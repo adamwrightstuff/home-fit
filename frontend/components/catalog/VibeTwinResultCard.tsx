@@ -1,42 +1,11 @@
 'use client'
 
-import type { CatalogMapPlace } from '@/lib/catalogMapTypes'
 import type { VibeTwinResult } from '@/lib/vibeFeatures'
 import { VIBE_LABELS, type VibeKey } from '@/lib/vibeFeatures'
 import { inferCatalogMetro } from '@/lib/catalogMapTypes'
 import MetroDot from '@/components/catalog/MetroDot'
 
 const KEYS: VibeKey[] = ['scene', 'race', 'bach', 'dem', 'scap', 'gvi', 'water']
-
-function DimBar({ label, query, twin }: { label: string; query: number | null | undefined; twin: number | null | undefined }) {
-  const q = query ?? 0.5
-  const t = twin ?? 0.5
-  const diff = Math.round((t - q) * 100)
-  const absDiff = Math.abs(diff)
-  const color = absDiff <= 6 ? 'var(--hf-text-tertiary)' : diff > 0 ? '#16a34a' : '#dc2626'
-
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className="w-[72px] shrink-0 text-[0.6rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)] truncate">{label}</span>
-      <div className="relative h-1 flex-1 rounded-full bg-[var(--hf-border)]">
-        <div
-          className="absolute inset-y-0 left-0 rounded-full opacity-30"
-          style={{ width: `${q * 100}%`, background: 'var(--hf-primary-1)' }}
-        />
-        <div
-          className="absolute inset-y-0 left-0 rounded-full"
-          style={{ width: `${t * 100}%`, background: 'var(--hf-primary-1)' }}
-        />
-      </div>
-      <span
-        className="w-8 shrink-0 text-right text-[0.6rem] font-bold tabular-nums"
-        style={{ color }}
-      >
-        {absDiff <= 6 ? '≈' : diff > 0 ? `+${absDiff}` : `−${absDiff}`}
-      </span>
-    </div>
-  )
-}
 
 interface VibeTwinResultCardProps {
   result: VibeTwinResult
@@ -45,14 +14,23 @@ interface VibeTwinResultCardProps {
 }
 
 export default function VibeTwinResultCard({ result, selected, onSelect }: VibeTwinResultCardProps) {
-  const place = result.place as CatalogMapPlace & { catalog: { type?: string } }
-  const metro = inferCatalogMetro(result.place as Parameters<typeof inferCatalogMetro>[0])
-  const typeLabel = (place.catalog.type || '').trim()
+  const place = result.place
+  const metro = inferCatalogMetro(place as Parameters<typeof inferCatalogMetro>[0])
+  const catalog = place.catalog as { name: string; county_borough?: string; state_abbr?: string; type?: string }
+  const typeLabel = (catalog.type || '').trim()
   const typePretty = typeLabel ? typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1).toLowerCase() : ''
-  const hf = typeof result.place.score.total_score === 'number' ? result.place.score.total_score : null
+  const hf = typeof place.score.total_score === 'number' ? place.score.total_score : null
 
-  const qnorm = result.queryFeatures.norm
-  const pnorm = result.vibeFeatures.norm
+  const qraw = result.queryFeatures.raw
+  const praw = result.vibeFeatures.raw
+
+  const diffs = KEYS.map((k) => {
+    const q = qraw[k] ?? 50
+    const p = praw[k] ?? 50
+    return { key: k, diff: Math.round(p - q) }
+  })
+
+  const maxAbs = Math.max(1, ...diffs.map((d) => Math.abs(d.diff)))
 
   return (
     <div
@@ -70,42 +48,50 @@ export default function VibeTwinResultCard({ result, selected, onSelect }: VibeT
 
       <div className="pr-16">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold text-[var(--hf-text-primary)]">{place.catalog.name}</h3>
+          <h3 className="text-sm font-bold text-[var(--hf-text-primary)]">{catalog.name}</h3>
           <MetroDot metro={metro} />
         </div>
         <p className="mt-0.5 text-[0.7rem] text-[var(--hf-text-secondary)]">
-          {place.catalog.county_borough}, {(place.catalog as { state_abbr?: string }).state_abbr}
+          {catalog.county_borough}, {catalog.state_abbr}
           {typePretty ? ` · ${typePretty}` : ''}
         </p>
-        <div className="mt-1 flex flex-wrap items-center gap-1.5">
-          <span className="rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)] bg-[var(--hf-border)]">
-            {result.vibeFeatures.areaType?.replace('_', ' ')}
+        <div className="mt-2 flex items-baseline gap-2">
+          <span className="text-[0.65rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
+            HomeFit
           </span>
-          {result.vibeFeatures.waterType !== 'none' && (
-            <span className="rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)] bg-[var(--hf-border)]">
-              {result.vibeFeatures.waterType}
-            </span>
-          )}
-          {hf != null && (
-            <span className="ml-auto text-[0.65rem] font-semibold text-[var(--hf-text-tertiary)] tabular-nums">
-              HF {hf.toFixed(1)}
-            </span>
-          )}
+          <span className="text-lg font-bold tabular-nums" style={{ color: '#6B5CE7' }}>
+            {hf != null ? hf.toFixed(1) : '—'}
+          </span>
         </div>
       </div>
 
-      <div className="mt-3 space-y-1.5 border-t border-[var(--hf-border)] pt-2">
-        <div className="mb-1 text-[0.6rem] font-bold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
-          Vibe dimensions <span className="font-normal opacity-60 ml-1">ghost bar = query</span>
+      <div className="mt-3 border-t border-[var(--hf-border)] pt-2">
+        <div className="mb-1.5 text-[0.6rem] font-bold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
+          Vibe dimensions
         </div>
-        {KEYS.map((k) => (
-          <DimBar
-            key={k}
-            label={VIBE_LABELS[k]}
-            query={qnorm[k]}
-            twin={pnorm[k]}
-          />
-        ))}
+        <div className="space-y-2">
+          {diffs.map(({ key, diff }) => {
+            const abs = Math.abs(diff)
+            const barColor = diff > 5 ? '#1D9E75' : diff < -5 ? '#E76B5C' : 'rgba(100,100,100,0.45)'
+            const pct = (abs / maxAbs) * 100
+            return (
+              <div key={key} className="flex items-center gap-2 text-[0.75rem]">
+                <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]">
+                  {VIBE_LABELS[key]}
+                </span>
+                <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
+                  <div
+                    className="h-full rounded-full transition-[width]"
+                    style={{ width: `${Math.min(100, pct)}%`, background: barColor }}
+                  />
+                </div>
+                <span className="w-11 shrink-0 tabular-nums text-right text-[var(--hf-text-secondary)]">
+                  {diff > 0 ? '+' : ''}{diff === 0 ? '0' : diff}
+                </span>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
