@@ -32,28 +32,8 @@ export default function HeroBand() {
   return (
     <div
       className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3"
-      style={{ gap: '1rem', position: 'relative' }}
+      style={{ gap: '1rem' }}
     >
-      <button
-        type="button"
-        onClick={() => setDismissed(true)}
-        aria-label="Dismiss"
-        style={{
-          position: 'absolute',
-          top: 6,
-          right: 8,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: '4px',
-          color: '#9ca3af',
-        }}
-      >
-        <X size={16} />
-      </button>
       <div style={{ flex: 1, minWidth: 0 }}>
         <h2 style={{ fontSize: 17, fontWeight: 500, margin: 0, lineHeight: 1.3, color: '#1a1a2e' }}>
           Find neighborhoods that fit how you want to live.
@@ -62,7 +42,7 @@ export default function HeroBand() {
           Scores across 13 pillars — outdoor access, natural beauty, schools, transit, and more.
         </p>
       </div>
-      <div style={{ flexShrink: 0 }}>
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
         <Link
           href="/quiz"
           style={{
@@ -80,6 +60,23 @@ export default function HeroBand() {
         >
           Take the quiz →
         </Link>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          aria-label="Dismiss"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px',
+            color: '#9ca3af',
+          }}
+        >
+          <X size={16} />
+        </button>
       </div>
     </div>
   )
