@@ -50,15 +50,21 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
           return (
             <div key={k} className="flex min-w-0 items-center gap-2 text-[0.65rem]">
               <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]" title={PILLAR_META[k].description}>{PILLAR_META[k].name}</span>
-              <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
-                {score != null && (
-                  <div className="h-full rounded-full" style={{ width: `${Math.min(100, score)}%`, background: fill }} />
-                )}
-              </div>
               {isSchoolsDisabled ? (
-                <span className="w-16 shrink-0 text-right text-[var(--hf-text-tertiary)] uppercase tracking-wide" style={{ fontSize: '0.55rem', fontWeight: 700 }}>Coming soon</span>
+                <span
+                  className="shrink-0 rounded px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-widest"
+                  style={{ background: 'var(--hf-bg-subtle)', border: '1px solid var(--hf-border)', color: 'var(--hf-text-tertiary)' }}
+                  title="School scoring is coming soon for this area and is not included in the total score."
+                >
+                  Coming soon
+                </span>
               ) : (
                 <>
+                  <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
+                    {score != null && (
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(100, score)}%`, background: fill }} />
+                    )}
+                  </div>
                   <span className="w-7 shrink-0 tabular-nums text-[var(--hf-text-secondary)]">
                     {score != null ? score.toFixed(0) : '—'}
                   </span>
