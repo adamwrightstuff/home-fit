@@ -93,7 +93,7 @@ function loadMetroFile(metro: CatalogMapMetro, climateIndex: Map<string, Climate
         score?: ScoreResponse
       }
       if (!row.success || !row.catalog || !row.score) continue
-      const place: CatalogMapPlaceWithMetro = { catalog: row.catalog, score: row.score, metro }
+      const place: CatalogMapPlaceWithMetro = { catalog: row.catalog, score: row.score, metro, cbd_transit_minutes: (row as any).cbd_transit_minutes ?? null }
       const climate = climateIndex.get(row.catalog.name)
       if (climate) place.climate = climate
       places.push(place)

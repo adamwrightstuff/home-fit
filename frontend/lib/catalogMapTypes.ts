@@ -67,6 +67,7 @@ export interface CatalogMapPlace {
   catalog: CatalogRow
   score: ScoreResponse
   climate?: ClimateIndicators
+  cbd_transit_minutes?: number | null
 }
 
 /** After `metro=all`, each place is tagged with its source metro. */
