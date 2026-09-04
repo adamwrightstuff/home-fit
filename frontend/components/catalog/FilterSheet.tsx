@@ -477,7 +477,7 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Commute Time</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Average daily travel time to work for residents in this area.
+              Transit travel time to the metro CBD (Grand Central, Financial District, Downtown LA).
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterCommuteMax === 'all', 'Any', () => onFilterCommuteMaxChange('all'))}

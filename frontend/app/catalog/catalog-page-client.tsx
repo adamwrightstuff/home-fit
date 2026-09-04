@@ -477,8 +477,10 @@ export default function CatalogPageClient({
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') return false
       if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false
       if (filterCommuteMax !== 'all') {
+        const cbd = (p as any).cbd_transit_minutes
         const mcm = (p.score.livability_pillars as any)?.public_transit_access?.summary?.mean_commute_minutes
-        if (typeof mcm === 'number' && mcm > 0 && mcm > Number(filterCommuteMax)) return false
+        const commute = typeof cbd === 'number' && cbd > 0 ? cbd : (typeof mcm === 'number' && mcm > 0 ? mcm : null)
+        if (commute !== null && commute > Number(filterCommuteMax)) return false
       }
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
         const hs = (p.score as any).housing_stock
