@@ -522,6 +522,7 @@ export default function CatalogPageClient({
     filterPoliticalLean,
     filterSchoolType,
     filterLocalScene,
+    filterCommuteMax,
     filterHousingType,
     filterBuiltCharacter,
     climatePrefs,
