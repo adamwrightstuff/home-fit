@@ -280,6 +280,7 @@ export default function CatalogPageClient({
           if (typeof f.filterSchoolType === 'string') setFilterSchoolType(f.filterSchoolType)
           if (typeof f.filterLocalScene === 'string') setFilterLocalScene(f.filterLocalScene)
           if (typeof f.filterCommuteMax === 'string') setFilterCommuteMax(f.filterCommuteMax)
+          if (f.climatePrefs && typeof f.climatePrefs === 'object') setClimatePrefs(f.climatePrefs)
         }
       })
       .catch(() => { /* silently ignore — sessionStorage fallback already applied */ })
@@ -309,12 +310,13 @@ export default function CatalogPageClient({
             filterSchoolType,
             filterLocalScene,
             filterCommuteMax,
+            climatePrefs,
           },
         }),
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, householdIncome, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, filterHousingType, filterBuiltCharacter, filterSchoolType, filterLocalScene, filterCommuteMax])
+  }, [user, priorities, dealbreakers, householdIncome, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, filterHousingType, filterBuiltCharacter, filterSchoolType, filterLocalScene, filterCommuteMax, climatePrefs])
 
   useEffect(() => {
     const key = searchParams.get('key')
