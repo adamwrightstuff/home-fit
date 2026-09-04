@@ -91,6 +91,7 @@ export default function CatalogPageClient({
   const searchParams = useSearchParams()
   const { user } = useAuth()
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasRestoredRef = useRef(false)
   const [places, setPlaces] = useState<CatalogMapPlaceWithMetro[]>([])
   const [loadMessage, setLoadMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -282,12 +283,13 @@ export default function CatalogPageClient({
           if (typeof f.filterCommuteMax === 'string') setFilterCommuteMax(f.filterCommuteMax)
           if (f.climatePrefs && typeof f.climatePrefs === 'object') setClimatePrefs(f.climatePrefs)
         }
+        hasRestoredRef.current = true
       })
-      .catch(() => { /* silently ignore — sessionStorage fallback already applied */ })
+      .catch(() => { hasRestoredRef.current = true /* silently ignore — sessionStorage fallback already applied */ })
   }, [user])
 
   useEffect(() => {
-    if (!user) return
+    if (!user || !hasRestoredRef.current) return
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(() => {
       fetch('/api/me/preferences', {
