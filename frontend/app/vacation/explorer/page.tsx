@@ -42,15 +42,14 @@ function VacationMap({
         style: {
           version: 8 as const,
           sources: {
-            carto: {
+            osm: {
               type: 'raster' as const,
-              tiles: ['https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-                      'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'],
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
               tileSize: 256,
-              attribution: '© CARTO, © OpenStreetMap contributors',
+              attribution: '© OpenStreetMap contributors',
             },
           },
-          layers: [{ id: 'carto', type: 'raster' as const, source: 'carto' }],
+          layers: [{ id: 'osm', type: 'raster' as const, source: 'osm' }],
           glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
         },
         bounds: [[-125, 24], [-66, 50]],
