@@ -481,10 +481,10 @@ export default function FilterSheet({
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterCommuteMax === 'all', 'Any', () => onFilterCommuteMaxChange('all'))}
-              {chip(filterCommuteMax === '15', 'Under 15 min', () => onFilterCommuteMaxChange(filterCommuteMax === '15' ? 'all' : '15'))}
-              {chip(filterCommuteMax === '30', 'Under 30 min', () => onFilterCommuteMaxChange(filterCommuteMax === '30' ? 'all' : '30'))}
-              {chip(filterCommuteMax === '45', 'Under 45 min', () => onFilterCommuteMaxChange(filterCommuteMax === '45' ? 'all' : '45'))}
-              {chip(filterCommuteMax === '60', 'Under 60 min', () => onFilterCommuteMaxChange(filterCommuteMax === '60' ? 'all' : '60'))}
+              {chip(filterCommuteMax !== 'all' && Number(filterCommuteMax) >= 15, 'Under 15 min', () => onFilterCommuteMaxChange(filterCommuteMax === '15' ? 'all' : '15'))}
+              {chip(filterCommuteMax !== 'all' && Number(filterCommuteMax) >= 30, 'Under 30 min', () => onFilterCommuteMaxChange(filterCommuteMax === '30' ? 'all' : '30'))}
+              {chip(filterCommuteMax !== 'all' && Number(filterCommuteMax) >= 45, 'Under 45 min', () => onFilterCommuteMaxChange(filterCommuteMax === '45' ? 'all' : '45'))}
+              {chip(filterCommuteMax !== 'all' && Number(filterCommuteMax) >= 60, 'Under 60 min', () => onFilterCommuteMaxChange(filterCommuteMax === '60' ? 'all' : '60'))}
             </div>
           </div>
 
