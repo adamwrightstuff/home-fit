@@ -5402,21 +5402,21 @@ def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_c
         metro_name = None
     
     # Compute baseline contexts for pillars that use them
+    # Always run even when area_type is None: get_baseline_context falls back to
+    # 'suburban' for unknown/None types, and recording that fallback value is more
+    # useful than omitting the key (which caused stored ao_baseline=None gaps).
     baseline_contexts = {}
-    if area_type:
-        from data_sources.data_quality import get_baseline_context
-        
-        # Compute baseline_context for each pillar that uses it
-        for pillar_name in ['active_outdoors', 'public_transit_access']:
-            if pillar_name in pillars:
-                try:
-                    baseline_contexts[pillar_name] = get_baseline_context(
-                        area_type=area_type,
-                        form_context=form_context,
-                        pillar_name=pillar_name
-                    )
-                except Exception:
-                    pass  # Non-fatal if computation fails
+    from data_sources.data_quality import get_baseline_context
+    for pillar_name in ['active_outdoors', 'public_transit_access']:
+        if pillar_name in pillars:
+            try:
+                baseline_contexts[pillar_name] = get_baseline_context(
+                    area_type=area_type,
+                    form_context=form_context,
+                    pillar_name=pillar_name
+                )
+            except Exception:
+                pass  # Non-fatal if computation fails
     
     # Compute deprecated effective_area_type (for backward compatibility)
     # Use form_context if available, otherwise use area_type

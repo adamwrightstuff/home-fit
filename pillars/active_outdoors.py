@@ -600,7 +600,10 @@ def _score_wild_adventure_v2(
         exp_near = 8.0
         exp_canopy = 35.0
         max_trails_total, max_trails_near, max_canopy = 12.0, 6.0, 15.0
-    elif baseline_context == "suburban":
+    elif baseline_context in {"suburban", "urban_residential", "commuter_rail_suburb"}:
+        # urban_residential falls here, not to the rural branch — it is a residential
+        # urban/inner-suburb context, not a wilderness context. commuter_rail_suburb
+        # is also suburban for outdoor purposes.
         if is_mountain_town:
             exp_trails = max(5.0, exp_trails_15km)
             exp_near = 15.0
@@ -611,7 +614,7 @@ def _score_wild_adventure_v2(
             exp_near = 6.0
             exp_canopy = 30.0
             max_trails_total, max_trails_near, max_canopy = 25.0, 12.0, 18.0
-    else:  # rural / exurban
+    elif baseline_context in {"exurban", "rural"}:
         if is_mountain_town:
             exp_trails = max(5.0, exp_trails_15km)
             exp_near = 15.0
@@ -622,6 +625,13 @@ def _score_wild_adventure_v2(
             exp_near = 15.0
             exp_canopy = 45.0
             max_trails_total, max_trails_near, max_canopy = 30.0, 15.0, 15.0
+    else:
+        # None or unrecognised baseline_context: default to suburban expectations
+        # so future new context types never silently inherit wilderness thresholds.
+        exp_trails = max(5.0, exp_trails_15km)
+        exp_near = 6.0
+        exp_canopy = 30.0
+        max_trails_total, max_trails_near, max_canopy = 25.0, 12.0, 18.0
 
     # Urban data quality cap: OSM tags many urban paths as hiking routes
     if baseline_context == "urban_core":
