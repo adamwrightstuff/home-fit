@@ -228,6 +228,7 @@ export default function ScoreDisplay({
       '',
       'Pillar Scores:',
       ...available_pillars.map((key) => {
+        if (key === 'quality_education' && schoolsDisabled) return `  ${PILLAR_META[key].name}: Coming soon`
         const raw = (livability_pillars as any)?.[key]?.score
         const score = typeof raw === 'number' && Number.isFinite(raw) ? raw : null
         return `  ${PILLAR_META[key].name}: ${score != null ? `${score.toFixed(1)}/100` : '—'}`
@@ -243,8 +244,13 @@ export default function ScoreDisplay({
     }
   }
 
+  const schoolsDisabled =
+    (livability_pillars.quality_education as any)?.data_quality?.fallback_used === true &&
+    String((livability_pillars.quality_education as any)?.data_quality?.reason || '').toLowerCase().includes('disabled')
+
   const pillar_ranked = available_pillars
     .map((key) => {
+      if (key === 'quality_education' && schoolsDisabled) return { key, score: null }
       const raw = (livability_pillars as any)?.[key]?.score
       const score = typeof raw === 'number' && Number.isFinite(raw) ? raw : null
       return { key, score }
@@ -259,10 +265,6 @@ export default function ScoreDisplay({
   /** Prefer original search input; fall back to city, state zip for display. */
   const locationDisplayName =
     (typeof data.input === 'string' && data.input.trim()) || [location_info.city, location_info.state, location_info.zip].filter(Boolean).join(', ') || 'Unknown location'
-
-  const schoolsDisabled =
-    (livability_pillars.quality_education as any)?.data_quality?.fallback_used === true &&
-    String((livability_pillars.quality_education as any)?.data_quality?.reason || '').toLowerCase().includes('disabled')
 
   const lowConfidencePillars = available_pillars.filter((k) => ((livability_pillars as any)?.[k]?.confidence ?? 100) < 60)
 

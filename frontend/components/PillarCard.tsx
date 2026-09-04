@@ -286,7 +286,9 @@ export default function PillarCard({
     String((pillar.data_quality as { reason?: string } | undefined)?.reason ?? '').toLowerCase().includes('disabled')
 
   const numericScore =
-    typeof pillar.score === 'number' && Number.isFinite(pillar.score) ? pillar.score : null
+    isSchoolsNotScored || isComingSoon
+      ? null
+      : typeof pillar.score === 'number' && Number.isFinite(pillar.score) ? pillar.score : null
 
   // Built Environment: the useful metrics live under details.architectural_analysis.metrics.
   // Some summary fields are placeholders (often zeros), so override them when available.
