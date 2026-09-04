@@ -55,6 +55,8 @@ interface FilterSheetProps {
   onFilterSchoolTypeChange: (v: 'any' | 'public_only' | 'charter') => void
   filterLocalScene: 'all' | 'Some' | 'High'
   onFilterLocalSceneChange: (v: 'all' | 'Some' | 'High') => void
+  filterCommuteMax: 'all' | '15' | '30' | '45' | '60'
+  onFilterCommuteMaxChange: (v: 'all' | '15' | '30' | '45' | '60') => void
   climatePrefs: ClimatePreferences
   onClimatePrefsChange: (v: ClimatePreferences) => void
   resultCount: number
@@ -106,6 +108,8 @@ export default function FilterSheet({
   onFilterSchoolTypeChange,
   filterLocalScene,
   onFilterLocalSceneChange,
+  filterCommuteMax,
+  onFilterCommuteMaxChange,
   climatePrefs,
   onClimatePrefsChange,
   resultCount,
@@ -466,6 +470,21 @@ export default function FilterSheet({
               {chip(filterLocalScene === 'all', 'All', () => onFilterLocalSceneChange('all'))}
               {chip(filterLocalScene === 'Some', 'Some+', () => onFilterLocalSceneChange(filterLocalScene === 'Some' ? 'all' : 'Some'))}
               {chip(filterLocalScene === 'High', 'High only', () => onFilterLocalSceneChange(filterLocalScene === 'High' ? 'all' : 'High'))}
+            </div>
+          </div>
+
+          {/* Commute Time */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Commute Time</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+              Census average commute for workers in the area. Includes all modes and local trips — not a transit-to-CBD estimate.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {chip(filterCommuteMax === 'all', 'Any', () => onFilterCommuteMaxChange('all'))}
+              {chip(filterCommuteMax === '15', 'Under 15 min', () => onFilterCommuteMaxChange(filterCommuteMax === '15' ? 'all' : '15'))}
+              {chip(filterCommuteMax === '30', 'Under 30 min', () => onFilterCommuteMaxChange(filterCommuteMax === '30' ? 'all' : '30'))}
+              {chip(filterCommuteMax === '45', 'Under 45 min', () => onFilterCommuteMaxChange(filterCommuteMax === '45' ? 'all' : '45'))}
+              {chip(filterCommuteMax === '60', 'Under 60 min', () => onFilterCommuteMaxChange(filterCommuteMax === '60' ? 'all' : '60'))}
             </div>
           </div>
 

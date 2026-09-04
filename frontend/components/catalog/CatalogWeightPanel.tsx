@@ -44,7 +44,7 @@ interface CatalogWeightPanelProps {
 }
 
 /** Pillars with a deal-breaker gate wired up. Independent axis from importance — see housing_value MVP. */
-const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value', 'air_travel_access', 'quality_education', 'community_safety', 'neighborhood_amenities', 'public_transit_access', 'healthcare_access', 'active_outdoors', 'climate_risk', 'social_fabric']
+const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value', 'air_travel_access', 'quality_education', 'community_safety', 'neighborhood_amenities', 'healthcare_access', 'active_outdoors', 'climate_risk', 'social_fabric']
 
 /**
  * Human-readable statement of what "fails" means per dealbreaker pillar — mirrors the exact
@@ -57,7 +57,6 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   quality_education: 'Exclude places with school ratings below 3-star equivalent',
   community_safety: 'Exclude places less safe than typical for the area type',
   neighborhood_amenities: 'Exclude places with too few businesses within walking distance',
-  public_transit_access: 'Exclude places with an average commute over 45 min',
   healthcare_access: 'Exclude places with below-average access to hospitals and clinics',
   active_outdoors: 'Exclude places with limited trails, parks, or outdoor recreation',
   climate_risk: 'Exclude places with below-average climate safety (flood, heat, fire exposure)',
