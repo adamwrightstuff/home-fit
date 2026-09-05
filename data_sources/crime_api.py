@@ -632,6 +632,9 @@ _SPECIAL_PURPOSE_AGENCY_SKIP = frozenset({
     "fire protection",
     "fire department",
     "department of forestry",
+    "state park",
+    "park police",
+    "park department",
 })
 
 
@@ -757,13 +760,16 @@ def _find_nibrs_agency_by_name(agencies: list, city_hint: str) -> Optional[Dict]
 
 @cached(ttl_seconds=CACHE_TTL["crime_data"])
 def _fetch_ny_state_agency_crimes(
-    town_keyword: str, county: str, year: int
+    town_keyword: str, county: Optional[str], year: int
 ) -> Optional[Dict]:
     """
     Query the NY State UCR per-agency dataset for a specific town in a county.
 
     Excludes county-wide entries ("County Total", "County PD", "County Sheriff",
     "State Police") so we always get a single-municipality figure.
+
+    Pass county=None to search across all NY counties (used when the geo-matched
+    agency county is suspect, e.g. cross-county-border geo matches).
 
     Returns the row dict with 'violent', 'property', 'months_reported', etc.,
     or None if not found or data is incomplete (<10 months reported).
@@ -778,13 +784,14 @@ def _fetch_ny_state_agency_crimes(
             f"AND agency NOT LIKE '%SUNY%' "
             f"AND agency != 'County Total'"
         )
-        params = {
+        params: Dict[str, str] = {
             "$where": where,
-            "county": county.title(),
             "year": str(year),
             "$order": "months_reported DESC, violent DESC",
             "$limit": 1,
         }
+        if county:
+            params["county"] = county.title()
         resp = requests.get(_NY_STATE_CRIME_DS, params=params, timeout=_REQUEST_TIMEOUT)
         if resp.status_code != 200:
             logger.debug("NY state crime DS returned %d for %s/%s", resp.status_code, town_keyword, county)
@@ -993,6 +1000,19 @@ def _get_fbi_rates(
                         city_hint, nassau_pop,
                     )
                     return _rates_from_ny_state(nassau_row, prev_nassau, nassau_pop)
+
+            if ny_row is None and county:
+                # Cross-county-border fallback: geo-matched agency may be in the
+                # wrong county (e.g. Tarrytown VPD selected for Nyack). Try the
+                # city keyword without a county filter across all NY agencies.
+                ny_row = _fetch_ny_state_agency_crimes(_city_kw, None, data_year)
+                if ny_row is None:
+                    ny_row = _fetch_ny_state_agency_crimes(_city_kw, None, data_year - 1)
+                if ny_row is not None:
+                    logger.debug(
+                        "NY state UCR: county-agnostic fallback matched '%s' for '%s' (geo-county was %s)",
+                        ny_row.get("agency"), city_hint, county,
+                    )
 
             if ny_row is not None:
                 prev_ny_row = _fetch_ny_state_agency_crimes(
