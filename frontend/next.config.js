@@ -4,9 +4,8 @@ const path = require('path')
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
-    // Include data files from the repo root (outside the frontend/ build root) so
-    // Vercel's file tracer bundles them into the catalog-map serverless function.
-    outputFileTracingRoot: path.join(__dirname, '../'),
+    // Tell the file tracer to bundle the catalog JSONL files (copied into
+    // frontend/data/ by the Vercel buildCommand before next build runs).
     outputFileTracingIncludes: {
       '/api/catalog-map': [
         'data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
