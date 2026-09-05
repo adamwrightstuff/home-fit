@@ -889,6 +889,14 @@ def _get_lasd_rates(station: str, population: int) -> Optional[Dict]:
 # for the unincorporated/contract portion of each county served by the county PD.
 _NY_COUNTY_PD_POPULATIONS: Dict[str, int] = {
     "Nassau County PD": 1_100_000,  # Nassau County unincorporated (county minus own-PD municipalities)
+    "Suffolk County PD": 1_200_000,  # Suffolk County — towns w/o own PD (Babylon, Islip, Brookhaven, Smithtown, Huntington)
+}
+
+# Villages/hamlets in NY policed by a covering town PD that reports to the state UCR.
+# Key: city_hint (lowercase).  Value: (town_keyword, county, town_population).
+# town_population is the full agency service population so per-1k rates are correct.
+_NY_VILLAGE_TO_TOWN_PD: Dict[str, tuple] = {
+    "nyack": ("Orangetown", "Rockland", 50_000),  # Nyack Village is within Town of Orangetown
 }
 
 
@@ -918,6 +926,32 @@ def _fetch_ny_state_nassau_pd(year: int) -> Optional[Dict]:
         return row
     except Exception as e:
         logger.warning("Nassau County PD fetch failed for year %d: %s", year, e)
+        return None
+
+
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _fetch_ny_state_suffolk_pd(year: int) -> Optional[Dict]:
+    """
+    Fetch Suffolk County PD crime row for unincorporated Suffolk communities
+    (Babylon, Islip, Brookhaven, Smithtown, Huntington towns) that lack a
+    dedicated town-level PD in the state UCR dataset.
+    """
+    try:
+        params = {
+            "$where": "upper(agency) = 'SUFFOLK COUNTY PD'",
+            "county": "Suffolk",
+            "year": str(year),
+            "$limit": 1,
+        }
+        resp = requests.get(_NY_STATE_CRIME_DS, params=params, timeout=_REQUEST_TIMEOUT)
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        if not data:
+            return None
+        return data[0]
+    except Exception as e:
+        logger.warning("Suffolk County PD fetch failed for year %d: %s", year, e)
         return None
 
 
@@ -983,7 +1017,26 @@ def _get_fbi_rates(
                         if ny_row is None:
                             ny_row = _fetch_ny_state_agency_crimes(town_kw, county, data_year - 1)
 
-            # Tier 3 Nassau fallback: unincorporated Nassau communities are served
+            # Tier 3a: village-to-town mapping — villages policed by a covering
+            # town PD that reports to the state UCR (e.g. Nyack → Orangetown).
+            if ny_row is None:
+                town_entry = _NY_VILLAGE_TO_TOWN_PD.get(_city_kw.lower())
+                if town_entry:
+                    town_kw, town_county, town_pop = town_entry
+                    ny_row = _fetch_ny_state_agency_crimes(town_kw, town_county, data_year)
+                    if ny_row is None:
+                        ny_row = _fetch_ny_state_agency_crimes(town_kw, town_county, data_year - 1)
+                    if ny_row is not None:
+                        prev_town = _fetch_ny_state_agency_crimes(
+                            ny_row.get("agency", town_kw)[:20], town_county, int(ny_row["year"]) - 1
+                        )
+                        logger.debug(
+                            "NY state UCR: village→town fallback '%s'→'%s' for '%s' (pop=%d)",
+                            _city_kw, town_kw, city_hint, town_pop,
+                        )
+                        return _rates_from_ny_state(ny_row, prev_town, town_pop)
+
+            # Tier 3b Nassau fallback: unincorporated Nassau communities are served
             # by Nassau County PD (not a dedicated city PD).  Use the county-wide
             # agency when the direct city lookup fails.  Use the known jurisdiction
             # population rather than the local-radius estimate so that the large
@@ -1000,6 +1053,22 @@ def _get_fbi_rates(
                         city_hint, nassau_pop,
                     )
                     return _rates_from_ny_state(nassau_row, prev_nassau, nassau_pop)
+
+            # Tier 3c Suffolk fallback: western Suffolk towns (Babylon, Islip,
+            # Brookhaven, Smithtown, Huntington) lack their own town PD in the
+            # UCR and are served by Suffolk County PD.
+            if ny_row is None and county.lower() == "suffolk":
+                suffolk_row = _fetch_ny_state_suffolk_pd(data_year)
+                if suffolk_row is None:
+                    suffolk_row = _fetch_ny_state_suffolk_pd(data_year - 1)
+                if suffolk_row is not None:
+                    prev_suffolk = _fetch_ny_state_suffolk_pd(int(suffolk_row["year"]) - 1)
+                    suffolk_pop = _NY_COUNTY_PD_POPULATIONS.get("Suffolk County PD", population)
+                    logger.debug(
+                        "NY state UCR: Suffolk County PD fallback for '%s' (pop=%d)",
+                        city_hint, suffolk_pop,
+                    )
+                    return _rates_from_ny_state(suffolk_row, prev_suffolk, suffolk_pop)
 
             if ny_row is None and county:
                 # Cross-county-border fallback: geo-matched agency may be in the
