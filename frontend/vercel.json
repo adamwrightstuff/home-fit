@@ -1,5 +1,5 @@
 {
-  "buildCommand": "mkdir -p data && cp ../data/*.composites_recomputed.jsonl ../data/catalog_climate_profiles.jsonl data/ && npm run build",
+  "buildCommand": "mkdir -p data && (cp ../data/*.composites_recomputed.jsonl ../data/catalog_climate_profiles.jsonl data/ 2>/dev/null || true) && npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
