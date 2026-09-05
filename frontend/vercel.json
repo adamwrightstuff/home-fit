@@ -1,5 +1,5 @@
 {
-  "buildCommand": "mkdir -p data && cp ../data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl ../data/la_metro_place_catalog_scores_merged.composites_recomputed.jsonl ../data/sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl ../data/catalog_climate_profiles.jsonl data/ && npm run build",
+  "buildCommand": "mkdir -p data && cp ../data/*.composites_recomputed.jsonl ../data/catalog_climate_profiles.jsonl data/ && npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
