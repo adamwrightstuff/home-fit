@@ -181,7 +181,10 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     # inflates the score (the old model let a drive-to Main Street tie a walkable urban core).
     location_score = _score_location_quality(all_businesses, lat, lon, max_points=40, area_type=area_type)
 
-    raw_total = home_score  # 0-100, data-backed, no calibration
+    # Home walkability (0-60) + location quality (0-40) = 0-100.
+    # Scaling home_score by 0.6 keeps genuine walkability as the dominant signal
+    # while letting a real town center add meaningful points.
+    raw_total = min(100.0, home_score * 0.6 + location_score)
     total_score = raw_total
     
     # Assess data quality
