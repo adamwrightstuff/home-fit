@@ -3488,7 +3488,11 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
             except Exception:
                 cat_result = None
             if cat_result is None:
-                results["_query_failed"] = True
+                # Only flag the whole query as failed when the hospital category fails —
+                # that's the critical data source. Failures in urgent_care/clinics/pharmacies
+                # are partial misses but shouldn't suppress confidence for hospitals found.
+                if cat == "hospitals":
+                    results["_query_failed"] = True
             else:
                 results["hospitals"].extend(cat_result.get("hospitals", []))
                 results["urgent_care"].extend(cat_result.get("urgent_care", []))
