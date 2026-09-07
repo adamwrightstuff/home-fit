@@ -728,7 +728,15 @@ def main() -> int:
         if total < max(args.min_flags, 1):
             continue
         top = sorted(pillar_flags, key=lambda p: -len(pillar_flags[p]))[:4]
-        pil_str = "  ".join(f"{p}({len(pillar_flags[p])})" for p in top)
+        parts = []
+        for p in top:
+            flags = pillar_flags[p]
+            if len(flags) <= 3:
+                flag_str = ",".join(flags)
+            else:
+                flag_str = f"{','.join(flags[:3])}+{len(flags)-3}"
+            parts.append(f"{p}[{flag_str}]")
+        pil_str = "  ".join(parts)
         meta_str = f"  meta:[{','.join(place_flags)}]" if place_flags else ""
         print(f"  {name:<30}  {total:2d}  {pil_str}{meta_str}")
         shown += 1
