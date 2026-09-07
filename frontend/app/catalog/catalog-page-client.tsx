@@ -567,13 +567,8 @@ export default function CatalogPageClient({
     },
     neighborhood_amenities: (p) => {
       const na = (p.score.livability_pillars as any)?.neighborhood_amenities
-      const be = (p.score.livability_pillars as any)?.built_environment
-      const businessesWithinWalk = na?.breakdown?.home_walkability?.businesses_within_walk
-      const effectiveAreaType = be?.breakdown?.effective_area_type ?? be?.details?.effective_area_type ?? null
-      return passesNeighborhoodAmenitiesDealbreaker(
-        typeof businessesWithinWalk === 'number' ? businessesWithinWalk : null,
-        effectiveAreaType
-      )
+      const score = na?.score
+      return passesNeighborhoodAmenitiesDealbreaker(typeof score === 'number' ? score : null)
     },
     healthcare_access: (p) => {
       const score = (p.score.livability_pillars as any)?.healthcare_access?.score

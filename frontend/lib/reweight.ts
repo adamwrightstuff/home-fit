@@ -342,20 +342,13 @@ export function passesCommunitySafetyDealbreaker(score: number | null | undefine
  * exurban/rural (11). Anchors to that pillar's own research-backed floor, not an invented
  * count.
  */
-const AMENITIES_ADEQUATE_THRESHOLD: Record<string, number> = {
-  urban_core: 18,
-  exurban: 11,
-  rural: 11,
-}
-const AMENITIES_ADEQUATE_DEFAULT = 15 // suburban baseline
+const AMENITIES_SCORE_THRESHOLD = 30
 
 export function passesNeighborhoodAmenitiesDealbreaker(
-  businessesWithinWalk: number | null | undefined,
-  effectiveAreaType: string | null | undefined
+  score: number | null | undefined
 ): boolean {
-  if (businessesWithinWalk === null || businessesWithinWalk === undefined) return true
-  const threshold = AMENITIES_ADEQUATE_THRESHOLD[(effectiveAreaType || '').toLowerCase()] ?? AMENITIES_ADEQUATE_DEFAULT
-  return businessesWithinWalk >= threshold
+  if (score === null || score === undefined) return true
+  return score >= AMENITIES_SCORE_THRESHOLD
 }
 
 /**

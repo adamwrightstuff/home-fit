@@ -56,7 +56,7 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   air_travel_access: 'Exclude places more than 60 min drive from an airport',
   quality_education: 'Exclude places with school ratings below 3-star equivalent',
   community_safety: 'Exclude places less safe than typical for the area type',
-  neighborhood_amenities: 'Exclude places where few businesses are within walking distance of home (does not count drive-to town centers)',
+  neighborhood_amenities: 'Exclude places with poor access to daily amenities — combines street-level walkability and town center vibrancy',
   healthcare_access: 'Exclude places with below-average access to hospitals and clinics',
   active_outdoors: 'Exclude places with limited trails, parks, or outdoor recreation',
   climate_risk: 'Exclude places with below-average climate safety (flood, heat, fire exposure)',
