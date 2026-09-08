@@ -559,6 +559,6 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
         out.get("happiness_index"),
         out.get("total_score"),
     )
-    out["hotness_score"] = _hotness
+    out["it_score"] = _hotness
 
     return out
