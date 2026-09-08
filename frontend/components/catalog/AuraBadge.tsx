@@ -12,7 +12,7 @@ export default function AuraBadge({
   if (typeof itScore !== 'number' || !Number.isFinite(itScore) || itScore < threshold) return null
   return (
     <span
-      title={`Aura score ${itScore.toFixed(1)} — high status, vibrant scene, and strong livability all at once`}
+      title="Places where the status, scene, and livability all land at once."
       style={{
         display: 'inline-flex',
         alignItems: 'center',
