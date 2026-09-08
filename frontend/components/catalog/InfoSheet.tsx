@@ -96,6 +96,7 @@ function Popover({ copy, anchorRef, onClose }: InfoSheetProps) {
         left: pos.left,
         zIndex: 9999,
         width: 280,
+        boxSizing: 'border-box',
         background: 'var(--hf-card-bg, #fff)',
         borderRadius: 12,
         padding: '1rem 1.1rem 1rem',
