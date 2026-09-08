@@ -54,6 +54,7 @@ _COMPOSITE_KEYS = (
     "happiness_index_breakdown",
     "total_score_breakdown",
     "total_score",
+    "hotness_score",
 )
 
 # Fields that should not move when recomputing from stored pillar data.
