@@ -79,16 +79,15 @@ export function rankTwinMatches(
   pillarKeys: PillarKey[],
   keyFn: (p: CatalogMapPlace) => string,
   limit = 12,
-  sameBandOnly = false,
-  includeScene = false
+  sameBandOnly = false
 ): TwinMatchResult[] {
   if (pillarKeys.length < 2) return []
   const queryBand = sameBandOnly ? placeSesBand(query) : null
   const out: TwinMatchResult[] = []
   for (const place of candidates) {
     if (sameBandOnly && queryBand && placeSesBand(place) !== queryBand) continue
-    const { distance, compared } = twinDistance(query, place, pillarKeys, includeScene)
-    const effectivePillarCount = compared.length + (includeScene ? 1 : 0)
+    const { distance, compared } = twinDistance(query, place, pillarKeys, true)
+    const effectivePillarCount = compared.length + 1
     out.push({
       key: keyFn(place),
       place,
