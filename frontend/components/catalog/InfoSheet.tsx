@@ -66,7 +66,7 @@ function Popover({ copy, anchorRef, onClose }: InfoSheetProps) {
     const above = r.top > 260
     setPos({
       top: above ? r.top - 8 : r.bottom + 8,
-      left: Math.min(r.left, window.innerWidth - 296),
+      left: Math.max(8, Math.min(r.left, window.innerWidth - 280 - 16)),
       above,
     })
   }, [anchorRef])
