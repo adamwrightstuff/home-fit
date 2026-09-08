@@ -18,6 +18,7 @@ import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
 import { HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
+import AuraBadge from '@/components/catalog/AuraBadge'
 
 const INDEX_TABS: { id: CatalogMapIndexMode; label: string; tooltip: string }[] = [
   { id: 'homefit', label: 'Trovamo', tooltip: HOMEFIT_COPY.tooltip },
@@ -182,6 +183,7 @@ export default function CatalogDetailPanel({
               {allIdx?.trajectory && (
                 <TrajectoryChip trajectory={allIdx.trajectory} />
               )}
+              <AuraBadge itScore={typeof place.score.it_score === 'number' ? place.score.it_score : null} />
             </div>
           )}
 

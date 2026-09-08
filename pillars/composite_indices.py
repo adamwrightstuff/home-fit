@@ -25,12 +25,55 @@ LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
 INDEX_VERSION_LONGEVITY = "2"
 INDEX_VERSION_STATUS = "6"
 INDEX_VERSION_HAPPINESS = "4"
+INDEX_VERSION_HOTNESS = "1"
 
 INDICES_VERSION_METADATA = {
     "longevity": INDEX_VERSION_LONGEVITY,
     "status_signal": INDEX_VERSION_STATUS,
     "happiness": INDEX_VERSION_HAPPINESS,
+    "hotness": INDEX_VERSION_HOTNESS,
 }
+
+# ---------------------------------------------------------------------------
+# Hotness Score — market desirability signal (status + scene + home cost + livability)
+# ---------------------------------------------------------------------------
+# Weights are intentionally velocity-free: velocity data is often missing or stale
+# in catalog snapshots, so the score is built from stored fundamentals only.
+HOTNESS_WEIGHTS = {
+    "status_signal": 0.30,   # wealth/credential concentration → demand ceiling
+    "local_scene": 0.25,     # cultural vibrancy → urban energy
+    "home_cost": 0.20,       # expensive = in-demand (home_cost from status breakdown)
+    "happiness_index": 0.15, # livability floor
+    "total_score": 0.10,     # broad pillar health
+}
+
+
+def compute_hotness_score(
+    status_signal: Optional[float],
+    local_scene_score: Optional[float],
+    home_cost: Optional[float],
+    happiness_index: Optional[float],
+    total_score: Optional[float],
+) -> Optional[float]:
+    """
+    Hotness Score 0–100: market desirability combining status, scene, home cost, and livability.
+    Returns None if fewer than 3 of the 5 inputs are available.
+    """
+    inputs = {
+        "status_signal": status_signal,
+        "local_scene": local_scene_score,
+        "home_cost": home_cost,
+        "happiness_index": happiness_index,
+        "total_score": total_score,
+    }
+    available = {k: v for k, v in inputs.items() if isinstance(v, (int, float))}
+    if len(available) < 3:
+        return None
+    total_w = sum(HOTNESS_WEIGHTS[k] for k in available)
+    if total_w <= 0:
+        return None
+    score = sum(float(v) * HOTNESS_WEIGHTS[k] / total_w for k, v in available.items())
+    return round(min(100.0, max(0.0, score)), 2)
 
 
 def _area_type_from_payload(payload: Dict[str, Any]) -> Optional[str]:
@@ -498,5 +541,24 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
         "rescore_available": True,
         "note": "These pillars had no data. Their weights were redistributed to scored pillars.",
     } if _all_gap_pillars else None
+
+    # Hotness Score — computed last so it can use the freshly recomputed composites.
+    _home_cost = None
+    _ss_bd = out.get("status_signal_breakdown") or payload.get("status_signal_breakdown")
+    if isinstance(_ss_bd, dict):
+        _home_cost = _ss_bd.get("home_cost")
+        if not isinstance(_home_cost, (int, float)):
+            _home_cost = None
+    _local_scene = payload.get("local_scene_score")
+    if not isinstance(_local_scene, (int, float)):
+        _local_scene = None
+    _hotness = compute_hotness_score(
+        out.get("status_signal"),
+        _local_scene,
+        _home_cost,
+        out.get("happiness_index"),
+        out.get("total_score"),
+    )
+    out["it_score"] = _hotness
 
     return out
