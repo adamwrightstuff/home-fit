@@ -175,6 +175,8 @@ export interface ScoreResponse {
   local_scene_score?: number;
   /** Local Scene bucket: 'High' | 'Some' | 'Low'. */
   local_scene_bucket?: 'High' | 'Some' | 'Low';
+  /** It Score (0–100): combined signal of status, scene, home cost, and livability. Displayed as "Aura" badge when ≥ 75. */
+  it_score?: number;
   /** Happiness Index: commute (35%), social fabric (30%), housing value (20%), natural beauty (15%); renormalized if missing. Not a pillar. */
   happiness_index?: number;
   happiness_index_breakdown?: Record<string, unknown>;

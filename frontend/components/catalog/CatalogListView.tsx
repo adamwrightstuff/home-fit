@@ -17,6 +17,7 @@ import { PILLAR_META, PILLAR_ORDER } from '@/lib/pillars'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
+import AuraBadge from '@/components/catalog/AuraBadge'
 
 const METRO_DOT_COLOR: Record<'nyc' | 'la' | 'sf', string> = { nyc: '#6B5CE7', la: '#E76B5C', sf: '#2A9D8F' }
 function MetroDot({ metro }: { metro: 'nyc' | 'la' | 'sf' }) {
@@ -230,6 +231,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       />
                       <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
                       <LocalSceneChip bucket={p.score.local_scene_bucket ?? null} compact />
+                      <AuraBadge itScore={p.score.it_score ?? null} compact />
                     </span>
                   </td>
                   <td className="py-2 pl-1">
