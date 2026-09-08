@@ -138,6 +138,7 @@ export default function CatalogPageClient({
   const [twinSearchText, setTwinSearchText] = useState('')
   const [twinCrossMetro, setTwinCrossMetro] = useState(true)
   const [twinSameBand, setTwinSameBand] = useState(false)
+  const [twinIncludeScene, setTwinIncludeScene] = useState(false)
   const [twinPillars, setTwinPillars] = useState<Set<PillarKey>>(() => defaultTwinPillarSet())
   const [filterText, setFilterText] = useState('')
   const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la' | 'sf'>(initialMetroFilter)
@@ -708,8 +709,8 @@ export default function CatalogPageClient({
   const twinRanked: TwinMatchResult[] = useMemo(() => {
     if (catalogMode !== 'twin' || !twinQueryKey || !queryPlace || twinPillarList.length < 2) return []
     const keyFn = (pl: CatalogMapPlace) => catalogRowKey(pl.catalog)
-    return rankTwinMatches(queryPlace, twinCandidatePlaces, twinPillarList, keyFn, 12, twinSameBand)
-  }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand, twinCrossMetro])
+    return rankTwinMatches(queryPlace, twinCandidatePlaces, twinPillarList, keyFn, 12, twinSameBand, twinIncludeScene)
+  }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand, twinCrossMetro, twinIncludeScene])
 
   const mapPlacesNoTwinQuery = useMemo(() => {
     if (catalogMode !== 'twin') return gatedPlaces
@@ -764,7 +765,7 @@ export default function CatalogPageClient({
     }
   }, [catalogMode, queryPlace, twinRanked])
 
-  const fitKey = `${catalogMode}-${twinQueryKey ?? 'nq'}-${filterMetro}-${twinCrossMetro}-${twinPillarList.join(',')}`
+  const fitKey = `${catalogMode}-${twinQueryKey ?? 'nq'}-${filterMetro}-${twinCrossMetro}-${twinIncludeScene}-${twinPillarList.join(',')}`
 
   const selectedPlace = useMemo(() => {
     const fromGated = findPlaceByKey(gatedPlaces, selectedKey)
@@ -1019,6 +1020,12 @@ export default function CatalogPageClient({
               <button
                 type="button"
                 disabled={twinControlsLocked}
+                className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold disabled:opacity-40 ${twinIncludeScene ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
+                onClick={() => setTwinIncludeScene((v) => !v)}
+              >+ Scene</button>
+              <button
+                type="button"
+                disabled={twinControlsLocked}
                 className="flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2 py-0.5 text-[0.65rem] font-bold disabled:opacity-40"
                 onClick={() => !twinControlsLocked && setTwinPillarOpen(true)}
               >
@@ -1231,6 +1238,12 @@ export default function CatalogPageClient({
                 className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold disabled:opacity-40 ${twinSameBand ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
                 onClick={() => setTwinSameBand((v) => !v)}
               >Same class</button>
+              <button
+                type="button"
+                disabled={twinControlsLocked}
+                className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold disabled:opacity-40 ${twinIncludeScene ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
+                onClick={() => setTwinIncludeScene((v) => !v)}
+              >+ Scene</button>
               <button
                 type="button"
                 disabled={twinControlsLocked}
@@ -1449,7 +1462,7 @@ export default function CatalogPageClient({
       )}
 
       {viewMode === 'list' && catalogMode === 'explorer' && (
-        <div className={dealbreakerZeroSurvivors && !searchResults ? 'opacity-60' : undefined}>
+        <div className={`flex min-h-0 flex-1 flex-col${dealbreakerZeroSurvivors && !searchResults ? ' opacity-60' : ''}`}>
           <CatalogListView
             places={searchResults ? searchResults.hits : gatedPlaces}
             filteredOutReasons={searchResults?.reasons}

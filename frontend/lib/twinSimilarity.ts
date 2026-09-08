@@ -33,11 +33,13 @@ function pillarScoreOrNull(place: CatalogMapPlace, k: PillarKey): number | null 
  * Pillars where either query or candidate has no data are skipped entirely
  * so missing-data gaps don't unfairly penalize candidates (e.g. SF built_environment=null).
  * Normalization uses the count of pillars that were actually compared.
+ * When includeScene is true, local_scene_score is added as an extra dimension.
  */
 export function twinDistance(
   query: CatalogMapPlace,
   candidate: CatalogMapPlace,
-  pillars: PillarKey[]
+  pillars: PillarKey[],
+  includeScene = false
 ): { distance: number; compared: PillarKey[] } {
   let sum = 0
   const compared: PillarKey[] = []
@@ -47,6 +49,13 @@ export function twinDistance(
     if (a === null || b === null) continue
     sum += (a - b) ** 2
     compared.push(k)
+  }
+  if (includeScene) {
+    const qs = (query.score as { local_scene_score?: number }).local_scene_score
+    const cs = (candidate.score as { local_scene_score?: number }).local_scene_score
+    if (typeof qs === 'number' && typeof cs === 'number') {
+      sum += (qs - cs) ** 2
+    }
   }
   return { distance: Math.sqrt(sum), compared }
 }
@@ -70,19 +79,21 @@ export function rankTwinMatches(
   pillarKeys: PillarKey[],
   keyFn: (p: CatalogMapPlace) => string,
   limit = 12,
-  sameBandOnly = false
+  sameBandOnly = false,
+  includeScene = false
 ): TwinMatchResult[] {
   if (pillarKeys.length < 2) return []
   const queryBand = sameBandOnly ? placeSesBand(query) : null
   const out: TwinMatchResult[] = []
   for (const place of candidates) {
     if (sameBandOnly && queryBand && placeSesBand(place) !== queryBand) continue
-    const { distance, compared } = twinDistance(query, place, pillarKeys)
+    const { distance, compared } = twinDistance(query, place, pillarKeys, includeScene)
+    const effectivePillarCount = compared.length + (includeScene ? 1 : 0)
     out.push({
       key: keyFn(place),
       place,
       distance,
-      matchPct: matchPctFromDistance(distance, compared.length),
+      matchPct: matchPctFromDistance(distance, effectivePillarCount),
       comparedPillars: compared,
     })
   }
