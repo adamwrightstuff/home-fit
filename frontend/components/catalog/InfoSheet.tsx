@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { createPortal } from 'react-dom'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import type { InfoCopy } from '@/lib/catalogInfoCopy'
 
@@ -57,18 +58,38 @@ function BottomSheet({ copy, onClose }: { copy: InfoCopy; onClose: () => void })
 
 function Popover({ copy, anchorRef, onClose }: InfoSheetProps) {
   const popRef = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState<{ top: number; left: number; above: boolean } | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+  // Start invisible; layout effect will position and reveal
+  const [style, setStyle] = useState<React.CSSProperties>({
+    position: 'fixed',
+    visibility: 'hidden',
+    top: 0,
+    left: 0,
+    zIndex: 9999,
+    width: 280,
+    boxSizing: 'border-box',
+    background: 'var(--hf-card-bg, #fff)',
+    borderRadius: 12,
+    padding: '1rem 1.1rem 1rem',
+    boxShadow: '0 4px 24px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.06)',
+  })
 
-  useEffect(() => {
-    if (!anchorRef.current) return
-    const r = anchorRef.current.getBoundingClientRect()
-    const above = r.top > 260
-    setPos({
-      top: above ? r.top - 8 : r.bottom + 8,
-      left: Math.max(8, Math.min(r.left, window.innerWidth - 280 - 16)),
-      above,
-    })
+  useLayoutEffect(() => {
+    if (!anchorRef.current || !popRef.current) return
+    const a = anchorRef.current.getBoundingClientRect()
+    const p = popRef.current.getBoundingClientRect()
+    const vw = window.visualViewport?.width ?? window.innerWidth
+    const vh = window.visualViewport?.height ?? window.innerHeight
+    const above = a.top > vh / 2
+
+    // Prefer left-align to anchor; fall back to right-align if it overflows
+    let left = a.left
+    if (left + p.width + 12 > vw) left = Math.max(8, a.right - p.width)
+    left = Math.max(8, left)
+
+    const top = above ? a.top - p.height - 8 : a.bottom + 8
+
+    setStyle(s => ({ ...s, top, left, visibility: 'visible' }))
   }, [anchorRef])
 
   useEffect(() => {
@@ -84,25 +105,8 @@ function Popover({ copy, anchorRef, onClose }: InfoSheetProps) {
     }
   }, [onClose])
 
-  if (!pos) return null
-
-  return (
-    <div
-      ref={popRef}
-      style={{
-        position: 'fixed',
-        top: pos.above ? undefined : pos.top,
-        bottom: pos.above ? window.innerHeight - pos.top : undefined,
-        left: pos.left,
-        zIndex: 9999,
-        width: 280,
-        boxSizing: 'border-box',
-        background: 'var(--hf-card-bg, #fff)',
-        borderRadius: 12,
-        padding: '1rem 1.1rem 1rem',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.06)',
-      }}
-    >
+  return createPortal(
+    <div ref={popRef} style={style}>
       <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.95rem', fontWeight: 700, color: 'var(--hf-text-primary)' }}>
         {copy.title}
       </h3>
@@ -122,7 +126,8 @@ function Popover({ copy, anchorRef, onClose }: InfoSheetProps) {
           {copy.detail}
         </p>
       )}
-    </div>
+    </div>,
+    document.body
   )
 }
 
