@@ -783,99 +783,101 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         </div>
       )}
 
-      {/* Score Summary — HomeFit Score on top, Longevity & Archetype below in smaller font */}
-      <div
-        style={{
+      {/* Score Summary Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', marginBottom: '1.5rem' }} data-longevity-index>
+
+        {/* Trovamo Score — spans full width */}
+        <div style={{
+          gridColumn: '1 / -1',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          marginBottom: '1.5rem',
-          padding: '1rem 0.75rem',
-        }}
-      >
-        <div
-          style={{
-            fontSize: '2.25rem',
-            fontWeight: 800,
-            color: totalScore != null ? 'var(--c-purple-600)' : 'var(--hf-text-secondary)',
-            lineHeight: 1.1,
-          }}
-        >
-          {totalScore != null ? totalScore.toFixed(1) : '—'}
-        </div>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            color: 'var(--hf-text-secondary)',
-            marginTop: '0.25rem',
-          }}
-        >
-          Trovamo Score
-          <HomeFitInfo />
-        </div>
-        <div className="tr-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 320 }}>
-          {HOMEFIT_COPY.subtitle}
+          gap: '1.25rem',
+          background: 'var(--hf-bg-subtle)',
+          border: '1.5px solid var(--hf-border)',
+          borderRadius: 12,
+          padding: '1.1rem 1.25rem',
+        }}>
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: '0.68rem', fontWeight: 700, color: 'var(--hf-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.3rem' }}>
+              Trovamo Score <HomeFitInfo />
+            </div>
+            <div style={{ fontSize: '2.75rem', fontWeight: 800, lineHeight: 1, color: totalScore != null ? 'var(--c-purple-600)' : 'var(--hf-text-secondary)' }}>
+              {totalScore != null ? totalScore.toFixed(1) : '—'}
+            </div>
+          </div>
+          <div className="tr-muted" style={{ fontSize: '0.78rem', lineHeight: 1.55, flex: 1 }}>
+            {HOMEFIT_COPY.subtitle}
+          </div>
         </div>
 
-        {/* Longevity Index, Archetype & Happiness Index — below, smaller font */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            gap: '1.25rem',
-            marginTop: '1rem',
-            fontSize: '0.8rem',
-            color: 'var(--hf-text-secondary)',
-          }}
-          data-longevity-index
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span className="tr-muted">Longevity Index</span>
-            <span style={{ fontWeight: 600, color: longevityIndex != null ? 'var(--c-teal-600)' : 'var(--hf-text-secondary)' }}>
-              {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
-            </span>
-            <LongevityInfo />
+        {/* Longevity Index */}
+        <div style={{
+          background: 'var(--hf-bg-subtle)',
+          border: '1.5px solid var(--hf-border)',
+          borderRadius: 12,
+          padding: '1rem 1.25rem',
+        }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: '0.68rem', fontWeight: 700, color: 'var(--hf-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.4rem' }}>
+            Longevity <LongevityInfo />
+          </div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1, color: longevityIndex != null ? 'var(--c-teal-600)' : 'var(--hf-text-secondary)' }}>
+            {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
+          </div>
+        </div>
+
+        {/* Happiness Index */}
+        <div style={{
+          background: 'var(--hf-bg-subtle)',
+          border: '1.5px solid var(--hf-border)',
+          borderRadius: 12,
+          padding: '1rem 1.25rem',
+        }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: '0.68rem', fontWeight: 700, color: 'var(--hf-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.4rem' }}>
+            Happiness <HappinessInfo />
+          </div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1, color: happinessIndex != null ? 'var(--c-blue-600)' : 'var(--hf-text-secondary)' }}>
+            {happinessIndex != null ? Math.max(0, Math.min(100, happinessIndex)).toFixed(1) : '—'}
+          </div>
+        </div>
+
+        {/* Archetype + Trajectory — spans full width */}
+        <div style={{
+          gridColumn: '1 / -1',
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
+          background: 'var(--hf-bg-subtle)',
+          border: '1.5px solid var(--hf-border)',
+          borderRadius: 12,
+          padding: '0.85rem 1.25rem',
+        }}>
+          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--hf-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginRight: '0.25rem' }}>
+            Profile
           </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span className="tr-muted">Archetype</span>
-            <StatusSignalInfo
-              onRefresh={handleRefreshStatusSignal}
-              refreshing={statusSignalRefreshLoading}
-              breakdown={statusSignalBreakdown}
-              compositeScore={statusSignal}
-              isSignedIn={isSignedIn}
-              savedScoreId={savedScoreId}
-            />
-          </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span className="tr-muted">Trajectory</span>
-            <TrajectoryInfo trajectory={statusSignalBreakdown?.trajectory ?? null} />
-          </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span className="tr-muted">Happiness Index</span>
-            <span style={{ fontWeight: 600, color: happinessIndex != null ? 'var(--c-blue-600)' : 'var(--hf-text-secondary)' }}>
-              {happinessIndex != null ? Math.max(0, Math.min(100, happinessIndex)).toFixed(1) : '—'}
-            </span>
-            <HappinessInfo />
-          </span>
+          <StatusSignalInfo
+            onRefresh={handleRefreshStatusSignal}
+            refreshing={statusSignalRefreshLoading}
+            breakdown={statusSignalBreakdown}
+            compositeScore={statusSignal}
+            isSignedIn={isSignedIn}
+            savedScoreId={savedScoreId}
+          />
+          <TrajectoryInfo trajectory={statusSignalBreakdown?.trajectory ?? null} />
           {hasResults && (
             <button
               type="button"
               onClick={() => handleRecomputeComposites()}
               disabled={recomputeLoading}
               className="hf-btn-link"
-              style={{ marginLeft: '0.5rem', fontSize: '0.75rem', opacity: recomputeLoading ? 0.6 : 1 }}
+              style={{ marginLeft: 'auto', fontSize: '0.72rem', opacity: recomputeLoading ? 0.6 : 1 }}
               aria-label="Refresh indices"
             >
-              {recomputeLoading ? 'Refreshing…' : 'Refresh indices'}
+              {recomputeLoading ? 'Refreshing…' : 'Refresh'}
             </button>
           )}
         </div>
+
       </div>
 
       {/* Export scores — only when we have results */}
