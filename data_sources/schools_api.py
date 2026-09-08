@@ -213,9 +213,30 @@ def get_schools(
             params_city_q = {**base_params, "q": city}
             schools = _fetch_schools(params_city_q)
         if schools and _rated_count(schools) >= 1:
-            schools = _filter_by_district(schools)
-            print(f"✅ City-based query returned {len(schools)} schools ({_rated_count(schools)} rated)")
-            return schools
+            filtered = _filter_by_district(schools)
+            # Verify the city-query district matches the nearest coordinate-derived district.
+            # When geocoding resolves a hamlet to its enclosing township (e.g. "Cold Spring
+            # Harbor" → "Town of Huntington" → "Huntington"), the city query returns the
+            # township's district schools rather than the hamlet's own district. Guard against
+            # this: if the closest district by coordinates is different from the city-query
+            # modal district, treat the city result as wrong and fall through.
+            # Only check the FIRST (nearest) coord district — nearby areas may overlap.
+            if filtered and lat is not None and lon is not None:
+                coord_districts = _find_districts_by_coordinates(lat, lon, state, base_params)
+                if coord_districts:
+                    city_district_ids = {
+                        str(s.get("district", {}).get("districtID", ""))
+                        for s in filtered
+                        if s.get("district", {}).get("districtID")
+                    }
+                    nearest_coord_district = coord_districts[0]
+                    if city_district_ids and nearest_coord_district not in city_district_ids:
+                        print(f"   ⚠️  City-query district {city_district_ids} doesn't match "
+                              f"nearest coordinate district {nearest_coord_district} — falling through")
+                        filtered = []
+            if filtered and _rated_count(filtered) >= 1:
+                print(f"✅ City-based query returned {len(filtered)} schools ({_rated_count(filtered)} rated)")
+                return filtered
         if schools:
             print(f"   City query only found {_rated_count(schools)} rated schools — trying coordinate fallback")
 
@@ -228,9 +249,16 @@ def get_schools(
             if lat is not None and lon is not None:
                 schools = _filter_schools_by_distance(schools, lat, lon, _radius_miles())
             if schools:
-                # Pin to correct district via tight coordinate lookup to avoid cross-boundary bleed
+                # Pin to correct district via tight coordinate lookup to avoid cross-boundary bleed.
+                # If the coordinate district list is large (many nearby districts, e.g. dense Long
+                # Island), it may not include the target district (pagination / centroid offset) and
+                # would remove all schools. Fall back to modal-district filter in that case.
                 target_districts = _find_districts_by_coordinates(lat, lon, state, base_params) if (lat is not None and lon is not None) else None
-                schools = _filter_by_district(schools, target_districts or None)
+                schools_filtered = _filter_by_district(schools, target_districts or None)
+                if not schools_filtered and target_districts:
+                    print(f"   ↩️  Coordinate district filter removed all schools — using modal fallback")
+                    schools_filtered = _filter_by_district(schools)
+                schools = schools_filtered
             if schools and _rated_count(schools) >= 1:
                 print(f"✅ ZIP-based query returned {len(schools)} schools ({_rated_count(schools)} rated)")
                 return schools
