@@ -1146,39 +1146,30 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       )
                     }
                     return (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'baseline',
-                            gap: '0.25rem',
-                            fontWeight: 800,
-                            fontSize: '1rem',
-                            padding: '0.3rem 0.55rem',
-                            borderRadius: 8,
-                            background: isFailed ? 'var(--hf-bg-subtle)' : getScoreBandBackground(score.score),
-                            border: `1px solid ${isFailed ? 'var(--hf-border)' : getScoreBandColor(score.score)}`,
-                            color: isFailed ? 'var(--hf-text-secondary)' : getScoreBandColor(score.score),
-                          }}
-                        >
-                          {isFailed ? (
-                            '?'
-                          ) : (
-                            <>
-                              {isFallback && <span style={{ opacity: 0.9 }}>~</span>}
-                              <span style={{ color: isFailed ? undefined : 'var(--hf-text-primary)' }}>{score.score.toFixed(0)}</span>
-                              <span style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.95 }}>· {getScoreBandLabel(score.score)}</span>
-                            </>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.15rem' }}>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 800, lineHeight: 1, color: isFailed ? 'var(--hf-text-secondary)' : getScoreBandColor(score.score) }}>
+                          {isFailed ? '—' : (
+                            <>{isFallback && <span style={{ fontSize: '0.9rem', opacity: 0.65, marginRight: 1 }}>~</span>}{score.score.toFixed(0)}</>
                           )}
-                        </span>
-                      </span>
+                        </div>
+                        {!isFailed && (
+                          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: getScoreBandColor(score.score), textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                            {getScoreBandLabel(score.score)}
+                          </div>
+                        )}
+                        {!isFailed && (
+                          <div style={{ width: 44, height: 3, borderRadius: 2, background: 'var(--hf-border)', overflow: 'hidden', marginTop: 2 }}>
+                            <div style={{ height: '100%', borderRadius: 2, width: `${score.score}%`, background: getScoreBandColor(score.score) }} />
+                          </div>
+                        )}
+                        {pillarWeightsAndContributions[key] && !score.failed && (
+                          <div className="tr-muted" style={{ fontSize: '0.65rem', marginTop: '0.1rem' }}>
+                            {pillarWeightsAndContributions[key].weight.toFixed(1)}% weight
+                          </div>
+                        )}
+                      </div>
                     )
                   })()}
-                  {score != null && !score.failed && pillarWeightsAndContributions[key] && (
-                    <div className="tr-muted hf-pillar-weight-line" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                      {pillarWeightsAndContributions[key].weight.toFixed(1)}% · {pillarWeightsAndContributions[key].contribution.toFixed(1)} to total
-                    </div>
-                  )}
                   {key === 'housing_value' && score != null && !score.failed && (
                     <div className="tr-muted" style={{ fontSize: '0.7rem', marginTop: '0.15rem', fontStyle: 'italic' }}>
                       {(searchOptions as { household_income?: number | null }).household_income
