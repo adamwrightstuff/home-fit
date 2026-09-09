@@ -37,6 +37,7 @@ import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker } from '@/lib/reweight'
 import { applyNbPreferencesV9, type NbPreference, type V9Breakdown } from '@/lib/nbPreference'
 import { applyAoPreferences, applyWaterfrontPreference, type AoPreference, type AoBreakdown, type WaterfrontSubPreference } from '@/lib/aoPreference'
+import { applyScenePreferences } from '@/lib/scenePreference'
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
@@ -118,6 +119,7 @@ export default function CatalogPageClient({
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>([])
   const [filterAoTypes, setFilterAoTypes] = useState<string[]>([])
   const [filterWaterfrontSubPref, setFilterWaterfrontSubPref] = useState<WaterfrontSubPreference | null>(null)
+  const [filterSceneTypes, setFilterSceneTypes] = useState<SceneArchetype[]>([])
   const [filterHousingType, setFilterHousingType] = useState<string[]>([])
   const [filterBuiltCharacter, setFilterBuiltCharacter] = useState<'historic' | 'contemporary' | ''>('')
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
@@ -281,6 +283,7 @@ export default function CatalogPageClient({
           if (Array.isArray(f.filterNbTypes)) setFilterNbTypes(f.filterNbTypes)
           if (Array.isArray(f.filterAoTypes)) setFilterAoTypes(f.filterAoTypes)
           if (typeof f.filterWaterfrontSubPref === 'string') setFilterWaterfrontSubPref(f.filterWaterfrontSubPref as WaterfrontSubPreference)
+          if (Array.isArray(f.filterSceneTypes)) setFilterSceneTypes(f.filterSceneTypes as SceneArchetype[])
           if (Array.isArray(f.filterHousingType)) setFilterHousingType(f.filterHousingType)
           if (f.filterBuiltCharacter === 'historic' || f.filterBuiltCharacter === 'contemporary') setFilterBuiltCharacter(f.filterBuiltCharacter)
           if (typeof f.filterSchoolType === 'string') setFilterSchoolType(f.filterSchoolType)
@@ -312,6 +315,7 @@ export default function CatalogPageClient({
             filterNbTypes,
             filterAoTypes,
             filterWaterfrontSubPref,
+            filterSceneTypes,
             filterHousingType,
             filterBuiltCharacter,
             filterSchoolType,
@@ -418,8 +422,7 @@ export default function CatalogPageClient({
     // 0 or 3 = no reweighting). When a waterfront sub-preference is also active, first
     // re-weight waterfront_lifestyle toward the chosen water type, then apply AO OWA.
     const aoActive = filterAoTypes.length > 0 && filterAoTypes.length < 3
-    if (!aoActive) return withNb
-    return withNb.map((p) => {
+    const withAo = aoActive ? withNb.map((p) => {
       const ao = (p.score.livability_pillars as any)?.active_outdoors
       if (!ao) return p
       const bk = ao.breakdown as AoBreakdown | undefined
@@ -447,8 +450,29 @@ export default function CatalogPageClient({
           },
         },
       }
+    }) : withNb
+
+    // Apply scene archetype preferences: replace local_scene_score with personalized
+    // score and inject as a synthetic livability_pillars entry so reweightScoreResponseFromPriorities
+    // can include it when local_scene has a non-None priority.
+    if (filterSceneTypes.length === 0) return withAo
+    return withAo.map((p) => {
+      const breakdown = (p.score as any).local_scene_breakdown as Record<string, number> | undefined
+      const personalized = applyScenePreferences(breakdown, filterSceneTypes)
+      if (personalized === null) return p
+      return {
+        ...p,
+        score: {
+          ...p.score,
+          local_scene_score: personalized,
+          livability_pillars: {
+            ...p.score.livability_pillars,
+            local_scene: { score: personalized },
+          },
+        },
+      }
     })
-  }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref])
+  }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, filterSceneTypes])
 
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
@@ -529,7 +553,10 @@ export default function CatalogPageClient({
       })
     }
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
-    return sortPlaces(list, sortKey, sortDir, priorities)
+    const effectivePriorities = filterSceneTypes.length > 0
+      ? { ...priorities, local_scene: 'Medium' as const }
+      : priorities
+    return sortPlaces(list, sortKey, sortDir, effectivePriorities)
   }, [
     adjustedPlaces,
     filterText,
@@ -549,6 +576,7 @@ export default function CatalogPageClient({
     sortDir,
     priorities,
     explorerSceneSort,
+    filterSceneTypes,
   ])
 
   /**
@@ -1680,6 +1708,8 @@ export default function CatalogPageClient({
         }}
         filterWaterfrontSubPref={filterWaterfrontSubPref}
         onFilterWaterfrontSubPrefChange={setFilterWaterfrontSubPref}
+        filterSceneTypes={filterSceneTypes}
+        onFilterSceneTypesChange={setFilterSceneTypes}
         filterHousingType={filterHousingType}
         onFilterHousingTypeChange={setFilterHousingType}
         filterBuiltCharacter={filterBuiltCharacter}

@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type WaterfrontSubPreference, WATERFRONT_SUB_LABELS } from '@/lib/aoPreference'
+import { SCENE_ARCHETYPES, type SceneArchetype } from '@/lib/vibeFeatures'
 import { type ClimatePreferences } from '@/lib/climatePreferences'
 import { X } from 'lucide-react'
 
@@ -47,6 +48,8 @@ interface FilterSheetProps {
   onFilterAoTypesChange: (v: string[]) => void
   filterWaterfrontSubPref: WaterfrontSubPreference | null
   onFilterWaterfrontSubPrefChange: (v: WaterfrontSubPreference | null) => void
+  filterSceneTypes: SceneArchetype[]
+  onFilterSceneTypesChange: (v: SceneArchetype[]) => void
   filterHousingType: string[]
   onFilterHousingTypeChange: (v: string[]) => void
   filterBuiltCharacter: 'historic' | 'contemporary' | ''
@@ -100,6 +103,8 @@ export default function FilterSheet({
   onFilterAoTypesChange,
   filterWaterfrontSubPref,
   onFilterWaterfrontSubPrefChange,
+  filterSceneTypes,
+  onFilterSceneTypesChange,
   filterHousingType,
   onFilterHousingTypeChange,
   filterBuiltCharacter,
@@ -362,6 +367,34 @@ export default function FilterSheet({
               )}
             </div>
           )}
+
+          {/* Local Scene */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Local Scene (select multiple)</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+              Reweights the local scene score toward your preferred vibe.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {(Object.entries(SCENE_ARCHETYPES) as [SceneArchetype, typeof SCENE_ARCHETYPES[SceneArchetype]][]).map(([key, meta]) =>
+                chip(filterSceneTypes.includes(key), `${meta.icon} ${meta.label}`, () =>
+                  onFilterSceneTypesChange(
+                    filterSceneTypes.includes(key)
+                      ? filterSceneTypes.filter((k) => k !== key)
+                      : [...filterSceneTypes, key]
+                  )
+                )
+              )}
+            </div>
+            {filterSceneTypes.length > 0 && (
+              <button
+                type="button"
+                onClick={() => onFilterSceneTypesChange([])}
+                style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
 
           {/* Housing Stock */}
           <div style={{ marginBottom: 20 }}>
