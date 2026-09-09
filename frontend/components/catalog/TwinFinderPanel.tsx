@@ -125,8 +125,8 @@ export default function TwinFinderPanel({
         </div>
       )}
 
-      {/* Scene archetype picker */}
-      <div className="mx-auto mb-4 max-w-lg sm:max-w-none">
+      {/* Scene archetype picker — sticky so it stays visible while scrolling results */}
+      <div className="sticky top-0 z-10 mx-auto mb-4 max-w-lg sm:max-w-none rounded-xl bg-[var(--hf-bg)] pb-2 pt-1">
         <p className="mb-2 text-[0.7rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
           Match my scene{sceneArchetypes.length > 0 ? ` · ${sceneArchetypes.length} selected` : ''}
         </p>
