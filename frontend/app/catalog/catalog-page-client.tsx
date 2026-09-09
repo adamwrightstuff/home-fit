@@ -143,6 +143,7 @@ export default function CatalogPageClient({
   const [twinPillars, setTwinPillars] = useState<Set<PillarKey>>(() => defaultTwinPillarSet())
   const [sceneArchetypes, setSceneArchetypes] = useState<SceneArchetype[]>([])
   const [explorerSceneSort, setExplorerSceneSort] = useState<SceneArchetype[]>([])
+  const [sceneSortOpen, setSceneSortOpen] = useState(false)
   const [filterText, setFilterText] = useState('')
   const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la' | 'sf'>(initialMetroFilter)
   const [filterAreaTypes, setFilterAreaTypes] = useState<string[]>([])
@@ -213,6 +214,7 @@ export default function CatalogPageClient({
     setIndexMode(mode)
     setSortByName(false)
     setExplorerSceneSort([])
+    setSceneSortOpen(false)
   }, [])
 
   useEffect(() => {
@@ -1126,20 +1128,20 @@ export default function CatalogPageClient({
               style={sortByName
                 ? { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }
                 : { background: 'transparent', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
-              onClick={() => { setSortByName(true); setExplorerSceneSort([]) }}
+              onClick={() => { setSortByName(true); setExplorerSceneSort([]); setSceneSortOpen(false) }}
             >A–Z</button>
 
             {/* Scene archetype sort */}
             <button
               type="button"
-              aria-pressed={explorerSceneSort.length > 0}
+              aria-pressed={sceneSortOpen}
               className="rounded-full px-2.5 py-0.5 text-xs font-bold"
-              style={explorerSceneSort.length > 0
+              style={sceneSortOpen
                 ? { background: 'var(--hf-primary-1)', color: '#fff', border: 'none' }
                 : { background: 'transparent', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
               onClick={() => {
-                if (explorerSceneSort.length > 0) setExplorerSceneSort([])
-                else { setExplorerSceneSort(['coffee']); setSortByName(false) }
+                if (sceneSortOpen) { setSceneSortOpen(false); setExplorerSceneSort([]) }
+                else { setSortByName(false); setSceneSortOpen(true) }
               }}
             >Scene</button>
 
@@ -1161,7 +1163,7 @@ export default function CatalogPageClient({
           </div>
         )}
 
-        {catalogMode === 'explorer' && explorerSceneSort.length > 0 && (
+        {catalogMode === 'explorer' && sceneSortOpen && (
           <div
             className="hidden md:flex flex-wrap gap-1.5 px-4 py-2 border-t border-[var(--hf-border)]"
             style={{ background: 'var(--hf-bg-subtle)' }}
