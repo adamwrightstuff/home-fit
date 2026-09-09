@@ -63,7 +63,10 @@ export function twinDistance(
       ? personalizedSceneScore(cs.local_scene_breakdown, sceneArchetypeWeights)
       : cs.local_scene_score
     if (typeof qa === 'number' && typeof ca === 'number') {
-      sum += (qa - ca) ** 2
+      // Give scene the same budget as all pillar dimensions combined when
+      // archetypes are active, so archetype selection visibly re-ranks results.
+      const sceneWeight = sceneArchetypeWeights ? 2 : 1
+      sum += sceneWeight * (qa - ca) ** 2
     }
   }
   return { distance: Math.sqrt(sum), compared }
@@ -97,7 +100,8 @@ export function rankTwinMatches(
   for (const place of candidates) {
     if (sameBandOnly && queryBand && placeSesBand(place) !== queryBand) continue
     const { distance, compared } = twinDistance(query, place, pillarKeys, true, sceneArchetypeWeights)
-    const effectivePillarCount = compared.length + 1
+    if (compared.length < 5) continue
+    const effectivePillarCount = compared.length + (sceneArchetypeWeights ? 2 : 1)
     out.push({
       key: keyFn(place),
       place,
