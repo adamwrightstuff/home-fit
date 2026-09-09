@@ -15,8 +15,10 @@ ROOT = Path(__file__).resolve().parents[2]
 
 CATALOGS = [
     ROOT / 'data/nyc_metro_place_catalog_scores_merged.jsonl',
+    ROOT / 'data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
     ROOT / 'data/la_metro_place_catalog_scores_merged.jsonl',
     ROOT / 'data/sf_metro_place_catalog_scores_merged.jsonl',
+    ROOT / 'data/sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
 ]
 
 KNOWN_CHAINS = {
@@ -56,7 +58,7 @@ def _score_name(name: str) -> int:
     return min(pts, 1)
 
 
-def _compute(biz: list) -> tuple[float, str] | tuple[None, None]:
+def _compute(biz: list) -> tuple[float, str, dict]:
     by_type: dict[str, int] = {}
     for b in biz:
         t = b.get('type', '?')
@@ -64,7 +66,7 @@ def _compute(biz: list) -> tuple[float, str] | tuple[None, None]:
 
     total = sum(by_type.values())
     if not total:
-        return 0.0, 'Low'
+        return 0.0, 'Low', {}
 
     cafe     = by_type.get('cafe', 0)
     salon    = by_type.get('salon', 0)
@@ -79,12 +81,20 @@ def _compute(biz: list) -> tuple[float, str] | tuple[None, None]:
         sum(1 for s in name_scores if s == -1)
     ) / total
 
+    sub = {
+        'cultural':   round(min(math.log(1 + cultural), 3.5) / 3.5 * 100, 1),
+        'bar_ratio':  round(min(bar / (rest + 1), 0.7) / 0.7 * 100, 1),
+        'cafe_social': round(min((cafe + bar) / (salon + 1), 10.0) / 10.0 * 100, 1),
+        'indie':      round(max(0, indie_ratio + 0.2) / 0.7 * 100, 1),
+        'volume':     round(min(math.log(1 + total), 6.0) / 6.0 * 100, 1),
+    }
+
     raw = (
-        0.25 * min(math.log(1 + cultural),        3.5) / 3.5 +
-        0.25 * min(bar / (rest + 1),              0.7) / 0.7 +
-        0.20 * min((cafe + bar) / (salon + 1),   10.0) / 10.0 +
-        0.20 * max(0, indie_ratio + 0.2)               / 0.7 +
-        0.10 * min(math.log(1 + total),            6.0) / 6.0
+        0.25 * sub['cultural']   / 100 +
+        0.25 * sub['bar_ratio']  / 100 +
+        0.20 * sub['cafe_social'] / 100 +
+        0.20 * sub['indie']      / 100 +
+        0.10 * sub['volume']     / 100
     ) * 100
 
     salon_penalty = min((salon / total) * 30, 12)
@@ -97,7 +107,7 @@ def _compute(biz: list) -> tuple[float, str] | tuple[None, None]:
     else:
         bucket = 'Low'
 
-    return score, bucket
+    return score, bucket, sub
 
 
 def process(path: Path) -> None:
@@ -120,14 +130,15 @@ def process(path: Path) -> None:
                .get('breakdown', {})
                .get('business_list', []))
 
-        score, bucket = _compute(biz)
-        if score is None:
+        score, bucket, breakdown = _compute(biz)
+        if not biz:
             out.append(line)
             no_biz += 1
             continue
 
-        d['score']['local_scene_score']  = score
-        d['score']['local_scene_bucket'] = bucket
+        d['score']['local_scene_score']     = score
+        d['score']['local_scene_bucket']    = bucket
+        d['score']['local_scene_breakdown'] = breakdown
         out.append(json.dumps(d, ensure_ascii=False))
         scored += 1
 

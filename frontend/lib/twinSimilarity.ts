@@ -1,5 +1,6 @@
 import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import type { CatalogMapPlace } from '@/lib/catalogMapTypes'
+import { personalizedSceneScore } from '@/lib/vibeFeatures'
 
 export type TwinMatchResult = {
   key: string
@@ -39,7 +40,8 @@ export function twinDistance(
   query: CatalogMapPlace,
   candidate: CatalogMapPlace,
   pillars: PillarKey[],
-  includeScene = false
+  includeScene = false,
+  sceneArchetypeWeights?: Record<string, number> | null
 ): { distance: number; compared: PillarKey[] } {
   let sum = 0
   const compared: PillarKey[] = []
@@ -51,10 +53,17 @@ export function twinDistance(
     compared.push(k)
   }
   if (includeScene) {
-    const qs = (query.score as { local_scene_score?: number }).local_scene_score
-    const cs = (candidate.score as { local_scene_score?: number }).local_scene_score
-    if (typeof qs === 'number' && typeof cs === 'number') {
-      sum += (qs - cs) ** 2
+    type WithScene = { local_scene_score?: number; local_scene_breakdown?: Record<string, number> }
+    const qs = query.score as WithScene
+    const cs = candidate.score as WithScene
+    const qa = sceneArchetypeWeights
+      ? personalizedSceneScore(qs.local_scene_breakdown, sceneArchetypeWeights)
+      : qs.local_scene_score
+    const ca = sceneArchetypeWeights
+      ? personalizedSceneScore(cs.local_scene_breakdown, sceneArchetypeWeights)
+      : cs.local_scene_score
+    if (typeof qa === 'number' && typeof ca === 'number') {
+      sum += (qa - ca) ** 2
     }
   }
   return { distance: Math.sqrt(sum), compared }
@@ -79,14 +88,15 @@ export function rankTwinMatches(
   pillarKeys: PillarKey[],
   keyFn: (p: CatalogMapPlace) => string,
   limit = 12,
-  sameBandOnly = false
+  sameBandOnly = false,
+  sceneArchetypeWeights?: Record<string, number> | null
 ): TwinMatchResult[] {
   if (pillarKeys.length < 2) return []
   const queryBand = sameBandOnly ? placeSesBand(query) : null
   const out: TwinMatchResult[] = []
   for (const place of candidates) {
     if (sameBandOnly && queryBand && placeSesBand(place) !== queryBand) continue
-    const { distance, compared } = twinDistance(query, place, pillarKeys, true)
+    const { distance, compared } = twinDistance(query, place, pillarKeys, true, sceneArchetypeWeights)
     const effectivePillarCount = compared.length + 1
     out.push({
       key: keyFn(place),

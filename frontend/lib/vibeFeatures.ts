@@ -2,6 +2,42 @@ import type { CatalogMapPlace } from '@/lib/catalogMapTypes'
 
 const COASTAL_TYPES = new Set(['ocean', 'bay', 'river', 'lake'])
 
+export type SceneArchetype = 'coffee' | 'nightlife' | 'arts' | 'food' | 'weekend'
+
+export const SCENE_ARCHETYPES: Record<SceneArchetype, {
+  label: string
+  icon: string
+  desc: string
+  weights: Record<string, number>
+}> = {
+  coffee:    { label: 'Coffee shop regular', icon: '☕', desc: 'Third places, slow mornings, indie cafes', weights: { cultural: 0.15, bar_ratio: 0.05, cafe_social: 0.45, indie: 0.25, volume: 0.10 } },
+  nightlife: { label: 'Late-night creative',  icon: '🎵', desc: 'Bars, venues, people who eat at 9pm',      weights: { cultural: 0.20, bar_ratio: 0.45, cafe_social: 0.15, indie: 0.15, volume: 0.05 } },
+  arts:      { label: 'Arts & culture',        icon: '🎨', desc: 'Galleries, bookstores, record shops',       weights: { cultural: 0.55, bar_ratio: 0.05, cafe_social: 0.15, indie: 0.20, volume: 0.05 } },
+  food:      { label: 'Food obsessive',        icon: '🍜', desc: 'Restaurant density, diverse cuisines',      weights: { cultural: 0.05, bar_ratio: 0.20, cafe_social: 0.25, indie: 0.20, volume: 0.30 } },
+  weekend:   { label: 'Weekend explorer',      icon: '🛍️', desc: 'Markets, pop-ups, always something on',    weights: { cultural: 0.25, bar_ratio: 0.10, cafe_social: 0.35, indie: 0.20, volume: 0.10 } },
+}
+
+export function blendSceneArchetypes(names: SceneArchetype[]): Record<string, number> | null {
+  if (!names.length) return null
+  const dims = Object.keys(SCENE_ARCHETYPES.coffee.weights)
+  const result: Record<string, number> = {}
+  for (const dim of dims) {
+    result[dim] = names.reduce((s, n) => s + SCENE_ARCHETYPES[n].weights[dim], 0) / names.length
+  }
+  return result
+}
+
+export function personalizedSceneScore(
+  breakdown: Record<string, number> | null | undefined,
+  archetypeWeights: Record<string, number>
+): number {
+  if (!breakdown) return 50
+  return Object.entries(archetypeWeights).reduce(
+    (sum, [dim, w]) => sum + w * (breakdown[dim] ?? 50),
+    0
+  )
+}
+
 export const VIBE_WEIGHTS = {
   scene: 2.0,
   race:  1.5,

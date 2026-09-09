@@ -16,6 +16,7 @@ of pairwise distance).
 
 Usage:
   PYTHONPATH=. python3 scripts/catalog/vibe_twins.py "Hoboken, NJ" --top 10
+  PYTHONPATH=. python3 scripts/catalog/vibe_twins.py "Hoboken, NJ" --archetypes coffee,arts
 """
 
 import argparse
@@ -31,6 +32,16 @@ CATALOG_FILES = [
 ]
 
 COASTAL_TYPES = {"ocean", "bay", "river", "lake"}
+
+# Sub-dimension weights per scene archetype (must sum to 1.0).
+# Keys match local_scene_breakdown fields from compute_local_scene.py.
+ARCHETYPES: dict[str, dict[str, float]] = {
+    "coffee":    {"cultural": 0.15, "bar_ratio": 0.05, "cafe_social": 0.45, "indie": 0.25, "volume": 0.10},
+    "nightlife": {"cultural": 0.20, "bar_ratio": 0.45, "cafe_social": 0.15, "indie": 0.15, "volume": 0.05},
+    "arts":      {"cultural": 0.55, "bar_ratio": 0.05, "cafe_social": 0.15, "indie": 0.20, "volume": 0.05},
+    "food":      {"cultural": 0.05, "bar_ratio": 0.20, "cafe_social": 0.25, "indie": 0.20, "volume": 0.30},
+    "weekend":   {"cultural": 0.25, "bar_ratio": 0.10, "cafe_social": 0.35, "indie": 0.20, "volume": 0.10},
+}
 
 WEIGHTS = {
     "scene":    2.0,
@@ -64,6 +75,7 @@ def extract_features(record):
     )
 
     scene = score.get("local_scene_score") if isinstance(score, dict) else None
+    scene_breakdown = score.get("local_scene_breakdown") if isinstance(score, dict) else None
 
     div = pillars.get("diversity", {})
     race = safe_get(div, "breakdown", "race_entropy")
@@ -90,6 +102,7 @@ def extract_features(record):
         "water_bucket": water_bucket,
         "water_type": water_type,
         "scene": scene,
+        "scene_breakdown": scene_breakdown,
         "race": race,
         "bach": bach,
         "dem_pct": dem_pct,
@@ -99,11 +112,32 @@ def extract_features(record):
     }
 
 
-def normalize(features):
+def personalized_scene(breakdown: dict | None, archetype_weights: dict[str, float]) -> float:
+    """Return a 0-100 scene score weighted by the user's archetype blend."""
+    if not breakdown:
+        return 50.0
+    return sum(
+        archetype_weights.get(dim, 0.0) * breakdown.get(dim, 50.0)
+        for dim in archetype_weights
+    )
+
+
+def blend_archetypes(names: list[str]) -> dict[str, float]:
+    """Average weights across the requested archetypes; fall back to defaults for unknowns."""
+    valid = [ARCHETYPES[n] for n in names if n in ARCHETYPES]
+    if not valid:
+        return {}
+    keys = ARCHETYPES[list(ARCHETYPES)[0]].keys()
+    return {k: sum(a[k] for a in valid) / len(valid) for k in keys}
+
+
+def normalize(features, archetype_weights: dict | None = None):
     out = {}
     for k in ["scene", "race", "bach", "dem_pct", "s_cap", "gvi", "water"]:
         v = features.get(k)
         out[k] = (v / 100.0) if v is not None else 0.5
+    if archetype_weights:
+        out["scene"] = personalized_scene(features.get("scene_breakdown"), archetype_weights) / 100.0
     return out
 
 
@@ -117,7 +151,7 @@ def weighted_distance(a, b):
     return math.sqrt(total / weight_sum)
 
 
-def load_places():
+def load_places(archetype_weights: dict | None = None):
     places = []
     for path in CATALOG_FILES:
         p = Path(path)
@@ -141,7 +175,7 @@ def load_places():
                     "state": state,
                     "label": f"{name}, {state}",
                     "features": feats,
-                    "norm": normalize(feats),
+                    "norm": normalize(feats, archetype_weights),
                     "local_scene_bucket": record.get("score", {}).get("local_scene_bucket"),
                     "total_score": record.get("score", {}).get("total_score"),
                     "water_bucket": feats["water_bucket"],
@@ -186,9 +220,24 @@ def main():
     parser.add_argument("query", help="Place name, e.g. 'Hoboken, NJ'")
     parser.add_argument("--top", type=int, default=10)
     parser.add_argument("--json", action="store_true", help="Output JSON")
+    parser.add_argument(
+        "--archetypes",
+        help=f"Comma-separated scene archetypes to personalize matching. "
+             f"Available: {', '.join(ARCHETYPES)}",
+    )
     args = parser.parse_args()
 
-    places = load_places()
+    archetype_weights = None
+    if args.archetypes:
+        names = [n.strip().lower() for n in args.archetypes.split(",")]
+        unknown = [n for n in names if n not in ARCHETYPES]
+        if unknown:
+            print(f"Unknown archetypes: {', '.join(unknown)}. "
+                  f"Available: {', '.join(ARCHETYPES)}", file=sys.stderr)
+            sys.exit(1)
+        archetype_weights = blend_archetypes(names)
+
+    places = load_places(archetype_weights)
     query_place = find_query(places, args.query)
     if not query_place:
         print(f"Place not found: {args.query}", file=sys.stderr)
@@ -205,7 +254,9 @@ def main():
                 "water_type": query_place["features"]["water_type"],
                 "total_score": query_place["total_score"],
                 "features": {k: round(v * 100, 1) for k, v in query_place["norm"].items()},
+                "scene_breakdown": query_place["features"].get("scene_breakdown"),
             },
+            "archetypes": list(archetype_weights.keys()) if archetype_weights else None,
             "twins": [
                 {
                     "rank": i + 1,
@@ -216,6 +267,7 @@ def main():
                     "water_type": p["features"]["water_type"],
                     "total_score": p["total_score"],
                     "features": {k: round(v * 100, 1) for k, v in p["norm"].items()},
+                    "scene_breakdown": p["features"].get("scene_breakdown"),
                 }
                 for i, (sim, dist, p) in enumerate(twins)
             ],
@@ -225,7 +277,14 @@ def main():
         qf = query_place["features"]
         print(f"\nVibe twins for: {query_place['label']}")
         print(f"  area_type={qf['area_type']}  water_bucket={qf['water_bucket']}  scene={query_place['local_scene_bucket']}")
-        print(f"  scene={qf['scene']:.0f}  race={qf['race']:.0f}  bach={qf['bach']:.0f}  dem={qf['dem_pct']:.0f}  s_cap={qf['s_cap']:.0f}  gvi={qf['gvi']:.0f}  water={qf['water']:.0f}\n")
+        if archetype_weights:
+            print(f"  archetypes={args.archetypes}  personalized_scene={query_place['norm']['scene']*100:.1f}")
+            bd = qf.get("scene_breakdown") or {}
+            print(f"  cultural={bd.get('cultural',0):.0f}  bar_ratio={bd.get('bar_ratio',0):.0f}  "
+                  f"cafe_social={bd.get('cafe_social',0):.0f}  indie={bd.get('indie',0):.0f}  volume={bd.get('volume',0):.0f}")
+        else:
+            print(f"  scene={qf['scene']:.0f}  race={qf['race']:.0f}  bach={qf['bach']:.0f}  dem={qf['dem_pct']:.0f}  s_cap={qf['s_cap']:.0f}  gvi={qf['gvi']:.0f}  water={qf['water']:.0f}")
+        print()
         print(f"{'Rank':<5} {'Place':<30} {'Sim%':<7} {'Scene':<10} {'Race':>6} {'Bach':>6} {'Dem':>5} {'SCap':>6} {'GVI':>5} {'Score':>6}")
         print("-" * 95)
         for i, (sim, dist, p) in enumerate(twins):
