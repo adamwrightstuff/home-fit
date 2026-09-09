@@ -40,7 +40,7 @@ import { applyAoPreferences, applyWaterfrontPreference, type AoPreference, type 
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
-import { blendSceneArchetypes, type SceneArchetype } from '@/lib/vibeFeatures'
+import { blendSceneArchetypes, personalizedSceneScore, SCENE_ARCHETYPES, type SceneArchetype } from '@/lib/vibeFeatures'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
 
@@ -142,6 +142,7 @@ export default function CatalogPageClient({
   const [twinSameBand, setTwinSameBand] = useState(false)
   const [twinPillars, setTwinPillars] = useState<Set<PillarKey>>(() => defaultTwinPillarSet())
   const [sceneArchetypes, setSceneArchetypes] = useState<SceneArchetype[]>([])
+  const [explorerSceneSort, setExplorerSceneSort] = useState<SceneArchetype[]>([])
   const [filterText, setFilterText] = useState('')
   const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la' | 'sf'>(initialMetroFilter)
   const [filterAreaTypes, setFilterAreaTypes] = useState<string[]>([])
@@ -211,6 +212,7 @@ export default function CatalogPageClient({
   const setIndexModeAndListSort = useCallback((mode: CatalogMapIndexMode) => {
     setIndexMode(mode)
     setSortByName(false)
+    setExplorerSceneSort([])
   }, [])
 
   useEffect(() => {
@@ -515,6 +517,15 @@ export default function CatalogPageClient({
         return !cm || cm.score >= 30
       })
     }
+    const sceneWeightsForSort = blendSceneArchetypes(explorerSceneSort)
+    if (sceneWeightsForSort) {
+      const mult = sortDir === 'asc' ? 1 : -1
+      return [...list].sort((a, b) => {
+        const sa = personalizedSceneScore((a.score as any).local_scene_breakdown, sceneWeightsForSort)
+        const sb = personalizedSceneScore((b.score as any).local_scene_breakdown, sceneWeightsForSort)
+        return mult * (sa - sb)
+      })
+    }
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
     return sortPlaces(list, sortKey, sortDir, priorities)
   }, [
@@ -535,6 +546,7 @@ export default function CatalogPageClient({
     sortByName,
     sortDir,
     priorities,
+    explorerSceneSort,
   ])
 
   /**
@@ -1114,8 +1126,22 @@ export default function CatalogPageClient({
               style={sortByName
                 ? { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }
                 : { background: 'transparent', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
-              onClick={() => setSortByName(true)}
+              onClick={() => { setSortByName(true); setExplorerSceneSort([]) }}
             >A–Z</button>
+
+            {/* Scene archetype sort */}
+            <button
+              type="button"
+              aria-pressed={explorerSceneSort.length > 0}
+              className="rounded-full px-2.5 py-0.5 text-xs font-bold"
+              style={explorerSceneSort.length > 0
+                ? { background: 'var(--hf-primary-1)', color: '#fff', border: 'none' }
+                : { background: 'transparent', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
+              onClick={() => {
+                if (explorerSceneSort.length > 0) setExplorerSceneSort([])
+                else { setExplorerSceneSort(['coffee']); setSortByName(false) }
+              }}
+            >Scene</button>
 
             <div className="h-3 w-px bg-[var(--hf-border)] mx-1" />
 
@@ -1132,6 +1158,35 @@ export default function CatalogPageClient({
               }
             </button>
 
+          </div>
+        )}
+
+        {catalogMode === 'explorer' && explorerSceneSort.length > 0 && (
+          <div
+            className="hidden md:flex flex-wrap gap-1.5 px-4 py-2 border-t border-[var(--hf-border)]"
+            style={{ background: 'var(--hf-bg-subtle)' }}
+          >
+            {(Object.entries(SCENE_ARCHETYPES) as [SceneArchetype, typeof SCENE_ARCHETYPES[SceneArchetype]][]).map(([key, meta]) => {
+              const active = explorerSceneSort.includes(key)
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={active}
+                  title={meta.desc}
+                  className="flex items-center gap-1 rounded-full px-3 py-1 text-[0.65rem] font-bold whitespace-nowrap transition-colors"
+                  style={active
+                    ? { background: 'var(--hf-primary-1)', color: '#fff', border: 'none' }
+                    : { background: 'var(--hf-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
+                  onClick={() => setExplorerSceneSort(
+                    active ? explorerSceneSort.filter(k => k !== key) : [...explorerSceneSort, key]
+                  )}
+                >
+                  <span>{meta.icon}</span>
+                  <span>{meta.label}</span>
+                </button>
+              )
+            })}
           </div>
         )}
 
