@@ -90,9 +90,10 @@ interface CatalogListViewProps {
   onRowExpand?: (key: string | null) => void
   /** When set (search mode), keyed by row key — lists filter/dealbreaker labels that exclude the place. */
   filteredOutReasons?: Record<string, string[]>
+  dividerLabel?: string
 }
 
-export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle, onRowExpand, filteredOutReasons }: CatalogListViewProps) {
+export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle, onRowExpand, filteredOutReasons, dividerLabel = 'Outside your filters' }: CatalogListViewProps) {
   const pillarMode = isPillarIndexMode(indexMode)
   const activePillarMeta = pillarMode ? PILLAR_INDEX_MODES.find(p => p.id === indexMode) : null
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
@@ -167,7 +168,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                     <td colSpan={5} className="py-1.5 px-0">
                       <div className="flex items-center gap-2 text-[0.6rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
                         <div className="h-px flex-1 bg-[var(--hf-border)]" />
-                        <span>Outside your filters</span>
+                        <span>{dividerLabel}</span>
                         <div className="h-px flex-1 bg-[var(--hf-border)]" />
                       </div>
                     </td>

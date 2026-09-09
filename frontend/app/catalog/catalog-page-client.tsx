@@ -40,6 +40,7 @@ import { applyAoPreferences, applyWaterfrontPreference, type AoPreference, type 
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
+import { blendSceneArchetypes, type SceneArchetype } from '@/lib/vibeFeatures'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
 
@@ -128,6 +129,7 @@ export default function CatalogPageClient({
   const toggleDealbreaker = useCallback((key: PillarKey) => {
     setDealbreakers((prev) => ({ ...prev, [key]: !prev[key] }))
   }, [])
+  const [showExcluded, setShowExcluded] = useState(false)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [snap, setSnap] = useState<CatalogSheetSnap>('peek')
   const [weightOpen, setWeightOpen] = useState(false)
@@ -139,6 +141,7 @@ export default function CatalogPageClient({
   const [twinCrossMetro, setTwinCrossMetro] = useState(true)
   const [twinSameBand, setTwinSameBand] = useState(false)
   const [twinPillars, setTwinPillars] = useState<Set<PillarKey>>(() => defaultTwinPillarSet())
+  const [sceneArchetypes, setSceneArchetypes] = useState<SceneArchetype[]>([])
   const [filterText, setFilterText] = useState('')
   const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la' | 'sf'>(initialMetroFilter)
   const [filterAreaTypes, setFilterAreaTypes] = useState<string[]>([])
@@ -587,21 +590,25 @@ export default function CatalogPageClient({
   }
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])
   const dealbreakerActive = activeDealbreakerKeys.length > 0
-  const { gatedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
+  const { gatedPlaces, excludedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) {
-      return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0, dealbreakerZeroSurvivors: false }
+      return { gatedPlaces: filteredPlaces, excludedPlaces: [] as CatalogMapPlaceWithMetro[], dealbreakerExcludedCount: 0, dealbreakerZeroSurvivors: false }
     }
     const survivors = filteredPlaces.filter((p) => activeDealbreakerKeys.every((k) => DEALBREAKER_CHECKS[k]!(p)))
     if (survivors.length === 0) {
-      return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0, dealbreakerZeroSurvivors: true }
+      return { gatedPlaces: filteredPlaces, excludedPlaces: [] as CatalogMapPlaceWithMetro[], dealbreakerExcludedCount: 0, dealbreakerZeroSurvivors: true }
     }
+    const excluded = filteredPlaces.filter((p) => !activeDealbreakerKeys.every((k) => DEALBREAKER_CHECKS[k]!(p)))
     return {
       gatedPlaces: survivors,
-      dealbreakerExcludedCount: filteredPlaces.length - survivors.length,
+      excludedPlaces: excluded,
+      dealbreakerExcludedCount: excluded.length,
       dealbreakerZeroSurvivors: false,
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredPlaces, activeDealbreakerKeys.join(','), householdIncome])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => setShowExcluded(false), [activeDealbreakerKeys.join(',')])
 
   const searchResults = useMemo<{ hits: CatalogMapPlaceWithMetro[]; reasons: Record<string, string[]> } | null>(() => {
     const t = filterText.trim().toLowerCase()
@@ -708,8 +715,9 @@ export default function CatalogPageClient({
   const twinRanked: TwinMatchResult[] = useMemo(() => {
     if (catalogMode !== 'twin' || !twinQueryKey || !queryPlace || twinPillarList.length < 2) return []
     const keyFn = (pl: CatalogMapPlace) => catalogRowKey(pl.catalog)
-    return rankTwinMatches(queryPlace, twinCandidatePlaces, twinPillarList, keyFn, 12, twinSameBand)
-  }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand, twinCrossMetro])
+    const sceneWeights = blendSceneArchetypes(sceneArchetypes)
+    return rankTwinMatches(queryPlace, twinCandidatePlaces, twinPillarList, keyFn, 12, twinSameBand, sceneWeights)
+  }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand, twinCrossMetro, sceneArchetypes])
 
   const mapPlacesNoTwinQuery = useMemo(() => {
     if (catalogMode !== 'twin') return gatedPlaces
@@ -1439,20 +1447,31 @@ export default function CatalogPageClient({
       )}
 
       {viewMode === 'list' && catalogMode === 'explorer' && !searchResults && dealbreakerActive && (
-        <div className="border-b border-[var(--hf-border)] bg-[var(--hf-hover-bg)] px-4 py-2 text-xs text-[var(--hf-text-secondary)]">
-          {dealbreakerZeroSurvivors
-            ? 'No places clear all your must-haves — showing closest matches anyway'
-            : dealbreakerExcludedCount > 0
-              ? `${gatedPlaces.length} match all your must-haves · ${dealbreakerExcludedCount} excluded`
-              : `All ${gatedPlaces.length} shown clear your must-haves`}
+        <div className="flex items-center gap-2 border-b border-[var(--hf-border)] bg-[var(--hf-hover-bg)] px-4 py-2 text-xs text-[var(--hf-text-secondary)]">
+          <span>
+            {dealbreakerZeroSurvivors
+              ? 'No places clear all your must-haves — showing closest matches anyway'
+              : dealbreakerExcludedCount > 0
+                ? `${gatedPlaces.length} match all your must-haves · ${dealbreakerExcludedCount} excluded`
+                : `All ${gatedPlaces.length} shown clear your must-haves`}
+          </span>
+          {!dealbreakerZeroSurvivors && dealbreakerExcludedCount > 0 && (
+            <button
+              onClick={() => setShowExcluded((v) => !v)}
+              className="ml-auto shrink-0 rounded-full border border-[var(--hf-border)] px-2 py-0.5 text-[0.65rem] font-semibold text-[var(--hf-text-secondary)] hover:bg-white"
+            >
+              {showExcluded ? 'Hide excluded' : 'Show excluded'}
+            </button>
+          )}
         </div>
       )}
 
       {viewMode === 'list' && catalogMode === 'explorer' && (
         <div className={`flex min-h-0 flex-1 flex-col${dealbreakerZeroSurvivors && !searchResults ? ' opacity-60' : ''}`}>
           <CatalogListView
-            places={searchResults ? searchResults.hits : gatedPlaces}
-            filteredOutReasons={searchResults?.reasons}
+            places={searchResults ? searchResults.hits : showExcluded && excludedPlaces.length > 0 ? [...gatedPlaces, ...excludedPlaces] : gatedPlaces}
+            filteredOutReasons={searchResults ? searchResults.reasons : showExcluded && excludedPlaces.length > 0 ? Object.fromEntries(excludedPlaces.map((p) => [catalogRowKey(p.catalog), ['Must-haves']])) : undefined}
+            dividerLabel="Outside your must-haves"
             priorities={priorities}
             indexMode={indexMode}
             onTwinRow={onTwinRow}
@@ -1472,6 +1491,8 @@ export default function CatalogPageClient({
           twinRanked={twinRanked}
           priorities={priorities}
           selectedPillars={twinPillarList}
+          sceneArchetypes={sceneArchetypes}
+          onSceneArchetypesChange={setSceneArchetypes}
           selectedTwinKey={
             selectedKey && twinQueryKey && selectedKey !== twinQueryKey ? selectedKey : null
           }
