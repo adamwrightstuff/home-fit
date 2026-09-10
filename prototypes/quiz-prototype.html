@@ -768,7 +768,6 @@ function applyAndClose() {
   if (window.parent !== window) {
     window.parent.postMessage(message, '*')
   } else {
-    // Standalone mode — log for debugging
     console.log('HomeFit quiz payload:', JSON.stringify(message, null, 2))
   }
 }
