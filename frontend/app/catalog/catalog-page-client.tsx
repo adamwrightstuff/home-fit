@@ -1559,7 +1559,7 @@ export default function CatalogPageClient({
             places={searchResults ? searchResults.hits : showExcluded && excludedPlaces.length > 0 ? [...gatedPlaces, ...excludedPlaces] : gatedPlaces}
             filteredOutReasons={searchResults ? searchResults.reasons : showExcluded && excludedPlaces.length > 0 ? Object.fromEntries(excludedPlaces.map((p) => [catalogRowKey(p.catalog), ['Must-haves']])) : undefined}
             dividerLabel="Outside your must-haves"
-            priorities={priorities}
+            priorities={effectivePriorities}
             indexMode={indexMode}
             onTwinRow={onTwinRow}
             compareIds={compareIds}
