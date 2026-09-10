@@ -1,0 +1,892 @@
+<title>HomeFit Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=DM+Sans:wght@300;400;500&display=swap">
+
+<style>
+  :root {
+    --bg: #0D1219;
+    --surface: #161E2A;
+    --surface-2: #1E2A3A;
+    --border: rgba(255,255,255,0.07);
+    --text: #EDE9E3;
+    --muted: #7A8696;
+    --dim: #3A4452;
+    --accent: #E8855A;
+    --accent-bg: rgba(232,133,90,0.12);
+    --bar-track: #1E2A3A;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .quiz-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 48px 56px;
+    min-width: 0;
+    position: relative;
+  }
+
+  .weights-pane {
+    width: 260px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border);
+    background: var(--surface);
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  @media (max-width: 700px) {
+    body { flex-direction: column; }
+    .quiz-pane { padding: 32px 24px; justify-content: flex-start; padding-top: 48px; }
+    .weights-pane { width: 100%; border-left: none; border-top: 1px solid var(--border); padding: 24px; }
+  }
+
+  .progress-track {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--border);
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.4s ease;
+  }
+
+  .question-wrap { max-width: 520px; }
+
+  .q-step {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .q-text {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(22px, 4vw, 32px);
+    font-weight: 800;
+    line-height: 1.2;
+    text-wrap: balance;
+    color: var(--text);
+    margin-bottom: 36px;
+  }
+
+  .q-sub {
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--muted);
+    margin-top: -24px;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 460px;
+  }
+
+  .opt {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+  }
+  .opt:hover { border-color: rgba(232,133,90,0.4); background: var(--surface-2); }
+  .opt.selected { border-color: var(--accent); background: var(--accent-bg); }
+  .opt-icon { font-size: 20px; width: 28px; flex-shrink: 0; text-align: center; }
+  .opt-label { font-weight: 500; }
+  .opt-desc { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 300; }
+
+  /* Multi-select chips */
+  .chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-width: 480px;
+    margin-bottom: 8px;
+  }
+
+  .chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 10px 18px;
+    cursor: pointer;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s;
+  }
+  .chip:hover { border-color: rgba(232,133,90,0.4); background: var(--surface-2); }
+  .chip.selected { border-color: var(--accent); background: var(--accent-bg); }
+
+  .nav-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .btn-continue {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 28px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-continue:hover { opacity: 0.88; }
+  .btn-continue:disabled { opacity: 0.3; cursor: default; }
+
+  .btn-back {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-back:hover { color: var(--text); }
+
+  .question-wrap { transition: opacity 0.2s ease, transform 0.2s ease; }
+  .question-wrap.out { opacity: 0; transform: translateY(-8px); pointer-events: none; }
+
+  /* Weights pane */
+  .weights-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .pillar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    transition: opacity 0.3s;
+  }
+  .pillar-row.dim { opacity: 0.28; }
+
+  .pillar-name {
+    font-size: 11px;
+    color: var(--text);
+    width: 96px;
+    flex-shrink: 0;
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 3px;
+    background: var(--bar-track);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .bar-fill.low { background: var(--dim); }
+  .bar-fill.none-w { background: transparent; }
+
+  .priority-tag {
+    font-size: 9px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    letter-spacing: 0.08em;
+    width: 26px;
+    text-align: right;
+    color: var(--muted);
+  }
+  .priority-tag.high { color: var(--accent); }
+
+  /* Dealbreaker section */
+  .db-section {
+    margin-bottom: 4px;
+  }
+  .db-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  /* Results */
+  .results-wrap { max-width: 520px; }
+  .result-headline {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(24px, 4vw, 36px);
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+  .result-sub {
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 28px;
+    max-width: 420px;
+  }
+  .result-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+  .result-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 400;
+  }
+  .result-chip.hi { border-color: rgba(232,133,90,0.5); background: var(--accent-bg); color: var(--accent); }
+  .result-chip.lo { opacity: 0.45; }
+
+  .btn-apply {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 32px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+  }
+  .btn-apply:hover { opacity: 0.88; }
+</style>
+
+<div class="quiz-pane">
+  <div class="progress-track"><div class="progress-fill" id="prog"></div></div>
+  <div class="question-wrap" id="qwrap"></div>
+</div>
+
+<div class="weights-pane">
+  <div class="weights-label">Your priorities</div>
+  <div id="bars"></div>
+</div>
+
+<script>
+// Pillars shown in sidebar — excludes economic_opportunity (metro-uniform) and air_travel (dealbreaker)
+const PILLARS = [
+  { key: 'quality_education',      label: 'Schools' },
+  { key: 'neighborhood_amenities', label: 'Walkability' },
+  { key: 'community_safety',       label: 'Safety' },
+  { key: 'social_fabric',          label: 'Community' },
+  { key: 'active_outdoors',        label: 'Outdoor Life' },
+  { key: 'natural_beauty',         label: 'Natural Beauty' },
+  { key: 'public_transit_access',  label: 'Transit' },
+  { key: 'housing_value',          label: 'Affordability' },
+  { key: 'healthcare_access',      label: 'Healthcare' },
+  { key: 'climate_risk',           label: 'Climate Risk' },
+  { key: 'diversity',              label: 'Diversity' },
+]
+
+// weights: 0=None, 1=Low, 2=Medium, 3=High
+// Pillars the quiz never touches start at Low so they don't falsely compete
+const LOW_DEFAULT = new Set(['climate_risk', 'diversity', 'healthcare_access', 'active_outdoors', 'social_fabric'])
+let weights = {}
+PILLARS.forEach(p => weights[p.key] = LOW_DEFAULT.has(p.key) ? 1 : 2)
+
+let answers = {}
+let step = 0
+let weatherPicks = []
+let politicalPicks = []
+let outdoorsPicks = []
+let sceneryPicks = []
+let localScenePicks = []
+let housingPicks = []
+
+const CHIP_TYPES = new Set(['weather', 'political', 'outdoors', 'scenery', 'local_scene', 'housing'])
+function pickArr(type) {
+  return { weather: weatherPicks, political: politicalPicks, outdoors: outdoorsPicks, scenery: sceneryPicks, local_scene: localScenePicks, housing: housingPicks }[type] || outdoorsPicks
+}
+
+function setWeight(k, v) {
+  if (weights[k] !== undefined) weights[k] = Math.max(0, Math.min(3, v))
+}
+function bumpWeight(k, delta) {
+  if (weights[k] !== undefined) weights[k] = Math.max(0, Math.min(3, weights[k] + delta))
+}
+
+const QUESTIONS = [
+  // Dimension 1 — Life stage
+  {
+    id: 'life',
+    q: 'Who\'s this move for?',
+    opts: [
+      { id: 'kids',      icon: '👨‍👩‍👧', label: 'Family with kids at home',      desc: 'Schools and safety will rank higher' },
+      { id: 'planning',  icon: '🍼',     label: 'Planning to have kids soon',    desc: 'Schools worth factoring in' },
+      { id: 'couple',    icon: '🏠',     label: 'Me or us, no kids planned',     desc: 'Life quality over school ratings' },
+      { id: 'empty',     icon: '🌿',     label: 'Empty nesters or retiring',     desc: 'Healthcare and outdoor access tend to rise' },
+    ],
+    apply(id) {
+      if (id === 'kids')     { setWeight('quality_education', 3); setWeight('community_safety', 3); bumpWeight('social_fabric', 1) }
+      if (id === 'planning') { setWeight('quality_education', 2); setWeight('community_safety', 3) }
+      if (id === 'couple')   { setWeight('quality_education', 0) }
+      if (id === 'empty')    { setWeight('quality_education', 0); bumpWeight('healthcare_access', 1); bumpWeight('active_outdoors', 1) }
+    }
+  },
+
+  // Dimension 2 — Work tether
+  {
+    id: 'work',
+    q: 'How does work shape where you live?',
+    opts: [
+      { id: 'office', icon: '🏢', label: 'In office most days',           desc: 'Getting there matters' },
+      { id: 'hybrid', icon: '📅', label: 'Hybrid or flexible',            desc: 'A few days in, a few at home' },
+      { id: 'remote', icon: '💻', label: 'Fully remote or self-employed', desc: 'Your neighborhood is your office' },
+    ],
+    apply(id) {
+      if (id === 'remote') { setWeight('public_transit_access', 0); bumpWeight('active_outdoors', 1); bumpWeight('natural_beauty', 1) }
+    }
+  },
+
+  // Dimension 2 — Commute mode (conditional)
+  {
+    id: 'commute_mode',
+    q: 'Do you need to be near a train line?',
+    showIf: () => answers.work === 'office' || answers.work === 'hybrid',
+    opts: [
+      { id: 'transit', icon: '🚆', label: 'Yes — train or subway is the plan',     desc: 'Station proximity matters' },
+      { id: 'drive',   icon: '🚗', label: 'No — I\'d drive',                        desc: 'Transit is less of a factor' },
+      { id: 'fly',     icon: '✈️', label: 'I travel by plane for work',              desc: 'Airport access matters more than local transit' },
+    ],
+    apply(id) {
+      if (id === 'transit') setWeight('public_transit_access', 3)
+      if (id === 'drive')   setWeight('public_transit_access', 1)
+      if (id === 'fly')     setWeight('public_transit_access', 1)
+    }
+  },
+
+  // Dimension 2 — Commute time cap (conditional, filter only)
+  {
+    id: 'commute_time',
+    q: 'What\'s your max commute each way?',
+    showIf: () => (answers.work === 'office' || answers.work === 'hybrid') && answers.commute_mode !== 'fly',
+    opts: [
+      { id: 'u30', icon: '⚡', label: 'Under 30 minutes', desc: '' },
+      { id: 'u45', icon: '🕐', label: 'Under 45 minutes', desc: 'The typical threshold' },
+      { id: 'u60', icon: '🕑', label: 'Under an hour',    desc: '' },
+      { id: 'any', icon: '🤷', label: 'No hard limit',    desc: 'The right place matters more than time' },
+    ],
+    apply() { /* filter only */ }
+  },
+
+  // Dimension 3 — Urban appetite
+  {
+    id: 'urban',
+    q: 'How much city do you want around you?',
+    opts: [
+      { id: 'city',         icon: '🏙️', label: 'Dense city neighborhood',       desc: 'Walkable, everything close — density is energy not noise' },
+      { id: 'inner_suburb', icon: '🏘️', label: 'Walkable town or inner suburb', desc: 'Some urban feel, quieter streets, a real local scene' },
+      { id: 'outer_suburb', icon: '🏡', label: 'Quiet suburb',                  desc: 'Space and calm, drive to most things' },
+      { id: 'small_town',   icon: '🌲', label: 'Small town or rural',           desc: 'Low density, open space, slower pace' },
+    ],
+    apply(id) {
+      if (id === 'city')         { setWeight('neighborhood_amenities', 3); setWeight('natural_beauty', 1); bumpWeight('public_transit_access', 1) }
+      if (id === 'inner_suburb') { setWeight('neighborhood_amenities', 2); setWeight('natural_beauty', 2) }
+      if (id === 'outer_suburb') { setWeight('neighborhood_amenities', 1); setWeight('natural_beauty', 2) }
+      if (id === 'small_town')   { setWeight('neighborhood_amenities', 1); setWeight('natural_beauty', 3) }
+    }
+  },
+
+  // Dimension 4 — Outdoor identity (multi-select)
+  {
+    id: 'outdoors',
+    type: 'outdoors',
+    q: 'What does the outdoors mean to you?',
+    sub: 'Pick everything that fits.',
+    chips: [
+      { id: 'local_parks',    icon: '🌳', label: 'Local Parks' },
+      { id: 'trails_regional', icon: '🥾', label: 'Trails & Regional Parks' },
+      { id: 'waterfront',     icon: '🌊', label: 'Waterfront' },
+      { id: 'none',        icon: '🛋️', label: 'Mostly indoors — not a factor' },
+    ],
+    apply(ids) {
+      if (ids.includes('none') && ids.length === 1) { setWeight('active_outdoors', 1); return }
+      if (ids.includes('trails_regional') || ids.includes('waterfront')) setWeight('active_outdoors', 3)
+      else if (ids.includes('local_parks')) setWeight('active_outdoors', 2)
+    }
+  },
+
+  // Dimension 4b — Scenery type (conditional on natural_beauty >= 2)
+  {
+    id: 'scenery',
+    type: 'scenery',
+    q: 'What scenery matters most to you?',
+    sub: 'Pick all that fit. Skip if you don\'t care.',
+    showIf: () => weights['natural_beauty'] >= 2,
+    chips: [
+      { id: 'mountains',    icon: '⛰️', label: 'Mountains' },
+      { id: 'ocean',        icon: '🌊', label: 'Ocean & Coast' },
+      { id: 'lakes_rivers', icon: '💧', label: 'Lakes & Rivers' },
+      { id: 'canopy',       icon: '🌳', label: 'Tree Canopy' },
+    ],
+    apply(ids) {
+      if (ids.length > 0) setWeight('natural_beauty', 3)
+    }
+  },
+
+  // Dimension 5 — Budget posture
+  {
+    id: 'budget',
+    q: 'How does price factor into your search?',
+    opts: [
+      { id: 'value',    icon: '💰', label: 'I need the best value I can get',      desc: 'Affordability is a real constraint' },
+      { id: 'balanced', icon: '⚖️', label: 'I\'ll pay more for the right place',   desc: 'But I\'m not ignoring price' },
+      { id: 'flexible', icon: '🏆', label: 'Price isn\'t the main consideration',  desc: 'Optimizing for quality of life' },
+    ],
+    apply(id) {
+      if (id === 'value')    setWeight('housing_value', 3)
+      if (id === 'balanced') setWeight('housing_value', 2)
+      if (id === 'flexible') setWeight('housing_value', 1)
+    }
+  },
+
+  // Dimension 6 — Stability vs. upside
+  {
+    id: 'stability',
+    q: 'What kind of neighborhood are you looking for?',
+    opts: [
+      { id: 'arrived', icon: '🔒', label: 'Established and stable',       desc: 'Known quantity, safe, community already there' },
+      { id: 'either',  icon: '⚖️', label: 'Either works',                 desc: 'Open to both' },
+      { id: 'upside',  icon: '📈', label: 'Up-and-coming with potential', desc: 'I\'ll take the discount for the trajectory' },
+    ],
+    apply(id) {
+      if (id === 'arrived') { if (answers.life !== 'kids') setWeight('community_safety', 3) }
+      if (id === 'upside')  { if (answers.life !== 'kids') setWeight('community_safety', 1) }
+    }
+  },
+
+  // Dimension 7 — Social fabric
+  {
+    id: 'community_feel',
+    q: 'How important is a sense of community?',
+    opts: [
+      { id: 'a_lot', icon: '🤝', label: 'A lot — I want to know my neighbors and feel part of the neighborhood', desc: '' },
+      { id: 'some',  icon: '👋', label: 'Nice to have, not a priority',                                          desc: '' },
+      { id: 'not',   icon: '🚪', label: 'Not really — I\'m more private',                                        desc: '' },
+    ],
+    apply(id) {
+      if (id === 'a_lot') setWeight('social_fabric', 3)
+      if (id === 'some')  setWeight('social_fabric', 2)
+      if (id === 'not')   setWeight('social_fabric', 1)
+    }
+  },
+
+  // Dimension 7b — Local scene
+  {
+    id: 'local_scene',
+    type: 'local_scene',
+    q: 'What\'s your local scene?',
+    sub: 'What do you want more of right outside your door? Pick all that fit.',
+    chips: [
+      { id: 'coffee',    icon: '☕', label: 'Coffee shop regular' },
+      { id: 'nightlife', icon: '🌙', label: 'Late-night creative' },
+      { id: 'arts',      icon: '🎭', label: 'Arts & culture' },
+      { id: 'food',      icon: '🍜', label: 'Food obsessive' },
+      { id: 'explorer',  icon: '🗺️', label: 'Weekend explorer' },
+      { id: 'none',      icon: '—',  label: 'None of the above' },
+    ],
+    apply(ids) {
+      const active = ids.filter(x => x !== 'none')
+      if (active.length > 0) {
+        if (weights['neighborhood_amenities'] < 2) setWeight('neighborhood_amenities', 2)
+        bumpWeight('social_fabric', 1)
+      }
+    }
+  },
+
+  // Filter — Housing type (multi-select)
+  {
+    id: 'housing',
+    type: 'housing',
+    q: 'What housing type works for you?',
+    sub: 'Pick all you\'d consider. Skip if you\'re open to anything.',
+    chips: [
+      { id: 'single_family', icon: '🏡', label: 'Single-family home' },
+      { id: 'rowhouse',      icon: '🏘️', label: 'Rowhouse or townhouse' },
+      { id: 'condo',         icon: '🏢', label: 'Apartment or condo' },
+    ],
+    apply() { /* filter only */ }
+  },
+
+  // Filter — Weather dealbreakers
+  {
+    id: 'weather',
+    q: 'Any weather you couldn\'t live with?',
+    sub: 'Pick anything that would rule a place out.',
+    type: 'weather',
+    chips: [
+      { id: 'cold',   icon: '🥶', label: 'Brutal winters — heavy snow, months below freezing' },
+      { id: 'hot',    icon: '🥵', label: 'Sweltering summers — humid 90°F+ heat' },
+      { id: 'rain',   icon: '🌧️', label: 'Rain and grey skies most of the year' },
+      { id: 'swings', icon: '🍂', label: 'Extreme seasonal swings' },
+      { id: 'none',   icon: '—',  label: 'Weather isn\'t a factor' },
+    ],
+    apply() { /* filter only */ }
+  },
+
+  // Filter — Political lean
+  {
+    id: 'political',
+    type: 'political',
+    q: 'Any political lean dealbreakers?',
+    sub: 'Pick all you\'d be comfortable with. Skip if it\'s not a factor.',
+    chips: [
+      { id: 'skip',    icon: '—',  label: 'Not a factor' },
+      { id: 'strong_d', icon: '🔵', label: 'Progressive' },
+      { id: 'lean_d',   icon: '🫐', label: 'Center-left' },
+      { id: 'moderate', icon: '⚖️', label: 'Moderate' },
+      { id: 'lean_r',   icon: '🍊', label: 'Center-right' },
+      { id: 'strong_r', icon: '🔴', label: 'Conservative' },
+    ],
+    apply() { /* filter only */ }
+  },
+]
+
+function visibleQuestions() {
+  return QUESTIONS.filter(q => !q.showIf || q.showIf())
+}
+function totalSteps() { return visibleQuestions().length }
+function currentQ() { return visibleQuestions()[step] }
+
+function barWidth(w) { return [0, 20, 52, 100][w] }
+function barClass(w) { return w === 0 ? 'none-w' : w === 1 ? 'low' : '' }
+function priorityLabel(w) { return ['—', 'Low', '', 'High'][w] }
+
+function renderBars() {
+  const el = document.getElementById('bars')
+  const sorted = [...PILLARS].sort((a, b) => weights[b.key] - weights[a.key])
+  el.innerHTML = sorted.map(p => {
+    const w = weights[p.key]
+    const hi = w === 3
+    const lo = w <= 1
+    return `<div class="pillar-row ${lo ? 'dim' : ''}">
+      <div class="pillar-name">${p.label}</div>
+      <div class="bar-track"><div class="bar-fill ${barClass(w)}" style="width:${barWidth(w)}%"></div></div>
+      <div class="priority-tag ${hi ? 'high' : ''}">${priorityLabel(w)}</div>
+    </div>`
+  }).join('')
+}
+
+function renderResults() {
+  document.getElementById('prog').style.width = '100%'
+  const highs = PILLARS.filter(p => weights[p.key] === 3).map(p => p.label)
+  const lows  = PILLARS.filter(p => weights[p.key] <= 1).map(p => p.label)
+
+  // Persona from 6 dimensions
+  const hasKids      = answers.life === 'kids'
+  const isEmptyNest  = answers.life === 'empty'
+  const isRemote     = answers.work === 'remote'
+  const needsTransit = answers.commute_mode === 'transit'
+  const wantsCity    = answers.urban === 'city'
+  const wantsOuter   = answers.urban === 'outer_suburb' || answers.urban === 'small_town'
+  const likesWater   = outdoorsPicks.includes('waterfront')
+  const likesAdventure = outdoorsPicks.includes('trails_regional')
+  const isValueFocused = answers.budget === 'value'
+  const wantsArrived = answers.stability === 'arrived'
+  const wantsUpside  = answers.stability === 'upside'
+
+  let persona = ''
+  if (hasKids && needsTransit && wantsCity)
+    persona = 'Urban family on a train line — walkable streets, good schools, and the kind of established community where you actually put down roots.'
+  else if (hasKids && wantsArrived)
+    persona = 'A family planting roots. Stable neighborhood, strong schools, the kind of place you stay for fifteen years.'
+  else if (hasKids && wantsOuter)
+    persona = 'Space for the family, quiet streets, solid schools. A suburb that earns its reputation.'
+  else if (hasKids)
+    persona = 'Walkable, safe, good schools. A neighborhood with enough life that it doesn\'t feel like a waiting room.'
+  else if (isRemote && wantsCity)
+    persona = 'Remote worker who wants the city. Your neighborhood is both your office and your life — it needs to hold up all day.'
+  else if (isRemote && (likesAdventure || likesWater) && wantsOuter)
+    persona = 'Lifestyle-first move. Nature close by, work from home, a place worth actually living in.'
+  else if (isRemote)
+    persona = 'Your neighborhood is your office. Walkable enough to break up the day, livable enough to stay for years.'
+  else if (needsTransit && wantsCity)
+    persona = 'Connected and walkable. A real neighborhood on a train line — you\'re not giving one up for the other.'
+  else if (wantsUpside)
+    persona = 'Betting on the right neighborhood before everyone else figures it out. Value now, payoff later.'
+  else if (isValueFocused && wantsArrived)
+    persona = 'Best neighborhood you can actually afford. Established, stable, and worth living in.'
+  else if (isEmptyNest)
+    persona = 'Quality of life over career logistics. The right environment now that you can actually choose.'
+  else
+    persona = 'Your priorities are set. HomeFit will rank places by what actually matters to you.'
+
+  const politicalLabels = { strong_d: 'Progressive', lean_d: 'Center-left', moderate: 'Moderate', lean_r: 'Center-right', strong_r: 'Conservative' }
+  const activePolitical = politicalPicks.filter(p => p !== 'skip')
+  const politicalNote = activePolitical.length > 0 ? activePolitical.map(p => politicalLabels[p]).join('/') + ' lean preferred' : ''
+
+  const weatherLabels = { cold: 'No brutal winters', hot: 'No humid summers', rain: 'No constant rain', swings: 'No extreme seasonal swings' }
+  const weatherNotes = weatherPicks.filter(w => w !== 'none').map(w => weatherLabels[w] || w)
+  const commuteNote = { u30: 'Commute under 30 min', u45: 'Commute under 45 min', u60: 'Commute under 60 min' }[answers.commute_time] || ''
+  const stabilityNote = { arrived: 'Arrived/Stable neighborhoods', upside: 'Up-and-coming neighborhoods' }[answers.stability] || ''
+  const outdoorsLabels = { local_parks: 'Local Parks', trails_regional: 'Trails & Regional Parks', waterfront: 'Waterfront' }
+  const outdoorsNote = outdoorsPicks.filter(p => p !== 'none').map(p => outdoorsLabels[p]).filter(Boolean).join(' + ') || ''
+  const sceneryLabels = { mountains: 'Mountains', ocean: 'Ocean & Coast', lakes_rivers: 'Lakes & Rivers', canopy: 'Tree Canopy' }
+  const sceneryNote = sceneryPicks.map(p => sceneryLabels[p]).filter(Boolean).join(' · ')
+  const localSceneLabels = { coffee: 'Coffee shops', nightlife: 'Nightlife', arts: 'Arts & culture', food: 'Food scene', explorer: 'Weekend exploration' }
+  const localSceneNote = localScenePicks.filter(p => p !== 'none').map(p => localSceneLabels[p]).filter(Boolean).join(' · ')
+  const housingLabels = { single_family: 'Single-family', rowhouse: 'Rowhouse/Townhouse', condo: 'Apartment/Condo' }
+  const housingNote = housingPicks.map(p => housingLabels[p]).filter(Boolean).join(' or ')
+  const filterNotes = [politicalNote, commuteNote, stabilityNote, outdoorsNote, sceneryNote, localSceneNote, housingNote, ...weatherNotes].filter(Boolean)
+
+  document.getElementById('qwrap').innerHTML = `
+    <div class="results-wrap">
+      <div class="q-step">Your profile</div>
+      <div class="result-headline">Here's how HomeFit will rank for you</div>
+      <div class="result-sub">${persona}</div>
+      <div class="result-chips">
+        ${highs.map(h => `<span class="result-chip hi">↑ ${h}</span>`).join('')}
+        ${lows.map(l => `<span class="result-chip lo">↓ ${l}</span>`).join('')}
+      </div>
+      ${filterNotes.length ? `<div class="q-sub" style="margin-top:0;margin-bottom:24px;">Filters: ${filterNotes.join(' · ')}</div>` : ''}
+      <button class="btn-apply" onclick="applyAndClose()">Apply to HomeFit →</button>
+    </div>
+  `
+}
+
+function applyAndClose() {
+  const LEVEL = ['None', 'Low', 'Medium', 'High']
+
+  // Pillar priorities — matches PillarPriorities type
+  const priorities = {}
+  PILLARS.forEach(p => priorities[p.key] = LEVEL[weights[p.key]])
+  // air_travel_access: boost if user flies for work
+  if (answers.commute_mode === 'fly') priorities['air_travel_access'] = 'High'
+
+  // filterAoTypes — IDs already match app (local_parks, trails_regional, waterfront)
+  const filterAoTypes = outdoorsPicks.filter(p => p !== 'none')
+
+  // filterNbTypes — IDs already match app (mountains, ocean, lakes_rivers, canopy)
+  const filterNbTypes = sceneryPicks.filter(Boolean)
+
+  // filterHousingType — app uses sf_townhouse and apartment
+  const filterHousingType = []
+  if (housingPicks.includes('single_family') || housingPicks.includes('rowhouse')) filterHousingType.push('sf_townhouse')
+  if (housingPicks.includes('condo')) filterHousingType.push('apartment')
+
+  // filterPoliticalLean — IDs already match app (strong_d, lean_d, moderate, lean_r, strong_r)
+  const filterPoliticalLean = politicalPicks.filter(p => p !== 'skip')
+
+  // filterTrajectory — app uses capitalized strings
+  const trajectoryMap = { arrived: 'Arrived', upside: 'Up-and-Coming' }
+  const filterTrajectory = trajectoryMap[answers.stability] || 'all'
+
+  // filterCommuteMax — app uses numeric string or 'all'
+  const commuteMap = { u30: '30', u45: '45', u60: '60', any: 'all' }
+  const filterCommuteMax = commuteMap[answers.commute_time] || 'all'
+
+  // filterLocalScene — app uses 'all' | 'Some' | 'High'; any scene pick = High
+  const activeScene = localScenePicks.filter(p => p !== 'none')
+  const filterLocalScene = activeScene.length > 0 ? 'High' : 'all'
+
+  // climatePrefs — map weather chips to ClimatePreferences structure
+  const climatePrefs = {}
+  if (weatherPicks.includes('cold'))   climatePrefs.cold_tolerance = 'dealbreaker'
+  if (weatherPicks.includes('hot'))    climatePrefs.heat_tolerance = 'dealbreaker'
+  if (weatherPicks.includes('rain'))   climatePrefs.rain_tolerance = 'dealbreaker'
+  if (weatherPicks.includes('swings')) climatePrefs.seasons = 'want_consistency'
+
+  const payload = {
+    priorities,
+    filterAoTypes,
+    filterNbTypes,
+    filterHousingType,
+    filterPoliticalLean,
+    filterTrajectory,
+    filterCommuteMax,
+    filterLocalScene,
+    climatePrefs,
+  }
+
+  // In production this would call window.parent.postMessage or a callback
+  console.log('HomeFit quiz payload:', JSON.stringify(payload, null, 2))
+  alert('Quiz payload (see console):\n\n' + JSON.stringify(payload, null, 2))
+}
+
+function renderQuestion() {
+  const q = currentQ()
+  if (!q) { renderResults(); return }
+  const vqs = visibleQuestions()
+  document.getElementById('prog').style.width = ((step / vqs.length) * 100) + '%'
+  const wrap = document.getElementById('qwrap')
+
+  if (CHIP_TYPES.has(q.type)) {
+    const picks = pickArr(q.type)
+    wrap.innerHTML = `
+      <div class="q-step">${step + 1} of ${totalSteps()}</div>
+      <div class="q-text">${q.q}</div>
+      ${q.sub ? `<div class="q-sub">${q.sub}</div>` : ''}
+      <div class="chip-group" id="chip-group">
+        ${q.chips.map(c => `
+          <button class="chip ${picks.includes(c.id) ? 'selected' : ''}" onclick="toggleChip('${q.type}','${c.id}')">
+            <span>${c.icon}</span><span>${c.label}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="nav-row">
+        ${step > 0 ? '<button class="btn-back" onclick="goBack()">← Back</button>' : ''}
+        <button class="btn-continue" id="cont-btn" onclick="nextStep()">Continue →</button>
+      </div>
+    `
+  } else {
+    const sel = answers[q.id]
+    wrap.innerHTML = `
+      <div class="q-step">${step + 1} of ${totalSteps()}</div>
+      <div class="q-text">${q.q}</div>
+      ${q.sub ? `<div class="q-sub">${q.sub}</div>` : ''}
+      <div class="options">
+        ${q.opts.map(o => `
+          <button class="opt ${sel === o.id ? 'selected' : ''}" onclick="selectOpt('${q.id}','${o.id}')">
+            <span class="opt-icon">${o.icon}</span>
+            <div class="opt-body">
+              <div class="opt-label">${o.label}</div>
+              ${o.desc ? `<div class="opt-desc">${o.desc}</div>` : ''}
+            </div>
+          </button>
+        `).join('')}
+      </div>
+      <div class="nav-row">
+        ${step > 0 ? '<button class="btn-back" onclick="goBack()">← Back</button>' : ''}
+        <button class="btn-continue" id="cont-btn" ${sel ? '' : 'disabled'} onclick="nextStep()">Continue →</button>
+      </div>
+    `
+  }
+  renderBars()
+}
+
+function toggleChip(type, id) {
+  const arr = pickArr(type)
+  if (id === 'none' || id === 'skip') {
+    arr.length = 0
+    arr.push(id)
+  } else {
+    const clearIdx = arr.findIndex(x => x === 'none' || x === 'skip')
+    if (clearIdx !== -1) arr.splice(clearIdx, 1)
+    const idx = arr.indexOf(id)
+    if (idx !== -1) arr.splice(idx, 1)
+    else arr.push(id)
+  }
+  recomputeAndRender()
+}
+
+function selectOpt(qid, oid) {
+  answers[qid] = oid
+  recomputeAndRender()
+}
+
+function recomputeAndRender() {
+  // Reset weights to their defaults
+  PILLARS.forEach(p => weights[p.key] = LOW_DEFAULT.has(p.key) ? 1 : 2)
+
+  // Replay all answered questions
+  QUESTIONS.forEach(q => {
+    if (q.type === 'weather' || q.type === 'political') {
+      /* filter only */
+    } else if (CHIP_TYPES.has(q.type)) {
+      const picks = pickArr(q.type)
+      if (picks.length > 0 && (!q.showIf || q.showIf())) q.apply(picks)
+    } else {
+      const ans = answers[q.id]
+      if (ans && (!q.showIf || q.showIf())) q.apply(ans)
+    }
+  })
+
+  renderQuestion()
+}
+
+function nextStep() {
+  const q = currentQ()
+  if (!q) return
+
+  // Validate — outdoors requires a pick; other chip types are skippable; options require a selection
+  if (q.type === 'outdoors' && outdoorsPicks.length === 0) return
+  if (!CHIP_TYPES.has(q.type) && !answers[q.id]) return
+
+  const wrap = document.getElementById('qwrap')
+  wrap.classList.add('out')
+  setTimeout(() => {
+    wrap.classList.remove('out')
+    step++
+    while (step < QUESTIONS.length) {
+      const vqs = visibleQuestions()
+      if (step < vqs.length) break
+      step++
+    }
+    renderQuestion()
+  }, 200)
+}
+
+function goBack() {
+  const wrap = document.getElementById('qwrap')
+  wrap.classList.add('out')
+  setTimeout(() => {
+    wrap.classList.remove('out')
+    step = Math.max(0, step - 1)
+    renderQuestion()
+  }, 200)
+}
+
+renderQuestion()
+</script>
