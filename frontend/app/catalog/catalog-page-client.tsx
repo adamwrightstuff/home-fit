@@ -474,6 +474,11 @@ export default function CatalogPageClient({
     })
   }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, filterSceneTypes])
 
+  const effectivePriorities = useMemo(
+    () => filterSceneTypes.length > 0 ? { ...priorities, local_scene: 'Medium' as const } : priorities,
+    [priorities, filterSceneTypes],
+  )
+
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
     let list = adjustedPlaces.filter((p) => {
@@ -553,9 +558,6 @@ export default function CatalogPageClient({
       })
     }
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
-    const effectivePriorities = filterSceneTypes.length > 0
-      ? { ...priorities, local_scene: 'Medium' as const }
-      : priorities
     return sortPlaces(list, sortKey, sortDir, effectivePriorities)
   }, [
     adjustedPlaces,
@@ -574,7 +576,7 @@ export default function CatalogPageClient({
     indexMode,
     sortByName,
     sortDir,
-    priorities,
+    effectivePriorities,
     explorerSceneSort,
     filterSceneTypes,
   ])
@@ -1446,7 +1448,7 @@ export default function CatalogPageClient({
           {hoverInfo && catalogMode === 'explorer' && (() => {
             const hoverPlace = findPlaceByKey(gatedPlaces, hoverInfo.key)
             if (!hoverPlace) return null
-            const rw = reweightScoreResponseFromPriorities(hoverPlace.score, priorities)
+            const rw = reweightScoreResponseFromPriorities(hoverPlace.score, effectivePriorities)
             const hf = rw.total_score
             const lon = hoverPlace.score.longevity_index ?? null
             const hap = hoverPlace.score.happiness_index ?? null
@@ -1627,7 +1629,7 @@ export default function CatalogPageClient({
             <span style={{ color: 'var(--hf-text-tertiary)' }}>Matching to: </span>
             <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>{queryPlace.catalog.name}</span>
             {(() => {
-              const rw = reweightScoreResponseFromPriorities(queryPlace.score, priorities)
+              const rw = reweightScoreResponseFromPriorities(queryPlace.score, effectivePriorities)
               const hf = rw.total_score
               return Number.isFinite(hf) ? (
                 <span style={{ color: 'var(--hf-text-secondary)' }}> · HomeFit {hf.toFixed(1)}</span>
