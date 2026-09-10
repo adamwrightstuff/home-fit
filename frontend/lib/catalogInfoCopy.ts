@@ -34,28 +34,28 @@ export const ARCHETYPE_COPY: Record<string, InfoCopy> = {
 
 export const TRAJECTORY_COPY: Record<string, InfoCopy> = {
   Arrived: {
-    title: 'Arrived',
+    title: 'Real Estate · Arrived',
     body: 'Established at the top of its market, this neighborhood is already highly desirable. Appreciation has slowed, but demand remains strong and the neighborhood\'s appeal is well established.',
     detail: 'Based on historical and recent home-value trends, demand, investment, and indicators of established neighborhood desirability.',
   },
   'Up-and-Coming': {
-    title: 'Up-and-Coming',
-    body: 'This neighborhood is gaining momentum, with rising values and growing demand. It is the kind of place where the market is still moving toward it rather than having already arrived.',
+    title: 'Real Estate · Up-and-Coming',
+    body: 'This neighborhood is gaining real estate momentum, with rising values and growing demand. The market is still moving toward it rather than having already peaked.',
     detail: 'Based on recent home-value growth, demand, investment, development activity, and other indicators of increasing market momentum.',
   },
   Cooling: {
-    title: 'Cooling',
-    body: 'This neighborhood has come off a recent peak and is no longer moving upward as quickly. It remains desirable, but demand and appreciation are beginning to ease.',
+    title: 'Real Estate · Cooling',
+    body: 'This neighborhood has come off a recent peak in the real estate market and is no longer moving upward as quickly. It remains desirable, but demand and appreciation are beginning to ease.',
     detail: 'Based on recent changes in home values and demand compared with longer-term trends, along with investment and development activity.',
   },
   Declining: {
-    title: 'Declining',
-    body: 'This neighborhood is losing demand or value relative to its recent position. It may still have strong qualities, but the market is currently moving away from it.',
+    title: 'Real Estate · Declining',
+    body: 'This neighborhood is losing demand or real estate value relative to its recent position. It may still have strong qualities, but the market is currently moving away from it.',
     detail: 'Based on changes in home values, demand, investment, development, and other indicators of declining market momentum.',
   },
   Stable: {
-    title: 'Stable',
-    body: 'This neighborhood is holding steady without a meaningful upward or downward trend. Its market is relatively predictable, with neither rapid appreciation nor notable decline.',
+    title: 'Real Estate · Stable',
+    body: 'This neighborhood\'s real estate market is holding steady without a meaningful upward or downward trend. Values are relatively predictable, with neither rapid appreciation nor notable decline.',
     detail: 'Based on home-value trends, demand, investment, and other indicators of market movement over time.',
   },
 }

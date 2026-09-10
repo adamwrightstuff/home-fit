@@ -129,7 +129,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 )}
               </th>
             )}
-            <th className="py-2 px-1 font-semibold">Archetype &amp; Character</th>
+            <th className="py-2 px-1 font-semibold">Profile</th>
             <th className="py-2 pl-1"> </th>
           </tr>
         </thead>
