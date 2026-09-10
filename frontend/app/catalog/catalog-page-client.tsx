@@ -43,7 +43,7 @@ import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { blendSceneArchetypes, personalizedSceneScore, SCENE_ARCHETYPES, type SceneArchetype } from '@/lib/vibeFeatures'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
-import PlaceValuesGame from '@/components/PlaceValuesGame'
+import QuizModal, { type QuizPayload } from '@/components/QuizModal'
 
 const INDEXES: { id: 'homefit' | 'longevity' | 'happiness' | 'status'; label: string; tooltip: string }[] = [
   { id: 'homefit', label: 'HomeFit', tooltip: HOMEFIT_COPY.tooltip },
@@ -919,14 +919,48 @@ export default function CatalogPageClient({
 
   if (showQuiz) {
     return (
-      <PlaceValuesGame
-        onApplyPriorities={(quizPriorities) => {
-          setPriorities(quizPriorities)
+      <QuizModal
+        onApply={(payload: QuizPayload) => {
+          // Pillar priorities — merge with defaults so non-quiz pillars keep their values
+          const merged = { ...DEFAULT_PRIORITIES, ...payload.priorities } as PillarPriorities
+          setPriorities(merged)
+
+          // Filters
+          if (payload.filterAoTypes.length > 0) setFilterAoTypes(payload.filterAoTypes)
+          if (payload.filterNbTypes.length > 0) setFilterNbTypes(payload.filterNbTypes)
+          if (payload.filterHousingType.length > 0) setFilterHousingType(payload.filterHousingType)
+          if (payload.filterPoliticalLean.length > 0) setFilterPoliticalLean(payload.filterPoliticalLean)
+          if (payload.filterTrajectory && payload.filterTrajectory !== 'all') setFilterTrajectory(payload.filterTrajectory as typeof filterTrajectory)
+          if (payload.filterCommuteMax && payload.filterCommuteMax !== 'all') setFilterCommuteMax(payload.filterCommuteMax as typeof filterCommuteMax)
+          if (payload.filterLocalScene && payload.filterLocalScene !== 'all') setFilterLocalScene(payload.filterLocalScene as 'Some' | 'High')
+          if (payload.climatePrefs && Object.keys(payload.climatePrefs).length > 0) setClimatePrefs(payload.climatePrefs)
+
+          // Dealbreakers
+          if (payload.dealbreakers && Object.keys(payload.dealbreakers).length > 0) {
+            setDealbreakers(prev => ({ ...prev, ...payload.dealbreakers }))
+          }
+
+          // Persist to sessionStorage
           try {
             const stored = sessionStorage.getItem('homefit_search_options')
             const opts = stored ? JSON.parse(stored) : {}
-            sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, priorities: quizPriorities }))
+            sessionStorage.setItem('homefit_search_options', JSON.stringify({
+              ...opts,
+              priorities: merged,
+              filters: {
+                ...(opts.filters ?? {}),
+                filterAoTypes: payload.filterAoTypes,
+                filterNbTypes: payload.filterNbTypes,
+                filterHousingType: payload.filterHousingType,
+                filterPoliticalLean: payload.filterPoliticalLean,
+                filterTrajectory: payload.filterTrajectory,
+                filterCommuteMax: payload.filterCommuteMax,
+                filterLocalScene: payload.filterLocalScene,
+                climatePrefs: payload.climatePrefs,
+              },
+            }))
           } catch { /* ignore */ }
+
           setShowQuiz(false)
         }}
         onBack={() => setShowQuiz(false)}
