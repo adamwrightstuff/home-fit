@@ -37,11 +37,9 @@ import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker } from '@/lib/reweight'
 import { applyNbPreferencesV9, type NbPreference, type V9Breakdown } from '@/lib/nbPreference'
 import { applyAoPreferences, applyWaterfrontPreference, type AoPreference, type AoBreakdown, type WaterfrontSubPreference } from '@/lib/aoPreference'
-import { applyScenePreferences } from '@/lib/scenePreference'
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
-import { blendSceneArchetypes, personalizedSceneScore, SCENE_ARCHETYPES, type SceneArchetype } from '@/lib/vibeFeatures'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import QuizModal, { type QuizPayload } from '@/components/QuizModal'
 
@@ -119,7 +117,6 @@ export default function CatalogPageClient({
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>([])
   const [filterAoTypes, setFilterAoTypes] = useState<string[]>([])
   const [filterWaterfrontSubPref, setFilterWaterfrontSubPref] = useState<WaterfrontSubPreference | null>(null)
-  const [filterSceneTypes, setFilterSceneTypes] = useState<SceneArchetype[]>([])
   const [filterHousingType, setFilterHousingType] = useState<string[]>([])
   const [filterBuiltCharacter, setFilterBuiltCharacter] = useState<'historic' | 'contemporary' | ''>('')
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
@@ -143,9 +140,6 @@ export default function CatalogPageClient({
   const [twinCrossMetro, setTwinCrossMetro] = useState(true)
   const [twinSameBand, setTwinSameBand] = useState(false)
   const [twinPillars, setTwinPillars] = useState<Set<PillarKey>>(() => defaultTwinPillarSet())
-  const [sceneArchetypes, setSceneArchetypes] = useState<SceneArchetype[]>([])
-  const [explorerSceneSort, setExplorerSceneSort] = useState<SceneArchetype[]>([])
-  const [sceneSortOpen, setSceneSortOpen] = useState(false)
   const [filterText, setFilterText] = useState('')
   const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la' | 'sf'>(initialMetroFilter)
   const [filterAreaTypes, setFilterAreaTypes] = useState<string[]>([])
@@ -215,8 +209,6 @@ export default function CatalogPageClient({
   const setIndexModeAndListSort = useCallback((mode: CatalogMapIndexMode) => {
     setIndexMode(mode)
     setSortByName(false)
-    setExplorerSceneSort([])
-    setSceneSortOpen(false)
   }, [])
 
   useEffect(() => {
@@ -283,7 +275,6 @@ export default function CatalogPageClient({
           if (Array.isArray(f.filterNbTypes)) setFilterNbTypes(f.filterNbTypes)
           if (Array.isArray(f.filterAoTypes)) setFilterAoTypes(f.filterAoTypes)
           if (typeof f.filterWaterfrontSubPref === 'string') setFilterWaterfrontSubPref(f.filterWaterfrontSubPref as WaterfrontSubPreference)
-          if (Array.isArray(f.filterSceneTypes)) setFilterSceneTypes(f.filterSceneTypes as SceneArchetype[])
           if (Array.isArray(f.filterHousingType)) setFilterHousingType(f.filterHousingType)
           if (f.filterBuiltCharacter === 'historic' || f.filterBuiltCharacter === 'contemporary') setFilterBuiltCharacter(f.filterBuiltCharacter)
           if (typeof f.filterSchoolType === 'string') setFilterSchoolType(f.filterSchoolType)
@@ -315,7 +306,6 @@ export default function CatalogPageClient({
             filterNbTypes,
             filterAoTypes,
             filterWaterfrontSubPref,
-            filterSceneTypes,
             filterHousingType,
             filterBuiltCharacter,
             filterSchoolType,
@@ -452,31 +442,12 @@ export default function CatalogPageClient({
       }
     }) : withNb
 
-    // Apply scene archetype preferences: replace local_scene_score with personalized
-    // score and inject as a synthetic livability_pillars entry so reweightScoreResponseFromPriorities
-    // can include it when local_scene has a non-None priority.
-    if (filterSceneTypes.length === 0) return withAo
-    return withAo.map((p) => {
-      const breakdown = (p.score as any).local_scene_breakdown as Record<string, number> | undefined
-      const personalized = applyScenePreferences(breakdown, filterSceneTypes)
-      if (personalized === null) return p
-      return {
-        ...p,
-        score: {
-          ...p.score,
-          local_scene_score: personalized,
-          livability_pillars: {
-            ...p.score.livability_pillars,
-            local_scene: { score: personalized },
-          },
-        },
-      }
-    })
-  }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, filterSceneTypes])
+    return withAo
+  }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref])
 
   const effectivePriorities = useMemo(
-    () => filterSceneTypes.length > 0 ? { ...priorities, local_scene: 'Medium' as const } : priorities,
-    [priorities, filterSceneTypes],
+    () => priorities,
+    [priorities],
   )
 
   const filteredPlaces = useMemo(() => {
@@ -548,15 +519,6 @@ export default function CatalogPageClient({
         return !cm || cm.score >= 30
       })
     }
-    const sceneWeightsForSort = blendSceneArchetypes(explorerSceneSort)
-    if (sceneWeightsForSort) {
-      const mult = sortDir === 'asc' ? 1 : -1
-      return [...list].sort((a, b) => {
-        const sa = personalizedSceneScore((a.score as any).local_scene_breakdown, sceneWeightsForSort)
-        const sb = personalizedSceneScore((b.score as any).local_scene_breakdown, sceneWeightsForSort)
-        return mult * (sa - sb)
-      })
-    }
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
     return sortPlaces(list, sortKey, sortDir, effectivePriorities)
   }, [
@@ -577,8 +539,6 @@ export default function CatalogPageClient({
     sortByName,
     sortDir,
     effectivePriorities,
-    explorerSceneSort,
-    filterSceneTypes,
   ])
 
   /**
@@ -759,9 +719,8 @@ export default function CatalogPageClient({
   const twinRanked: TwinMatchResult[] = useMemo(() => {
     if (catalogMode !== 'twin' || !twinQueryKey || !queryPlace || twinPillarList.length < 2) return []
     const keyFn = (pl: CatalogMapPlace) => catalogRowKey(pl.catalog)
-    const sceneWeights = blendSceneArchetypes(sceneArchetypes)
-    return rankTwinMatches(queryPlace, twinCandidatePlaces, twinPillarList, keyFn, 12, twinSameBand, sceneWeights)
-  }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand, twinCrossMetro, sceneArchetypes])
+    return rankTwinMatches(queryPlace, twinCandidatePlaces, twinPillarList, keyFn, 12, twinSameBand, null)
+  }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand, twinCrossMetro])
 
   const mapPlacesNoTwinQuery = useMemo(() => {
     if (catalogMode !== 'twin') return gatedPlaces
@@ -1192,22 +1151,8 @@ export default function CatalogPageClient({
               style={sortByName
                 ? { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }
                 : { background: 'transparent', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
-              onClick={() => { setSortByName(true); setExplorerSceneSort([]); setSceneSortOpen(false) }}
+              onClick={() => { setSortByName(true) }}
             >A–Z</button>
-
-            {/* Scene archetype sort */}
-            <button
-              type="button"
-              aria-pressed={sceneSortOpen}
-              className="rounded-full px-2.5 py-0.5 text-xs font-bold"
-              style={sceneSortOpen
-                ? { background: 'var(--hf-primary-1)', color: '#fff', border: 'none' }
-                : { background: 'transparent', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
-              onClick={() => {
-                if (sceneSortOpen) { setSceneSortOpen(false); setExplorerSceneSort([]) }
-                else { setSortByName(false); setSceneSortOpen(true) }
-              }}
-            >Scene</button>
 
             <div className="h-3 w-px bg-[var(--hf-border)] mx-1" />
 
@@ -1224,35 +1169,6 @@ export default function CatalogPageClient({
               }
             </button>
 
-          </div>
-        )}
-
-        {catalogMode === 'explorer' && sceneSortOpen && (
-          <div
-            className="hidden md:flex flex-wrap gap-1.5 px-4 py-2 border-t border-[var(--hf-border)]"
-            style={{ background: 'var(--hf-bg-subtle)' }}
-          >
-            {(Object.entries(SCENE_ARCHETYPES) as [SceneArchetype, typeof SCENE_ARCHETYPES[SceneArchetype]][]).map(([key, meta]) => {
-              const active = explorerSceneSort.includes(key)
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  aria-pressed={active}
-                  title={meta.desc}
-                  className="flex items-center gap-1 rounded-full px-3 py-1 text-[0.65rem] font-bold whitespace-nowrap transition-colors"
-                  style={active
-                    ? { background: 'var(--hf-primary-1)', color: '#fff', border: 'none' }
-                    : { background: 'var(--hf-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
-                  onClick={() => setExplorerSceneSort(
-                    active ? explorerSceneSort.filter(k => k !== key) : [...explorerSceneSort, key]
-                  )}
-                >
-                  <span>{meta.icon}</span>
-                  <span>{meta.label}</span>
-                </button>
-              )
-            })}
           </div>
         )}
 
@@ -1612,8 +1528,6 @@ export default function CatalogPageClient({
           twinRanked={twinRanked}
           priorities={priorities}
           selectedPillars={twinPillarList}
-          sceneArchetypes={sceneArchetypes}
-          onSceneArchetypesChange={setSceneArchetypes}
           selectedTwinKey={
             selectedKey && twinQueryKey && selectedKey !== twinQueryKey ? selectedKey : null
           }
@@ -1744,8 +1658,6 @@ export default function CatalogPageClient({
         }}
         filterWaterfrontSubPref={filterWaterfrontSubPref}
         onFilterWaterfrontSubPrefChange={setFilterWaterfrontSubPref}
-        filterSceneTypes={filterSceneTypes}
-        onFilterSceneTypesChange={setFilterSceneTypes}
         filterHousingType={filterHousingType}
         onFilterHousingTypeChange={setFilterHousingType}
         filterBuiltCharacter={filterBuiltCharacter}

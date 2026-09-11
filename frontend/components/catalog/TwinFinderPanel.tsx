@@ -9,7 +9,6 @@ import type { TwinMatchResult } from '@/lib/twinSimilarity'
 import TwinResultCard from '@/components/catalog/TwinResultCard'
 import TwinCandidateDetailContent from '@/components/catalog/TwinCandidateDetailContent'
 import MetroDot from '@/components/catalog/MetroDot'
-import { SCENE_ARCHETYPES, type SceneArchetype } from '@/lib/vibeFeatures'
 
 interface TwinFinderPanelProps {
   places: CatalogMapPlaceWithMetro[]
@@ -19,8 +18,6 @@ interface TwinFinderPanelProps {
   twinRanked: TwinMatchResult[]
   priorities: PillarPriorities
   selectedPillars: PillarKey[]
-  sceneArchetypes: SceneArchetype[]
-  onSceneArchetypesChange: (archetypes: SceneArchetype[]) => void
   selectedTwinKey: string | null
   onSelectTwinResult: (key: string | null) => void
   onSelectQuery: (key: string) => void
@@ -34,19 +31,10 @@ export default function TwinFinderPanel({
   twinRanked,
   priorities,
   selectedPillars,
-  sceneArchetypes,
-  onSceneArchetypesChange,
   selectedTwinKey,
   onSelectTwinResult,
   onSelectQuery,
 }: TwinFinderPanelProps) {
-  function toggleArchetype(key: SceneArchetype) {
-    onSceneArchetypesChange(
-      sceneArchetypes.includes(key)
-        ? sceneArchetypes.filter((k) => k !== key)
-        : [...sceneArchetypes, key]
-    )
-  }
   const q = twinSearchText.trim().toLowerCase()
   const autocomplete =
     !twinQueryKey && q.length > 0
@@ -124,44 +112,6 @@ export default function TwinFinderPanel({
           />
         </div>
       )}
-
-      {/* Scene archetype picker — sticky so it stays visible while scrolling results */}
-      <div className="sticky top-0 z-10 mx-auto mb-4 max-w-lg sm:max-w-none rounded-xl bg-[var(--hf-bg)] pb-2 pt-1">
-        <p className="mb-2 text-[0.7rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
-          Match my scene{sceneArchetypes.length > 0 ? ` · ${sceneArchetypes.length} selected` : ''}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {(Object.entries(SCENE_ARCHETYPES) as [SceneArchetype, typeof SCENE_ARCHETYPES[SceneArchetype]][]).map(([key, meta]) => {
-            const active = sceneArchetypes.includes(key)
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => toggleArchetype(key)}
-                title={meta.desc}
-                className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors"
-                style={{
-                  borderColor: active ? 'var(--hf-primary-1)' : 'var(--hf-border)',
-                  background: active ? 'var(--hf-primary-1)' : 'var(--hf-card-bg)',
-                  color: active ? '#fff' : 'var(--hf-text-secondary)',
-                }}
-              >
-                <span>{meta.icon}</span>
-                <span>{meta.label}</span>
-              </button>
-            )
-          })}
-          {sceneArchetypes.length > 0 && (
-            <button
-              type="button"
-              onClick={() => onSceneArchetypesChange([])}
-              className="rounded-full border border-[var(--hf-border)] px-3 py-1 text-xs text-[var(--hf-text-tertiary)] transition-colors hover:text-[var(--hf-text-secondary)]"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      </div>
 
       <div className="mx-auto grid max-w-lg gap-3 sm:max-w-none sm:grid-cols-2">
         {twinRanked.map((r) => (
