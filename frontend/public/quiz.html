@@ -1,19 +1,19 @@
 <title>HomeFit Quiz</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=DM+Sans:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap">
 
 <style>
   :root {
-    --bg: #0D1219;
-    --surface: #161E2A;
-    --surface-2: #1E2A3A;
-    --border: rgba(255,255,255,0.07);
-    --text: #EDE9E3;
-    --muted: #7A8696;
-    --dim: #3A4452;
-    --accent: #E8855A;
-    --accent-bg: rgba(232,133,90,0.12);
-    --bar-track: #1E2A3A;
+    --bg: #FAF7F2;
+    --surface: #ffffff;
+    --surface-2: #F0EAE3;
+    --border: #E2DDD7;
+    --text: #1C1917;
+    --muted: #9B948D;
+    --dim: #E2DDD7;
+    --accent: #C96956;
+    --accent-bg: rgba(201, 105, 86, 0.09);
+    --bar-track: #F0EAE3;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,7 +24,47 @@
     font-family: 'DM Sans', system-ui, sans-serif;
     min-height: 100vh;
     display: flex;
+    flex-direction: column;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Hero band ── */
+  .hero {
+    background: linear-gradient(135deg, #C96956 0%, #8B6F5E 100%);
+    padding: 28px 48px 32px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .hero-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(22px, 4vw, 32px);
+    color: #fff;
+    position: relative;
+    z-index: 1;
+    line-height: 1.2;
+  }
+  .hero-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.78);
+    margin-top: 6px;
+    position: relative;
+    z-index: 1;
+    font-weight: 300;
+  }
+
+  /* ── Layout ── */
+  .main {
+    flex: 1;
+    display: flex;
+    min-height: 0;
   }
 
   .quiz-pane {
@@ -38,26 +78,28 @@
   }
 
   .weights-pane {
-    width: 260px;
+    width: 240px;
     flex-shrink: 0;
     border-left: 1px solid var(--border);
     background: var(--surface);
-    padding: 32px 24px;
+    padding: 28px 20px;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
   }
 
   @media (max-width: 700px) {
-    body { flex-direction: column; }
-    .quiz-pane { padding: 32px 24px; justify-content: flex-start; padding-top: 48px; }
-    .weights-pane { width: 100%; border-left: none; border-top: 1px solid var(--border); padding: 24px; }
+    .hero { padding: 20px 24px 24px; }
+    .main { flex-direction: column; }
+    .quiz-pane { padding: 32px 24px; justify-content: flex-start; padding-top: 40px; }
+    .weights-pane { width: 100%; border-left: none; border-top: 1px solid var(--border); padding: 20px 24px; }
   }
 
+  /* ── Progress bar ── */
   .progress-track {
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 2px;
+    height: 3px;
     background: var(--border);
   }
   .progress-fill {
@@ -66,52 +108,51 @@
     transition: width 0.4s ease;
   }
 
+  /* ── Question ── */
   .question-wrap { max-width: 520px; }
 
   .q-step {
-    font-family: 'Syne', sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.18em;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--muted);
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
 
   .q-text {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(22px, 4vw, 32px);
-    font-weight: 800;
-    line-height: 1.2;
-    text-wrap: balance;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(22px, 3.5vw, 30px);
+    line-height: 1.25;
     color: var(--text);
-    margin-bottom: 36px;
+    margin-bottom: 32px;
   }
 
   .q-sub {
     font-size: 13px;
     font-weight: 300;
     color: var(--muted);
-    margin-top: -24px;
-    margin-bottom: 28px;
+    margin-top: -22px;
+    margin-bottom: 24px;
     line-height: 1.6;
   }
 
+  /* ── Options ── */
   .options {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     max-width: 460px;
   }
 
   .opt {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: 10px;
-    padding: 16px 20px;
+    padding: 14px 18px;
     text-align: left;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s, background 0.15s;
     display: flex;
     align-items: center;
     gap: 14px;
@@ -119,27 +160,28 @@
     font-family: 'DM Sans', sans-serif;
     font-size: 15px;
     font-weight: 400;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
-  .opt:hover { border-color: rgba(232,133,90,0.4); background: var(--surface-2); }
+  .opt:hover { border-color: rgba(201,105,86,0.45); background: var(--accent-bg); }
   .opt.selected { border-color: var(--accent); background: var(--accent-bg); }
   .opt-icon { font-size: 20px; width: 28px; flex-shrink: 0; text-align: center; }
-  .opt-label { font-weight: 500; }
+  .opt-label { font-weight: 500; color: var(--text); }
   .opt-desc { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 300; }
 
-  /* Multi-select chips */
+  /* ── Chips ── */
   .chip-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     max-width: 480px;
     margin-bottom: 8px;
   }
 
   .chip {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: 24px;
-    padding: 10px 18px;
+    padding: 9px 16px;
     cursor: pointer;
     color: var(--text);
     font-family: 'DM Sans', sans-serif;
@@ -147,17 +189,19 @@
     font-weight: 400;
     display: flex;
     align-items: center;
-    gap: 8px;
-    transition: all 0.15s;
+    gap: 7px;
+    transition: border-color 0.15s, background 0.15s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
-  .chip:hover { border-color: rgba(232,133,90,0.4); background: var(--surface-2); }
+  .chip:hover { border-color: rgba(201,105,86,0.45); background: var(--accent-bg); }
   .chip.selected { border-color: var(--accent); background: var(--accent-bg); }
 
+  /* ── Nav ── */
   .nav-row {
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-top: 32px;
+    margin-top: 28px;
   }
 
   .btn-continue {
@@ -165,16 +209,16 @@
     color: #fff;
     border: none;
     border-radius: 8px;
-    padding: 12px 28px;
-    font-family: 'Syne', sans-serif;
+    padding: 11px 26px;
+    font-family: 'DM Sans', sans-serif;
     font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
+    font-weight: 500;
+    letter-spacing: 0.02em;
     cursor: pointer;
     transition: opacity 0.15s;
   }
   .btn-continue:hover { opacity: 0.88; }
-  .btn-continue:disabled { opacity: 0.3; cursor: default; }
+  .btn-continue:disabled { opacity: 0.35; cursor: default; }
 
   .btn-back {
     background: none;
@@ -190,30 +234,29 @@
   .question-wrap { transition: opacity 0.2s ease, transform 0.2s ease; }
   .question-wrap.out { opacity: 0; transform: translateY(-8px); pointer-events: none; }
 
-  /* Weights pane */
+  /* ── Weights pane ── */
   .weights-label {
-    font-family: 'Syne', sans-serif;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.16em;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--muted);
-    margin-bottom: 20px;
+    margin-bottom: 18px;
   }
 
   .pillar-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 5px 0;
     transition: opacity 0.3s;
   }
-  .pillar-row.dim { opacity: 0.28; }
+  .pillar-row.dim { opacity: 0.3; }
 
   .pillar-name {
     font-size: 11px;
     color: var(--text);
-    width: 96px;
+    width: 88px;
     flex-shrink: 0;
     font-weight: 400;
     white-space: nowrap;
@@ -240,88 +283,82 @@
   .priority-tag {
     font-size: 9px;
     font-weight: 600;
-    font-family: 'Syne', sans-serif;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     width: 26px;
     text-align: right;
     color: var(--muted);
   }
   .priority-tag.high { color: var(--accent); }
 
-  /* Dealbreaker section */
-  .db-section {
-    margin-bottom: 4px;
-  }
-  .db-hint {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 14px;
-    font-weight: 300;
-    line-height: 1.5;
-  }
-
-  /* Results */
+  /* ── Results ── */
   .results-wrap { max-width: 520px; }
   .result-headline {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(24px, 4vw, 36px);
-    font-weight: 800;
-    line-height: 1.2;
-    margin-bottom: 12px;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(22px, 3.5vw, 30px);
+    line-height: 1.25;
+    margin-bottom: 10px;
     color: var(--text);
   }
   .result-sub {
     font-size: 14px;
     font-weight: 300;
-    color: var(--muted);
+    color: #6B6560;
     line-height: 1.7;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
     max-width: 420px;
   }
   .result-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
   }
   .result-chip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: 20px;
-    padding: 7px 14px;
+    padding: 6px 14px;
     font-size: 12px;
     color: var(--text);
     font-weight: 400;
   }
-  .result-chip.hi { border-color: rgba(232,133,90,0.5); background: var(--accent-bg); color: var(--accent); }
-  .result-chip.lo { opacity: 0.45; }
+  .result-chip.hi { border-color: rgba(201,105,86,0.5); background: var(--accent-bg); color: var(--accent); }
+  .result-chip.lo { opacity: 0.42; }
 
   .btn-apply {
     background: var(--accent);
     color: #fff;
     border: none;
     border-radius: 8px;
-    padding: 14px 32px;
-    font-family: 'Syne', sans-serif;
+    padding: 13px 30px;
+    font-family: 'DM Sans', sans-serif;
     font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
+    font-weight: 500;
+    letter-spacing: 0.02em;
     cursor: pointer;
+    transition: opacity 0.15s;
   }
   .btn-apply:hover { opacity: 0.88; }
 </style>
 
-<div class="quiz-pane">
-  <div class="progress-track"><div class="progress-fill" id="prog"></div></div>
-  <div class="question-wrap" id="qwrap"></div>
+<div class="hero">
+  <div class="hero-title">Find your neighborhood</div>
+  <div class="hero-sub">Answer a few questions and HomeFit will rank places by what actually matters to you.</div>
 </div>
 
-<div class="weights-pane">
-  <div class="weights-label">Your priorities</div>
-  <div id="bars"></div>
+<div class="main">
+  <div class="quiz-pane">
+    <div class="progress-track"><div class="progress-fill" id="prog"></div></div>
+    <div class="question-wrap" id="qwrap"></div>
+  </div>
+
+  <div class="weights-pane">
+    <div class="weights-label">Your priorities</div>
+    <div id="bars"></div>
+  </div>
 </div>
 
 <script>
@@ -634,15 +671,14 @@ function renderResults() {
   const highs = PILLARS.filter(p => weights[p.key] === 3).map(p => p.label)
   const lows  = PILLARS.filter(p => weights[p.key] <= 1).map(p => p.label)
 
-  // Persona from 6 dimensions
   const hasKids      = answers.life === 'kids'
   const isEmptyNest  = answers.life === 'empty'
   const isRemote     = answers.work === 'remote'
   const needsTransit = answers.commute_mode === 'transit'
   const wantsCity    = answers.urban === 'city'
   const wantsOuter   = answers.urban === 'outer_suburb' || answers.urban === 'small_town'
-  const likesWater   = outdoorsPicks.includes('waterfront')
   const likesAdventure = outdoorsPicks.includes('trails_regional')
+  const likesWater   = outdoorsPicks.includes('waterfront')
   const isValueFocused = answers.budget === 'value'
   const wantsArrived = answers.stability === 'arrived'
   const wantsUpside  = answers.stability === 'upside'
@@ -700,7 +736,7 @@ function renderResults() {
         ${highs.map(h => `<span class="result-chip hi">↑ ${h}</span>`).join('')}
         ${lows.map(l => `<span class="result-chip lo">↓ ${l}</span>`).join('')}
       </div>
-      ${filterNotes.length ? `<div class="q-sub" style="margin-top:0;margin-bottom:24px;">Filters: ${filterNotes.join(' · ')}</div>` : ''}
+      ${filterNotes.length ? `<div class="q-sub" style="margin-top:0;margin-bottom:20px;">Filters: ${filterNotes.join(' · ')}</div>` : ''}
       <button class="btn-apply" onclick="applyAndClose()">Apply to HomeFit →</button>
     </div>
   `
@@ -709,39 +745,28 @@ function renderResults() {
 function applyAndClose() {
   const LEVEL = ['None', 'Low', 'Medium', 'High']
 
-  // Pillar priorities — matches PillarPriorities type
   const priorities = {}
   PILLARS.forEach(p => priorities[p.key] = LEVEL[weights[p.key]])
-  // air_travel_access: boost if user flies for work
   if (answers.commute_mode === 'fly') priorities['air_travel_access'] = 'High'
 
-  // filterAoTypes — IDs already match app (local_parks, trails_regional, waterfront)
   const filterAoTypes = outdoorsPicks.filter(p => p !== 'none')
-
-  // filterNbTypes — IDs already match app (mountains, ocean, lakes_rivers, canopy)
   const filterNbTypes = sceneryPicks.filter(Boolean)
 
-  // filterHousingType — app uses sf_townhouse and apartment
   const filterHousingType = []
   if (housingPicks.includes('single_family') || housingPicks.includes('rowhouse')) filterHousingType.push('sf_townhouse')
   if (housingPicks.includes('condo')) filterHousingType.push('apartment')
 
-  // filterPoliticalLean — IDs already match app (strong_d, lean_d, moderate, lean_r, strong_r)
   const filterPoliticalLean = politicalPicks.filter(p => p !== 'skip')
 
-  // filterTrajectory — app uses capitalized strings
   const trajectoryMap = { arrived: 'Arrived', upside: 'Up-and-Coming' }
   const filterTrajectory = trajectoryMap[answers.stability] || 'all'
 
-  // filterCommuteMax — app uses numeric string or 'all'
   const commuteMap = { u30: '30', u45: '45', u60: '60', any: 'all' }
   const filterCommuteMax = commuteMap[answers.commute_time] || 'all'
 
-  // filterLocalScene — app uses 'all' | 'Some' | 'High'; any scene pick = High
   const activeScene = localScenePicks.filter(p => p !== 'none')
   const filterLocalScene = activeScene.length > 0 ? 'High' : 'all'
 
-  // climatePrefs — map weather chips to ClimatePreferences structure
   const climatePrefs = {}
   if (weatherPicks.includes('cold'))   climatePrefs.cold_tolerance = 'dealbreaker'
   if (weatherPicks.includes('hot'))    climatePrefs.heat_tolerance = 'dealbreaker'
@@ -760,7 +785,6 @@ function applyAndClose() {
     climatePrefs,
   }
 
-  // Dealbreakers derived from strong signals
   const dealbreakers = {}
   if (answers.commute_mode === 'fly') dealbreakers['air_travel_access'] = true
 
@@ -844,10 +868,8 @@ function selectOpt(qid, oid) {
 }
 
 function recomputeAndRender() {
-  // Reset weights to their defaults
   PILLARS.forEach(p => weights[p.key] = LOW_DEFAULT.has(p.key) ? 1 : 2)
 
-  // Replay all answered questions
   QUESTIONS.forEach(q => {
     if (q.type === 'weather' || q.type === 'political') {
       /* filter only */
@@ -867,7 +889,6 @@ function nextStep() {
   const q = currentQ()
   if (!q) return
 
-  // Validate — outdoors requires a pick; other chip types are skippable; options require a selection
   if (q.type === 'outdoors' && outdoorsPicks.length === 0) return
   if (!CHIP_TYPES.has(q.type) && !answers[q.id]) return
 
