@@ -719,7 +719,8 @@ function applyAndClose() {
 
   const priorities = {}
   PILLARS.forEach(p => priorities[p.key] = LEVEL[weights[p.key]])
-  if (answers.commute_mode === 'fly') priorities['air_travel_access'] = 'High'
+  priorities['air_travel_access'] = answers.commute_mode === 'fly' ? 'High' : 'None'
+  priorities['economic_opportunity'] = 'None'
 
   const filterAoTypes = outdoorsPicks.filter(p => p !== 'none')
   const filterNbTypes = sceneryPicks.filter(Boolean)
