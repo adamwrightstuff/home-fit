@@ -499,8 +499,9 @@ const QUESTIONS = [
     ],
     apply(ids) {
       if (ids.includes('none') && ids.length === 1) { setWeight('active_outdoors', 0); return }
-      if (ids.includes('trails_regional') || ids.includes('waterfront')) setWeight('active_outdoors', 3)
+      if (ids.includes('trails_regional')) setWeight('active_outdoors', 3)
       else if (ids.includes('local_parks')) setWeight('active_outdoors', 2)
+      if (ids.includes('waterfront')) bumpWeight('natural_beauty', 1)
     }
   },
 
@@ -754,10 +755,6 @@ function applyAndClose() {
 
   const dealbreakers = {}
   if (answers.commute_mode === 'fly') dealbreakers['air_travel_access'] = true
-  if (answers.life === 'kids') {
-    dealbreakers['quality_education'] = true
-    dealbreakers['community_safety'] = true
-  }
 
   const message = { type: 'homefit-quiz-result', payload: { ...payload, dealbreakers } }
   if (window.parent !== window) {
