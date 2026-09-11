@@ -622,11 +622,13 @@ export default function CatalogPageClient({
     },
     quality_education: (p) => {
       const qe = (p.score.livability_pillars as any)?.quality_education
+      if (qe?.status === 'fallback' || qe?.status === 'no_data') return true
       const score = typeof qe?.score === 'number' ? qe.score : null
       return passesQualityEducationDealbreaker(score)
     },
     community_safety: (p) => {
       const cs = (p.score.livability_pillars as any)?.community_safety
+      if (cs?.status === 'fallback' || cs?.status === 'no_data') return true
       const score = typeof cs?.score === 'number' ? cs.score : null
       return passesCommunitySafetyDealbreaker(score)
     },
