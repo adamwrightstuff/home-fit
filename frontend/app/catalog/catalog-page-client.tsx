@@ -113,18 +113,60 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
     return { ...DEFAULT_PRIORITIES }
   })
-  const [filterPoliticalLean, setFilterPoliticalLean] = useState<string[]>([])
-  const [filterNbTypes, setFilterNbTypes] = useState<string[]>([])
-  const [filterAoTypes, setFilterAoTypes] = useState<string[]>([])
+  const [filterPoliticalLean, setFilterPoliticalLean] = useState<string[]>(() => {
+    try {
+      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      return Array.isArray(f?.filterPoliticalLean) ? f.filterPoliticalLean : []
+    } catch { return [] }
+  })
+  const [filterNbTypes, setFilterNbTypes] = useState<string[]>(() => {
+    try {
+      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      return Array.isArray(f?.filterNbTypes) ? f.filterNbTypes : []
+    } catch { return [] }
+  })
+  const [filterAoTypes, setFilterAoTypes] = useState<string[]>(() => {
+    try {
+      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      return Array.isArray(f?.filterAoTypes) ? f.filterAoTypes : []
+    } catch { return [] }
+  })
   const [filterWaterfrontSubPref, setFilterWaterfrontSubPref] = useState<WaterfrontSubPreference | null>(null)
-  const [filterHousingType, setFilterHousingType] = useState<string[]>([])
+  const [filterHousingType, setFilterHousingType] = useState<string[]>(() => {
+    try {
+      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      return Array.isArray(f?.filterHousingType) ? f.filterHousingType : []
+    } catch { return [] }
+  })
   const [filterBuiltCharacter, setFilterBuiltCharacter] = useState<'historic' | 'contemporary' | ''>('')
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
-  const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High'>('all')
-  const [filterCommuteMax, setFilterCommuteMax] = useState<'all' | '15' | '30' | '45' | '60'>('all')
-  const [climatePrefs, setClimatePrefs] = useState<ClimatePreferences>({})
+  const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High'>(() => {
+    try {
+      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const v = f?.filterLocalScene
+      return v === 'Some' || v === 'High' ? v : 'all'
+    } catch { return 'all' }
+  })
+  const [filterCommuteMax, setFilterCommuteMax] = useState<'all' | '15' | '30' | '45' | '60'>(() => {
+    try {
+      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const v = f?.filterCommuteMax
+      return v === '15' || v === '30' || v === '45' || v === '60' ? v : 'all'
+    } catch { return 'all' }
+  })
+  const [climatePrefs, setClimatePrefs] = useState<ClimatePreferences>(() => {
+    try {
+      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      return f?.climatePrefs && typeof f.climatePrefs === 'object' ? f.climatePrefs : {}
+    } catch { return {} }
+  })
 /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
-  const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>({})
+  const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>(() => {
+    try {
+      const parsed = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')
+      return parsed?.dealbreakers && typeof parsed.dealbreakers === 'object' ? parsed.dealbreakers : {}
+    } catch { return {} }
+  })
   const toggleDealbreaker = useCallback((key: PillarKey) => {
     setDealbreakers((prev) => ({ ...prev, [key]: !prev[key] }))
   }, [])
