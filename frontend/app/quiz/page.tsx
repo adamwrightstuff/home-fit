@@ -24,7 +24,6 @@ export default function QuizPage() {
           filterPoliticalLean: payload.filterPoliticalLean,
           filterTrajectory: payload.filterTrajectory,
           filterCommuteMax: payload.filterCommuteMax,
-          filterLocalScene: payload.filterLocalScene,
           climatePrefs: payload.climatePrefs,
         },
         dealbreakers: payload.dealbreakers,

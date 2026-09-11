@@ -389,12 +389,11 @@ let weatherPicks = []
 let politicalPicks = []
 let outdoorsPicks = []
 let sceneryPicks = []
-let localScenePicks = []
 let housingPicks = []
 
-const CHIP_TYPES = new Set(['weather', 'political', 'outdoors', 'scenery', 'local_scene', 'housing'])
+const CHIP_TYPES = new Set(['weather', 'political', 'outdoors', 'scenery', 'housing'])
 function pickArr(type) {
-  return { weather: weatherPicks, political: politicalPicks, outdoors: outdoorsPicks, scenery: sceneryPicks, local_scene: localScenePicks, housing: housingPicks }[type] || outdoorsPicks
+  return { weather: weatherPicks, political: politicalPicks, outdoors: outdoorsPicks, scenery: sceneryPicks, housing: housingPicks }[type] || outdoorsPicks
 }
 
 function setWeight(k, v) {
@@ -570,29 +569,6 @@ const QUESTIONS = [
     }
   },
 
-  // Dimension 7b — Local scene
-  {
-    id: 'local_scene',
-    type: 'local_scene',
-    q: 'What\'s your local scene?',
-    sub: 'What do you want more of right outside your door? Pick all that fit.',
-    chips: [
-      { id: 'coffee',    icon: '☕', label: 'Coffee shop regular' },
-      { id: 'nightlife', icon: '🌙', label: 'Late-night creative' },
-      { id: 'arts',      icon: '🎭', label: 'Arts & culture' },
-      { id: 'food',      icon: '🍜', label: 'Food obsessive' },
-      { id: 'explorer',  icon: '🗺️', label: 'Weekend explorer' },
-      { id: 'none',      icon: '—',  label: 'None of the above' },
-    ],
-    apply(ids) {
-      const active = ids.filter(x => x !== 'none')
-      if (active.length > 0) {
-        if (weights['neighborhood_amenities'] < 2) setWeight('neighborhood_amenities', 2)
-        bumpWeight('social_fabric', 1)
-      }
-    }
-  },
-
   // Filter — Housing type (multi-select)
   {
     id: 'housing',
@@ -721,11 +697,9 @@ function renderResults() {
   const outdoorsNote = outdoorsPicks.filter(p => p !== 'none').map(p => outdoorsLabels[p]).filter(Boolean).join(' + ') || ''
   const sceneryLabels = { mountains: 'Mountains', ocean: 'Ocean & Coast', lakes_rivers: 'Lakes & Rivers', canopy: 'Tree Canopy' }
   const sceneryNote = sceneryPicks.map(p => sceneryLabels[p]).filter(Boolean).join(' · ')
-  const localSceneLabels = { coffee: 'Coffee shops', nightlife: 'Nightlife', arts: 'Arts & culture', food: 'Food scene', explorer: 'Weekend exploration' }
-  const localSceneNote = localScenePicks.filter(p => p !== 'none').map(p => localSceneLabels[p]).filter(Boolean).join(' · ')
   const housingLabels = { single_family: 'Single-family', rowhouse: 'Rowhouse/Townhouse', condo: 'Apartment/Condo' }
   const housingNote = housingPicks.map(p => housingLabels[p]).filter(Boolean).join(' or ')
-  const filterNotes = [politicalNote, commuteNote, stabilityNote, outdoorsNote, sceneryNote, localSceneNote, housingNote, ...weatherNotes].filter(Boolean)
+  const filterNotes = [politicalNote, commuteNote, stabilityNote, outdoorsNote, sceneryNote, housingNote, ...weatherNotes].filter(Boolean)
 
   document.getElementById('qwrap').innerHTML = `
     <div class="results-wrap">
@@ -764,9 +738,6 @@ function applyAndClose() {
   const commuteMap = { u30: '30', u45: '45', u60: '60', any: 'all' }
   const filterCommuteMax = commuteMap[answers.commute_time] || 'all'
 
-  const activeScene = localScenePicks.filter(p => p !== 'none')
-  const filterLocalScene = activeScene.length > 0 ? 'High' : 'all'
-
   const climatePrefs = {}
   if (weatherPicks.includes('cold'))   climatePrefs.cold_tolerance = 'dealbreaker'
   if (weatherPicks.includes('hot'))    climatePrefs.heat_tolerance = 'dealbreaker'
@@ -781,7 +752,6 @@ function applyAndClose() {
     filterPoliticalLean,
     filterTrajectory,
     filterCommuteMax,
-    filterLocalScene,
     climatePrefs,
   }
 

@@ -12,7 +12,6 @@ export interface QuizPayload {
   filterPoliticalLean: string[]
   filterTrajectory: string
   filterCommuteMax: string
-  filterLocalScene: string
   climatePrefs: ClimatePreferences
   dealbreakers: Partial<Record<string, boolean>>
 }
