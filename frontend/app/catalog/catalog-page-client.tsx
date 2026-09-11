@@ -296,6 +296,18 @@ export default function CatalogPageClient({
   // Load preferences from Supabase on sign-in; save debounced on change when signed in.
   useEffect(() => {
     if (!user) return
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      if (stored) {
+        const opts = JSON.parse(stored)
+        if (opts.quiz_override) {
+          delete opts.quiz_override
+          sessionStorage.setItem('homefit_search_options', JSON.stringify(opts))
+          hasRestoredRef.current = true
+          return
+        }
+      }
+    } catch { /* ignore */ }
     fetch('/api/me/preferences')
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {

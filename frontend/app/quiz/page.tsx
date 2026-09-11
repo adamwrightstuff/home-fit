@@ -15,6 +15,7 @@ export default function QuizPage() {
       const opts = stored ? JSON.parse(stored) : {}
       sessionStorage.setItem('homefit_search_options', JSON.stringify({
         ...opts,
+        quiz_override: true,
         priorities: merged,
         filters: {
           ...(opts.filters ?? {}),
