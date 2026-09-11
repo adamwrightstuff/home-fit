@@ -576,7 +576,17 @@ export default function CatalogPageClient({
     if (hasClimatePreferences(climatePrefs)) {
       list = list.filter((p) => {
         const cm = scoreClimateMatch(p.climate, climatePrefs)
-        return !cm || cm.score >= 30
+        // No climate data at all (null) or empty object producing NaN score → pass
+        if (!cm || isNaN(cm.score)) return true
+        // Each dealbreaker axis must pass independently — averaging neutral axes (50) with a
+        // failing dealbreaker axis can raise the average above the threshold, letting rainy/cold/hot
+        // places slip through when the user said they're dealbreakers.
+        if (climatePrefs.rain_tolerance === 'dealbreaker' && typeof cm.axes.rain_grey === 'number' && !isNaN(cm.axes.rain_grey) && cm.axes.rain_grey < 30) return false
+        if (climatePrefs.cold_tolerance === 'dealbreaker' && typeof cm.axes.cold_winter === 'number' && !isNaN(cm.axes.cold_winter) && cm.axes.cold_winter < 30) return false
+        if (climatePrefs.heat_tolerance === 'dealbreaker' && typeof cm.axes.summer_heat === 'number' && !isNaN(cm.axes.summer_heat) && cm.axes.summer_heat < 30) return false
+        if (climatePrefs.seasons === 'want_consistency' && typeof cm.axes.seasonal === 'number' && !isNaN(cm.axes.seasonal) && cm.axes.seasonal < 30) return false
+        // For non-dealbreaker preferences ('love cold', 'vibe rain', etc.) still use average score
+        return cm.score >= 30
       })
     }
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
@@ -1730,7 +1740,7 @@ export default function CatalogPageClient({
         onFilterCommuteMaxChange={setFilterCommuteMax}
         climatePrefs={climatePrefs}
         onClimatePrefsChange={setClimatePrefs}
-        resultCount={filteredPlaces.length}
+        resultCount={gatedPlaces.length}
       />
 
       {loading && (
