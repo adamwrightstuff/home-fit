@@ -76,7 +76,7 @@ _Shown when Q2 = office or hybrid AND Q3 ≠ fly. Filter only — no weight chan
 
 | Answer | Weight changes |
 |---|---|
-| Dense city neighborhood | Walkability → 3, Nat. Beauty → 2, Transit +1 |
+| Dense city neighborhood | Walkability → 3, Nat. Beauty → 1, Transit +1 |
 | Walkable town or inner suburb | Walkability → 2, Nat. Beauty → 2 |
 | Quiet suburb | Walkability → 1, Nat. Beauty → 2 |
 | Small town or rural | Walkability → 1, Nat. Beauty → 3 |

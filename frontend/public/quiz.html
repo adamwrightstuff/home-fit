@@ -478,7 +478,7 @@ const QUESTIONS = [
       { id: 'small_town',   icon: '🌲', label: 'Small town or rural',           desc: 'Low density, open space, slower pace' },
     ],
     apply(id) {
-      if (id === 'city')         { setWeight('neighborhood_amenities', 3); setWeight('natural_beauty', 2); bumpWeight('public_transit_access', 1) }
+      if (id === 'city')         { setWeight('neighborhood_amenities', 3); setWeight('natural_beauty', 1); bumpWeight('public_transit_access', 1) }
       if (id === 'inner_suburb') { setWeight('neighborhood_amenities', 2); setWeight('natural_beauty', 2) }
       if (id === 'outer_suburb') { setWeight('neighborhood_amenities', 1); setWeight('natural_beauty', 2) }
       if (id === 'small_town')   { setWeight('neighborhood_amenities', 1); setWeight('natural_beauty', 3) }
