@@ -48,7 +48,7 @@ export default function QuizModal({ onApply, onBack }: QuizModalProps) {
         zIndex: 9999,
         display: 'flex',
         flexDirection: 'column',
-        background: '#0D1219',
+        background: '#FAF7F2',
       }}
     >
       <button
@@ -60,7 +60,7 @@ export default function QuizModal({ onApply, onBack }: QuizModalProps) {
           zIndex: 10000,
           background: 'none',
           border: 'none',
-          color: '#7A8696',
+          color: '#9B948D',
           fontSize: 13,
           cursor: 'pointer',
           fontFamily: 'system-ui, sans-serif',

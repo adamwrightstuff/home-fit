@@ -186,7 +186,13 @@ export default function CatalogPageClient({
   const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la' | 'sf'>(initialMetroFilter)
   const [filterAreaTypes, setFilterAreaTypes] = useState<string[]>([])
   const [filterArchetypes, setFilterArchetypes] = useState<string[]>([])
-  const [filterTrajectory, setFilterTrajectory] = useState<'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'>('all')
+  const [filterTrajectory, setFilterTrajectory] = useState<'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'>(() => {
+    try {
+      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const v = f?.filterTrajectory
+      return v === 'Arrived' || v === 'Up-and-Coming' || v === 'Stable' || v === 'Cooling' || v === 'Declining' ? v : 'all'
+    } catch { return 'all' }
+  })
   /** When true, list sorts by name; map coloring still follows `indexMode`. */
   const [sortByName, setSortByName] = useState(false)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
