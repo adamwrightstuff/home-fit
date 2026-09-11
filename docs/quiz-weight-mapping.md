@@ -55,7 +55,7 @@ _Shown when Q2 = office or hybrid_
 |---|---|
 | Yes — train or subway | Transit → 3 |
 | No — I'd drive | Transit → 1 |
-| I travel by plane for work | Transit → 1; sets `air_travel_access` dealbreaker |
+| I travel by plane for work | Transit unchanged; sets `air_travel_access` dealbreaker |
 
 ---
 
@@ -76,7 +76,7 @@ _Shown when Q2 = office or hybrid AND Q3 ≠ fly. Filter only — no weight chan
 
 | Answer | Weight changes |
 |---|---|
-| Dense city neighborhood | Walkability → 3, Nat. Beauty → 1, Transit +1 |
+| Dense city neighborhood | Walkability → 3, Nat. Beauty → 2, Transit +1 |
 | Walkable town or inner suburb | Walkability → 2, Nat. Beauty → 2 |
 | Quiet suburb | Walkability → 1, Nat. Beauty → 2 |
 | Small town or rural | Walkability → 1, Nat. Beauty → 3 |
@@ -92,7 +92,7 @@ _Multi-select. Logic evaluates the full set of picks._
 | Trails & Regional Parks (in picks) | Outdoor Life → 3 |
 | Waterfront (in picks) | Outdoor Life → 3 |
 | Local Parks only (no trails/waterfront) | Outdoor Life → 2 |
-| Mostly indoors — not a factor (alone) | Outdoor Life → 1 |
+| Mostly indoors — not a factor (alone) | Outdoor Life → 0 |
 
 ---
 
@@ -121,13 +121,13 @@ Scenery type values: `mountains`, `ocean`, `lakes_rivers`, `canopy`
 
 ## Q9 — What kind of neighborhood are you looking for?
 
-_Safety change only applies when Q1 ≠ kids (kids locks Safety → 3 in Q1 and Q9 doesn't override it)._
+_Filter only — no weight changes._
 
-| Answer | Weight changes | Filter output |
-|---|---|---|
-| Established and stable | Safety → 3 _(if not kids)_ | `filterTrajectory = 'Arrived'` |
-| Either works | _(no change)_ | `filterTrajectory = 'all'` |
-| Up-and-coming with potential | Safety → 1 _(if not kids)_ | `filterTrajectory = 'Up-and-Coming'` |
+| Answer | Filter output |
+|---|---|
+| Established and stable | `filterTrajectory = 'Arrived'` |
+| Either works | `filterTrajectory = 'all'` |
+| Up-and-coming with potential | `filterTrajectory = 'Up-and-Coming'` |
 
 ---
 

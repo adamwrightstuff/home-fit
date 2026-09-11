@@ -449,7 +449,7 @@ const QUESTIONS = [
     apply(id) {
       if (id === 'transit') setWeight('public_transit_access', 3)
       if (id === 'drive')   setWeight('public_transit_access', 1)
-      if (id === 'fly')     setWeight('public_transit_access', 1)
+      // fly: transit stays at default; airport access handled as dealbreaker in payload
     }
   },
 
@@ -478,7 +478,7 @@ const QUESTIONS = [
       { id: 'small_town',   icon: '🌲', label: 'Small town or rural',           desc: 'Low density, open space, slower pace' },
     ],
     apply(id) {
-      if (id === 'city')         { setWeight('neighborhood_amenities', 3); setWeight('natural_beauty', 1); bumpWeight('public_transit_access', 1) }
+      if (id === 'city')         { setWeight('neighborhood_amenities', 3); setWeight('natural_beauty', 2); bumpWeight('public_transit_access', 1) }
       if (id === 'inner_suburb') { setWeight('neighborhood_amenities', 2); setWeight('natural_beauty', 2) }
       if (id === 'outer_suburb') { setWeight('neighborhood_amenities', 1); setWeight('natural_beauty', 2) }
       if (id === 'small_town')   { setWeight('neighborhood_amenities', 1); setWeight('natural_beauty', 3) }
@@ -498,7 +498,7 @@ const QUESTIONS = [
       { id: 'none',        icon: '🛋️', label: 'Mostly indoors — not a factor' },
     ],
     apply(ids) {
-      if (ids.includes('none') && ids.length === 1) { setWeight('active_outdoors', 1); return }
+      if (ids.includes('none') && ids.length === 1) { setWeight('active_outdoors', 0); return }
       if (ids.includes('trails_regional') || ids.includes('waterfront')) setWeight('active_outdoors', 3)
       else if (ids.includes('local_parks')) setWeight('active_outdoors', 2)
     }
@@ -547,10 +547,7 @@ const QUESTIONS = [
       { id: 'either',  icon: '⚖️', label: 'Either works',                 desc: 'Open to both' },
       { id: 'upside',  icon: '📈', label: 'Up-and-coming with potential', desc: 'I\'ll take the discount for the trajectory' },
     ],
-    apply(id) {
-      if (id === 'arrived') { if (answers.life !== 'kids') setWeight('community_safety', 3) }
-      if (id === 'upside')  { if (answers.life !== 'kids') setWeight('community_safety', 1) }
-    }
+    apply() { /* filter only — trajectory sets filterTrajectory in payload, no weight change */ }
   },
 
   // Dimension 7 — Social fabric
