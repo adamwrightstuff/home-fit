@@ -41,7 +41,13 @@ function missingDetail(metro: CatalogMapMetro): string {
   return `Catalog file not found for ${metro.toUpperCase()}. Add repo data/${names} (or copy into frontend/data).`
 }
 
-/** Load catalog_climate_profiles.jsonl → map of place name → ClimateIndicators */
+const METRO_TO_SOURCE: Record<CatalogMapMetro, string> = {
+  nyc: 'nyc_metro',
+  la: 'la_metro',
+  sf: 'sf_metro',
+}
+
+/** Load catalog_climate_profiles.jsonl → map of "${source}::${name}" → ClimateIndicators */
 function loadClimateIndex(): Map<string, ClimateIndicators> {
   const filePath = findFile('catalog_climate_profiles.jsonl')
   const index = new Map<string, ClimateIndicators>()
@@ -54,8 +60,10 @@ function loadClimateIndex(): Map<string, ClimateIndicators> {
       try {
         const row = JSON.parse(trimmed) as {
           name: string
+          source?: string
           climate?: { months?: Array<{ month: number; avg_temp_f: number; avg_precip_in: number; solar_kwh_m2_day: number }> }
         }
+        if (!row.source || !row.name) continue
         const months = row.climate?.months
         if (!months?.length) continue
         const byMonth = Object.fromEntries(months.map((m) => [m.month, m]))
@@ -65,7 +73,7 @@ function loadClimateIndex(): Map<string, ClimateIndicators> {
         const annual_precip_in = months.reduce((s, m) => s + (m.avg_precip_in ?? 0), 0)
         const solar_vals = months.map((m) => m.solar_kwh_m2_day).filter((v) => v != null)
         const avg_solar = solar_vals.length ? solar_vals.reduce((a, b) => a + b, 0) / solar_vals.length : 4.5
-        index.set(row.name, {
+        index.set(`${row.source}::${row.name}`, {
           jan_f: jan.avg_temp_f,
           jul_f: jul.avg_temp_f,
           swing_f: jul.avg_temp_f - jan.avg_temp_f,
@@ -94,7 +102,7 @@ function loadMetroFile(metro: CatalogMapMetro, climateIndex: Map<string, Climate
       }
       if (!row.success || !row.catalog || !row.score) continue
       const place: CatalogMapPlaceWithMetro = { catalog: row.catalog, score: row.score, metro, cbd_transit_minutes: (row as any).cbd_transit_minutes ?? null }
-      const climate = climateIndex.get(row.catalog.name)
+      const climate = climateIndex.get(`${METRO_TO_SOURCE[metro]}::${row.catalog.name}`)
       if (climate) place.climate = climate
       places.push(place)
     } catch {

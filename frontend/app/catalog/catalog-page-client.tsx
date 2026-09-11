@@ -581,12 +581,14 @@ export default function CatalogPageClient({
         // Each dealbreaker axis must pass independently — averaging neutral axes (50) with a
         // failing dealbreaker axis can raise the average above the threshold, letting rainy/cold/hot
         // places slip through when the user said they're dealbreakers.
-        if (climatePrefs.rain_tolerance === 'dealbreaker' && typeof cm.axes.rain_grey === 'number' && !isNaN(cm.axes.rain_grey) && cm.axes.rain_grey < 30) return false
-        if (climatePrefs.cold_tolerance === 'dealbreaker' && typeof cm.axes.cold_winter === 'number' && !isNaN(cm.axes.cold_winter) && cm.axes.cold_winter < 30) return false
-        if (climatePrefs.heat_tolerance === 'dealbreaker' && typeof cm.axes.summer_heat === 'number' && !isNaN(cm.axes.summer_heat) && cm.axes.summer_heat < 30) return false
-        if (climatePrefs.seasons === 'want_consistency' && typeof cm.axes.seasonal === 'number' && !isNaN(cm.axes.seasonal) && cm.axes.seasonal < 30) return false
+        // Threshold 15: rejects places greyer/colder/hotter than Seattle-level extremes.
+        // NYC cluster scores ~15.8 on rain_grey; threshold of 30 incorrectly killed the entire metro.
+        if (climatePrefs.rain_tolerance === 'dealbreaker' && typeof cm.axes.rain_grey === 'number' && !isNaN(cm.axes.rain_grey) && cm.axes.rain_grey < 15) return false
+        if (climatePrefs.cold_tolerance === 'dealbreaker' && typeof cm.axes.cold_winter === 'number' && !isNaN(cm.axes.cold_winter) && cm.axes.cold_winter < 15) return false
+        if (climatePrefs.heat_tolerance === 'dealbreaker' && typeof cm.axes.summer_heat === 'number' && !isNaN(cm.axes.summer_heat) && cm.axes.summer_heat < 15) return false
+        if (climatePrefs.seasons === 'want_consistency' && typeof cm.axes.seasonal === 'number' && !isNaN(cm.axes.seasonal) && cm.axes.seasonal < 15) return false
         // For non-dealbreaker preferences ('love cold', 'vibe rain', etc.) still use average score
-        return cm.score >= 30
+        return cm.score >= 15
       })
     }
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
