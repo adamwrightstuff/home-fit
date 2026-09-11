@@ -30,7 +30,7 @@ Climate Risk and Diversity are never touched by the quiz — they stay at Low 1 
 
 | Answer | Weight changes |
 |---|---|
-| Family with kids at home | Schools → 3, Safety → 3, Community +1 |
+| Family with kids at home | Schools → 3, Safety → 3, Community +1; dealbreakers: Schools ≥ 60, Safety ≥ 50 |
 | Planning to have kids soon | Schools → 2, Safety → 3 |
 | Me or us, no kids planned | Schools → 0 |
 | Empty nesters or retiring | Schools → 0, Healthcare +1, Outdoor Life +1 |

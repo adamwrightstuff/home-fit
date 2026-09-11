@@ -754,6 +754,10 @@ function applyAndClose() {
 
   const dealbreakers = {}
   if (answers.commute_mode === 'fly') dealbreakers['air_travel_access'] = true
+  if (answers.life === 'kids') {
+    dealbreakers['quality_education'] = true
+    dealbreakers['community_safety'] = true
+  }
 
   const message = { type: 'homefit-quiz-result', payload: { ...payload, dealbreakers } }
   if (window.parent !== window) {
