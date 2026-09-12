@@ -71,11 +71,7 @@ function loadClimateIndex(): Map<string, ClimateIndicators> {
         const jul = byMonth[7]
         if (!jan?.avg_temp_f || !jul?.avg_temp_f) continue
         const annual_precip_in = months.reduce((s, m) => s + (m.avg_precip_in ?? 0), 0)
-        // Use warm-season solar (Apr–Sep) so winter dark months don't drag down cities
-        // like NYC that are genuinely sunny when people are actually outside.
-        const warm = months.filter((m) => m.month >= 4 && m.month <= 9)
-        const solar_src = warm.length > 0 ? warm : months
-        const solar_vals = solar_src.map((m) => m.solar_kwh_m2_day).filter((v) => v != null)
+        const solar_vals = months.map((m) => m.solar_kwh_m2_day).filter((v) => v != null)
         const avg_solar = solar_vals.length ? solar_vals.reduce((a, b) => a + b, 0) / solar_vals.length : 4.5
         index.set(`${row.source}::${row.name}`, {
           jan_f: jan.avg_temp_f,
