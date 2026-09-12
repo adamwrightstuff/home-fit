@@ -33,13 +33,13 @@ function linear(val: number, bad: number, good: number): number {
 
 function axisCold(jan_f: number, pref: ColdTolerance): number {
   if (pref === 'tolerable') return 50
-  if (pref === 'dealbreaker') return linear(jan_f, 35, 52)
+  if (pref === 'dealbreaker') return linear(jan_f, 15, 50) // bad=Minneapolis, good=LA/SF
   return linear(jan_f, 45, 20) // love cold
 }
 
 function axisHeat(jul_f: number, pref: HeatTolerance): number {
   if (pref === 'fine') return 50
-  if (pref === 'dealbreaker') return linear(jul_f, 80, 65)
+  if (pref === 'dealbreaker') return linear(jul_f, 83, 68) // bad=Miami/NOLA, good=SF/Seattle
   return linear(jul_f, 70, 85) // love heat
 }
 
@@ -55,7 +55,7 @@ function axisRain(avg_solar: number, annual_precip_in: number, pref: RainToleran
 function axisSeasons(swing_f: number, pref: SeasonsPref): number {
   if (pref === 'mild_ok') return 50
   if (pref === 'want_4') return linear(swing_f, 18, 40)
-  return linear(swing_f, 30, 10) // want consistency
+  return linear(swing_f, 55, 15) // want_consistency: bad=Minneapolis, good=SF/Miami
 }
 
 export function scoreClimateMatch(
