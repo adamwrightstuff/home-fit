@@ -49,8 +49,6 @@ interface FilterSheetProps {
   onFilterWaterfrontSubPrefChange: (v: WaterfrontSubPreference | null) => void
   filterHousingType: string[]
   onFilterHousingTypeChange: (v: string[]) => void
-  filterBuiltCharacter: 'historic' | 'contemporary' | ''
-  onFilterBuiltCharacterChange: (v: 'historic' | 'contemporary' | '') => void
   filterSchoolType: 'any' | 'public_only' | 'charter'
   onFilterSchoolTypeChange: (v: 'any' | 'public_only' | 'charter') => void
   filterLocalScene: 'all' | 'Some' | 'High'
@@ -102,8 +100,6 @@ export default function FilterSheet({
   onFilterWaterfrontSubPrefChange,
   filterHousingType,
   onFilterHousingTypeChange,
-  filterBuiltCharacter,
-  onFilterBuiltCharacterChange,
   filterSchoolType,
   onFilterSchoolTypeChange,
   filterLocalScene,
@@ -154,7 +150,6 @@ export default function FilterSheet({
     onFilterAoTypesChange([])
     onFilterWaterfrontSubPrefChange(null)
     onFilterHousingTypeChange([])
-    onFilterBuiltCharacterChange('')
     onFilterSchoolTypeChange('any')
     onFilterLocalSceneChange('all')
     onClimatePrefsChange({})
@@ -390,31 +385,6 @@ export default function FilterSheet({
               <button
                 type="button"
                 onClick={() => onFilterHousingTypeChange([])}
-                style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-
-          {/* Neighborhood Character */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Neighborhood Character</div>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Based on landmark and heritage building counts from OSM. Fails open when data is unavailable.
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {chip(filterBuiltCharacter === 'historic', 'Historic', () =>
-                onFilterBuiltCharacterChange(filterBuiltCharacter === 'historic' ? '' : 'historic')
-              )}
-              {chip(filterBuiltCharacter === 'contemporary', 'Contemporary', () =>
-                onFilterBuiltCharacterChange(filterBuiltCharacter === 'contemporary' ? '' : 'contemporary')
-              )}
-            </div>
-            {filterBuiltCharacter !== '' && (
-              <button
-                type="button"
-                onClick={() => onFilterBuiltCharacterChange('')}
                 style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               >
                 Clear

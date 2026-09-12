@@ -19,7 +19,6 @@ export interface RunPillarScoreOptions {
   job_categories?: string[]
   natural_beauty_preference?: string[] | null
   built_env_preference?: 'urban_core' | 'urban_residential' | 'suburban' | 'exurban' | 'rural' | null
-  built_character_preference?: 'historic' | 'contemporary' | 'no_preference' | null
   built_density_preference?: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null
   diversity_preference?: string[] | null
   political_preference?: string | null
@@ -43,11 +42,6 @@ const ADD_NATURAL_BEAUTY_CHIPS: Array<{ value: string | null; label: string }> =
   { value: 'ocean', label: 'Ocean' },
   { value: 'lakes_rivers', label: 'Lakes & rivers' },
   { value: 'canopy', label: 'Greenery' },
-]
-const ADD_BUILT_CHARACTER_CHIPS: Array<{ value: 'historic' | 'contemporary' | 'no_preference'; label: string }> = [
-  { value: 'historic', label: 'Historic' },
-  { value: 'contemporary', label: 'Contemporary' },
-  { value: 'no_preference', label: 'No preference' },
 ]
 const ADD_BUILT_DENSITY_CHIPS: Array<{ value: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living'; label: string }> = [
   { value: 'spread_out_residential', label: 'Spread out' },
@@ -196,7 +190,6 @@ export default function ScoreDisplay({
   const [addPillarImportance, setAddPillarImportance] = useState<'Low' | 'Medium' | 'High'>('Medium')
   const [addPillarJobCategories, setAddPillarJobCategories] = useState<string[]>([])
   const [addPillarNaturalBeauty, setAddPillarNaturalBeauty] = useState<string[] | null>(null)
-  const [addPillarBuiltCharacter, setAddPillarBuiltCharacter] = useState<'historic' | 'contemporary' | 'no_preference' | null>(null)
   const [addPillarBuiltDensity, setAddPillarBuiltDensity] = useState<'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null>(null)
   const [addPillarDiversity, setAddPillarDiversity] = useState<string[] | null>(null)
   const [runPillarLoading, setRunPillarLoading] = useState(false)
@@ -287,7 +280,6 @@ export default function ScoreDisplay({
       setAddPillarJobCategories(Array.isArray(searchOptions?.job_categories) ? [...searchOptions.job_categories] : [])
       const nb = searchOptions?.natural_beauty_preference
       setAddPillarNaturalBeauty(nb && nb.length > 0 ? [...nb] : null)
-      setAddPillarBuiltCharacter(searchOptions?.built_character_preference ?? null)
       setAddPillarBuiltDensity(searchOptions?.built_density_preference ?? null)
       const div = searchOptions?.diversity_preference
       setAddPillarDiversity(div && div.length > 0 ? [...div] : null)
@@ -310,7 +302,6 @@ export default function ScoreDisplay({
         priorities: nextPriorities,
         job_categories: addPillarJobCategories.length > 0 ? addPillarJobCategories : undefined,
         natural_beauty_preference: addPillarNaturalBeauty && addPillarNaturalBeauty.length > 0 ? addPillarNaturalBeauty : null,
-        built_character_preference: addPillarBuiltCharacter,
         built_density_preference: addPillarBuiltDensity,
         diversity_preference: addPillarDiversity && addPillarDiversity.length > 0 ? addPillarDiversity : null,
         include_chains: searchOptions?.include_chains,
@@ -628,15 +619,7 @@ export default function ScoreDisplay({
                       }
                     : undefined
                 }
-                builtCharacterPreference={key === 'built_environment' ? searchOptions?.built_character_preference ?? null : undefined}
                 builtDensityPreference={key === 'built_environment' ? searchOptions?.built_density_preference ?? null : undefined}
-                onBuiltCharacterPreferenceChange={
-                  key === 'built_environment' && onSearchOptionsChange && searchOptions
-                    ? (value) => {
-                        onSearchOptionsChange({ ...searchOptions, built_character_preference: value as SearchOptions['built_character_preference'] })
-                      }
-                    : undefined
-                }
                 onBuiltDensityPreferenceChange={
                   key === 'built_environment' && onSearchOptionsChange && searchOptions
                     ? (value) => {
@@ -840,28 +823,6 @@ export default function ScoreDisplay({
 
                           {key === 'built_environment' && (
                             <>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                <span className="tr-muted" style={{ fontSize: '0.85rem' }}>Character:</span>
-                                {ADD_BUILT_CHARACTER_CHIPS.map(({ value, label }) => (
-                                  <button
-                                    key={value}
-                                    type="button"
-                                    onClick={() => setAddPillarBuiltCharacter(addPillarBuiltCharacter === value ? null : value)}
-                                    style={{
-                                      padding: '0.35rem 0.65rem',
-                                      borderRadius: 8,
-                                      fontSize: '0.85rem',
-                                      fontWeight: addPillarBuiltCharacter === value ? 600 : 400,
-                                      background: addPillarBuiltCharacter === value ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
-                                      color: addPillarBuiltCharacter === value ? 'white' : 'var(--hf-text-secondary)',
-                                      border: `1px solid ${addPillarBuiltCharacter === value ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
-                                      cursor: 'pointer',
-                                    }}
-                                  >
-                                    {label}
-                                  </button>
-                                ))}
-                              </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                 <span className="tr-muted" style={{ fontSize: '0.85rem' }}>Density:</span>
                                 {ADD_BUILT_DENSITY_CHIPS.map(({ value, label }) => (

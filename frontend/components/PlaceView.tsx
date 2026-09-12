@@ -32,13 +32,6 @@ const NATURAL_BEAUTY_PREFERENCE_CHIPS: Array<{ value: string | null; label: stri
   { value: 'canopy', label: 'Greenery' },
 ]
 
-/** Built Environment character preference (single select). */
-const BUILT_CHARACTER_CHIPS: Array<{ value: 'historic' | 'contemporary' | 'no_preference'; label: string }> = [
-  { value: 'historic', label: 'Historic character' },
-  { value: 'contemporary', label: 'Contemporary design' },
-  { value: 'no_preference', label: 'No preference' },
-]
-
 /** Built Environment density preference (single select). */
 const BUILT_DENSITY_CHIPS: Array<{ value: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living'; label: string }> = [
   { value: 'spread_out_residential', label: 'Spread out residential' },
@@ -274,7 +267,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
               options.natural_beauty_preference?.length
                 ? JSON.stringify(options.natural_beauty_preference)
                 : undefined,
-            built_character_preference: options.built_character_preference ?? undefined,
             built_density_preference: options.built_density_preference ?? undefined,
             diversity_preference:
               options.diversity_preference?.length
@@ -348,9 +340,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           ...(searchOptions.enable_schools !== undefined ? { enable_schools: searchOptions.enable_schools } : {}),
           ...(searchOptions.natural_beauty_preference?.length
             ? { natural_beauty_preference: JSON.stringify(searchOptions.natural_beauty_preference) }
-            : {}),
-          ...(searchOptions.built_character_preference
-            ? { built_character_preference: searchOptions.built_character_preference }
             : {}),
           ...(searchOptions.built_density_preference
             ? { built_density_preference: searchOptions.built_density_preference }
@@ -444,7 +433,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
 
       const naturalChanged = prev.natural_beauty_preference !== newOptions.natural_beauty_preference
       const builtChanged =
-        prev.built_character_preference !== newOptions.built_character_preference ||
         prev.built_density_preference !== newOptions.built_density_preference
       const diversityChanged = JSON.stringify(prev.diversity_preference ?? null) !== JSON.stringify(newOptions.diversity_preference ?? null)
 
@@ -639,7 +627,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             searchOptions.natural_beauty_preference?.length ?
               JSON.stringify(searchOptions.natural_beauty_preference) :
               undefined,
-          built_character_preference: searchOptions.built_character_preference ?? undefined,
           built_density_preference: searchOptions.built_density_preference ?? undefined,
           diversity_preference:
             searchOptions.diversity_preference?.length
@@ -1360,37 +1347,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                   )}
                   {key === 'built_environment' && (
                     <>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Character:</span>
-                        {BUILT_CHARACTER_CHIPS.map(({ value, label }) => {
-                          const selected = searchOptions.built_character_preference === value
-                          return (
-                            <button
-                              key={value}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleSearchOptionsChange({
-                                  ...searchOptions,
-                                  built_character_preference: selected ? null : value,
-                                })
-                              }}
-                              style={{
-                                padding: '0.35rem 0.65rem',
-                                borderRadius: 8,
-                                fontSize: '0.85rem',
-                                fontWeight: selected ? 600 : 400,
-                                background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
-                                color: selected ? 'white' : 'var(--hf-text-secondary)',
-                                border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
-                                cursor: 'pointer',
-                              }}
-                            >
-                              {label}
-                            </button>
-                          )
-                        })}
-                      </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                         <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Density:</span>
                         {BUILT_DENSITY_CHIPS.map(({ value, label }) => {

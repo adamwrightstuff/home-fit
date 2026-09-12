@@ -99,8 +99,6 @@ export default function SavedDetailPage() {
           natural_beauty_preference: Array.isArray(saved?.natural_beauty_preference)
             ? saved.natural_beauty_preference
             : null,
-          built_character_preference:
-            typeof saved?.built_character_preference === 'string' ? saved.built_character_preference : null,
           built_density_preference:
             typeof saved?.built_density_preference === 'string' ? saved.built_density_preference : null,
           diversity_preference: Array.isArray(saved?.diversity_preference) ? saved.diversity_preference : null,
@@ -148,7 +146,6 @@ export default function SavedDetailPage() {
         natural_beauty_preference: searchOptions?.natural_beauty_preference?.length
           ? JSON.stringify(searchOptions.natural_beauty_preference)
           : undefined,
-        built_character_preference: searchOptions?.built_character_preference ?? undefined,
         built_density_preference: searchOptions?.built_density_preference ?? undefined,
         diversity_preference: searchOptions?.diversity_preference?.length
           ? JSON.stringify(searchOptions.diversity_preference)
@@ -192,7 +189,6 @@ export default function SavedDetailPage() {
           priorities: JSON.stringify(options.priorities),
           job_categories: options.job_categories?.length ? options.job_categories.join(',') : undefined,
           natural_beauty_preference: options.natural_beauty_preference?.length ? JSON.stringify(options.natural_beauty_preference) : undefined,
-          built_character_preference: options.built_character_preference ?? undefined,
           built_density_preference: options.built_density_preference ?? undefined,
           diversity_preference:
             options.diversity_preference?.length ? JSON.stringify(options.diversity_preference) : undefined,
@@ -271,9 +267,6 @@ export default function SavedDetailPage() {
           ...(jobCategories.length > 0 ? { job_categories: jobCategories.join(',') } : {}),
           ...(searchOptions?.natural_beauty_preference?.length
             ? { natural_beauty_preference: JSON.stringify(searchOptions.natural_beauty_preference) }
-            : {}),
-          ...(searchOptions?.built_character_preference
-            ? { built_character_preference: searchOptions.built_character_preference }
             : {}),
           ...(searchOptions?.built_density_preference
             ? { built_density_preference: searchOptions.built_density_preference }
@@ -366,7 +359,6 @@ export default function SavedDetailPage() {
           priorities,
           job_categories: jobCategories.length > 0 ? jobCategories : undefined,
           natural_beauty_preference: searchOptions?.natural_beauty_preference ?? null,
-          built_character_preference: searchOptions?.built_character_preference ?? undefined,
           built_density_preference: searchOptions?.built_density_preference ?? undefined,
           include_chains: searchOptions?.include_chains ?? false,
           enable_schools: searchOptions?.enable_schools ?? false,

@@ -114,7 +114,6 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                                    precomputed_arch_diversity: Optional[Dict] = None,
                                    density: Optional[float] = None,
                                    form_context: Optional[str] = None,
-                                   built_character_preference: Optional[str] = None,
                                    built_density_preference: Optional[str] = None) -> Tuple[Optional[float], Dict]:
     """
     Score architectural beauty (0-50 points native range).
@@ -481,7 +480,6 @@ def calculate_built_environment(lat: float,
                            precomputed_arch_diversity: Optional[Dict] = None,
                            density: Optional[float] = None,
                            form_context: Optional[str] = None,
-                           built_character_preference: Optional[str] = None,
                            built_density_preference: Optional[str] = None) -> Dict:
     """
     Compute built environment components prior to normalization.
@@ -497,7 +495,6 @@ def calculate_built_environment(lat: float,
         precomputed_arch_diversity=precomputed_arch_diversity,
         density=density,
         form_context=form_context,
-        built_character_preference=built_character_preference,
         built_density_preference=built_density_preference,
     )
 
@@ -560,15 +557,6 @@ def calculate_built_environment(lat: float,
     # Cap at 100 to keep scores in 0-100 range while preserving natural distribution below 100
     # This only affects exceptional locations (built_native > 50) that would score > 100
     built_score_raw = min(100.0, built_native * 2.0)
-
-    # Character preference: penalize contemporary preference in any place (historic_urban is retired;
-    # all places are either urban_residential or another non-historic type now).
-    CHARACTER_MISMATCH_PENALTY = 8.0  # points on 0-100 scale
-    if built_character_preference and effective_area_type:
-        pref = (built_character_preference or "").strip().lower()
-        if pref == "historic":
-            built_score_raw = max(0.0, built_score_raw - CHARACTER_MISMATCH_PENALTY)
-    # no_preference -> no adjustment
 
     built_score_norm, built_norm_meta = normalize_beauty_score(
         built_score_raw,

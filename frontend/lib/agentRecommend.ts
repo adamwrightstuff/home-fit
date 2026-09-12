@@ -34,7 +34,6 @@ export function hydrateRecommendationResultsNavigation(rec: AgentRecommendation)
       include_chains: false,
       enable_schools: false,
       natural_beauty_preference: null,
-      built_character_preference: null,
       built_density_preference: null,
     }
     const cacheKey = buildResultsCacheKey(routeParams)

@@ -46,7 +46,6 @@ type Normalized = Required<Pick<ResultsRouteParams, 'location' | 'prioritiesJson
     enable_schools: boolean
     natural_beauty_preference: string | null
     built_env_preference: string | null
-    built_character_preference: string | null
     built_density_preference: string | null
     diversity_preference: string | null
     political_preference: string | null
@@ -86,7 +85,6 @@ function normalizeSearchParams(sp: RawSearchParams): Normalized | null {
 
   const natural_beauty_preference = firstParam(sp.natural_beauty_preference)
   const built_env_preference = firstParam(sp.built_env_preference)
-  const built_character_preference = firstParam(sp.built_character_preference)
   const built_density_preference = firstParam(sp.built_density_preference)
   const diversity_preference = firstParam(sp.diversity_preference)
   const political_preference = firstParam(sp.political_preference)
@@ -106,7 +104,6 @@ function normalizeSearchParams(sp: RawSearchParams): Normalized | null {
     enable_schools,
     natural_beauty_preference: natural_beauty_preference && natural_beauty_preference.trim() ? natural_beauty_preference : null,
     built_env_preference: built_env_preference && ['urban_core','urban_residential','suburban','exurban','rural'].includes(built_env_preference) ? built_env_preference : null,
-    built_character_preference: built_character_preference && built_character_preference.trim() ? built_character_preference : null,
     built_density_preference: built_density_preference && built_density_preference.trim() ? built_density_preference : null,
     diversity_preference: diversity_preference && diversity_preference.trim() ? diversity_preference : null,
     political_preference: political_preference && ['progressive', 'conservative'].includes(political_preference) ? political_preference : null,
@@ -213,7 +210,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
         }
       })(),
       built_env_preference: normalized.built_env_preference as any,
-      built_character_preference: normalized.built_character_preference as any,
       built_density_preference: normalized.built_density_preference as any,
       diversity_preference: (() => {
         if (!normalized.diversity_preference) return null
@@ -381,7 +377,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
         enable_schools: Boolean(next.enable_schools),
         natural_beauty_preference: next.natural_beauty_preference?.length ? JSON.stringify(next.natural_beauty_preference) : null,
         built_env_preference: next.built_env_preference ?? null,
-        built_character_preference: next.built_character_preference ?? null,
         built_density_preference: next.built_density_preference ?? null,
         diversity_preference: next.diversity_preference?.length ? JSON.stringify(next.diversity_preference) : null,
         political_preference: next.political_preference ?? normalized.political_preference ?? null,
@@ -405,7 +400,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           enable_schools: normalized.enable_schools,
           natural_beauty_preference: normalized.natural_beauty_preference ?? undefined,
           built_env_preference: normalized.built_env_preference ?? undefined,
-          built_character_preference: normalized.built_character_preference ?? undefined,
           built_density_preference: normalized.built_density_preference ?? undefined,
           diversity_preference: normalized.diversity_preference ?? undefined,
           political_preference: normalized.political_preference ?? undefined,
@@ -459,7 +453,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
             ? JSON.stringify(options.natural_beauty_preference)
             : undefined,
           built_env_preference: options.built_env_preference ?? undefined,
-          built_character_preference: options.built_character_preference ?? undefined,
           built_density_preference: options.built_density_preference ?? undefined,
           diversity_preference:
             options.diversity_preference && options.diversity_preference.length > 0
@@ -508,7 +501,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
             ? JSON.stringify(options.natural_beauty_preference)
             : normalized.natural_beauty_preference,
         built_env_preference: options.built_env_preference ?? normalized.built_env_preference,
-        built_character_preference: options.built_character_preference ?? normalized.built_character_preference,
         built_density_preference: options.built_density_preference ?? normalized.built_density_preference,
         diversity_preference:
           options.diversity_preference && options.diversity_preference.length > 0
@@ -546,9 +538,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
             ? { natural_beauty_preference: JSON.stringify(searchOptions.natural_beauty_preference) }
             : {}),
           ...(searchOptions.built_env_preference ? { built_env_preference: searchOptions.built_env_preference } : {}),
-          ...(searchOptions.built_character_preference
-            ? { built_character_preference: searchOptions.built_character_preference }
-            : {}),
           ...(searchOptions.built_density_preference ? { built_density_preference: searchOptions.built_density_preference } : {}),
           ...(searchOptions.diversity_preference?.length
             ? { diversity_preference: JSON.stringify(searchOptions.diversity_preference) }
@@ -696,7 +685,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
               include_chains={normalized.include_chains}
               enable_schools={normalized.enable_schools}
               natural_beauty_preference={normalized.natural_beauty_preference ?? undefined}
-              built_character_preference={normalized.built_character_preference ?? undefined}
               built_density_preference={normalized.built_density_preference ?? undefined}
               diversity_preference={normalized.diversity_preference ?? undefined}
               political_preference={normalized.political_preference ?? undefined}

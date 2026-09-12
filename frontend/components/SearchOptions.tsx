@@ -31,8 +31,6 @@ interface SearchOptions {
   job_categories: string[]
   /** Natural Beauty preference from quiz: 1–2 of mountains, ocean, lakes_rivers, canopy; null = no preference. */
   natural_beauty_preference?: string[] | null
-  /** Built Environment character: historic | contemporary | no_preference; null = no selection. */
-  built_character_preference?: 'historic' | 'contemporary' | 'no_preference' | null
   /** Built Environment density: spread_out_residential | walkable_residential | dense_urban_living; null = no selection. */
   built_density_preference?: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null
   /** Built Environment area-type preference: urban_core | urban_residential | suburban | exurban | rural; null = no preference (score = 50). */
@@ -138,12 +136,10 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
           ...parsed,
           enable_schools: parsed.enable_schools && !storedPremiumCode ? false : parsed.enable_schools,
         }
-        const validCharacter = ['historic', 'contemporary', 'no_preference'].includes(parsed.built_character_preference)
         const validDensity = ['spread_out_residential', 'walkable_residential', 'dense_urban_living'].includes(parsed.built_density_preference)
         onChange({
           ...options,
           ...migrated,
-          built_character_preference: validCharacter ? parsed.built_character_preference : null,
           built_density_preference: validDensity ? parsed.built_density_preference : null,
         })
       }

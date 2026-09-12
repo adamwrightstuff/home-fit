@@ -23,7 +23,6 @@ interface SmartLoadingScreenProps {
   include_chains?: boolean
   enable_schools?: boolean
   natural_beauty_preference?: string
-  built_character_preference?: string
   built_density_preference?: string
   diversity_preference?: string
   political_preference?: string
@@ -56,7 +55,6 @@ export default function SmartLoadingScreen({
   include_chains,
   enable_schools,
   natural_beauty_preference,
-  built_character_preference,
   built_density_preference,
   diversity_preference,
   political_preference,
@@ -100,7 +98,6 @@ export default function SmartLoadingScreen({
         include_chains,
         enable_schools,
         ...(natural_beauty_preference ? { natural_beauty_preference } : {}),
-        ...(built_character_preference ? { built_character_preference } : {}),
         ...(built_density_preference ? { built_density_preference } : {}),
         ...(diversity_preference ? { diversity_preference } : {}),
         ...(political_preference ? { political_preference } : {}),
@@ -163,7 +160,6 @@ export default function SmartLoadingScreen({
     include_chains,
     enable_schools,
     natural_beauty_preference,
-    built_character_preference,
     built_density_preference,
     diversity_preference,
     on_complete,
