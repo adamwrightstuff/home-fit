@@ -587,7 +587,12 @@ export default function CatalogPageClient({
         if (climatePrefs.cold_tolerance === 'dealbreaker' && typeof cm.axes.cold_winter === 'number' && !isNaN(cm.axes.cold_winter) && cm.axes.cold_winter < 15) return false
         if (climatePrefs.heat_tolerance === 'dealbreaker' && typeof cm.axes.summer_heat === 'number' && !isNaN(cm.axes.summer_heat) && cm.axes.summer_heat < 15) return false
         if (climatePrefs.seasons === 'want_consistency' && typeof cm.axes.seasonal === 'number' && !isNaN(cm.axes.seasonal) && cm.axes.seasonal < 15) return false
-        // For non-dealbreaker preferences ('love cold', 'vibe rain', etc.) still use average score
+        // Positive preferences also checked independently — a neutral axis (50) must not rescue
+        // a place that scores 0 on something the user said they actively want.
+        if (climatePrefs.heat_tolerance === 'love' && typeof cm.axes.summer_heat === 'number' && !isNaN(cm.axes.summer_heat) && cm.axes.summer_heat < 15) return false
+        if (climatePrefs.cold_tolerance === 'love' && typeof cm.axes.cold_winter === 'number' && !isNaN(cm.axes.cold_winter) && cm.axes.cold_winter < 15) return false
+        if (climatePrefs.rain_tolerance === 'vibe' && typeof cm.axes.rain_grey === 'number' && !isNaN(cm.axes.rain_grey) && cm.axes.rain_grey < 15) return false
+        if (climatePrefs.seasons === 'want_4' && typeof cm.axes.seasonal === 'number' && !isNaN(cm.axes.seasonal) && cm.axes.seasonal < 15) return false
         return cm.score >= 15
       })
     }
