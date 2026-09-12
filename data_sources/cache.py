@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 # Cache key versioning.
 # Used to invalidate old/poisoned cache entries after a deploy (esp. OSM/Overpass transient empties).
 # Can be overridden via env without code changes.
-CACHE_KEY_VERSION = os.getenv("HOMEFIT_CACHE_KEY_VERSION", "2")
+CACHE_KEY_VERSION = os.getenv("HOMEFIT_CACHE_KEY_VERSION", "3")
 
 # Cache schema versioning (structural changes).
 # Bump this when you change what is stored/returned in cached payloads.
@@ -165,14 +165,27 @@ def _generate_cache_key(func_name: str, *args, **kwargs) -> str:
 def cached(ttl_seconds: int = 3600):
     """
     Decorator to cache function results with Redis (if available) or in-memory cache.
-    
+
     Args:
         ttl_seconds: Time to live for cached results in seconds
     """
     def decorator(func):
+        import inspect as _inspect
+        _sig = _inspect.signature(func)
+
         @wraps(func)
         def wrapper(*args, **kwargs):
-            cache_key = _generate_cache_key(func.__name__, *args, **kwargs)
+            # Bind args+kwargs to the function signature so that positional and keyword
+            # calls with the same effective arguments generate the same cache key.
+            # e.g. f(lat, lon, 1000) and f(lat, lon, radius_m=1000) are the same call.
+            try:
+                bound = _sig.bind(*args, **kwargs)
+                bound.apply_defaults()
+                norm_args = tuple(bound.arguments.values())
+                norm_kwargs: dict = {}
+            except TypeError:
+                norm_args, norm_kwargs = args, kwargs
+            cache_key = _generate_cache_key(func.__name__, *norm_args, **norm_kwargs)
             current_time = time.time()
             
             # Try Redis first, fall back to in-memory

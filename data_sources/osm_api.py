@@ -395,7 +395,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
     """
     # Core parks/playgrounds query used by Active Outdoors and Natural Beauty fallback.
     query = f"""
-    [out:json][timeout:30];
+    [out:json][timeout:60];
     (
       // PARKS & GREEN SPACES - core (skip nodes except playgrounds)
       way["leisure"~"^(park|garden|dog_park|playground)$"](around:{radius_m},{lat},{lon});
@@ -433,7 +433,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
       node["leisure"="dog_park"]["access"!="private"](around:{radius_m},{lat},{lon});
       way["leisure"="dog_park"]["access"!="private"](around:{radius_m},{lat},{lon});
     );
-    out body center;
+    out body center bb;
     """
 
     _gs_key = f"query_green_spaces:{lat:.5f}:{lon:.5f}:{int(radius_m)}"
@@ -443,7 +443,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
                 r = requests.post(
                     get_overpass_url(),
                     data={"data": query},
-                    timeout=_overpass_timeout(20),  # Reduced from 40s for faster failure
+                    timeout=_overpass_timeout(45),
                     headers={"User-Agent": "HomeFit/1.0"}
                 )
                 # IMPORTANT: Non-200 responses (e.g., 504) must trigger retry/endpoint rotation.
@@ -2906,18 +2906,33 @@ def _resolve_element_coordinates(elem: Dict, nodes_dict: Dict, ways_dict: Dict) 
 
 
 def _compute_relation_bbox_area(elem: Dict, ways_dict: Dict, nodes_dict: Dict) -> float:
-    """Bounding-box area estimate (sqm) for a relation from its member way nodes.
+    """Bounding-box area estimate (sqm) for a relation.
 
-    Uses the outer-ring members first, falling back to all way members.  Bounding
-    box over-estimates the true polygon area by ~1.3–1.7×, which is acceptable for
-    the 0.5 ha meaningful-park threshold — any real park large enough to matter will
-    clear it, and decorative plazas / tiny greens will not.
+    Reads the `bounds` dict added by Overpass `out body center bb;`.  Falls back to
+    member-way node scanning for responses that lack bounds (e.g. cached older data).
+    Bounding box over-estimates the true polygon area by ~1.3–1.7×, which is fine for
+    the 0.5 ha meaningful-park threshold check.
     """
-    members = elem.get("members") or []
+    bounds = elem.get("bounds")
+    if bounds:
+        minlat = bounds.get("minlat")
+        minlon = bounds.get("minlon")
+        maxlat = bounds.get("maxlat")
+        maxlon = bounds.get("maxlon")
+        if all(v is not None for v in (minlat, minlon, maxlat, maxlon)):
+            lat_mid = (maxlat + minlat) / 2
+            return (
+                (maxlat - minlat)
+                * (maxlon - minlon)
+                * 111_000
+                * 111_000
+                * math.cos(math.radians(lat_mid))
+            )
+    # Fallback: scan member way nodes (only populated when response includes geometry)
     lats: list = []
     lons: list = []
     for role in ("outer", ""):
-        for member in members:
+        for member in (elem.get("members") or []):
             if member.get("type") != "way":
                 continue
             if role and member.get("role") != role:
@@ -2931,7 +2946,7 @@ def _compute_relation_bbox_area(elem: Dict, ways_dict: Dict, nodes_dict: Dict) -
                     lats.append(node["lat"])
                     lons.append(node["lon"])
         if lats:
-            break  # outer-ring data found; don't append inner rings
+            break
     if len(lats) < 3:
         return 0.0
     lat_mid = (max(lats) + min(lats)) / 2
@@ -2948,7 +2963,18 @@ def _get_relation_centroid(elem: Dict, ways_dict: Dict, nodes_dict: Dict) -> Tup
     """Calculate centroid of a relation from its outer member ways."""
     if elem.get("type") != "relation":
         return None, None
-    
+
+    # out body center bb; adds bounds to the element; use midpoint as centroid when
+    # member node coordinates are not in the response (typical for non-geom queries).
+    bounds = elem.get("bounds")
+    if bounds:
+        minlat = bounds.get("minlat")
+        minlon = bounds.get("minlon")
+        maxlat = bounds.get("maxlat")
+        maxlon = bounds.get("maxlon")
+        if all(v is not None for v in (minlat, minlon, maxlat, maxlon)):
+            return (minlat + maxlat) / 2, (minlon + maxlon) / 2
+
     members = elem.get("members", [])
     if not members:
         return None, None

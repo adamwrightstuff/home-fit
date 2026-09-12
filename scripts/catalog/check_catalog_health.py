@@ -179,6 +179,12 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
     if isinstance(conf, (int, float)) and conf < threshold:
         flags.append(f"conf_{int(conf)}")
 
+    quality_tier = dq.get("quality_tier")
+    if quality_tier in ("poor", "very_poor"):
+        flags.append(f"quality_tier:{quality_tier}")
+    elif quality_tier is None and not dq.get("fallback_used") and pillar not in NO_SCORE_EXPECTED:
+        flags.append("quality_tier:missing")
+
     if dq.get("degraded") is True:
         flags.append("degraded")
 
@@ -223,6 +229,27 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
         for key in NB_V9_KEYS:
             if v9.get(key) is None:
                 flags.append(f"missing:v9.{key}")
+
+        # Detect water-type misidentification: stream/small-canal flagged as dominant water
+        # feature in an urban place.  Streams inside parks (Prospect Park Lullwater, etc.)
+        # or unnamed ditches score max=40 — ocean/bay could be nearby but invisible.
+        # Flag so the place can be manually verified or re-fetched.
+        nb_inp = v9.get("inputs") or {}
+        nb_water_type = nb_inp.get("water_type")
+        if area_type in {"urban_core", "urban_residential"} and nb_water_type == "stream":
+            flags.append(f"nb_water_stream:{nb_inp.get('water_dist_km', '?')}km")
+
+    # active_outdoors: Overpass succeeded but daily_urban_outdoors is implausibly low for
+    # urban areas — typically indicates that all queried parks were linear greenways (area_sqm
+    # < 5000) or that relation geometry could not be computed (area_sqm=0 bug).
+    if pillar == "active_outdoors":
+        duo = (data.get("breakdown") or {}).get("daily_urban_outdoors")
+        local_outcome = (data.get("data_quality") or {}).get("overpass_local_outcome")
+        if (area_type in {"urban_core", "urban_residential"}
+                and isinstance(duo, (int, float))
+                and duo < 5.0
+                and local_outcome == "overpass_ok"):
+            flags.append(f"ao_duo_low:{duo:.1f}(overpass_ok)")
 
     # Transit: check if Transitland API was unavailable and score fell back to commute-time only
     if pillar == "public_transit_access":
@@ -529,6 +556,7 @@ def main() -> int:
     composite_drifts:    Dict[str, List[str]] = defaultdict(list)
     missing_composites:  Dict[str, List[str]] = defaultdict(list)
     low_conf:            Dict[str, List[Tuple[str,str]]] = defaultdict(list)
+    quality_tier_issues: Dict[str, List[Tuple[str,str]]] = defaultdict(list)
     degraded_issues:     Dict[str, List[str]] = defaultdict(list)
     warning_issues:      Dict[str, List[str]] = defaultdict(list)
     fallback_issues:     Dict[str, List[str]] = defaultdict(list)
@@ -551,6 +579,8 @@ def main() -> int:
                     absent_pillars[pillar].append(name)
                 elif f.startswith("conf_"):
                     low_conf[pillar].append((name, f))
+                elif f.startswith("quality_tier:"):
+                    quality_tier_issues[pillar].append((name, f[13:]))
                 elif f == "degraded":
                     degraded_issues[pillar].append(name)
                 elif f.startswith("warn:"):
@@ -626,6 +656,19 @@ def main() -> int:
             entries = ", ".join(f"{n}[{f}]" for n, f in low_conf[pillar][:8])
             suffix = f" +{len(low_conf[pillar])-8} more" if len(low_conf[pillar]) > 8 else ""
             print(f"  {pillar} (threshold {threshold}): {entries}{suffix}")
+
+    # ── Section 4b: Quality tier ───────────────────────────────────────────
+    if quality_tier_issues:
+        print("\n── POOR QUALITY TIER (pillar data insufficient for reliable score) ──")
+        for pillar in sorted(quality_tier_issues):
+            entries = quality_tier_issues[pillar]
+            by_tier: Dict[str, List[str]] = defaultdict(list)
+            for name, tier in entries:
+                by_tier[tier].append(name)
+            for tier in sorted(by_tier):
+                places = by_tier[tier]
+                truncated = ", ".join(places[:6]) + (f" +{len(places)-6} more" if len(places) > 6 else "")
+                print(f"  {pillar} [{tier}]: {len(places)} place(s) — {truncated}")
 
     # ── Section 5: Degraded ────────────────────────────────────────────────
     if degraded_issues:
@@ -752,6 +795,7 @@ def main() -> int:
     print(f"  Absent pillars          : {sum(len(v) for v in absent_pillars.values())}")
     print(f"  Fallback zeros          : {sum(len(v) for v in fallback_zeros.values())}")
     print(f"  Low confidence          : {sum(len(v) for v in low_conf.values())}")
+    print(f"  Poor quality tier       : {sum(len(v) for v in quality_tier_issues.values())}")
     print(f"  Degraded                : {sum(len(v) for v in degraded_issues.values())}")
     print(f"  Data warnings           : {sum(len(v) for v in warning_issues.values())}")
     print(f"  Fallback used           : {sum(len(v) for v in fallback_issues.values())}")

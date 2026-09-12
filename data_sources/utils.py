@@ -148,11 +148,25 @@ def get_way_center(elem: Dict, nodes_dict: Dict) -> Tuple[Optional[float], Optio
     if elem.get("type") != "way":
         return None, None, 0
 
-    # out body center; puts centroid in elem["center"] without returning child nodes
-    if "center" in elem:
-        c = elem["center"]
-        if c.get("lat") is not None and c.get("lon") is not None:
-            return float(c["lat"]), float(c["lon"]), 0.0
+    # out body center bb; adds bounding box in elem["bounds"] but NOT a center sub-object.
+    # Compute centroid from bounds midpoint and area from bounds extents when available.
+    bounds = elem.get("bounds")
+    if bounds:
+        minlat = bounds.get("minlat")
+        minlon = bounds.get("minlon")
+        maxlat = bounds.get("maxlat")
+        maxlon = bounds.get("maxlon")
+        if all(v is not None for v in (minlat, minlon, maxlat, maxlon)):
+            clat = (minlat + maxlat) / 2
+            clon = (minlon + maxlon) / 2
+            area = (
+                (maxlat - minlat)
+                * (maxlon - minlon)
+                * 111_000
+                * 111_000
+                * math.cos(math.radians(clat))
+            )
+            return clat, clon, area
 
     if "nodes" not in elem:
         return None, None, 0
