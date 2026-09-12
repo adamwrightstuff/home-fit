@@ -39,7 +39,7 @@ function axisCold(jan_f: number, pref: ColdTolerance): number {
 
 function axisHeat(jul_f: number, pref: HeatTolerance): number {
   if (pref === 'fine') return 50
-  if (pref === 'dealbreaker') return linear(jul_f, 77, 65)
+  if (pref === 'dealbreaker') return linear(jul_f, 80, 65)
   return linear(jul_f, 70, 85) // love heat
 }
 
