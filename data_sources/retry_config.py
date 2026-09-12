@@ -92,10 +92,10 @@ RETRY_PROFILES: Dict[RetryProfile, RetryConfig] = {
     RetryProfile.HEALTHCARE: RetryConfig(
         max_attempts=2,
         base_wait=1.0,
-        fail_fast=True,
+        fail_fast=False,
         max_wait=4.0,
         exponential_backoff=False,
-        retry_on_timeout=False,  # Parallel queries already cover failures
+        retry_on_timeout=True,
         retry_on_429=True,
     ),
 }

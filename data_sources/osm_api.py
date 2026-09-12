@@ -1860,7 +1860,7 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
                             area_sqm = 1000  # Default 0.1 ha for linear greenways
             elif elem_type == "relation":
                 elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
-                area_sqm = 0
+                area_sqm = _compute_relation_bbox_area(elem, ways_dict, nodes_dict)
                 if elem_lat is None:
                     # Fallback: use OSM center attribute (populated by "out body center;")
                     # or center:lat/lon tags. Use local vars to avoid clobbering the
@@ -2905,6 +2905,45 @@ def _resolve_element_coordinates(elem: Dict, nodes_dict: Dict, ways_dict: Dict) 
     return None, None, "unresolved"
 
 
+def _compute_relation_bbox_area(elem: Dict, ways_dict: Dict, nodes_dict: Dict) -> float:
+    """Bounding-box area estimate (sqm) for a relation from its member way nodes.
+
+    Uses the outer-ring members first, falling back to all way members.  Bounding
+    box over-estimates the true polygon area by ~1.3–1.7×, which is acceptable for
+    the 0.5 ha meaningful-park threshold — any real park large enough to matter will
+    clear it, and decorative plazas / tiny greens will not.
+    """
+    members = elem.get("members") or []
+    lats: list = []
+    lons: list = []
+    for role in ("outer", ""):
+        for member in members:
+            if member.get("type") != "way":
+                continue
+            if role and member.get("role") != role:
+                continue
+            way = ways_dict.get(member.get("ref"))
+            if not way:
+                continue
+            for node_id in (way.get("nodes") or []):
+                node = nodes_dict.get(node_id)
+                if node and "lat" in node and "lon" in node:
+                    lats.append(node["lat"])
+                    lons.append(node["lon"])
+        if lats:
+            break  # outer-ring data found; don't append inner rings
+    if len(lats) < 3:
+        return 0.0
+    lat_mid = (max(lats) + min(lats)) / 2
+    return (
+        (max(lats) - min(lats))
+        * (max(lons) - min(lons))
+        * 111_000
+        * 111_000
+        * math.cos(math.radians(lat_mid))
+    )
+
+
 def _get_relation_centroid(elem: Dict, ways_dict: Dict, nodes_dict: Dict) -> Tuple[Optional[float], Optional[float]]:
     """Calculate centroid of a relation from its outer member ways."""
     if elem.get("type") != "relation":
@@ -3381,10 +3420,14 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
         "_query_failed": False
     }
     
-    # Build smaller, focused queries for better reliability
+    # Build smaller, focused queries for better reliability.
+    # Use "out center tags;" instead of "out body; >; out skel qt;" — the heavy format
+    # downloads all sub-nodes of every way (536 nodes for 31 hospitals in NYC), pushing
+    # dense-area queries past the [timeout:10] QL limit. "out center tags;" returns only
+    # tagged elements with their center point: ~31 records instead of 565 for Park Slope.
     # Query 1: Hospitals and major medical centers
     hospital_query = f"""
-    [out:json][timeout:10];
+    [out:json][timeout:30];
     (
       node["amenity"~"hospital|medical_centre"]["healthcare"!="urgent_care"](around:{radius_m},{lat},{lon});
       way["amenity"~"hospital|medical_centre"]["healthcare"!="urgent_care"](around:{radius_m},{lat},{lon});
@@ -3392,14 +3435,12 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
       node["healthcare"="hospital"](around:{radius_m},{lat},{lon});
       way["healthcare"="hospital"](around:{radius_m},{lat},{lon});
     );
-    out body;
-    >;
-    out skel qt;
+    out center tags;
     """
-    
+
     # Query 2: Urgent care and emergency services
     urgent_query = f"""
-    [out:json][timeout:10];
+    [out:json][timeout:30];
     (
       node["healthcare"~"urgent_care|emergency"](around:{radius_m},{lat},{lon});
       way["healthcare"~"urgent_care|emergency"](around:{radius_m},{lat},{lon});
@@ -3408,28 +3449,24 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
       node["emergency"="yes"]["amenity"~"clinic|hospital"](around:{radius_m},{lat},{lon});
       way["emergency"="yes"]["amenity"~"clinic|hospital"](around:{radius_m},{lat},{lon});
     );
-    out body;
-    >;
-    out skel qt;
+    out center tags;
     """
-    
+
     # Query 3: Clinics and doctors
     clinic_query = f"""
-    [out:json][timeout:10];
+    [out:json][timeout:30];
     (
       node["amenity"~"clinic|doctors"](around:{radius_m},{lat},{lon});
       way["amenity"~"clinic|doctors"](around:{radius_m},{lat},{lon});
       node["healthcare"~"clinic|doctor"](around:{radius_m},{lat},{lon});
       way["healthcare"~"clinic|doctor"](around:{radius_m},{lat},{lon});
     );
-    out body;
-    >;
-    out skel qt;
+    out center tags;
     """
-    
+
     # Query 4: Pharmacies
     pharmacy_query = f"""
-    [out:json][timeout:10];
+    [out:json][timeout:30];
     (
       node["shop"="pharmacy"](around:{radius_m},{lat},{lon});
       way["shop"="pharmacy"](around:{radius_m},{lat},{lon});
@@ -3438,9 +3475,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
       node["healthcare"="pharmacy"](around:{radius_m},{lat},{lon});
       way["healthcare"="pharmacy"](around:{radius_m},{lat},{lon});
     );
-    out body;
-    >;
-    out skel qt;
+    out center tags;
     """
     
     # Execute queries in parallel for speed — each hits an independent Overpass endpoint.
@@ -3460,7 +3495,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
                 return requests.post(
                     get_overpass_url(),
                     data={"data": query},
-                    timeout=_overpass_timeout(12),
+                    timeout=_overpass_timeout(35),
                     headers={"User-Agent": "HomeFit/1.0"}
                 )
             resp = _retry_overpass(_do_request, query_type="healthcare")
@@ -3471,6 +3506,9 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
             if data is None:
                 return None
             elements = data.get("elements", [])
+            # With "out center tags;" the elements list contains only tagged facilities
+            # (not sub-nodes), so nodes_dict/ways_dict are populated but rarely needed —
+            # _resolve_element_coordinates reads the center attribute directly for ways.
             nodes_dict = {e["id"]: e for e in elements if e.get("type") == "node"}
             ways_dict = {e["id"]: e for e in elements if e.get("type") == "way"}
             return _process_healthcare_elements(elements, lat, lon, nodes_dict, ways_dict)
@@ -3484,7 +3522,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
         for fut in futures:
             cat = futures[fut]
             try:
-                cat_result = fut.result(timeout=15)
+                cat_result = fut.result(timeout=40)
             except Exception:
                 cat_result = None
             if cat_result is None:
