@@ -33,7 +33,7 @@ function linear(val: number, bad: number, good: number): number {
 
 function axisCold(jan_f: number, pref: ColdTolerance): number {
   if (pref === 'tolerable') return 50
-  if (pref === 'dealbreaker') return linear(jan_f, 15, 50) // bad=Minneapolis, good=LA/SF
+  if (pref === 'dealbreaker') return linear(jan_f, 20, 55) // bad=Minneapolis, good=LA/SF
   return linear(jan_f, 45, 20) // love cold
 }
 
