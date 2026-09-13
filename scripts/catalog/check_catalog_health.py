@@ -764,6 +764,18 @@ def main() -> int:
             truncated = ', '.join(places[:6]) + ('...' if len(places) > 6 else '')
             print(f"  {flag}: {len(places)} place(s) — {truncated}")
 
+    # ── Section 10b: cbd_transit_minutes coverage ────────────────────────
+    cbd_missing = [
+        r.get('catalog', {}).get('name', '?')
+        for r in rows
+        if r.get('success') and r.get('cbd_transit_minutes') is None
+    ]
+    if cbd_missing:
+        truncated = ', '.join(cbd_missing[:8]) + (f' +{len(cbd_missing)-8} more' if len(cbd_missing) > 8 else '')
+        print(f"\n── CBD_TRANSIT_MINUTES MISSING ({len(cbd_missing)} place(s)) ──────────────────────")
+        print(f"  Run: python3 scripts/manual/add_cbd_transit_minutes.py --force")
+        print(f"  {truncated}")
+
     # ── Section 11: Per-place summary ─────────────────────────────────────
     print("\n── PER-PLACE FLAG SUMMARY ─────────────────────────────────────────")
     shown = 0
@@ -812,6 +824,7 @@ def main() -> int:
     print(f"  Missing composites      : {n_missing_composite}")
     lean_missing = len(missing_composites.get("lean_2024", []))
     print(f"  Missing lean_2024       : {lean_missing} / {len(results)} places (election data gap)")
+    print(f"  Missing cbd_transit_min : {len(cbd_missing)} / {len(results)} places")
     print()
 
     return 0
