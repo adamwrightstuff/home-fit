@@ -219,9 +219,10 @@ export function applyNbPreferencesV9(
   const prefVals = Array.from(targets).map((t) => effective[t]).filter((v): v is number => typeof v === 'number')
   if (prefVals.length === 0) return null
 
-  // OWA: preferred mean → lead slot; remaining components fill lower slots in desc order.
-  // Lead weight scales with the preferred score so high-scoring preferred dimensions dominate more.
-  const preferred = prefVals.reduce((a, b) => a + b, 0) / prefVals.length
+  // OWA: best preferred component → lead slot; remaining components fill lower slots in desc order.
+  // Using max (not mean) so a place strong in ANY preferred dimension isn't penalised for
+  // a weaker second preference — both still contribute in lower slots via `others`.
+  const preferred = Math.max(...prefVals)
   const others = Object.entries(effective)
     .filter(([k]) => !targets.has(k))
     .map(([, v]) => v as number)

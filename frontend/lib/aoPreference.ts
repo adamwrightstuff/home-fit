@@ -71,7 +71,7 @@ export function applyAoPreferences(
   const prefVals = Array.from(targets).map((t) => normalized[t]).filter((v): v is number => typeof v === 'number')
   if (prefVals.length === 0) return null
 
-  const preferred = prefVals.reduce((a, b) => a + b, 0) / prefVals.length
+  const preferred = Math.max(...prefVals)
   const others = keys
     .filter((k) => !targets.has(k))
     .map((k) => normalized[k])
