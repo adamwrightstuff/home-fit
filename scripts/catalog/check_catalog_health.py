@@ -197,6 +197,15 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
     if fb.get("fallback_used") is True:
         flags.append("fallback_used")
 
+    # Ghosted: healthy score that carries zero weight — pillar is invisibly excluded from composite
+    weight = data.get("weight")
+    if (weight == 0.0
+            and score is not None and score > 0
+            and data.get("confidence") != 0
+            and status not in ("fallback", "error")
+            and pillar not in {"political_lean", "built_environment"}):
+        flags.append("ghosted_weight")
+
     # Version checks
     got = pillar_version(pillar, data)
     old = OLD_VERSIONS.get(pillar, set())
@@ -551,6 +560,7 @@ def main() -> int:
     old_version_issues:  Dict[str, List[str]] = defaultdict(list)
     unversioned_issues:  Dict[str, List[str]] = defaultdict(list)
     null_scores:         Dict[str, List[str]] = defaultdict(list)
+    ghosted_weights:     Dict[str, List[str]] = defaultdict(list)
     fallback_zeros:      Dict[str, List[str]] = defaultdict(list)
     absent_pillars:      Dict[str, List[str]] = defaultdict(list)
     composite_drifts:    Dict[str, List[str]] = defaultdict(list)
@@ -573,6 +583,8 @@ def main() -> int:
                     unversioned_issues[pillar].append(f"{name} ({f})")
                 elif f == "score_null":
                     null_scores[pillar].append(name)
+                elif f == "ghosted_weight":
+                    ghosted_weights[pillar].append(name)
                 elif f == "fallback_zero":
                     fallback_zeros[pillar].append(name)
                 elif f == "pillar_absent":
@@ -631,6 +643,14 @@ def main() -> int:
         print("\n── NULL SCORES ────────────────────────────────────────────────────")
         for pillar in sorted(null_scores):
             print(f"  {pillar}: {', '.join(null_scores[pillar])}")
+
+    # ── Section 3a: Ghosted weights (healthy score, weight=0 — excluded from composite) ──
+    if ghosted_weights:
+        print("\n── GHOSTED WEIGHTS (score>0 + healthy, but weight=0 — not in composite) ─")
+        for pillar in sorted(ghosted_weights):
+            places = ghosted_weights[pillar]
+            truncated = ', '.join(places[:6]) + (f' +{len(places)-6} more' if len(places) > 6 else '')
+            print(f"  {pillar}: {len(places)} place(s) — {truncated}")
 
     # ── Section 3b: Absent pillars (key not in JSONL at all) ──────────────
     if absent_pillars:
@@ -804,6 +824,7 @@ def main() -> int:
     print(f"  Known old versions      : {sum(len(v) for v in old_version_issues.values())}")
     print(f"  Unversioned pillars     : {sum(len(v) for v in unversioned_issues.values())}")
     print(f"  Null scores             : {sum(len(v) for v in null_scores.values())}")
+    print(f"  Ghosted weights         : {sum(len(v) for v in ghosted_weights.values())}")
     print(f"  Absent pillars          : {sum(len(v) for v in absent_pillars.values())}")
     print(f"  Fallback zeros          : {sum(len(v) for v in fallback_zeros.values())}")
     print(f"  Low confidence          : {sum(len(v) for v in low_conf.values())}")
