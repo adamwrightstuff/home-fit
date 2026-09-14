@@ -695,7 +695,7 @@ export default function CatalogPageClient({
     for (const p of hits) {
       const key = catalogRowKey(p.catalog)
       const r: string[] = []
-      if (filterMetro !== 'all' && inferCatalogMetro(p) !== filterMetro) r.push(`Metro: ${filterMetro.toUpperCase()}`)
+      if (filterMetro !== 'all' && inferCatalogMetro(p) !== filterMetro) r.push(`Metro: ${inferCatalogMetro(p).toUpperCase()}`)
       if (filterAreaTypes.length > 0) {
         const at = p.score.data_quality_summary?.area_classification?.area_type ?? ''
         if (!filterAreaTypes.includes(at)) r.push('Area type')
