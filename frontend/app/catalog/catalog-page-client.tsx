@@ -742,6 +742,23 @@ export default function CatalogPageClient({
       for (const k of activeDealbreakerKeys) {
         if (!DEALBREAKER_CHECKS[k]?.(p)) r.push(`${PILLAR_META[k].name} must-have`)
       }
+      if (hasClimatePreferences(climatePrefs)) {
+        const cm = scoreClimateMatch(p.climate, climatePrefs)
+        if (cm && !isNaN(cm.score)) {
+          const ax = cm.axes
+          const fails =
+            (climatePrefs.rain_tolerance === 'dealbreaker' && typeof ax.rain_grey === 'number' && !isNaN(ax.rain_grey) && ax.rain_grey < 15) ||
+            (climatePrefs.cold_tolerance === 'dealbreaker' && typeof ax.cold_winter === 'number' && !isNaN(ax.cold_winter) && ax.cold_winter < 15) ||
+            (climatePrefs.heat_tolerance === 'dealbreaker' && typeof ax.summer_heat === 'number' && !isNaN(ax.summer_heat) && ax.summer_heat < 15) ||
+            (climatePrefs.seasons === 'want_consistency' && typeof ax.seasonal === 'number' && !isNaN(ax.seasonal) && ax.seasonal < 15) ||
+            (climatePrefs.heat_tolerance === 'love' && typeof ax.summer_heat === 'number' && !isNaN(ax.summer_heat) && ax.summer_heat < 15) ||
+            (climatePrefs.cold_tolerance === 'love' && typeof ax.cold_winter === 'number' && !isNaN(ax.cold_winter) && ax.cold_winter < 15) ||
+            (climatePrefs.rain_tolerance === 'vibe' && typeof ax.rain_grey === 'number' && !isNaN(ax.rain_grey) && ax.rain_grey < 15) ||
+            (climatePrefs.seasons === 'want_4' && typeof ax.seasonal === 'number' && !isNaN(ax.seasonal) && ax.seasonal < 15) ||
+            cm.score < 15
+          if (fails) r.push('Climate')
+        }
+      }
       if (r.length > 0) reasons[key] = r
     }
 
@@ -754,7 +771,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterCommuteMax, filterHousingType, activeDealbreakerKeys.join(','), householdIncome])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterCommuteMax, filterHousingType, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
