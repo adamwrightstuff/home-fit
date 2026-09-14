@@ -183,6 +183,11 @@ export default function CatalogBottomSheet({
                 >
                   {place.catalog.county_borough}, {place.catalog.state_abbr}
                 </div>
+                {place.cbd_transit_minutes != null && (
+                  <div style={{ fontSize: '0.7rem', color: 'var(--hf-text-secondary)', marginTop: 2 }}>
+                    {Math.round(place.cbd_transit_minutes)} min to CBD · transit
+                  </div>
+                )}
                 <div style={{ fontSize: '0.7rem', color: 'var(--hf-text-secondary)', opacity: 0.7, marginTop: 2 }}>
                   Scored July 2026
                 </div>
