@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-JSONL = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.jsonl"
+JSONL = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
 
 # Per-pillar confidence thresholds. Pillars with structurally low confidence
 # (healthcare, air travel) get a lower bar so they don't flood the report.
