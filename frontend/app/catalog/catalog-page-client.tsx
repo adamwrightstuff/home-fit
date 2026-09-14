@@ -722,6 +722,10 @@ export default function CatalogPageClient({
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
       if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
+      if (filterCommuteMax !== 'all') {
+        const cbd = p.cbd_transit_minutes
+        if (typeof cbd !== 'number' || cbd > Number(filterCommuteMax)) r.push('Commute')
+      }
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
         const hs = (p.score as any).housing_stock
         const pctLow = typeof hs?.pct_low_density === 'number' ? hs.pct_low_density : null
@@ -750,7 +754,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterHousingType, activeDealbreakerKeys.join(','), householdIncome])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterCommuteMax, filterHousingType, activeDealbreakerKeys.join(','), householdIncome])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
