@@ -540,7 +540,7 @@ export default function CatalogPageClient({
       if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false
       if (filterCommuteMax !== 'all') {
         const cbd = p.cbd_transit_minutes
-        if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) return false
+        if (typeof cbd !== 'number' || cbd > Number(filterCommuteMax)) return false
       }
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
         const hs = (p.score as any).housing_stock
