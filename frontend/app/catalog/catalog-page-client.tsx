@@ -253,6 +253,70 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
   }, [])
 
+  const [currentHomeMonthlyCost, setCurrentHomeMonthlyCost] = useState<number | null>(() => {
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        return typeof parsed.current_home_monthly_cost === 'number' && parsed.current_home_monthly_cost > 0
+          ? parsed.current_home_monthly_cost : null
+      }
+    } catch { /* ignore */ }
+    return null
+  })
+  const [currentHomeMonthlyCostInput, setCurrentHomeMonthlyCostInput] = useState<string>(() => {
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        return typeof parsed.current_home_monthly_cost === 'number' && parsed.current_home_monthly_cost > 0
+          ? String(parsed.current_home_monthly_cost) : ''
+      }
+    } catch { /* ignore */ }
+    return ''
+  })
+  const [currentHomeMatch, setCurrentHomeMatch] = useState<string>(() => {
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        return typeof parsed.current_home_match === 'string' ? parsed.current_home_match : ''
+      }
+    } catch { /* ignore */ }
+    return ''
+  })
+
+  const handleCurrentHomeMonthlyCostBlur = useCallback((val: string) => {
+    const v = val === '' ? null : parseInt(val.replace(/,/g, ''), 10)
+    const next = Number.isFinite(v) && (v as number) >= 100 ? (v as number) : null
+    setCurrentHomeMonthlyCost(next)
+    setCurrentHomeMonthlyCostInput(next ? String(next) : '')
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      const opts = stored ? JSON.parse(stored) : {}
+      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_monthly_cost: next }))
+    } catch { /* ignore */ }
+  }, [])
+
+  const handleCurrentHomeMonthlyCostClear = useCallback(() => {
+    setCurrentHomeMonthlyCost(null)
+    setCurrentHomeMonthlyCostInput('')
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      const opts = stored ? JSON.parse(stored) : {}
+      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_monthly_cost: null }))
+    } catch { /* ignore */ }
+  }, [])
+
+  const handleCurrentHomeMatchChange = useCallback((val: string) => {
+    setCurrentHomeMatch(val)
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      const opts = stored ? JSON.parse(stored) : {}
+      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_match: val }))
+    } catch { /* ignore */ }
+  }, [])
+
   const setIndexModeAndListSort = useCallback((mode: CatalogMapIndexMode) => {
     setIndexMode(mode)
     setSortByName(false)
@@ -423,7 +487,12 @@ export default function CatalogPageClient({
 
   const adjustedPlaces = useMemo(() => {
     const withIncome = householdIncome
-      ? places.map((p) => ({ ...p, score: applyUserIncomeToScore(p.score, householdIncome) }))
+      ? places.map((p) => {
+          const isCurrentHome = currentHomeMatch.trim() &&
+            (p.catalog?.name ?? '').toLowerCase().includes(currentHomeMatch.trim().toLowerCase())
+          const monthlyCostOverride = isCurrentHome ? currentHomeMonthlyCost : null
+          return { ...p, score: applyUserIncomeToScore(p.score, householdIncome, monthlyCostOverride) }
+        })
       : places
 
     // Recompute quality_education score based on school type preference.
@@ -500,7 +569,7 @@ export default function CatalogPageClient({
     }) : withNb
 
     return withAo
-  }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref])
+  }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, currentHomeMonthlyCost, currentHomeMatch])
 
   const effectivePriorities = useMemo(
     () => priorities,
@@ -1693,6 +1762,12 @@ export default function CatalogPageClient({
         onIncomeInputChange={setIncomeInputValue}
         onIncomeBlur={() => handleIncomeBlur(incomeInputValue, householdIncome)}
         onIncomeClear={handleIncomeClear}
+        currentHomeMonthlyCostInput={currentHomeMonthlyCostInput}
+        onCurrentHomeMonthlyCostInputChange={setCurrentHomeMonthlyCostInput}
+        onCurrentHomeMonthlyCostBlur={() => handleCurrentHomeMonthlyCostBlur(currentHomeMonthlyCostInput)}
+        onCurrentHomeMonthlyCostClear={handleCurrentHomeMonthlyCostClear}
+        currentHomeMatch={currentHomeMatch}
+        onCurrentHomeMatchChange={handleCurrentHomeMatchChange}
         dealbreakers={dealbreakers}
         onDealbreakerToggle={toggleDealbreaker}
       />

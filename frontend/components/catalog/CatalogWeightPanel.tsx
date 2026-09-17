@@ -38,6 +38,14 @@ interface CatalogWeightPanelProps {
   onIncomeInputChange?: (v: string) => void
   onIncomeBlur?: () => void
   onIncomeClear?: () => void
+  /** Current home monthly cost (mortgage + tax) — overrides area median for the matched place. */
+  currentHomeMonthlyCostInput?: string
+  onCurrentHomeMonthlyCostInputChange?: (v: string) => void
+  onCurrentHomeMonthlyCostBlur?: () => void
+  onCurrentHomeMonthlyCostClear?: () => void
+  /** Substring matched against place names to identify the current home. */
+  currentHomeMatch?: string
+  onCurrentHomeMatchChange?: (v: string) => void
   /** Deal-breaker pillars (currently housing_value only). Independent of importance weight. */
   dealbreakers?: Partial<Record<PillarKey, boolean>>
   onDealbreakerToggle?: (key: PillarKey) => void
@@ -63,7 +71,7 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   social_fabric: 'Exclude places with weak community cohesion scores',
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, currentHomeMonthlyCostInput = '', onCurrentHomeMonthlyCostInputChange, onCurrentHomeMonthlyCostBlur, onCurrentHomeMonthlyCostClear, currentHomeMatch = '', onCurrentHomeMatchChange, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
@@ -208,6 +216,55 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                 )}
               </div>
             </div>
+
+            {householdIncome && onCurrentHomeMonthlyCostInputChange && (
+              <div className="mt-3 rounded-lg border border-dashed border-[var(--hf-border)] p-2.5">
+                <div className="mb-2 text-xs font-medium text-[var(--hf-text-secondary)]">
+                  Current home override
+                  <span
+                    className="ml-1 inline-flex h-4 w-4 cursor-default items-center justify-center rounded-full border border-[var(--hf-border)] text-[0.65rem] font-bold text-[var(--hf-text-secondary)]"
+                    title="When set, your current home's housing score is computed from your actual monthly cost instead of the area median price. All other places still use area median."
+                  >
+                    ?
+                  </span>
+                </div>
+                <div className="mb-2">
+                  <div className="mb-1 text-[0.65rem] uppercase tracking-wide text-[var(--hf-text-tertiary)]">Place name (partial match)</div>
+                  <input
+                    type="text"
+                    placeholder="e.g. Carroll Gardens"
+                    value={currentHomeMatch}
+                    onChange={(e) => onCurrentHomeMatchChange?.(e.target.value)}
+                    className="w-full rounded-lg border border-[var(--hf-border)] px-2 py-1.5 text-xs"
+                  />
+                </div>
+                <div>
+                  <div className="mb-1 text-[0.65rem] uppercase tracking-wide text-[var(--hf-text-tertiary)]">Monthly cost (mortgage + tax)</div>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-2 text-xs text-[var(--hf-text-secondary)]">$</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="monthly"
+                      value={currentHomeMonthlyCostInput}
+                      onChange={(e) => onCurrentHomeMonthlyCostInputChange(e.target.value)}
+                      onBlur={onCurrentHomeMonthlyCostBlur}
+                      className="w-full rounded-lg border border-[var(--hf-border)] py-1.5 pl-5 pr-8 text-xs"
+                    />
+                    {currentHomeMonthlyCostInput && onCurrentHomeMonthlyCostClear && (
+                      <button
+                        type="button"
+                        className="absolute right-2 text-[var(--hf-text-tertiary)] hover:text-[var(--hf-text-secondary)]"
+                        onClick={onCurrentHomeMonthlyCostClear}
+                        aria-label="Clear monthly cost"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

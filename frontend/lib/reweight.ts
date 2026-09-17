@@ -1,5 +1,5 @@
 import type { ScoreResponse } from '@/types/api'
-import { PILLAR_ORDER, SCORE_BANDS, type PillarKey } from '@/lib/pillars'
+import { PILLAR_ORDER, SCORE_BANDS, type PillarKey, computeHappinessIndex } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
 
 type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
@@ -401,10 +401,8 @@ export function passesSocialFabricDealbreaker(score: number | null | undefined):
   return score >= SOCIAL_FABRIC_DEALBREAKER_SCORE
 }
 
-/** Mirror of Python _score_local_affordability — step function on price-to-income ratio (0–50 pts). */
-function scoreLocalAffordability(homeValue: number, income: number): number {
-  if (!homeValue || !income) return 0
-  const ratio = homeValue / income
+/** Step function on price-to-income ratio (0–50 pts). */
+function scoreAffordabilityRatio(ratio: number): number {
   if (ratio <= 2.0) return 50
   if (ratio <= 2.5) return 45
   if (ratio <= 3.0) return 40
@@ -417,26 +415,45 @@ function scoreLocalAffordability(homeValue: number, income: number): number {
   return 5
 }
 
+/** Mirror of Python _score_local_affordability — step function on price-to-income ratio (0–50 pts). */
+function scoreLocalAffordability(homeValue: number, income: number): number {
+  if (!homeValue || !income) return 0
+  return scoreAffordabilityRatio(homeValue / income)
+}
+
 /**
- * Recompute housing_value score using a user-supplied income instead of the local median.
- * Only local_affordability (0–50 pts) changes; space and value_efficiency are income-independent.
- * Returns original data unchanged when userIncome is null/zero or median_home_value is missing.
+ * Recompute housing_value score using either a user-supplied income against area median,
+ * or an actual monthly cost (mortgage + tax) for the user's current home.
+ * When actualMonthlyCost is provided, uses (cost * 12) / income as the affordability ratio,
+ * bypassing median_home_value — correct for existing owners with a locked-in cost basis.
+ * Also recomputes happiness_index since housing_value is one of its components.
+ * Returns original data unchanged when userIncome is null/zero.
  */
 export function applyUserIncomeToScore(
   data: ScoreResponse,
-  userIncome: number | null | undefined
+  userIncome: number | null | undefined,
+  actualMonthlyCost?: number | null
 ): ScoreResponse {
   if (!userIncome || userIncome <= 0) return data
   const hv = (data.livability_pillars as any)?.housing_value
   if (!hv) return data
-  const medianHomeValue = Number(hv.summary?.median_home_value ?? 0)
-  if (medianHomeValue <= 0) return data
+
+  let ratio: number
+  if (actualMonthlyCost && actualMonthlyCost > 0) {
+    ratio = (actualMonthlyCost * 12) / userIncome
+  } else {
+    const medianHomeValue = Number(hv.summary?.median_home_value ?? 0)
+    if (medianHomeValue <= 0) return data
+    ratio = medianHomeValue / userIncome
+  }
+
   const bk = hv.breakdown ?? {}
   const space = Number(bk.space ?? 0)
   const valueEfficiency = Number(bk.value_efficiency ?? 0)
-  const newAffordability = scoreLocalAffordability(medianHomeValue, userIncome)
+  const newAffordability = scoreAffordabilityRatio(ratio)
   const newTotal = Math.min(100, Math.max(0, newAffordability + space + valueEfficiency))
-  return {
+
+  const patched: ScoreResponse = {
     ...data,
     livability_pillars: {
       ...data.livability_pillars,
@@ -447,6 +464,9 @@ export function applyUserIncomeToScore(
       },
     } as ScoreResponse['livability_pillars'],
   }
+
+  const newHI = computeHappinessIndex((patched.livability_pillars as any) ?? {})
+  return newHI !== null ? { ...patched, happiness_index: newHI } : patched
 }
 
 /** Expose token allocation for UI: weight % per pillar from current priorities (no API). */

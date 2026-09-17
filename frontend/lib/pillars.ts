@@ -84,6 +84,32 @@ export function computeLongevityIndex(
   return Math.round(total * 100) / 100
 }
 
+/**
+ * Compute Happiness Index (0–100) client-side from livability_pillars. Mirrors backend pillars/happiness_index.py.
+ * Weights: social 0.30, safety 0.20, commute 0.15, amenities 0.05, housing 0.10, beauty 0.12, education 0.08.
+ * Renormalizes over available components; safety/education excluded when failed/missing/confidence=0.
+ * Social fabric is modified by economic_opportunity when available (eco_modifier 0.85–1.15).
+ */
+export function computeHappinessIndex(pillars: Record<string, any>): number | null {
+  let S: number | null = typeof pillars.social_fabric?.score === 'number' ? pillars.social_fabric.score : null
+  const cs = pillars.community_safety
+  const F: number | null = (!cs || cs.status === 'failed') ? null : typeof cs.score === 'number' ? cs.score : null
+  const C: number | null = typeof pillars.public_transit_access?.breakdown?.commute_time === 'number'
+    ? pillars.public_transit_access.breakdown.commute_time : null
+  const N: number | null = typeof pillars.neighborhood_amenities?.score === 'number' ? pillars.neighborhood_amenities.score : null
+  const H: number | null = typeof pillars.housing_value?.score === 'number' ? pillars.housing_value.score : null
+  const G: number | null = typeof pillars.natural_beauty?.score === 'number' ? pillars.natural_beauty.score : null
+  const edu = pillars.quality_education
+  const E: number | null = (edu?.confidence === 0) ? null : typeof edu?.score === 'number' ? edu.score : null
+  const ecoScore: number | null = typeof pillars.economic_opportunity?.score === 'number' ? pillars.economic_opportunity.score : null
+  if (S !== null && ecoScore !== null) S = Math.max(0, Math.min(100, S * (0.85 + (ecoScore / 100) * 0.30)))
+  const cmps: [number | null, number][] = [[S, 0.30], [F, 0.20], [C, 0.15], [N, 0.05], [H, 0.10], [G, 0.12], [E, 0.08]]
+  const avail = cmps.filter((c): c is [number, number] => c[0] !== null)
+  if (!avail.length) return null
+  const tw = avail.reduce((s, [, w]) => s + w, 0)
+  return Math.round(Math.max(0, Math.min(100, avail.reduce((s, [v, w]) => s + v * w, 0) / tw)) * 10) / 10
+}
+
 /** API `only=` list includes every longevity pillar → server returns a meaningful longevity_index. */
 export function allLongevityPillarsInOnlyKeys(onlyKeys: string[]): boolean {
   const set = new Set(onlyKeys)
