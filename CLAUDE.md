@@ -6,6 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Answer in one sentence. Lead with the fix, not the explanation. No code snippets unless asked. No bullet points. No file names or function names unless asked. One cause, not a list of possibilities — trace the actual code path before responding. If something doesn't add up, say so directly and say what you'd need to verify.
 
+## Social Post Tone
+
+Posts are warm, direct, specific. Modeled on Suburban Jungle's voice. Rules:
+- No em dashes
+- No scores in posts (70s look bad even when accurate)
+- No negative framings (no "X scores worse than Y")
+- No words like "data", "dimensions", "livability" in the copy itself
+- Lead with a place or a person, not a concept
+- Short sentences. Conversational. Like you're telling a friend.
+- No bullet-pointed conclusions or "that's what X is for" signoffs
+
 ## What This Is
 
 HomeFit is a personalized livability scoring API that evaluates any location across 13 research-backed pillars (active outdoors, natural beauty, neighborhood amenities, air travel, public transit, healthcare, education, housing value, economic security, climate risk, social fabric, diversity, community safety) to produce a weighted 0–100 score. Political lean is a 14th opt-in pillar (weight=0 unless the user declares a preference). Built environment is scored but not a primary residential pillar — it only appears in vacation road_trip mode. Production backend runs on Railway; frontend on Vercel.
