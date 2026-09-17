@@ -274,7 +274,7 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                       </button>
                     )}
                     {comboOpen && comboFiltered.length > 0 && (
-                      <ul className="absolute z-50 mt-0.5 max-h-48 w-full overflow-y-auto rounded-lg border border-[var(--hf-border)] bg-[var(--hf-surface)] py-1 shadow-lg">
+                      <ul className="absolute bottom-full z-50 mb-0.5 max-h-48 w-full overflow-y-auto rounded-lg border border-[var(--hf-border)] bg-[var(--hf-surface)] py-1 shadow-lg">
                         {comboFiltered.map((o) => (
                           <li key={o.name}>
                             <button
