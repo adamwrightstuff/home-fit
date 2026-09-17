@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef, useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
@@ -43,9 +44,12 @@ interface CatalogWeightPanelProps {
   onCurrentHomeMonthlyCostInputChange?: (v: string) => void
   onCurrentHomeMonthlyCostBlur?: () => void
   onCurrentHomeMonthlyCostClear?: () => void
-  /** Substring matched against place names to identify the current home. */
+  /** The confirmed selected place name for the current home. */
   currentHomeMatch?: string
-  onCurrentHomeMatchChange?: (v: string) => void
+  /** Called with the exact catalog place name when user selects from the dropdown. */
+  onCurrentHomeSelect?: (name: string) => void
+  /** Options for the current home dropdown — pass catalog places as { name, sub }. */
+  currentHomePlaceOptions?: { name: string; sub: string }[]
   /** Deal-breaker pillars (currently housing_value only). Independent of importance weight. */
   dealbreakers?: Partial<Record<PillarKey, boolean>>
   onDealbreakerToggle?: (key: PillarKey) => void
@@ -71,7 +75,27 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   social_fabric: 'Exclude places with weak community cohesion scores',
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, currentHomeMonthlyCostInput = '', onCurrentHomeMonthlyCostInputChange, onCurrentHomeMonthlyCostBlur, onCurrentHomeMonthlyCostClear, currentHomeMatch = '', onCurrentHomeMatchChange, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, currentHomeMonthlyCostInput = '', onCurrentHomeMonthlyCostInputChange, onCurrentHomeMonthlyCostBlur, onCurrentHomeMonthlyCostClear, currentHomeMatch = '', onCurrentHomeSelect, currentHomePlaceOptions = [], dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
+  const [comboInput, setComboInput] = useState(currentHomeMatch)
+  const [comboOpen, setComboOpen] = useState(false)
+  const comboRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!currentHomeMatch) setComboInput('')
+  }, [currentHomeMatch])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (comboRef.current && !comboRef.current.contains(e.target as Node)) setComboOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const comboFiltered = comboInput.trim()
+    ? currentHomePlaceOptions.filter(o => o.name.toLowerCase().includes(comboInput.toLowerCase())).slice(0, 8)
+    : currentHomePlaceOptions.slice(0, 8)
+
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
@@ -228,15 +252,49 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                     ?
                   </span>
                 </div>
-                <div className="mb-2">
-                  <div className="mb-1 text-[0.65rem] uppercase tracking-wide text-[var(--hf-text-tertiary)]">Place name (partial match)</div>
-                  <input
-                    type="text"
-                    placeholder="e.g. Carroll Gardens"
-                    value={currentHomeMatch}
-                    onChange={(e) => onCurrentHomeMatchChange?.(e.target.value)}
-                    className="w-full rounded-lg border border-[var(--hf-border)] px-2 py-1.5 text-xs"
-                  />
+                <div className="mb-2" ref={comboRef}>
+                  <div className="mb-1 text-[0.65rem] uppercase tracking-wide text-[var(--hf-text-tertiary)]">Neighborhood</div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search your neighborhood…"
+                      value={comboInput}
+                      onChange={(e) => { setComboInput(e.target.value); setComboOpen(true) }}
+                      onFocus={() => setComboOpen(true)}
+                      className="w-full rounded-lg border border-[var(--hf-border)] px-2 py-1.5 pr-6 text-xs"
+                    />
+                    {currentHomeMatch && (
+                      <button
+                        type="button"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--hf-text-tertiary)] hover:text-[var(--hf-text-secondary)]"
+                        onClick={() => { setComboInput(''); onCurrentHomeSelect?.('') }}
+                        aria-label="Clear neighborhood"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                    {comboOpen && comboFiltered.length > 0 && (
+                      <ul className="absolute z-50 mt-0.5 max-h-48 w-full overflow-y-auto rounded-lg border border-[var(--hf-border)] bg-[var(--hf-surface)] py-1 shadow-lg">
+                        {comboFiltered.map((o) => (
+                          <li key={o.name}>
+                            <button
+                              type="button"
+                              className="flex w-full flex-col px-2.5 py-1.5 text-left hover:bg-[var(--hf-track)]"
+                              onMouseDown={(e) => {
+                                e.preventDefault()
+                                setComboInput(o.name)
+                                setComboOpen(false)
+                                onCurrentHomeSelect?.(o.name)
+                              }}
+                            >
+                              <span className="text-xs font-medium text-[var(--hf-text-primary)]">{o.name}</span>
+                              <span className="text-[0.65rem] text-[var(--hf-text-tertiary)]">{o.sub}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <div className="mb-1 text-[0.65rem] uppercase tracking-wide text-[var(--hf-text-tertiary)]">Monthly cost (mortgage + tax)</div>

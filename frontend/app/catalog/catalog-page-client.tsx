@@ -308,12 +308,12 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
   }, [])
 
-  const handleCurrentHomeMatchChange = useCallback((val: string) => {
-    setCurrentHomeMatch(val)
+  const handleCurrentHomeSelect = useCallback((name: string) => {
+    setCurrentHomeMatch(name)
     try {
       const stored = sessionStorage.getItem('homefit_search_options')
       const opts = stored ? JSON.parse(stored) : {}
-      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_match: val }))
+      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_match: name }))
     } catch { /* ignore */ }
   }, [])
 
@@ -485,11 +485,17 @@ export default function CatalogPageClient({
     })
   }, [places])
 
+  const currentHomePlaceOptions = useMemo(() =>
+    places.map((p) => ({
+      name: p.catalog?.name ?? '',
+      sub: [p.catalog?.county_borough, p.catalog?.state_abbr].filter(Boolean).join(', '),
+    })).filter(o => o.name),
+  [places])
+
   const adjustedPlaces = useMemo(() => {
     const withIncome = householdIncome
       ? places.map((p) => {
-          const isCurrentHome = currentHomeMatch.trim() &&
-            (p.catalog?.name ?? '').toLowerCase().includes(currentHomeMatch.trim().toLowerCase())
+          const isCurrentHome = currentHomeMatch && p.catalog?.name === currentHomeMatch
           const monthlyCostOverride = isCurrentHome ? currentHomeMonthlyCost : null
           return { ...p, score: applyUserIncomeToScore(p.score, householdIncome, monthlyCostOverride) }
         })
@@ -1767,7 +1773,8 @@ export default function CatalogPageClient({
         onCurrentHomeMonthlyCostBlur={() => handleCurrentHomeMonthlyCostBlur(currentHomeMonthlyCostInput)}
         onCurrentHomeMonthlyCostClear={handleCurrentHomeMonthlyCostClear}
         currentHomeMatch={currentHomeMatch}
-        onCurrentHomeMatchChange={handleCurrentHomeMatchChange}
+        onCurrentHomeSelect={handleCurrentHomeSelect}
+        currentHomePlaceOptions={currentHomePlaceOptions}
         dealbreakers={dealbreakers}
         onDealbreakerToggle={toggleDealbreaker}
       />
