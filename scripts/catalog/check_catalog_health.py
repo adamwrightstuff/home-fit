@@ -106,9 +106,18 @@ NB_V9_KEYS = ["gvi_score", "water_score", "canopy_score", "topo_score", "landcov
 # None = GEE/API call was skipped or failed; the score was built without this input.
 EXPECTED_SUMMARY_FIELDS: Dict[str, List[str]] = {
     "natural_beauty": [
-        "weighted_canopy_pct",   # GEE tree canopy — None means GEE never ran for this place
-        "green_view_index",      # Street-level GVI — None means GVI pipeline didn't run
+        "weighted_canopy_pct",   # GEE tree canopy — checked in summary OR legacy multi_radius_canopy
+        "green_view_index",      # Street-level GVI — checked in summary OR legacy top-level field
     ],
+}
+
+# For NB fields that exist in two storage locations (new summary dict vs legacy top-level),
+# list the fallback top-level key to check when the summary key is absent.
+SUMMARY_FIELD_LEGACY_FALLBACKS: Dict[str, Dict[str, str]] = {
+    "natural_beauty": {
+        "weighted_canopy_pct": "multi_radius_canopy",
+        "green_view_index":    "green_view_index",
+    },
 }
 
 # Subcomponents where a stored value of exactly 0 is suspicious — it indicates a data
@@ -247,9 +256,14 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
 
     # Summary-level data pipeline presence checks (independent of scoring version)
     nb_summary = data.get("summary") or {}
+    legacy_fallbacks = SUMMARY_FIELD_LEGACY_FALLBACKS.get(pillar, {})
     for key in EXPECTED_SUMMARY_FIELDS.get(pillar, []):
-        if nb_summary.get(key) is None:
-            flags.append(f"missing:{key}")
+        if nb_summary.get(key) is not None:
+            continue  # present in new summary format — OK
+        fallback_key = legacy_fallbacks.get(key)
+        if fallback_key and data.get(fallback_key) is not None:
+            continue  # present in legacy top-level field — OK
+        flags.append(f"missing:{key}")
 
     # natural_beauty v9_breakdown — stored at pillar root in older batches (NYC/LA),
     # inside details in newer batches (SF). Check both locations.
