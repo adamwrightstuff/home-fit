@@ -101,6 +101,16 @@ EXPECTED_BREAKDOWN: Dict[str, List[str]] = {
 
 NB_V9_KEYS = ["gvi_score", "water_score", "canopy_score", "topo_score", "landcover_score"]
 
+# Summary-level fields whose absence indicates a data pipeline never ran.
+# Unlike EXPECTED_BREAKDOWN (which checks the breakdown dict), these check the summary dict.
+# None = GEE/API call was skipped or failed; the score was built without this input.
+EXPECTED_SUMMARY_FIELDS: Dict[str, List[str]] = {
+    "natural_beauty": [
+        "weighted_canopy_pct",   # GEE tree canopy — None means GEE never ran for this place
+        "green_view_index",      # Street-level GVI — None means GVI pipeline didn't run
+    ],
+}
+
 # Subcomponents where a stored value of exactly 0 is suspicious — it indicates a data
 # failure (Overpass timeout, GEE API error, missing source data) rather than a true zero.
 # Legitimate zeros (crime trend flat = 0, no elite schools = 0, no waterfront = 0) are
@@ -121,6 +131,10 @@ ZERO_SUSPICIOUS_SUBCOMPONENTS: Dict[str, Dict[str, Any]] = {
         # Any populated place has at least some hospitals/clinics within range; 0 = API error
         "specialized_care": "always",
         "emergency_services": "always",
+    },
+    "housing_value": {
+        # value_efficiency = cost_per_room / rooms_per_100k; 0 means Census tract data gap
+        "value_efficiency": "always",
     },
 }
 
@@ -231,6 +245,12 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
             if condition == "always" or area_type in condition:
                 flags.append(f"zero:{key}")
 
+    # Summary-level data pipeline presence checks (independent of scoring version)
+    nb_summary = data.get("summary") or {}
+    for key in EXPECTED_SUMMARY_FIELDS.get(pillar, []):
+        if nb_summary.get(key) is None:
+            flags.append(f"missing:{key}")
+
     # natural_beauty v9_breakdown — stored at pillar root in older batches (NYC/LA),
     # inside details in newer batches (SF). Check both locations.
     if pillar == "natural_beauty" and got == "v9":
@@ -259,6 +279,11 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
                 and duo < 5.0
                 and local_outcome == "overpass_ok"):
             flags.append(f"ao_duo_low:{duo:.1f}(overpass_ok)")
+        # Overpass failures for trail and regional tiers — stored in summary.overpass
+        ao_overpass = (data.get("summary") or {}).get("overpass") or {}
+        for tier in ("trail", "regional"):
+            if ao_overpass.get(tier) == "overpass_error":
+                flags.append(f"overpass_{tier}:error")
 
     # Transit: check if Transitland API was unavailable and score fell back to commute-time only
     if pillar == "public_transit_access":
@@ -571,6 +596,7 @@ def main() -> int:
     warning_issues:      Dict[str, List[str]] = defaultdict(list)
     fallback_issues:     Dict[str, List[str]] = defaultdict(list)
     transit_api_fallbacks: Dict[str, List[str]] = defaultdict(list)
+    missing_input:       Dict[str, Dict[str, List[str]]] = defaultdict(lambda: defaultdict(list))
     missing_sub:         Dict[str, Dict[str, List[str]]] = defaultdict(lambda: defaultdict(list))
     zero_sub:            Dict[str, Dict[str, List[str]]] = defaultdict(lambda: defaultdict(list))
 
@@ -602,7 +628,12 @@ def main() -> int:
                 elif f == "transit_api_fallback":
                     transit_api_fallbacks[pillar].append(name)
                 elif f.startswith("missing:"):
-                    missing_sub[pillar][f[8:]].append(name)
+                    key = f[8:]
+                    # Route summary pipeline gaps to missing_input; breakdown gaps to missing_sub
+                    if key in (EXPECTED_SUMMARY_FIELDS.get(pillar) or []):
+                        missing_input[pillar][key].append(name)
+                    else:
+                        missing_sub[pillar][key].append(name)
                 elif f.startswith("zero:"):
                     zero_sub[pillar][f[5:]].append(name)
 
@@ -729,6 +760,16 @@ def main() -> int:
             truncated = ', '.join(entries[:4]) + (f' +{len(entries)-4} more' if len(entries) > 4 else '')
             print(f"  {key}: {len(entries)} place(s) — {truncated}")
 
+    # ── Section 7d: Missing pipeline inputs (GEE, external APIs that never ran) ─
+    if missing_input:
+        print("\n── MISSING PIPELINE INPUTS (data source never ran — scores built blind) ─")
+        for pillar in sorted(missing_input):
+            for key, places in sorted(missing_input[pillar].items()):
+                truncated = ', '.join(places[:5]) + (f' +{len(places)-5} more' if len(places) > 5 else '')
+                print(f"  {pillar}.{key}: {len(places)} place(s) — {truncated}")
+                if pillar == "natural_beauty" and key == "weighted_canopy_pct":
+                    print(f"    → requires live GEE rescore: rescore_catalog_pillar.py --pillars natural_beauty")
+
     # ── Section 8: Missing subcomponents ──────────────────────────────────
     if missing_sub:
         print("\n── MISSING SUBCOMPONENTS ──────────────────────────────────────────")
@@ -833,6 +874,7 @@ def main() -> int:
     print(f"  Data warnings           : {sum(len(v) for v in warning_issues.values())}")
     print(f"  Fallback used           : {sum(len(v) for v in fallback_issues.values())}")
     print(f"  Transit API fallback    : {sum(len(v) for v in transit_api_fallbacks.values())}")
+    print(f"  Missing pipeline inputs : {sum(len(vv) for v in missing_input.values() for vv in v.values())}")
     print(f"  Missing subcomponents   : {sum(len(vv) for v in missing_sub.values() for vv in v.values())}")
     print(f"  Zero subcomponents      : {sum(len(vv) for v in zero_sub.values() for vv in v.values())}")
     print(f"  Metadata issues         : {sum(len(pf) for _, pf, _, _ in results)}")
