@@ -741,6 +741,34 @@ export default function CatalogPageClient({
     const filteredSet = new Set(filteredPlaces)
     return adjustedPlaces.filter((p) => inferCatalogMetro(p) === filterMetro && !filteredSet.has(p)) as CatalogMapPlaceWithMetro[]
   }, [filterMetro, filteredPlaces, adjustedPlaces])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const metroFilterExcludedReasons = useMemo(() => {
+    const reasons: Record<string, string[]> = {}
+    for (const p of metroFilterExcluded) {
+      const key = catalogRowKey(p.catalog)
+      const r: string[] = []
+      if (filterAreaTypes.length > 0) {
+        const at = p.score.data_quality_summary?.area_classification?.area_type ?? ''
+        if (!filterAreaTypes.includes(at)) r.push('Area type')
+      }
+      if (filterArchetypes.length > 0) {
+        const ar = p.score.status_signal_breakdown?.archetype
+        if (!ar || !filterArchetypes.includes(ar)) r.push('Archetype')
+      }
+      if (filterTrajectory !== 'all') {
+        const tr = p.score.status_signal_breakdown?.trajectory
+        if (tr !== filterTrajectory) r.push('Trajectory')
+      }
+      if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
+      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
+      if (filterCommuteMax !== 'all') {
+        const cbd = p.cbd_transit_minutes
+        if (typeof cbd !== 'number' || cbd > Number(filterCommuteMax)) r.push('Commute')
+      }
+      reasons[key] = r.length > 0 ? r : ['Outside filters']
+    }
+    return reasons
+  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterCommuteMax])
   const { gatedPlaces, excludedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) {
       return { gatedPlaces: filteredPlaces, excludedPlaces: metroFilterExcluded, dealbreakerExcludedCount: metroFilterExcluded.length, dealbreakerZeroSurvivors: false }
@@ -1663,7 +1691,10 @@ export default function CatalogPageClient({
         <div className={`flex min-h-0 flex-1 flex-col pb-20 md:pb-0${dealbreakerZeroSurvivors && !searchResults ? ' opacity-60' : ''}`}>
           <CatalogListView
             places={searchResults ? searchResults.hits : showExcluded && excludedPlaces.length > 0 ? (dealbreakerZeroSurvivors ? excludedPlaces : [...gatedPlaces, ...excludedPlaces]) : gatedPlaces}
-            filteredOutReasons={searchResults ? searchResults.reasons : showExcluded && excludedPlaces.length > 0 ? Object.fromEntries(excludedPlaces.map((p) => [catalogRowKey(p.catalog), ['Must-haves']])) : undefined}
+            filteredOutReasons={searchResults ? searchResults.reasons : showExcluded && excludedPlaces.length > 0 ? {
+              ...Object.fromEntries(excludedPlaces.filter((p) => !metroFilterExcludedReasons[catalogRowKey(p.catalog)]).map((p) => [catalogRowKey(p.catalog), ['Must-haves']])),
+              ...metroFilterExcludedReasons,
+            } : undefined}
             dividerLabel="Outside your must-haves"
             priorities={effectivePriorities}
             indexMode={indexMode}
