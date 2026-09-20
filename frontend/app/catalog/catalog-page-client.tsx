@@ -735,10 +735,10 @@ export default function CatalogPageClient({
   }
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])
   const dealbreakerActive = activeDealbreakerKeys.length > 0
-  // Places in the selected metro that were blocked by regular filters — always shown in "Show excluded"
+  // Places blocked by regular filters — always shown in "Show excluded"
   const metroFilterExcluded = useMemo(() => {
-    if (filterMetro === 'all') return [] as CatalogMapPlaceWithMetro[]
     const filteredSet = new Set(filteredPlaces)
+    if (filterMetro === 'all') return adjustedPlaces.filter((p) => !filteredSet.has(p)) as CatalogMapPlaceWithMetro[]
     return adjustedPlaces.filter((p) => inferCatalogMetro(p) === filterMetro && !filteredSet.has(p)) as CatalogMapPlaceWithMetro[]
   }, [filterMetro, filteredPlaces, adjustedPlaces])
   // eslint-disable-next-line react-hooks/exhaustive-deps
