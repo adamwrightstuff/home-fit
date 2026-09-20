@@ -11,6 +11,7 @@ const nextConfig = {
         'data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
         'data/la_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
         'data/sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+        'data/seattle_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
         'data/catalog_climate_profiles.jsonl',
       ],
     },

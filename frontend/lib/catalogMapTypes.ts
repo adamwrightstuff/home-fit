@@ -85,8 +85,9 @@ export function catalogRowKey(c: Pick<CatalogRow, 'name' | 'county_borough' | 's
 const SF_COUNTIES = new Set(['San Francisco', 'San Mateo', 'Santa Clara', 'Alameda', 'Contra Costa', 'Marin'])
 
 /** Single-metro API responses omit `metro`; infer from catalog fields when missing. */
-export function inferCatalogMetro(p: CatalogMapPlace & { metro?: 'nyc' | 'la' | 'sf' }): 'nyc' | 'la' | 'sf' {
-  if (p.metro === 'nyc' || p.metro === 'la' || p.metro === 'sf') return p.metro
+export function inferCatalogMetro(p: CatalogMapPlace & { metro?: 'nyc' | 'la' | 'sf' | 'seattle' }): 'nyc' | 'la' | 'sf' | 'seattle' {
+  if (p.metro === 'nyc' || p.metro === 'la' || p.metro === 'sf' || p.metro === 'seattle') return p.metro
+  if (p.catalog.state_abbr === 'WA') return 'seattle'
   if (p.catalog.state_abbr === 'CA') {
     return SF_COUNTIES.has(p.catalog.county_borough) ? 'sf' : 'la'
   }

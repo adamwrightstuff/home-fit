@@ -7,13 +7,14 @@ import type { ScoreResponse } from '@/types/api'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-export type CatalogMapMetro = 'nyc' | 'la' | 'sf'
+export type CatalogMapMetro = 'nyc' | 'la' | 'sf' | 'seattle'
 
 /** Single canonical file per metro (composites live inside each row's `score`). */
 const METRO_FILES: Record<CatalogMapMetro, readonly string[]> = {
   nyc: ['nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
   la: ['la_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
   sf: ['sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
+  seattle: ['seattle_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
 }
 
 function dataRoots(): string[] {
@@ -45,6 +46,7 @@ const METRO_TO_SOURCE: Record<CatalogMapMetro, string> = {
   nyc: 'nyc_metro',
   la: 'la_metro',
   sf: 'sf_metro',
+  seattle: 'seattle_metro',
 }
 
 /** Load catalog_climate_profiles.jsonl → map of "${source}::${name}" → ClimateIndicators */
