@@ -1389,21 +1389,23 @@ export default function CatalogPageClient({
           </div>
           {/* Row 2: metro filter (scrollable) */}
           {catalogMode === 'explorer' && (
-            <div className="flex overflow-x-auto border-t border-[var(--hf-border)]">
-              {(['all', 'nyc', 'la', 'sf', 'seattle'] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  className={`flex-shrink-0 border-r border-[var(--hf-border)] px-3 py-1.5 text-[0.65rem] font-bold last:border-r-0 ${filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
-                  style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
-                  onClick={() => setFilterMetro(m)}
-                >
-                  {m === 'all' ? 'All' : m === 'seattle' ? 'SEA' : m.toUpperCase()}
-                  {m !== 'all' && metroResultCounts && (
-                    <span className="ml-0.5 font-normal opacity-60">({metroResultCounts[m]})</span>
-                  )}
-                </button>
-              ))}
+            <div className="overflow-x-auto border-t border-[var(--hf-border)]" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex w-max">
+                {(['all', 'nyc', 'la', 'sf', 'seattle'] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    className={`border-r border-[var(--hf-border)] px-4 py-2 text-[0.65rem] font-bold last:border-r-0 whitespace-nowrap ${filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+                    style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
+                    onClick={() => setFilterMetro(m)}
+                  >
+                    {m === 'all' ? 'All' : m === 'seattle' ? 'SEA' : m.toUpperCase()}
+                    {m !== 'all' && metroResultCounts && (
+                      <span className="ml-0.5 font-normal opacity-60">({metroResultCounts[m]})</span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
