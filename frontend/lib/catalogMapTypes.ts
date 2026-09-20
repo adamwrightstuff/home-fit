@@ -71,7 +71,7 @@ export interface CatalogMapPlace {
 }
 
 /** After `metro=all`, each place is tagged with its source metro. */
-export type CatalogMapPlaceWithMetro = CatalogMapPlace & { metro: 'nyc' | 'la' | 'sf' }
+export type CatalogMapPlaceWithMetro = CatalogMapPlace & { metro: 'nyc' | 'la' | 'sf' | 'seattle' }
 
 export interface CatalogMapApiResponse {
   places: CatalogMapPlace[] | CatalogMapPlaceWithMetro[]

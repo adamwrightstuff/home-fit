@@ -124,17 +124,18 @@ export async function GET(request: Request) {
     const nyc = loadMetroFile('nyc', climateIndex)
     const la = loadMetroFile('la', climateIndex)
     const sf = loadMetroFile('sf', climateIndex)
-    const places: CatalogMapPlaceWithMetro[] = [...nyc, ...la, ...sf]
-    const sources = [nyc.length ? 'nyc' : null, la.length ? 'la' : null, sf.length ? 'sf' : null].filter(Boolean).join('+') || 'missing'
+    const seattle = loadMetroFile('seattle', climateIndex)
+    const places: CatalogMapPlaceWithMetro[] = [...nyc, ...la, ...sf, ...seattle]
+    const sources = [nyc.length ? 'nyc' : null, la.length ? 'la' : null, sf.length ? 'sf' : null, seattle.length ? 'seattle' : null].filter(Boolean).join('+') || 'missing'
     return NextResponse.json({
       places,
       source: sources === 'missing' ? 'missing' : `all:${sources}`,
     } satisfies CatalogMapApiResponse & { detail?: string })
   }
 
-  if (raw !== 'nyc' && raw !== 'la' && raw !== 'sf') {
+  if (raw !== 'nyc' && raw !== 'la' && raw !== 'sf' && raw !== 'seattle') {
     return NextResponse.json(
-      { error: 'Invalid metro. Use metro=nyc, metro=la, metro=sf, or metro=all.' },
+      { error: 'Invalid metro. Use metro=nyc, metro=la, metro=sf, metro=seattle, or metro=all.' },
       { status: 400 }
     )
   }

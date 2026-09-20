@@ -19,8 +19,8 @@ import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
 import AuraBadge from '@/components/catalog/AuraBadge'
 
-const METRO_DOT_COLOR: Record<'nyc' | 'la' | 'sf', string> = { nyc: '#6B5CE7', la: '#E76B5C', sf: '#2A9D8F' }
-function MetroDot({ metro }: { metro: 'nyc' | 'la' | 'sf' }) {
+const METRO_DOT_COLOR: Record<'nyc' | 'la' | 'sf' | 'seattle', string> = { nyc: '#6B5CE7', la: '#E76B5C', sf: '#2A9D8F', seattle: '#1A8FBF' }
+function MetroDot({ metro }: { metro: 'nyc' | 'la' | 'sf' | 'seattle' }) {
   return <span className="inline-block h-2 w-2 rounded-full" style={{ background: METRO_DOT_COLOR[metro] }} title={metro.toUpperCase()} />
 }
 
@@ -144,7 +144,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
             const idx = getAllCatalogIndexDisplay(p, priorities)
             const rw = reweightScoreResponseFromPriorities(p.score, priorities)
             const hf = rw.total_score
-            const metro = inferCatalogMetro(p as CatalogMapPlace & { metro?: 'nyc' | 'la' | 'sf' })
+            const metro = inferCatalogMetro(p as CatalogMapPlace & { metro?: 'nyc' | 'la' | 'sf' | 'seattle' })
             const expanded = expandedKey === key
             const bar = (v: number | null, mode: CatalogMapIndexMode) => {
               if (v == null || !Number.isFinite(v)) return <span className="text-[var(--hf-text-tertiary)]">—</span>
