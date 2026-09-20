@@ -587,16 +587,16 @@ export default function CatalogPageClient({
     let list = adjustedPlaces.filter((p) => {
       if (filterMetro !== 'all' && inferCatalogMetro(p) !== filterMetro) return false
       if (filterAreaTypes.length > 0) {
-        const at = p.score.data_quality_summary?.area_classification?.area_type ?? ''
-        if (!filterAreaTypes.includes(at)) return false
+        const at = p.score.data_quality_summary?.area_classification?.area_type
+        if (at && !filterAreaTypes.includes(at)) return false
       }
       if (filterArchetypes.length > 0) {
         const ar = p.score.status_signal_breakdown?.archetype
-        if (!ar || !filterArchetypes.includes(ar)) return false
+        if (ar && !filterArchetypes.includes(ar)) return false
       }
       if (filterTrajectory !== 'all') {
         const tr = p.score.status_signal_breakdown?.trajectory
-        if (tr !== filterTrajectory) return false
+        if (tr && tr !== filterTrajectory) return false
       }
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
@@ -612,7 +612,7 @@ export default function CatalogPageClient({
         if (!matchesAny) return false
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') return false
-      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false
+      if (filterLocalScene === 'High' && p.score.local_scene_bucket && p.score.local_scene_bucket !== 'High') return false
       if (filterCommuteMax !== 'all') {
         const cbd = p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) return false
@@ -748,22 +748,22 @@ export default function CatalogPageClient({
       const key = catalogRowKey(p.catalog)
       const r: string[] = []
       if (filterAreaTypes.length > 0) {
-        const at = p.score.data_quality_summary?.area_classification?.area_type ?? ''
-        if (!filterAreaTypes.includes(at)) r.push('Area type')
+        const at = p.score.data_quality_summary?.area_classification?.area_type
+        if (at && !filterAreaTypes.includes(at)) r.push('Area type')
       }
       if (filterArchetypes.length > 0) {
         const ar = p.score.status_signal_breakdown?.archetype
-        if (!ar || !filterArchetypes.includes(ar)) r.push('Archetype')
+        if (ar && !filterArchetypes.includes(ar)) r.push('Archetype')
       }
       if (filterTrajectory !== 'all') {
         const tr = p.score.status_signal_breakdown?.trajectory
-        if (tr !== filterTrajectory) r.push('Trajectory')
+        if (tr && tr !== filterTrajectory) r.push('Trajectory')
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
-      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
+      if (filterLocalScene === 'High' && p.score.local_scene_bucket && p.score.local_scene_bucket !== 'High') r.push('Local scene')
       if (filterCommuteMax !== 'all') {
         const cbd = p.cbd_transit_minutes
-        if (typeof cbd !== 'number' || cbd > Number(filterCommuteMax)) r.push('Commute')
+        if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) r.push('Commute')
       }
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
         const hs = (p.score as any).housing_stock
@@ -851,16 +851,16 @@ export default function CatalogPageClient({
       const r: string[] = []
       if (filterMetro !== 'all' && inferCatalogMetro(p) !== filterMetro) r.push(`Metro: ${inferCatalogMetro(p).toUpperCase()}`)
       if (filterAreaTypes.length > 0) {
-        const at = p.score.data_quality_summary?.area_classification?.area_type ?? ''
-        if (!filterAreaTypes.includes(at)) r.push('Area type')
+        const at = p.score.data_quality_summary?.area_classification?.area_type
+        if (at && !filterAreaTypes.includes(at)) r.push('Area type')
       }
       if (filterArchetypes.length > 0) {
         const ar = p.score.status_signal_breakdown?.archetype
-        if (!ar || !filterArchetypes.includes(ar)) r.push('Archetype')
+        if (ar && !filterArchetypes.includes(ar)) r.push('Archetype')
       }
       if (filterTrajectory !== 'all') {
         const tr = p.score.status_signal_breakdown?.trajectory
-        if (tr !== filterTrajectory) r.push('Trajectory')
+        if (tr && tr !== filterTrajectory) r.push('Trajectory')
       }
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
@@ -875,10 +875,10 @@ export default function CatalogPageClient({
         if (!matchesAny) r.push('Political lean')
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
-      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
+      if (filterLocalScene === 'High' && p.score.local_scene_bucket && p.score.local_scene_bucket !== 'High') r.push('Local scene')
       if (filterCommuteMax !== 'all') {
         const cbd = p.cbd_transit_minutes
-        if (typeof cbd !== 'number' || cbd > Number(filterCommuteMax)) r.push('Commute')
+        if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) r.push('Commute')
       }
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
         const hs = (p.score as any).housing_stock
