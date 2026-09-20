@@ -765,10 +765,35 @@ export default function CatalogPageClient({
         const cbd = p.cbd_transit_minutes
         if (typeof cbd !== 'number' || cbd > Number(filterCommuteMax)) r.push('Commute')
       }
-      reasons[key] = r.length > 0 ? r : ['Outside filters']
+      if (filterHousingType.length > 0 && filterHousingType.length < 3) {
+        const hs = (p.score as any).housing_stock
+        const pctLow = typeof hs?.pct_low_density === 'number' ? hs.pct_low_density : null
+        if (pctLow !== null) {
+          const passesAny = filterHousingType.some((ht) => {
+            if (ht === 'sf_townhouse') return pctLow >= 0.25
+            if (ht === 'small_multifamily') return pctLow >= 0.1 && pctLow < 0.7
+            if (ht === 'apartment') return pctLow < 0.3
+            return false
+          })
+          if (!passesAny) r.push('Housing type')
+        }
+      }
+      if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
+        const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
+        const matchesAny = typeof lean === 'number' && filterPoliticalLean.some((pref) => {
+          if (pref === 'strong_d') return lean >= 0.5
+          if (pref === 'lean_d') return lean >= 0.15 && lean < 0.5
+          if (pref === 'moderate') return lean >= -0.15 && lean < 0.15
+          if (pref === 'lean_r') return lean >= -0.5 && lean < -0.15
+          if (pref === 'strong_r') return lean < -0.5
+          return false
+        })
+        if (!matchesAny) r.push('Political lean')
+      }
+      reasons[key] = r.length > 0 ? r : ['Filters']
     }
     return reasons
-  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterCommuteMax])
+  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterCommuteMax, filterHousingType, filterPoliticalLean])
   const { gatedPlaces, excludedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) {
       return { gatedPlaces: filteredPlaces, excludedPlaces: metroFilterExcluded, dealbreakerExcludedCount: metroFilterExcluded.length, dealbreakerZeroSurvivors: false }
@@ -1692,7 +1717,14 @@ export default function CatalogPageClient({
           <CatalogListView
             places={searchResults ? searchResults.hits : showExcluded && excludedPlaces.length > 0 ? (dealbreakerZeroSurvivors ? excludedPlaces : [...gatedPlaces, ...excludedPlaces]) : gatedPlaces}
             filteredOutReasons={searchResults ? searchResults.reasons : showExcluded && excludedPlaces.length > 0 ? {
-              ...Object.fromEntries(excludedPlaces.filter((p) => !metroFilterExcludedReasons[catalogRowKey(p.catalog)]).map((p) => [catalogRowKey(p.catalog), ['Must-haves']])),
+              ...Object.fromEntries(
+                excludedPlaces
+                  .filter((p) => !metroFilterExcludedReasons[catalogRowKey(p.catalog)])
+                  .map((p) => {
+                    const failedKeys = activeDealbreakerKeys.filter((k) => !DEALBREAKER_CHECKS[k]?.(p))
+                    return [catalogRowKey(p.catalog), failedKeys.length > 0 ? failedKeys.map((k) => `${PILLAR_META[k].name}`) : ['Must-haves']]
+                  })
+              ),
               ...metroFilterExcludedReasons,
             } : undefined}
             dividerLabel="Outside your must-haves"
