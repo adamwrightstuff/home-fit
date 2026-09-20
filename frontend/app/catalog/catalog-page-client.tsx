@@ -636,6 +636,11 @@ export default function CatalogPageClient({
       const st = (p.catalog.state_abbr || '').toLowerCase()
       return name.includes(t) || county.includes(t) || st.includes(t)
     })
+    // When a specific metro is selected and ALL its places are filtered out, fall back to
+    // showing all metro places so the dealbreaker gate can still show them as excluded.
+    if (list.length === 0 && filterMetro !== 'all') {
+      list = adjustedPlaces.filter((p) => inferCatalogMetro(p) === filterMetro)
+    }
     if (hasClimatePreferences(climatePrefs)) {
       list = list.filter((p) => {
         const cm = scoreClimateMatch(p.climate, climatePrefs)
