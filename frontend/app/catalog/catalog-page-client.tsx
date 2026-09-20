@@ -636,11 +636,6 @@ export default function CatalogPageClient({
       const st = (p.catalog.state_abbr || '').toLowerCase()
       return name.includes(t) || county.includes(t) || st.includes(t)
     })
-    // When a specific metro is selected and ALL its places are filtered out, fall back to
-    // showing all metro places so the dealbreaker gate can still show them as excluded.
-    if (list.length === 0 && filterMetro !== 'all') {
-      list = adjustedPlaces.filter((p) => inferCatalogMetro(p) === filterMetro)
-    }
     if (hasClimatePreferences(climatePrefs)) {
       list = list.filter((p) => {
         const cm = scoreClimateMatch(p.climate, climatePrefs)
@@ -740,15 +735,22 @@ export default function CatalogPageClient({
   }
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])
   const dealbreakerActive = activeDealbreakerKeys.length > 0
+  // Places in the selected metro that were blocked by regular filters — always shown in "Show excluded"
+  const metroFilterExcluded = useMemo(() => {
+    if (filterMetro === 'all') return [] as CatalogMapPlaceWithMetro[]
+    const filteredSet = new Set(filteredPlaces)
+    return adjustedPlaces.filter((p) => inferCatalogMetro(p) === filterMetro && !filteredSet.has(p)) as CatalogMapPlaceWithMetro[]
+  }, [filterMetro, filteredPlaces, adjustedPlaces])
   const { gatedPlaces, excludedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) {
-      return { gatedPlaces: filteredPlaces, excludedPlaces: [] as CatalogMapPlaceWithMetro[], dealbreakerExcludedCount: 0, dealbreakerZeroSurvivors: false }
+      return { gatedPlaces: filteredPlaces, excludedPlaces: metroFilterExcluded, dealbreakerExcludedCount: metroFilterExcluded.length, dealbreakerZeroSurvivors: false }
     }
     const survivors = filteredPlaces.filter((p) => activeDealbreakerKeys.every((k) => DEALBREAKER_CHECKS[k]!(p)))
     if (survivors.length === 0) {
-      return { gatedPlaces: filteredPlaces, excludedPlaces: filteredPlaces as CatalogMapPlaceWithMetro[], dealbreakerExcludedCount: filteredPlaces.length, dealbreakerZeroSurvivors: true }
+      const allExcluded = [...filteredPlaces as CatalogMapPlaceWithMetro[], ...metroFilterExcluded]
+      return { gatedPlaces: filteredPlaces, excludedPlaces: allExcluded, dealbreakerExcludedCount: allExcluded.length, dealbreakerZeroSurvivors: true }
     }
-    const excluded = filteredPlaces.filter((p) => !activeDealbreakerKeys.every((k) => DEALBREAKER_CHECKS[k]!(p)))
+    const excluded = [...filteredPlaces.filter((p) => !activeDealbreakerKeys.every((k) => DEALBREAKER_CHECKS[k]!(p))) as CatalogMapPlaceWithMetro[], ...metroFilterExcluded]
     return {
       gatedPlaces: survivors,
       excludedPlaces: excluded,
@@ -756,7 +758,7 @@ export default function CatalogPageClient({
       dealbreakerZeroSurvivors: false,
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredPlaces, activeDealbreakerKeys.join(','), householdIncome])
+  }, [filteredPlaces, metroFilterExcluded, activeDealbreakerKeys.join(','), householdIncome])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setShowExcluded(false), [activeDealbreakerKeys.join(',')])
 
@@ -1637,7 +1639,7 @@ export default function CatalogPageClient({
         </div>
       )}
 
-      {viewMode === 'list' && catalogMode === 'explorer' && !searchResults && dealbreakerActive && (
+      {viewMode === 'list' && catalogMode === 'explorer' && !searchResults && (dealbreakerActive || metroFilterExcluded.length > 0) && (
         <div className="flex items-center gap-2 border-b border-[var(--hf-border)] bg-[var(--hf-hover-bg)] px-4 py-2 text-xs text-[var(--hf-text-secondary)]">
           <span>
             {dealbreakerZeroSurvivors
