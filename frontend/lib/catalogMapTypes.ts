@@ -68,6 +68,7 @@ export interface CatalogMapPlace {
   score: ScoreResponse
   climate?: ClimateIndicators
   cbd_transit_minutes?: number | null
+  cbd_transit_dest?: 'gct' | 'penn' | null
 }
 
 /** After `metro=all`, each place is tagged with its source metro. */
