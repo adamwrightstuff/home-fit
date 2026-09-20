@@ -615,7 +615,7 @@ export default function CatalogPageClient({
       if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false
       if (filterCommuteMax !== 'all') {
         const cbd = p.cbd_transit_minutes
-        if (typeof cbd !== 'number' || cbd > Number(filterCommuteMax)) return false
+        if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) return false
       }
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
         const hs = (p.score as any).housing_stock
@@ -1345,7 +1345,9 @@ export default function CatalogPageClient({
         )}
 
         {/* ── Mobile header: single compact row ── */}
-        <div className="md:hidden flex items-center gap-1.5 px-3 py-2 min-h-[48px]">
+        <div className="md:hidden flex flex-col">
+          {/* Row 1: mode tabs + view controls */}
+          <div className="flex items-center gap-1.5 px-3 py-2 min-h-[48px]">
           {/* Mode tabs */}
           <div className="flex items-center gap-1 shrink-0">
             <button
@@ -1361,25 +1363,6 @@ export default function CatalogPageClient({
               onClick={() => { setCatalogMode('twin'); setViewMode('list') }}
             >Twin</button>
           </div>
-
-          {catalogMode === 'explorer' && (
-            <div className="flex items-center gap-0.5 shrink-0">
-              {(['all', 'nyc', 'la', 'sf', 'seattle'] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  className={`rounded-full px-2 py-1 text-[0.65rem] font-bold ${filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
-                  style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
-                  onClick={() => setFilterMetro(m)}
-                >
-                    {m === 'all' ? 'All' : m.toUpperCase()}
-                    {m !== 'all' && metroResultCounts && (
-                      <span className="ml-0.5 font-normal opacity-60">({metroResultCounts[m]})</span>
-                    )}
-                  </button>
-              ))}
-            </div>
-          )}
 
           <div className="ml-auto flex items-center gap-0.5 shrink-0">
             {/* Filters */}
@@ -1404,6 +1387,25 @@ export default function CatalogPageClient({
               <List className="h-4 w-4" />
             </button>
           </div>
+          {/* Row 2: metro filter (scrollable) */}
+          {catalogMode === 'explorer' && (
+            <div className="flex overflow-x-auto border-t border-[var(--hf-border)]">
+              {(['all', 'nyc', 'la', 'sf', 'seattle'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={`flex-shrink-0 border-r border-[var(--hf-border)] px-3 py-1.5 text-[0.65rem] font-bold last:border-r-0 ${filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+                  style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
+                  onClick={() => setFilterMetro(m)}
+                >
+                  {m === 'all' ? 'All' : m === 'seattle' ? 'SEA' : m.toUpperCase()}
+                  {m !== 'all' && metroResultCounts && (
+                    <span className="ml-0.5 font-normal opacity-60">({metroResultCounts[m]})</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Twin mode second row: search + controls */}
