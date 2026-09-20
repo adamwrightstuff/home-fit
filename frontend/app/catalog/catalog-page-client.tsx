@@ -741,7 +741,7 @@ export default function CatalogPageClient({
     }
     const survivors = filteredPlaces.filter((p) => activeDealbreakerKeys.every((k) => DEALBREAKER_CHECKS[k]!(p)))
     if (survivors.length === 0) {
-      return { gatedPlaces: filteredPlaces, excludedPlaces: [] as CatalogMapPlaceWithMetro[], dealbreakerExcludedCount: 0, dealbreakerZeroSurvivors: true }
+      return { gatedPlaces: filteredPlaces, excludedPlaces: filteredPlaces as CatalogMapPlaceWithMetro[], dealbreakerExcludedCount: filteredPlaces.length, dealbreakerZeroSurvivors: true }
     }
     const excluded = filteredPlaces.filter((p) => !activeDealbreakerKeys.every((k) => DEALBREAKER_CHECKS[k]!(p)))
     return {
@@ -1649,7 +1649,7 @@ export default function CatalogPageClient({
                 ? `${gatedPlaces.length} match all your must-haves · ${dealbreakerExcludedCount} excluded`
                 : `All ${gatedPlaces.length} shown clear your must-haves`}
           </span>
-          {!dealbreakerZeroSurvivors && dealbreakerExcludedCount > 0 && (
+          {dealbreakerExcludedCount > 0 && (
             <button
               onClick={() => setShowExcluded((v) => !v)}
               className="ml-auto shrink-0 rounded-full border border-[var(--hf-border)] px-2 py-0.5 text-[0.65rem] font-semibold text-[var(--hf-text-secondary)] hover:bg-white"
@@ -1663,7 +1663,7 @@ export default function CatalogPageClient({
       {viewMode === 'list' && catalogMode === 'explorer' && (
         <div className={`flex min-h-0 flex-1 flex-col${dealbreakerZeroSurvivors && !searchResults ? ' opacity-60' : ''}`}>
           <CatalogListView
-            places={searchResults ? searchResults.hits : showExcluded && excludedPlaces.length > 0 ? [...gatedPlaces, ...excludedPlaces] : gatedPlaces}
+            places={searchResults ? searchResults.hits : showExcluded && excludedPlaces.length > 0 ? (dealbreakerZeroSurvivors ? excludedPlaces : [...gatedPlaces, ...excludedPlaces]) : gatedPlaces}
             filteredOutReasons={searchResults ? searchResults.reasons : showExcluded && excludedPlaces.length > 0 ? Object.fromEntries(excludedPlaces.map((p) => [catalogRowKey(p.catalog), ['Must-haves']])) : undefined}
             dividerLabel="Outside your must-haves"
             priorities={effectivePriorities}
