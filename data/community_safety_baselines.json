@@ -2,8 +2,11 @@
   "_meta": {
     "description": "Mean and std of violent_per_1k and property_per_1k crime rates by area type.",
     "sources": [
-      "nyc_metro_place_catalog_scores_merged.jsonl",
-      "la_metro_place_catalog_scores_merged.jsonl"
+      "sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl",
+      "seattle_metro_place_catalog_scores_merged.composites_recomputed.jsonl",
+      "la_metro_place_catalog_scores_merged.composites_recomputed.jsonl",
+      "nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl",
+      "seattle_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
     ],
     "notes": [
       "violent_per_1k: (assault + robbery + homicide) per 1,000 residents in scored radius",
@@ -13,40 +16,40 @@
       "Rebuild: PYTHONPATH=. python3 scripts/baselines/build_community_safety_baselines.py"
     ]
   },
+  "exurban": {
+    "violent_mean": 0.12,
+    "violent_std": 0.5,
+    "property_mean": 1.16,
+    "property_std": 1.29
+  },
   "rural": {
-    "violent_mean": 1.8,
-    "violent_std": 1.0,
-    "property_mean": 6.0,
-    "property_std": 4.0
+    "violent_mean": 0.06,
+    "violent_std": 0.5,
+    "property_mean": 0.75,
+    "property_std": 0.66
   },
   "suburban": {
-    "violent_mean": 2.0,
-    "violent_std": 1.5,
-    "property_mean": 10.0,
-    "property_std": 6.0
+    "violent_mean": 0.59,
+    "violent_std": 0.78,
+    "property_mean": 4.37,
+    "property_std": 5.01
   },
   "urban_residential": {
-    "violent_mean": 2.64,
-    "violent_std": 1.79,
-    "property_mean": 7.19,
-    "property_std": 6.1
+    "violent_mean": 2.12,
+    "violent_std": 1.84,
+    "property_mean": 5.64,
+    "property_std": 5.01
   },
   "urban_core": {
-    "violent_mean": 2.64,
-    "violent_std": 1.79,
-    "property_mean": 7.19,
-    "property_std": 6.1
-  },
-  "exurban": {
-    "violent_mean": 1.5,
-    "violent_std": 1.2,
-    "property_mean": 8.0,
-    "property_std": 5.0
+    "violent_mean": 2.12,
+    "violent_std": 1.84,
+    "property_mean": 5.64,
+    "property_std": 5.01
   },
   "default": {
-    "violent_mean": 2.64,
-    "violent_std": 1.79,
-    "property_mean": 7.19,
-    "property_std": 6.1
+    "violent_mean": 2.12,
+    "violent_std": 1.84,
+    "property_mean": 5.64,
+    "property_std": 5.01
   }
 }

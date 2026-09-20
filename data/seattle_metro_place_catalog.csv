@@ -1,0 +1,6 @@
+name,type,county_borough,state_full,state_abbr,lat,lon,search_query
+Mercer Island,suburb,King,Washington,WA,47.5707,-122.2221,"Mercer Island, WA"
+Bainbridge Island,suburb,Kitsap,Washington,WA,47.6262,-122.5230,"Bainbridge Island, WA"
+Kirkland,suburb,King,Washington,WA,47.6815,-122.2088,"Kirkland, WA"
+Edmonds,suburb,Snohomish,Washington,WA,47.8107,-122.3776,"Edmonds, WA"
+Ballard,neighborhood,King,Washington,WA,47.6677,-122.3836,"Ballard, Seattle, WA"

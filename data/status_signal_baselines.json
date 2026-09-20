@@ -52,6 +52,25 @@
         "min": 0.0
       }
     },
+    "dfg": {
+      "_note": "Option A national fallback \u2014 ACS 2022 national tract approximation. Replace with per-metro stats (Option B) per metro as coverage expands.",
+      "edu_pct": {
+        "mean": 32.0,
+        "std": 18.0
+      },
+      "home_val": {
+        "mean": 280000,
+        "std": 190000
+      },
+      "mean_income": {
+        "mean": 90000,
+        "std": 55000
+      },
+      "occ_pct": {
+        "mean": 15.0,
+        "std": 9.0
+      }
+    },
     "education": {
       "bach_pct": {
         "max": 75.0,
@@ -91,25 +110,6 @@
         "max": 1.0141970706649788,
         "min": 0.0
       }
-    },
-    "dfg": {
-      "mean_income": {
-        "mean": 90000,
-        "std": 55000
-      },
-      "home_val": {
-        "mean": 280000,
-        "std": 190000
-      },
-      "edu_pct": {
-        "mean": 32.0,
-        "std": 18.0
-      },
-      "occ_pct": {
-        "mean": 15.0,
-        "std": 9.0
-      },
-      "_note": "Option A national fallback \u2014 ACS 2022 national tract approximation. Replace with per-metro stats (Option B) per metro as coverage expands."
     }
   },
   "atlanta,_georgia": {
@@ -204,7 +204,10 @@
   },
   "cbsa_to_baseline": {
     "31080": "la_metro",
-    "35620": "nyc_metro"
+    "35620": "nyc_metro",
+    "41860": "sf_metro",
+    "41940": "sf_metro",
+    "42660": "seattle_metro"
   },
   "charlotte,_north_carolina": {
     "brand": {},
@@ -454,6 +457,24 @@
     }
   },
   "la_metro": {
+    "dfg": {
+      "edu_pct": {
+        "mean": 35.9,
+        "std": 21.4
+      },
+      "home_val": {
+        "mean": 828599,
+        "std": 378305
+      },
+      "mean_income": {
+        "mean": 122999,
+        "std": 59864
+      },
+      "occ_pct": {
+        "mean": 18.0,
+        "std": 8.6
+      }
+    },
     "education": {
       "bach_pct": {
         "max": 73.1,
@@ -474,24 +495,6 @@
       "white_collar_pct": {
         "max": 54.7483,
         "min": 9.6918
-      }
-    },
-    "dfg": {
-      "mean_income": {
-        "mean": 122999,
-        "std": 59864
-      },
-      "home_val": {
-        "mean": 828599,
-        "std": 378305
-      },
-      "edu_pct": {
-        "mean": 35.9,
-        "std": 21.4
-      },
-      "occ_pct": {
-        "mean": 18.0,
-        "std": 8.6
       }
     }
   },
@@ -713,6 +716,24 @@
     }
   },
   "nyc_metro": {
+    "dfg": {
+      "edu_pct": {
+        "mean": 38.4,
+        "std": 20.1
+      },
+      "home_val": {
+        "mean": 490629,
+        "std": 357830
+      },
+      "mean_income": {
+        "mean": 122940,
+        "std": 66215
+      },
+      "occ_pct": {
+        "mean": 18.6,
+        "std": 10.0
+      }
+    },
     "education": {
       "bach_pct": {
         "max": 80.4,
@@ -733,24 +754,6 @@
       "white_collar_pct": {
         "max": 57.949,
         "min": 12.1437
-      }
-    },
-    "dfg": {
-      "mean_income": {
-        "mean": 122940,
-        "std": 66215
-      },
-      "home_val": {
-        "mean": 490629,
-        "std": 357830
-      },
-      "edu_pct": {
-        "mean": 38.4,
-        "std": 20.1
-      },
-      "occ_pct": {
-        "mean": 18.6,
-        "std": 10.0
       }
     }
   },
@@ -921,6 +924,30 @@
     },
     "occupation": {},
     "wealth": {}
+  },
+  "seattle_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 81.22,
+        "min": 16.0
+      },
+      "grad_pct": {
+        "max": 41.2,
+        "min": 3.4
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 1220700.0,
+        "min": 339440.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 64.1796,
+        "min": 16.5007
+      }
+    }
   },
   "south_atlantic": {
     "brand": {

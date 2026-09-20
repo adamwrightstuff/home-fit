@@ -36,6 +36,7 @@ import requests
 CENSUS_BASE_URL = "https://api.census.gov/data"
 ACS5_YEAR = "2022"
 SLEEP_S = 0.15
+CENSUS_API_KEY = os.environ.get("CENSUS_API_KEY")
 
 # state FIPS → [county FIPS] for each CBSA
 CBSA_COUNTIES: Dict[str, Dict[str, List[str]]] = {
@@ -53,6 +54,9 @@ CBSA_COUNTIES: Dict[str, Dict[str, List[str]]] = {
     "41940": {  # San Jose-Sunnyvale-Santa Clara, CA
         "06": ["085", "069"],  # Santa Clara, San Benito
     },
+    "42660": {  # Seattle-Tacoma-Bellevue, WA
+        "53": ["033", "035", "053", "061"],  # King, Kitsap, Pierce, Snohomish
+    },
 }
 
 CBSA_TO_KEY = {
@@ -60,6 +64,7 @@ CBSA_TO_KEY = {
     "35620": "nyc_metro",
     "41860": "sf_metro",
     "41940": "sf_metro",  # South Bay maps to same sf_metro key; data is merged
+    "42660": "seattle_metro",
 }
 
 # S2401 white-collar component variables (management through health practitioners)
@@ -101,13 +106,16 @@ def linear_percentile(values: List[float], p: float) -> float:
 
 def fetch_county_tracts_wealth(state: str, county: str) -> List[Tuple[Optional[float], Optional[float]]]:
     """Returns list of (mean_hh_income, median_home_value) per tract."""
+    params: Dict = {
+        "get": "B19025_001E,B19001_001E,B25077_001E",
+        "for": "tract:*",
+        "in": f"state:{state} county:{county}",
+    }
+    if CENSUS_API_KEY:
+        params["key"] = CENSUS_API_KEY
     r = requests.get(
         f"{CENSUS_BASE_URL}/{ACS5_YEAR}/acs/acs5",
-        params={
-            "get": "B19025_001E,B19001_001E,B25077_001E",
-            "for": "tract:*",
-            "in": f"state:{state} county:{county}",
-        },
+        params=params,
         timeout=30,
     )
     if r.status_code != 200:
@@ -140,13 +148,16 @@ def fetch_county_tracts_wealth(state: str, county: str) -> List[Tuple[Optional[f
 
 def fetch_county_tracts_occupation(state: str, county: str) -> List[Optional[float]]:
     """Returns list of white_collar_pct per tract (or None)."""
+    params: Dict = {
+        "get": ",".join(S2401_VARS),
+        "for": "tract:*",
+        "in": f"state:{state} county:{county}",
+    }
+    if CENSUS_API_KEY:
+        params["key"] = CENSUS_API_KEY
     r = requests.get(
         f"{CENSUS_BASE_URL}/{ACS5_YEAR}/acs/acs5/subject",
-        params={
-            "get": ",".join(S2401_VARS),
-            "for": "tract:*",
-            "in": f"state:{state} county:{county}",
-        },
+        params=params,
         timeout=30,
     )
     if r.status_code != 200:
@@ -176,13 +187,16 @@ def fetch_county_tracts_occupation(state: str, county: str) -> List[Optional[flo
 
 def fetch_county_tracts_education(state: str, county: str) -> List[Tuple[Optional[float], Optional[float]]]:
     """Returns list of (bach_pct, grad_pct) per tract (S1501 C02 = percent columns)."""
+    params: Dict = {
+        "get": "S1501_C02_015E,S1501_C02_013E",
+        "for": "tract:*",
+        "in": f"state:{state} county:{county}",
+    }
+    if CENSUS_API_KEY:
+        params["key"] = CENSUS_API_KEY
     r = requests.get(
         f"{CENSUS_BASE_URL}/{ACS5_YEAR}/acs/acs5/subject",
-        params={
-            "get": "S1501_C02_015E,S1501_C02_013E",
-            "for": "tract:*",
-            "in": f"state:{state} county:{county}",
-        },
+        params=params,
         timeout=30,
     )
     if r.status_code != 200:
