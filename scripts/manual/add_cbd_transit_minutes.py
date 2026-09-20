@@ -26,12 +26,14 @@ CBDS = {
     'nyc': {'lat': 40.7527, 'lon': -73.9772, 'label': 'Grand Central / Midtown'},
     'sf':  {'lat': 37.7894, 'lon': -122.4013, 'label': 'Montgomery St BART / Financial District'},
     'la':  {'lat': 34.0487, 'lon': -118.2595, 'label': '7th/Metro Center / Downtown LA'},
+    'seattle': {'lat': 47.6038, 'lon': -122.3301, 'label': 'King Street Station / Downtown Seattle'},
 }
 
 FILES = {
     'nyc': 'data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
     'sf':  'data/sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
     'la':  'data/la_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+    'seattle': 'data/seattle_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
 }
 
 
@@ -119,7 +121,7 @@ def process_metro(metro: str, force: bool) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--metro', choices=['nyc', 'sf', 'la'], help='Run one metro only')
+    parser.add_argument('--metro', choices=['nyc', 'sf', 'la', 'seattle'], help='Run one metro only')
     parser.add_argument('--force', action='store_true', help='Re-fetch all, even if already set')
     args = parser.parse_args()
 

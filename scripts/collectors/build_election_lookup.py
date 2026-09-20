@@ -43,6 +43,7 @@ _PRECINCT_COL = {
     "CA": "SRPREC",
     "CT": "NAME20",
     "NJ": "MUNINAME",
+    "WA": "PRECINCTNA",
 }
 
 # Per-state county FIPS derivation
@@ -182,6 +183,10 @@ def _county_fips_from_row(row, state_fips: str) -> str | None:
     cnty = str(row.get("CNTY_CODE") or "").strip()
     if cnty and state_fips:
         return f"{state_fips.zfill(2)}{cnty.zfill(3)}"
+    # WA and some states: COUNTY column already holds the 5-digit FIPS code
+    county_raw = str(row.get("COUNTY") or "").strip()
+    if re.match(r"^\d{5}$", county_raw):
+        return county_raw
     # NJ: COUNTY name — resolved later via county_name_to_fips
     return None
 
