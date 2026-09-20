@@ -1387,7 +1387,8 @@ export default function CatalogPageClient({
               <List className="h-4 w-4" />
             </button>
           </div>
-          {/* Row 2: metro filter (scrollable) */}
+        </div>
+        {/* Row 2: metro filter (scrollable) */}
           {catalogMode === 'explorer' && (
             <div className="overflow-x-auto border-t border-[var(--hf-border)]" style={{ WebkitOverflowScrolling: 'touch' }}>
               <div className="flex w-max">
