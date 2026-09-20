@@ -1364,38 +1364,32 @@ export default function CatalogPageClient({
             >Twin</button>
           </div>
 
-          <div className="ml-auto flex items-center gap-0.5 shrink-0">
-            {/* Filters */}
+          <div className="ml-auto flex items-center gap-2 shrink-0">
+            {/* Filters pill */}
             <button
               type="button"
-              className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]"
+              className="flex items-center gap-1.5 rounded-full border border-[var(--hf-border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--hf-text-primary)] shadow-sm"
               onClick={() => setFilterSheetOpen(true)}
               aria-label="Filters"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
+              Filters
               {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
                   {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount}
                 </span>
               )}
             </button>
-            {/* View toggle */}
-            <button type="button" className={`rounded-lg p-1.5 ${viewMode === 'map' ? 'bg-[var(--hf-hover-bg)]' : ''}`} onClick={() => setViewMode('map')} title="Map">
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-            <button type="button" className={`rounded-lg p-1.5 ${viewMode === 'list' ? 'bg-[var(--hf-hover-bg)]' : ''}`} onClick={() => setViewMode('list')} title="List">
-              <List className="h-4 w-4" />
-            </button>
           </div>
         </div>
-        {/* Row 2: metro filter */}
+        {/* Row 2: metro pills */}
           {catalogMode === 'explorer' && (
-            <div className="flex border-t border-[var(--hf-border)]">
+            <div className="flex gap-2 px-3 pb-3 pt-1">
               {(['all', 'nyc', 'la', 'sf', 'seattle'] as const).map((m) => (
                 <button
                   key={m}
                   type="button"
-                  className={`flex-1 border-r border-[var(--hf-border)] py-2 text-[0.65rem] font-bold last:border-r-0 ${filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+                  className={`flex-1 rounded-full py-1.5 text-[0.7rem] font-semibold transition-colors ${filterMetro === m ? 'text-white shadow-sm' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
                   style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
                   onClick={() => setFilterMetro(m)}
                 >
@@ -1659,7 +1653,7 @@ export default function CatalogPageClient({
       )}
 
       {viewMode === 'list' && catalogMode === 'explorer' && (
-        <div className={`flex min-h-0 flex-1 flex-col${dealbreakerZeroSurvivors && !searchResults ? ' opacity-60' : ''}`}>
+        <div className={`flex min-h-0 flex-1 flex-col pb-20 md:pb-0${dealbreakerZeroSurvivors && !searchResults ? ' opacity-60' : ''}`}>
           <CatalogListView
             places={searchResults ? searchResults.hits : showExcluded && excludedPlaces.length > 0 ? (dealbreakerZeroSurvivors ? excludedPlaces : [...gatedPlaces, ...excludedPlaces]) : gatedPlaces}
             filteredOutReasons={searchResults ? searchResults.reasons : showExcluded && excludedPlaces.length > 0 ? Object.fromEntries(excludedPlaces.map((p) => [catalogRowKey(p.catalog), ['Must-haves']])) : undefined}
@@ -1692,6 +1686,22 @@ export default function CatalogPageClient({
           }}
           onSelectQuery={onTwinSelectFromSearch}
         />
+      )}
+
+      {/* Floating map/list toggle — Airbnb style */}
+      {catalogMode === 'explorer' && (
+        <div className="md:hidden pointer-events-none fixed bottom-6 left-0 right-0 z-40 flex justify-center">
+          <button
+            type="button"
+            className="pointer-events-auto flex items-center gap-2 rounded-full bg-[#222] px-5 py-3 text-sm font-semibold text-white shadow-xl"
+            onClick={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
+          >
+            {viewMode === 'map'
+              ? <><List className="h-4 w-4" /> Show list</>
+              : <><LayoutGrid className="h-4 w-4" /> Show map</>
+            }
+          </button>
+        </div>
       )}
 
       {catalogMode === 'explorer' && viewMode === 'map' && (
