@@ -54,7 +54,7 @@ def fetch_transit_minutes(origin_lat: float, origin_lon: float, cbd: dict, depar
         'origins': f'{origin_lat},{origin_lon}',
         'destinations': f'{cbd["lat"]},{cbd["lon"]}',
         'mode': 'transit',
-        'departure_time': departure_ts,
+        'arrival_time': departure_ts,
         'key': GOOGLE_MAPS_API_KEY,
     }
     try:
