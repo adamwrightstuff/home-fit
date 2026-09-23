@@ -390,10 +390,11 @@ let politicalPicks = []
 let outdoorsPicks = []
 let sceneryPicks = []
 let housingPicks = []
+let tenurePicks = []
 
-const CHIP_TYPES = new Set(['weather', 'political', 'outdoors', 'scenery', 'housing'])
+const CHIP_TYPES = new Set(['weather', 'political', 'outdoors', 'scenery', 'housing', 'tenure'])
 function pickArr(type) {
-  return { weather: weatherPicks, political: politicalPicks, outdoors: outdoorsPicks, scenery: sceneryPicks, housing: housingPicks }[type] || outdoorsPicks
+  return { weather: weatherPicks, political: politicalPicks, outdoors: outdoorsPicks, scenery: sceneryPicks, housing: housingPicks, tenure: tenurePicks }[type] || outdoorsPicks
 }
 
 function setWeight(k, v) {
@@ -581,6 +582,20 @@ const QUESTIONS = [
     apply() { /* filter only */ }
   },
 
+  // Filter — Tenure mix (multi-select)
+  {
+    id: 'tenure',
+    type: 'tenure',
+    q: 'Renting or buying?',
+    sub: 'Pick all you\'d consider. Skip if you\'re open to either.',
+    chips: [
+      { id: 'renter',    icon: '🔑', label: 'Renting' },
+      { id: 'balanced',  icon: '⚖️', label: 'Open to either' },
+      { id: 'homeowner', icon: '🏠', label: 'Buying' },
+    ],
+    apply() { /* filter only */ }
+  },
+
   // Filter — Weather dealbreakers
   {
     id: 'weather',
@@ -697,7 +712,9 @@ function renderResults() {
   const sceneryNote = sceneryPicks.map(p => sceneryLabels[p]).filter(Boolean).join(' · ')
   const housingLabels = { single_family: 'Single-family', rowhouse: 'Rowhouse/Townhouse', condo: 'Apartment/Condo' }
   const housingNote = housingPicks.map(p => housingLabels[p]).filter(Boolean).join(' or ')
-  const filterNotes = [politicalNote, commuteNote, stabilityNote, outdoorsNote, sceneryNote, housingNote, ...weatherNotes].filter(Boolean)
+  const tenureLabels = { renter: 'Renting', balanced: 'Renting or buying', homeowner: 'Buying' }
+  const tenureNote = tenurePicks.map(p => tenureLabels[p]).filter(Boolean).join(' or ')
+  const filterNotes = [politicalNote, commuteNote, stabilityNote, outdoorsNote, sceneryNote, housingNote, tenureNote, ...weatherNotes].filter(Boolean)
 
   document.getElementById('qwrap').innerHTML = `
     <div class="results-wrap">
@@ -729,6 +746,8 @@ function applyAndClose() {
   if (housingPicks.includes('single_family') || housingPicks.includes('rowhouse')) filterHousingType.push('sf_townhouse')
   if (housingPicks.includes('condo')) filterHousingType.push('apartment')
 
+  const filterTenure = tenurePicks.filter(Boolean)
+
   const filterPoliticalLean = politicalPicks.filter(p => p !== 'skip')
 
   const trajectoryMap = { arrived: 'Arrived', upside: 'Up-and-Coming' }
@@ -748,6 +767,7 @@ function applyAndClose() {
     filterAoTypes,
     filterNbTypes,
     filterHousingType,
+    filterTenure,
     filterPoliticalLean,
     filterTrajectory,
     filterCommuteMax,

@@ -49,6 +49,8 @@ interface FilterSheetProps {
   onFilterWaterfrontSubPrefChange: (v: WaterfrontSubPreference | null) => void
   filterHousingType: string[]
   onFilterHousingTypeChange: (v: string[]) => void
+  filterTenure: string[]
+  onFilterTenureChange: (v: string[]) => void
   filterSchoolType: 'any' | 'public_only' | 'charter'
   onFilterSchoolTypeChange: (v: 'any' | 'public_only' | 'charter') => void
   filterLocalScene: 'all' | 'Some' | 'High'
@@ -100,6 +102,8 @@ export default function FilterSheet({
   onFilterWaterfrontSubPrefChange,
   filterHousingType,
   onFilterHousingTypeChange,
+  filterTenure,
+  onFilterTenureChange,
   filterSchoolType,
   onFilterSchoolTypeChange,
   filterLocalScene,
@@ -133,6 +137,7 @@ export default function FilterSheet({
     (filterAoTypes.length > 0 ? 1 : 0) +
     (filterWaterfrontSubPref !== null ? 1 : 0) +
     (filterHousingType.length > 0 ? 1 : 0) +
+    (filterTenure.length > 0 ? 1 : 0) +
     (filterSchoolType !== 'any' ? 1 : 0) +
     (filterLocalScene !== 'all' ? 1 : 0) +
     (climatePrefs.cold_tolerance ? 1 : 0) +
@@ -150,6 +155,7 @@ export default function FilterSheet({
     onFilterAoTypesChange([])
     onFilterWaterfrontSubPrefChange(null)
     onFilterHousingTypeChange([])
+    onFilterTenureChange([])
     onFilterSchoolTypeChange('any')
     onFilterLocalSceneChange('all')
     onClimatePrefsChange({})
@@ -385,6 +391,40 @@ export default function FilterSheet({
               <button
                 type="button"
                 onClick={() => onFilterHousingTypeChange([])}
+                style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Tenure Mix */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Tenure Mix</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+              Filter by the local owner/renter split. Based on Census share of occupied units that are rented.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {chip(filterTenure.includes('renter'), 'Renter-Majority', () => {
+                onFilterTenureChange(filterTenure.includes('renter')
+                  ? filterTenure.filter((v) => v !== 'renter')
+                  : [...filterTenure, 'renter'])
+              })}
+              {chip(filterTenure.includes('balanced'), 'Balanced', () => {
+                onFilterTenureChange(filterTenure.includes('balanced')
+                  ? filterTenure.filter((v) => v !== 'balanced')
+                  : [...filterTenure, 'balanced'])
+              })}
+              {chip(filterTenure.includes('homeowner'), 'Homeowner-Majority', () => {
+                onFilterTenureChange(filterTenure.includes('homeowner')
+                  ? filterTenure.filter((v) => v !== 'homeowner')
+                  : [...filterTenure, 'homeowner'])
+              })}
+            </div>
+            {filterTenure.length > 0 && (
+              <button
+                type="button"
+                onClick={() => onFilterTenureChange([])}
                 style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               >
                 Clear
