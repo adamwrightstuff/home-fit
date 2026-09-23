@@ -1,9 +1,10 @@
 """
 For every commuter-rail suburb, geocode the train station by name and:
-  1. Update catalog lat/lon to station coords
-  2. Re-fetch cbd_transit_minutes with arrival_time=9am
-  3. Re-fetch with departure_time for results >150 min (arrival_time failure mode)
-  4. NYC: update gct/penn/dest fields too (takes min of GCT and Penn)
+  1. Re-fetch cbd_transit_minutes with arrival_time=9am, using the station as the
+     transit origin (text-based, via Distance Matrix — does not touch catalog lat/lon,
+     which is the place's actual location and is what pillar scoring is keyed to)
+  2. Re-fetch with departure_time for results >150 min (arrival_time failure mode)
+  3. NYC: update gct/penn/dest fields too (takes min of GCT and Penn)
 
 Run:
     PYTHONPATH=. python3 scripts/manual/fix_cbd_station_coords.py
@@ -340,8 +341,9 @@ def process(metro: str, dry_run: bool) -> None:
         print(f'  {place_name}: {delta} min{coord_tag}  ({formatted})')
 
         if not dry_run:
-            p['catalog']['lat'] = slat
-            p['catalog']['lon'] = slon
+            # Station coords (slat/slon) are used only for the skip-heuristic above and
+            # for logging — they must never be written back into catalog lat/lon, which
+            # is the place's actual location and what pillar scoring is keyed to.
             p['cbd_transit_minutes'] = final_mins
             if metro == 'nyc':
                 p['cbd_transit_minutes_gct'] = gct_mins
