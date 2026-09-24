@@ -505,11 +505,12 @@ def _fetch_fbi_agencies(state_abbr: str) -> Optional[list]:
 
 
 @cached(ttl_seconds=CACHE_TTL["crime_data"])
-def _fetch_fbi_rate(
+def _fetch_fbi_annual_rate(
     ori: str, offense_type: str, year: int, agency_name: Optional[str] = None
 ) -> Optional[Tuple[float, str]]:
     """
     Fetch an annual crime rate per 100k from the FBI CDE summarized/agency endpoint.
+    Renamed from _fetch_fbi_rate so cached December-only monthly values are not reused.
 
     Returns ``(rate, tier)`` where tier is one of:
       ``"agency"``   — per-agency key found (works for NIBRS and UCR-reporting non-NIBRS agencies)
@@ -536,12 +537,14 @@ def _fetch_fbi_rate(
         rates_by_label = data.get("offenses", {}).get("rates", {})
 
         def _extract(label: str) -> Optional[float]:
-            month_vals = rates_by_label.get(label, {})
+            # CDE returns monthly rates per 100k; annualize by summing the months.
+            # If the agency reported fewer than 12 months, scale the mean to a year.
+            month_vals = [
+                float(v) for v in rates_by_label.get(label, {}).values() if v is not None
+            ]
             if not month_vals:
                 return None
-            dec_key = f"12-{year}"
-            vals = list(month_vals.values())
-            return float(month_vals.get(dec_key) or vals[-1])
+            return round(sum(month_vals) / len(month_vals) * 12, 2)
 
         # Tier 2: per-agency key when the caller supplies the expected agency name.
         # Works for NIBRS agencies *and* non-NIBRS agencies that report UCR summary
@@ -581,7 +584,7 @@ def _fetch_fbi_rate(
 
 
 def _unpack_fbi_rate(result) -> Tuple[Optional[float], Optional[str]]:
-    """Unpack (rate, tier) from _fetch_fbi_rate, handling legacy bare-float cache entries."""
+    """Unpack (rate, tier) from _fetch_fbi_annual_rate, handling legacy bare-float cache entries."""
     if result is None:
         return None, None
     if isinstance(result, (list, tuple)) and len(result) == 2:
@@ -592,7 +595,7 @@ def _unpack_fbi_rate(result) -> Tuple[Optional[float], Optional[str]]:
 
 # Keep the old name as an alias so existing callers don't break
 def _fetch_fbi_state_rate(ori: str, offense_type: str, year: int) -> Optional[float]:
-    rate, _ = _unpack_fbi_rate(_fetch_fbi_rate(ori, offense_type, year))
+    rate, _ = _unpack_fbi_rate(_fetch_fbi_annual_rate(ori, offense_type, year))
     return rate
 
 
@@ -1095,7 +1098,7 @@ def _get_fbi_rates(
 
     # -----------------------------------------------------------------------
     # Tier 2/3: FBI CDE.  For NIBRS-reporting agencies, pass the agency name
-    # so _fetch_fbi_rate can extract per-agency rates rather than the state
+    # so _fetch_fbi_annual_rate can extract per-agency rates rather than the state
     # aggregate.  For non-NIBRS agencies, agency_name_hint stays None and the
     # function falls through to the state-level rate.
     # -----------------------------------------------------------------------
@@ -1174,7 +1177,7 @@ def _get_fbi_rates(
 
     agency_name_hint = agency_display_name if nibrs_city_match else None
 
-    v_result = _fetch_fbi_rate(ori, "violent-crime", data_year, agency_name_hint)
+    v_result = _fetch_fbi_annual_rate(ori, "violent-crime", data_year, agency_name_hint)
     v_rate_0, v_tier_0 = _unpack_fbi_rate(v_result) if v_result else (None, None)
 
     # FBI per-agency data is released 12-18 months after year end; non-NIBRS
@@ -1182,7 +1185,7 @@ def _get_fbi_rates(
     # the most recent year with per-agency data before falling back to state aggregate.
     if agency_name_hint and v_tier_0 != "agency":
         for _fallback_year in range(prev_year, prev_year - 3, -1):
-            v_result_py = _fetch_fbi_rate(ori, "violent-crime", _fallback_year, agency_name_hint)
+            v_result_py = _fetch_fbi_annual_rate(ori, "violent-crime", _fallback_year, agency_name_hint)
             _, v_tier_py = _unpack_fbi_rate(v_result_py) if v_result_py else (None, None)
             if v_tier_py == "agency":
                 v_result = v_result_py
@@ -1190,7 +1193,7 @@ def _get_fbi_rates(
                 break
 
     if v_result is None:
-        v_result = _fetch_fbi_rate(ori, "violent-crime", prev_year, agency_name_hint)
+        v_result = _fetch_fbi_annual_rate(ori, "violent-crime", prev_year, agency_name_hint)
         prev_year -= 1
 
     if v_result is None:
@@ -1198,9 +1201,9 @@ def _get_fbi_rates(
 
     violent_rate_100k, violent_tier = _unpack_fbi_rate(v_result)
 
-    p_result = _fetch_fbi_rate(ori, "property-crime", data_year, agency_name_hint)
+    p_result = _fetch_fbi_annual_rate(ori, "property-crime", data_year, agency_name_hint)
     if p_result is None:
-        p_result = _fetch_fbi_rate(ori, "property-crime", prev_year, agency_name_hint)
+        p_result = _fetch_fbi_annual_rate(ori, "property-crime", prev_year, agency_name_hint)
     property_rate_100k, _ = _unpack_fbi_rate(p_result) if p_result else (None, None)
 
     # Convert per-100k → per-1k
@@ -1209,13 +1212,13 @@ def _get_fbi_rates(
 
     # Trend: compare current year violent to prior year
     trend_pct: Optional[float] = None
-    pv_result = _fetch_fbi_rate(ori, "violent-crime", prev_year, agency_name_hint)
+    pv_result = _fetch_fbi_annual_rate(ori, "violent-crime", prev_year, agency_name_hint)
     prev_violent_100k, _ = _unpack_fbi_rate(pv_result) if pv_result else (None, None)
     if prev_violent_100k and prev_violent_100k > 0:
         raw_trend = (violent_rate_100k - prev_violent_100k) / prev_violent_100k * 100
         trend_pct = round(max(-100.0, min(100.0, raw_trend)), 1)
 
-    # Source reflects actual data tier returned by _fetch_fbi_rate:
+    # Source reflects actual data tier returned by _fetch_fbi_annual_rate:
     #   "agency" tier → per-agency key was found in the CDE response
     #   "state"/"national" tier → only state/national aggregate was available
     if nibrs_city_match and violent_tier == "agency":
