@@ -21,9 +21,17 @@ cbd_transit_minutes), not the catalog centroid. Drive origins stay the centroid.
 Stores `work_commute: {zone_id: {"transit": min, "transit_centroid", "transit_station", "drive": min}}` top-level on each
 catalog entry. Skips pairs/modes already set (safe to re-run / resume).
 
+Billing guard: Google bills anything past the monthly free allowance automatically.
+Every real run requires --free-left with the remaining free lookups per mode, read from
+Cloud Console -> Billing -> Reports (group by SKU): transit = 10,000 minus "Distance Matrix"
+usage, drive = 5,000 minus "Distance Matrix Advanced" usage. The script plans the run
+(counting a worst-case transit fallback for every place), refuses to start if the plan
+exceeds what is left, and also stops mid-run before any request that would cross it.
+--allow-billing skips the guard.
+
 Usage:
     PYTHONPATH=. python3 scripts/manual/add_work_zone_commutes.py --dry-run
-    PYTHONPATH=. python3 scripts/manual/add_work_zone_commutes.py --metro nyc
+    PYTHONPATH=. python3 scripts/manual/add_work_zone_commutes.py --metro nyc --free-left transit=669,drive=1525
     PYTHONPATH=. python3 scripts/manual/add_work_zone_commutes.py --modes transit
     PYTHONPATH=. python3 scripts/manual/add_work_zone_commutes.py --force
     # Redo transit for NYC rail towns from their stations; pilot first with --places
@@ -65,11 +73,44 @@ MODE_SAMPLES = {
     'drive': ('departure_time', ['07:30', '08:15']),
 }
 
+# Google found no route (e.g. no transit service); stored as null so re-runs don't re-query it.
+NO_ROUTE = float('inf')
+
 TRANSIT_FALLBACK_OVER_MIN = 150
 TRANSIT_FALLBACK_DEPARTURE = '08:00'
 
 # Distance Matrix list prices per 1,000 elements (Essentials vs Pro/traffic).
 PRICE_PER_1000 = {'transit': 5.0, 'drive': 10.0}
+
+
+class BudgetExceeded(Exception):
+    pass
+
+
+class Budget:
+    """Remaining free Distance Matrix elements per mode; None = unlimited (--allow-billing)."""
+
+    def __init__(self, left: dict | None):
+        self.left = left
+        self.used = {m: 0 for m in MODE_SAMPLES}
+
+    def spend(self, mode: str, elements: int) -> None:
+        if self.left is not None and self.used[mode] + elements > self.left.get(mode, 0):
+            raise BudgetExceeded(
+                f'{mode}: next request needs {elements} elements but only '
+                f'{self.left.get(mode, 0) - self.used[mode]} free remain')
+        self.used[mode] += elements
+
+
+def parse_free_left(text: str) -> dict:
+    out = {}
+    for part in text.split(','):
+        mode, _, n = part.partition('=')
+        mode = mode.strip()
+        if mode not in MODE_SAMPLES or not n.strip().isdigit():
+            raise SystemExit(f'Bad --free-left entry {part!r}; expected e.g. transit=669,drive=1525')
+        out[mode] = int(n)
+    return out
 
 
 def next_tuesday_ts(metro: str, hhmm: str) -> int:
@@ -134,6 +175,9 @@ def fetch_batch(origins: list, zone: dict, mode: str, time_param: str, ts: int) 
     out = []
     for row in data['rows']:
         el = row['elements'][0]
+        if el.get('status') == 'ZERO_RESULTS':
+            out.append(NO_ROUTE)
+            continue
         if el.get('status') != 'OK':
             out.append(None)
             continue
@@ -143,7 +187,10 @@ def fetch_batch(origins: list, zone: dict, mode: str, time_param: str, ts: int) 
 
 
 def process_metro(metro: str, zones: list, modes: list, force: bool, dry_run: bool,
-                  station_origins_on: bool, only_station_towns: bool, only_places: set | None) -> float:
+                  station_origins_on: bool, only_station_towns: bool, only_places: set | None,
+                  planned: dict, budget: Budget | None = None, quiet: bool = False) -> float:
+    """Adds worst-case elements per mode to `planned`. Real runs spend from `budget` per request."""
+    say = (lambda *a, **k: None) if quiet else print
     path = FILES[metro]
     with open(path) as fh:
         places = [json.loads(line) for line in fh]
@@ -160,37 +207,39 @@ def process_metro(metro: str, zones: list, modes: list, force: bool, dry_run: bo
             continue
         candidates.append(i)
 
-    print(f'\n=== {metro.upper()}: {len(candidates)} places x {len(zones)} zones ===')
+    say(f'\n=== {metro.upper()}: {len(candidates)} places x {len(zones)} zones ===')
     for mode in modes:
         time_param, samples = MODE_SAMPLES[mode]
         stamps = ', '.join(
             datetime.datetime.fromtimestamp(next_tuesday_ts(metro, h), ZoneInfo(TIMEZONES[metro])).strftime('%a %Y-%m-%d %H:%M %Z')
             for h in samples)
-        print(f'  {mode}: {time_param} samples = {stamps}; keep the minimum')
+        say(f'  {mode}: {time_param} samples = {stamps}; keep the minimum')
         if mode == 'transit':
             fb = datetime.datetime.fromtimestamp(next_tuesday_ts(metro, TRANSIT_FALLBACK_DEPARTURE), ZoneInfo(TIMEZONES[metro]))
-            print(f'    fallback if best is missing or >{TRANSIT_FALLBACK_OVER_MIN} min: departure_time {fb.strftime("%a %Y-%m-%d %H:%M %Z")}')
+            say(f'    fallback if best is missing or >{TRANSIT_FALLBACK_OVER_MIN} min: departure_time {fb.strftime("%a %Y-%m-%d %H:%M %Z")}')
     if dry_run:
-        print('\n  Origins:')
+        say('\n  Origins:')
         for i in candidates:
             p = places[i]
             origins = {m: origin_for(p, i, m, station_origins) for m in modes}
             desc = '; '.join(f'{m}: {o}' for m, o in origins.items())
-            print(f"    {p['catalog']['name']} ({p['catalog'].get('county_borough')}, {p['catalog'].get('state_abbr')}) -> {desc}")
-        print('\n  Destinations: ' + '; '.join(f"{z['label']} ({z['lat']},{z['lon']})" for z in zones))
+            say(f"    {p['catalog']['name']} ({p['catalog'].get('county_borough')}, {p['catalog'].get('state_abbr')}) -> {desc}")
+        say('\n  Destinations: ' + '; '.join(f"{z['label']} ({z['lat']},{z['lon']})" for z in zones))
 
     est_cost = 0.0
     for zone in zones:
         for mode in modes:
             time_param, samples = MODE_SAMPLES[mode]
             todo = [i for i in candidates
-                    if force or (places[i].get('work_commute') or {}).get(zone['id'], {}).get(
-                        stored_key(i, mode, station_origins)) is None]
+                    if force or stored_key(i, mode, station_origins)
+                    not in (places[i].get('work_commute') or {}).get(zone['id'], {})]
             elements = len(todo) * len(samples)
-            est_cost += elements * PRICE_PER_1000[mode] / 1000
+            worst = elements + (len(todo) if mode == 'transit' else 0)  # every place could need the fallback
+            planned[mode] = planned.get(mode, 0) + worst
+            est_cost += worst * PRICE_PER_1000[mode] / 1000
             if not todo:
                 continue
-            print(f'  {zone["label"]} [{mode}]: {len(todo)} places, {elements} elements (+ fallback calls if needed)')
+            say(f'  {zone["label"]} [{mode}]: {len(todo)} places, {elements} elements (+ fallback calls if needed)')
             if dry_run:
                 continue
 
@@ -201,35 +250,46 @@ def process_metro(metro: str, zones: list, modes: list, force: bool, dry_run: bo
                 ts = next_tuesday_ts(metro, hhmm)
                 for start in range(0, len(idxs), BATCH_SIZE):
                     chunk = idxs[start:start + BATCH_SIZE]
+                    if budget is not None:
+                        budget.spend(mode, len(chunk))
                     results = fetch_batch([origins_all[k] for k in chunk], zone, mode, param, ts)
                     for k, minutes in zip(chunk, results):
                         if minutes is not None and (best[k] is None or minutes < best[k]):
                             best[k] = minutes
                     time.sleep(0.2)
 
-            for hhmm in samples:
-                run_sample(time_param, hhmm, list(range(len(todo))))
-            if mode == 'transit':
-                retry = [k for k, m in enumerate(best) if m is None or m > TRANSIT_FALLBACK_OVER_MIN]
-                if retry:
-                    print(f'    fallback departure_time for {len(retry)} places')
-                    run_sample('departure_time', TRANSIT_FALLBACK_DEPARTURE, retry)
+            try:
+                for hhmm in samples:
+                    run_sample(time_param, hhmm, list(range(len(todo))))
+                if mode == 'transit':
+                    retry = [k for k, m in enumerate(best) if m is None or m == NO_ROUTE or m > TRANSIT_FALLBACK_OVER_MIN]
+                    if retry:
+                        say(f'    fallback departure_time for {len(retry)} places')
+                        run_sample('departure_time', TRANSIT_FALLBACK_DEPARTURE, retry)
+            except BudgetExceeded as e:
+                # Don't save a partial minimum: a place missing later samples would store a slower time.
+                with open(path, 'w') as fh:
+                    for p in places:
+                        fh.write(json.dumps(p) + '\n')
+                raise BudgetExceeded(f'{zone["label"]} [{mode}] not saved; {e}') from None
 
             failed = 0
             for i, minutes in zip(todo, best):
-                if minutes is None:
+                if minutes is None:  # request/API failure: leave unset so a re-run retries it
                     failed += 1
                     continue
+                if minutes == NO_ROUTE:
+                    minutes = None
                 entry = places[i].setdefault('work_commute', {}).setdefault(zone['id'], {})
                 entry[stored_key(i, mode, station_origins)] = minutes
                 if mode == 'transit':
                     # Fastest of town-center and station origins (bus from town center can beat the train).
                     opts = [v for v in (entry.get('transit_centroid'), entry.get('transit_station')) if v is not None]
-                    entry['transit'] = min(opts)
+                    entry['transit'] = min(opts) if opts else None
                 else:
                     entry[mode] = minutes
             if failed:
-                print(f'    {failed} places had no {mode} route')
+                say(f'    {failed} places had no {mode} route')
 
             # Write after every zone/mode so a crash never loses paid-for results.
             with open(path, 'w') as fh:
@@ -237,11 +297,11 @@ def process_metro(metro: str, zones: list, modes: list, force: bool, dry_run: bo
                     fh.write(json.dumps(p) + '\n')
 
     if only_places is not None and not dry_run:
-        print('\n  Pilot check (Midtown East = Grand Central pin, Midtown West ~ Penn):')
+        say('\n  Pilot check (Midtown East = Grand Central pin, Midtown West ~ Penn):')
         for i in candidates:
             p = places[i]
             wc = p.get('work_commute') or {}
-            print(f"    {p['catalog']['name']}: GCT stored {p.get('cbd_transit_minutes_gct')} vs new {wc.get('nyc_midtown_east', {}).get('transit')}; "
+            say(f"    {p['catalog']['name']}: GCT stored {p.get('cbd_transit_minutes_gct')} vs new {wc.get('nyc_midtown_east', {}).get('transit')}; "
                   f"Penn stored {p.get('cbd_transit_minutes_penn')} vs new {wc.get('nyc_midtown_west', {}).get('transit')}")
 
     return est_cost
@@ -256,6 +316,8 @@ def main() -> None:
     parser.add_argument('--station-origins', action='store_true', help='Transit from commuter-rail stations (NYC)')
     parser.add_argument('--only-station-towns', action='store_true', help='Only places with a station origin')
     parser.add_argument('--places', help='Comma list of place names (pilot)')
+    parser.add_argument('--free-left', help='Free elements left this month, e.g. transit=669,drive=1525 (from Billing -> Reports by SKU)')
+    parser.add_argument('--allow-billing', action='store_true', help='Skip the free-allowance guard (may incur charges)')
     args = parser.parse_args()
 
     modes = [m.strip() for m in args.modes.split(',') if m.strip()]
@@ -270,14 +332,46 @@ def main() -> None:
 
     only_places = {n.strip() for n in args.places.split(',')} if args.places else None
     metros = [args.metro] if args.metro else list(FILES)
-    total = 0.0
-    for metro in metros:
-        total += process_metro(metro, all_zones[metro], modes, args.force, args.dry_run,
-                               args.station_origins, args.only_station_towns, only_places)
 
-    print(f'\nEstimated list-price cost: ${total:.2f} (before Google free monthly usage)')
-    if not args.dry_run:
-        print('Copy the updated JSONL files to frontend/data/ before deploying.')
+    def run(dry_run: bool, planned: dict, budget: Budget | None = None, quiet: bool = False) -> float:
+        return sum(
+            process_metro(metro, all_zones[metro], modes, args.force, dry_run,
+                          args.station_origins, args.only_station_towns, only_places,
+                          planned, budget, quiet)
+            for metro in metros)
+
+    # Plan first (no API calls) so the guard sees the whole run, fallbacks included.
+    planned: dict = {}
+    total = run(True, planned, quiet=not args.dry_run)
+    plan_desc = ', '.join(f'{m}={planned.get(m, 0):,}' for m in modes)
+    print(f'\nPlanned worst-case elements: {plan_desc}')
+    print(f'Estimated list-price cost if none were free: ${total:.2f}')
+    if args.dry_run:
+        return
+
+    budget = Budget(None)
+    if not args.allow_billing:
+        if not args.free_left:
+            raise SystemExit(
+                'Refusing to run without --free-left (e.g. --free-left transit=669,drive=1525).\n'
+                'Read usage in Cloud Console -> Billing -> Reports, group by SKU:\n'
+                '  transit = 10,000 - "Distance Matrix" usage; drive = 5,000 - "Distance Matrix Advanced" usage.\n'
+                'Or pass --allow-billing to accept charges.')
+        left = parse_free_left(args.free_left)
+        over = {m: planned.get(m, 0) - left.get(m, 0) for m in modes if planned.get(m, 0) > left.get(m, 0)}
+        if over:
+            detail = ', '.join(f'{m} needs {planned[m]:,} but {left.get(m, 0):,} free left' for m in over)
+            raise SystemExit(f'Refusing to run: plan exceeds free allowance ({detail}). '
+                             'Wait for the monthly reset, narrow the run, or pass --allow-billing.')
+        budget = Budget(left)
+
+    try:
+        run(False, {}, budget)
+    except BudgetExceeded as e:
+        raise SystemExit(f'Stopped before exceeding the free allowance: {e}')
+    finally:
+        print(f'Elements sent: ' + ', '.join(f'{m}={budget.used[m]:,}' for m in modes))
+    print('Copy the updated JSONL files to frontend/data/ before deploying.')
 
 
 if __name__ == '__main__':
