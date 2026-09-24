@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Briefcase, Building2, Loader2, MapPin, Search, X } from 'lucide-react'
 import { type WorkZone, type WorkZoneMetro } from '@/lib/workZones'
 
-export type WorkAddressResult = { error: string } | { zoneId: string; km: number; address: string }
+export type WorkAddressResult = { error: string } | { zoneId: string; miles: number; address: string }
 
 const METRO_LABELS: Record<WorkZoneMetro, string> = {
   nyc: 'New York metro',
@@ -47,7 +47,7 @@ export default function WorkHubPicker({ zones, value, onChange, onAddressSubmit 
   const [activeIdx, setActiveIdx] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [snappedFrom, setSnappedFrom] = useState<{ zoneId: string; address: string; km: number } | null>(null)
+  const [snappedFrom, setSnappedFrom] = useState<{ zoneId: string; address: string; miles: number } | null>(null)
 
   const selected = zones.find((z) => z.id === value) ?? null
   const showSearch = !selected || editing
@@ -101,7 +101,7 @@ export default function WorkHubPicker({ zones, value, onChange, onAddressSubmit 
       setError(res.error)
       return
     }
-    setSnappedFrom({ zoneId: res.zoneId, address: res.address, km: res.km })
+    setSnappedFrom({ zoneId: res.zoneId, address: res.address, miles: res.miles })
     finish()
   }
 
@@ -158,7 +158,7 @@ export default function WorkHubPicker({ zones, value, onChange, onAddressSubmit 
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--hf-text-primary)', lineHeight: 1.3 }}>{selected.label}</div>
           <div style={{ fontSize: 11, color: 'var(--hf-text-secondary)', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {snapped
-              ? `Nearest hub to ${snapped.address} · ${snapped.km < 1 ? 'under 1' : Math.round(snapped.km)} km away`
+              ? `Nearest hub to ${snapped.address} · ${snapped.miles < 0.1 ? 'under 0.1' : snapped.miles.toFixed(1)} mi away`
               : `${METRO_LABELS[selected.metro]} · tap to change`}
           </div>
         </button>

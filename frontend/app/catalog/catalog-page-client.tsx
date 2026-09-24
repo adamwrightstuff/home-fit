@@ -550,7 +550,7 @@ export default function CatalogPageClient({
       if (!snapped) return { error: 'That address isn\'t near a job hub we have commute times for yet.' }
       setWorkZoneId(snapped.zone.id)
       setFilterMetro(snapped.zone.metro)
-      return { zoneId: snapped.zone.id, km: snapped.km, address }
+      return { zoneId: snapped.zone.id, miles: snapped.miles, address }
     } catch {
       return { error: 'Location service is temporarily unavailable.' }
     }

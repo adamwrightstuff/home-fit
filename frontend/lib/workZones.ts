@@ -19,18 +19,18 @@ export const WORK_ZONES: WorkZone[] = (Object.entries(zonesByMetro) as [WorkZone
   .flatMap(([metro, zones]) => zones.map((z) => ({ ...z, metro })))
 
 /** Addresses farther than this from every hub are rejected rather than snapped. */
-export const MAX_SNAP_KM = 25
+export const MAX_SNAP_MILES = 15
 
 export function findWorkZone(id: string | null): WorkZone | null {
   return (id && WORK_ZONES.find((z) => z.id === id)) || null
 }
 
-function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
+function haversineMiles(aLat: number, aLon: number, bLat: number, bLon: number): number {
   const toRad = (d: number) => (d * Math.PI) / 180
   const dLat = toRad(bLat - aLat)
   const dLon = toRad(bLon - aLon)
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLon / 2) ** 2
-  return 6371 * 2 * Math.asin(Math.sqrt(h))
+  return 3958.8 * 2 * Math.asin(Math.sqrt(h))
 }
 
 /** Zones that have precomputed times on at least one place (metros not yet run are hidden). */
@@ -40,13 +40,13 @@ export function availableWorkZones(places: { work_commute?: WorkCommute | null }
   return WORK_ZONES.filter((z) => ids.has(z.id))
 }
 
-export function snapToWorkZone(lat: number, lon: number, zones: WorkZone[] = WORK_ZONES): { zone: WorkZone; km: number } | null {
-  let best: { zone: WorkZone; km: number } | null = null
+export function snapToWorkZone(lat: number, lon: number, zones: WorkZone[] = WORK_ZONES): { zone: WorkZone; miles: number } | null {
+  let best: { zone: WorkZone; miles: number } | null = null
   for (const zone of zones) {
-    const km = haversineKm(lat, lon, zone.lat, zone.lon)
-    if (!best || km < best.km) best = { zone, km }
+    const miles = haversineMiles(lat, lon, zone.lat, zone.lon)
+    if (!best || miles < best.miles) best = { zone, miles }
   }
-  return best && best.km <= MAX_SNAP_KM ? best : null
+  return best && best.miles <= MAX_SNAP_MILES ? best : null
 }
 
 /**
