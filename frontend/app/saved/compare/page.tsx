@@ -12,7 +12,7 @@ import { PILLAR_META, PILLAR_ORDER, isLongevityPillar, isHappinessPillar, type P
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import PillarInfoIcon from '@/components/PillarInfoIcon'
-import { applyExplorerScoreAdjustments, readCompareContext } from '@/lib/explorerScoreAdjust'
+import { applyExplorerScoreAdjustments, readCompareContext, type CompareContext } from '@/lib/explorerScoreAdjust'
 
 type ScoreMode = 'yours' | 'catalog'
 
@@ -146,19 +146,20 @@ function CompareContent() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState<SortBy>('diff')
-  const compareContext = useMemo(() => readCompareContext(), [])
-  const [scoreMode, setScoreMode] = useState<ScoreMode>(() => (readCompareContext() ? 'yours' : 'catalog'))
-
-  const householdIncome = useMemo(() => {
+  // sessionStorage is only readable after mount (SSR renders without it), so load it in an effect.
+  const [compareContext, setCompareContext] = useState<CompareContext | null>(null)
+  const [householdIncome, setHouseholdIncome] = useState<number | null>(null)
+  const [scoreMode, setScoreMode] = useState<ScoreMode>('yours')
+  useEffect(() => {
+    const ctx = readCompareContext()
+    setCompareContext(ctx)
     try {
-      const raw = sessionStorage.getItem('homefit_search_options')
-      if (!raw) return null
-      const parsed = JSON.parse(raw)
-      return typeof parsed.household_income === 'number' && parsed.household_income > 0
-        ? parsed.household_income
-        : null
+      const parsed = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? 'null')
+      const inc = parsed?.household_income
+      setHouseholdIncome(typeof inc === 'number' && inc > 0 ? inc : null)
+      if (!ctx && !(typeof inc === 'number' && inc > 0)) setScoreMode('catalog')
     } catch {
-      return null
+      if (!ctx) setScoreMode('catalog')
     }
   }, [])
 
@@ -371,8 +372,8 @@ function CompareContent() {
               {placeNameB}
             </span>
           </div>
-          <div role="group" aria-label="Score source" style={{ display: 'inline-flex', flexShrink: 0, border: '1px solid var(--hf-border)', borderRadius: 999, overflow: 'hidden' }}>
-            {([['yours', 'Your HomeFit'], ['catalog', 'Catalog']] as const).map(([mode, label]) => {
+          <div role="group" aria-label="Score source" style={{ display: 'inline-flex', flexShrink: 0, borderRadius: 10, border: '1px solid var(--hf-border)', overflow: 'hidden', background: 'var(--hf-bg-subtle)' }}>
+            {([['yours', 'Your HomeFit'], ['catalog', 'Catalog']] as const).map(([mode, label], i) => {
               const active = scoreMode === mode
               const disabled = mode === 'yours' && !compareContext && !householdIncome
               return (
@@ -385,12 +386,15 @@ function CompareContent() {
                   onClick={() => setScoreMode(mode)}
                   style={{
                     border: 'none',
-                    padding: '4px 12px',
+                    borderRight: i === 0 ? '1px solid var(--hf-border)' : undefined,
+                    padding: '0.45rem 0.7rem',
                     fontSize: '0.8rem',
                     fontWeight: 600,
                     cursor: disabled ? 'not-allowed' : 'pointer',
-                    background: active ? 'var(--hf-text-primary)' : 'transparent',
-                    color: active ? 'var(--hf-page-bg)' : disabled ? 'var(--hf-border)' : 'var(--hf-text-primary)',
+                    background: active ? 'var(--hf-card-bg)' : 'transparent',
+                    color: active ? 'var(--hf-text-primary)' : 'var(--hf-text-secondary)',
+                    boxShadow: active ? 'inset 0 0 0 1px var(--hf-border)' : undefined,
+                    opacity: disabled ? 0.5 : 1,
                     whiteSpace: 'nowrap',
                   }}
                 >

@@ -1,5 +1,5 @@
 import type { ScoreResponse } from '@/types/api'
-import type { PillarPriorities } from '@/components/SearchOptions'
+import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import { applyNbPreferencesV9, type NbPreference, type V9Breakdown } from '@/lib/nbPreference'
 import { applyAoPreferences, applyWaterfrontPreference, type AoPreference, type AoBreakdown, type WaterfrontSubPreference } from '@/lib/aoPreference'
 
@@ -92,10 +92,24 @@ export function writeCompareContext(ctx: CompareContext): void {
 export function readCompareContext(): CompareContext | null {
   try {
     const raw = sessionStorage.getItem(COMPARE_CONTEXT_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    if (!parsed?.priorities || !parsed?.filters) return null
-    return parsed as CompareContext
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed?.priorities && parsed?.filters) return parsed as CompareContext
+    }
+    // Fallback: saved search options (quiz / search page) when Explore hasn't been opened this session.
+    const opts = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? 'null')
+    const pri = opts?.priorities
+    if (!pri || typeof pri !== 'object') return null
+    const f = opts.filters ?? {}
+    return {
+      priorities: { ...DEFAULT_PRIORITIES, ...pri } as PillarPriorities,
+      filters: {
+        filterSchoolType: f.filterSchoolType === 'public_only' || f.filterSchoolType === 'charter' ? f.filterSchoolType : 'any',
+        filterNbTypes: Array.isArray(f.filterNbTypes) ? f.filterNbTypes : [],
+        filterAoTypes: Array.isArray(f.filterAoTypes) ? f.filterAoTypes : [],
+        filterWaterfrontSubPref: typeof f.filterWaterfrontSubPref === 'string' ? f.filterWaterfrontSubPref : null,
+      },
+    }
   } catch {
     return null
   }
