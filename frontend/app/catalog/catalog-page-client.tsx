@@ -36,7 +36,7 @@ import {
 } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker, withCommuteTimePillar } from '@/lib/reweight'
 import { type WaterfrontSubPreference } from '@/lib/aoPreference'
 import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
@@ -107,7 +107,7 @@ export default function CatalogPageClient({
         const merged = { ...DEFAULT_PRIORITIES }
         const valid: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
         const source = parsed.priorities ?? parsed
-        for (const k of [...PILLAR_ORDER, 'natural_beauty'] as PillarKey[]) {
+        for (const k of [...PILLAR_ORDER, 'natural_beauty', 'commute_time'] as PillarKey[]) {
           if (valid.includes(source[k])) merged[k] = source[k]
         }
         return merged
@@ -393,7 +393,7 @@ export default function CatalogPageClient({
         const valid: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
         if (opts.priorities) {
           const merged = { ...DEFAULT_PRIORITIES }
-          for (const k of [...PILLAR_ORDER, 'natural_beauty'] as PillarKey[]) {
+          for (const k of [...PILLAR_ORDER, 'natural_beauty', 'commute_time'] as PillarKey[]) {
             if (valid.includes(opts.priorities[k])) merged[k] = opts.priorities[k]
           }
           setPriorities(merged)
@@ -534,6 +534,9 @@ export default function CatalogPageClient({
         cbd_transit_minutes: commute.filterMinutes ?? Number.POSITIVE_INFINITY,
         cbd_transit_dest: null,
         commute_text: formatZoneCommute(workZone, commute),
+        // Optional commute_time pillar (see reweight.ts) -- only meaningful once a work hub is
+        // picked, and only when this place has a usable precomputed time to it.
+        score: withCommuteTimePillar(adjusted.score, commute.filterMinutes),
       }
     })
   }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, currentHomeMonthlyCost, currentHomeMatch, workZoneId])
@@ -1965,6 +1968,8 @@ export default function CatalogPageClient({
           if (zone) setFilterMetro(zone.metro)
         }}
         onWorkAddressSubmit={setWorkAddress}
+        commutePriority={priorities.commute_time ?? 'None'}
+        onCommutePriorityChange={(v) => setPriorities((prev) => ({ ...prev, commute_time: v }))}
         climatePrefs={climatePrefs}
         onClimatePrefsChange={setClimatePrefs}
         resultCount={gatedPlaces.length}

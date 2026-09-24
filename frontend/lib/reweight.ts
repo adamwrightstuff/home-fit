@@ -231,6 +231,49 @@ export function reweightScoreResponseFromPriorities(
 }
 
 /**
+ * Commute-time pillar score (opt-in, catalog-explorer only -- see CLAUDE.md: commute is not
+ * one of the 13 research-backed residential pillars, and this isn't wired into the backend's
+ * weight allocation). Linear decay anchored on Marchetti's constant, the transportation-research
+ * finding that people budget ~30min one-way for travel regardless of era or geography: 100 at
+ * <=15min, 80 at the 30min anchor, decaying to 0 at 90min. This is a placeholder curve, not
+ * calibrated against research the way the real pillars' scoring functions are.
+ */
+export function commuteTimeScore(minutes: number | null | undefined): number | null {
+  if (minutes === null || minutes === undefined || !Number.isFinite(minutes) || minutes < 0) return null
+  if (minutes <= 15) return 100
+  if (minutes <= 30) return 100 - (minutes - 15) * (20 / 15)
+  if (minutes <= 60) return 80 - (minutes - 30) * (30 / 30)
+  if (minutes <= 90) return 50 - (minutes - 60) * (50 / 30)
+  return 0
+}
+
+/**
+ * Injects a synthetic commute_time pillar into a catalog place's score so
+ * reweightScoreResponseFromPriorities blends it like any other pillar (it treats any key in
+ * livability_pillars with a numeric score as eligible -- see prioritiesToTokens' handling of
+ * extra keys not in PILLAR_ORDER, the same mechanism political_lean uses). No-ops when minutes
+ * is null (no work hub selected, or no precomputed time to this place), so the pillar simply
+ * doesn't appear and gets no weight.
+ */
+export function withCommuteTimePillar(data: ScoreResponse, minutes: number | null | undefined): ScoreResponse {
+  const score = commuteTimeScore(minutes)
+  if (score === null) return data
+  return {
+    ...data,
+    livability_pillars: {
+      ...data.livability_pillars,
+      commute_time: {
+        score,
+        weight: 0,
+        contribution: 0,
+        importance_level: null,
+        breakdown: { minutes: Math.round((minutes as number) * 10) / 10 },
+      },
+    } as any,
+  }
+}
+
+/**
  * Running total from partial pillar scores (tap-to-score flow).
  * Uses only completed pillars with valid scores (excludes failed runs) and renormalizes their weights to sum to 100.
  */

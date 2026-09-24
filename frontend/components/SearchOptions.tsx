@@ -22,6 +22,9 @@ interface PillarPriorities {
   diversity: PriorityLevel
   community_safety: PriorityLevel
   political_lean: PriorityLevel
+  /** Opt-in, catalog-explorer only -- not one of the 13 research-backed pillars (see CLAUDE.md).
+   * Only affects HomeFit total when a work hub is selected; otherwise inert like political_lean. */
+  commute_time?: PriorityLevel
 }
 
 interface SearchOptions {
@@ -71,6 +74,7 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   diversity: 'Medium',
   community_safety: 'Medium',
   political_lean: 'None',
+  commute_time: 'None',
 }
 
 export const JOB_CATEGORY_OPTIONS: Array<{ key: string; label: string; description: string }> = [

@@ -65,6 +65,9 @@ interface FilterSheetProps {
   onWorkZoneChange: (id: string | null) => void
   /** Geocodes and snaps to the nearest zone. */
   onWorkAddressSubmit: (address: string) => Promise<WorkAddressResult>
+  /** Opt-in commute_time pillar weight (see lib/reweight.ts); only shown once a work hub is selected. */
+  commutePriority: 'None' | 'Low' | 'Medium' | 'High'
+  onCommutePriorityChange: (v: 'None' | 'Low' | 'Medium' | 'High') => void
   climatePrefs: ClimatePreferences
   onClimatePrefsChange: (v: ClimatePreferences) => void
   resultCount: number
@@ -122,6 +125,8 @@ export default function FilterSheet({
   workZones,
   onWorkZoneChange,
   onWorkAddressSubmit,
+  commutePriority,
+  onCommutePriorityChange,
   climatePrefs,
   onClimatePrefsChange,
   resultCount,
@@ -521,6 +526,19 @@ export default function FilterSheet({
               {chip(filterCommuteMax === '45', 'Under 45 min', () => onFilterCommuteMaxChange(filterCommuteMax === '45' ? 'all' : '45'))}
               {chip(filterCommuteMax === '60', 'Under 60 min', () => onFilterCommuteMaxChange(filterCommuteMax === '60' ? 'all' : '60'))}
             </div>
+            {workZone && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+                  How much should commute time count toward your HomeFit score? Not a research-backed
+                  pillar like the 13 above -- a rough linear estimate, and off by default.
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {(['None', 'Low', 'Medium', 'High'] as const).map((level) =>
+                    chip(commutePriority === level, level, () => onCommutePriorityChange(level))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Weather / Climate */}
