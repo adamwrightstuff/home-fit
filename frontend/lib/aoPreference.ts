@@ -117,3 +117,43 @@ export function applyWaterfrontPreference(
   const tot = weights.reduce((a, b) => a + b, 0) || 1
   return Math.round((ranked.reduce((sum, s, i) => sum + (weights[i] / tot) * s, 0)) * 100) / 100
 }
+
+// ── AND-filter preference model ──────────────────────────────────────────────
+// Same reasoning as nbPreference.ts's nbPreferencePasses: "local parks + waterfront"
+// is a checklist, not a tradeoff to blend. Requires each selected sub-component to
+// independently clear a floor and never touches active_outdoors.score.
+//
+// Floors are the 40th percentile of each raw component (normalized to 0-100) across
+// the current NYC/SF/LA/Seattle catalog -- see nbPreference.ts for the same
+// derivation and its staleness caveat.
+export const AO_PREFERENCE_FLOOR: Record<AoNumericKey, number> = {
+  daily_urban_outdoors: 63,
+  wild_adventure: 83,
+  waterfront_lifestyle: 62,
+}
+
+/**
+ * Does this place clear every selected AO sub-preference's floor, independently?
+ * True AND, never mutates active_outdoors.score. When `waterfrontSub` is given and
+ * `waterfront` is one of the selected preferences, also requires that specific water
+ * type to actually be present (not just any waterfront_lifestyle score).
+ */
+export function aoPreferencePasses(
+  breakdown: AoBreakdown | undefined | null,
+  preferences: AoPreference[],
+  waterfrontSub?: WaterfrontSubPreference | null,
+): boolean {
+  if (!breakdown || preferences.length === 0) return true
+  for (const pref of preferences) {
+    const key = PREFERENCE_AO_COMPONENTS[pref]
+    const raw = breakdown[key]
+    if (typeof raw !== 'number') return false
+    const normalized = Math.min(100, (raw / AO_COMPONENT_MAX[key]) * 100)
+    if (normalized < (AO_PREFERENCE_FLOOR[key] ?? 0)) return false
+    if (pref === 'waterfront' && waterfrontSub) {
+      const wb = breakdown.waterfront_breakdown
+      if (!wb || !((wb[waterfrontSub] ?? 0) > 0)) return false
+    }
+  }
+  return true
+}

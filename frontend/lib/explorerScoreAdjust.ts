@@ -1,14 +1,10 @@
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
-import { applyNbPreferencesV9, type NbPreference, type V9Breakdown } from '@/lib/nbPreference'
-import { applyAoPreferences, applyWaterfrontPreference, type AoPreference, type AoBreakdown, type WaterfrontSubPreference } from '@/lib/aoPreference'
+import type { WaterfrontSubPreference } from '@/lib/aoPreference'
 
 /** Explorer filters that rewrite pillar scores (as opposed to filters that only hide places). */
 export interface ScoreAffectingFilters {
   filterSchoolType: 'any' | 'public_only' | 'charter'
-  filterNbTypes: string[]
-  filterAoTypes: string[]
-  filterWaterfrontSubPref: WaterfrontSubPreference | null
 }
 
 function withPillar(score: ScoreResponse, key: string, pillar: unknown): ScoreResponse {
@@ -41,44 +37,24 @@ export function applyExplorerScoreAdjustments(score: ScoreResponse, f: ScoreAffe
     }
   }
 
-  // Apply scenery preferences to natural_beauty via v9 preference weighting.
-  if (f.filterNbTypes.length > 0 && f.filterNbTypes.length < 4) {
-    const nb = (out.livability_pillars as any)?.natural_beauty
-    if (nb) {
-      const v9 = nb.v9_breakdown as V9Breakdown | undefined
-      const prefScore = v9 ? (applyNbPreferencesV9(v9, f.filterNbTypes as NbPreference[]) ?? nb.score) : nb.score
-      out = withPillar(out, 'natural_beauty', { ...nb, score: prefScore })
-    }
-  }
-
-  // Reweight AO score toward selected sub-components (1–2 selected = partial preference;
-  // 0 or 3 = no reweighting). When a waterfront sub-preference is also active, first
-  // re-weight waterfront_lifestyle toward the chosen water type, then apply AO OWA.
-  if (f.filterAoTypes.length > 0 && f.filterAoTypes.length < 3) {
-    const ao = (out.livability_pillars as any)?.active_outdoors
-    if (ao) {
-      const bk = ao.breakdown as AoBreakdown | undefined
-      let effectiveBk = bk
-      if (f.filterWaterfrontSubPref && f.filterAoTypes.includes('waterfront') && bk) {
-        const prefWf = applyWaterfrontPreference(bk, f.filterWaterfrontSubPref)
-        if (prefWf !== null) {
-          // applyAoPreferences normalizes waterfront_lifestyle (0–25 raw) to 0–100,
-          // so convert prefWf (already 0–100) back to raw range before injection.
-          effectiveBk = { ...bk, waterfront_lifestyle: (prefWf * 25) / 100 }
-        }
-      }
-      const reweighted = applyAoPreferences(effectiveBk, f.filterAoTypes as AoPreference[])
-      if (reweighted !== null) out = withPillar(out, 'active_outdoors', { ...ao, score: reweighted })
-    }
-  }
+  // NB scenery and AO sub-component preferences no longer rewrite scores here -- they're
+  // AND-filters now (nbPreferencePasses / aoPreferencePasses in lib/nbPreference.ts and
+  // lib/aoPreference.ts, applied in the catalog page's visibility filter), so
+  // natural_beauty.score and active_outdoors.score stay the same for every user and every
+  // composite that reads them (happiness_index, longevity_index, status_signal) stays
+  // consistent. See CLAUDE.md-adjacent design note in nbPreference.ts for why.
 
   return out
 }
 
-/** Snapshot of the Explorer's current weights + score-affecting filters, handed to Compare. */
+/** Snapshot of the Explorer's current weights + filters, handed to Compare. */
 export interface CompareContext {
   priorities: PillarPriorities
-  filters: ScoreAffectingFilters
+  filters: ScoreAffectingFilters & {
+    filterNbTypes: string[]
+    filterAoTypes: string[]
+    filterWaterfrontSubPref: WaterfrontSubPreference | null
+  }
   /** Explorer's live income (signed-in users load it from their profile, not sessionStorage). */
   householdIncome?: number | null
   /** "Current home" monthly-cost override, applied only to the place with this catalog name. */

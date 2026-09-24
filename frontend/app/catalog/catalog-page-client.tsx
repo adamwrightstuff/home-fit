@@ -37,7 +37,8 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker, withCommuteTimePillar } from '@/lib/reweight'
-import { type WaterfrontSubPreference } from '@/lib/aoPreference'
+import { type WaterfrontSubPreference, aoPreferencePasses } from '@/lib/aoPreference'
+import { nbPreferencePasses } from '@/lib/nbPreference'
 import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
@@ -519,7 +520,7 @@ export default function CatalogPageClient({
         })
       : places
 
-    const f = { filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref }
+    const f = { filterSchoolType }
     const workZone = findWorkZone(workZoneId)
     return withIncome.map((p) => {
       const adjusted = { ...p, score: applyExplorerScoreAdjustments(p.score, f) }
@@ -634,6 +635,14 @@ export default function CatalogPageClient({
           if (!passesAny) return false
         }
       }
+      if (filterNbTypes.length > 0 && filterNbTypes.length < 4) {
+        const v9 = (p.score.livability_pillars as any)?.natural_beauty?.v9_breakdown
+        if (!nbPreferencePasses(v9, filterNbTypes as any)) return false
+      }
+      if (filterAoTypes.length > 0 && filterAoTypes.length < 3) {
+        const bk = (p.score.livability_pillars as any)?.active_outdoors?.breakdown
+        if (!aoPreferencePasses(bk, filterAoTypes as any, filterWaterfrontSubPref)) return false
+      }
       if (!t) return true
       const name = (p.catalog.name || '').toLowerCase()
       const county = (p.catalog.county_borough || '').toLowerCase()
@@ -678,6 +687,9 @@ export default function CatalogPageClient({
     filterCommuteMax,
     filterHousingType,
     filterTenure,
+    filterNbTypes,
+    filterAoTypes,
+    filterWaterfrontSubPref,
     climatePrefs,
     indexMode,
     sortByName,
@@ -809,6 +821,14 @@ export default function CatalogPageClient({
           if (!matchesAny) r.push('Political lean')
         }
       }
+      if (filterNbTypes.length > 0 && filterNbTypes.length < 4) {
+        const v9 = (p.score.livability_pillars as any)?.natural_beauty?.v9_breakdown
+        if (!nbPreferencePasses(v9, filterNbTypes as any)) r.push('Scenery preference')
+      }
+      if (filterAoTypes.length > 0 && filterAoTypes.length < 3) {
+        const bk = (p.score.livability_pillars as any)?.active_outdoors?.breakdown
+        if (!aoPreferencePasses(bk, filterAoTypes as any, filterWaterfrontSubPref)) r.push('Outdoors preference')
+      }
       if (hasClimatePreferences(climatePrefs)) {
         const cm = scoreClimateMatch(p.climate, climatePrefs)
         if (cm && !isNaN(cm.score)) {
@@ -829,7 +849,7 @@ export default function CatalogPageClient({
       reasons[key] = r.length > 0 ? r : ['Filters']
     }
     return reasons
-  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterCommuteMax, filterHousingType, filterTenure, filterPoliticalLean, climatePrefs])
+  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterCommuteMax, filterHousingType, filterTenure, filterPoliticalLean, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, climatePrefs])
   const { gatedPlaces, excludedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) {
       return { gatedPlaces: filteredPlaces, excludedPlaces: metroFilterExcluded, dealbreakerExcludedCount: metroFilterExcluded.length, dealbreakerZeroSurvivors: false }
@@ -922,6 +942,14 @@ export default function CatalogPageClient({
           if (!passesAny) r.push('Tenure')
         }
       }
+      if (filterNbTypes.length > 0 && filterNbTypes.length < 4) {
+        const v9 = (p.score.livability_pillars as any)?.natural_beauty?.v9_breakdown
+        if (!nbPreferencePasses(v9, filterNbTypes as any)) r.push('Scenery preference')
+      }
+      if (filterAoTypes.length > 0 && filterAoTypes.length < 3) {
+        const bk = (p.score.livability_pillars as any)?.active_outdoors?.breakdown
+        if (!aoPreferencePasses(bk, filterAoTypes as any, filterWaterfrontSubPref)) r.push('Outdoors preference')
+      }
       for (const k of activeDealbreakerKeys) {
         if (!DEALBREAKER_CHECKS[k]?.(p)) r.push(`${PILLAR_META[k].name} must-have`)
       }
@@ -954,7 +982,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterCommuteMax, filterHousingType, filterTenure, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterCommuteMax, filterHousingType, filterTenure, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
