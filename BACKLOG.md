@@ -52,19 +52,34 @@ both dense-urban and suburban rows, ruling those out as the explanation. It's a 
 measurement, just answering "% of all land here is under a tree" rather than "does this street
 feel tree-lined."
 
-**Considered and rejected:** NYC's Street Tree Census (real per-tree municipal point data,
-already partially in the pipeline as a GVI nudge) — rejected because it's what inflated NYC
-neighborhoods over suburbs previously (better municipal data ≠ more trees) and because it's a
-one-off per-metro integration, not something that scales as new metros get added.
+**Considered and rejected:**
+- NYC's Street Tree Census (real per-tree municipal point data, already partially in the
+  pipeline as a GVI nudge) — rejected because it's what inflated NYC neighborhoods over
+  suburbs previously (better municipal data ≠ more trees) and because it's a one-off
+  per-metro integration, not something that scales as new metros get added.
+- Real Street View Green View Index (Treepedia-style image segmentation) — most accurate
+  option for "does the street feel green," but rejected as not worth it: a new paid API
+  plus per-location image-processing cost, for a marginal accuracy gain over what the
+  satellite-only option below already gets directionally.
 
-**Scalable options (same national datasets already in the pipeline, no per-metro dependency):**
-1. Sample NLCD TCC only within a buffer of the street/sidewalk right-of-way (reuse OSM road
-   geometry already pulled elsewhere) instead of the whole radius — isolates canopy over where
-   you'd actually walk from canopy anywhere on any property nearby. Cheapest, no new data source.
-2. Real Street View Green View Index (actual Treepedia-style street-view image segmentation,
-   not the current NDVI satellite proxy mislabeled as "eye-level" in the code's own docstrings)
-   — most accurate, but needs a Street View API integration and per-location image processing
-   cost.
+**The actual fix isn't "replace canopy_pct" — it's splitting one conflated question into
+two, both served by data already in the pipeline:**
+- *"Living there feels green overall"* (yards + streets + parks) — already the right question
+  for today's `canopy_pct` (NLCD TCC, whole-radius) + `gvi_pct` (Sentinel-2 NDVI/VARI) +
+  `local_green_spaces`/`local_green_score` (OSM park polygons, currently reading ~0 for most
+  catalog places and likely underqueried — worth its own look). Keep this as "canopy
+  preference" means today.
+- *"Walking the street feels green"* — genuinely unserved today. Add as a distinct,
+  separately-selectable preference, fed by NLCD TCC sampled only within a buffer of the
+  street/sidewalk right-of-way (reuse OSM road geometry `street_geometry.py` already fetches
+  for built_environment) instead of the whole radius. Same national dataset already in the
+  pipeline, no new API, no per-metro dependency — just a different geometry passed into the
+  existing GEE canopy call.
+
+Note this isn't a strict improvement to swap in and call it fixed: a corridor-only metric
+would systematically favor tree-lined urban blocks over yard-heavy suburbs (Larchmont's real
+backyard canopy stops counting), which is a legitimate but different definition of "canopy" —
+hence splitting into two preferences rather than replacing one metric with the other.
 
 **Priority:** medium — this is actively excluding places from the new canopy AND-filter based
 on a metric that doesn't measure what users mean by "canopy preference" for dense urban areas.
