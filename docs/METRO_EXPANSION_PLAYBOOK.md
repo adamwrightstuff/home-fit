@@ -207,3 +207,4 @@ PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py --no-unversioned
 - [ ] Run `score_metro.py` with all env vars set
 - [ ] Verify coverage ≥95% for housing_stock, political_lean, local_scene_bucket, built_environment
 - [ ] Run `check_catalog_health.py --no-unversioned` against all metros
+- [ ] Work commute feature: follow `docs/WORK_COMMUTE_PLAYBOOK.md` (job hubs, precomputed commutes, station access)
