@@ -155,7 +155,7 @@ function CompareContent() {
     setCompareContext(ctx)
     try {
       const parsed = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? 'null')
-      const inc = parsed?.household_income
+      const inc = ctx && ctx.householdIncome !== undefined ? ctx.householdIncome : parsed?.household_income
       setHouseholdIncome(typeof inc === 'number' && inc > 0 ? inc : null)
       if (!ctx && !(typeof inc === 'number' && inc > 0)) setScoreMode('catalog')
     } catch {
@@ -200,8 +200,10 @@ function CompareContent() {
   const scoredBRaw = rowB?.score_payload as ScoreResponse | undefined
   // "Your HomeFit": Explorer weights + score-affecting filters + household income.
   // "Catalog": the stored scores under each row's own (or default) weights.
-  const personalize = (raw: ScoreResponse): ScoreResponse => {
-    let out = householdIncome ? applyUserIncomeToScore(raw, householdIncome) : raw
+  const personalize = (raw: ScoreResponse, row: SavedScoreRow): ScoreResponse => {
+    const home = compareContext?.currentHome
+    const isCurrentHome = !!home && isCatalogKey(row.id) && row.id.split('|')[0] === home.name
+    let out = householdIncome ? applyUserIncomeToScore(raw, householdIncome, isCurrentHome ? home.monthlyCost : null) : raw
     if (compareContext) out = applyExplorerScoreAdjustments(out, compareContext.filters)
     return out
   }
@@ -209,7 +211,7 @@ function CompareContent() {
   const displayA = useMemo(() => {
     if (!rowA || !scoredARaw) return null
     if (scoreMode === 'yours') {
-      return reweightScoreResponseFromPriorities(personalize(scoredARaw), compareContext?.priorities ?? prioritiesFromRow(rowA))
+      return reweightScoreResponseFromPriorities(personalize(scoredARaw, rowA), compareContext?.priorities ?? prioritiesFromRow(rowA))
     }
     return reweightScoreResponseFromPriorities(scoredARaw, prioritiesFromRow(rowA))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -218,7 +220,7 @@ function CompareContent() {
   const displayB = useMemo(() => {
     if (!rowB || !scoredBRaw) return null
     if (scoreMode === 'yours') {
-      return reweightScoreResponseFromPriorities(personalize(scoredBRaw), compareContext?.priorities ?? prioritiesFromRow(rowB))
+      return reweightScoreResponseFromPriorities(personalize(scoredBRaw, rowB), compareContext?.priorities ?? prioritiesFromRow(rowB))
     }
     return reweightScoreResponseFromPriorities(scoredBRaw, prioritiesFromRow(rowB))
     // eslint-disable-next-line react-hooks/exhaustive-deps

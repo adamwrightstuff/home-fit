@@ -518,8 +518,10 @@ export default function CatalogPageClient({
     writeCompareContext({
       priorities,
       filters: { filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref },
+      householdIncome,
+      currentHome: currentHomeMatch ? { name: currentHomeMatch, monthlyCost: currentHomeMonthlyCost } : null,
     })
-  }, [priorities, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref])
+  }, [priorities, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, householdIncome, currentHomeMatch, currentHomeMonthlyCost])
 
   const effectivePriorities = useMemo(
     () => priorities,

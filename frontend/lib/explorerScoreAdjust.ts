@@ -79,6 +79,10 @@ export function applyExplorerScoreAdjustments(score: ScoreResponse, f: ScoreAffe
 export interface CompareContext {
   priorities: PillarPriorities
   filters: ScoreAffectingFilters
+  /** Explorer's live income (signed-in users load it from their profile, not sessionStorage). */
+  householdIncome?: number | null
+  /** "Current home" monthly-cost override, applied only to the place with this catalog name. */
+  currentHome?: { name: string; monthlyCost: number | null } | null
 }
 
 const COMPARE_CONTEXT_KEY = 'homefit_compare_context'
