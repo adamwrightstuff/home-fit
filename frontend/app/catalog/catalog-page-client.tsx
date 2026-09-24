@@ -14,6 +14,7 @@ import TwinCandidateDetailContent from '@/components/catalog/TwinCandidateDetail
 import CatalogListView from '@/components/catalog/CatalogListView'
 import HeroBand from '@/components/catalog/HeroBand'
 import FilterSheet from '@/components/catalog/FilterSheet'
+import { type WorkAddressResult } from '@/components/catalog/WorkHubPicker'
 import { availableWorkZones, fastestCommute, findWorkZone, snapToWorkZone } from '@/lib/workZones'
 import IndexInfoButton from '@/components/catalog/IndexInfoButton'
 import CompareTray from '@/components/catalog/CompareTray'
@@ -538,19 +539,19 @@ export default function CatalogPageClient({
 
   const workZones = useMemo(() => availableWorkZones(places), [places])
 
-  /** Geocode a work address and snap it to the nearest precomputed work zone. Returns an error message or null. */
-  const setWorkAddress = useCallback(async (address: string): Promise<string | null> => {
+  /** Geocode a work address and snap it to the nearest precomputed work zone. */
+  const setWorkAddress = useCallback(async (address: string): Promise<WorkAddressResult> => {
     try {
       const res = await fetch(`/api/geocode?location=${encodeURIComponent(address)}`)
       const data = await res.json().catch(() => ({}))
-      if (!res.ok || typeof data?.lat !== 'number') return data?.detail || 'Could not find that address.'
+      if (!res.ok || typeof data?.lat !== 'number') return { error: data?.detail || 'We couldn\'t find that address.' }
       const snapped = snapToWorkZone(data.lat, data.lon, workZones)
-      if (!snapped) return 'That address is not near a job hub we have commute times for.'
+      if (!snapped) return { error: 'That address isn\'t near a job hub we have commute times for yet.' }
       setWorkZoneId(snapped.zone.id)
       setFilterMetro(snapped.zone.metro)
-      return null
+      return { zoneId: snapped.zone.id, km: snapped.km, address }
     } catch {
-      return 'Location service is temporarily unavailable.'
+      return { error: 'Location service is temporarily unavailable.' }
     }
   }, [workZones])
 
