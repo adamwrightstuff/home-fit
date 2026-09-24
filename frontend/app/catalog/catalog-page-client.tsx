@@ -35,8 +35,8 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker } from '@/lib/reweight'
-import { applyNbPreferencesV9, type NbPreference, type V9Breakdown } from '@/lib/nbPreference'
-import { applyAoPreferences, applyWaterfrontPreference, type AoPreference, type AoBreakdown, type WaterfrontSubPreference } from '@/lib/aoPreference'
+import { type WaterfrontSubPreference } from '@/lib/aoPreference'
+import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
@@ -509,81 +509,17 @@ export default function CatalogPageClient({
         })
       : places
 
-    // Recompute quality_education score based on school type preference.
-    const withSchoolType = filterSchoolType === 'any' ? withIncome : withIncome.map((p) => {
-      const edu = (p.score.livability_pillars as any)?.quality_education
-      if (!edu?.by_level) return p
-      const allSchools: { rating: number; is_charter_school?: boolean | null }[] = Object.values(edu.by_level).flat() as any
-      const filtered = allSchools.filter((s) =>
-        filterSchoolType === 'public_only' ? s.is_charter_school === false : s.is_charter_school === true
-      )
-      if (filtered.length === 0) {
-        return { ...p, score: { ...p.score, livability_pillars: { ...p.score.livability_pillars,
-          quality_education: { ...edu, score: null, status: 'no_data' } } } }
-      }
-      const baseAvg = filtered.reduce((sum, s) => sum + (s.rating ?? 0), 0) / filtered.length
-      const breakdown = edu.breakdown ?? {}
-      const newScore = Math.min(100, baseAvg + (breakdown.access_bonus ?? 0) + (breakdown.early_ed_bonus ?? 0))
-      return { ...p, score: { ...p.score, livability_pillars: { ...p.score.livability_pillars,
-        quality_education: { ...edu, score: newScore, breakdown: { ...breakdown, base_avg_rating: baseAvg } } } } }
-    })
-
-    // Apply scenery preferences to natural_beauty via v9 preference weighting.
-    const withNb = filterNbTypes.length > 0 && filterNbTypes.length < 4
-      ? withSchoolType.map((p) => {
-          const nb = (p.score.livability_pillars as any)?.natural_beauty
-          if (!nb) return p
-          const v9 = nb.v9_breakdown as V9Breakdown | undefined
-          const prefScore = v9 ? (applyNbPreferencesV9(v9, filterNbTypes as NbPreference[]) ?? nb.score) : nb.score
-          return {
-            ...p,
-            score: {
-              ...p.score,
-              livability_pillars: {
-                ...p.score.livability_pillars,
-                natural_beauty: { ...nb, score: prefScore },
-              },
-            },
-          }
-        })
-      : withSchoolType
-
-    // Reweight AO score toward selected sub-components (1–2 selected = partial preference;
-    // 0 or 3 = no reweighting). When a waterfront sub-preference is also active, first
-    // re-weight waterfront_lifestyle toward the chosen water type, then apply AO OWA.
-    const aoActive = filterAoTypes.length > 0 && filterAoTypes.length < 3
-    const withAo = aoActive ? withNb.map((p) => {
-      const ao = (p.score.livability_pillars as any)?.active_outdoors
-      if (!ao) return p
-      const bk = ao.breakdown as AoBreakdown | undefined
-
-      // Inject waterfront sub-preference before AO OWA so the sub-type affects ranking
-      let effectiveBk = bk
-      if (filterWaterfrontSubPref && filterAoTypes.includes('waterfront') && bk) {
-        const prefWf = applyWaterfrontPreference(bk, filterWaterfrontSubPref)
-        if (prefWf !== null) {
-          // applyAoPreferences normalizes waterfront_lifestyle (0–25 raw) to 0–100,
-          // so convert prefWf (already 0–100) back to raw range before injection.
-          effectiveBk = { ...bk, waterfront_lifestyle: (prefWf * 25) / 100 }
-        }
-      }
-
-      const reweighted = applyAoPreferences(effectiveBk, filterAoTypes as AoPreference[])
-      if (reweighted === null) return p
-      return {
-        ...p,
-        score: {
-          ...p.score,
-          livability_pillars: {
-            ...p.score.livability_pillars,
-            active_outdoors: { ...ao, score: reweighted },
-          },
-        },
-      }
-    }) : withNb
-
-    return withAo
+    const f = { filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref }
+    return withIncome.map((p) => ({ ...p, score: applyExplorerScoreAdjustments(p.score, f) }))
   }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, currentHomeMonthlyCost, currentHomeMatch])
+
+  // Hand the current weights + score-affecting filters to Compare ("Your HomeFit" mode).
+  useEffect(() => {
+    writeCompareContext({
+      priorities,
+      filters: { filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref },
+    })
+  }, [priorities, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref])
 
   const effectivePriorities = useMemo(
     () => priorities,

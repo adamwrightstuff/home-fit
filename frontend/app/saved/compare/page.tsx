@@ -12,6 +12,9 @@ import { PILLAR_META, PILLAR_ORDER, isLongevityPillar, isHappinessPillar, type P
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import PillarInfoIcon from '@/components/PillarInfoIcon'
+import { applyExplorerScoreAdjustments, readCompareContext } from '@/lib/explorerScoreAdjust'
+
+type ScoreMode = 'yours' | 'catalog'
 
 function isCatalogKey(id: string): boolean {
   return id.includes('|')
@@ -143,6 +146,8 @@ function CompareContent() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState<SortBy>('diff')
+  const compareContext = useMemo(() => readCompareContext(), [])
+  const [scoreMode, setScoreMode] = useState<ScoreMode>(() => (readCompareContext() ? 'yours' : 'catalog'))
 
   const householdIncome = useMemo(() => {
     try {
@@ -192,26 +197,31 @@ function CompareContent() {
 
   const scoredARaw = rowA?.score_payload as ScoreResponse | undefined
   const scoredBRaw = rowB?.score_payload as ScoreResponse | undefined
-  const scoredA = useMemo(() => {
-    if (!scoredARaw) return scoredARaw
-    return householdIncome ? applyUserIncomeToScore(scoredARaw, householdIncome) : scoredARaw
-  }, [scoredARaw, householdIncome])
-  const scoredB = useMemo(() => {
-    if (!scoredBRaw) return scoredBRaw
-    return householdIncome ? applyUserIncomeToScore(scoredBRaw, householdIncome) : scoredBRaw
-  }, [scoredBRaw, householdIncome])
+  // "Your HomeFit": Explorer weights + score-affecting filters + household income.
+  // "Catalog": the stored scores under each row's own (or default) weights.
+  const personalize = (raw: ScoreResponse): ScoreResponse => {
+    let out = householdIncome ? applyUserIncomeToScore(raw, householdIncome) : raw
+    if (compareContext) out = applyExplorerScoreAdjustments(out, compareContext.filters)
+    return out
+  }
 
   const displayA = useMemo(() => {
-    if (!rowA || !scoredA) return null
-    const pri = prioritiesFromRow(rowA)
-    return reweightScoreResponseFromPriorities(scoredA, pri)
-  }, [rowA, scoredA])
+    if (!rowA || !scoredARaw) return null
+    if (scoreMode === 'yours') {
+      return reweightScoreResponseFromPriorities(personalize(scoredARaw), compareContext?.priorities ?? prioritiesFromRow(rowA))
+    }
+    return reweightScoreResponseFromPriorities(scoredARaw, prioritiesFromRow(rowA))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowA, scoredARaw, scoreMode, compareContext, householdIncome])
 
   const displayB = useMemo(() => {
-    if (!rowB || !scoredB) return null
-    const pri = prioritiesFromRow(rowB)
-    return reweightScoreResponseFromPriorities(scoredB, pri)
-  }, [rowB, scoredB])
+    if (!rowB || !scoredBRaw) return null
+    if (scoreMode === 'yours') {
+      return reweightScoreResponseFromPriorities(personalize(scoredBRaw), compareContext?.priorities ?? prioritiesFromRow(rowB))
+    }
+    return reweightScoreResponseFromPriorities(scoredBRaw, prioritiesFromRow(rowB))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowB, scoredBRaw, scoreMode, compareContext, householdIncome])
 
   const homefitA = typeof displayA?.total_score === 'number' ? displayA.total_score : null
   const homefitB = typeof displayB?.total_score === 'number' ? displayB.total_score : null
@@ -360,6 +370,34 @@ function CompareContent() {
             <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--hf-longevity-purple)', whiteSpace: 'nowrap' }}>
               {placeNameB}
             </span>
+          </div>
+          <div role="group" aria-label="Score source" style={{ display: 'inline-flex', flexShrink: 0, border: '1px solid var(--hf-border)', borderRadius: 999, overflow: 'hidden' }}>
+            {([['yours', 'Your HomeFit'], ['catalog', 'Catalog']] as const).map(([mode, label]) => {
+              const active = scoreMode === mode
+              const disabled = mode === 'yours' && !compareContext && !householdIncome
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={active}
+                  disabled={disabled}
+                  title={disabled ? 'Set weights or filters in Explore first' : undefined}
+                  onClick={() => setScoreMode(mode)}
+                  style={{
+                    border: 'none',
+                    padding: '4px 12px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    background: active ? 'var(--hf-text-primary)' : 'transparent',
+                    color: active ? 'var(--hf-page-bg)' : disabled ? 'var(--hf-border)' : 'var(--hf-text-primary)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
           </div>
         </nav>
 
