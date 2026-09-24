@@ -15,7 +15,7 @@ import CatalogListView from '@/components/catalog/CatalogListView'
 import HeroBand from '@/components/catalog/HeroBand'
 import FilterSheet from '@/components/catalog/FilterSheet'
 import { type WorkAddressResult } from '@/components/catalog/WorkHubPicker'
-import { availableWorkZones, fastestCommute, findWorkZone, snapToWorkZone } from '@/lib/workZones'
+import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, snapToWorkZone } from '@/lib/workZones'
 import IndexInfoButton from '@/components/catalog/IndexInfoButton'
 import CompareTray from '@/components/catalog/CompareTray'
 import { DEFAULT_PRIORITIES, type PillarPriorities, type PriorityLevel } from '@/components/SearchOptions'
@@ -525,14 +525,15 @@ export default function CatalogPageClient({
       const adjusted = { ...p, score: applyExplorerScoreAdjustments(p.score, f) }
       // Work zone replaces the CBD commute (display + commute filter) where precomputed times exist.
       if (!workZone) return adjusted
-      const fastest = fastestCommute(p.work_commute, workZone.id)
+      const commute = commuteToZone(p.work_commute, workZone)
       // No time to this hub (e.g. another metro): keep the CBD display but exempt it from the commute filter.
-      if (!fastest) return { ...adjusted, commute_off_zone: true }
+      if (!commute) return { ...adjusted, commute_off_zone: true }
       return {
         ...adjusted,
-        cbd_transit_minutes: fastest.minutes,
+        // No usable mode (e.g. no transit to a transit-only hub) must fail any max-commute filter.
+        cbd_transit_minutes: commute.filterMinutes ?? Number.POSITIVE_INFINITY,
         cbd_transit_dest: null,
-        commute_label: `${workZone.label} · ${fastest.mode === 'drive' ? 'drive' : 'transit'}`,
+        commute_text: formatZoneCommute(workZone, commute),
       }
     })
   }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, currentHomeMonthlyCost, currentHomeMatch, workZoneId])

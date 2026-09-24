@@ -1,11 +1,11 @@
 {
   "nyc": [
-    { "id": "nyc_midtown_east", "label": "Midtown East / Grand Central", "lat": 40.7527, "lon": -73.9772 },
-    { "id": "nyc_midtown_west", "label": "Midtown West / Hudson Yards", "lat": 40.7536, "lon": -73.9967 },
-    { "id": "nyc_fidi", "label": "Financial District", "lat": 40.7075, "lon": -74.0110 },
-    { "id": "nyc_downtown_brooklyn", "label": "Downtown Brooklyn", "lat": 40.6928, "lon": -73.9903 },
-    { "id": "nyc_lic", "label": "Long Island City", "lat": 40.7447, "lon": -73.9485 },
-    { "id": "nyc_jersey_city", "label": "Jersey City (Exchange Place)", "lat": 40.7163, "lon": -74.0331 },
+    { "id": "nyc_midtown_east", "label": "Midtown East / Grand Central", "lat": 40.7527, "lon": -73.9772, "transitOnly": true },
+    { "id": "nyc_midtown_west", "label": "Midtown West / Hudson Yards", "lat": 40.7536, "lon": -73.9967, "transitOnly": true },
+    { "id": "nyc_fidi", "label": "Financial District", "lat": 40.7075, "lon": -74.0110, "transitOnly": true },
+    { "id": "nyc_downtown_brooklyn", "label": "Downtown Brooklyn", "lat": 40.6928, "lon": -73.9903, "transitOnly": true },
+    { "id": "nyc_lic", "label": "Long Island City", "lat": 40.7447, "lon": -73.9485, "transitOnly": true },
+    { "id": "nyc_jersey_city", "label": "Jersey City (Exchange Place)", "lat": 40.7163, "lon": -74.0331, "transitOnly": true },
     { "id": "nyc_newark", "label": "Downtown Newark", "lat": 40.7347, "lon": -74.1644 },
     { "id": "nyc_white_plains", "label": "White Plains", "lat": 41.0334, "lon": -73.7751 },
     { "id": "nyc_stamford", "label": "Stamford", "lat": 41.0469, "lon": -73.5416 }

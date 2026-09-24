@@ -183,9 +183,13 @@ export default function CatalogBottomSheet({
                 >
                   {place.catalog.county_borough}, {place.catalog.state_abbr}
                 </div>
-                {place.cbd_transit_minutes != null && (
+                {place.commute_text ? (
                   <div style={{ fontSize: '0.7rem', color: 'var(--hf-text-secondary)', marginTop: 2 }}>
-                    {Math.round(place.cbd_transit_minutes)} min to {place.commute_label ?? `${place.cbd_transit_dest === 'penn' ? 'Penn Station' : place.cbd_transit_dest === 'gct' ? 'Grand Central' : 'CBD'} · transit`}
+                    {place.commute_text}
+                  </div>
+                ) : place.cbd_transit_minutes != null && (
+                  <div style={{ fontSize: '0.7rem', color: 'var(--hf-text-secondary)', marginTop: 2 }}>
+                    {Math.round(place.cbd_transit_minutes)} min to {place.cbd_transit_dest === 'penn' ? 'Penn Station' : place.cbd_transit_dest === 'gct' ? 'Grand Central' : 'CBD'} · transit
                   </div>
                 )}
                 <div style={{ fontSize: '0.7rem', color: 'var(--hf-text-secondary)', opacity: 0.7, marginTop: 2 }}>

@@ -8,6 +8,8 @@ export interface WorkZone {
   lat: number
   lon: number
   metro: WorkZoneMetro
+  /** Hubs people reach by transit (parking makes Google's drive time unrealistic); filter ignores drive. */
+  transitOnly?: boolean
 }
 
 /** Precomputed fastest weekday-morning minutes per mode (see scripts/manual/add_work_zone_commutes.py). */
@@ -47,16 +49,29 @@ export function snapToWorkZone(lat: number, lon: number, zones: WorkZone[] = WOR
   return best && best.km <= MAX_SNAP_KM ? best : null
 }
 
-/** Fastest mode to a zone, or null when the place has no precomputed times for it. */
-export function fastestCommute(
+/**
+ * Commute to a zone: both modes for display, plus the minutes the commute filter uses
+ * (transit only for transitOnly hubs, otherwise the faster mode). Null when nothing is precomputed.
+ */
+export function commuteToZone(
   commute: WorkCommute | null | undefined,
-  zoneId: string,
-): { minutes: number; mode: 'transit' | 'drive' } | null {
-  const c = commute?.[zoneId]
+  zone: WorkZone,
+): { filterMinutes: number | null; transit: number | null; drive: number | null } | null {
+  const c = commute?.[zone.id]
   if (!c) return null
-  const t = typeof c.transit === 'number' ? c.transit : null
-  const d = typeof c.drive === 'number' ? c.drive : null
-  if (t === null && d === null) return null
-  if (d === null || (t !== null && t <= d)) return { minutes: t as number, mode: 'transit' }
-  return { minutes: d, mode: 'drive' }
+  const transit = typeof c.transit === 'number' ? c.transit : null
+  const drive = typeof c.drive === 'number' ? c.drive : null
+  if (transit === null && drive === null) return null
+  const candidates = zone.transitOnly ? [transit] : [transit, drive]
+  const usable = candidates.filter((m): m is number => m !== null)
+  return { filterMinutes: usable.length ? Math.min(...usable) : null, transit, drive }
+}
+
+/** Card line, e.g. "Financial District: 57 min transit · 67 min drive". */
+export function formatZoneCommute(zone: WorkZone, c: { transit: number | null; drive: number | null }): string {
+  const parts = [
+    c.transit !== null ? `${Math.round(c.transit)} min transit` : 'no transit route',
+    c.drive !== null ? `${Math.round(c.drive)} min drive` : null,
+  ].filter(Boolean)
+  return `${zone.label}: ${parts.join(' · ')}`
 }

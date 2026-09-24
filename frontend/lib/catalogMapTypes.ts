@@ -72,8 +72,8 @@ export interface CatalogMapPlace {
   cbd_transit_dest?: 'gct' | 'penn' | null
   /** Precomputed fastest weekday-morning minutes to each work zone. */
   work_commute?: WorkCommute | null
-  /** Set when a work zone is active: replaces the CBD label, e.g. "Midtown West · drive". */
-  commute_label?: string | null
+  /** Set when a work zone is active: replaces the CBD line, e.g. "Stamford: 21 min transit · 38 min drive". */
+  commute_text?: string | null
   /** Work zone active but no precomputed time to it; commute filter skips this place. */
   commute_off_zone?: boolean
 }
