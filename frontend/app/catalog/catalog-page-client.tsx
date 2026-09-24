@@ -540,7 +540,7 @@ export default function CatalogPageClient({
         score: withCommuteTimePillar(adjusted.score, commute.filterMinutes),
       }
     })
-  }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, currentHomeMonthlyCost, currentHomeMatch, workZoneId])
+  }, [places, householdIncome, filterSchoolType, currentHomeMonthlyCost, currentHomeMatch, workZoneId])
 
   const workZones = useMemo(() => availableWorkZones(places), [places])
 
