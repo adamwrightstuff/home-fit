@@ -163,7 +163,13 @@ function formatSpecMetricValue(
       if (num === undefined && (str === undefined || str === '')) return null
       const d = num ?? (str !== undefined ? parseFloat(str) : NaN)
       if (!Number.isFinite(d)) return str ?? null
-      return `${d.toFixed(1)} km`
+      return `${(d * 0.621371).toFixed(1)} mi`
+    case 'elevation':
+      if (num === undefined) return str ?? null
+      return `${Math.round(num * 3.28084).toLocaleString()} ft`
+    case 'temperatureDelta':
+      if (num === undefined) return str ?? null
+      return `${num * 1.8 >= 0 ? '+' : ''}${(num * 1.8).toFixed(1)}°F`
     case 'qualitative':
       if (num !== undefined) return resolveQualitative(num, metric.bands, metric.valueLabels)
       if (str !== undefined && str !== '') {
@@ -182,13 +188,13 @@ function formatSpecMetricValue(
 const METRIC_EXPLAINERS: Record<string, string> = {
   'natural_beauty:Neighborhood canopy': 'Share of your neighborhood area with tree cover (satellite canopy).',
   'natural_beauty:Nearest mapped water': 'Distance to the nearest water feature we use for scoring (rivers, lakes, coast, etc.).',
-  'natural_beauty:Terrain relief (local)': 'Elevation range nearby (meters)—hills and valleys add texture.',
+  'natural_beauty:Terrain relief (local)': 'Elevation range nearby—hills and valleys add texture.',
   'active_outdoors:Parks (nearby)': 'OSM parks counted within the local search radius used for this score.',
-  'active_outdoors:Trail segments within 5 km': 'Hiking or trail ways within five kilometers.',
+  'active_outdoors:Trail segments within 3 mi': 'Hiking or trail ways within about three miles.',
   'active_outdoors:Nearest water access': 'Distance to the nearest swimmable or recreation water access.',
-  'neighborhood_amenities:Businesses within ~1 km': 'Count of mapped shops and services used for walkability near home.',
+  'neighborhood_amenities:Businesses within ~0.6 mi': 'Count of mapped shops and services used for walkability near home.',
   'neighborhood_amenities:Typical distance to businesses': 'Median distance to businesses we found—shorter usually means easier errands.',
-  'neighborhood_amenities:Places within ~10 min walk': 'Rough count within about 800 m (≈10 minute walk).',
+  'neighborhood_amenities:Places within ~10 min walk': 'Rough count within about half a mile (≈10 minute walk).',
   'built_environment:Built form': 'High-level character of the built area (e.g. historic urban vs suburban) from OSM signals.',
   'built_environment:Streetscape tags': 'Short tags from the map that describe the streetscape (e.g. rowhouse, historic).',
   'built_environment:Median year built': 'Typical building age nearby—older can mean more character, not always “better.”',
@@ -211,7 +217,7 @@ const METRIC_EXPLAINERS: Record<string, string> = {
   'housing_value:Median household income': 'Census tract median household income (dollars).',
   'housing_value:Price-to-income ratio': 'Median home price divided by median income—higher = more housing stress.',
   'climate_risk:Flood zone (FEMA)': 'FEMA flood zone class for this location (when available).',
-  'climate_risk:Extra heat vs region (°C)': 'How much hotter this place runs than the regional baseline (satellite land-surface temperature).',
+  'climate_risk:Extra heat vs region': 'How much hotter this place runs than the regional baseline (satellite land-surface temperature).',
   'climate_risk:PM2.5 proxy (µg/m³)': 'Fine particulate pollution proxy used for air risk (micrograms per cubic meter).',
   'social_fabric:Same-house blend (tract + place)': 'Blend of tract and place “same house as last year” shares from Census.',
   'social_fabric:Civic places (non-commercial)':

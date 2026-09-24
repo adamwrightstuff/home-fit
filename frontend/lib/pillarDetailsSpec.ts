@@ -5,7 +5,7 @@
 
 import type { PillarKey } from './pillars'
 
-export type DetailFormat = 'percent' | 'count' | 'distance' | 'qualitative' | 'text'
+export type DetailFormat = 'percent' | 'count' | 'distance' | 'elevation' | 'temperatureDelta' | 'qualitative' | 'text'
 
 /** Bands for converting a numeric value to a qualitative label (e.g. median_distance_m -> "Very close" / "Short walk"). */
 export interface QualitativeBand {
@@ -30,9 +30,22 @@ export interface DetailMetricCount extends DetailMetricBase {
   suffix?: string
 }
 
+/** Source value in km; displayed in miles. */
 export interface DetailMetricDistance extends DetailMetricBase {
   path: string
   format: 'distance'
+}
+
+/** Source value in meters; displayed in feet. */
+export interface DetailMetricElevation extends DetailMetricBase {
+  path: string
+  format: 'elevation'
+}
+
+/** Source value is a °C difference; displayed as a °F difference. */
+export interface DetailMetricTemperatureDelta extends DetailMetricBase {
+  path: string
+  format: 'temperatureDelta'
 }
 
 export interface DetailMetricQualitative extends DetailMetricBase {
@@ -60,6 +73,8 @@ export type DetailMetric =
   | DetailMetricPercent
   | DetailMetricCount
   | DetailMetricDistance
+  | DetailMetricElevation
+  | DetailMetricTemperatureDelta
   | DetailMetricQualitative
   | DetailMetricText
   | DetailMetricStatic
@@ -140,7 +155,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
       { label: 'Best natural fit', path: 'breakdown.nb_best_fit_label', format: 'text' },
       { label: 'Neighborhood canopy', path: 'summary.neighborhood_canopy_pct', format: 'percent', max: 100 },
       { label: 'Nearest mapped water', path: 'summary.water_proximity_km', format: 'distance' },
-      { label: 'Terrain relief (local)', path: 'summary.terrain_relief_m', format: 'text' },
+      { label: 'Terrain relief (local)', path: 'summary.terrain_relief_m', format: 'elevation' },
     ],
     degradedMessage: 'Limited data: natural beauty data sources were unavailable.',
   },
@@ -156,7 +171,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     topLine: 'Everyday parks, trails, and water access the score is built from.',
     metrics: [
       { label: 'Parks (nearby)', path: 'summary.local_parks.count', format: 'count', suffix: ' parks' },
-      { label: 'Trail segments within 5 km', path: 'summary.trails.count_within_5km', format: 'count', suffix: ' segments' },
+      { label: 'Trail segments within 3 mi', path: 'summary.trails.count_within_5km', format: 'count', suffix: ' segments' },
       { label: 'Nearest water access', path: 'summary.water.nearest_km', format: 'distance' },
     ],
     degradedMessage: 'Limited data: some outdoor data sources were unavailable.',
@@ -165,7 +180,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     topLine: 'How many places are walkable, how far they typically are, and how many you get within about 10 minutes.',
     metrics: [
       {
-        label: 'Businesses within ~1 km',
+        label: 'Businesses within ~0.6 mi',
         path: 'breakdown.home_walkability.businesses_within_1km',
         format: 'count',
         suffix: ' places',
@@ -248,7 +263,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
         format: 'qualitative',
         valueLabels: { floodway: 'High', sfha: 'High', x_500yr: 'Moderate', d: 'Moderate', minimal: 'Low' },
       },
-      { label: 'Extra heat vs region (°C)', path: 'summary.heat_excess_deg_c', format: 'text' },
+      { label: 'Extra heat vs region', path: 'summary.heat_excess_deg_c', format: 'temperatureDelta' },
       { label: 'PM2.5 proxy (µg/m³)', path: 'summary.pm25_proxy_ugm3', format: 'text' },
     ],
     degradedMessage: 'Limited data: some climate/flood data were unavailable.',
