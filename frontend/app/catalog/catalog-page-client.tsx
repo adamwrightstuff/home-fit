@@ -14,6 +14,7 @@ import TwinCandidateDetailContent from '@/components/catalog/TwinCandidateDetail
 import CatalogListView from '@/components/catalog/CatalogListView'
 import HeroBand from '@/components/catalog/HeroBand'
 import FilterSheet from '@/components/catalog/FilterSheet'
+import { availableWorkZones, fastestCommute, findWorkZone, snapToWorkZone } from '@/lib/workZones'
 import IndexInfoButton from '@/components/catalog/IndexInfoButton'
 import CompareTray from '@/components/catalog/CompareTray'
 import { DEFAULT_PRIORITIES, type PillarPriorities, type PriorityLevel } from '@/components/SearchOptions'
@@ -158,6 +159,12 @@ export default function CatalogPageClient({
       const v = f?.filterCommuteMax
       return v === '15' || v === '30' || v === '45' || v === '60' ? v : 'all'
     } catch { return 'all' }
+  })
+  const [workZoneId, setWorkZoneId] = useState<string | null>(() => {
+    try {
+      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      return findWorkZone(f?.workZoneId)?.id ?? null
+    } catch { return null }
   })
   const [climatePrefs, setClimatePrefs] = useState<ClimatePreferences>(() => {
     try {
@@ -409,6 +416,7 @@ export default function CatalogPageClient({
           if (typeof f.filterSchoolType === 'string') setFilterSchoolType(f.filterSchoolType)
           if (typeof f.filterLocalScene === 'string') setFilterLocalScene(f.filterLocalScene)
           if (typeof f.filterCommuteMax === 'string') setFilterCommuteMax(f.filterCommuteMax)
+          if (typeof f.workZoneId === 'string' && findWorkZone(f.workZoneId)) setWorkZoneId(f.workZoneId)
           if (f.climatePrefs && typeof f.climatePrefs === 'object') setClimatePrefs(f.climatePrefs)
         }
         hasRestoredRef.current = true
@@ -440,13 +448,14 @@ export default function CatalogPageClient({
             filterSchoolType,
             filterLocalScene,
             filterCommuteMax,
+            workZoneId,
             climatePrefs,
           },
         }),
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, householdIncome, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterCommuteMax, climatePrefs])
+  }, [user, priorities, dealbreakers, householdIncome, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterCommuteMax, workZoneId, climatePrefs])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -510,8 +519,40 @@ export default function CatalogPageClient({
       : places
 
     const f = { filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref }
-    return withIncome.map((p) => ({ ...p, score: applyExplorerScoreAdjustments(p.score, f) }))
-  }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, currentHomeMonthlyCost, currentHomeMatch])
+    const workZone = findWorkZone(workZoneId)
+    return withIncome.map((p) => {
+      const adjusted = { ...p, score: applyExplorerScoreAdjustments(p.score, f) }
+      // Work zone replaces the CBD commute (display + commute filter) where precomputed times exist.
+      if (!workZone) return adjusted
+      const fastest = fastestCommute(p.work_commute, workZone.id)
+      // No time to this hub (e.g. another metro): keep the CBD display but exempt it from the commute filter.
+      if (!fastest) return { ...adjusted, commute_off_zone: true }
+      return {
+        ...adjusted,
+        cbd_transit_minutes: fastest.minutes,
+        cbd_transit_dest: null,
+        commute_label: `${workZone.label} · ${fastest.mode === 'drive' ? 'drive' : 'transit'}`,
+      }
+    })
+  }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, currentHomeMonthlyCost, currentHomeMatch, workZoneId])
+
+  const workZones = useMemo(() => availableWorkZones(places), [places])
+
+  /** Geocode a work address and snap it to the nearest precomputed work zone. Returns an error message or null. */
+  const setWorkAddress = useCallback(async (address: string): Promise<string | null> => {
+    try {
+      const res = await fetch(`/api/geocode?location=${encodeURIComponent(address)}`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || typeof data?.lat !== 'number') return data?.detail || 'Could not find that address.'
+      const snapped = snapToWorkZone(data.lat, data.lon, workZones)
+      if (!snapped) return 'That address is not near a job hub we have commute times for.'
+      setWorkZoneId(snapped.zone.id)
+      setFilterMetro(snapped.zone.metro)
+      return null
+    } catch {
+      return 'Location service is temporarily unavailable.'
+    }
+  }, [workZones])
 
   // Hand the current weights + score-affecting filters to Compare ("Your HomeFit" mode).
   useEffect(() => {
@@ -560,7 +601,7 @@ export default function CatalogPageClient({
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') return false
       if (filterLocalScene === 'High' && p.score.local_scene_bucket && p.score.local_scene_bucket !== 'High') return false
       if (filterCommuteMax !== 'all') {
-        const cbd = p.cbd_transit_minutes
+        const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) return false
       }
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
@@ -721,7 +762,7 @@ export default function CatalogPageClient({
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
       if (filterLocalScene === 'High' && p.score.local_scene_bucket && p.score.local_scene_bucket !== 'High') r.push('Local scene')
       if (filterCommuteMax !== 'all') {
-        const cbd = p.cbd_transit_minutes
+        const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) r.push('Commute')
       }
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
@@ -848,7 +889,7 @@ export default function CatalogPageClient({
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
       if (filterLocalScene === 'High' && p.score.local_scene_bucket && p.score.local_scene_bucket !== 'High') r.push('Local scene')
       if (filterCommuteMax !== 'all') {
-        const cbd = p.cbd_transit_minutes
+        const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) r.push('Commute')
       }
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
@@ -1914,6 +1955,14 @@ export default function CatalogPageClient({
         onFilterLocalSceneChange={setFilterLocalScene}
         filterCommuteMax={filterCommuteMax}
         onFilterCommuteMaxChange={setFilterCommuteMax}
+        workZoneId={workZoneId}
+        workZones={workZones}
+        onWorkZoneChange={(id) => {
+          setWorkZoneId(id)
+          const zone = findWorkZone(id)
+          if (zone) setFilterMetro(zone.metro)
+        }}
+        onWorkAddressSubmit={setWorkAddress}
         climatePrefs={climatePrefs}
         onClimatePrefsChange={setClimatePrefs}
         resultCount={gatedPlaces.length}

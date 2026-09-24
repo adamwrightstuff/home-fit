@@ -1,0 +1,37 @@
+{
+  "nyc": [
+    { "id": "nyc_midtown_east", "label": "Midtown East / Grand Central", "lat": 40.7527, "lon": -73.9772 },
+    { "id": "nyc_midtown_west", "label": "Midtown West / Hudson Yards", "lat": 40.7536, "lon": -73.9967 },
+    { "id": "nyc_fidi", "label": "Financial District", "lat": 40.7075, "lon": -74.0110 },
+    { "id": "nyc_downtown_brooklyn", "label": "Downtown Brooklyn", "lat": 40.6928, "lon": -73.9903 },
+    { "id": "nyc_lic", "label": "Long Island City", "lat": 40.7447, "lon": -73.9485 },
+    { "id": "nyc_jersey_city", "label": "Jersey City (Exchange Place)", "lat": 40.7163, "lon": -74.0331 },
+    { "id": "nyc_newark", "label": "Downtown Newark", "lat": 40.7347, "lon": -74.1644 },
+    { "id": "nyc_white_plains", "label": "White Plains", "lat": 41.0334, "lon": -73.7751 },
+    { "id": "nyc_stamford", "label": "Stamford", "lat": 41.0469, "lon": -73.5416 }
+  ],
+  "sf": [
+    { "id": "sf_fidi", "label": "SF Financial District", "lat": 37.7894, "lon": -122.4013 },
+    { "id": "sf_mission_bay", "label": "SoMa / Mission Bay", "lat": 37.7706, "lon": -122.3915 },
+    { "id": "sf_oakland", "label": "Downtown Oakland", "lat": 37.8044, "lon": -122.2712 },
+    { "id": "sf_palo_alto", "label": "Palo Alto / Menlo Park", "lat": 37.4419, "lon": -122.1430 },
+    { "id": "sf_mountain_view", "label": "Mountain View", "lat": 37.3894, "lon": -122.0819 },
+    { "id": "sf_san_jose", "label": "Downtown San Jose", "lat": 37.3352, "lon": -121.8881 }
+  ],
+  "la": [
+    { "id": "la_downtown", "label": "Downtown LA", "lat": 34.0487, "lon": -118.2595 },
+    { "id": "la_century_city", "label": "Century City", "lat": 34.0556, "lon": -118.4170 },
+    { "id": "la_santa_monica", "label": "Santa Monica", "lat": 34.0170, "lon": -118.4960 },
+    { "id": "la_hollywood", "label": "Hollywood", "lat": 34.1016, "lon": -118.3267 },
+    { "id": "la_burbank", "label": "Burbank", "lat": 34.1561, "lon": -118.3295 },
+    { "id": "la_culver_city", "label": "Culver City", "lat": 34.0233, "lon": -118.3964 },
+    { "id": "la_el_segundo", "label": "El Segundo / LAX", "lat": 33.9192, "lon": -118.4165 },
+    { "id": "la_pasadena", "label": "Pasadena", "lat": 34.1461, "lon": -118.1440 }
+  ],
+  "seattle": [
+    { "id": "sea_downtown", "label": "Downtown Seattle", "lat": 47.6038, "lon": -122.3301 },
+    { "id": "sea_slu", "label": "South Lake Union", "lat": 47.6256, "lon": -122.3386 },
+    { "id": "sea_bellevue", "label": "Downtown Bellevue", "lat": 47.6150, "lon": -122.1950 },
+    { "id": "sea_redmond", "label": "Redmond", "lat": 47.6423, "lon": -122.1391 }
+  ]
+}

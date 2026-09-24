@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type WaterfrontSubPreference, WATERFRONT_SUB_LABELS } from '@/lib/aoPreference'
 import { type ClimatePreferences } from '@/lib/climatePreferences'
 import { X } from 'lucide-react'
+import { type WorkZone, findWorkZone } from '@/lib/workZones'
 
 const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'urban_core', label: 'Urban Core' },
@@ -57,6 +58,12 @@ interface FilterSheetProps {
   onFilterLocalSceneChange: (v: 'all' | 'Some' | 'High') => void
   filterCommuteMax: 'all' | '15' | '30' | '45' | '60'
   onFilterCommuteMaxChange: (v: 'all' | '15' | '30' | '45' | '60') => void
+  workZoneId: string | null
+  /** Zones with precomputed commute data; the input is hidden when empty. */
+  workZones: WorkZone[]
+  onWorkZoneChange: (id: string | null) => void
+  /** Geocodes and snaps to the nearest zone; resolves to an error message or null. */
+  onWorkAddressSubmit: (address: string) => Promise<string | null>
   climatePrefs: ClimatePreferences
   onClimatePrefsChange: (v: ClimatePreferences) => void
   resultCount: number
@@ -110,10 +117,25 @@ export default function FilterSheet({
   onFilterLocalSceneChange,
   filterCommuteMax,
   onFilterCommuteMaxChange,
+  workZoneId,
+  workZones,
+  onWorkZoneChange,
+  onWorkAddressSubmit,
   climatePrefs,
   onClimatePrefsChange,
   resultCount,
 }: FilterSheetProps) {
+  const [workAddress, setWorkAddress] = useState('')
+  const [workAddressBusy, setWorkAddressBusy] = useState(false)
+  const [workAddressError, setWorkAddressError] = useState<string | null>(null)
+  const workZone = findWorkZone(workZoneId)
+  const submitWorkAddress = async () => {
+    const address = workAddress.trim()
+    if (!address || workAddressBusy) return
+    setWorkAddressBusy(true)
+    setWorkAddressError(await onWorkAddressSubmit(address))
+    setWorkAddressBusy(false)
+  }
   type TrajectoryOption = 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
   useEffect(() => {
     if (open) {
@@ -487,8 +509,45 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Commute Time</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Transit travel time to the metro CBD (Penn Station or Grand Central for NYC, Financial District for SF, Downtown LA).
+              {workZone
+                ? `Fastest weekday-morning commute (transit or drive) to ${workZone.label}.`
+                : 'Transit travel time to the metro CBD (Penn Station or Grand Central for NYC, Financial District for SF, Downtown LA). ' + (workZones.length > 0 ? 'Add a work address to use your own commute.' : '')}
             </div>
+            {workZones.length > 0 && (<>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+              <input
+                type="text"
+                value={workAddress}
+                onChange={(e) => { setWorkAddress(e.target.value); setWorkAddressError(null) }}
+                onKeyDown={(e) => { if (e.key === 'Enter') submitWorkAddress() }}
+                placeholder="Work address"
+                aria-label="Work address"
+                style={{ flex: 1, minWidth: 0, fontSize: 13, padding: '6px 10px', borderRadius: 8, border: '1px solid #d1d5db' }}
+              />
+              <button
+                type="button"
+                onClick={submitWorkAddress}
+                disabled={workAddressBusy || !workAddress.trim()}
+                style={{ fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', opacity: workAddressBusy || !workAddress.trim() ? 0.5 : 1 }}
+              >
+                {workAddressBusy ? 'Finding…' : 'Set'}
+              </button>
+            </div>
+            <select
+              value={workZoneId ?? ''}
+              onChange={(e) => { onWorkZoneChange(e.target.value || null); setWorkAddressError(null) }}
+              aria-label="Work zone"
+              style={{ width: '100%', fontSize: 13, padding: '6px 8px', borderRadius: 8, border: '1px solid #d1d5db', marginBottom: 6, background: '#fff' }}
+            >
+              <option value="">Metro CBD (default)</option>
+              {workZones.map((z) => (
+                <option key={z.id} value={z.id}>{z.label}</option>
+              ))}
+            </select>
+            {workAddressError && (
+              <div style={{ fontSize: 11, color: '#b91c1c', marginBottom: 6 }}>{workAddressError}</div>
+            )}
+            </>)}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterCommuteMax === 'all', 'Any', () => onFilterCommuteMaxChange('all'))}
               {chip(filterCommuteMax === '15', 'Under 15 min', () => onFilterCommuteMaxChange(filterCommuteMax === '15' ? 'all' : '15'))}

@@ -1,3 +1,4 @@
+import type { WorkCommute } from './workZones'
 import type { ScoreResponse } from '@/types/api'
 
 /** One row from `data/nyc_metro_place_catalog.csv` embedded in catalog scores JSONL. */
@@ -69,6 +70,12 @@ export interface CatalogMapPlace {
   climate?: ClimateIndicators
   cbd_transit_minutes?: number | null
   cbd_transit_dest?: 'gct' | 'penn' | null
+  /** Precomputed fastest weekday-morning minutes to each work zone. */
+  work_commute?: WorkCommute | null
+  /** Set when a work zone is active: replaces the CBD label, e.g. "Midtown West · drive". */
+  commute_label?: string | null
+  /** Work zone active but no precomputed time to it; commute filter skips this place. */
+  commute_off_zone?: boolean
 }
 
 /** After `metro=all`, each place is tagged with its source metro. */

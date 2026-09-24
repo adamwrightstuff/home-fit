@@ -103,7 +103,7 @@ function loadMetroFile(metro: CatalogMapMetro, climateIndex: Map<string, Climate
         score?: ScoreResponse
       }
       if (!row.success || !row.catalog || !row.score) continue
-      const place: CatalogMapPlaceWithMetro = { catalog: row.catalog, score: row.score, metro, cbd_transit_minutes: (row as any).cbd_transit_minutes ?? null, cbd_transit_dest: (row as any).cbd_transit_dest ?? null }
+      const place: CatalogMapPlaceWithMetro = { catalog: row.catalog, score: row.score, metro, cbd_transit_minutes: (row as any).cbd_transit_minutes ?? null, cbd_transit_dest: (row as any).cbd_transit_dest ?? null, work_commute: (row as any).work_commute ?? null }
       const climate = climateIndex.get(`${METRO_TO_SOURCE[metro]}::${row.catalog.name}`)
       if (climate) place.climate = climate
       places.push(place)
