@@ -2,6 +2,7 @@
   "nyc": [
     { "id": "nyc_midtown_east", "label": "Midtown East / Grand Central", "lat": 40.7527, "lon": -73.9772, "transitOnly": true },
     { "id": "nyc_midtown_west", "label": "Midtown West / Hudson Yards", "lat": 40.7536, "lon": -73.9967, "transitOnly": true },
+    { "id": "nyc_union_square", "label": "Union Square / Flatiron", "lat": 40.7359, "lon": -73.9906, "transitOnly": true },
     { "id": "nyc_fidi", "label": "Financial District", "lat": 40.7075, "lon": -74.0110, "transitOnly": true },
     { "id": "nyc_downtown_brooklyn", "label": "Downtown Brooklyn", "lat": 40.6928, "lon": -73.9903, "transitOnly": true },
     { "id": "nyc_lic", "label": "Long Island City", "lat": 40.7447, "lon": -73.9485, "transitOnly": true },

@@ -502,7 +502,7 @@ export default function FilterSheet({
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
               {workZone
                 ? workZone.transitOnly
-                  ? `Weekday-morning transit time to ${workZone.label}. Drive times are shown but not used, since parking there isn't counted.`
+                  ? `Weekday-morning transit time to ${workZone.label}. Driving doesn't count toward the filter here, since drive times leave out parking.`
                   : `Fastest weekday-morning commute to ${workZone.label}, by transit or car.`
                 : 'Transit travel time to the metro CBD (Penn Station or Grand Central for NYC, Financial District for SF, Downtown LA). ' + (workZones.length > 0 ? 'Add a work address to use your own commute.' : '')}
             </div>
