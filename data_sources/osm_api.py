@@ -860,7 +860,21 @@ def query_water_only(lat: float, lon: float, radius_m: int = 15000) -> Optional[
                     raise RuntimeError(f"Overpass status={r.status_code}")
                 return r
 
-            resp = _retry_overpass(_do_request, query_type="water_only")
+            # Batch rescore script, not the live /score path -- worth waiting out a timeout
+            # and retrying rather than giving up on the first one (unlike the live-request
+            # profiles in retry_config.py, which fail fast to keep response times bounded).
+            resp = _retry_overpass(
+                _do_request,
+                config=RetryConfig(
+                    max_attempts=4,
+                    base_wait=3.0,
+                    fail_fast=False,
+                    max_wait=15.0,
+                    exponential_backoff=True,
+                    retry_on_timeout=True,
+                    retry_on_429=True,
+                ),
+            )
             if resp is None or resp.status_code != 200:
                 return {"swimming": [], "_overpass_outcome": OVERPASS_OUTCOME_ERROR}
             data = _safe_overpass_json(resp, context="water-only query")
