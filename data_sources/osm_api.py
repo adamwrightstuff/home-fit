@@ -803,6 +803,80 @@ def query_nature_features(
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
+@handle_api_timeout(timeout_seconds=25)
+def query_water_only(lat: float, lon: float, radius_m: int = 15000) -> Optional[Dict]:
+    """
+    Water-only variant of query_nature_features -- issues just the SWIMMING (water_query)
+    Overpass block, no hiking/camping. Built for targeted re-scoring of just
+    waterfront_lifestyle (e.g. after a scoring-logic fix) without paying for the hiking and
+    camping sub-queries that a full active_outdoors rescore would otherwise repeat unchanged.
+
+    Coastline/bay are queried at a slightly padded radius (regional radius + 3km) so a real
+    beach found near the edge of the main search window still has its adjacent coastline
+    captured -- coastline and bay must be within a beach's own 2km ocean-confirmation range
+    (see _beach_is_ocean in pillars/active_outdoors.py) even when the beach itself is near the
+    edge of radius_m.
+
+    Returns: {"swimming": [...], "_overpass_outcome": ...}
+    """
+    coastline_radius = radius_m + 3_000
+    water_query = f"""
+      // SWIMMING - water-only rescore (no hiking/camping)
+      way[\"natural\"=\"beach\"](around:{radius_m},{lat},{lon});
+      relation[\"natural\"=\"beach\"](around:{radius_m},{lat},{lon});
+      way[\"natural\"=\"coastline\"](around:{coastline_radius},{lat},{lon});
+      relation[\"natural\"=\"coastline\"](around:{coastline_radius},{lat},{lon});
+      way[\"natural\"=\"water\"][\"water\"~\"^(lake|bay)$\"](around:{radius_m},{lat},{lon});
+      relation[\"natural\"=\"water\"][\"water\"~\"^(lake|bay)$\"](around:{radius_m},{lat},{lon});
+      way[\"waterway\"~\"^(river|canal)$\"](around:{radius_m},{lat},{lon});
+      relation[\"waterway\"~\"^(river|canal)$\"](around:{radius_m},{lat},{lon});
+      way[\"leisure\"=\"swimming_area\"](around:{radius_m},{lat},{lon});
+      relation[\"leisure\"=\"swimming_area\"](around:{radius_m},{lat},{lon});
+    """
+
+    query = (
+        f"\n    [out:json][timeout:{_overpass_timeout(30)}];\n    (\n"
+        + water_query
+        + "\n    );\n    out center tags;\n    "
+    )
+
+    _wq_key = f"query_water_only:{lat:.5f}:{lon:.5f}:{int(radius_m)}"
+    with _overpass_rlock_for(_wq_key):
+        try:
+            def _do_request():
+                r = requests.post(
+                    get_overpass_url(),
+                    data={"data": query},
+                    timeout=_overpass_timeout(35),
+                    headers={"User-Agent": "HomeFit/1.0"}
+                )
+                if r.status_code != 200:
+                    raise RuntimeError(f"Overpass status={r.status_code}")
+                return r
+
+            resp = _retry_overpass(_do_request, query_type="water_only")
+            if resp is None or resp.status_code != 200:
+                return {"swimming": [], "_overpass_outcome": OVERPASS_OUTCOME_ERROR}
+            data = _safe_overpass_json(resp, context="water-only query")
+            if data is None:
+                return {"swimming": [], "_overpass_outcome": OVERPASS_OUTCOME_ERROR}
+            elements = data.get("elements", [])
+
+            _, swimming, _ = _process_nature_features(elements, lat, lon)
+
+            return {
+                "swimming": swimming,
+                "_overpass_outcome": (
+                    OVERPASS_OUTCOME_EMPTY if len(elements) == 0 else OVERPASS_OUTCOME_OK
+                ),
+            }
+        except Exception as e:
+            logger.error(f"OSM water-only query error: {e}", exc_info=True)
+            return {"swimming": [], "_overpass_outcome": _classify_overpass_exception(e)}
+
+
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
+@safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=30)
 def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optional[Dict]:
     """
