@@ -9,6 +9,7 @@ from typing import Dict, Tuple, Optional, List
 
 from data_sources import osm_api
 from data_sources.osm_api import coerce_green_spaces_response, coerce_nature_features_response
+from data_sources.utils import haversine_distance
 from data_sources.data_quality import assess_pillar_data_quality, get_baseline_context
 from data_sources.gee_api import get_tree_canopy_gee
 from data_sources.regional_baselines import (
@@ -717,20 +718,46 @@ def _score_water_lifestyle_v2(
         return 0.0, _empty_breakdown, None, None
 
     # natural=beach is ambiguous — ocean beaches and inland park beaches share the tag.
-    # natural=coastline is the unambiguous OSM ocean signal. Confirm each beach individually:
-    # the nearest coastline must be within 3km of that beach's own distance from the scoring
-    # center. This keeps the check local to each feature rather than global — a coastline
-    # that is far from all local beaches cannot contaminate their classification even if it
-    # falls within the regional query radius. The 3km tolerance covers OSM geometry offsets
-    # without conflating beaches and coastlines that belong to different water bodies.
-    min_coastline_dist = min(
-        (f.get("distance_m", 1e9) for f in swimming
-         if f.get("type") in ("coastline", "coastline_rocky")),
-        default=1e9,
-    )
+    # natural=coastline is the unambiguous OSM ocean signal. Confirm each beach individually
+    # by checking the TRUE distance from that specific beach to its nearest coastline feature
+    # (point-to-point, using each feature's own coordinates) -- not by comparing both features'
+    # distances from the shared scoring center. Comparing center-relative distances let two
+    # completely unrelated water bodies pass the check whenever both happened to be "close to
+    # center" from different directions: an inland reservoir beach several km from any real
+    # coastline could still satisfy the old check purely because a real coastline elsewhere
+    # also sat within the search radius. Confirmed via live Overpass testing against a random
+    # 30-place catalog sample -- see BACKLOG.md for the reproduction data (Piedmont/Temescal/
+    # Rockridge, CA all shared one such false positive: a hillside reservoir beach 6.6km from
+    # the real Bay coastline, previously passing because the real coastline was separately
+    # "close to center"). True point-to-point distance closes that gap: every real beach in the
+    # validation sample sat within ~1.7km of its actual coastline; the confirmed false positives
+    # sat 5-7km away. 2km cap is the validated threshold with a clean separation between the two.
+    BEACH_OCEAN_CONFIRM_MAX_M = 2_000
+    _coastline_feats = [
+        f for f in swimming
+        if f.get("type") in ("coastline", "coastline_rocky") and f.get("lat") is not None
+    ]
 
-    def _beach_is_ocean(beach_dist: float) -> bool:
-        return min_coastline_dist <= beach_dist + 3_000
+    def _nearest_coastline_dist(beach_feat: Dict) -> Optional[float]:
+        """True point-to-point distance from a beach feature to its nearest coastline
+        feature, or None if neither has usable coordinates."""
+        blat, blon = beach_feat.get("lat"), beach_feat.get("lon")
+        if blat is None or not _coastline_feats:
+            return None
+        return min(haversine_distance(blat, blon, c["lat"], c["lon"]) for c in _coastline_feats)
+
+    def _beach_is_ocean(beach_feat: Dict) -> bool:
+        true_dist = _nearest_coastline_dist(beach_feat)
+        if true_dist is not None:
+            return true_dist <= BEACH_OCEAN_CONFIRM_MAX_M
+        # No coordinates on this feature (older cached data) -- fall back to the old,
+        # looser center-relative check rather than always failing.
+        min_coastline_dist = min(
+            (f.get("distance_m", 1e9) for f in swimming
+             if f.get("type") in ("coastline", "coastline_rocky")),
+            default=1e9,
+        )
+        return min_coastline_dist <= beach_feat.get("distance_m", 1e9) + 3_000
 
     def feature_score(feat: Dict) -> float:
         d = feat.get("distance_m", 1e9)
@@ -738,7 +765,7 @@ def _score_water_lifestyle_v2(
         base = _WATERFRONT_BASE.get(t, 10.0)
 
         # Inland park beach: downgrade to swimming_area level (no ocean confirmation)
-        if t == "beach" and not _beach_is_ocean(d):
+        if t == "beach" and not _beach_is_ocean(feat):
             base = _WATERFRONT_BASE["swimming_area"]
 
         # Context downweights
@@ -765,7 +792,7 @@ def _score_water_lifestyle_v2(
     def _feat_category(feat: Dict) -> str:
         t = feat.get("type", "")
         if t == "beach":
-            return "ocean_beach" if _beach_is_ocean(feat.get("distance_m", 1e9)) else "lake_river"
+            return "ocean_beach" if _beach_is_ocean(feat) else "lake_river"
         return _WATERFRONT_CATEGORY.get(t, "lake_river")
 
     category_best: Dict[str, float] = {"ocean_beach": 0.0, "lake_river": 0.0, "bay_harbor": 0.0}
@@ -783,16 +810,35 @@ def _score_water_lifestyle_v2(
     # Track the winning feature's type and distance for offline recalibration.
     best_feat_type: Optional[str] = None
     best_feat_dist_m: Optional[float] = None
+    best_feat_name: Optional[str] = None
+    best_feat_true_coastline_dist_m: Optional[float] = None
     for feat, s in zip(swimming, all_feature_scores):
         if s == best_score:
             best_feat_type = feat.get("type")
             best_feat_dist_m = feat.get("distance_m")
+            best_feat_name = feat.get("name")
+            if best_feat_type == "beach":
+                best_feat_true_coastline_dist_m = _nearest_coastline_dist(feat)
             break
 
     # Normalize each category to 0-100 (budget cap is 25)
     waterfront_breakdown: Dict = {
         cat: round(min(100.0, v / 25.0 * 100.0), 1)
         for cat, v in category_best.items()
+    }
+    # Persist the winning feature's identity so a future audit (or a person double-checking a
+    # surprising score) can read it straight from the catalog instead of needing a fresh live
+    # Overpass query to reconstruct what drove the number -- the gap that made debugging this
+    # exact class of bug (Piedmont/Temescal/Rockridge, see BACKLOG.md) require re-querying OSM
+    # from scratch. Only meaningful for beach-type winners since coastline/lake/bay don't run
+    # through the ocean-confirmation check.
+    waterfront_breakdown["winning_feature"] = {
+        "type": best_feat_type,
+        "name": best_feat_name,
+        "distance_from_center_m": best_feat_dist_m,
+        "true_distance_to_coastline_m": (
+            round(best_feat_true_coastline_dist_m) if best_feat_true_coastline_dist_m is not None else None
+        ),
     }
 
     logger.info(

@@ -2315,6 +2315,14 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
         distance_m = haversine_distance(
             center_lat, center_lon, elem_lat, elem_lon)
         feature["distance_m"] = round(distance_m, 0)
+        # Feature's own coordinates -- lets waterfront scoring check true feature-to-feature
+        # distance (e.g. beach-to-coastline) instead of only distance-from-scoring-center,
+        # which is what let an inland lake beach get confused for an ocean beach (both can be
+        # "close to center" from opposite directions without being anywhere near each other).
+        # See BACKLOG.md for the false-positive case this fixes (Piedmont/Temescal/Rockridge).
+        if category == "swimming":
+            feature["lat"] = elem_lat
+            feature["lon"] = elem_lon
 
         if category == "hiking":
             hiking.append(feature)
