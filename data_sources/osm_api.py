@@ -831,7 +831,6 @@ def query_water_only(lat: float, lon: float, radius_m: int = 15000) -> Optional[
       way[\"natural\"=\"beach\"](around:{radius_m},{lat},{lon});
       relation[\"natural\"=\"beach\"](around:{radius_m},{lat},{lon});
       way[\"natural\"=\"coastline\"](around:{coastline_radius},{lat},{lon});
-      relation[\"natural\"=\"coastline\"](around:{coastline_radius},{lat},{lon});
       way[\"natural\"=\"water\"][\"water\"~\"^(lake|bay)$\"](around:{radius_m},{lat},{lon});
       relation[\"natural\"=\"water\"][\"water\"~\"^(lake|bay)$\"](around:{radius_m},{lat},{lon});
       way[\"waterway\"~\"^(river|canal)$\"](around:{radius_m},{lat},{lon});
@@ -841,7 +840,7 @@ def query_water_only(lat: float, lon: float, radius_m: int = 15000) -> Optional[
     """
 
     query = (
-        f"\n    [out:json][timeout:{_overpass_timeout(30)}];\n    (\n"
+        f"\n    [out:json][timeout:{_overpass_timeout(60)}];\n    (\n"
         + water_query
         + "\n    );\n    out center tags;\n    "
     )
@@ -853,7 +852,7 @@ def query_water_only(lat: float, lon: float, radius_m: int = 15000) -> Optional[
                 r = requests.post(
                     get_overpass_url(),
                     data={"data": query},
-                    timeout=_overpass_timeout(35),
+                    timeout=_overpass_timeout(70),
                     headers={"User-Agent": "HomeFit/1.0"}
                 )
                 if r.status_code != 200:
