@@ -685,8 +685,15 @@ def _score_wild_adventure_v2(
 
 _WATERFRONT_CATEGORY: Dict[str, str] = {
     "beach": "ocean_beach",
-    "coastline": "ocean_beach",
-    "coastline_rocky": "ocean_beach",
+    # coastline/coastline_rocky are real, correctly-scored ocean access (harbor edge, promenade,
+    # marina) but not a swimmable beach -- folding them into ocean_beach let places like Cos Cob,
+    # Edgewater, Leonia, and Mount Vernon (real Hudson River/LI Sound waterfront towns, none of
+    # them beach destinations) score and label identically to an actual sand beach town. See
+    # BACKLOG.md for the validation: 0 of 16 real ground-truth beach towns win on coastline, so
+    # this split costs no real beach town its score -- it only stops mislabeling plain coastline
+    # access as "beach."
+    "coastline": "waterfront_access",
+    "coastline_rocky": "waterfront_access",
     "lake": "lake_river",
     "swimming_area": "lake_river",
     "bay": "bay_harbor",
@@ -713,7 +720,9 @@ def _score_water_lifestyle_v2(
     per-category best scores normalized to 0-100 for preference reweighting.
     Categories: ocean_beach (beach/coastline), lake_river (lake/swimming_area), bay_harbor (bay).
     """
-    _empty_breakdown: Dict = {"ocean_beach": 0.0, "lake_river": 0.0, "bay_harbor": 0.0}
+    _empty_breakdown: Dict = {
+        "ocean_beach": 0.0, "lake_river": 0.0, "bay_harbor": 0.0, "waterfront_access": 0.0,
+    }
     if not swimming:
         return 0.0, _empty_breakdown, None, None
 
@@ -808,7 +817,9 @@ def _score_water_lifestyle_v2(
             return "ocean_beach" if _beach_is_ocean(feat) else "lake_river"
         return _WATERFRONT_CATEGORY.get(t, "lake_river")
 
-    category_best: Dict[str, float] = {"ocean_beach": 0.0, "lake_river": 0.0, "bay_harbor": 0.0}
+    category_best: Dict[str, float] = {
+        "ocean_beach": 0.0, "lake_river": 0.0, "bay_harbor": 0.0, "waterfront_access": 0.0,
+    }
     all_feature_scores = []
     for feat in swimming:
         s = feature_score(feat)
