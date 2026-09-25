@@ -2286,11 +2286,11 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
             # OBJECTIVE CRITERIA: surface=rock indicates non-swimmable beach
             if surface == "rock":
                 # Treat as rocky coastline, not beach (lower score)
-                feature = {"type": "coastline_rocky", "name": tags.get("name")}
+                feature = {"type": "coastline_rocky", "name": tags.get("name"), "surface": tags.get("surface")}
                 category = "swimming"
             else:
                 # Actual swimmable beach
-                feature = {"type": "beach", "name": tags.get("name")}
+                feature = {"type": "beach", "name": tags.get("name"), "surface": tags.get("surface")}
                 category = "swimming"
         elif natural == "water" and water_type == "lake":
             # DATA QUALITY: Distinguish recreational lakes from ornamental water

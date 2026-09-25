@@ -812,11 +812,13 @@ def _score_water_lifestyle_v2(
     best_feat_dist_m: Optional[float] = None
     best_feat_name: Optional[str] = None
     best_feat_true_coastline_dist_m: Optional[float] = None
+    best_feat_surface: Optional[str] = None
     for feat, s in zip(swimming, all_feature_scores):
         if s == best_score:
             best_feat_type = feat.get("type")
             best_feat_dist_m = feat.get("distance_m")
             best_feat_name = feat.get("name")
+            best_feat_surface = feat.get("surface")
             if best_feat_type == "beach":
                 best_feat_true_coastline_dist_m = _nearest_coastline_dist(feat)
             break
@@ -835,6 +837,7 @@ def _score_water_lifestyle_v2(
     waterfront_breakdown["winning_feature"] = {
         "type": best_feat_type,
         "name": best_feat_name,
+        "surface": best_feat_surface,
         "distance_from_center_m": best_feat_dist_m,
         "true_distance_to_coastline_m": (
             round(best_feat_true_coastline_dist_m) if best_feat_true_coastline_dist_m is not None else None
