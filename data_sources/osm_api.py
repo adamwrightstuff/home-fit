@@ -819,6 +819,12 @@ def query_water_only(lat: float, lon: float, radius_m: int = 15000) -> Optional[
 
     Returns: {"swimming": [...], "_overpass_outcome": ...}
     """
+    try:
+        lat = float(lat)
+        lon = float(lon)
+    except (TypeError, ValueError):
+        return {"swimming": [], "_overpass_outcome": OVERPASS_OUTCOME_ERROR}
+
     coastline_radius = radius_m + 3_000
     water_query = f"""
       // SWIMMING - water-only rescore (no hiking/camping)

@@ -83,7 +83,10 @@ def rescore_row(row: dict, delay: float) -> tuple[dict, bool, str]:
     if result is None:
         return row, False, "skipped (Overpass call failed)"
 
+    outcome = result.get("_overpass_outcome")
     swimming = result.get("swimming") or []
+    if outcome not in ("overpass_ok", "overpass_empty") and not swimming:
+        return row, False, f"skipped (Overpass outcome: {outcome})"
     final_water, waterfront_breakdown, best_type, best_dist = _score_water_lifestyle_v2(
         swimming, area_type, is_desert_context=False
     )
