@@ -86,13 +86,13 @@ on a metric that doesn't measure what users mean by "canopy preference" for dens
 
 ---
 
-## `ocean_beach` waterfront category has two distinct, separately-validated problems
+## `ocean_beach` waterfront category: three distinct, separately-validated problems
 
 **Where:** `pillars/active_outdoors.py`, `_score_water_lifestyle_v2` and its `_beach_is_ocean`
 helper. Surfaced while investigating why Carroll Gardens failed the AO waterfront AND-filter
 and why Piedmont, CA (a landlocked East Bay hill town) scored a perfect `ocean_beach: 100.0`.
 
-### Problem 1 (validated bug, ready to fix): false ocean-confirmation on inland beaches
+### False ocean-confirmation on inland beaches (SHIPPED)
 
 `_beach_is_ocean` decides whether a `natural=beach`-tagged feature counts as ocean-connected by
 comparing **both features' distances from the shared scoring center** (`min_coastline_dist <=
@@ -149,7 +149,7 @@ rescoring real data:
 NYC (193 places) fully rescored and applied: 133 changed, composites recomputed. LA/SF/Seattle
 still pending as of this writing.
 
-### Problem 1b (found while rescoring, separate from Problem 1): tied beaches pick an arbitrary winner
+### Arbitrary winner among tied beaches (SHIPPED)
 
 Every confirmed-ocean beach under 3km gets the *identical* base score (25.0, flat — distance
 decay only starts past 3km), so when a place has multiple real beaches in that zone, which one
@@ -173,9 +173,9 @@ displayed score; both downstream clamps (`min(25.0, ...)`, `min(100.0, ...)`) ab
 overflow risk. Reverified against the live CSV export after shipping — Larchmont, Mamaroneck,
 Coney Island, and Long Beach all now correctly pick their own real named beach.
 
-### Problem 2 (separate, unfixed): `ocean_beach` category conflates beach with coastline/harbor
+### `ocean_beach` category conflates real beach with plain coastline/harbor (OPEN)
 
-Independent of Problem 1. `_WATERFRONT_CATEGORY` buckets `beach`, `coastline`, and
+Independent of the false-ocean-confirmation bug above. `_WATERFRONT_CATEGORY` buckets `beach`, `coastline`, and
 `coastline_rocky` into the same `ocean_beach` output category. A place whose winning feature is
 plain `natural=coastline` (harbor edge, no swimmable beach — e.g. Carroll Gardens, whose winning
 feature is real Upper NY Bay coastline, correctly computed, no bug) gets the same category label
@@ -185,7 +185,7 @@ cases; the label misrepresents what's actually there.
 **Fix:** split the category so `ocean_beach` requires a `beach`/`swimming_area` winner
 specifically; anything where `coastline`/`bay` wins becomes a separate category (e.g.
 `waterfront_access`) instead of being folded into "beach." Same OSM data, no new source, but
-this is a bigger surface-area change than Problem 1 since it touches the AND-filter floors
+this is a bigger surface-area change than the false-ocean-confirmation fix since it touches the AND-filter floors
 shipped in `frontend/lib/aoPreference.ts` today (`AO_PREFERENCE_FLOOR`, `PREFERENCE_AO_COMPONENTS`)
 and the `waterfront_breakdown` shape the frontend already reads.
 
@@ -196,26 +196,30 @@ actual beach destinations, all scoring a moderate 16.2/25. Zero of the 16 real g
 beach towns checked win on `coastline`. Splitting the category costs no real beach town its
 score.
 
-**Also surfaced, still open — the real driver of most false positives isn't the coastline/beach
-conflation above, it's cross-neighborhood reuse of one real beach within the 15-18km search
-radius.** Analyzed all 68 places in NYC's 133-rescore that score ≥80% `ocean_beach` but aren't
-an actual ground-truth beach town (of a hand-picked, non-exhaustive 16-place reference list —
-likely undercounts real beach places, e.g. Pelham Bay/Orchard Beach was mistakenly left off).
-89% (58/68) win on either a completely unnamed `natural=beach` tag (37, unverifiable — could be
+**Priority:** medium — not a bug, but an active mislabeling that misleads anyone using the
+waterfront preference to mean "can I swim here."
+
+### Cross-neighborhood reuse of one real beach within the 15-18km search radius (OPEN)
+
+The bigger driver of `ocean_beach` false positives — separate from both problems above.
+Analyzed all 68 places in NYC's 133-rescore that score ≥80% `ocean_beach` but aren't an actual
+ground-truth beach town (of a hand-picked, non-exhaustive 16-place reference list — likely
+undercounts real beach places, e.g. Pelham Bay/Orchard Beach was mistakenly left off). 89%
+(58/68) win on either a completely unnamed `natural=beach` tag (37, unverifiable — could be
 anything) or a named feature that's *also* winning for 2+ other unrelated places (25) — Pebble
 Beach (a real but non-swim decorative rock/pebble strip in Brooklyn Bridge Park, `surface=pebblestone`,
 confirmed) alone is the winning feature for 12 different NYC/Brooklyn places boroughs apart;
 Dyckman Street Beach for 4; Maxwell Place Beach for 3. Only 6/68 have a genuinely unique named
 feature (real beach, just doesn't make the town itself a beach destination — e.g. Jersey City,
-Harrison, Roslyn). Named-vs-unnamed correlates but isn't a clean filter on its own: 4 of the 16
-real ground-truth towns also win on an unnamed feature (Larchmont, Long Beach, Mamaroneck, Old
-Greenwich — the real local beach just isn't `name`-tagged in OSM), and 4 more share a feature
-with exactly one adjacent neighbor legitimately on the same beach (Brighton Beach/Coney Island
-both near Manhattan Beach; Manhasset/Port Washington both near PWEA Beach) — the difference is
+Harrison, Roslyn).
+
+Named-vs-unnamed correlates but isn't a clean filter on its own: 4 of the 16 real ground-truth
+towns also win on an unnamed feature (Larchmont, Long Beach, Mamaroneck, Old Greenwich — the
+real local beach just isn't `name`-tagged in OSM), and 4 more share a feature with exactly one
+adjacent neighbor legitimately on the same beach (Brighton Beach/Coney Island both near
+Manhattan Beach; Manhasset/Port Washington both near PWEA Beach) — the difference is
 share-count-and-distance-spread (1 adjacent neighbor vs. up to 11 places boroughs apart), not
-"shared: yes/no." Not yet acted on — would need either shrinking the 15-18km radius or a
-different mechanism than the category split above to fix, since Problem 2's split only
-addresses the beach/coastline label conflation, not this radius-driven reuse.
+"shared: yes/no."
 
 `surface=sand` looked promising as an automatic "is this a real beach" signal but the evidence
 is mixed: 13/14 known-real LA beach towns win on a `surface=sand` feature (El Segundo Beach,
@@ -224,7 +228,10 @@ signal there — but NYC data doesn't hold up nearly as well (lots of `surface=N
 real winners, `surface=pebblestone` confirmed non-swim on Pebble Beach specifically). `surface`
 is now persisted on `winning_feature` (`0f45d9e`) for future analysis but isn't used in scoring.
 
-**Priority:** medium — not a bug, but an active mislabeling that misleads anyone using the
-waterfront preference to mean "can I swim here," and (per the radius-reuse finding above) a
-meaningful fraction of `ocean_beach` near-max scores in dense NYC neighborhoods reflect a
-borrowed beach several km away rather than a real local amenity.
+**Fix:** not yet designed. Shrinking the 15-18km search radius is the most direct lever but
+needs care (some real, correctly-scored places sit farther than 3km from their own beach); the
+category split above (previous section) doesn't address this since it only separates
+beach-vs-coastline labels, not reuse of the same beach across many unrelated places.
+
+**Priority:** medium — a meaningful fraction of `ocean_beach` near-max scores in dense NYC
+neighborhoods reflect a borrowed beach several km away rather than a real local amenity.
