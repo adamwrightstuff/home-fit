@@ -118,7 +118,11 @@ def main() -> int:
     ap.add_argument("--cache-output", type=Path, default=None, help="Where to save computed rows for later --from-cache reuse (default: <input>.rescored_cache.jsonl when --dry-run is set)")
     ap.add_argument("--from-cache", type=Path, default=None, help="Skip Overpass entirely -- load already-computed rows from a prior --dry-run's --cache-output and just write them out")
     ap.add_argument("--delay", type=float, default=1.5, help="Seconds between Overpass calls")
-    ap.add_argument("--max-places", type=int, default=0, help="Limit for testing; 0 = all")
+    ap.add_argument("--max-places", type=int, default=0, help="Limit how many TARGETED places to process (after --names filtering, if any); 0 = all")
+    ap.add_argument("--names", type=str, default=None,
+                     help="Comma-separated place names to restrict processing to (e.g. for testing "
+                          "just the coastal places in a metro). Every other row in the file is left "
+                          "untouched and still written back unchanged -- this never shrinks the file.")
     args = ap.parse_args()
 
     if not args.input.exists():
@@ -132,24 +136,45 @@ def main() -> int:
         rows = [json.loads(l) for l in args.from_cache.open() if l.strip()]
         print(f"Loaded {len(rows)} already-computed rows from {args.from_cache} -- no Overpass calls made.")
     else:
+        # Always load every row in the file -- --names/--max-places narrow which rows get
+        # RESCORED below, never which rows get kept. The cache/write step at the bottom always
+        # writes this full `rows` list back out, so anything not targeted is preserved as-is.
         rows = [json.loads(l) for l in args.input.open() if l.strip()]
+
+        name_filter = None
+        if args.names:
+            name_filter = {n.strip() for n in args.names.split(",") if n.strip()}
+
+        target_indices = [
+            i for i, row in enumerate(rows)
+            if name_filter is None or (row.get("catalog") or {}).get("name") in name_filter
+        ]
         if args.max_places:
-            rows = rows[: args.max_places]
+            target_indices = target_indices[: args.max_places]
+
+        if name_filter is not None:
+            found_names = {(rows[i].get("catalog") or {}).get("name") for i in target_indices}
+            missing = name_filter - found_names
+            if missing:
+                print(f"Not found in catalog (skipping): {sorted(missing)}")
 
         changed_count = 0
         skipped_count = 0
-        for i, row in enumerate(rows):
+        for n, i in enumerate(target_indices):
+            row = rows[i]
             name = (row.get("catalog") or {}).get("name", "?")
             updated, changed, note = rescore_row(row, args.delay)
             rows[i] = updated
             tag = "CHANGED" if changed else "  --   "
-            print(f"[{i+1}/{len(rows)}] {tag} {name}: {note}")
+            print(f"[{n+1}/{len(target_indices)}] {tag} {name}: {note}")
             if changed:
                 changed_count += 1
             elif "skipped" in note:
                 skipped_count += 1
 
-        print(f"\n{changed_count} changed, {skipped_count} skipped, {len(rows) - changed_count - skipped_count} unchanged (of {len(rows)})")
+        print(f"\n{changed_count} changed, {skipped_count} skipped, "
+              f"{len(target_indices) - changed_count - skipped_count} unchanged "
+              f"(of {len(target_indices)} targeted, {len(rows)} total in file)")
 
         cache_path = args.cache_output or (args.input.with_suffix(".rescored_cache.jsonl") if args.dry_run else None)
         if cache_path:
