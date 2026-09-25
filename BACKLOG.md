@@ -83,3 +83,79 @@ hence splitting into two preferences rather than replacing one metric with the o
 
 **Priority:** medium — this is actively excluding places from the new canopy AND-filter based
 on a metric that doesn't measure what users mean by "canopy preference" for dense urban areas.
+
+---
+
+## `ocean_beach` waterfront category has two distinct, separately-validated problems
+
+**Where:** `pillars/active_outdoors.py`, `_score_water_lifestyle_v2` and its `_beach_is_ocean`
+helper. Surfaced while investigating why Carroll Gardens failed the AO waterfront AND-filter
+and why Piedmont, CA (a landlocked East Bay hill town) scored a perfect `ocean_beach: 100.0`.
+
+### Problem 1 (validated bug, ready to fix): false ocean-confirmation on inland beaches
+
+`_beach_is_ocean` decides whether a `natural=beach`-tagged feature counts as ocean-connected by
+comparing **both features' distances from the shared scoring center** (`min_coastline_dist <=
+beach_dist + 3000`) rather than the distance **between the beach and the coastline themselves**.
+This lets two completely unrelated water bodies pass the check whenever both happen to sit
+within the search radius from center, regardless of direction: an inland reservoir beach several
+km from any real coastline can pass simply because a real coastline elsewhere is *also* within
+range of the same center point.
+
+**Validated with live Overpass data, not just theory** (see chat log for full methodology):
+- Random 30-place sample drawn from the 197 catalog places with nonzero `ocean_beach` score.
+- Built a corrected version of `_beach_is_ocean` that checks true point-to-point distance
+  between each beach feature and its nearest coastline feature (using each feature's own
+  lat/lon, not distance-from-center), capped at 2km, and ran both the old and new logic side by
+  side against real OSM data for all 30 places.
+- **Result: 3 of 30 places have a real, likely score-changing false positive** — Piedmont,
+  Temescal, and Rockridge (all CA, all near the same Lake Temescal / Lake Anza cluster in the
+  Oakland hills). Lake Temescal Beach (a hillside reservoir beach) sits 3450m from Temescal's
+  center — close enough that under the old logic it plausibly *wins* the "best feature" contest
+  over the real, farther-away Bay beaches (Albany Beach, Radio Beach), since it takes less
+  distance-decay penalty. True distance from Lake Temescal Beach to the nearest real coastline:
+  6645m — nowhere close to the same shoreline.
+- **7 more flips found, but don't change any score**: junk unnamed candidates at 2-5km in City
+  Island, Long Beach, and Half Moon Bay that fail the corrected check but were never going to
+  beat those places' real, much closer named beaches anyway (Orchard Beach 96m, Rockaway Beach
+  254m, etc.).
+- **20 of 30 places: completely unaffected.** This is a narrow, geography-specific bug (one
+  lake cluster, not a catalog-wide problem) — confirmed by testing before acting on it, not
+  assumed from the first suspicious-looking example found.
+
+**The fix (drafted, reverted pending this validation, ready to reapply):**
+1. `data_sources/osm_api.py`, `_process_nature_features` — store each swimming/water feature's
+   own `lat`/`lon` on the feature dict (currently only `distance_m` from center is kept).
+2. `pillars/active_outdoors.py`, `_beach_is_ocean` — rewrite to compute true haversine distance
+   from the beach's own coordinates to its nearest coastline feature's own coordinates, capped
+   at 2000m (validated threshold — real beaches in the sample sit under ~1.7km true distance;
+   the confirmed false positives sit at 5-7km). Falls back to the old center-relative check only
+   when a feature has no stored coordinates (older cached data).
+3. Reuse `data_sources/utils.py`'s existing `haversine_distance` — no new dependency.
+
+Needs a live rescore of `waterfront_lifestyle` for the whole catalog after merging (true
+beach-to-coastline distance isn't derivable from what's currently stored — genuine new-data
+case, not a pure logic fix on existing fields).
+
+**Priority:** medium — real, validated, narrow-scope bug with a small, low-risk, already-tested
+fix. Not urgent (only ~10% of a random sample affected, all one cluster) but correct and cheap
+enough to ship without further debate.
+
+### Problem 2 (separate, unfixed): `ocean_beach` category conflates beach with coastline/harbor
+
+Independent of Problem 1. `_WATERFRONT_CATEGORY` buckets `beach`, `coastline`, and
+`coastline_rocky` into the same `ocean_beach` output category. A place whose winning feature is
+plain `natural=coastline` (harbor edge, no swimmable beach — e.g. Carroll Gardens, whose winning
+feature is real Upper NY Bay coastline, correctly computed, no bug) gets the same category label
+as a place with an actual sand beach (e.g. Larchmont's Manor Beach). The math is correct in both
+cases; the label misrepresents what's actually there.
+
+**Fix:** split the category so `ocean_beach` requires a `beach`/`swimming_area` winner
+specifically; anything where `coastline`/`bay` wins becomes a separate category (e.g.
+`waterfront_access`) instead of being folded into "beach." Same OSM data, no new source, but
+this is a bigger surface-area change than Problem 1 since it touches the AND-filter floors
+shipped in `frontend/lib/aoPreference.ts` today (`AO_PREFERENCE_FLOOR`, `PREFERENCE_AO_COMPONENTS`)
+and the `waterfront_breakdown` shape the frontend already reads.
+
+**Priority:** medium — not a bug, but an active mislabeling that misleads anyone using the
+waterfront preference to mean "can I swim here."
