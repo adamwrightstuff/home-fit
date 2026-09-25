@@ -787,6 +787,19 @@ def _score_water_lifestyle_v2(
         if d > 3_000:
             base *= math.exp(-0.00025 * (d - 3_000))
 
+        # Deterministic tiebreak: every confirmed-ocean beach under 3km gets the identical
+        # base score above, so when a place has several real beaches in that flat zone, which
+        # one gets reported as the "winner" (used for the ocean_beach/lake_river/bay_harbor
+        # category label and the persisted winning_feature audit trail) depended entirely on
+        # Overpass's arbitrary element order -- confirmed with real data: Larchmont's own named
+        # Manor Beach (1251m) lost to a closer unnamed sliver purely on list order, and Coney
+        # Island's own Coney Island Beach (703m) lost to the neighboring Manhattan Beach
+        # (2248m) the same way. Nudge is far below the score's 0.1 rounding precision (max
+        # ~0.01 on a 0-25 scale) so it never changes the numeric score, only which feature gets
+        # credited: prefer a named feature over an unnamed one, then prefer the closer one.
+        base += 0.01 if feat.get("name") else 0.0
+        base -= min(d, 3_000) * 1e-6
+
         return base
 
     def _feat_category(feat: Dict) -> str:
