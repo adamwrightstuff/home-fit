@@ -111,7 +111,9 @@ def main() -> int:
     ap.add_argument("--in-place", action="store_true", help="Write back to --input (timestamped .bak kept unless --no-backup)")
     ap.add_argument("--no-backup", action="store_true")
     ap.add_argument("--output", type=Path, default=None, help="Alternative output path (instead of --in-place)")
-    ap.add_argument("--dry-run", action="store_true", help="Print what would change, write nothing")
+    ap.add_argument("--dry-run", action="store_true", help="Print what would change, write nothing (still fetches -- also saves --cache-output so a later --from-cache run can apply these exact results without refetching)")
+    ap.add_argument("--cache-output", type=Path, default=None, help="Where to save computed rows for later --from-cache reuse (default: <input>.rescored_cache.jsonl when --dry-run is set)")
+    ap.add_argument("--from-cache", type=Path, default=None, help="Skip Overpass entirely -- load already-computed rows from a prior --dry-run's --cache-output and just write them out")
     ap.add_argument("--delay", type=float, default=1.5, help="Seconds between Overpass calls")
     ap.add_argument("--max-places", type=int, default=0, help="Limit for testing; 0 = all")
     args = ap.parse_args()
@@ -120,28 +122,43 @@ def main() -> int:
         print(f"Input not found: {args.input}", file=sys.stderr)
         return 1
 
-    rows = [json.loads(l) for l in args.input.open() if l.strip()]
-    if args.max_places:
-        rows = rows[: args.max_places]
+    if args.from_cache:
+        if not args.from_cache.exists():
+            print(f"Cache file not found: {args.from_cache}", file=sys.stderr)
+            return 1
+        rows = [json.loads(l) for l in args.from_cache.open() if l.strip()]
+        print(f"Loaded {len(rows)} already-computed rows from {args.from_cache} -- no Overpass calls made.")
+    else:
+        rows = [json.loads(l) for l in args.input.open() if l.strip()]
+        if args.max_places:
+            rows = rows[: args.max_places]
 
-    changed_count = 0
-    skipped_count = 0
-    for i, row in enumerate(rows):
-        name = (row.get("catalog") or {}).get("name", "?")
-        updated, changed, note = rescore_row(row, args.delay)
-        rows[i] = updated
-        tag = "CHANGED" if changed else "  --   "
-        print(f"[{i+1}/{len(rows)}] {tag} {name}: {note}")
-        if changed:
-            changed_count += 1
-        elif "skipped" in note:
-            skipped_count += 1
+        changed_count = 0
+        skipped_count = 0
+        for i, row in enumerate(rows):
+            name = (row.get("catalog") or {}).get("name", "?")
+            updated, changed, note = rescore_row(row, args.delay)
+            rows[i] = updated
+            tag = "CHANGED" if changed else "  --   "
+            print(f"[{i+1}/{len(rows)}] {tag} {name}: {note}")
+            if changed:
+                changed_count += 1
+            elif "skipped" in note:
+                skipped_count += 1
 
-    print(f"\n{changed_count} changed, {skipped_count} skipped, {len(rows) - changed_count - skipped_count} unchanged (of {len(rows)})")
+        print(f"\n{changed_count} changed, {skipped_count} skipped, {len(rows) - changed_count - skipped_count} unchanged (of {len(rows)})")
 
-    if args.dry_run:
-        print("\n--dry-run: no files written.")
-        return 0
+        cache_path = args.cache_output or (args.input.with_suffix(".rescored_cache.jsonl") if args.dry_run else None)
+        if cache_path:
+            with cache_path.open("w") as f:
+                for row in rows:
+                    f.write(json.dumps(row) + "\n")
+            print(f"Computed results cached to: {cache_path}")
+            print(f"To apply without refetching: --from-cache {cache_path} --in-place")
+
+        if args.dry_run:
+            print("\n--dry-run: catalog file not written.")
+            return 0
 
     out_path = args.output or (args.input if args.in_place else None)
     if out_path is None:
