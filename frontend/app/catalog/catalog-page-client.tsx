@@ -99,7 +99,11 @@ function computePreferenceMultiplier(
 ): number {
   let m = 1
   if (filterNbTypes.length > 0 && filterNbTypes.length < 4) {
-    const v9 = (p.score.livability_pillars as any)?.natural_beauty?.v9_breakdown
+    // Some metros (e.g. Seattle, rescored via rescore_natural_beauty_v9_offline.py) only
+    // have v9_breakdown nested under details, not duplicated to the top level the way a
+    // live score does -- same shape gap check_catalog_health.py already works around.
+    const nb = (p.score.livability_pillars as any)?.natural_beauty
+    const v9 = nb?.v9_breakdown ?? nb?.details?.v9_breakdown
     m *= nbPreferenceMultiplier(v9, filterNbTypes as any)
   }
   if (filterAoTypes.length > 0 && filterAoTypes.length < 3) {
