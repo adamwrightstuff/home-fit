@@ -242,28 +242,35 @@ export function applyNbPreferenceV9(
   return applyNbPreferencesV9(v9, [preference])
 }
 
-// ── AND-filter preference model ──────────────────────────────────────────────
-// "Ocean + canopy" isn't a tradeoff to blend -- it's "does this place actually have
-// both," a checklist, not a dial. The OWA blend above forces the *better* of the
-// selected components into the lead slot and dilutes the other one alongside
-// unrelated dimensions (e.g. canopy standing in as gvi_score got buried under a
-// stronger water_score for an ocean+canopy pick). This instead requires every
-// selected preference's real component to independently clear a floor -- true AND,
-// no blending -- and never touches natural_beauty.score, so the pillar's weight
-// keeps meaning the same thing for every user and every composite that reads it
-// (happiness_index, longevity_index, status_signal) stays consistent with it.
+// ── Gradient multiplier preference model ─────────────────────────────────────
+// Replaces the true-AND filter this used to be (6d7b639). That filter fixed the
+// OWA blend's real bug (canopy standing in as gvi_score got buried under a
+// stronger water_score for an ocean+canopy pick) but traded it for a new one:
+// a hard floor gate removes a place from results entirely the moment ANY
+// selected trait misses its floor, which risks an empty results page and treats
+// "slightly below the 40th percentile" the same as "has none of this at all."
+//
+// This keeps the AND filter's real fix (each selected trait checked against its
+// own real component, not diluted by unrelated ones) but turns the gate into a
+// multiplier: 1.0 at/above the floor, dropping steeply (not instantly) below it.
+// Multipliers for every selected trait are then multiplied together -- a place
+// missing one of several selected traits gets compounded down even if its other
+// traits are perfect, so multi-trait matches still rise above single-trait ones,
+// but nothing is ever removed from the list outright. Never mutates the NB score
+// -- only used to weight sort order (see computePreferenceMultiplier in
+// catalog-page-client.tsx).
 //
 // Floors are the 40th percentile of each component across the current NYC/SF/LA/
-// Seattle catalog (~193-600 places/metro) -- "clearly above typical for this
-// catalog," not an invented number. Recompute via scripts/catalog/ tooling if the
-// catalog's composition changes enough to drift these (new metros, a big rescore).
+// Seattle catalog -- see scripts/baselines/compute_preference_floors.py. Rerun
+// that script and re-paste here if the catalog's composition changes enough to
+// drift these (new metros, a big rescore).
 export const NB_PREFERENCE_FLOOR: Record<string, number> = {
-  gvi_score: 60,
-  water_score: 21,
-  canopy_score: 10,
-  topo_score: 23,
+  gvi_score: 61,
+  water_score: 11,
+  canopy_score: 8,
+  topo_score: 28,
   landcover_score: 1,
-  bio_score: 2,
+  bio_score: 1,
 }
 
 // Unlike the OWA blend's PREFERENCE_V9_COMPONENTS (which maps canopy -> gvi_score),
@@ -275,26 +282,47 @@ const NB_PREFERENCE_TARGET: Record<NbPreference, keyof V9Breakdown> = {
   canopy: 'canopy_score',
 }
 
+// How steeply a trait below its floor gets penalized. ratio**4 keeps ~66% credit
+// at 90% of floor but crushes to ~6% at half of floor -- steep enough to sink a
+// clear miss out of view without a hard cliff at the floor itself.
+const NB_TRAIT_EXPONENT = 4
+
+// water_type is a categorical fact (is the nearest water body actually ocean vs
+// lake/river), not a magnitude -- there's no percentile to derive, so a mismatch
+// gets a fixed heavy penalty instead. Missing water_type data is null-safe (no
+// penalty), matching how every other filter in this catalog treats a data gap.
+const NB_WATER_TYPE_MISMATCH_MULTIPLIER = 0.05
+
 /**
- * Does this place clear every selected scenery preference's floor, independently?
- * True AND across preferences (not OWA blending) and never mutates the NB score --
- * only decides whether the place is shown. ocean/lakes_rivers additionally require
- * the nearest water body to actually be that type (a river doesn't count as ocean
- * no matter how high water_score is).
+ * Gradient multiplier (0-1] for how well this place matches every selected
+ * scenery preference, compounded across preferences. 1.0 when no preferences
+ * are selected or the place has no NB data (null-safe, never penalizes a gap).
+ * Multiply this onto whatever score you're sorting by -- never onto
+ * natural_beauty.score itself, so the pillar's weight keeps meaning the same
+ * thing for every user and every composite that reads it stays consistent.
  */
-export function nbPreferencePasses(
+export function nbPreferenceMultiplier(
   v9: V9Breakdown | undefined | null,
   preferences: NbPreference[],
-): boolean {
-  if (!v9 || preferences.length === 0) return true
+): number {
+  if (!v9 || preferences.length === 0) return 1
   const waterType = v9.inputs?.water_type ?? ''
+  let multiplier = 1
   for (const pref of preferences) {
     const target = NB_PREFERENCE_TARGET[pref]
     const val = v9[target]
-    if (typeof val !== 'number' || val < (NB_PREFERENCE_FLOOR[target] ?? 0)) return false
-    if (pref === 'ocean' && !/ocean|coast|bay|harbor|sea/i.test(waterType)) return false
-    if (pref === 'lakes_rivers' && !/lake|reservoir|river|stream|canal/i.test(waterType)) return false
+    if (typeof val === 'number') {
+      const floor = NB_PREFERENCE_FLOOR[target] ?? 0
+      const ratio = floor > 0 ? Math.min(1, val / floor) : 1
+      multiplier *= ratio ** NB_TRAIT_EXPONENT
+    }
+    if (pref === 'ocean' && waterType && !/ocean|coast|bay|harbor|sea/i.test(waterType)) {
+      multiplier *= NB_WATER_TYPE_MISMATCH_MULTIPLIER
+    }
+    if (pref === 'lakes_rivers' && waterType && !/lake|reservoir|river|stream|canal/i.test(waterType)) {
+      multiplier *= NB_WATER_TYPE_MISMATCH_MULTIPLIER
+    }
   }
-  return true
+  return multiplier
 }
 
