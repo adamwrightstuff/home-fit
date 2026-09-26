@@ -235,3 +235,31 @@ beach-vs-coastline labels, not reuse of the same beach across many unrelated pla
 
 **Priority:** medium — a meaningful fraction of `ocean_beach` near-max scores in dense NYC
 neighborhoods reflect a borrowed beach several km away rather than a real local amenity.
+
+### 15km trail-count radius draws from the same citywide pool for most neighborhoods in a metro (OPEN)
+
+`wild_adventure`'s trail count queries `route=hiking` within 15km — a circle roughly the size of
+NYC itself. Different, unrelated neighborhoods showed identical or near-identical trail counts
+(Astoria, Bay Ridge, Bed-Stuy, and Bensonhurst all stored `count_total=30`; a separate cluster of
+NYC places plus Boyle Heights, LA all stored `count_total=10`). Initially suspected as a caching
+bug — traced the cache-key generation directly (`_generate_cache_key` in `data_sources/cache.py`)
+using each place's real stored coordinates and confirmed all four produce distinct, correctly-keyed
+cache entries (no collision at that layer). A live re-pull of Astoria's own trail data returned 27
+relations (vs. the stored 30) at a slightly different query center within the neighborhood,
+consistent with normal circle-boundary movement, not a bug.
+
+**Root cause (not a bug):** at 15km, a metro like NYC has a relatively small, finite pool of
+named/tagged hiking-route relations (Prospect Park's color-coded loops, NYC Parks path networks,
+Empire State Trail segments). Most neighborhoods' 15km circles overlap this same pool almost
+entirely, so many different places legitimately converge on the same or a very similar count —
+independent of the trail-tag/urban-vs-wild question tracked elsewhere in this file. Same
+underlying issue as the beach-reuse problem above, one level up: too large a radius relative to
+the size of the thing being measured, applied uniformly regardless of area type.
+
+**Fix:** not yet designed. A smaller trail radius (or one that scales with area_type/metro
+density rather than a flat 15km for every place) is the likely direction, but hasn't been
+tested against real data yet.
+
+**Priority:** medium — doesn't change any specific place's score by itself, but explains why
+trail count so often fails to distinguish one urban neighborhood's real outdoor access from
+another's (feeds the "urban wild_adventure inflated" problem above).
