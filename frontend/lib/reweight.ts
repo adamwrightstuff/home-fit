@@ -1,6 +1,8 @@
 import type { ScoreResponse } from '@/types/api'
 import { PILLAR_ORDER, SCORE_BANDS, type PillarKey, computeHappinessIndex } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
+import { applyAoPreferences, applyWaterfrontPreference, type WaterfrontSubPreference } from '@/lib/aoPreference'
+import { applyNbPreferencesV9 } from '@/lib/nbPreference'
 
 type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
 
@@ -508,6 +510,74 @@ export function applyUserIncomeToScore(
     } as ScoreResponse['livability_pillars'],
   }
 
+  const newHI = computeHappinessIndex((patched.livability_pillars as any) ?? {})
+  return newHI !== null ? { ...patched, happiness_index: newHI } : patched
+}
+
+/**
+ * Patch active_outdoors.score and natural_beauty.score with OWA-reweighted values when the
+ * viewer has selected scenery/outdoors sub-preferences, so the pillar tiles and total_score
+ * actually reflect the preference instead of only reordering the list (the multiplier approach
+ * this replaces -- aoPreferenceMultiplier/nbPreferenceMultiplier -- deliberately never mutated
+ * the score; this does the opposite on purpose, since a reordered list with unchanged numbers
+ * reads as broken to anyone not tracking the internal rationale). total_score itself isn't
+ * touched here -- reweightScoreResponseFromPriorities (called downstream on every place, for
+ * both sorting and display) recomputes it from livability_pillars, so patching the pillar score
+ * here is sufficient for total_score to already reflect it wherever that function runs next.
+ */
+export function applyScenerySubPreferencesToScore(
+  data: ScoreResponse,
+  aoPrefs: string[],
+  waterfrontSub: WaterfrontSubPreference | null,
+  nbPrefs: string[],
+): ScoreResponse {
+  let patched = data
+  let changed = false
+
+  if (aoPrefs.length > 0 && aoPrefs.length < 3) {
+    const ao = (data.livability_pillars as any)?.active_outdoors
+    const bk = ao?.breakdown
+    if (bk) {
+      // A water-type sub-preference first reweights waterfront_lifestyle's own category mix
+      // (ocean_beach/lake_river/bay_harbor) before the top-level OWA blend across
+      // daily_urban_outdoors/wild_adventure/waterfront_lifestyle runs, so picking "Ocean & Beach"
+      // both favors the waterfront component overall AND favors the ocean-specific share of it.
+      let effectiveBk = bk
+      if (waterfrontSub && aoPrefs.includes('waterfront')) {
+        const wf = applyWaterfrontPreference(bk, waterfrontSub)
+        if (wf !== null) effectiveBk = { ...bk, waterfront_lifestyle: (wf / 100) * 25 }
+      }
+      const newAoScore = applyAoPreferences(effectiveBk, aoPrefs as any)
+      if (newAoScore !== null) {
+        patched = {
+          ...patched,
+          livability_pillars: {
+            ...patched.livability_pillars,
+            active_outdoors: { ...ao, score: newAoScore },
+          } as ScoreResponse['livability_pillars'],
+        }
+        changed = true
+      }
+    }
+  }
+
+  if (nbPrefs.length > 0 && nbPrefs.length < 4) {
+    const nb = (data.livability_pillars as any)?.natural_beauty
+    const v9 = nb?.v9_breakdown ?? nb?.details?.v9_breakdown
+    const newNbScore = v9 ? applyNbPreferencesV9(v9, nbPrefs as any) : null
+    if (newNbScore !== null) {
+      patched = {
+        ...patched,
+        livability_pillars: {
+          ...patched.livability_pillars,
+          natural_beauty: { ...nb, score: newNbScore },
+        } as ScoreResponse['livability_pillars'],
+      }
+      changed = true
+    }
+  }
+
+  if (!changed) return data
   const newHI = computeHappinessIndex((patched.livability_pillars as any) ?? {})
   return newHI !== null ? { ...patched, happiness_index: newHI } : patched
 }

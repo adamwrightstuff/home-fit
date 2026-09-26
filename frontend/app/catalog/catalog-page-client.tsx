@@ -36,9 +36,8 @@ import {
 } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker, withCommuteTimePillar } from '@/lib/reweight'
-import { type WaterfrontSubPreference, aoPreferenceMultiplier } from '@/lib/aoPreference'
-import { nbPreferenceMultiplier } from '@/lib/nbPreference'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker, withCommuteTimePillar } from '@/lib/reweight'
+import { type WaterfrontSubPreference } from '@/lib/aoPreference'
 import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
@@ -59,11 +58,7 @@ function sortPlaces(
   places: CatalogMapPlace[],
   sortKey: CatalogMapIndexMode | 'name',
   dir: 'asc' | 'desc',
-  priorities: PillarPriorities,
-  // Gradient scenery/outdoors preference multiplier (0-1] -- see
-  // computePreferenceMultiplier. Applied to the sort value only, never stored or
-  // displayed, so a strong non-matching place is ranked lower but never removed.
-  boost?: (p: CatalogMapPlace) => number
+  priorities: PillarPriorities
 ): CatalogMapPlace[] {
   const mult = dir === 'desc' ? -1 : 1
   const out = [...places]
@@ -72,13 +67,16 @@ function sortPlaces(
       return mult * a.catalog.name.localeCompare(b.catalog.name)
     }
     const get = (p: CatalogMapPlace) => {
-      let v: number
-      if (sortKey === 'homefit') v = reweightScoreResponseFromPriorities(p.score, priorities).total_score
-      else if (sortKey === 'longevity') v = p.score.longevity_index ?? NaN
-      else if (sortKey === 'happiness') v = p.score.happiness_index ?? NaN
-      else if (isPillarIndexMode(sortKey)) v = (p.score.livability_pillars as any)?.[sortKey]?.score ?? NaN
-      else v = p.score.status_signal ?? NaN
-      return boost && Number.isFinite(v) ? v * boost(p) : v
+      // p.score already reflects any scenery/outdoors sub-preference reweighting done in
+      // adjustedPlaces (see applyScenerySubPreferencesToScore), so no separate boost is
+      // needed here -- sorting on the real, already-patched score keeps sort order and
+      // displayed numbers consistent instead of a hidden multiplier reordering the list
+      // without the displayed score explaining why.
+      if (sortKey === 'homefit') return reweightScoreResponseFromPriorities(p.score, priorities).total_score
+      if (sortKey === 'longevity') return p.score.longevity_index ?? NaN
+      if (sortKey === 'happiness') return p.score.happiness_index ?? NaN
+      if (isPillarIndexMode(sortKey)) return (p.score.livability_pillars as any)?.[sortKey]?.score ?? NaN
+      return p.score.status_signal ?? NaN
     }
     const va = get(a)
     const vb = get(b)
@@ -88,29 +86,6 @@ function sortPlaces(
     return mult * (va - vb)
   })
   return out
-}
-
-/** Combined gradient multiplier from selected scenery + outdoors preferences for one place. */
-function computePreferenceMultiplier(
-  p: CatalogMapPlace,
-  filterNbTypes: string[],
-  filterAoTypes: string[],
-  filterWaterfrontSubPref: WaterfrontSubPreference | null
-): number {
-  let m = 1
-  if (filterNbTypes.length > 0 && filterNbTypes.length < 4) {
-    // Some metros (e.g. Seattle, rescored via rescore_natural_beauty_v9_offline.py) only
-    // have v9_breakdown nested under details, not duplicated to the top level the way a
-    // live score does -- same shape gap check_catalog_health.py already works around.
-    const nb = (p.score.livability_pillars as any)?.natural_beauty
-    const v9 = nb?.v9_breakdown ?? nb?.details?.v9_breakdown
-    m *= nbPreferenceMultiplier(v9, filterNbTypes as any)
-  }
-  if (filterAoTypes.length > 0 && filterAoTypes.length < 3) {
-    const bk = (p.score.livability_pillars as any)?.active_outdoors?.breakdown
-    m *= aoPreferenceMultiplier(bk, filterAoTypes as any, filterWaterfrontSubPref)
-  }
-  return m
 }
 
 export default function CatalogPageClient({
@@ -551,7 +526,7 @@ export default function CatalogPageClient({
 
     const f = { filterSchoolType }
     const workZone = findWorkZone(workZoneId)
-    return withIncome.map((p) => {
+    const withCommute = withIncome.map((p) => {
       const adjusted = { ...p, score: applyExplorerScoreAdjustments(p.score, f) }
       // Work zone replaces the CBD commute (display + commute filter) where precomputed times exist.
       if (!workZone) return adjusted
@@ -569,7 +544,28 @@ export default function CatalogPageClient({
         score: withCommuteTimePillar(adjusted.score, commute.filterMinutes),
       }
     })
-  }, [places, householdIncome, filterSchoolType, currentHomeMonthlyCost, currentHomeMatch, workZoneId])
+
+    // Scenery (NB) / outdoors (AO) sub-preferences reweight the pillar score itself (and, via
+    // total_score being recomputed from livability_pillars downstream, the overall HomeFit
+    // score too) instead of only reordering the list -- see applyScenerySubPreferencesToScore.
+    const hasScenaryOrOutdoorsPref =
+      (filterNbTypes.length > 0 && filterNbTypes.length < 4) || (filterAoTypes.length > 0 && filterAoTypes.length < 3)
+    if (!hasScenaryOrOutdoorsPref) return withCommute
+    return withCommute.map((p) => ({
+      ...p,
+      score: applyScenerySubPreferencesToScore(p.score, filterAoTypes, filterWaterfrontSubPref, filterNbTypes),
+    }))
+  }, [
+    places,
+    householdIncome,
+    filterSchoolType,
+    currentHomeMonthlyCost,
+    currentHomeMatch,
+    workZoneId,
+    filterNbTypes,
+    filterAoTypes,
+    filterWaterfrontSubPref,
+  ])
 
   const workZones = useMemo(() => availableWorkZones(places), [places])
 
@@ -665,9 +661,9 @@ export default function CatalogPageClient({
         }
       }
       // Scenery (NB) and outdoors (AO) preferences no longer exclude places here --
-      // they're a gradient sort boost instead (see computePreferenceMultiplier /
-      // the sortPlaces call below), so a place missing a selected trait sinks in
-      // rank rather than disappearing from results.
+      // adjustedPlaces already reweighted each place's own NB/AO pillar score (and, via
+      // total_score, its overall HomeFit score) toward the selection, so a place weak in
+      // a selected trait sinks in the score-based sort naturally rather than disappearing.
       if (!t) return true
       const name = (p.catalog.name || '').toLowerCase()
       const county = (p.catalog.county_borough || '').toLowerCase()
@@ -698,17 +694,7 @@ export default function CatalogPageClient({
       })
     }
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
-    const hasScenaryOrOutdoorsPref =
-      (filterNbTypes.length > 0 && filterNbTypes.length < 4) || (filterAoTypes.length > 0 && filterAoTypes.length < 3)
-    return sortPlaces(
-      list,
-      sortKey,
-      sortDir,
-      effectivePriorities,
-      hasScenaryOrOutdoorsPref
-        ? (p) => computePreferenceMultiplier(p, filterNbTypes, filterAoTypes, filterWaterfrontSubPref)
-        : undefined
-    )
+    return sortPlaces(list, sortKey, sortDir, effectivePriorities)
   }, [
     adjustedPlaces,
     filterText,
@@ -722,9 +708,6 @@ export default function CatalogPageClient({
     filterCommuteMax,
     filterHousingType,
     filterTenure,
-    filterNbTypes,
-    filterAoTypes,
-    filterWaterfrontSubPref,
     climatePrefs,
     indexMode,
     sortByName,
@@ -856,8 +839,8 @@ export default function CatalogPageClient({
           if (!matchesAny) r.push('Political lean')
         }
       }
-      // Scenery/outdoors preferences are a gradient sort boost now, not an
-      // exclusion reason -- see computePreferenceMultiplier.
+      // Scenery/outdoors preferences reweight each place's own score now (see
+      // applyScenerySubPreferencesToScore), not an exclusion reason.
       if (hasClimatePreferences(climatePrefs)) {
         const cm = scoreClimateMatch(p.climate, climatePrefs)
         if (cm && !isNaN(cm.score)) {
@@ -971,8 +954,8 @@ export default function CatalogPageClient({
           if (!passesAny) r.push('Tenure')
         }
       }
-      // Scenery/outdoors preferences are a gradient sort boost now, not an
-      // exclusion reason -- see computePreferenceMultiplier.
+      // Scenery/outdoors preferences reweight each place's own score now (see
+      // applyScenerySubPreferencesToScore), not an exclusion reason.
       for (const k of activeDealbreakerKeys) {
         if (!DEALBREAKER_CHECKS[k]?.(p)) r.push(`${PILLAR_META[k].name} must-have`)
       }
