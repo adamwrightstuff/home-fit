@@ -118,42 +118,75 @@ export function applyWaterfrontPreference(
   return Math.round((ranked.reduce((sum, s, i) => sum + (weights[i] / tot) * s, 0)) * 100) / 100
 }
 
-// ── AND-filter preference model ──────────────────────────────────────────────
-// Same reasoning as nbPreference.ts's nbPreferencePasses: "local parks + waterfront"
-// is a checklist, not a tradeoff to blend. Requires each selected sub-component to
-// independently clear a floor and never touches active_outdoors.score.
+// ── Gradient multiplier preference model ─────────────────────────────────────
+// Replaces the true-AND filter this used to be (6d7b639) for the same reason as
+// nbPreference.ts's nbPreferenceMultiplier: a hard floor gate removes a place
+// from results entirely the moment ANY selected trait misses its floor, which
+// risks an empty results page and treats "just below the 40th percentile" the
+// same as "has none of this at all." This keeps each selected sub-component
+// checked independently against its own floor, but turns the gate into a
+// multiplier (1.0 at/above floor, steep falloff below) instead of a pass/fail,
+// and multiplies every selected trait's multiplier together so a place missing
+// one of several picks still gets compounded down. Never mutates
+// active_outdoors.score -- only used to weight sort order (see
+// computePreferenceMultiplier in catalog-page-client.tsx).
 //
-// Floors are the 40th percentile of each raw component (normalized to 0-100) across
-// the current NYC/SF/LA/Seattle catalog -- see nbPreference.ts for the same
-// derivation and its staleness caveat.
+// Floors are the 40th percentile of each raw component (normalized to 0-100)
+// across the current NYC/SF/LA/Seattle catalog -- see
+// scripts/baselines/compute_preference_floors.py.
 export const AO_PREFERENCE_FLOOR: Record<AoNumericKey, number> = {
-  daily_urban_outdoors: 63,
-  wild_adventure: 83,
-  waterfront_lifestyle: 62,
+  daily_urban_outdoors: 57,
+  wild_adventure: 70,
+  waterfront_lifestyle: 65,
 }
 
+// 40th percentile of each waterfront sub-type, computed only over places where
+// that sub-type is actually nonzero (most places are inland and score a flat 0 on
+// e.g. bay_harbor, so an all-places percentile would just be 0 and gate nothing --
+// see scripts/baselines/compute_preference_floors.py). bay_harbor has zero
+// nonzero places in the current 4-metro catalog, so it falls back to the
+// lake_river floor as a placeholder; recompute once a real bay/harbor-winning
+// place exists in the catalog.
+export const AO_WATERFRONT_SUBTYPE_FLOOR: Record<WaterfrontSubPreference, number> = {
+  ocean_beach: 85,
+  lake_river: 65,
+  bay_harbor: 65,
+}
+
+// See nbPreference.ts's NB_TRAIT_EXPONENT for the rationale (steep but not a cliff).
+const AO_TRAIT_EXPONENT = 4
+
 /**
- * Does this place clear every selected AO sub-preference's floor, independently?
- * True AND, never mutates active_outdoors.score. When `waterfrontSub` is given and
- * `waterfront` is one of the selected preferences, also requires that specific water
- * type to actually be present (not just any waterfront_lifestyle score).
+ * Gradient multiplier (0-1] for how well this place matches every selected AO
+ * sub-preference, compounded across preferences. 1.0 when no preferences are
+ * selected or the place has no AO breakdown (null-safe, never penalizes a gap).
+ * When `waterfrontSub` is given and `waterfront` is selected, also folds in a
+ * multiplier for that specific water type's own floor (not just any
+ * waterfront_lifestyle score).
  */
-export function aoPreferencePasses(
+export function aoPreferenceMultiplier(
   breakdown: AoBreakdown | undefined | null,
   preferences: AoPreference[],
   waterfrontSub?: WaterfrontSubPreference | null,
-): boolean {
-  if (!breakdown || preferences.length === 0) return true
+): number {
+  if (!breakdown || preferences.length === 0) return 1
+  let multiplier = 1
   for (const pref of preferences) {
     const key = PREFERENCE_AO_COMPONENTS[pref]
     const raw = breakdown[key]
-    if (typeof raw !== 'number') return false
-    const normalized = Math.min(100, (raw / AO_COMPONENT_MAX[key]) * 100)
-    if (normalized < (AO_PREFERENCE_FLOOR[key] ?? 0)) return false
+    if (typeof raw === 'number') {
+      const normalized = Math.min(100, (raw / AO_COMPONENT_MAX[key]) * 100)
+      const floor = AO_PREFERENCE_FLOOR[key] ?? 0
+      const ratio = floor > 0 ? Math.min(1, normalized / floor) : 1
+      multiplier *= ratio ** AO_TRAIT_EXPONENT
+    }
     if (pref === 'waterfront' && waterfrontSub) {
       const wb = breakdown.waterfront_breakdown
-      if (!wb || !((wb[waterfrontSub] ?? 0) > 0)) return false
+      const subVal = wb?.[waterfrontSub] ?? 0
+      const subFloor = AO_WATERFRONT_SUBTYPE_FLOOR[waterfrontSub] ?? 0
+      const ratio = subFloor > 0 ? Math.min(1, subVal / subFloor) : 1
+      multiplier *= ratio ** AO_TRAIT_EXPONENT
     }
   }
-  return true
+  return multiplier
 }
