@@ -37,12 +37,11 @@ export function applyExplorerScoreAdjustments(score: ScoreResponse, f: ScoreAffe
     }
   }
 
-  // NB scenery and AO sub-component preferences no longer rewrite scores here -- they're
-  // AND-filters now (nbPreferencePasses / aoPreferencePasses in lib/nbPreference.ts and
-  // lib/aoPreference.ts, applied in the catalog page's visibility filter), so
-  // natural_beauty.score and active_outdoors.score stay the same for every user and every
-  // composite that reads them (happiness_index, longevity_index, status_signal) stays
-  // consistent. See CLAUDE.md-adjacent design note in nbPreference.ts for why.
+  // NB scenery and AO sub-component preferences aren't handled here -- they're applied
+  // separately in the catalog page's adjustedPlaces pipeline via
+  // applyScenerySubPreferencesToScore (lib/reweight.ts), which patches
+  // natural_beauty.score/active_outdoors.score directly (and, via total_score being
+  // recomputed downstream, the overall HomeFit score too).
 
   return out
 }
