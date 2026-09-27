@@ -382,32 +382,39 @@ export function estimatedDriveMinutes(
  * instead of an invisible ceiling effect.
  *
  * The bonus amount and the cap are round placeholder constants, not fitted or sourced. The
- * "counts as close" threshold is: PMC10645308's own long-distance cutoff (>25km, their own
- * boundary, not ours) and the Compton-Pollak "close" definition (25-30mi, a different paper's
- * own boundary) each convert, through this file's suburban-baseline speed, to a close-tie-curve
- * score of ~75 and ~69-70 respectively -- two independent sources bracketing ~70-75. 70 is the
- * stricter end of that bracket (a point must clear both sources' sense of "still local", not
- * just the more generous one), not a target solved backward for.
+ * "counts as close" threshold is tier-specific, each derived from the paper its own curve is
+ * actually built on rather than one number borrowed across both:
+ * - Close tie: PMC10645308's own long-distance cutoff (>25km, their own boundary) and the
+ *   Compton-Pollak "close" definition (25-30mi, a different paper's own boundary) each convert,
+ *   through this file's suburban-baseline speed, to a close-tie-curve score of ~75 and ~69-70
+ *   respectively -- two independent sources bracketing ~70-75. 70 is the stricter end.
+ * - Acquaintance: the same "convenient driving distance" study the acquaintance curve's own
+ *   30min knot already comes from (mean 17.9min + 1SD = ~28.7min) scores ~60 on that curve.
+ *   Using the close-tie threshold (70) here would exclude someone at 27-28min even though
+ *   that's within the source study's own "still convenient" range -- a mismatch, not a choice.
  */
-const SOCIAL_CONNECTION_BONUS_THRESHOLD = 70
+const SOCIAL_CONNECTION_BONUS_THRESHOLD: Record<SocialConnectionTier, number> = {
+  close: 70,
+  acquaintance: 60,
+}
 const SOCIAL_CONNECTION_BONUS_PER_EXTRA_POINT = 5
 const SOCIAL_CONNECTION_MAX_BONUS_POINTS = 2
 
 export function socialConnectionScore(
   points: Array<{ tier: SocialConnectionTier; minutes: number | null | undefined }>
 ): number | null {
-  const proximities: number[] = []
+  const scored: Array<{ tier: SocialConnectionTier; proximity: number }> = []
   for (const p of points) {
     const proximity = TIE_PROXIMITY_CURVE[p.tier](p.minutes)
     if (proximity === null) continue
-    proximities.push(proximity)
+    scored.push({ tier: p.tier, proximity })
   }
-  if (proximities.length === 0) return null
-  proximities.sort((a, b) => b - a)
-  const [best, ...rest] = proximities
-  const bonusEligibleCount = rest.filter((p) => p >= SOCIAL_CONNECTION_BONUS_THRESHOLD).length
+  if (scored.length === 0) return null
+  scored.sort((a, b) => b.proximity - a.proximity)
+  const [best, ...rest] = scored
+  const bonusEligibleCount = rest.filter((p) => p.proximity >= SOCIAL_CONNECTION_BONUS_THRESHOLD[p.tier]).length
   const bonus = Math.min(bonusEligibleCount, SOCIAL_CONNECTION_MAX_BONUS_POINTS) * SOCIAL_CONNECTION_BONUS_PER_EXTRA_POINT
-  return Math.min(100, Math.round((best + bonus) * 10) / 10)
+  return Math.min(100, Math.round((best.proximity + bonus) * 10) / 10)
 }
 
 /**
