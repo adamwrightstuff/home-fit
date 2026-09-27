@@ -25,7 +25,7 @@ export function findWorkZone(id: string | null): WorkZone | null {
   return (id && WORK_ZONES.find((z) => z.id === id)) || null
 }
 
-function haversineMiles(aLat: number, aLon: number, bLat: number, bLon: number): number {
+export function haversineMiles(aLat: number, aLon: number, bLat: number, bLon: number): number {
   const toRad = (d: number) => (d * Math.PI) / 180
   const dLat = toRad(bLat - aLat)
   const dLon = toRad(bLon - aLon)

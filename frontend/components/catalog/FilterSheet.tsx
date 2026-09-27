@@ -7,6 +7,8 @@ import { type ClimatePreferences } from '@/lib/climatePreferences'
 import { X } from 'lucide-react'
 import { type WorkZone, findWorkZone } from '@/lib/workZones'
 import WorkHubPicker, { type WorkAddressResult } from './WorkHubPicker'
+import PeopleYouKnowPicker from './PeopleYouKnowPicker'
+import type { SocialConnectionPerson } from '@/lib/socialConnections'
 
 const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'urban_core', label: 'Urban Core' },
@@ -68,6 +70,11 @@ interface FilterSheetProps {
   /** Opt-in commute_time pillar weight (see lib/reweight.ts); only shown once a work hub is selected. */
   commutePriority: 'None' | 'Low' | 'Medium' | 'High'
   onCommutePriorityChange: (v: 'None' | 'Low' | 'Medium' | 'High') => void
+  people: SocialConnectionPerson[]
+  onPeopleChange: (people: SocialConnectionPerson[]) => void
+  /** Opt-in social_connection pillar weight (see lib/reweight.ts); only shown once someone's added. */
+  socialConnectionPriority: 'None' | 'Low' | 'Medium' | 'High'
+  onSocialConnectionPriorityChange: (v: 'None' | 'Low' | 'Medium' | 'High') => void
   climatePrefs: ClimatePreferences
   onClimatePrefsChange: (v: ClimatePreferences) => void
   resultCount: number
@@ -127,6 +134,10 @@ export default function FilterSheet({
   onWorkAddressSubmit,
   commutePriority,
   onCommutePriorityChange,
+  people,
+  onPeopleChange,
+  socialConnectionPriority,
+  onSocialConnectionPriorityChange,
   climatePrefs,
   onClimatePrefsChange,
   resultCount,
@@ -535,6 +546,30 @@ export default function FilterSheet({
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {(['None', 'Low', 'Medium', 'High'] as const).map((level) =>
                     chip(commutePriority === level, level, () => onCommutePriorityChange(level))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* People You Know */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>People You Know</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+              Add the people you'd want to stay close to. A close family member or friend still
+              counts even if they're a bit of a drive; casual friends and neighbors mostly matter
+              nearby.
+            </div>
+            <PeopleYouKnowPicker people={people} onPeopleChange={onPeopleChange} />
+            {people.length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+                  How much should being close to them count toward your HomeFit score? Not a
+                  research-backed pillar like the 13 above -- a rough estimate, and off by default.
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {(['None', 'Low', 'Medium', 'High'] as const).map((level) =>
+                    chip(socialConnectionPriority === level, level, () => onSocialConnectionPriorityChange(level))
                   )}
                 </div>
               </div>

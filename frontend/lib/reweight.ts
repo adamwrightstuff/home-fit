@@ -1,6 +1,7 @@
 import type { ScoreResponse } from '@/types/api'
 import { PILLAR_ORDER, SCORE_BANDS, type PillarKey, computeHappinessIndex } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
+import { haversineMiles } from '@/lib/workZones'
 
 type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
 
@@ -268,6 +269,132 @@ export function withCommuteTimePillar(data: ScoreResponse, minutes: number | nul
         contribution: 0,
         importance_level: null,
         breakdown: { minutes: Math.round((minutes as number) * 10) / 10 },
+      },
+    } as any,
+  }
+}
+
+/**
+ * Social-connection pillar score (opt-in, catalog-explorer only, same non-backend mechanism
+ * as commute_time above -- see CLAUDE.md, this isn't one of the 13 research-backed pillars).
+ * User supplies named points (family/friends' homes) tagged by tie strength; each point's
+ * proximity decays on its own curve, then all points combine via noisy-OR so one very close
+ * tie can carry the score alone while several weaker ties still add up with diminishing
+ * returns, rather than everything averaging down to "medium." Curve anchors and the noisy-OR
+ * choice over averaging/nearest-only are researched in this session, not invented:
+ * - Close tie: flat 100 through 50min (HRS study on relocation found no significant
+ *   in-person-contact difference under a ~50-mile move; below that threshold distance isn't
+ *   predictive), decaying to 65 by 120min (partial, not total, falloff -- matches the ~0.3
+ *   effect size the same study found for moves >=50mi), floored at 40 beyond that (long-
+ *   distance strong ties persist via a selection effect and keep exchanging real support --
+ *   documented in the sociology literature, not assumed).
+ * - Acquaintance: 100 only through 18min (anchored on a study's measured mean "convenient
+ *   driving distance" of 17.9min, SD 10.8), dropping to 55 by 30min (~mean+1SD, where
+ *   "convenient" stops covering most respondents), 10 by 60min, 0 by 75min with no floor --
+ *   casual ties are the proximity-dependent category with no long-distance selection effect.
+ * Both curves are placeholder-quality like commute_time's, anchored on real numbers where
+ * research gave them, interpolated where it didn't -- not calibrated to pillar-grade rigor.
+ */
+export type SocialConnectionTier = 'close' | 'acquaintance'
+
+export interface SocialConnectionPoint {
+  lat: number
+  lon: number
+  tier: SocialConnectionTier
+  label?: string
+}
+
+export function closeTieProximityScore(minutes: number | null | undefined): number | null {
+  if (minutes === null || minutes === undefined || !Number.isFinite(minutes) || minutes < 0) return null
+  if (minutes <= 50) return 100
+  if (minutes <= 120) return 100 - (minutes - 50) * (35 / 70)
+  return Math.max(40, 65 - (minutes - 120) * (25 / 120))
+}
+
+export function acquaintanceProximityScore(minutes: number | null | undefined): number | null {
+  if (minutes === null || minutes === undefined || !Number.isFinite(minutes) || minutes < 0) return null
+  if (minutes <= 18) return 100
+  if (minutes <= 30) return 100 - (minutes - 18) * (45 / 12)
+  if (minutes <= 60) return 55 - (minutes - 30) * (45 / 30)
+  if (minutes <= 75) return 10 - (minutes - 60) * (10 / 15)
+  return 0
+}
+
+const TIE_PROXIMITY_CURVE: Record<SocialConnectionTier, (minutes: number | null | undefined) => number | null> = {
+  close: closeTieProximityScore,
+  acquaintance: acquaintanceProximityScore,
+}
+
+/**
+ * Area-type drive speed table, reused from the air-travel dealbreaker above -- these are
+ * general-purpose area-type driving speeds, not airport-specific, and there's no precomputed
+ * routing to arbitrary user-picked points the way work_commute precomputes work hubs, so
+ * straight-line distance + area-type speed + road circuity is the estimate, same approach as
+ * passesAirTravelDealbreaker.
+ */
+export function estimatedDriveMinutes(
+  originLat: number,
+  originLon: number,
+  destLat: number,
+  destLon: number,
+  effectiveAreaType: string | null | undefined
+): number {
+  const miles = haversineMiles(originLat, originLon, destLat, destLon)
+  const km = miles * 1.60934
+  const kmh = AIRPORT_DRIVE_KMH[(effectiveAreaType || '').toLowerCase()] ?? 50.0
+  return (km * ROAD_CIRCUITY) / kmh * 60.0
+}
+
+/**
+ * Noisy-OR combine: raw = 1 - Π(1 - proximity_i). One close tie at full proximity alone
+ * saturates the score; a cluster of weaker ties still lifts it, with each additional one
+ * mattering less than the last. Rejected flat-averaging (one far tie shouldn't drag down one
+ * close tie) and nearest-point-only (throws away the "network size" signal entirely).
+ */
+export function socialConnectionScore(
+  points: Array<{ tier: SocialConnectionTier; minutes: number | null | undefined }>
+): number | null {
+  let productOfComplements = 1
+  let sawAny = false
+  for (const p of points) {
+    const proximity = TIE_PROXIMITY_CURVE[p.tier](p.minutes)
+    if (proximity === null) continue
+    sawAny = true
+    productOfComplements *= 1 - proximity / 100
+  }
+  if (!sawAny) return null
+  return Math.round((1 - productOfComplements) * 1000) / 10
+}
+
+/**
+ * Injects a synthetic social_connection pillar into a catalog place's score, same mechanism
+ * as withCommuteTimePillar: any key in livability_pillars with a numeric score is eligible for
+ * a token share via prioritiesToTokens' extra-keys handling. No-ops when there are no usable
+ * points (none supplied, or none with a resolvable minutes value), so the pillar doesn't
+ * appear and gets no weight.
+ */
+export function withSocialConnectionPillar(
+  data: ScoreResponse,
+  points: Array<{ tier: SocialConnectionTier; minutes: number | null | undefined; label?: string }>
+): ScoreResponse {
+  const score = socialConnectionScore(points)
+  if (score === null) return data
+  return {
+    ...data,
+    livability_pillars: {
+      ...data.livability_pillars,
+      social_connection: {
+        score,
+        weight: 0,
+        contribution: 0,
+        importance_level: null,
+        breakdown: {
+          points: points.map((p) => ({
+            tier: p.tier,
+            minutes: typeof p.minutes === 'number' ? Math.round(p.minutes * 10) / 10 : null,
+            label: p.label ?? null,
+          })),
+        },
       },
     } as any,
   }

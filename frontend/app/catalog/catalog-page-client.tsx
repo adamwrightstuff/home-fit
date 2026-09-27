@@ -36,7 +36,8 @@ import {
 } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker, withCommuteTimePillar } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker, withCommuteTimePillar, withSocialConnectionPillar, estimatedDriveMinutes } from '@/lib/reweight'
+import { loadPeople, savePeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { type WaterfrontSubPreference, aoPreferenceMultiplier } from '@/lib/aoPreference'
 import { nbPreferenceMultiplier } from '@/lib/nbPreference'
 import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
@@ -203,6 +204,14 @@ export default function CatalogPageClient({
       return f?.climatePrefs && typeof f.climatePrefs === 'object' ? f.climatePrefs : {}
     } catch { return {} }
   })
+  // Long-lived (localStorage, not the sessionStorage filters above) -- who you're close to
+  // doesn't reset every visit the way search filters should.
+  const [people, setPeople] = useState<SocialConnectionPerson[]>([])
+  useEffect(() => { setPeople(loadPeople()) }, [])
+  const handlePeopleChange = useCallback((next: SocialConnectionPerson[]) => {
+    setPeople(next)
+    savePeople(next)
+  }, [])
 /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>(() => {
     try {
@@ -552,24 +561,43 @@ export default function CatalogPageClient({
     const f = { filterSchoolType }
     const workZone = findWorkZone(workZoneId)
     return withIncome.map((p) => {
-      const adjusted = { ...p, score: applyExplorerScoreAdjustments(p.score, f) }
+      let adjusted = { ...p, score: applyExplorerScoreAdjustments(p.score, f) }
+
       // Work zone replaces the CBD commute (display + commute filter) where precomputed times exist.
-      if (!workZone) return adjusted
-      const commute = commuteToZone(p.work_commute, workZone)
-      // No time to this hub (e.g. another metro): keep the CBD display but exempt it from the commute filter.
-      if (!commute) return { ...adjusted, commute_off_zone: true }
-      return {
-        ...adjusted,
-        // No usable mode (e.g. no transit to a transit-only hub) must fail any max-commute filter.
-        cbd_transit_minutes: commute.filterMinutes ?? Number.POSITIVE_INFINITY,
-        cbd_transit_dest: null,
-        commute_text: formatZoneCommute(workZone, commute),
-        // Optional commute_time pillar (see reweight.ts) -- only meaningful once a work hub is
-        // picked, and only when this place has a usable precomputed time to it.
-        score: withCommuteTimePillar(adjusted.score, commute.filterMinutes),
+      if (workZone) {
+        const commute = commuteToZone(p.work_commute, workZone)
+        if (!commute) {
+          adjusted = { ...adjusted, commute_off_zone: true }
+        } else {
+          adjusted = {
+            ...adjusted,
+            // No usable mode (e.g. no transit to a transit-only hub) must fail any max-commute filter.
+            cbd_transit_minutes: commute.filterMinutes ?? Number.POSITIVE_INFINITY,
+            cbd_transit_dest: null,
+            commute_text: formatZoneCommute(workZone, commute),
+            // Optional commute_time pillar (see reweight.ts) -- only meaningful once a work hub is
+            // picked, and only when this place has a usable precomputed time to it.
+            score: withCommuteTimePillar(adjusted.score, commute.filterMinutes),
+          }
+        }
       }
+
+      // Optional social_connection pillar (see lib/reweight.ts) -- only meaningful once at least
+      // one person has been added. No precomputed routing to arbitrary addresses exists, so
+      // minutes come from estimatedDriveMinutes' straight-line + area-type-speed estimate.
+      if (people.length > 0 && typeof p.catalog?.lat === 'number' && typeof p.catalog?.lon === 'number') {
+        const areaType = p.score.data_quality_summary?.area_classification?.area_type ?? null
+        const points = people.map((person) => ({
+          tier: person.tier,
+          minutes: estimatedDriveMinutes(person.lat, person.lon, p.catalog.lat, p.catalog.lon, areaType),
+          label: person.label,
+        }))
+        adjusted = { ...adjusted, score: withSocialConnectionPillar(adjusted.score, points) }
+      }
+
+      return adjusted
     })
-  }, [places, householdIncome, filterSchoolType, currentHomeMonthlyCost, currentHomeMatch, workZoneId])
+  }, [places, householdIncome, filterSchoolType, currentHomeMonthlyCost, currentHomeMatch, workZoneId, people])
 
   const workZones = useMemo(() => availableWorkZones(places), [places])
 
@@ -2021,6 +2049,10 @@ export default function CatalogPageClient({
         onWorkAddressSubmit={setWorkAddress}
         commutePriority={priorities.commute_time ?? 'None'}
         onCommutePriorityChange={(v) => setPriorities((prev) => ({ ...prev, commute_time: v }))}
+        people={people}
+        onPeopleChange={handlePeopleChange}
+        socialConnectionPriority={priorities.social_connection ?? 'None'}
+        onSocialConnectionPriorityChange={(v) => setPriorities((prev) => ({ ...prev, social_connection: v }))}
         climatePrefs={climatePrefs}
         onClimatePrefsChange={setClimatePrefs}
         resultCount={gatedPlaces.length}
