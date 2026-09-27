@@ -173,31 +173,29 @@ displayed score; both downstream clamps (`min(25.0, ...)`, `min(100.0, ...)`) ab
 overflow risk. Reverified against the live CSV export after shipping — Larchmont, Mamaroneck,
 Coney Island, and Long Beach all now correctly pick their own real named beach.
 
-### `ocean_beach` category conflates real beach with plain coastline/harbor (OPEN)
+### `ocean_beach` category conflated real beach with plain coastline/harbor (SHIPPED — coastline split; see below for the definition question this raised)
 
-Independent of the false-ocean-confirmation bug above. `_WATERFRONT_CATEGORY` buckets `beach`, `coastline`, and
-`coastline_rocky` into the same `ocean_beach` output category. A place whose winning feature is
-plain `natural=coastline` (harbor edge, no swimmable beach — e.g. Carroll Gardens, whose winning
-feature is real Upper NY Bay coastline, correctly computed, no bug) gets the same category label
-as a place with an actual sand beach (e.g. Larchmont's Manor Beach). The math is correct in both
-cases; the label misrepresents what's actually there.
+`_WATERFRONT_CATEGORY` used to bucket `beach`, `coastline`, and `coastline_rocky` into the same
+`ocean_beach` output category. A place whose winning feature was plain `natural=coastline`
+(harbor edge, no beach — e.g. Carroll Gardens, real Upper NY Bay coastline) got the same label as
+a place with an actual sand beach (e.g. Larchmont's Manor Beach). Fixed by splitting `coastline`/
+`coastline_rocky` into their own `waterfront_access` category (`6945492`). Validated against
+NYC's 133-place rescore: only 4 places win on `coastline` at all (Cos Cob, Edgewater, Leonia,
+Mount Vernon — real waterfront towns, none of them beach destinations), 0 of 16 ground-truth
+beach towns win on `coastline`, so the split cost no real beach town its score.
 
-**Fix:** split the category so `ocean_beach` requires a `beach`/`swimming_area` winner
-specifically; anything where `coastline`/`bay` wins becomes a separate category (e.g.
-`waterfront_access`) instead of being folded into "beach." Same OSM data, no new source, but
-this is a bigger surface-area change than the false-ocean-confirmation fix since it touches the AND-filter floors
-shipped in `frontend/lib/aoPreference.ts` today (`AO_PREFERENCE_FLOOR`, `PREFERENCE_AO_COMPONENTS`)
-and the `waterfront_breakdown` shape the frontend already reads.
-
-**Checked: is `coastline` (as opposed to `beach`) actually needed to cover real beach towns?**
-No. Of NYC's 133 rescored places, only 4 win on `coastline` type at all (Cos Cob, Edgewater,
-Leonia, Mount Vernon) — real Hudson River/Long Island Sound waterfront towns, none of them
-actual beach destinations, all scoring a moderate 16.2/25. Zero of the 16 real ground-truth
-beach towns checked win on `coastline`. Splitting the category costs no real beach town its
-score.
-
-**Priority:** medium — not a bug, but an active mislabeling that misleads anyone using the
-waterfront preference to mean "can I swim here."
+**Resolved definition question raised after shipping this:** does `ocean_beach` require
+swimmability? Initially assumed yes, and started designing tag-based fixes (OSM `swimming` tag,
+name-keyword detection for kayak/launch features) to downgrade non-swim beaches. Rejected after
+checking real beach-activity research — the Outdoor Foundation's 2025 Outdoor Participation
+Trends Report, a Kailua Beach Park usage study, and Hawaii DBEDT's visitor survey all find
+walking and sunbathing are the most common beach activities, consistently ahead of swimming.
+So `ocean_beach` correctly means general beach lifestyle (walking, sunbathing, views, casual
+paddle/boat access) — not swim access specifically. Non-swim beaches that already win this
+category today (Gansevoort Peninsula, Pier 4 Beach, Hallet's Cove, Dyckman St. Beach) are
+correctly scored as-is; no code change needed beyond correcting the stale comment in
+`pillars/active_outdoors.py` (`_WATERFRONT_CATEGORY`) that had described the split in swim-specific
+terms. No swim-tag gate was ever shipped.
 
 ### Cross-neighborhood reuse of one real beach within the 15-18km search radius (OPEN)
 
@@ -235,3 +233,83 @@ beach-vs-coastline labels, not reuse of the same beach across many unrelated pla
 
 **Priority:** medium — a meaningful fraction of `ocean_beach` near-max scores in dense NYC
 neighborhoods reflect a borrowed beach several km away rather than a real local amenity.
+
+### 15km trail-count radius draws from the same citywide pool for most neighborhoods in a metro (OPEN)
+
+`wild_adventure`'s trail count queries `route=hiking` within 15km — a circle roughly the size of
+NYC itself. Different, unrelated neighborhoods showed identical or near-identical trail counts
+(Astoria, Bay Ridge, Bed-Stuy, and Bensonhurst all stored `count_total=30`; a separate cluster of
+NYC places plus Boyle Heights, LA all stored `count_total=10`). Initially suspected as a caching
+bug — traced the cache-key generation directly (`_generate_cache_key` in `data_sources/cache.py`)
+using each place's real stored coordinates and confirmed all four produce distinct, correctly-keyed
+cache entries (no collision at that layer). A live re-pull of Astoria's own trail data returned 27
+relations (vs. the stored 30) at a slightly different query center within the neighborhood,
+consistent with normal circle-boundary movement, not a bug.
+
+**Root cause (not a bug):** at 15km, a metro like NYC has a relatively small, finite pool of
+named/tagged hiking-route relations (Prospect Park's color-coded loops, NYC Parks path networks,
+Empire State Trail segments). Most neighborhoods' 15km circles overlap this same pool almost
+entirely, so many different places legitimately converge on the same or a very similar count —
+independent of the trail-tag/urban-vs-wild question tracked elsewhere in this file. Same
+underlying issue as the beach-reuse problem above, one level up: too large a radius relative to
+the size of the thing being measured, applied uniformly regardless of area type.
+
+**Fix:** not yet designed. A smaller trail radius (or one that scales with area_type/metro
+density rather than a flat 15km for every place) is the likely direction, but hasn't been
+tested against real data yet.
+
+**Priority:** medium — doesn't change any specific place's score by itself, but explains why
+trail count so often fails to distinguish one urban neighborhood's real outdoor access from
+another's (feeds the "urban wild_adventure inflated" problem above).
+
+### Urban trail-count fragmentation discount (SHIPPED, `urban_residential` only)
+
+Root cause of the wild_adventure inflation for dense urban neighborhoods: trail count
+accounted for a mean of 72% of the entire wild_adventure score across 114 real
+urban_residential places (Westwood, Great Kills, Riverdale, Yonkers, Stamford, West
+Hollywood, Hollywood, Washington Heights, Outer Richmond, Brooklyn Heights all hit the
+50/50 cap or close, 34-37 of those points from trail count alone) — meaning wild_adventure
+was effectively just a trail-count score wearing a thin coat of paint.
+
+Investigated why: live-pulled real trail data (name, lat/lon, operator) for Astoria,
+Carroll Gardens, and Boyle Heights. Found one real park's trail network is commonly
+mapped as many separate OSM relations (color-coded loop segments — Teatown Lake
+Reservation alone accounts for ~10 separate relations in Chappaqua's data; Astoria's 27
+"trails" traced back to one park, Inwood Hill/Van Cortlandt). A naive fix (site-clustering
+via nearest-neighbor chaining) was tried and rejected: tested against Mt. Tamalpais/Marin
+Municipal Water District (Fairfax, CA), it collapsed a genuinely large, real 47-trail
+wilderness network into one false "site" at any threshold generous enough to do useful
+merging (chaining problem — if A links to B and B links to C, A and C merge even when far
+apart). Switched to bounded-diameter (complete-linkage) clustering instead, which requires
+every pair within a cluster to stay under the threshold, not just adjacent pairs — this
+did not collapse Mt. Tamalpais's network and produced stable cluster counts (29/26/18
+clusters at 800m/1200m/2000m thresholds, no runaway merging).
+
+**Measurement:** ran bounded-diameter clustering (1200m threshold) against real trail data
+for 8 NYC urban_residential neighborhoods (Bay Ridge, Bed-Stuy, Bensonhurst, Washington
+Heights, Harlem, Sunset Park, Flushing, Ridgewood) — raw trail count vs. distinct clustered
+sites, both counted within each place's own 15km radius. Result: raw count overstated real
+distinct sites by a mean of 2.6x (median 2.8x, range 1.6x-3.3x, n=8).
+
+**Fix shipped:** `_score_wild_adventure_v2` divides `trail_count`/`near_count` by 2.6 before
+scoring, applied only when `baseline_context == "urban_residential"`. Suburban/exurban/rural
+are untouched — Chappaqua (suburban) and Fairfax (near Mt. Tamalpais) both showed
+genuinely large real trail networks, not the same fragmentation severity, and applying an
+unvalidated discount there risked under-crediting real wilderness access the way the
+clustering algorithm almost did.
+
+**Known limits, explicitly not resolved:**
+- Single-metro sample (NYC only, n=8). Not validated against LA/SF/Seattle.
+- Separately (not fixed by this discount): giant multi-hundred-mile trails get miscounted
+  as local access regardless of area type — e.g. "Long Path" showing up in Chappaqua's data
+  with a computed center 114km away, "California Mission Trail" showing up near Boyle
+  Heights with segments 18-39km away. Caused by Overpass's `around` filter matching on
+  partial geometry overlap while the codebase's distance field reflects the relation's full
+  centroid. A blunt distance-based filter was considered and rejected: it would also
+  exclude genuinely local segments of real long-distance trails (e.g. Long Path legitimately
+  passing through/near a town), which is a real amenity, not a false positive. No fix
+  designed yet.
+- ÷2.6 is a discount on the existing raw-count formula, not a true distinct-site count. It
+  is deliberately the honest, small, validated fix for the specific problem measured
+  (urban_residential trail-count inflation) — not a claim that wild_adventure now measures
+  real site counts everywhere.
