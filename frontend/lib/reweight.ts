@@ -374,16 +374,22 @@ export function estimatedDriveMinutes(
 
 /**
  * Nearest-tie-plus-bonus: score is whoever's closest, plus a small flat bonus for each
- * additional point that's also meaningfully close (up to a cap). Deliberately simple and
- * explicitly NOT research-derived at the number level -- the bonus amount, the "counts as
- * close" threshold, and the cap are round placeholder constants, not fitted or sourced. Chosen
- * over an earlier noisy-OR combine, which let a single point above the close-tie plateau
- * instantly saturate every place in that tie's whole metro to ~100 regardless of the rest of
- * the list, with no way to tell places in that metro apart on this pillar anymore. This version
- * still lets one very close tie carry most of the score, but multiple close ties add a
- * visible, bounded, honestly-arbitrary bump instead of an invisible ceiling effect.
+ * additional point that's also meaningfully close (up to a cap). Chosen over an earlier
+ * noisy-OR combine, which let a single point above the close-tie plateau instantly saturate
+ * every place in that tie's whole metro to ~100 regardless of the rest of the list, with no way
+ * to tell places in that metro apart on this pillar anymore. This version still lets one very
+ * close tie carry most of the score, but multiple close ties add a visible, bounded bump
+ * instead of an invisible ceiling effect.
+ *
+ * The bonus amount and the cap are round placeholder constants, not fitted or sourced. The
+ * "counts as close" threshold is: PMC10645308's own long-distance cutoff (>25km, their own
+ * boundary, not ours) and the Compton-Pollak "close" definition (25-30mi, a different paper's
+ * own boundary) each convert, through this file's suburban-baseline speed, to a close-tie-curve
+ * score of ~75 and ~69-70 respectively -- two independent sources bracketing ~70-75. 70 is the
+ * stricter end of that bracket (a point must clear both sources' sense of "still local", not
+ * just the more generous one), not a target solved backward for.
  */
-const SOCIAL_CONNECTION_BONUS_THRESHOLD = 50
+const SOCIAL_CONNECTION_BONUS_THRESHOLD = 70
 const SOCIAL_CONNECTION_BONUS_PER_EXTRA_POINT = 5
 const SOCIAL_CONNECTION_MAX_BONUS_POINTS = 2
 
