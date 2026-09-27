@@ -11,9 +11,9 @@ export default function QuizPage() {
   function handleApply(payload: QuizPayload) {
     try {
       const merged = { ...DEFAULT_PRIORITIES, ...payload.priorities } as PillarPriorities
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       const opts = stored ? JSON.parse(stored) : {}
-      sessionStorage.setItem('homefit_search_options', JSON.stringify({
+      localStorage.setItem('homefit_search_options', JSON.stringify({
         ...opts,
         quiz_override: true,
         priorities: merged,

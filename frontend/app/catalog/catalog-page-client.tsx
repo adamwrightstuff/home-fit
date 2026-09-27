@@ -107,13 +107,13 @@ export default function CatalogPageClient({
   const [indexMode, setIndexMode] = useState<CatalogMapIndexMode>('homefit')
   const [priorities, setPriorities] = useState<PillarPriorities>(() => {
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       if (stored) {
         const parsed = JSON.parse(stored)
         const merged = { ...DEFAULT_PRIORITIES }
         const valid: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
         const source = parsed.priorities ?? parsed
-        for (const k of [...PILLAR_ORDER, 'natural_beauty', 'commute_time'] as PillarKey[]) {
+        for (const k of [...PILLAR_ORDER, 'natural_beauty', 'commute_time', 'social_connection'] as PillarKey[]) {
           if (valid.includes(source[k])) merged[k] = source[k]
         }
         return merged
@@ -123,59 +123,59 @@ export default function CatalogPageClient({
   })
   const [filterPoliticalLean, setFilterPoliticalLean] = useState<string[]>(() => {
     try {
-      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       return Array.isArray(f?.filterPoliticalLean) ? f.filterPoliticalLean : []
     } catch { return [] }
   })
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>(() => {
     try {
-      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       return Array.isArray(f?.filterNbTypes) ? f.filterNbTypes : []
     } catch { return [] }
   })
   const [filterAoTypes, setFilterAoTypes] = useState<string[]>(() => {
     try {
-      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       return Array.isArray(f?.filterAoTypes) ? f.filterAoTypes : []
     } catch { return [] }
   })
   const [filterWaterfrontSubPref, setFilterWaterfrontSubPref] = useState<WaterfrontSubPreference | null>(null)
   const [filterHousingType, setFilterHousingType] = useState<string[]>(() => {
     try {
-      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       return Array.isArray(f?.filterHousingType) ? f.filterHousingType : []
     } catch { return [] }
   })
   const [filterTenure, setFilterTenure] = useState<string[]>(() => {
     try {
-      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       return Array.isArray(f?.filterTenure) ? f.filterTenure : []
     } catch { return [] }
   })
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
   const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High'>(() => {
     try {
-      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       const v = f?.filterLocalScene
       return v === 'Some' || v === 'High' ? v : 'all'
     } catch { return 'all' }
   })
   const [filterCommuteMax, setFilterCommuteMax] = useState<'all' | '15' | '30' | '45' | '60'>(() => {
     try {
-      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       const v = f?.filterCommuteMax
       return v === '15' || v === '30' || v === '45' || v === '60' ? v : 'all'
     } catch { return 'all' }
   })
   const [workZoneId, setWorkZoneId] = useState<string | null>(() => {
     try {
-      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       return findWorkZone(f?.workZoneId)?.id ?? null
     } catch { return null }
   })
   const [climatePrefs, setClimatePrefs] = useState<ClimatePreferences>(() => {
     try {
-      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       return f?.climatePrefs && typeof f.climatePrefs === 'object' ? f.climatePrefs : {}
     } catch { return {} }
   })
@@ -190,7 +190,7 @@ export default function CatalogPageClient({
 /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>(() => {
     try {
-      const parsed = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')
+      const parsed = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')
       return parsed?.dealbreakers && typeof parsed.dealbreakers === 'object' ? parsed.dealbreakers : {}
     } catch { return {} }
   })
@@ -215,7 +215,7 @@ export default function CatalogPageClient({
   const [filterArchetypes, setFilterArchetypes] = useState<string[]>([])
   const [filterTrajectory, setFilterTrajectory] = useState<'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'>(() => {
     try {
-      const f = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       const v = f?.filterTrajectory
       return v === 'Arrived' || v === 'Up-and-Coming' || v === 'Stable' || v === 'Cooling' || v === 'Declining' ? v : 'all'
     } catch { return 'all' }
@@ -225,7 +225,7 @@ export default function CatalogPageClient({
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [householdIncome, setHouseholdIncome] = useState<number | null>(() => {
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       if (stored) {
         const parsed = JSON.parse(stored)
         return typeof parsed.household_income === 'number' && parsed.household_income > 0
@@ -237,7 +237,7 @@ export default function CatalogPageClient({
   })
   const [incomeInputValue, setIncomeInputValue] = useState<string>(() => {
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       if (stored) {
         const parsed = JSON.parse(stored)
         return typeof parsed.household_income === 'number' && parsed.household_income > 0
@@ -265,9 +265,9 @@ export default function CatalogPageClient({
     if (next !== current) setHouseholdIncome(next)
     setIncomeInputValue(next ? String(next) : '')
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       const opts = stored ? JSON.parse(stored) : {}
-      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, household_income: next }))
+      localStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, household_income: next }))
     } catch { /* ignore */ }
   }, [])
 
@@ -275,15 +275,15 @@ export default function CatalogPageClient({
     setHouseholdIncome(null)
     setIncomeInputValue('')
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       const opts = stored ? JSON.parse(stored) : {}
-      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, household_income: null }))
+      localStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, household_income: null }))
     } catch { /* ignore */ }
   }, [])
 
   const [currentHomeMonthlyCost, setCurrentHomeMonthlyCost] = useState<number | null>(() => {
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       if (stored) {
         const parsed = JSON.parse(stored)
         return typeof parsed.current_home_monthly_cost === 'number' && parsed.current_home_monthly_cost > 0
@@ -294,7 +294,7 @@ export default function CatalogPageClient({
   })
   const [currentHomeMonthlyCostInput, setCurrentHomeMonthlyCostInput] = useState<string>(() => {
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       if (stored) {
         const parsed = JSON.parse(stored)
         return typeof parsed.current_home_monthly_cost === 'number' && parsed.current_home_monthly_cost > 0
@@ -305,7 +305,7 @@ export default function CatalogPageClient({
   })
   const [currentHomeMatch, setCurrentHomeMatch] = useState<string>(() => {
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       if (stored) {
         const parsed = JSON.parse(stored)
         return typeof parsed.current_home_match === 'string' ? parsed.current_home_match : ''
@@ -320,9 +320,9 @@ export default function CatalogPageClient({
     setCurrentHomeMonthlyCost(next)
     setCurrentHomeMonthlyCostInput(next ? String(next) : '')
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       const opts = stored ? JSON.parse(stored) : {}
-      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_monthly_cost: next }))
+      localStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_monthly_cost: next }))
     } catch { /* ignore */ }
   }, [])
 
@@ -330,18 +330,18 @@ export default function CatalogPageClient({
     setCurrentHomeMonthlyCost(null)
     setCurrentHomeMonthlyCostInput('')
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       const opts = stored ? JSON.parse(stored) : {}
-      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_monthly_cost: null }))
+      localStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_monthly_cost: null }))
     } catch { /* ignore */ }
   }, [])
 
   const handleCurrentHomeSelect = useCallback((name: string) => {
     setCurrentHomeMatch(name)
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       const opts = stored ? JSON.parse(stored) : {}
-      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_match: name }))
+      localStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_match: name }))
     } catch { /* ignore */ }
   }, [])
 
@@ -349,6 +349,42 @@ export default function CatalogPageClient({
     setIndexMode(mode)
     setSortByName(false)
   }, [])
+
+  // Persist priorities/weights, commute hub, and filter toggles for every visitor, signed in or
+  // not -- previously only household_income/current_home_* had their own writer, so priorities
+  // (including commute_time/social_connection weights) and workZoneId silently reset on reload
+  // for anonymous users even though the read-side initializers above already expected them.
+  useEffect(() => {
+    // Signed-in users: wait for the Supabase restore below so we don't overwrite it with this
+    // component's initial-render defaults before that fetch resolves. Anonymous users have no
+    // such race (their initializers above already read localStorage synchronously at mount).
+    if (user && !hasRestoredRef.current) return
+    try {
+      const stored = localStorage.getItem('homefit_search_options')
+      const opts = stored ? JSON.parse(stored) : {}
+      localStorage.setItem('homefit_search_options', JSON.stringify({
+        ...opts,
+        priorities,
+        dealbreakers,
+        filters: {
+          ...(opts.filters ?? {}),
+          filterAreaTypes,
+          filterArchetypes,
+          filterTrajectory,
+          filterPoliticalLean,
+          filterNbTypes,
+          filterAoTypes,
+          filterHousingType,
+          filterTenure,
+          filterSchoolType,
+          filterLocalScene,
+          filterCommuteMax,
+          workZoneId,
+          climatePrefs,
+        },
+      }))
+    } catch { /* ignore */ }
+  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterCommuteMax, workZoneId, climatePrefs])
 
   useEffect(() => {
     const ac = new AbortController()
@@ -388,12 +424,12 @@ export default function CatalogPageClient({
   useEffect(() => {
     if (!user) return
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       if (stored) {
         const opts = JSON.parse(stored)
         if (opts.quiz_override) {
           delete opts.quiz_override
-          sessionStorage.setItem('homefit_search_options', JSON.stringify(opts))
+          localStorage.setItem('homefit_search_options', JSON.stringify(opts))
           hasRestoredRef.current = true
           return
         }
@@ -407,7 +443,7 @@ export default function CatalogPageClient({
         const valid: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
         if (opts.priorities) {
           const merged = { ...DEFAULT_PRIORITIES }
-          for (const k of [...PILLAR_ORDER, 'natural_beauty', 'commute_time'] as PillarKey[]) {
+          for (const k of [...PILLAR_ORDER, 'natural_beauty', 'commute_time', 'social_connection'] as PillarKey[]) {
             if (valid.includes(opts.priorities[k])) merged[k] = opts.priorities[k]
           }
           setPriorities(merged)
@@ -559,11 +595,18 @@ export default function CatalogPageClient({
       // Optional social_connection pillar (see lib/reweight.ts) -- only meaningful once at least
       // one person has been added. No precomputed routing to arbitrary addresses exists, so
       // minutes come from estimatedDriveMinutes' straight-line + area-type-speed estimate.
-      if (people.length > 0 && typeof p.catalog?.lat === 'number' && typeof p.catalog?.lon === 'number') {
+      // catalog.lat/lon come out of the JSONL as strings despite the CatalogMapPlace type
+      // declaring them as number, so a strict `typeof === 'number'` guard here silently never
+      // passes -- Number(...) + Number.isFinite matches how the rest of the app actually
+      // consumes these fields (Math.* auto-coerces numeric strings, so this always worked
+      // everywhere else by accident).
+      const placeLat = Number(p.catalog?.lat)
+      const placeLon = Number(p.catalog?.lon)
+      if (people.length > 0 && Number.isFinite(placeLat) && Number.isFinite(placeLon)) {
         const areaType = p.score.data_quality_summary?.area_classification?.area_type ?? null
         const points = people.map((person) => ({
           tier: person.tier,
-          minutes: estimatedDriveMinutes(person.lat, person.lon, p.catalog.lat, p.catalog.lon, areaType),
+          minutes: estimatedDriveMinutes(person.lat, person.lon, placeLat, placeLon, areaType),
           label: person.label,
         }))
         adjusted = { ...adjusted, score: withSocialConnectionPillar(adjusted.score, points) }
@@ -1225,9 +1268,9 @@ export default function CatalogPageClient({
 
           // Persist to sessionStorage
           try {
-            const stored = sessionStorage.getItem('homefit_search_options')
+            const stored = localStorage.getItem('homefit_search_options')
             const opts = stored ? JSON.parse(stored) : {}
-            sessionStorage.setItem('homefit_search_options', JSON.stringify({
+            localStorage.setItem('homefit_search_options', JSON.stringify({
               ...opts,
               priorities: merged,
               filters: {

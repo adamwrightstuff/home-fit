@@ -168,10 +168,19 @@ export function getAllCatalogIndexDisplay(
 }
 
 export type CatalogStandoutChip = {
-  pillarKey: PillarKey
+  pillarKey: PillarKey | 'social_connection'
   name: string
   score: number
   tier: 'top' | 'bottom'
+}
+
+/**
+ * social_connection is a synthetic, client-side pillar (see lib/reweight.ts) -- not in
+ * PILLAR_ORDER/PILLAR_META since it's not one of the 13 research-backed pillars, but it should
+ * still be eligible for a standout chip once it's actually weighted (someone's been added).
+ */
+const EXTRA_STANDOUT_PILLAR_NAMES: Record<string, string> = {
+  social_connection: 'Social Connection',
 }
 
 /** Top 2 + weakest 1 pillar chips (green vs coral tint in UI). */
@@ -186,13 +195,17 @@ export function getStandoutPillarChips(
       : place.score
   const pillars = rw.livability_pillars as unknown as Record<
     string,
-    { score?: number; contribution?: number } | undefined
+    { score?: number; contribution?: number; weight?: number } | undefined
   >
-  const ranked = PILLAR_ORDER.map((k) => {
+  const candidateKeys: string[] = [...PILLAR_ORDER]
+  if (mode === 'homefit' && (pillars.social_connection?.weight ?? 0) > 0) {
+    candidateKeys.push('social_connection')
+  }
+  const ranked = candidateKeys.map((k) => {
     const pl = pillars[k]
     const score = typeof pl?.score === 'number' ? pl.score : NaN
     const contribution = typeof pl?.contribution === 'number' ? Math.abs(pl.contribution) : 0
-    return { k: k as PillarKey, score, contribution }
+    return { k: k as PillarKey | 'social_connection', score, contribution }
   })
     .filter((x) => Number.isFinite(x.score) && x.score > 0)
     .sort((a, b) => {
@@ -200,16 +213,17 @@ export function getStandoutPillarChips(
       return b.score - a.score
     })
   if (ranked.length === 0) return []
+  const nameFor = (k: PillarKey | 'social_connection') => EXTRA_STANDOUT_PILLAR_NAMES[k] ?? PILLAR_META[k as PillarKey].name
   const out: CatalogStandoutChip[] = []
   const topSlots = Math.min(2, ranked.length)
   for (let i = 0; i < topSlots; i++) {
     const r = ranked[i]!
-    out.push({ pillarKey: r.k, name: PILLAR_META[r.k].name, score: r.score, tier: 'top' })
+    out.push({ pillarKey: r.k, name: nameFor(r.k), score: r.score, tier: 'top' })
   }
   if (ranked.length >= 3) {
     const last = ranked[ranked.length - 1]!
     if (!out.some((c) => c.pillarKey === last.k)) {
-      out.push({ pillarKey: last.k, name: PILLAR_META[last.k].name, score: last.score, tier: 'bottom' })
+      out.push({ pillarKey: last.k, name: nameFor(last.k), score: last.score, tier: 'bottom' })
     }
   }
   return out

@@ -32,7 +32,7 @@ export default function SearchPage() {
   const [justAppliedQuizPriorities, setJustAppliedQuizPriorities] = useState(false)
   const [search_options, set_search_options] = useState<SearchOptions>(() => {
     try {
-      const stored = sessionStorage.getItem('homefit_search_options')
+      const stored = localStorage.getItem('homefit_search_options')
       if (stored) {
         const parsed = JSON.parse(stored)
         return {
@@ -102,7 +102,7 @@ export default function SearchPage() {
         ...(job_categories !== undefined ? { job_categories } : {}),
       }
       try {
-        sessionStorage.setItem('homefit_search_options', JSON.stringify(updated))
+        localStorage.setItem('homefit_search_options', JSON.stringify(updated))
       } catch (e) {
         // ignore
       }
@@ -164,7 +164,7 @@ export default function SearchPage() {
   const handleSearchOptionsChange = (options: SearchOptions) => {
     set_search_options(options)
     try {
-      sessionStorage.setItem('homefit_search_options', JSON.stringify(options))
+      localStorage.setItem('homefit_search_options', JSON.stringify(options))
     } catch (e) {
       // ignore
     }

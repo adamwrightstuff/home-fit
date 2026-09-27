@@ -154,7 +154,7 @@ function CompareContent() {
     const ctx = readCompareContext()
     setCompareContext(ctx)
     try {
-      const parsed = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? 'null')
+      const parsed = JSON.parse(localStorage.getItem('homefit_search_options') ?? 'null')
       const inc = ctx && ctx.householdIncome !== undefined ? ctx.householdIncome : parsed?.household_income
       setHouseholdIncome(typeof inc === 'number' && inc > 0 ? inc : null)
       if (!ctx && !(typeof inc === 'number' && inc > 0)) setScoreMode('catalog')

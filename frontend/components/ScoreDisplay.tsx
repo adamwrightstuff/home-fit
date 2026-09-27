@@ -10,7 +10,8 @@ import InteractiveMap, { type PillarPoi } from './InteractiveMap'
 import LongevityInfo from './LongevityInfo'
 import HappinessInfo from './HappinessInfo'
 import StatusArchetypeCompass from './StatusArchetypeCompass'
-import { PILLAR_META, PILLAR_ORDER, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, getScoreBandLabel, type PillarKey } from '@/lib/pillars'
+import { homefitPillarBarFill, scoreNumeralOnLight } from '@/lib/indexColorSystem'
 import { useAuth } from '@/contexts/AuthContext'
 
 /** Options passed to onRunPillarScore when user runs a score for a single pillar from the "+ Add" expand. */
@@ -647,6 +648,84 @@ export default function ScoreDisplay({
             )
           })}
         </div>
+
+        {(() => {
+          // social_connection is a synthetic, client-side pillar (see lib/reweight.ts) -- not
+          // in PILLAR_ORDER, so it never appears in the loop above. Only show it here once it's
+          // actually contributing to the total (weight > 0), matching how the People You Know
+          // priority chips in FilterSheet only appear once someone's been added.
+          const sc = (livability_pillars as any)?.social_connection
+          if (!sc || typeof sc.weight !== 'number' || sc.weight <= 0) return null
+          const score = typeof sc.score === 'number' ? sc.score : null
+          const points: Array<{ tier: 'close' | 'acquaintance'; minutes: number | null; label: string | null }> =
+            Array.isArray(sc.breakdown?.points) ? sc.breakdown.points : []
+          return (
+            <div className="hf-card-sm" style={{ marginTop: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', minWidth: 0, flex: '1 1 0' }}>
+                  <div style={{ fontSize: '1.6rem', flexShrink: 0 }}>🤝</div>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)' }}>Social Connection</span>
+                    <div className="tr-muted" style={{ fontSize: '0.95rem', marginTop: '0.5rem', lineHeight: 1.4 }}>
+                      Not a research-backed pillar like the 13 above -- a rough estimate of proximity to the people you added under People You Know, off by default.
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
+                  <span
+                    style={{
+                      fontWeight: 800,
+                      fontSize: '1.75rem',
+                      lineHeight: 1.2,
+                      color: score == null ? 'var(--hf-text-secondary)' : scoreNumeralOnLight('purple', score),
+                    }}
+                  >
+                    {score == null ? '—' : score.toFixed(0)}
+                  </span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: '0.2rem', color: 'var(--hf-text-secondary)' }}>
+                    {score != null ? getScoreBandLabel(score) : '—'}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '0.6rem', height: 6, borderRadius: 999, background: 'var(--hf-border)', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${Math.min(100, sc.weight)}%`,
+                    borderRadius: 999,
+                    background: score != null ? homefitPillarBarFill(score) : 'rgba(0, 0, 0, 0.08)',
+                    transition: 'width 0.25s ease',
+                  }}
+                />
+              </div>
+
+              <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem 1rem', alignItems: 'baseline' }}>
+                <div>
+                  <div className="tr-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Weight</div>
+                  <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', fontSize: '1rem' }}>{sc.weight.toFixed(1)}%</div>
+                </div>
+                <div>
+                  <div className="tr-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Contribution</div>
+                  <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', fontSize: '1rem' }}>
+                    {typeof sc.contribution === 'number' && Number.isFinite(sc.contribution) ? sc.contribution.toFixed(1) : '—'}
+                  </div>
+                </div>
+              </div>
+
+              {points.length > 0 && (
+                <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  {points.map((p, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--hf-text-secondary)' }}>
+                      <span>{p.tier === 'close' ? '❤️' : '🙂'} {p.label ?? (p.tier === 'close' ? 'Close connection' : 'Acquaintance')}</span>
+                      <span>{typeof p.minutes === 'number' ? `${Math.round(p.minutes)} min` : '—'}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })()}
 
         {not_included_pillars.length > 0 && !hideNotIncluded && (
           <div style={{ marginTop: '2rem' }}>

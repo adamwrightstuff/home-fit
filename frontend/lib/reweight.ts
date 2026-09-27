@@ -172,6 +172,17 @@ export function reweightScoreResponseFromPriorities(
                   : 'Medium'
             }
           }
+          // Carry over extra keys (commute_time, social_connection, etc.) that this loop drops
+          // because it only walks PILLAR_ORDER -- without this, any pillar unexpectedly landing
+          // at 0 weight (a failed/degraded score elsewhere) silently zeroes every synthetic
+          // pillar's weight too, regardless of what the user set it to.
+          for (const k of Object.keys(userPriorities)) {
+            if ((PILLAR_ORDER as string[]).includes(k)) continue
+            const userLevel = String(userPriorities[k] ?? 'none').toLowerCase().trim()
+            if (userLevel === 'low' || userLevel === 'medium' || userLevel === 'high') {
+              merged[k] = userPriorities[k] as string
+            }
+          }
           const alloc = prioritiesToTokens(merged)
           return isSchoolsDisabledFromResult(data) ? applySchoolsDisabledOverride(alloc) : alloc
         })()

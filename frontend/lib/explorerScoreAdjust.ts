@@ -77,7 +77,7 @@ export function readCompareContext(): CompareContext | null {
       if (parsed?.priorities && parsed?.filters) return parsed as CompareContext
     }
     // Fallback: saved search options (quiz / search page) when Explore hasn't been opened this session.
-    const opts = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? 'null')
+    const opts = JSON.parse(localStorage.getItem('homefit_search_options') ?? 'null')
     const pri = opts?.priorities
     if (!pri || typeof pri !== 'object') return null
     const f = opts.filters ?? {}

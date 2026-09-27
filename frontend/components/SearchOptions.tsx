@@ -135,7 +135,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
         setPremiumCodeInput(storedPremiumCode)
       }
 
-      const stored = sessionStorage.getItem(STORAGE_KEY)
+      const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
         // Migration: if schools were previously enabled but no premium code is saved,
@@ -163,7 +163,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
   useEffect(() => {
     if (skipSessionRestore) return
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(options))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(options))
     } catch (e) {
       // Ignore storage errors
     }
