@@ -399,7 +399,7 @@ def get_active_outdoors_score_v2(
     # IMPORTANT: Pass scoring_area_type (not original area_type) so mountain town detection works
     # If Denver is detected as mountain town, scoring_area_type = "exurban", which enables higher expectations
     wild_score = _score_wild_adventure_v2(
-        hiking_trails, camping, canopy_pct_5km, scoring_area_type, is_mountain_town=is_mountain_town
+        hiking_trails, camping, scoring_area_type, is_mountain_town=is_mountain_town
     )
     water_score, waterfront_breakdown, best_water_type, best_water_dist_m = _score_water_lifestyle_v2(
         swimming, scoring_area_type, is_desert_context=is_desert_context
@@ -568,7 +568,6 @@ def _score_daily_urban_outdoors_v2(
 def _score_wild_adventure_v2(
     hiking_trails: list,
     camping: list,
-    canopy_pct_5km: float,
     area_type: str,
     is_mountain_town: bool = False,
 ) -> float:
@@ -576,13 +575,14 @@ def _score_wild_adventure_v2(
     Wild Adventure Backbone (0-50):
       - Trail richness: total count within 15km  (calibrated by area type)
       - Trail proximity: count within 5km        (calibrated by area type)
-      - Wild/forested context (tree canopy)      (differentiates forest vs scrub trails)
       - Camping access                           (proximity decay)
 
-    Canopy is intentionally kept here even though Natural Beauty also uses it:
-    a forested trail network (Catskills, Adirondacks) should score higher than
-    a scrubby desert trail network with the same trail count. Canopy captures
-    the quality of the outdoor recreation environment, not just scenery.
+    Tree canopy was removed from this score (previously a "differentiates forest vs
+    scrub trails" quality modifier). It measured canopy at the scored place's own
+    location, not at the trails 15km away it was meant to describe, and it isn't an
+    activity -- it's scenery, which Natural Beauty already scores. Kept as a classifier
+    input in _detect_special_contexts() (mountain-town detection selects which
+    threshold branch applies) but no longer contributes points here.
     """
     trail_count = len(hiking_trails)
     near_trails = [t for t in hiking_trails if t.get("distance_m", 1e9) <= 5000]
@@ -599,8 +599,7 @@ def _score_wild_adventure_v2(
     if baseline_context == "urban_core":
         exp_trails = max(2.0, exp_trails_15km)
         exp_near = 8.0
-        exp_canopy = 35.0
-        max_trails_total, max_trails_near, max_canopy = 12.0, 6.0, 15.0
+        max_trails_total, max_trails_near = 12.0, 6.0
     elif baseline_context in {"suburban", "urban_residential", "commuter_rail_suburb"}:
         # urban_residential falls here, not to the rural branch — it is a residential
         # urban/inner-suburb context, not a wilderness context. commuter_rail_suburb
@@ -608,31 +607,26 @@ def _score_wild_adventure_v2(
         if is_mountain_town:
             exp_trails = max(5.0, exp_trails_15km)
             exp_near = 15.0
-            exp_canopy = 45.0
-            max_trails_total, max_trails_near, max_canopy = 35.0, 20.0, 18.0
+            max_trails_total, max_trails_near = 35.0, 20.0
         else:
             exp_trails = max(5.0, exp_trails_15km)
             exp_near = 6.0
-            exp_canopy = 30.0
-            max_trails_total, max_trails_near, max_canopy = 25.0, 12.0, 18.0
+            max_trails_total, max_trails_near = 25.0, 12.0
     elif baseline_context in {"exurban", "rural"}:
         if is_mountain_town:
             exp_trails = max(5.0, exp_trails_15km)
             exp_near = 15.0
-            exp_canopy = 45.0
-            max_trails_total, max_trails_near, max_canopy = 35.0, 20.0, 18.0
+            max_trails_total, max_trails_near = 35.0, 20.0
         else:
             exp_trails = max(1.0, exp_trails_15km)
             exp_near = 15.0
-            exp_canopy = 45.0
-            max_trails_total, max_trails_near, max_canopy = 30.0, 15.0, 15.0
+            max_trails_total, max_trails_near = 30.0, 15.0
     else:
         # None or unrecognised baseline_context: default to suburban expectations
         # so future new context types never silently inherit wilderness thresholds.
         exp_trails = max(5.0, exp_trails_15km)
         exp_near = 6.0
-        exp_canopy = 30.0
-        max_trails_total, max_trails_near, max_canopy = 25.0, 12.0, 18.0
+        max_trails_total, max_trails_near = 25.0, 12.0
 
     # Urban data quality cap: OSM tags many urban paths as hiking routes
     if baseline_context == "urban_core":
@@ -644,7 +638,6 @@ def _score_wild_adventure_v2(
 
     s_trails_total = _sat_ratio_v2(capped_trail_count, exp_trails, max_trails_total)
     s_trails_near = _sat_ratio_v2(capped_near_count, exp_near, max_trails_near)
-    s_canopy = _sat_ratio_v2(canopy_pct_5km, exp_canopy, max_canopy)
 
     # Camping proximity
     if not camping:
@@ -668,17 +661,17 @@ def _score_wild_adventure_v2(
             else:
                 s_camp = 10.0 * math.exp(-0.00005 * (d - 25_000))
 
-    total_wild = s_trails_total + s_trails_near + s_canopy + s_camp
+    total_wild = s_trails_total + s_trails_near + s_camp
     final_wild = max(0.0, min(50.0, total_wild))
 
     logger.info(
         f"[WILD ADVENTURE] area_type={area_type} is_mt={is_mountain_town} "
-        f"trails={capped_trail_count} near={capped_near_count} canopy={canopy_pct_5km:.1f}% "
-        f"s_tot={s_trails_total:.1f} s_near={s_trails_near:.1f} s_can={s_canopy:.1f} s_camp={s_camp:.1f} -> {final_wild:.1f}/50",
+        f"trails={capped_trail_count} near={capped_near_count} "
+        f"s_tot={s_trails_total:.1f} s_near={s_trails_near:.1f} s_camp={s_camp:.1f} -> {final_wild:.1f}/50",
         extra={"pillar_name": "active_outdoors_v2", "area_type": area_type,
                "trail_count": trail_count, "near_count": near_count,
                "s_trails_total": s_trails_total, "s_trails_near": s_trails_near,
-               "s_canopy": s_canopy, "s_camp": s_camp, "final_wild": final_wild}
+               "s_camp": s_camp, "final_wild": final_wild}
     )
     return final_wild
 
