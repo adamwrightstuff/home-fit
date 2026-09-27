@@ -556,8 +556,8 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>People You Know</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Add the people you'd want to stay close to. A close family member or friend still
-              counts even if they're a bit of a drive; casual friends and neighbors mostly matter
+              Add the people you&apos;d want to stay close to. A close family member or friend still
+              counts even if they&apos;re a bit of a drive; casual friends and neighbors mostly matter
               nearby.
             </div>
             <PeopleYouKnowPicker people={people} onPeopleChange={onPeopleChange} />
