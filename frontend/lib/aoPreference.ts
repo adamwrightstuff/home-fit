@@ -68,12 +68,20 @@ export function applyAoPreferences(
   }
 
   const targets = new Set(preferences.map((p) => PREFERENCE_AO_COMPONENTS[p]))
-  const prefVals = Array.from(targets).map((t) => normalized[t]).filter((v): v is number => typeof v === 'number')
-  if (prefVals.length === 0) return null
+  const targetEntries = Array.from(targets)
+    .map((t) => [t, normalized[t]] as const)
+    .filter((entry): entry is [AoNumericKey, number] => typeof entry[1] === 'number')
+  if (targetEntries.length === 0) return null
 
-  const preferred = Math.max(...prefVals)
+  // Best selected trait leads the OWA; every other component -- including a selected trait
+  // that didn't win -- still competes for the remaining slots by magnitude, so a strong
+  // second preference isn't silently discarded just because another selected trait scored
+  // higher for this place (e.g. selecting both Waterfront and Local Parks shouldn't erase a
+  // place's genuinely strong waterfront score just because its park score happens to be higher).
+  targetEntries.sort((a, b) => b[1] - a[1])
+  const [leadKey, preferred] = targetEntries[0]
   const others = keys
-    .filter((k) => !targets.has(k))
+    .filter((k) => k !== leadKey)
     .map((k) => normalized[k])
     .filter((v): v is number => typeof v === 'number')
     .sort((a, b) => b - a)

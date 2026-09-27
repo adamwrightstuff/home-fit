@@ -216,15 +216,21 @@ export function applyNbPreferencesV9(
 
   // Collect preferred targets (deduped across all selected preferences).
   const targets = new Set(preferences.flatMap((p) => PREFERENCE_V9_COMPONENTS[p] ?? []))
-  const prefVals = Array.from(targets).map((t) => effective[t]).filter((v): v is number => typeof v === 'number')
-  if (prefVals.length === 0) return null
+  const targetEntries = Array.from(targets)
+    .map((t) => [t, effective[t]] as const)
+    .filter((entry): entry is [string, number] => typeof entry[1] === 'number')
+  if (targetEntries.length === 0) return null
 
-  // OWA: best preferred component → lead slot; remaining components fill lower slots in desc order.
-  // Using max (not mean) so a place strong in ANY preferred dimension isn't penalised for
-  // a weaker second preference — both still contribute in lower slots via `others`.
-  const preferred = Math.max(...prefVals)
+  // OWA: best preferred component -> lead slot; remaining components fill lower slots in desc
+  // order. Only the winning lead component is excluded from `others` -- a second selected
+  // preference that scored lower still competes for the remaining slots on its own merits,
+  // instead of being dropped entirely just because another selected trait scored higher for
+  // this place (e.g. selecting both Ocean and Tree Canopy shouldn't erase a place's genuinely
+  // strong water score just because its canopy/GVI score happens to be even higher).
+  targetEntries.sort((a, b) => b[1] - a[1])
+  const [leadKey, preferred] = targetEntries[0]
   const others = Object.entries(effective)
-    .filter(([k]) => !targets.has(k))
+    .filter(([k]) => k !== leadKey)
     .map(([, v]) => v as number)
     .sort((a, b) => b - a)
   const dynamicLead = Math.min(1.0, 0.62 + 0.38 * (preferred / 100))
