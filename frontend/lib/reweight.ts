@@ -291,22 +291,35 @@ export function withCommuteTimePillar(data: ScoreResponse, minutes: number | nul
  * Social-connection pillar score (opt-in, catalog-explorer only, same non-backend mechanism
  * as commute_time above -- see CLAUDE.md, this isn't one of the 13 research-backed pillars).
  * User supplies named points (family/friends' homes) tagged by tie strength; each point's
- * proximity decays on its own curve, then all points combine via noisy-OR so one very close
- * tie can carry the score alone while several weaker ties still add up with diminishing
- * returns, rather than everything averaging down to "medium." Curve anchors and the noisy-OR
- * choice over averaging/nearest-only are researched in this session, not invented:
- * - Close tie: flat 100 through 50min (HRS study on relocation found no significant
- *   in-person-contact difference under a ~50-mile move; below that threshold distance isn't
- *   predictive), decaying to 65 by 120min (partial, not total, falloff -- matches the ~0.3
- *   effect size the same study found for moves >=50mi), floored at 40 beyond that (long-
- *   distance strong ties persist via a selection effect and keep exchanging real support --
- *   documented in the sociology literature, not assumed).
- * - Acquaintance: 100 only through 18min (anchored on a study's measured mean "convenient
- *   driving distance" of 17.9min, SD 10.8), dropping to 55 by 30min (~mean+1SD, where
- *   "convenient" stops covering most respondents), 10 by 60min, 0 by 75min with no floor --
- *   casual ties are the proximity-dependent category with no long-distance selection effect.
- * Both curves are placeholder-quality like commute_time's, anchored on real numbers where
- * research gave them, interpolated where it didn't -- not calibrated to pillar-grade rigor.
+ * proximity decays on its own curve (below), then the points combine via the simple
+ * nearest-plus-bonus rule in socialConnectionScore.
+ *
+ * Close-tie curve knots come from three real, verified studies (each checked against its
+ * actual text, not taken from a summary) measuring three different things -- combining them
+ * into one curve is itself a judgment call, not something any single paper hands you:
+ * - Healy & Dunifon 2025 (PSID data): households within 1 mile of a grandparent received a
+ *   median 208 hrs/year of help; 1-5 miles away, 186 hrs/year (~89% retained). Real dose-
+ *   response, same study, same population -- anchors the 15min and 40min knots below.
+ * - "Distance in Disconnection" (PMC10645308, SHARE data): bands are 0-1km/1-5km/5-25km/>25km
+ *   (walking distance / convenient face-to-face / transit-accessible-casual / long-distance),
+ *   and losing a tie within 1-5km raises loneliness more than losing a distant one -- supports
+ *   continued decline through the ~25km (~15.5mi) mark, not a plateau.
+ * - HRS relocation study: no significant in-person-contact difference for moves under ~50
+ *   miles, a real but partial (~0.3 effect size) drop for moves >=50mi -- anchors the 120min
+ *   knot as "still not significantly worse than the 40min point," not "back to normal."
+ * Miles->minutes uses this file's suburban speed constant (52 km/h, the AIRPORT_DRIVE_KMH
+ * "suburban" entry) as one disclosed baseline for turning those studies' mile/km anchors into
+ * fixed minute knots -- an actual place's own minutes still come from its own area type via
+ * estimatedDriveMinutes, so this only affects where the curve's knots sit, not how any given
+ * place's minutes get computed. The interpolation between knots, and everything past the last
+ * one, is not from these studies.
+ *
+ * Acquaintance curve: 100 only through 18min (anchored on a study's measured mean "convenient
+ * driving distance" of 17.9min, SD 10.8), dropping to 55 by 30min (~mean+1SD, where
+ * "convenient" stops covering most respondents), 10 by 60min, 0 by 75min with no floor --
+ * casual ties are the proximity-dependent category with no long-distance selection effect
+ * (per the HRS finding above), unlike close ties, which is why this curve has no floor and
+ * the close-tie curve does.
  */
 export type SocialConnectionTier = 'close' | 'acquaintance'
 
@@ -319,8 +332,9 @@ export interface SocialConnectionPoint {
 
 export function closeTieProximityScore(minutes: number | null | undefined): number | null {
   if (minutes === null || minutes === undefined || !Number.isFinite(minutes) || minutes < 0) return null
-  if (minutes <= 50) return 100
-  if (minutes <= 120) return 100 - (minutes - 50) * (35 / 70)
+  if (minutes <= 15) return 100
+  if (minutes <= 40) return 100 - (minutes - 15) * (28 / 25)
+  if (minutes <= 120) return 72 - (minutes - 40) * (7 / 80)
   return Math.max(40, 65 - (minutes - 120) * (25 / 120))
 }
 
@@ -359,24 +373,35 @@ export function estimatedDriveMinutes(
 }
 
 /**
- * Noisy-OR combine: raw = 1 - Π(1 - proximity_i). One close tie at full proximity alone
- * saturates the score; a cluster of weaker ties still lifts it, with each additional one
- * mattering less than the last. Rejected flat-averaging (one far tie shouldn't drag down one
- * close tie) and nearest-point-only (throws away the "network size" signal entirely).
+ * Nearest-tie-plus-bonus: score is whoever's closest, plus a small flat bonus for each
+ * additional point that's also meaningfully close (up to a cap). Deliberately simple and
+ * explicitly NOT research-derived at the number level -- the bonus amount, the "counts as
+ * close" threshold, and the cap are round placeholder constants, not fitted or sourced. Chosen
+ * over an earlier noisy-OR combine, which let a single point above the close-tie plateau
+ * instantly saturate every place in that tie's whole metro to ~100 regardless of the rest of
+ * the list, with no way to tell places in that metro apart on this pillar anymore. This version
+ * still lets one very close tie carry most of the score, but multiple close ties add a
+ * visible, bounded, honestly-arbitrary bump instead of an invisible ceiling effect.
  */
+const SOCIAL_CONNECTION_BONUS_THRESHOLD = 50
+const SOCIAL_CONNECTION_BONUS_PER_EXTRA_POINT = 5
+const SOCIAL_CONNECTION_MAX_BONUS_POINTS = 2
+
 export function socialConnectionScore(
   points: Array<{ tier: SocialConnectionTier; minutes: number | null | undefined }>
 ): number | null {
-  let productOfComplements = 1
-  let sawAny = false
+  const proximities: number[] = []
   for (const p of points) {
     const proximity = TIE_PROXIMITY_CURVE[p.tier](p.minutes)
     if (proximity === null) continue
-    sawAny = true
-    productOfComplements *= 1 - proximity / 100
+    proximities.push(proximity)
   }
-  if (!sawAny) return null
-  return Math.round((1 - productOfComplements) * 1000) / 10
+  if (proximities.length === 0) return null
+  proximities.sort((a, b) => b - a)
+  const [best, ...rest] = proximities
+  const bonusEligibleCount = rest.filter((p) => p >= SOCIAL_CONNECTION_BONUS_THRESHOLD).length
+  const bonus = Math.min(bonusEligibleCount, SOCIAL_CONNECTION_MAX_BONUS_POINTS) * SOCIAL_CONNECTION_BONUS_PER_EXTRA_POINT
+  return Math.min(100, Math.round((best + bonus) * 10) / 10)
 }
 
 /**
