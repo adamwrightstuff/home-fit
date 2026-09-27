@@ -173,31 +173,29 @@ displayed score; both downstream clamps (`min(25.0, ...)`, `min(100.0, ...)`) ab
 overflow risk. Reverified against the live CSV export after shipping — Larchmont, Mamaroneck,
 Coney Island, and Long Beach all now correctly pick their own real named beach.
 
-### `ocean_beach` category conflates real beach with plain coastline/harbor (OPEN)
+### `ocean_beach` category conflated real beach with plain coastline/harbor (SHIPPED — coastline split; see below for the definition question this raised)
 
-Independent of the false-ocean-confirmation bug above. `_WATERFRONT_CATEGORY` buckets `beach`, `coastline`, and
-`coastline_rocky` into the same `ocean_beach` output category. A place whose winning feature is
-plain `natural=coastline` (harbor edge, no swimmable beach — e.g. Carroll Gardens, whose winning
-feature is real Upper NY Bay coastline, correctly computed, no bug) gets the same category label
-as a place with an actual sand beach (e.g. Larchmont's Manor Beach). The math is correct in both
-cases; the label misrepresents what's actually there.
+`_WATERFRONT_CATEGORY` used to bucket `beach`, `coastline`, and `coastline_rocky` into the same
+`ocean_beach` output category. A place whose winning feature was plain `natural=coastline`
+(harbor edge, no beach — e.g. Carroll Gardens, real Upper NY Bay coastline) got the same label as
+a place with an actual sand beach (e.g. Larchmont's Manor Beach). Fixed by splitting `coastline`/
+`coastline_rocky` into their own `waterfront_access` category (`6945492`). Validated against
+NYC's 133-place rescore: only 4 places win on `coastline` at all (Cos Cob, Edgewater, Leonia,
+Mount Vernon — real waterfront towns, none of them beach destinations), 0 of 16 ground-truth
+beach towns win on `coastline`, so the split cost no real beach town its score.
 
-**Fix:** split the category so `ocean_beach` requires a `beach`/`swimming_area` winner
-specifically; anything where `coastline`/`bay` wins becomes a separate category (e.g.
-`waterfront_access`) instead of being folded into "beach." Same OSM data, no new source, but
-this is a bigger surface-area change than the false-ocean-confirmation fix since it touches the AND-filter floors
-shipped in `frontend/lib/aoPreference.ts` today (`AO_PREFERENCE_FLOOR`, `PREFERENCE_AO_COMPONENTS`)
-and the `waterfront_breakdown` shape the frontend already reads.
-
-**Checked: is `coastline` (as opposed to `beach`) actually needed to cover real beach towns?**
-No. Of NYC's 133 rescored places, only 4 win on `coastline` type at all (Cos Cob, Edgewater,
-Leonia, Mount Vernon) — real Hudson River/Long Island Sound waterfront towns, none of them
-actual beach destinations, all scoring a moderate 16.2/25. Zero of the 16 real ground-truth
-beach towns checked win on `coastline`. Splitting the category costs no real beach town its
-score.
-
-**Priority:** medium — not a bug, but an active mislabeling that misleads anyone using the
-waterfront preference to mean "can I swim here."
+**Resolved definition question raised after shipping this:** does `ocean_beach` require
+swimmability? Initially assumed yes, and started designing tag-based fixes (OSM `swimming` tag,
+name-keyword detection for kayak/launch features) to downgrade non-swim beaches. Rejected after
+checking real beach-activity research — the Outdoor Foundation's 2025 Outdoor Participation
+Trends Report, a Kailua Beach Park usage study, and Hawaii DBEDT's visitor survey all find
+walking and sunbathing are the most common beach activities, consistently ahead of swimming.
+So `ocean_beach` correctly means general beach lifestyle (walking, sunbathing, views, casual
+paddle/boat access) — not swim access specifically. Non-swim beaches that already win this
+category today (Gansevoort Peninsula, Pier 4 Beach, Hallet's Cove, Dyckman St. Beach) are
+correctly scored as-is; no code change needed beyond correcting the stale comment in
+`pillars/active_outdoors.py` (`_WATERFRONT_CATEGORY`) that had described the split in swim-specific
+terms. No swim-tag gate was ever shipped.
 
 ### Cross-neighborhood reuse of one real beach within the 15-18km search radius (OPEN)
 

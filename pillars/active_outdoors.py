@@ -686,12 +686,23 @@ def _score_wild_adventure_v2(
 _WATERFRONT_CATEGORY: Dict[str, str] = {
     "beach": "ocean_beach",
     # coastline/coastline_rocky are real, correctly-scored ocean access (harbor edge, promenade,
-    # marina) but not a swimmable beach -- folding them into ocean_beach let places like Cos Cob,
-    # Edgewater, Leonia, and Mount Vernon (real Hudson River/LI Sound waterfront towns, none of
-    # them beach destinations) score and label identically to an actual sand beach town. See
-    # BACKLOG.md for the validation: 0 of 16 real ground-truth beach towns win on coastline, so
-    # this split costs no real beach town its score -- it only stops mislabeling plain coastline
-    # access as "beach."
+    # marina) but not a dedicated beach amenity -- folding them into ocean_beach let places like
+    # Cos Cob, Edgewater, Leonia, and Mount Vernon (real Hudson River/LI Sound waterfront towns,
+    # none of them beach destinations) score and label identically to an actual sand beach town.
+    # See BACKLOG.md for the validation: 0 of 16 real ground-truth beach towns win on coastline,
+    # so this split costs no real beach town its score -- it only stops mislabeling plain
+    # coastline access as "beach."
+    #
+    # ocean_beach means general beach lifestyle (walking, sunbathing, views, casual water/paddle
+    # access), not swim access specifically. Research on real beach-activity participation
+    # (Outdoor Foundation 2025; Kailua Beach Park study; Hawaii DBEDT visitor survey) consistently
+    # finds walking and sunbathing are the most common beach activities, ahead of swimming --
+    # so a beach with no swimming (Gansevoort Peninsula, Pier 4 Beach, Hallet's Cove) still
+    # delivers the majority-activity beach experience and correctly earns full ocean_beach credit
+    # here. Do not add a swim-specific gate (e.g. OSM's `swimming` tag) to this category --
+    # that was tried and rejected as measuring the wrong thing. `surface == "rock"` below routing
+    # to coastline_rocky is a physical-character distinction (bare rock vs. sand/pebble beach),
+    # not a swim-access gate, and stays.
     "coastline": "waterfront_access",
     "coastline_rocky": "waterfront_access",
     "lake": "lake_river",
