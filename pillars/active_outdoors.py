@@ -632,6 +632,24 @@ def _score_wild_adventure_v2(
     if baseline_context == "urban_core":
         capped_trail_count = min(trail_count, exp_trails * 15.0)
         capped_near_count = min(near_count, exp_near * 2.5)
+    elif baseline_context == "urban_residential":
+        # Fragmentation discount: OSM commonly maps one real urban park's trail
+        # network as many separate relations (color-coded loop segments), inflating
+        # raw trail_count well beyond the number of real distinct destinations.
+        # Measured empirically across 8 real NYC urban_residential neighborhoods
+        # (Bay Ridge, Bed-Stuy, Bensonhurst, Washington Heights, Harlem, Sunset Park,
+        # Flushing, Ridgewood) using bounded-diameter clustering (not nearest-neighbor
+        # chaining, which collapses genuinely large trail networks like Mt. Tamalpais
+        # into one false cluster -- see BACKLOG.md): raw count overstated real distinct
+        # sites by a mean of 2.6x (median 2.8x, range 1.6x-3.3x). Only applied to
+        # urban_residential, not suburban/exurban/rural, where this same measurement
+        # hasn't been done and real trail networks are typically far less fragmented
+        # relative to their true size (see the Chappaqua/Mt. Tamalpais tests in
+        # BACKLOG.md). Single-metro sample (NYC only) -- not yet validated for LA/SF/
+        # Seattle.
+        URBAN_TRAIL_FRAGMENTATION_DISCOUNT = 2.6
+        capped_trail_count = trail_count / URBAN_TRAIL_FRAGMENTATION_DISCOUNT
+        capped_near_count = near_count / URBAN_TRAIL_FRAGMENTATION_DISCOUNT
     else:
         capped_trail_count = trail_count
         capped_near_count = near_count

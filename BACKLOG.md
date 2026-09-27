@@ -261,3 +261,55 @@ tested against real data yet.
 **Priority:** medium — doesn't change any specific place's score by itself, but explains why
 trail count so often fails to distinguish one urban neighborhood's real outdoor access from
 another's (feeds the "urban wild_adventure inflated" problem above).
+
+### Urban trail-count fragmentation discount (SHIPPED, `urban_residential` only)
+
+Root cause of the wild_adventure inflation for dense urban neighborhoods: trail count
+accounted for a mean of 72% of the entire wild_adventure score across 114 real
+urban_residential places (Westwood, Great Kills, Riverdale, Yonkers, Stamford, West
+Hollywood, Hollywood, Washington Heights, Outer Richmond, Brooklyn Heights all hit the
+50/50 cap or close, 34-37 of those points from trail count alone) — meaning wild_adventure
+was effectively just a trail-count score wearing a thin coat of paint.
+
+Investigated why: live-pulled real trail data (name, lat/lon, operator) for Astoria,
+Carroll Gardens, and Boyle Heights. Found one real park's trail network is commonly
+mapped as many separate OSM relations (color-coded loop segments — Teatown Lake
+Reservation alone accounts for ~10 separate relations in Chappaqua's data; Astoria's 27
+"trails" traced back to one park, Inwood Hill/Van Cortlandt). A naive fix (site-clustering
+via nearest-neighbor chaining) was tried and rejected: tested against Mt. Tamalpais/Marin
+Municipal Water District (Fairfax, CA), it collapsed a genuinely large, real 47-trail
+wilderness network into one false "site" at any threshold generous enough to do useful
+merging (chaining problem — if A links to B and B links to C, A and C merge even when far
+apart). Switched to bounded-diameter (complete-linkage) clustering instead, which requires
+every pair within a cluster to stay under the threshold, not just adjacent pairs — this
+did not collapse Mt. Tamalpais's network and produced stable cluster counts (29/26/18
+clusters at 800m/1200m/2000m thresholds, no runaway merging).
+
+**Measurement:** ran bounded-diameter clustering (1200m threshold) against real trail data
+for 8 NYC urban_residential neighborhoods (Bay Ridge, Bed-Stuy, Bensonhurst, Washington
+Heights, Harlem, Sunset Park, Flushing, Ridgewood) — raw trail count vs. distinct clustered
+sites, both counted within each place's own 15km radius. Result: raw count overstated real
+distinct sites by a mean of 2.6x (median 2.8x, range 1.6x-3.3x, n=8).
+
+**Fix shipped:** `_score_wild_adventure_v2` divides `trail_count`/`near_count` by 2.6 before
+scoring, applied only when `baseline_context == "urban_residential"`. Suburban/exurban/rural
+are untouched — Chappaqua (suburban) and Fairfax (near Mt. Tamalpais) both showed
+genuinely large real trail networks, not the same fragmentation severity, and applying an
+unvalidated discount there risked under-crediting real wilderness access the way the
+clustering algorithm almost did.
+
+**Known limits, explicitly not resolved:**
+- Single-metro sample (NYC only, n=8). Not validated against LA/SF/Seattle.
+- Separately (not fixed by this discount): giant multi-hundred-mile trails get miscounted
+  as local access regardless of area type — e.g. "Long Path" showing up in Chappaqua's data
+  with a computed center 114km away, "California Mission Trail" showing up near Boyle
+  Heights with segments 18-39km away. Caused by Overpass's `around` filter matching on
+  partial geometry overlap while the codebase's distance field reflects the relation's full
+  centroid. A blunt distance-based filter was considered and rejected: it would also
+  exclude genuinely local segments of real long-distance trails (e.g. Long Path legitimately
+  passing through/near a town), which is a real amenity, not a false positive. No fix
+  designed yet.
+- ÷2.6 is a discount on the existing raw-count formula, not a true distinct-site count. It
+  is deliberately the honest, small, validated fix for the specific problem measured
+  (urban_residential trail-count inflation) — not a claim that wild_adventure now measures
+  real site counts everywhere.
