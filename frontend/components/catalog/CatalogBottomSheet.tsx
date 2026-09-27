@@ -251,8 +251,9 @@ export default function CatalogBottomSheet({
               })}
             </div>
 
-            {/* Archetype + Trajectory + Local Scene pill row */}
-            {(allIdx?.archetype || allIdx?.trajectory || place.score.local_scene_bucket) && (
+            {/* Archetype + Trajectory + Local Scene + Commute N/A pill row */}
+            {(allIdx?.archetype || allIdx?.trajectory || place.score.local_scene_bucket ||
+              (place.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None')) && (
               <div className="mb-2" style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', whiteSpace: 'nowrap' }}>
                 {(statusBadge || allIdx?.archetype) && (
                   <ArchetypeBadge
@@ -262,6 +263,26 @@ export default function CatalogBottomSheet({
                   />
                 )}
                 {allIdx?.trajectory && <TrajectoryChip trajectory={allIdx.trajectory} />}
+                {place.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
+                  <span
+                    title="No commute data to your work hub from here (different metro) -- this place isn't scored on commute time, and isn't being helped or hurt by that weight."
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      height: 28,
+                      padding: '0 10px',
+                      borderRadius: 99,
+                      background: '#f1f5f9',
+                      border: '1px dashed #cbd5e1',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: '#64748b',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Commute: N/A
+                  </span>
+                )}
                 {place.score.local_scene_bucket && (
                   <span
                     title="Reflects the presence of independent places to spend time, like cafés, bookstores, bars, and galleries."

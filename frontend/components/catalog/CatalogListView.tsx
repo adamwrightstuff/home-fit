@@ -101,6 +101,18 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
             </div>
           )
         })()}
+        {place.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
+          <div className="flex min-w-0 items-center gap-2 text-[0.65rem]">
+            <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]">Commute Time</span>
+            <span
+              className="shrink-0 rounded px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-widest"
+              style={{ background: 'var(--hf-bg-subtle)', border: '1px solid var(--hf-border)', color: 'var(--hf-text-tertiary)' }}
+              title="No commute data to your work hub from here (different metro) -- this place isn't scored on commute time, and isn't being helped or hurt by that weight."
+            >
+              N/A -- different metro
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -259,6 +271,15 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
                       <LocalSceneChip bucket={p.score.local_scene_bucket ?? null} compact />
                       <AuraBadge itScore={p.score.it_score ?? null} compact />
+                      {p.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
+                        <span
+                          title="No commute data to your work hub from here (different metro) -- this place isn't scored on commute time, and isn't being helped or hurt by that weight."
+                          className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[0.65rem] font-medium"
+                          style={{ background: '#f1f5f9', border: '1px dashed #cbd5e1', color: '#64748b' }}
+                        >
+                          Commute: N/A
+                        </span>
+                      )}
                     </span>
                   </td>
                   <td className="py-2 pl-1">
