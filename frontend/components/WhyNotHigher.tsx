@@ -72,37 +72,42 @@ export default function WhyNotHigher({
   if (drags.length === 0) return null
 
   return (
-    <div style={{ marginTop: '0.6rem' }}>
+    <div style={{ margin: '0.85rem 0', paddingTop: '0.1rem' }}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         style={{
           appearance: 'none',
-          background: 'transparent',
-          border: 'none',
-          padding: 0,
           cursor: 'pointer',
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '0.3rem',
+          gap: '0.4rem',
           fontFamily: 'inherit',
-          fontSize: '0.92rem',
+          fontSize: '0.82rem',
           fontWeight: 700,
-          color: 'var(--hf-primary-2)',
+          lineHeight: 1,
+          color: open ? '#ffffff' : 'var(--hf-primary-2)',
+          background: open ? 'var(--hf-primary-1)' : '#ffffff',
+          border: `1.5px solid ${open ? 'var(--hf-primary-1)' : 'var(--hf-border-strong)'}`,
+          borderRadius: 999,
+          padding: '0.45rem 0.8rem',
+          boxShadow: '0 1px 3px rgba(28,25,23,0.08)',
+          transition: 'background 0.15s ease, color 0.15s ease',
         }}
       >
+        <span aria-hidden style={{ fontSize: '0.95rem' }}>💡</span>
         Why not higher?
         <svg
-          width="12"
-          height="12"
+          width="11"
+          height="11"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
-          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}
+          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease', flexShrink: 0 }}
         >
           <path d="M6 9l6 6 6-6" />
         </svg>
