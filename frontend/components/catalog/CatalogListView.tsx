@@ -100,7 +100,7 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
           return (
             <div className="flex min-w-0 items-center gap-2 text-[0.65rem]">
               <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]" title="Rough proximity estimate to the people you added, not a research-backed pillar.">
-                🤝 Social Connection
+                Social Connection
               </span>
               <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
                 {score != null && (
@@ -126,6 +126,32 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
             </span>
           </div>
         )}
+        {(() => {
+          // commute_time is synthetic/client-side (see lib/reweight.ts) -- not in PILLAR_ORDER,
+          // so it never appears in the loop above. Only show it once it's actually weighted
+          // (work hub set, priority on); the off-zone case is handled separately above.
+          const ct = lp.commute_time
+          const w = typeof ct?.weight === 'number' && Number.isFinite(ct.weight) ? ct.weight : 0
+          if (w <= 0 || place.commute_off_zone) return null
+          const score = typeof ct?.score === 'number' && Number.isFinite(ct.score) ? ct.score : null
+          const fill = score != null ? homefitPillarBarFill(score) : 'rgba(0,0,0,0.08)'
+          return (
+            <div className="flex min-w-0 items-center gap-2 text-[0.65rem]">
+              <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]" title="Not a research-backed pillar like the 13 above -- a rough linear estimate, off by default.">
+                Commute Time
+              </span>
+              <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
+                {score != null && (
+                  <div className="h-full rounded-full" style={{ width: `${Math.min(100, score)}%`, background: fill }} />
+                )}
+              </div>
+              <span className="w-7 shrink-0 tabular-nums text-[var(--hf-text-secondary)]">
+                {score != null ? score.toFixed(0) : '—'}
+              </span>
+              <span className="w-9 shrink-0 text-right tabular-nums text-[var(--hf-text-tertiary)]">{w.toFixed(0)}%</span>
+            </div>
+          )
+        })()}
       </div>
     </div>
   )
