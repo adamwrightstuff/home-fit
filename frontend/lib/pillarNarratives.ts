@@ -112,9 +112,9 @@ export function getHealthcareAccessNarrative(
   placeLabel: string,
   pillar: Record<string, unknown>
 ): string {
-  const hospitalScore = getPillarValue(pillar, 'breakdown.breakdown.hospital_access')
+  const hospitalScore = getPillarValue(pillar, 'breakdown.hospital_access')
   const hospitalCount = getPillarValue(pillar, 'summary.hospital_count')
-  const primary = getPillarValue(pillar, 'breakdown.breakdown.primary_care')
+  const primary = getPillarValue(pillar, 'breakdown.primary_care')
 
   let accessPhrase = 'basic access to hospitals and clinics'
   if (typeof hospitalScore === 'number') {
@@ -148,9 +148,9 @@ export function getPublicTransitNarrative(
   placeLabel: string,
   pillar: Record<string, unknown>
 ): string {
-  const heavy = getPillarValue(pillar, 'breakdown.breakdown.heavy_rail')
-  const light = getPillarValue(pillar, 'breakdown.breakdown.light_rail')
-  const bus = getPillarValue(pillar, 'breakdown.breakdown.bus')
+  const heavy = getPillarValue(pillar, 'breakdown.heavy_rail')
+  const light = getPillarValue(pillar, 'breakdown.light_rail')
+  const bus = getPillarValue(pillar, 'breakdown.bus')
   const nearestRailKm = getPillarValue(pillar, 'summary.nearest_heavy_rail_distance_km')
 
   let modePhrase = 'few useful transit options nearby'
@@ -278,8 +278,8 @@ export function getHousingValueNarrative(
   placeLabel: string,
   pillar: Record<string, unknown>
 ): string {
-  const affordability = getPillarValue(pillar, 'breakdown.breakdown.local_affordability')
-  const space = getPillarValue(pillar, 'breakdown.breakdown.space')
+  const affordability = getPillarValue(pillar, 'breakdown.local_affordability')
+  const space = getPillarValue(pillar, 'breakdown.space')
   const medianValueRaw = getPillarValue(pillar, 'summary.median_home_value')
 
   let costPhrase = 'typical housing costs for the area'
