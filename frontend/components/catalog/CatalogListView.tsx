@@ -13,7 +13,8 @@ import {
 import { catalogRampKey } from '@/lib/catalogIndexColors'
 import { scoreBandFill, homefitPillarBarFill, RAMP_HEX } from '@/lib/indexColorSystem'
 import { isPillarIndexMode, PILLAR_INDEX_MODES } from '@/lib/catalogMapTypes'
-import { PILLAR_META, PILLAR_ORDER } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
+import WhyNotHigher from '@/components/WhyNotHigher'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
@@ -30,12 +31,24 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
     string,
     { score?: number; weight?: number; status?: string; data_quality?: { fallback_used?: boolean; reason?: string } }
   >
+  const availablePillars = PILLAR_ORDER.filter((k) => Boolean(lp[k]))
+  const schoolsDisabled =
+    lp.quality_education?.data_quality?.fallback_used === true &&
+    String(lp.quality_education?.data_quality?.reason ?? '').toLowerCase().includes('disabled')
+  const placeLabel = [place.catalog.name, place.catalog.county_borough].filter(Boolean).join(', ') || place.catalog.name
+
   return (
     <div className="space-y-1 border-t border-[var(--hf-border)] bg-[var(--hf-bg-subtle)] px-2 py-3">
       <div className="mb-2 text-[0.6rem] font-bold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
         Pillars (score · weight in HomeFit blend)
       </div>
-      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+      <WhyNotHigher
+        livability_pillars={rw.livability_pillars}
+        available_pillars={availablePillars as PillarKey[]}
+        schoolsDisabled={Boolean(schoolsDisabled)}
+        placeLabel={placeLabel}
+      />
+      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 pt-2">
         {PILLAR_ORDER.map((k) => {
           const row = lp[k]
           const isSchoolsDisabled =
