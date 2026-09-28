@@ -6,6 +6,7 @@ import { ScoreResponse } from '@/types/api'
 import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
 import TotalScore from './TotalScore'
 import PillarCard from './PillarCard'
+import WhyNotHigher from './WhyNotHigher'
 import InteractiveMap, { type PillarPoi } from './InteractiveMap'
 import LongevityInfo from './LongevityInfo'
 import HappinessInfo from './HappinessInfo'
@@ -528,6 +529,13 @@ export default function ScoreDisplay({
                     ? `${PILLAR_META[bottom1.key].icon} ${PILLAR_META[bottom1.key].name} (${bottom1.score.toFixed(0)})`
                     : '—'}
                 </div>
+
+                <WhyNotHigher
+                  livability_pillars={livability_pillars}
+                  available_pillars={available_pillars}
+                  schoolsDisabled={schoolsDisabled}
+                  placeLabel={mapLocationLabel || locationDisplayName}
+                />
               </>
             )}
 
