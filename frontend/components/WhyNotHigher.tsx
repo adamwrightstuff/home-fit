@@ -173,7 +173,7 @@ export default function WhyNotHigher({
               borderTop: '1px solid var(--hf-border)',
             }}
           >
-            Ranked by points lost against your priority weights — raise a pillar's importance and it moves up this list.
+            Ranked by points lost against your priority weights — raise a pillar&apos;s importance and it moves up this list.
           </div>
         </div>
       )}
