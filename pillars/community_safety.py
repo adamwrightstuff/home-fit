@@ -1,39 +1,41 @@
 """
-Community Safety pillar — 0-100 score reflecting how safe a neighborhood is
-relative to other places of the same area type.
+Community Safety pillar — 0-100 score reflecting how safe a place is compared
+with US cities and towns nationally.  One national scale applies to every area
+type: a resident's risk does not depend on whether the place is urban or rural.
 
 Inputs
 ------
-- Violent crime rate  (assault, robbery, homicide) per 1,000 residents
-- Property crime rate (burglary, larceny, vehicle theft) per 1,000 residents
+- Violent crime rate  (FBI Part I: murder, rape, robbery, aggravated assault) per 1,000 residents
+- Property crime rate (FBI Part I: burglary, larceny-theft, motor vehicle theft) per 1,000 residents
 - Year-over-year violent crime trend (optional, ±5-point modifier)
 
 Scoring
 -------
-1. Z-score each rate against area-type baselines (inverted: lower crime → higher z).
-2. Blend: 65% violent slot + 35% property slot (both clipped ±2.5, mapped to 0-100).
+1. Each rate's slot = 100 - its percentile among a random national sample of US
+   city/town police departments (safer than 90% of US towns → 90).
+2. Blend: 65% violent slot + 35% property slot (15% property in retail-theft hubs).
 3. Add capped trend modifier: improving trend → +up to 5pts, worsening → -up to 5pts.
 4. Final = clip(blend + trend_delta, 0, 100).
 
 Data sources
 ------------
-- NYC metro:  NYPD Complaint Data via NYC Open Data (Socrata)
-- LA metro:   LAPD Crime Data via LA Open Data (Socrata, legacy through 2024)
-- All others: FBI Crime Data Explorer API (requires FBI_CRIME_API_KEY env var)
+- NYC / SF / LA city limits: NYPD, SFPD, LAPD incident open data (Part I offenses, last full year)
+- All others: FBI Crime Data Explorer per-agency data (requires FBI_CRIME_API_KEY env var),
+  NY State UCR, CA DOJ, LASD station totals
 - Optional: Census LODES+H3 commuter context (Parquet) to adjust commercial-heavy denominators
 - Degraded:   score=None when no data available; does not contribute to total.
 
-Baselines
----------
-Stored in data/community_safety_baselines.json.
-Override path via COMMUNITY_SAFETY_BASELINES_PATH env var.
-Rebuild with scripts/baselines/build_community_safety_baselines.py.
+National scale
+--------------
+Stored in data/community_safety_national_scale.json.
+Override path via COMMUNITY_SAFETY_SCALE_PATH env var.
+Rebuild with scripts/baselines/build_community_safety_national_scale.py.
 """
 
 from __future__ import annotations
 
+import bisect
 import json
-import math
 import os
 from typing import Any, Dict, Optional, Tuple
 
@@ -46,37 +48,32 @@ logger = get_logger(__name__)
 _BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 _DEFAULT_DATA_DIR = os.path.join(_BASE_DIR, "data")
 
-_BASELINES_PATH = os.getenv(
-    "COMMUNITY_SAFETY_BASELINES_PATH",
-    os.path.join(_DEFAULT_DATA_DIR, "community_safety_baselines.json"),
+_SCALE_PATH = os.getenv(
+    "COMMUNITY_SAFETY_SCALE_PATH",
+    os.path.join(_DEFAULT_DATA_DIR, "community_safety_national_scale.json"),
 )
 
 # ---------------------------------------------------------------------------
-# Load baselines at import time
+# Load national scale at import time
 # ---------------------------------------------------------------------------
 
-_baselines: Dict[str, Dict[str, float]] = {}
+_scale: Dict[str, Any] = {}
 
 try:
-    if os.path.exists(_BASELINES_PATH):
-        with open(_BASELINES_PATH, "r", encoding="utf-8") as _f:
-            _raw = json.load(_f)
-        for key, val in _raw.items():
-            if key.startswith("_"):
-                continue
-            if isinstance(val, dict) and "violent_mean" in val:
-                _baselines[key] = val
-        if _baselines:
-            logger.info("Loaded community safety baselines for %d area types", len(_baselines))
+    with open(_SCALE_PATH, "r", encoding="utf-8") as _f:
+        _scale = json.load(_f)
+    logger.info(
+        "Loaded community safety national scale (%s agencies, %s)",
+        _scale.get("_meta", {}).get("agencies_used"), _scale.get("_meta", {}).get("data_year"),
+    )
 except Exception as e:
-    logger.warning("Failed to load community safety baselines: %s", e)
+    logger.warning("Failed to load community safety national scale: %s", e)
 
 
 # ---------------------------------------------------------------------------
 # Scoring helpers
 # ---------------------------------------------------------------------------
 
-_CLIP = 2.5
 _TREND_CAP_PTS = 5.0
 
 # Precision level indicates how granular/reliable the underlying data source is.
@@ -87,6 +84,7 @@ _TREND_CAP_PTS = 5.0
 _PRECISION_MAP = {
     "nyc_open_data":    "HYPER_LOCAL",
     "la_open_data":     "HYPER_LOCAL",
+    "sf_open_data":     "HYPER_LOCAL",
     "lasd_station":     "PRECINCT_PROXY",
     "ny_state_ucr":     "AGENCY_VERIFIED",
     "fbi_nibrs_agency": "AGENCY_VERIFIED",
@@ -126,43 +124,43 @@ def _confidence_and_dqi(precision_level: str, commuter_meta: Dict[str, Any]) -> 
     return conf_i, dqi
 
 
-def _z_to_slot(z: float) -> float:
-    """Clip z to ±2.5 and map to 0–100 (higher is safer, so z is inverted)."""
-    z_inv = -z  # lower crime → higher z_inv → higher score
-    z_clipped = max(-_CLIP, min(_CLIP, z_inv))
-    return ((z_clipped + _CLIP) / (2 * _CLIP)) * 100.0
+def _national_percentile(rate: float, key: str) -> float:
+    """Percentile (0-100) of `rate` among US towns, interpolated between the
+    stored 0th..100th percentile breakpoints."""
+    pts = _scale.get(key) or []
+    if not pts:
+        return 50.0
+    if rate <= pts[0]:
+        return 0.0
+    if rate >= pts[-1]:
+        return 100.0
+    lo = bisect.bisect_right(pts, rate) - 1
+    # Flat stretches (many towns at the same rate, e.g. 0) take their midpoint.
+    hi = bisect.bisect_left(pts, rate)
+    if pts[lo] == rate or hi > lo + 1:
+        return (bisect.bisect_left(pts, rate) + bisect.bisect_right(pts, rate) - 1) / 2
+    return lo + (rate - pts[lo]) / (pts[lo + 1] - pts[lo])
 
 
-def _get_baselines(area_type: Optional[str]) -> Dict[str, float]:
-    at = (area_type or "").lower().replace(" ", "_") if area_type else None
-    if at and at in _baselines:
-        return _baselines[at]
-    return _baselines.get("default", {
-        "violent_mean": 3.5, "violent_std": 4.0,
-        "property_mean": 12.0, "property_std": 9.0,
-    })
+def national_scale_meta() -> Dict[str, Any]:
+    meta = _scale.get("_meta", {})
+    return {"data_year": meta.get("data_year"), "agencies_used": meta.get("agencies_used")}
 
 
 def _score_rates(
     violent_per_1k: float,
     property_per_1k: float,
-    area_type: Optional[str],
+    area_type: Optional[str] = None,
 ) -> Tuple[float, float, float, float]:
     """
-    Compute violent slot, property slot, and blended raw score.
-    Returns (violent_slot, property_slot, raw_score, violent_z).
+    Compute violent slot, property slot, and blended raw score against the
+    national scale (area_type is accepted for call compatibility but unused).
+    Returns (violent_slot, property_slot, raw_score, violent_percentile).
     """
-    bl = _get_baselines(area_type)
-    v_mean = float(bl.get("violent_mean", 3.5))
-    v_std = float(bl.get("violent_std", 4.0))
-    p_mean = float(bl.get("property_mean", 12.0))
-    p_std = float(bl.get("property_std", 9.0))
-
-    v_z = (violent_per_1k - v_mean) / v_std if v_std > 0 else 0.0
-    p_z = (property_per_1k - p_mean) / p_std if p_std > 0 else 0.0
-
-    v_slot = _z_to_slot(v_z)
-    p_slot = _z_to_slot(p_z)
+    v_pct = _national_percentile(violent_per_1k, "violent_per_1k_percentiles")
+    p_pct = _national_percentile(property_per_1k, "property_per_1k_percentiles")
+    v_slot = 100.0 - v_pct
+    p_slot = 100.0 - p_pct
 
     # Commercial-hub dampening: reduce property weight when the crime profile
     # is dominated by property crime (retail theft, pickpockets) vs. violence.
@@ -175,7 +173,7 @@ def _score_rates(
     v_weight = 1.0 - p_weight
 
     raw = v_weight * v_slot + p_weight * p_slot
-    return v_slot, p_slot, raw, v_z
+    return v_slot, p_slot, raw, v_pct
 
 
 def _trend_delta(trend_pct: Optional[float]) -> float:
@@ -205,6 +203,7 @@ def get_community_safety_score(
     zip_code: Optional[str] = None,
     population: Optional[int] = None,
     population_denominator_meta: Optional[Dict[str, Any]] = None,
+    fallback_city: Optional[str] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Score community safety for a location.
@@ -221,9 +220,10 @@ def get_community_safety_score(
         population:   Estimated residential population for per-1k conversion.
                       Defaults to 10,000 when not supplied.
         population_denominator_meta: Optional telemetry from main (areal ACS disk estimate).
+        fallback_city: Jurisdiction city for agency matching when `city` is a neighborhood.
     """
     pop = population or 10_000
-    bl = _get_baselines(area_type)
+    scale_meta = national_scale_meta()
 
     rates = get_crime_rates(
         lat, lon,
@@ -231,6 +231,7 @@ def get_community_safety_score(
         state_abbr=state,
         area_type=area_type,
         population=pop,
+        fallback_city=fallback_city,
     )
 
     if rates is None:
@@ -243,7 +244,7 @@ def get_community_safety_score(
             "precision_level": "DEGRADED",
             "status": "DEGRADED",
             "data_available": False,
-            "area_type_baseline": bl,
+            "national_scale": scale_meta,
             "confidence": 0,
             "data_quality_index": 0.0,
         }
@@ -277,7 +278,7 @@ def get_community_safety_score(
             "precision_level": precision_level,
             "status": "DEGRADED",
             "data_available": True,
-            "area_type_baseline": bl,
+            "national_scale": scale_meta,
             "agency_name": rates.get("agency_name"),
             "confidence": 0,
             "data_quality_index": 0.0,
@@ -317,7 +318,7 @@ def get_community_safety_score(
         "precision_level": precision_level,
         "status": "VERIFIED",
         "data_available": True,
-        "area_type_baseline": bl,
+        "national_scale": scale_meta,
         "incidents_current": rates.get("incidents_current"),
         "data_period": rates.get("data_period"),
         "agency_name": rates.get("agency_name"),

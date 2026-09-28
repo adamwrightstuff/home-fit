@@ -56,6 +56,8 @@ def _extract_location(row: Dict):
         "Maryland": "MD", "Virginia": "VA", "Georgia": "GA",
     }
     state = _state_map.get(state_full, state_full[:2].upper() if len(state_full) >= 2 else "")
+    if not state:
+        state = row.get("catalog", {}).get("state_abbr", "")
 
     # area_type is stored in data_quality_summary.area_classification.area_type
     dq = score.get("data_quality_summary", {})
@@ -152,6 +154,7 @@ def rescore_catalog(input_path: str, output_path: str, dry_run: bool = False):
                 zip_code=zip_code,
                 population=pop,
                 population_denominator_meta=pop_meta,
+                fallback_city=row.get("score", {}).get("location_info", {}).get("city") or None,
             )
         except Exception as e:
             logger.error("[%d/%d] %s: error %s", idx, total, key, e)

@@ -128,10 +128,9 @@ These work anywhere with no baseline updates:
 - Builder: `scripts/baselines/build_metro_baselines_from_cbsa.py --only xx_metro`
 
 **`community_safety`**
-- Needs `community_safety_baselines.json` computed from scored catalog places
-- Without it: falls back to national avg → violent/property crime thresholds are wrong for the market
-- Fix: Phase 11 (safety baselines rebuild), runs automatically after scoring
-- Builder: `scripts/baselines/build_community_safety_baselines.py --inputs data/nyc... data/la... data/sf... data/xx...`
+- Scores against one national scale (`community_safety_national_scale.json`, a random sample of US city/town police departments), so no per-metro rebuild is needed
+- If the metro's core city publishes incident-level open data, add it as a bbox source in `data_sources/crime_api.py` (Part I offenses only, last full calendar year); otherwise places fall through to FBI per-agency data
+- Builder: `scripts/baselines/build_community_safety_national_scale.py` (rebuild when a newer FBI data year is out)
 
 **`social_fabric` (stability component)**
 - Needs `stability_baselines.json` with the right Census division for this metro
@@ -156,7 +155,7 @@ These work anywhere with no baseline updates:
 | File | Built by | Scope | When to rebuild |
 |------|---------|-------|----------------|
 | `data/status_signal_baselines.json` | `build_metro_baselines_from_cbsa.py` | Per CBSA | Adding a new metro (Phase A) |
-| `data/community_safety_baselines.json` | `build_community_safety_baselines.py` | All scored catalog places grouped by area_type | After adding any new metro |
+| `data/community_safety_national_scale.json` | `build_community_safety_national_scale.py` | National sample of US city/town police departments | When a newer FBI data year is released (~annually) |
 | `data/stability_baselines.json` | `build_stability_baselines_from_results.py` | Census division | If stability scores are flat — already national |
 | `data/economic_baselines.json` | `build_economic_baselines_from_results.py` | Census division × area_type | If economic scores are 50 flat for a new region |
 | `data/zillow_zhvi_zip.json` | `build_zillow_zhvi.py` | ZIP code, national | When Zillow releases new ZHVI data (~annually) |

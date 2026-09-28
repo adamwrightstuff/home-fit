@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Recompute community_safety scores in catalog JSONL files using stored crime
-rates and the current community_safety_baselines.json.
+rates and the current data/community_safety_national_scale.json.
 
 No API calls — all raw data (violent_per_1k, property_per_1k, area_type) is
 already stored in the catalog breakdown. Only the scoring curve changes.
@@ -27,7 +27,7 @@ sys.path.insert(0, ROOT)
 
 import math
 
-from pillars.community_safety import _score_rates, _trend_delta, _get_baselines
+from pillars.community_safety import _score_rates, _trend_delta, national_scale_meta
 
 DEFAULT_INPUTS = [
     os.path.join(ROOT, "data", "nyc_metro_place_catalog_scores_merged.jsonl"),
@@ -94,13 +94,8 @@ def recompute_record(score: dict) -> tuple[float | None, float | None, str]:
     bd["property_slot"] = round(p_slot, 1)
     bd["raw_score"] = round(raw, 1)
     bd["trend_delta"] = td
-    bl = _get_baselines(area_type)
-    bd["area_type_baseline"] = {
-        "violent_mean": bl.get("violent_mean"),
-        "violent_std": bl.get("violent_std"),
-        "property_mean": bl.get("property_mean"),
-        "property_std": bl.get("property_std"),
-    }
+    bd.pop("area_type_baseline", None)
+    bd["national_scale"] = national_scale_meta()
     if commuter_meta:
         bd["commuter_context"] = commuter_meta
 

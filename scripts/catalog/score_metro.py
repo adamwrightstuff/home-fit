@@ -25,9 +25,8 @@ Phases (all run unless --skip-* flags used):
   8. schools   — charter/public flag on school arrays
   9. archs     — Claude-based archetype summaries (costs ~$5-15, requires ANTHROPIC_API_KEY)
  10. compose   — recompute composites (longevity, status_signal, happiness_index)
- 11. safety    — rebuild community_safety_baselines.json from all metro catalog files
 
-Skip individual phases with --skip-baselines, --skip-batch, --skip-safety, etc.
+Skip individual phases with --skip-baselines, --skip-batch, etc.
 Skip archs by default if ANTHROPIC_API_KEY is unset; override with --archs.
 
 The --out file is used as the working file throughout. After phase 1, every
@@ -126,25 +125,6 @@ def phase_baselines(metro: str) -> None:
     result = subprocess.run(cmd, env={**os.environ, "PYTHONPATH": str(REPO_ROOT)})
     if result.returncode != 0:
         print(f"  WARNING: baseline build exited {result.returncode} — scoring will use division-level fallback")
-
-
-def phase_safety_baselines(out_path: Path) -> None:
-    """Rebuild community_safety_baselines.json from all catalog JSONL files including the new metro."""
-    import subprocess
-    all_catalogs = list(REPO_ROOT.glob("data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl"))
-    if not all_catalogs:
-        # fall back to any merged JSONL
-        all_catalogs = list(REPO_ROOT.glob("data/*_metro_place_catalog_scores_merged.jsonl"))
-    if str(out_path) not in [str(p) for p in all_catalogs]:
-        all_catalogs.append(out_path)
-    cmd = [
-        sys.executable,
-        str(REPO_ROOT / "scripts/baselines/build_community_safety_baselines.py"),
-        "--inputs", *[str(p) for p in all_catalogs],
-    ]
-    result = subprocess.run(cmd, env={**os.environ, "PYTHONPATH": str(REPO_ROOT)})
-    if result.returncode != 0:
-        print(f"  WARNING: safety baselines build exited {result.returncode}")
 
 
 def phase_batch(csv_path: Path, out_path: Path, args) -> None:
@@ -344,7 +324,6 @@ def main() -> int:
     p.add_argument("--skip-schools",   action="store_true", help="Skip phase 8 (charter school flag)")
     p.add_argument("--skip-archs",     action="store_true", help="Skip phase 9 (archetype summaries)")
     p.add_argument("--skip-compose",   action="store_true", help="Skip phase 10 (composite recompute)")
-    p.add_argument("--skip-safety",    action="store_true", help="Skip phase 11 (community safety baselines)")
     args = p.parse_args()
 
     if not args.csv.is_file():
@@ -441,11 +420,6 @@ def main() -> int:
     else:
         print("\n[skip] Phase 10: composite recompute")
 
-    if not args.skip_safety:
-        _banner(11, "Community safety baselines (all metros)")
-        phase_safety_baselines(args.out)
-    else:
-        print("\n[skip] Phase 11: community safety baselines")
 
     print(f"\n{'='*60}")
     print(f"  Complete: {args.out}")

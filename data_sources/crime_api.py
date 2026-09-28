@@ -38,12 +38,16 @@ logger = get_logger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-# Socrata endpoints (no API key needed for <1 000 rows/request at this rate)
-_NYC_SOCRATA = "https://data.cityofnewyork.us/resource/5uac-w243.json"
-# Legacy LAPD dataset (SRS format) — updated through Dec 2024.
-# The newer NIBRS dataset (y8y3-fqfu) lacks lat/lon fields; use legacy for coordinate queries.
-_LA_SOCRATA = "https://data.lacity.org/resource/2nrs-mtv8.json"
-_LA_DATA_MAX_DATE = "2024-12-31"  # Legacy dataset last update
+# City open-data endpoints (Socrata, no key required).  Each is queried for the
+# last complete calendar year, matching the FBI per-agency data year, and only
+# FBI Part I offenses are counted so city neighborhoods and police-department
+# totals measure the same crimes.
+# NYPD Complaint Data Historic (full calendar years; the "Current" dataset is year-to-date only).
+_NYC_SOCRATA = "https://data.cityofnewyork.us/resource/qgea-i56i.json"
+# LAPD NIBRS offenses (2024+, with lat/lon).  The legacy SRS dataset stops mid-2024.
+_LA_SOCRATA = "https://data.lacity.org/resource/y8y3-fqfu.json"
+# SFPD "Police Department Incident Reports: 2018 to Present" (updated daily).
+_SF_SOCRATA = "https://data.sf.gov/resource/wg3w-h783.json"
 
 # FBI Crime Data Explorer
 _FBI_CDE_BASE = "https://api.usa.gov/crime/fbi/cde"
@@ -130,35 +134,36 @@ _LASD_STATION_DATA: Dict = {}  # populated lazily on first use
 # NYC 5-borough bounding box (excludes NJ, Westchester, LI suburbs)
 _NYC_BBOX = (40.47, -74.27, 40.92, -73.68)   # (lat_min, lon_min, lat_max, lon_max)
 
+# City and County of San Francisco (SFPD jurisdiction; excludes Daly City/Brisbane)
+_SF_BBOX = (37.703, -122.53, 37.835, -122.355)
+
 # LAPD jurisdiction bounding box (City of Los Angeles proper)
 _LA_BBOX  = (33.70, -118.67, 34.34, -118.13)
 
-# ±1 year search window for current period
-_MONTHS_BACK = 12
 # Minimum incident count to trust the data (low counts = unreliable rate)
 _MIN_INCIDENTS = 5
 
-# NYC offense description substrings → violent category
-_NYC_VIOLENT = frozenset({
-    "murder", "manslaughter", "rape", "robbery", "felony assault",
-    "assault", "kidnap", "sex crimes",
-})
-_NYC_PROPERTY = frozenset({
-    "burglary", "larceny", "grand larceny", "motor vehicle theft",
-    "criminal mischief",
-})
-
-# LAPD crime code prefixes → category
-# Codes 100-199 = homicide, 200-299 = sex/assault, 300-399 = robbery+burglary
-# 400-499 = theft, 500-599 = vehicle
-_LA_VIOLENT_CODES = frozenset({
-    "110", "113", "121", "122", "210", "220", "230", "231", "235", "236",
-    "250", "251", "761", "762",
-})
-_LA_PROPERTY_CODES = frozenset({
-    "310", "320", "330", "331", "341", "343", "345", "350", "351", "352",
-    "353", "354", "355", "356", "357", "358", "359", "510", "520",
-})
+# FBI Part I definitions: violent = murder/non-negligent manslaughter, rape,
+# robbery, aggravated assault; property = burglary, larceny-theft, motor vehicle
+# theft.  Simple assault, vandalism, and other Part II offenses are excluded.
+_NYC_VIOLENT_OFFENSES = (
+    "MURDER & NON-NEGL. MANSLAUGHTER", "RAPE", "ROBBERY", "FELONY ASSAULT",
+)
+_NYC_PROPERTY_OFFENSES = (
+    "BURGLARY", "GRAND LARCENY", "PETIT LARCENY",
+    "GRAND LARCENY OF MOTOR VEHICLE", "PETIT LARCENY OF MOTOR VEHICLE",
+)
+# SFPD: only the Aggravated Assault subcategory of Assault is Part I.
+_SF_VIOLENT_WHERE = (
+    "(incident_category in ('Homicide', 'Rape', 'Robbery') "
+    "OR incident_subcategory = 'Aggravated Assault')"
+)
+_SF_PROPERTY_WHERE = (
+    "incident_category in ('Burglary', 'Larceny Theft', 'Motor Vehicle Theft', 'Motor Vehicle Theft?')"
+)
+# LAPD NIBRS offense codes (FBI NIBRS code list).
+_LA_VIOLENT_NIBRS = ("09A", "11A", "11B", "11C", "120", "13A")
+_LA_PROPERTY_NIBRS = ("220", "23A", "23B", "23C", "23D", "23E", "23F", "23G", "23H", "240")
 
 # FBI UCR offense type keys → HomeFit category
 _FBI_VIOLENT_KEYS = frozenset({
@@ -249,58 +254,37 @@ def _get_fbi_key() -> Optional[str]:
     return os.getenv("FBI_CRIME_API_KEY") or os.getenv("FBI_API_KEY")
 
 
-def _date_range(
-    months_back: int,
-    offset_months: int = 0,
-    max_date: Optional[datetime.date] = None,
-) -> Tuple[str, str]:
-    """
-    Return ISO date strings for a rolling window ending `offset_months` ago,
-    optionally capped at `max_date`.
-    """
-    now = datetime.date.today()
-    end_month = now.month - offset_months
-    end_year = now.year
-    while end_month <= 0:
-        end_month += 12
-        end_year -= 1
-    end = datetime.date(end_year, end_month, 1)
-    if max_date and end > max_date:
-        end = max_date.replace(day=1)
-
-    start_month = end.month - months_back
-    start_year = end.year
-    while start_month <= 0:
-        start_month += 12
-        start_year -= 1
-    start = datetime.date(start_year, start_month, 1)
-    return start.isoformat(), end.isoformat()
-
-
-def _classify_nyc(ofns_desc: str) -> Optional[str]:
-    desc = ofns_desc.lower()
-    for kw in _NYC_VIOLENT:
-        if kw in desc:
-            return "violent"
-    for kw in _NYC_PROPERTY:
-        if kw in desc:
-            return "property"
-    return None
-
-
-def _classify_la(crm_cd: str) -> Optional[str]:
-    code = str(crm_cd).strip()
-    if code in _LA_VIOLENT_CODES:
-        return "violent"
-    if code in _LA_PROPERTY_CODES:
-        return "property"
-    return None
-
-
 def _per_1k(count: int, population: int) -> float:
     if population <= 0:
         return 0.0
     return round(count / population * 1000, 3)
+
+
+def _soql_list(values) -> str:
+    return ", ".join("'" + v.replace("'", "''") + "'" for v in values)
+
+
+def _open_data_year() -> int:
+    """Last complete calendar year (same year the FBI per-agency path uses)."""
+    return datetime.date.today().year - 1
+
+
+def _socrata_count(url: str, select: str, where: str, label: str) -> Optional[int]:
+    try:
+        resp = requests.get(url, params={"$select": f"{select} as n", "$where": where},
+                            timeout=_REQUEST_TIMEOUT)
+        if resp.status_code != 200:
+            logger.warning("%s crime API returned %d", label, resp.status_code)
+            return None
+        rows = resp.json()
+        return int(rows[0].get("n", 0) or 0) if rows else 0
+    except Exception as e:
+        logger.warning("%s crime fetch failed: %s", label, e)
+        return None
+
+
+def _year_bounds(year: int, field: str) -> str:
+    return f"{field} >= '{year}-01-01T00:00:00.000' AND {field} < '{year + 1}-01-01T00:00:00.000'"
 
 
 # ---------------------------------------------------------------------------
@@ -308,76 +292,38 @@ def _per_1k(count: int, population: int) -> float:
 # ---------------------------------------------------------------------------
 
 @cached(ttl_seconds=CACHE_TTL["crime_data"])
-def _fetch_nyc_crimes(lat: float, lon: float, radius_m: int, start_date: str, end_date: str) -> Optional[Dict]:
+def _fetch_nyc_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
+    """Part I violent/property complaint counts within a circle for one calendar year."""
+    base = f"within_circle(lat_lon, {lat}, {lon}, {radius_m}) AND " + _year_bounds(year, "cmplnt_fr_dt")
+    v = _socrata_count(_NYC_SOCRATA, "count(*)",
+                       f"{base} AND ofns_desc in ({_soql_list(_NYC_VIOLENT_OFFENSES)})", "NYC")
+    p = _socrata_count(_NYC_SOCRATA, "count(*)",
+                       f"{base} AND ofns_desc in ({_soql_list(_NYC_PROPERTY_OFFENSES)})", "NYC")
+    if v is None or p is None:
+        return None
+    return {"violent": v, "property": p}
+
+
+# ---------------------------------------------------------------------------
+# SF Open Data
+# ---------------------------------------------------------------------------
+
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _fetch_sf_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
     """
-    Query NYPD Complaint Data via Socrata SoQL within_circle.
-    Returns raw dict with violent/property counts, or None on failure.
+    Part I violent/property incident counts within a circle for one calendar year.
+    Only initial reports (II, VI) are counted, each incident once, so supplemental
+    reports and multi-code incidents don't double-count.
     """
-    try:
-        # SoQL: filter by circle and date range; return only needed fields
-        where = (
-            f"within_circle(lat_lon, {lat}, {lon}, {radius_m}) "
-            f"AND cmplnt_fr_dt >= '{start_date}T00:00:00.000' "
-            f"AND cmplnt_fr_dt < '{end_date}T00:00:00.000'"
-        )
-        params = {
-            "$where": where,
-            "$select": "ofns_desc,law_cat_cd,cmplnt_fr_dt",
-            "$limit": 10000,
-        }
-        resp = requests.get(_NYC_SOCRATA, params=params, timeout=_REQUEST_TIMEOUT)
-        if resp.status_code != 200:
-            logger.warning("NYC crime API returned %d", resp.status_code)
-            return None
-        records = resp.json()
-        violent, prop = 0, 0
-        for r in records:
-            cat = _classify_nyc(r.get("ofns_desc", ""))
-            if cat == "violent":
-                violent += 1
-            elif cat == "property":
-                prop += 1
-        return {"violent": violent, "property": prop, "total": len(records)}
-    except Exception as e:
-        logger.warning("NYC crime fetch failed: %s", e)
+    base = (
+        f"within_circle(point, {lat}, {lon}, {radius_m}) "
+        f"AND report_type_code in ('II', 'VI') AND " + _year_bounds(year, "incident_datetime")
+    )
+    v = _socrata_count(_SF_SOCRATA, "count(distinct incident_id)", f"{base} AND {_SF_VIOLENT_WHERE}", "SF")
+    p = _socrata_count(_SF_SOCRATA, "count(distinct incident_id)", f"{base} AND {_SF_PROPERTY_WHERE}", "SF")
+    if v is None or p is None:
         return None
-
-
-def _get_nyc_rates(
-    lat: float, lon: float, population: int, radius_m: int
-) -> Optional[Dict]:
-    """Get current + prior-year rates for NYC and compute trend."""
-    start_cur, end_cur = _date_range(_MONTHS_BACK, offset_months=0)
-    start_prv, end_prv = _date_range(_MONTHS_BACK, offset_months=_MONTHS_BACK)
-
-    cur = _fetch_nyc_crimes(lat, lon, radius_m, start_cur, end_cur)
-    prv = _fetch_nyc_crimes(lat, lon, radius_m, start_prv, end_prv)
-
-
-    if cur is None:
-        return None
-    if cur["total"] < _MIN_INCIDENTS:
-        logger.debug("NYC crime: too few incidents (%d) — unreliable", cur["total"])
-        return None
-
-    violent_rate = _per_1k(cur["violent"], population)
-    property_rate = _per_1k(cur["property"], population)
-
-    trend_pct: Optional[float] = None
-    if prv is not None and prv["total"] >= _MIN_INCIDENTS and prv["violent"] >= 5:
-        prv_violent = _per_1k(prv["violent"], population)
-        if prv_violent > 0:
-            raw_trend = (violent_rate - prv_violent) / prv_violent * 100
-            # Cap at ±100% to prevent denominator-blowup nonsense
-            trend_pct = round(max(-100.0, min(100.0, raw_trend)), 1)
-
-    return {
-        "violent_per_1k": violent_rate,
-        "property_per_1k": property_rate,
-        "trend_pct": trend_pct,
-        "source": "nyc_open_data",
-        "incidents_current": cur["total"],
-    }
+    return {"violent": v, "property": p}
 
 
 # ---------------------------------------------------------------------------
@@ -390,83 +336,74 @@ def _meters_to_degrees(meters: int) -> float:
 
 
 @cached(ttl_seconds=CACHE_TTL["crime_data"])
-def _fetch_la_crimes(
-    lat: float, lon: float, delta_deg: float, start_date: str, end_date: str
-) -> Optional[Dict]:
+def _fetch_la_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
     """
-    Query LAPD legacy crime data via bounding box.
-    The legacy dataset (2nrs-mtv8) has separate `lat` / `lon` numeric columns —
-    Socrata's within_circle() does not work on them, so we use a bounding box.
-    Data available through Dec 2024.
+    Part I violent/property case counts within a bounding box for one calendar
+    year.  The NIBRS dataset stores lat/lon as plain columns (within_circle does
+    not apply), so a box is used; callers scale the population to the box area.
     """
-    try:
-        where = (
-            f"lat >= {lat - delta_deg} AND lat <= {lat + delta_deg} "
-            f"AND lon >= {lon - delta_deg} AND lon <= {lon + delta_deg} "
-            f"AND date_occ >= '{start_date}T00:00:00.000' "
-            f"AND date_occ < '{end_date}T00:00:00.000'"
-        )
-        params = {
-            "$where": where,
-            "$select": "crm_cd,date_occ",
-            "$limit": 10000,
-        }
-        resp = requests.get(_LA_SOCRATA, params=params, timeout=_REQUEST_TIMEOUT)
-        if resp.status_code != 200:
-            logger.warning("LA crime API returned %d", resp.status_code)
-            return None
-        records = resp.json()
-        violent, prop = 0, 0
-        for r in records:
-            cat = _classify_la(r.get("crm_cd", ""))
-            if cat == "violent":
-                violent += 1
-            elif cat == "property":
-                prop += 1
-        return {"violent": violent, "property": prop, "total": len(records)}
-    except Exception as e:
-        logger.warning("LA crime fetch failed: %s", e)
+    d = _meters_to_degrees(radius_m)
+    base = (
+        f"lat >= {lat - d} AND lat <= {lat + d} AND lon >= {lon - d} AND lon <= {lon + d} AND "
+        + _year_bounds(year, "date_occ")
+    )
+    v = _socrata_count(_LA_SOCRATA, "count(distinct caseno)",
+                       f"{base} AND nibr_code in ({_soql_list(_LA_VIOLENT_NIBRS)})", "LA")
+    p = _socrata_count(_LA_SOCRATA, "count(distinct caseno)",
+                       f"{base} AND nibr_code in ({_soql_list(_LA_PROPERTY_NIBRS)})", "LA")
+    if v is None or p is None:
         return None
+    return {"violent": v, "property": p}
 
 
-def _get_la_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
-    la_max = datetime.date(2024, 12, 31)
-    # Current window: most recent 12 months within available data
-    start_cur, end_cur = _date_range(_MONTHS_BACK, offset_months=0, max_date=la_max)
-    start_prv, end_prv = _date_range(_MONTHS_BACK, offset_months=_MONTHS_BACK, max_date=la_max)
-
-    delta_deg = _meters_to_degrees(radius_m)
-    cur = _fetch_la_crimes(lat, lon, delta_deg, start_cur, end_cur)
-    prv = _fetch_la_crimes(lat, lon, delta_deg, start_prv, end_prv)
-
+def _open_data_rates(fetch, source: str, lat: float, lon: float, population: int,
+                     radius_m: int) -> Optional[Dict]:
+    """Annual Part I rates per 1k from a city open-data source, with YoY trend."""
+    year = _open_data_year()
+    cur = fetch(lat, lon, radius_m, year)
     if cur is None:
         return None
-    if cur["total"] < _MIN_INCIDENTS:
-        logger.debug("LA crime: too few incidents (%d) — unreliable", cur["total"])
+    if cur["violent"] + cur["property"] < _MIN_INCIDENTS:
+        logger.debug("%s crime: too few incidents (%d) — unreliable", source,
+                     cur["violent"] + cur["property"])
         return None
+    prv = fetch(lat, lon, radius_m, year - 1)
 
-    import math as _math
-    # Bounding box area = (2r)² = 4r²; circle area = π×r².
-    # Scale population up by 4/π so per-1k rates are circle-equivalent (matching NYC).
-    _adj_pop = max(1, int(population * (4.0 / _math.pi)))
-    violent_rate = _per_1k(cur["violent"], _adj_pop)
-    property_rate = _per_1k(cur["property"], _adj_pop)
+    violent_rate = _per_1k(cur["violent"], population)
+    property_rate = _per_1k(cur["property"], population)
 
     trend_pct: Optional[float] = None
-    if prv is not None and prv["total"] >= _MIN_INCIDENTS and prv["violent"] >= 5:
+    if prv is not None and prv["violent"] >= 5:
         prv_violent = _per_1k(prv["violent"], population)
         if prv_violent > 0:
             raw_trend = (violent_rate - prv_violent) / prv_violent * 100
+            # Cap at ±100% to prevent denominator-blowup nonsense
             trend_pct = round(max(-100.0, min(100.0, raw_trend)), 1)
 
     return {
         "violent_per_1k": violent_rate,
         "property_per_1k": property_rate,
         "trend_pct": trend_pct,
-        "source": "la_open_data",
-        "incidents_current": cur["total"],
-        "data_period": f"{start_cur} to {end_cur}",
+        "source": source,
+        "incidents_current": cur["violent"] + cur["property"],
+        "data_period": str(year),
     }
+
+
+def _get_nyc_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
+    return _open_data_rates(_fetch_nyc_part1, "nyc_open_data", lat, lon, population, radius_m)
+
+
+def _get_sf_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
+    return _open_data_rates(_fetch_sf_part1, "sf_open_data", lat, lon, population, radius_m)
+
+
+def _get_la_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
+    import math as _math
+    # Bounding box area = (2r)² = 4r²; circle area = π×r².
+    # Scale population up by 4/π so per-1k rates are circle-equivalent (matching NYC).
+    adj_pop = max(1, int(population * (4.0 / _math.pi)))
+    return _open_data_rates(_fetch_la_part1, "la_open_data", lat, lon, adj_pop, radius_m)
 
 
 # ---------------------------------------------------------------------------
@@ -505,14 +442,16 @@ def _fetch_fbi_agencies(state_abbr: str) -> Optional[list]:
 
 
 @cached(ttl_seconds=CACHE_TTL["crime_data"])
-def _fetch_fbi_annual_rate(
+def _fetch_fbi_agency_rate(
     ori: str, offense_type: str, year: int, agency_name: Optional[str] = None
-) -> Optional[Tuple[float, str]]:
+) -> Optional[Tuple[float, str, Optional[int]]]:
     """
     Fetch an annual crime rate per 100k from the FBI CDE summarized/agency endpoint.
-    Renamed from _fetch_fbi_rate so cached December-only monthly values are not reused.
+    An agency tier rate may be 0 (e.g. no violent crimes in a small town); callers
+    decide whether the agency is actually reporting.  agency_population is the
+    FBI service population for the matched agency (None for state/national tiers).
 
-    Returns ``(rate, tier)`` where tier is one of:
+    Returns ``(rate, tier, agency_population)`` where tier is one of:
       ``"agency"``   — per-agency key found (works for NIBRS and UCR-reporting non-NIBRS agencies)
       ``"state"``    — state-level aggregate (fallback when no per-agency key)
       ``"national"`` — US national rate (last-resort)
@@ -560,23 +499,39 @@ def _fetch_fbi_annual_rate(
             )
             if ag_key:
                 val = _extract(ag_key)
-                if val is not None and val > 0:
-                    logger.debug("FBI CDE agency rate for '%s' %s %d: %.2f", agency_name, offense_type, year, val)
-                    return (val, "agency")
-
-        # Tier 3: state-level aggregate
-        for label in rates_by_label:
-            if "Offenses" in label and "United States" not in label:
-                val = _extract(label)
                 if val is not None:
-                    return (val, "state")
+                    pops = (data.get("populations") or {}).get("population") or {}
+                    ag_pops = [
+                        float(v) for v in (pops.get(ag_key.replace(" Offenses", "")) or {}).values()
+                        if v
+                    ]
+                    ag_pop = int(sum(ag_pops) / len(ag_pops)) if ag_pops else None
+                    logger.debug("FBI CDE agency rate for '%s' %s %d: %.2f", agency_name, offense_type, year, val)
+                    return (val, "agency", ag_pop)
+
+        # Tier 3: state-level aggregate.  The response also carries the agency's
+        # own series, so pick the non-national series with the largest population.
+        pops = (data.get("populations") or {}).get("population") or {}
+
+        def _label_pop(label: str) -> float:
+            vals = [float(v) for v in (pops.get(label.replace(" Offenses", "")) or {}).values() if v]
+            return max(vals) if vals else 0.0
+
+        state_labels = sorted(
+            (l for l in rates_by_label if "Offenses" in l and "United States" not in l),
+            key=_label_pop, reverse=True,
+        )
+        for label in state_labels:
+            val = _extract(label)
+            if val is not None:
+                return (val, "state", None)
 
         # Last-resort: national rate
         for label in rates_by_label:
             if "United States" in label and "Offenses" in label:
                 val = _extract(label)
                 if val is not None:
-                    return (val, "national")
+                    return (val, "national", None)
         return None
     except Exception as e:
         logger.warning("FBI CDE rate fetch failed: %s", e)
@@ -584,10 +539,10 @@ def _fetch_fbi_annual_rate(
 
 
 def _unpack_fbi_rate(result) -> Tuple[Optional[float], Optional[str]]:
-    """Unpack (rate, tier) from _fetch_fbi_annual_rate, handling legacy bare-float cache entries."""
+    """Unpack (rate, tier) from _fetch_fbi_agency_rate, handling legacy bare-float cache entries."""
     if result is None:
         return None, None
-    if isinstance(result, (list, tuple)) and len(result) == 2:
+    if isinstance(result, (list, tuple)) and len(result) >= 2:
         return result[0], result[1]
     # Legacy disk-cache entry: bare float
     return float(result), "state"
@@ -595,7 +550,7 @@ def _unpack_fbi_rate(result) -> Tuple[Optional[float], Optional[str]]:
 
 # Keep the old name as an alias so existing callers don't break
 def _fetch_fbi_state_rate(ori: str, offense_type: str, year: int) -> Optional[float]:
-    rate, _ = _unpack_fbi_rate(_fetch_fbi_annual_rate(ori, offense_type, year))
+    rate, _ = _unpack_fbi_rate(_fetch_fbi_agency_rate(ori, offense_type, year))
     return rate
 
 
@@ -626,6 +581,10 @@ _SPECIAL_PURPOSE_AGENCY_SKIP = frozenset({
     "harbor",
     "university police",
     "college police",
+    "university",           # e.g. "University of California: San Francisco"
+    "community college",    # e.g. "San Jose/Evergreen Community College"
+    "school district",
+    "highway patrol",       # CHP area offices patrol freeways, not neighborhoods
     "campus police",
     "stevens institute",
     "housing authority",
@@ -724,14 +683,21 @@ def _find_nearest_agency(agencies: list, lat: float, lon: float) -> Optional[Dic
     return best if best_dist < 50 else None  # 50 km max
 
 
-def _find_nibrs_agency_by_name(agencies: list, city_hint: str) -> Optional[Dict]:
+def _find_nibrs_agency_by_name(
+    agencies: list, city_hint: str, lat: Optional[float] = None, lon: Optional[float] = None,
+) -> Optional[Dict]:
     """
-    Scan all agencies for a NIBRS-reporting PD whose name contains all words
-    from city_hint (len > 3).  Used as a fallback when _find_nearest_agency
+    Scan all agencies for a PD whose name contains all words from city_hint
+    (len >= 3).  NIBRS reporters are preferred, but legacy-UCR agencies (e.g.
+    Oakland PD) are still returned since CDE publishes their per-agency rates.  Used as a fallback when _find_nearest_agency
     selects the wrong agency due to bad lat/lon data in the FBI database.
 
     Prefers city police departments over county sheriffs so that an incorporated
     city like Santa Clara gets its own PD rather than the county sheriff.
+
+    When lat/lon are given, agencies with coordinates more than 50 km away are
+    rejected so a same-named PD elsewhere in the state (Montclair in Oakland vs
+    Montclair PD in San Bernardino County) is never matched.
     """
     if not city_hint or not agencies:
         return None
@@ -740,8 +706,7 @@ def _find_nibrs_agency_by_name(agencies: list, city_hint: str) -> Optional[Dict]
         return None
     candidates = [
         ag for ag in agencies
-        if ag.get("is_nibrs")
-        and not _is_special_purpose_agency(
+        if not _is_special_purpose_agency(
             (ag.get("agency_name") or ag.get("agencyName") or "").lower()
         )
         and all(
@@ -749,20 +714,30 @@ def _find_nibrs_agency_by_name(agencies: list, city_hint: str) -> Optional[Dict]
             for w in words
         )
     ]
+    if lat is not None and lon is not None:
+        def _near(ag: Dict) -> bool:
+            ag_lat = ag.get("latitude") or ag.get("lat")
+            ag_lon = ag.get("longitude") or ag.get("lng") or ag.get("lon")
+            if ag_lat is None or ag_lon is None:
+                return True
+            try:
+                return _haversine_km(lat, lon, float(ag_lat), float(ag_lon)) <= 50
+            except (TypeError, ValueError):
+                return True
+        candidates = [ag for ag in candidates if _near(ag)]
     if not candidates:
         return None
-    # Prefer city police departments over county sheriffs / other agencies
-    pd_match = next(
-        (ag for ag in candidates
-         if "police department" in (ag.get("agency_name") or ag.get("agencyName") or "").lower()
-         or "police dept" in (ag.get("agency_name") or ag.get("agencyName") or "").lower()),
-        None,
-    )
-    return pd_match if pd_match is not None else candidates[0]
+    # Prefer city police departments over county sheriffs / other agencies,
+    # and NIBRS reporters over legacy-UCR agencies.
+    def _rank(ag: Dict) -> Tuple[int, int]:
+        name = (ag.get("agency_name") or ag.get("agencyName") or "").lower()
+        is_pd = "police department" in name or "police dept" in name
+        return (0 if is_pd else 1, 0 if ag.get("is_nibrs") else 1)
+    return min(candidates, key=_rank)
 
 
 @cached(ttl_seconds=CACHE_TTL["crime_data"])
-def _fetch_ny_state_agency_crimes(
+def _fetch_ny_state_agency_row(
     town_keyword: str, county: Optional[str], year: int
 ) -> Optional[Dict]:
     """
@@ -791,7 +766,7 @@ def _fetch_ny_state_agency_crimes(
             "$where": where,
             "year": str(year),
             "$order": "months_reported DESC, violent DESC",
-            "$limit": 1,
+            "$limit": 20,
         }
         if county:
             params["county"] = county.title()
@@ -802,7 +777,13 @@ def _fetch_ny_state_agency_crimes(
         data = resp.json()
         if not data:
             return None
-        row = data[0]
+        # Prefer an agency whose town name equals the keyword, so "Rye" picks
+        # "Rye City PD" rather than "Rye Brook Vg PD".
+        kw = town_keyword.strip().lower()
+        row = next(
+            (r for r in data if _ny_town_keyword(r.get("agency", "")).lower() == kw),
+            data[0],
+        )
         months = int(row.get("months_reported", 0) or 0)
         if months < 10:
             return None  # reject partial-year reports
@@ -810,6 +791,29 @@ def _fetch_ny_state_agency_crimes(
     except Exception as e:
         logger.warning("NY state crime fetch failed for '%s'/%s: %s", town_keyword, county, e)
         return None
+
+
+def _ny_town_keyword(ny_agency: str) -> str:
+    """"Yonkers City PD" → "Yonkers", "Rye Brook Vg PD" → "Rye Brook"."""
+    return re.sub(r"\s+(City|Vg|Village|Town|Twn)?\s*PD$", "", ny_agency or "", flags=re.IGNORECASE).strip()
+
+
+def _agency_population_by_name(
+    agencies: list, town: str, lat: float, lon: float, year: int
+) -> Optional[int]:
+    """FBI service population for the municipal agency named after `town`
+    (e.g. "Yonkers" → Yonkers Police Department), or None if not found."""
+    if not town or not agencies:
+        return None
+    ag = _find_nibrs_agency_by_name(agencies, town, lat, lon)
+    if not ag:
+        return None
+    ag_name = ag.get("agency_name") or ag.get("agencyName") or ""
+    for y in (year, year - 1):
+        res = _fetch_fbi_agency_rate(ag.get("ori") or ag.get("ORI"), "violent-crime", y, ag_name)
+        if res and len(res) >= 3 and res[1] == "agency" and res[2]:
+            return int(res[2])
+    return None
 
 
 def _rates_from_ny_state(
@@ -907,7 +911,7 @@ _NY_VILLAGE_TO_TOWN_PD: Dict[str, tuple] = {
 def _fetch_ny_state_nassau_pd(year: int) -> Optional[Dict]:
     """
     Fetch Nassau County PD crime row for unincorporated Nassau communities.
-    Bypasses the standard _fetch_ny_state_agency_crimes filter that excludes
+    Bypasses the standard _fetch_ny_state_agency_row filter that excludes
     county-level agencies, since Nassau County PD is the correct serving
     agency for dozens of unincorporated hamlets (Bellmore, Hewlett, etc.).
     """
@@ -961,6 +965,7 @@ def _fetch_ny_state_suffolk_pd(year: int) -> Optional[Dict]:
 def _get_fbi_rates(
     lat: float, lon: float, state_abbr: str, population: int,
     city_hint: Optional[str] = None,
+    fallback_city: Optional[str] = None,
 ) -> Optional[Dict]:
     """
     Return state-level FBI crime rates as a proxy for suburban/rural locations.
@@ -1001,9 +1006,9 @@ def _get_fbi_rates(
         # Strip Nominatim prefixes ("Village of Ardsley" → "Ardsley", "Town of X" → "X")
         _city_kw = re.sub(r"^(?:Village|Town|City|Hamlet)\s+of\s+", "", city_hint, flags=re.IGNORECASE).strip()
         if county:
-            ny_row = _fetch_ny_state_agency_crimes(_city_kw, county, data_year)
+            ny_row = _fetch_ny_state_agency_row(_city_kw, county, data_year)
             if ny_row is None:
-                ny_row = _fetch_ny_state_agency_crimes(_city_kw, county, data_year - 1)
+                ny_row = _fetch_ny_state_agency_row(_city_kw, county, data_year - 1)
 
             # Hamlets and unincorporated communities in New York are policed by TOWN
             # police departments, which appear in the state dataset under the town name
@@ -1016,9 +1021,9 @@ def _get_fbi_rates(
                 if " Town " in agency_name_raw and " Village " not in agency_name_raw:
                     town_kw = agency_name_raw.split(" Town ")[0].strip()
                     if town_kw and town_kw.lower() != city_hint.lower():
-                        ny_row = _fetch_ny_state_agency_crimes(town_kw, county, data_year)
+                        ny_row = _fetch_ny_state_agency_row(town_kw, county, data_year)
                         if ny_row is None:
-                            ny_row = _fetch_ny_state_agency_crimes(town_kw, county, data_year - 1)
+                            ny_row = _fetch_ny_state_agency_row(town_kw, county, data_year - 1)
 
             # Tier 3a: village-to-town mapping — villages policed by a covering
             # town PD that reports to the state UCR (e.g. Nyack → Orangetown).
@@ -1026,11 +1031,11 @@ def _get_fbi_rates(
                 town_entry = _NY_VILLAGE_TO_TOWN_PD.get(_city_kw.lower())
                 if town_entry:
                     town_kw, town_county, town_pop = town_entry
-                    ny_row = _fetch_ny_state_agency_crimes(town_kw, town_county, data_year)
+                    ny_row = _fetch_ny_state_agency_row(town_kw, town_county, data_year)
                     if ny_row is None:
-                        ny_row = _fetch_ny_state_agency_crimes(town_kw, town_county, data_year - 1)
+                        ny_row = _fetch_ny_state_agency_row(town_kw, town_county, data_year - 1)
                     if ny_row is not None:
-                        prev_town = _fetch_ny_state_agency_crimes(
+                        prev_town = _fetch_ny_state_agency_row(
                             ny_row.get("agency", town_kw)[:20], town_county, int(ny_row["year"]) - 1
                         )
                         logger.debug(
@@ -1077,9 +1082,9 @@ def _get_fbi_rates(
                 # Cross-county-border fallback: geo-matched agency may be in the
                 # wrong county (e.g. Tarrytown VPD selected for Nyack). Try the
                 # city keyword without a county filter across all NY agencies.
-                ny_row = _fetch_ny_state_agency_crimes(_city_kw, None, data_year)
+                ny_row = _fetch_ny_state_agency_row(_city_kw, None, data_year)
                 if ny_row is None:
-                    ny_row = _fetch_ny_state_agency_crimes(_city_kw, None, data_year - 1)
+                    ny_row = _fetch_ny_state_agency_row(_city_kw, None, data_year - 1)
                 if ny_row is not None:
                     logger.debug(
                         "NY state UCR: county-agnostic fallback matched '%s' for '%s' (geo-county was %s)",
@@ -1087,10 +1092,16 @@ def _get_fbi_rates(
                     )
 
             if ny_row is not None:
-                prev_ny_row = _fetch_ny_state_agency_crimes(
+                prev_ny_row = _fetch_ny_state_agency_row(
                     ny_row.get("agency", city_hint)[:20], county, int(ny_row["year"]) - 1
                 )
-                return _rates_from_ny_state(ny_row, prev_ny_row, population)
+                # State UCR counts cover the whole municipality, so divide by the
+                # agency's FBI service population rather than the local disk estimate
+                # (a 1 km disk around Yonkers holds ~30k of its ~210k residents).
+                juris_pop = _agency_population_by_name(
+                    agencies, _ny_town_keyword(ny_row.get("agency", "")), lat, lon, int(ny_row["year"])
+                )
+                return _rates_from_ny_state(ny_row, prev_ny_row, juris_pop or population)
             logger.debug(
                 "NY state UCR: no per-agency row for '%s' in %s; falling back to CDE state rate",
                 city_hint, county,
@@ -1098,7 +1109,7 @@ def _get_fbi_rates(
 
     # -----------------------------------------------------------------------
     # Tier 2/3: FBI CDE.  For NIBRS-reporting agencies, pass the agency name
-    # so _fetch_fbi_annual_rate can extract per-agency rates rather than the state
+    # so _fetch_fbi_agency_rate can extract per-agency rates rather than the state
     # aggregate.  For non-NIBRS agencies, agency_name_hint stays None and the
     # function falls through to the state-level rate.
     # -----------------------------------------------------------------------
@@ -1138,19 +1149,30 @@ def _get_fbi_rates(
     # Tier 2b fallback: the nearest agency may have bad lat/lon in the FBI
     # database, causing _find_nearest_agency to pick the wrong PD.  Try a
     # direct name-based search as a second opinion.
-    if not nibrs_city_match and city_hint and agencies:
-        name_match_agency = _find_nibrs_agency_by_name(agencies, city_hint)
-        if name_match_agency and name_match_agency.get("ori") != ori:
-            ori = name_match_agency.get("ori") or name_match_agency.get("ORI")
-            agency_display_name = (
-                name_match_agency.get("agencyName") or name_match_agency.get("agency_name") or ""
-            )
-            is_nibrs = True
-            nibrs_city_match = True
-            logger.debug(
-                "FBI CDE: name-based fallback for '%s' → %s (ORI %s)",
-                city_hint, agency_display_name, ori,
-            )
+    # Also tries the parent municipality and the geocoded jurisdiction city, so a
+    # neighborhood ("Rockridge", "Ballard") resolves to its city PD.
+    if not nibrs_city_match and agencies:
+        _name_hints = [
+            h for h in (
+                city_hint,
+                _SUBURB_TO_PARENT_CITY.get((city_hint or "").lower()),
+                fallback_city,
+            ) if h
+        ]
+        for _hint in _name_hints:
+            name_match_agency = _find_nibrs_agency_by_name(agencies, _hint, lat, lon)
+            if name_match_agency:
+                ori = name_match_agency.get("ori") or name_match_agency.get("ORI")
+                agency_display_name = (
+                    name_match_agency.get("agencyName") or name_match_agency.get("agency_name") or ""
+                )
+                is_nibrs = bool(name_match_agency.get("is_nibrs"))
+                nibrs_city_match = True
+                logger.debug(
+                    "FBI CDE: name-based fallback for '%s' → %s (ORI %s)",
+                    _hint, agency_display_name, ori,
+                )
+                break
 
     # Tier 2c: CA explicit suburb → serving agency.
     # Handles unincorporated communities (served by county sheriff) and small cities
@@ -1177,34 +1199,42 @@ def _get_fbi_rates(
 
     agency_name_hint = agency_display_name if nibrs_city_match else None
 
-    v_result = _fetch_fbi_annual_rate(ori, "violent-crime", data_year, agency_name_hint)
-    v_rate_0, v_tier_0 = _unpack_fbi_rate(v_result) if v_result else (None, None)
+    def _agency_year(year: int):
+        """Per-agency (violent, property) results for a year, or None when the
+        agency did not report.  Zero violent crime is valid for a small town as
+        long as the agency reported some crime that year."""
+        v_res = _fetch_fbi_agency_rate(ori, "violent-crime", year, agency_name_hint)
+        p_res = _fetch_fbi_agency_rate(ori, "property-crime", year, agency_name_hint)
+        v_rate, v_tier = _unpack_fbi_rate(v_res)
+        p_rate, p_tier = _unpack_fbi_rate(p_res)
+        if v_tier == "agency" and p_tier == "agency" and (v_rate or 0) + (p_rate or 0) > 0:
+            return v_res, p_res
+        return None
 
     # FBI per-agency data is released 12-18 months after year end; non-NIBRS
     # legacy-UCR agencies often lag 2-3 years.  Walk back up to 3 years to find
     # the most recent year with per-agency data before falling back to state aggregate.
-    if agency_name_hint and v_tier_0 != "agency":
-        for _fallback_year in range(prev_year, prev_year - 3, -1):
-            v_result_py = _fetch_fbi_annual_rate(ori, "violent-crime", _fallback_year, agency_name_hint)
-            _, v_tier_py = _unpack_fbi_rate(v_result_py) if v_result_py else (None, None)
-            if v_tier_py == "agency":
-                v_result = v_result_py
-                prev_year = _fallback_year - 1
+    v_result = p_result = None
+    if agency_name_hint:
+        for _year in range(data_year, data_year - 4, -1):
+            _found = _agency_year(_year)
+            if _found:
+                v_result, p_result = _found
+                prev_year = _year - 1
                 break
 
     if v_result is None:
-        v_result = _fetch_fbi_annual_rate(ori, "violent-crime", prev_year, agency_name_hint)
-        prev_year -= 1
-
-    if v_result is None:
-        return None
+        agency_name_hint = None
+        v_result = _fetch_fbi_agency_rate(ori, "violent-crime", data_year, None)
+        if v_result is None:
+            v_result = _fetch_fbi_agency_rate(ori, "violent-crime", prev_year, None)
+            prev_year -= 1
+        if v_result is None:
+            return None
+        p_result = _fetch_fbi_agency_rate(ori, "property-crime", prev_year + 1, None)
 
     violent_rate_100k, violent_tier = _unpack_fbi_rate(v_result)
-
-    p_result = _fetch_fbi_annual_rate(ori, "property-crime", data_year, agency_name_hint)
-    if p_result is None:
-        p_result = _fetch_fbi_annual_rate(ori, "property-crime", prev_year, agency_name_hint)
-    property_rate_100k, _ = _unpack_fbi_rate(p_result) if p_result else (None, None)
+    property_rate_100k, _ = _unpack_fbi_rate(p_result)
 
     # Convert per-100k → per-1k
     violent_rate = round(violent_rate_100k / 100.0, 3)
@@ -1212,13 +1242,13 @@ def _get_fbi_rates(
 
     # Trend: compare current year violent to prior year
     trend_pct: Optional[float] = None
-    pv_result = _fetch_fbi_annual_rate(ori, "violent-crime", prev_year, agency_name_hint)
-    prev_violent_100k, _ = _unpack_fbi_rate(pv_result) if pv_result else (None, None)
-    if prev_violent_100k and prev_violent_100k > 0:
+    pv_result = _fetch_fbi_agency_rate(ori, "violent-crime", prev_year, agency_name_hint)
+    prev_violent_100k, prev_tier = _unpack_fbi_rate(pv_result)
+    if prev_violent_100k and prev_violent_100k > 0 and prev_tier == violent_tier:
         raw_trend = (violent_rate_100k - prev_violent_100k) / prev_violent_100k * 100
         trend_pct = round(max(-100.0, min(100.0, raw_trend)), 1)
 
-    # Source reflects actual data tier returned by _fetch_fbi_annual_rate:
+    # Source reflects actual data tier returned by _fetch_fbi_agency_rate:
     #   "agency" tier → per-agency key was found in the CDE response
     #   "state"/"national" tier → only state/national aggregate was available
     if nibrs_city_match and violent_tier == "agency":
@@ -1228,7 +1258,17 @@ def _get_fbi_rates(
         # try the CA DOJ "Crimes and Clearances" dataset which covers all CA
         # LEAs regardless of NIBRS participation.
         if city_hint and state_abbr.upper() == "CA":
-            ca_doj = _get_ca_doj_rates(city_hint, population, data_year)
+            # DOJ counts cover the whole city: only use them when the place is that
+            # city (a neighborhood like Oakland's "Montclair" must not match Montclair
+            # in San Bernardino County), and divide by the city's FBI service population.
+            doj_city = city_hint
+            same_city = not fallback_city or fallback_city.strip().lower() == city_hint.strip().lower()
+            ca_doj = None
+            if same_city:
+                doj_pop = population
+                if doj_city.strip().lower() not in _CA_DOJ_SERVING_AGENCIES:
+                    doj_pop = _agency_population_by_name(agencies, doj_city, lat, lon, data_year) or population
+                ca_doj = _get_ca_doj_rates(doj_city, doj_pop, data_year)
             if ca_doj:
                 logger.debug(
                     "CA DOJ fallback for '%s': violent=%.3f property=%.3f (year %d)",
@@ -1284,6 +1324,7 @@ def get_crime_rates(
     state_abbr: Optional[str] = None,
     area_type: Optional[str] = None,
     population: int = 10000,
+    fallback_city: Optional[str] = None,
 ) -> Optional[Dict]:
     """
     Fetch violent and property crime rates per 1k population for a location.
@@ -1299,6 +1340,8 @@ def get_crime_rates(
         state_abbr:    Two-letter state (used by FBI CDE path).
         area_type:     Morphological area type (drives search radius).
         population:    Estimated population in the scored area (for per-1k conversion).
+        fallback_city: Jurisdiction city to try for agency matching when `city` is a
+                       neighborhood name (e.g. "Rockridge" → "Oakland").
     """
     radius_m = community_safety_crime_radius_m(area_type)
 
@@ -1317,6 +1360,11 @@ def get_crime_rates(
         if result:
             return result
 
+    if _in_bbox(_SF_BBOX):
+        result = _get_sf_rates(lat, lon, population, radius_m)
+        if result:
+            return result
+
     # LASD station data: CA cities that contract with LA County Sheriff
     if city:
         lasd_station = _LASD_CITY_TO_STATION.get(city.lower())
@@ -1332,7 +1380,9 @@ def get_crime_rates(
         if len(_abbr) > 2:
             from data_sources.geocoding import STATE_ABBREVIATIONS
             _abbr = STATE_ABBREVIATIONS.get(_abbr.lower(), _abbr)
-        result = _get_fbi_rates(lat, lon, _abbr, population, city_hint=city)
+        result = _get_fbi_rates(
+            lat, lon, _abbr, population, city_hint=city, fallback_city=fallback_city,
+        )
         if result:
             return result
 
