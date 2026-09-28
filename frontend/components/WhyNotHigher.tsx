@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { LivabilityPillars } from '@/types/api'
 import { PILLAR_META, getPillarFailureType, type PillarKey } from '@/lib/pillars'
 import { getPillarNarrative } from '@/lib/pillarNarratives'
+import { getPillarValue, getPillarString } from '@/lib/pillarDetailsSpec'
 
 interface WhyNotHigherProps {
   livability_pillars: LivabilityPillars
@@ -23,6 +24,94 @@ interface Drag {
 function firstSentence(text: string): string {
   const match = text.match(/^.*?[.!?](?=\s|$)/)
   return (match ? match[0] : text).trim()
+}
+
+/**
+ * getPillarNarrative is written to describe a place neutrally (used elsewhere for a
+ * general "tell me about this pillar" blurb), not to explain a shortfall. Each narrative
+ * only reaches for genuinely negative wording once its own driving metric crosses that
+ * function's own "weak" threshold; anywhere above that, it falls back to neutral or even
+ * mildly positive default phrasing (e.g. "some signs of civic engagement", "typical crime
+ * levels for the area", "many long-term residents"), which reads like a value-add under a
+ * "why not higher" label even though the pillar is still a real drag on the total at its
+ * weight. This mirrors each narrative's own primary branch condition (same fields, same
+ * thresholds, see lib/pillarNarratives.ts) so we only borrow its wording when that
+ * branch actually fired.
+ */
+function narrativeLeadIsWeak(key: PillarKey, pillar: Record<string, unknown>): boolean {
+  switch (key) {
+    case 'natural_beauty': {
+      const tree = getPillarValue(pillar, 'summary.tree_score')
+      if (typeof tree === 'number') return tree <= 30
+      const canopy = getPillarValue(pillar, 'summary.neighborhood_canopy_pct')
+      return typeof canopy === 'number' && canopy <= 20
+    }
+    case 'neighborhood_amenities': {
+      const walk = getPillarValue(pillar, 'breakdown.home_walkability.score')
+      if (typeof walk === 'number') return walk <= 30
+      const biz = getPillarValue(pillar, 'breakdown.home_walkability.businesses_within_1km')
+      return biz === 0
+    }
+    case 'active_outdoors': {
+      const daily = getPillarValue(pillar, 'breakdown.daily_urban_outdoors')
+      return typeof daily === 'number' && daily <= 30
+    }
+    case 'healthcare_access': {
+      const hospital = getPillarValue(pillar, 'breakdown.hospital_access')
+      return typeof hospital === 'number' && hospital <= 30
+    }
+    case 'public_transit_access': {
+      const scores = [
+        getPillarValue(pillar, 'breakdown.heavy_rail'),
+        getPillarValue(pillar, 'breakdown.light_rail'),
+        getPillarValue(pillar, 'breakdown.bus'),
+      ].filter((n): n is number => typeof n === 'number')
+      if (!scores.length) return false
+      return scores.reduce((a, b) => a + b, 0) / scores.length <= 30
+    }
+    case 'air_travel_access': {
+      const km = getPillarValue(pillar, 'summary.nearest_airport_km')
+      return typeof km === 'number' && km > 60
+    }
+    case 'economic_opportunity': {
+      const job = getPillarValue(pillar, 'base_score')
+      return typeof job === 'number' && job <= 30
+    }
+    case 'quality_education': {
+      const avg = getPillarValue(pillar, 'summary.base_avg_rating')
+      return typeof avg === 'number' && avg <= 50
+    }
+    case 'housing_value': {
+      const affordability = getPillarValue(pillar, 'breakdown.local_affordability')
+      return typeof affordability === 'number' && affordability <= 30
+    }
+    case 'climate_risk': {
+      const heat = getPillarValue(pillar, 'breakdown.lst_score')
+      const air = getPillarValue(pillar, 'breakdown.aqi_score')
+      const floodTier = getPillarString(pillar, 'summary.flood_risk_tier')
+      return (
+        (typeof heat === 'number' && heat >= 70) ||
+        (typeof air === 'number' && air <= 40) ||
+        floodTier === 'sfha' ||
+        floodTier === 'floodway'
+      )
+    }
+    case 'social_fabric': {
+      const stability =
+        getPillarValue(pillar, 'summary.stability_blend_pct') ?? getPillarValue(pillar, 'summary.same_house_pct')
+      return typeof stability === 'number' && stability <= 40
+    }
+    case 'community_safety': {
+      const raw = getPillarValue(pillar, 'breakdown.raw_score')
+      return typeof raw === 'number' && raw <= 30
+    }
+    case 'diversity': {
+      const score = getPillarValue(pillar, 'summary.diversity_entropy_score')
+      return typeof score === 'number' && score <= 35
+    }
+    default:
+      return false
+  }
 }
 
 function buildDrags(
@@ -48,7 +137,10 @@ function buildDrags(
       const pointsLost = Math.max(0, weight * (1 - score / 100))
       if (pointsLost < 0.5) return null
 
-      const narrative = getPillarNarrative(key, placeLabel, pillar as unknown as Record<string, unknown>)
+      const pillarRecord = pillar as unknown as Record<string, unknown>
+      const narrative = narrativeLeadIsWeak(key, pillarRecord)
+        ? getPillarNarrative(key, placeLabel, pillarRecord)
+        : null
       const cause = narrative
         ? firstSentence(narrative)
         : `Scored ${score.toFixed(0)}/100 here, below where it's pulling its weight in your total.`

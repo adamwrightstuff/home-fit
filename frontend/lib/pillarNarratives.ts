@@ -216,7 +216,7 @@ export function getEconomicOpportunityNarrative(
   placeLabel: string,
   pillar: Record<string, unknown>
 ): string {
-  const jobScore = getPillarValue(pillar, 'breakdown.base_score')
+  const jobScore = getPillarValue(pillar, 'base_score')
   const divisionRaw = getPillarString(pillar, 'summary.division')
   const divisionLabel = divisionRaw ? DIVISION_LABELS[divisionRaw] ?? divisionRaw : null
 
@@ -248,8 +248,10 @@ export function getQualityEducationNarrative(
 
   let qualityPhrase = 'a mix of school options nearby'
   if (typeof avgRating === 'number') {
-    if (avgRating >= 8) qualityPhrase = 'strong school options nearby overall'
-    else if (avgRating <= 5) qualityPhrase = 'weaker school options nearby overall'
+    // base_avg_rating is 0-100 (already normalized), not the 0-10 scale these thresholds
+    // originally assumed -- rescaled to the same 80%/50% cutoffs the original 8/5 implied.
+    if (avgRating >= 80) qualityPhrase = 'strong school options nearby overall'
+    else if (avgRating <= 50) qualityPhrase = 'weaker school options nearby overall'
   }
 
   let countPhrase = ''
@@ -389,9 +391,9 @@ export function getCommunitySafetyNarrative(
   placeLabel: string,
   pillar: Record<string, unknown>
 ): string {
-  const overall = getPillarValue(pillar, 'summary.overall_crime_score')
-  const violent = getPillarValue(pillar, 'summary.violent_crime_score')
-  const property = getPillarValue(pillar, 'summary.property_crime_score')
+  const overall = getPillarValue(pillar, 'breakdown.raw_score')
+  const violent = getPillarValue(pillar, 'breakdown.violent_slot')
+  const property = getPillarValue(pillar, 'breakdown.property_slot')
 
   let safetyPhrase = 'typical crime levels for the area'
   if (typeof overall === 'number') {
