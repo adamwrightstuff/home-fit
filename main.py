@@ -2202,25 +2202,43 @@ def _compute_single_score_internal(
         political_lean_score, political_lean_details = _raw_political_lean
     else:
         political_lean_score, political_lean_details = None, {}
-    # F02: Ghost weight redistribution — pillars with score=None (no data) retain their
-    # full token weight in the denominator, depressing total_score ceiling.  Zero their
-    # weight and rescale remaining weights proportionally to 100.
+    # F02: Ghost weight redistribution — pillars with no real data (score=None, or a
+    # confidence=0 fallback zero) retain their full token weight in the denominator,
+    # depressing total_score ceiling and actively punishing a place for missing data
+    # instead of being neutral about it. Zero their weight and rescale remaining
+    # weights proportionally to 100.
+    #
+    # Generalized from a hardcoded 3-pillar check (political_lean, community_safety,
+    # neighborhood_amenities) to every pillar in this equal-weight pool that can
+    # legitimately come back with no real data -- confirmed against the live catalog
+    # that public_transit_access, social_fabric, and diversity all hit this in
+    # production (confidence=0, score=0.0, full weight retained, ceiling silently
+    # capped) with no redistribution safety net before this fix.
+    #
+    # Excludes quality_education (has its own dedicated
+    # _apply_schools_disabled_weight_override -- confidence=0 there is the normal,
+    # deliberate "schools disabled by default" state, not a failure) and
+    # built_environment/natural_beauty (extracted later in this function, not part
+    # of this weight pool the same way -- a known gap, not yet covered here).
     _no_data_pillars: List[str] = []
-
-    if political_lean_score is None and "political_lean" in token_allocation and token_allocation["political_lean"] > 0:
-        token_allocation = dict(token_allocation)
-        token_allocation["political_lean"] = 0.0
-        _remaining = sum(token_allocation.values())
-        if _remaining > 0:
-            _scale = 100.0 / _remaining
-            token_allocation = {k: v * _scale for k, v in token_allocation.items()}
-        _no_data_pillars.append("political_lean")
-
-    for _pillar_key, _score_val in [
-        ("community_safety", community_safety_score),
-        ("neighborhood_amenities", amenities_score),
-    ]:
-        if _score_val is None and _pillar_key in token_allocation and token_allocation[_pillar_key] > 0:
+    _ghost_weight_candidates: List[tuple] = [
+        ("political_lean", political_lean_score, None),
+        ("community_safety", community_safety_score, None),
+        ("neighborhood_amenities", amenities_score, amenities_details),
+        ("active_outdoors", active_outdoors_score, active_outdoors_details),
+        ("air_travel_access", air_travel_score, air_travel_details),
+        ("public_transit_access", transit_score, transit_details),
+        ("healthcare_access", healthcare_score, healthcare_details),
+        ("economic_opportunity", economic_opportunity_score, economic_opportunity_details),
+        ("housing_value", housing_score, housing_details),
+        ("climate_risk", climate_risk_score, climate_risk_details),
+        ("social_fabric", social_fabric_score, social_fabric_details),
+        ("diversity", diversity_score, diversity_details),
+    ]
+    for _pillar_key, _score_val, _details_val in _ghost_weight_candidates:
+        _confidence = (_details_val or {}).get("data_quality", {}).get("confidence", 100) if _details_val is not None else 100
+        _no_real_data = (_score_val is None) or (_confidence == 0)
+        if _no_real_data and _pillar_key in token_allocation and token_allocation[_pillar_key] > 0:
             token_allocation = dict(token_allocation)
             token_allocation[_pillar_key] = 0.0
             _remaining = sum(token_allocation.values())
@@ -3856,23 +3874,27 @@ async def _stream_score_with_progress(
         else:
             political_lean_score, political_lean_details = None, {}
 
-        # F02: Ghost weight redistribution — same logic as _compute_single_score_internal.
+        # F02: Ghost weight redistribution — same logic as _compute_single_score_internal
+        # (generalized from a hardcoded 3-pillar check; see the doc comment there for why).
         _no_data_pillars: List[str] = []
-
-        if political_lean_score is None and "political_lean" in token_allocation and token_allocation["political_lean"] > 0:
-            token_allocation = dict(token_allocation)
-            token_allocation["political_lean"] = 0.0
-            _remaining = sum(token_allocation.values())
-            if _remaining > 0:
-                _scale = 100.0 / _remaining
-                token_allocation = {k: v * _scale for k, v in token_allocation.items()}
-            _no_data_pillars.append("political_lean")
-
-        for _pillar_key, _score_val in [
-            ("community_safety", community_safety_score),
-            ("neighborhood_amenities", amenities_score),
-        ]:
-            if _score_val is None and _pillar_key in token_allocation and token_allocation[_pillar_key] > 0:
+        _ghost_weight_candidates: List[tuple] = [
+            ("political_lean", political_lean_score, None),
+            ("community_safety", community_safety_score, None),
+            ("neighborhood_amenities", amenities_score, amenities_details),
+            ("active_outdoors", active_outdoors_score, active_outdoors_details),
+            ("air_travel_access", air_travel_score, air_travel_details),
+            ("public_transit_access", transit_score, transit_details),
+            ("healthcare_access", healthcare_score, healthcare_details),
+            ("economic_opportunity", economic_opportunity_score, economic_opportunity_details),
+            ("housing_value", housing_score, housing_details),
+            ("climate_risk", climate_risk_score, climate_risk_details),
+            ("social_fabric", social_fabric_score, social_fabric_details),
+            ("diversity", diversity_score, diversity_details),
+        ]
+        for _pillar_key, _score_val, _details_val in _ghost_weight_candidates:
+            _confidence = (_details_val or {}).get("data_quality", {}).get("confidence", 100) if _details_val is not None else 100
+            _no_real_data = (_score_val is None) or (_confidence == 0)
+            if _no_real_data and _pillar_key in token_allocation and token_allocation[_pillar_key] > 0:
                 token_allocation = dict(token_allocation)
                 token_allocation[_pillar_key] = 0.0
                 _remaining = sum(token_allocation.values())
