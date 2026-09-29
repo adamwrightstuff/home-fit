@@ -421,8 +421,12 @@ export default function CatalogPageClient({
   }, [])
 
   // Load preferences from Supabase on sign-in; save debounced on change when signed in.
+  // Guarded by hasRestoredRef so this only runs once per sign-in -- Supabase re-emits
+  // onAuthStateChange (with a new `user` object) on tab refocus/token refresh, and without this
+  // guard that refetch clobbered any priority change (esp. commute_time/social_connection) made
+  // just before switching away, since it unconditionally overwrote local state from the server.
   useEffect(() => {
-    if (!user) return
+    if (!user || hasRestoredRef.current) return
     try {
       const stored = localStorage.getItem('homefit_search_options')
       if (stored) {
