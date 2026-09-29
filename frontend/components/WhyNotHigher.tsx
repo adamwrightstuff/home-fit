@@ -31,8 +31,8 @@ function firstSentence(text: string): string {
  * general "tell me about this pillar" blurb), not to explain a shortfall. Each narrative
  * only reaches for genuinely negative wording once its own driving metric crosses that
  * function's own "weak" threshold; anywhere above that, it falls back to neutral or even
- * mildly positive default phrasing (e.g. "some signs of civic engagement", "typical crime
- * levels for the area", "many long-term residents"), which reads like a value-add under a
+ * mildly positive default phrasing (e.g. "some signs of civic engagement", "about average
+ * crime for the US", "many long-term residents"), which reads like a value-add under a
  * "why not higher" label even though the pillar is still a real drag on the total at its
  * weight. This mirrors each narrative's own primary branch condition (same fields, same
  * thresholds, see lib/pillarNarratives.ts) so we only borrow its wording when that

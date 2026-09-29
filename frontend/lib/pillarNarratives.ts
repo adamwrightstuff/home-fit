@@ -391,27 +391,37 @@ export function getCommunitySafetyNarrative(
   placeLabel: string,
   pillar: Record<string, unknown>
 ): string {
+  // Slots are national percentiles: 60 = safer than 60% of places Americans live.
   const overall = getPillarValue(pillar, 'breakdown.raw_score')
+  const score = getPillarValue(pillar, 'score') ?? overall
   const violent = getPillarValue(pillar, 'breakdown.violent_slot')
   const property = getPillarValue(pillar, 'breakdown.property_slot')
 
-  let safetyPhrase = 'typical crime levels for the area'
+  const pct = typeof score === 'number' ? Math.round(score) : null
+  const safer = pct != null ? `safer than ${pct}% of places Americans live` : null
+
+  let safetyPhrase = 'about average crime for the US'
   if (typeof overall === 'number') {
-    if (overall >= 70) safetyPhrase = 'lower crime rates relative to comparable areas'
-    else if (overall <= 30) safetyPhrase = 'higher crime rates relative to comparable areas'
+    if (overall >= 70) safetyPhrase = 'less crime than most of the US'
+    else if (overall <= 30) safetyPhrase = 'more crime than most of the US'
   }
+  if (safer) safetyPhrase += ` (${safer})`
 
   let violentPhrase = ''
   if (typeof violent === 'number') {
     if (violent >= 70) violentPhrase = ', with notably low violent crime'
-    else if (violent <= 30) violentPhrase = ', with elevated violent crime compared to similar areas'
+    else if (violent <= 30) violentPhrase = ', with violent crime above most US neighborhoods'
   }
 
   let propertyPhrase = '.'
   if (typeof property === 'number') {
     if (property >= 70) propertyPhrase = ' and low property crime.'
-    else if (property <= 30) propertyPhrase = ' and higher property crime than similar areas.'
-    else propertyPhrase = '.'
+    else if (property <= 30) propertyPhrase = ' and property crime above most US neighborhoods.'
+  }
+
+  if (typeof violent === 'number' && typeof property === 'number' && violent <= 30 && property <= 30) {
+    violentPhrase = ', with both violent and property crime above most US neighborhoods'
+    propertyPhrase = '.'
   }
 
   const locationSentence = `${placeLabel} has ${safetyPhrase}${violentPhrase}${propertyPhrase}`

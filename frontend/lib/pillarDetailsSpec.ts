@@ -290,7 +290,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
   },
   community_safety: {
     topLine:
-      'Reported incidents in the search radius from local open data (e.g. NYPD), converted to per‑1k rates using estimated residents in that radius, then graded vs area‑type baselines.',
+      'Compared nationally: a score of 60 means safer than 60% of places Americans live. Based on reported violent and property crime per 1,000 residents (last full year).',
     metrics: [
       { label: 'Violent crime (per 1k)', path: 'breakdown.violent_per_1k', format: 'text' },
       { label: 'Property crime (per 1k)', path: 'breakdown.property_per_1k', format: 'text' },

@@ -544,10 +544,9 @@ export function passesQualityEducationDealbreaker(score: number | null | undefin
 
 
 /**
- * Deal-breaker gate for community_safety: pillar score must clear 50 — the exact midpoint
- * of pillars/community_safety.py's _z_to_slot mapping (z=0, i.e. crime rate exactly at the
- * area-type-typical baseline, maps to slot=50). Anchors to "no worse than typical for this
- * area type," the real center point of that pillar's own z-score normalization.
+ * Deal-breaker gate for community_safety: pillar score must clear 50. Safety scores are
+ * population-weighted national percentiles (pillars/community_safety.py), so 50 is the
+ * median: "no more crime than where the typical American lives."
  */
 export const COMMUNITY_SAFETY_DEALBREAKER_SCORE = 50
 

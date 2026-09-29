@@ -406,7 +406,7 @@ export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
   diversity:
     'Neighborhood diversity in race, income, and age reflects exposure to different life experiences and can support vibrant daily life. This score uses Census distributions (not architectural variety).',
   community_safety:
-    'Feeling safe at home and in your neighborhood affects daily wellbeing, children\'s freedom to play outside, and long-term quality of life. This score is based on reported local crime rates relative to comparable areas.',
+    'Feeling safe at home and in your neighborhood affects daily wellbeing, children\'s freedom to play outside, and long-term quality of life. This score compares reported local crime rates nationally: 60 means safer than 60% of places Americans live.',
   political_lean:
     'Some people feel more at home in a community that shares their political values. This score is based on 2020 and 2024 presidential election results at the precinct level — weighted by your declared preference.',
 }
