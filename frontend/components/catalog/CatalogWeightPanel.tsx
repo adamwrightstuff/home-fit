@@ -67,7 +67,7 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   housing_value: 'Exclude places where home price exceeds 3x your household income',
   air_travel_access: 'Exclude places more than 60 min drive from an airport',
   quality_education: 'Exclude places with school ratings below 3-star equivalent',
-  community_safety: "Exclude places with more crime than the typical American's neighborhood",
+  community_safety: "Exclude places in the highest-crime quarter nationally (more crime than where 75% of Americans live)",
   neighborhood_amenities: 'Exclude places with poor access to daily amenities — combines street-level walkability and town center vibrancy',
   healthcare_access: 'Exclude places with below-average access to hospitals and clinics',
   active_outdoors: 'Exclude places with limited trails, parks, or outdoor recreation',

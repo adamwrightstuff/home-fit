@@ -544,11 +544,12 @@ export function passesQualityEducationDealbreaker(score: number | null | undefin
 
 
 /**
- * Deal-breaker gate for community_safety: pillar score must clear 50. Safety scores are
- * population-weighted national percentiles (pillars/community_safety.py), so 50 is the
- * median: "no more crime than where the typical American lives."
+ * Deal-breaker gate for community_safety: pillar score must clear 25. Safety scores are
+ * population-weighted national percentiles (pillars/community_safety.py), so this hides
+ * the worst quarter nationally: places with more crime than where 75% of Americans live.
+ * (The median, 50, hid most city neighborhoods — e.g. 62 of 105 LA places.)
  */
-export const COMMUNITY_SAFETY_DEALBREAKER_SCORE = 50
+export const COMMUNITY_SAFETY_DEALBREAKER_SCORE = 25
 
 export function passesCommunitySafetyDealbreaker(score: number | null | undefined): boolean {
   if (score === null || score === undefined) return true
