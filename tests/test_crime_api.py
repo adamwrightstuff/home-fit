@@ -214,3 +214,49 @@ def test_name_match_requires_exact_place_name():
     assert crime_api._find_nibrs_agency_by_name(agencies, "Palms") is None
     assert crime_api._find_nibrs_agency_by_name(agencies, "Rye")["ori"] == "NY2"
     assert crime_api._find_nibrs_agency_by_name(agencies, "Village of Rye Brook")["ori"] == "NY1"
+
+
+def _with_place_pop(pop):
+    return mock.patch("data_sources.people_present.people_present_multiplier",
+                      return_value=(1.0, {"residents": pop}))
+
+
+def test_community_smaller_than_its_sheriff_station_is_measured_locally():
+    with mock.patch.object(crime_api, "open_data_city", return_value=None), _with_place_pop(10_274):
+        assert crime_api.neighborhood_incident_source(33.98, -118.45, "Marina del Rey") == "lasd"
+
+
+def test_city_that_is_its_whole_station_keeps_the_station_total():
+    with mock.patch.object(crime_api, "open_data_city", return_value=None), _with_place_pop(35_358):
+        assert crime_api.neighborhood_incident_source(34.09, -118.36, "West Hollywood") is None
+
+
+def test_station_without_known_population_is_measured_locally():
+    with mock.patch.object(crime_api, "open_data_city", return_value=None):
+        assert crime_api.neighborhood_incident_source(34.02, -118.17, "East Los Angeles") == "lasd"
+
+
+def test_place_with_own_police_department_uses_agency_total():
+    with mock.patch.object(crime_api, "open_data_city", return_value=None):
+        assert crime_api.neighborhood_incident_source(34.02, -118.39, "Culver City") is None
+
+
+def test_lasd_counts_part1_categories_in_box():
+    calls = []
+
+    def fake_get(url, params=None, timeout=None):
+        calls.append(params)
+        return _Resp({"count": 40 if "ROBBERY" in params["where"] else 300})
+
+    with mock.patch.object(crime_api.requests, "get", side_effect=fake_get):
+        counts = crime_api._fetch_lasd_community_part1.__wrapped__(33.98, -118.45, 1000, 2025)
+    assert counts == {"violent": 40, "property": 300}
+    assert all(p["geometryType"] == "esriGeometryEnvelope" for p in calls)
+    assert "NON-AGGRAVATED" not in calls[0]["where"]
+    assert "MEN''S CENTRAL JAIL" in calls[0]["where"] and "NOT IN" in calls[0]["where"]
+
+
+def test_la_county_area_sums_lapd_and_lasd_incidents():
+    with mock.patch.object(crime_api, "_fetch_la_part1", return_value={"violent": 16, "property": 164}), \
+         mock.patch.object(crime_api, "_fetch_lasd_community_part1", return_value={"violent": 39, "property": 212}):
+        assert crime_api._fetch_la_county_part1(33.98, -118.45, 1000, 2025) == {"violent": 55, "property": 376}

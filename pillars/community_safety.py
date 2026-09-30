@@ -43,7 +43,7 @@ from data_sources.crime_api import (
     MIN_NEIGHBORHOOD_RESIDENTS,
     NEIGHBORHOOD_RADII_M,
     get_crime_rates,
-    open_data_city,
+    neighborhood_incident_source,
 )
 from data_sources.lodes_h8_commuter_context import jobs_in_disk
 from data_sources.people_present import WORK_WEEK_SHARE, people_present, people_present_multiplier
@@ -91,6 +91,7 @@ _PRECISION_MAP = {
     "nyc_open_data":    "HYPER_LOCAL",
     "la_open_data":     "HYPER_LOCAL",
     "sf_open_data":     "HYPER_LOCAL",
+    "lasd_open_data":   "HYPER_LOCAL",
     "lasd_station":     "PRECINCT_PROXY",
     "ny_state_ucr":     "AGENCY_VERIFIED",
     "fbi_nibrs_agency": "AGENCY_VERIFIED",
@@ -272,7 +273,8 @@ def get_community_safety_score(
     # radius and an ambient (residents + workers) denominator.
     radius_override: Optional[int] = None
     ambient_neighborhood = False
-    if open_data_city(lat, lon):
+    incident_source = neighborhood_incident_source(lat, lon, city, fallback_city)
+    if incident_source:
         radius_override, pop, population_denominator_meta = _neighborhood_ambient_population(lat, lon, area_type)
         ambient_neighborhood = True
 
@@ -284,6 +286,7 @@ def get_community_safety_score(
         population=pop,
         fallback_city=fallback_city,
         radius_m=radius_override,
+        incident_source=incident_source,
     )
 
     if rates is None:

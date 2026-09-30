@@ -111,6 +111,11 @@ _LASD_CITY_TO_STATION: Dict[str, str] = {
     "rosemead":             "TEMPLE",
     "west hollywood":       "WEST HOLLYWOOD",
     "marina del rey":       "MARINA DEL REY",
+    "calabasas":            "MALIBU/LOST HILLS",
+    "hidden hills":         "MALIBU/LOST HILLS",
+    "view park":            "MARINA DEL REY",
+    "ladera heights":       "MARINA DEL REY",
+    "east los angeles":     "EAST LOS ANGELES",
 }
 
 def _load_lasd_station_crimes() -> Dict:
@@ -316,6 +321,116 @@ def _fetch_nyc_part1(lat: float, lon: float, radius_m: int, year: int) -> Option
 
 
 # ---------------------------------------------------------------------------
+# LA County Sheriff (LASD) incidents — every LASD station, with coordinates
+# ---------------------------------------------------------------------------
+
+_LASD_INCIDENTS_URL = (
+    "https://services.arcgis.com/RmCCgQtiZLDCtblq/arcgis/rest/services/"
+    "Sheriff%20Part%201%20and%202%20Crimes%20(Historical)/FeatureServer/0/query"
+)
+_LASD_VIOLENT_CATEGORIES = ("CRIMINAL HOMICIDE", "FORCIBLE RAPE", "ROBBERY", "AGGRAVATED ASSAULT")
+_LASD_PROPERTY_CATEGORIES = ("BURGLARY", "LARCENY THEFT", "GRAND THEFT AUTO")
+# Custody facilities report incidents inside jails; those aren't neighborhood crime.
+_LASD_CUSTODY_UNITS = (
+    "MEN'S CENTRAL JAIL", "TTCF", "CRDF", "INMATE RECEPTION CENTR",
+    "NORTH COUNTY CORRECTIONAL FAC.", "PDC - NORTH", "PDC - SOUTH", "LCMC",
+)
+
+
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _fetch_lasd_community_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
+    """
+    Part I violent/property LASD incident counts for one calendar year inside the
+    same lat/lon box the LAPD query uses (half-width radius_m), so LA County areas
+    can sum both departments' incidents over one footprint.
+    """
+    d = _meters_to_degrees(radius_m)
+    out: Dict[str, int] = {}
+    for label, cats in (("violent", _LASD_VIOLENT_CATEGORIES), ("property", _LASD_PROPERTY_CATEGORIES)):
+        params = {
+            "where": (
+                f"INCIDENT_DATE >= DATE '{year}-01-01' AND INCIDENT_DATE < DATE '{year + 1}-01-01' "
+                f"AND CATEGORY IN ({_soql_list(cats)}) "
+                f"AND UNIT_NAME NOT IN ({_soql_list(_LASD_CUSTODY_UNITS)})"
+            ),
+            "geometry": json.dumps({"xmin": lon - d, "ymin": lat - d, "xmax": lon + d, "ymax": lat + d}),
+            "geometryType": "esriGeometryEnvelope",
+            "inSR": 4326,
+            "spatialRel": "esriSpatialRelIntersects",
+            "returnCountOnly": "true",
+            "f": "json",
+        }
+        try:
+            resp = requests.get(_LASD_INCIDENTS_URL, params=params, timeout=_REQUEST_TIMEOUT * 3)
+            data = resp.json() if resp.status_code == 200 else {}
+        except Exception as e:
+            logger.warning("LASD incident fetch failed: %s", e)
+            return None
+        if "count" not in data:
+            logger.warning("LASD incident query returned no count: %s", str(data)[:200])
+            return None
+        out[label] = int(data["count"])
+    return out
+
+
+def _fetch_la_county_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
+    """LAPD + LASD Part I incidents in one box: an area straddling the LA city line
+    (Marina del Rey / Venice, View Park / Hyde Park) counts crimes from both."""
+    lapd = _fetch_la_part1(lat, lon, radius_m, year)
+    lasd = _fetch_lasd_community_part1(lat, lon, radius_m, year)
+    if lapd is None or lasd is None:
+        return None
+    return {k: lapd[k] + lasd[k] for k in ("violent", "property")}
+
+
+def _get_lasd_incident_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
+    import math as _math
+    adj_pop = max(1, int(population * (4.0 / _math.pi)))  # box area vs circle, as for LAPD
+    return _open_data_rates(_fetch_la_county_part1, "lasd_open_data", lat, lon, adj_pop, radius_m)
+
+
+# A community gets its own neighborhood-level measurement when it holds less than
+# this share of its sheriff station's population (e.g. Marina del Rey in a station
+# that also covers Ladera Heights and View Park); a city that is its station's
+# whole service area (West Hollywood) keeps the station total.
+_SMALLER_THAN_STATION_SHARE = 0.8
+
+
+def lasd_station_for(city: Optional[str], fallback_city: Optional[str] = None) -> Optional[str]:
+    for c in (city, fallback_city):
+        if c and c.strip().lower() in _LASD_CITY_TO_STATION:
+            return _LASD_CITY_TO_STATION[c.strip().lower()]
+    return None
+
+
+def neighborhood_incident_source(
+    lat: float, lon: float, city: Optional[str] = None, fallback_city: Optional[str] = None,
+) -> Optional[str]:
+    """
+    Incident-level source to measure this place over a neighborhood-sized area, or
+    None to use its police agency's reported total.  Applies when the place is
+    smaller than the agency's reporting area: a neighborhood inside NYC/LA/SF, or a
+    community inside an LA County Sheriff station.
+    """
+    city_src = open_data_city(lat, lon)
+    if city_src:
+        return city_src
+    station = lasd_station_for(city, fallback_city)
+    if not station:
+        return None
+    station_pop = _LASD_STATION_POPULATIONS.get(station)
+    if not station_pop:
+        return "lasd"  # station total unknown (e.g. East Los Angeles): measure locally
+    from data_sources.people_present import people_present_multiplier
+
+    _, meta = people_present_multiplier(lat, lon, "municipal")
+    place_pop = meta.get("residents")
+    if place_pop and place_pop >= _SMALLER_THAN_STATION_SHARE * station_pop:
+        return None
+    return "lasd"
+
+
+# ---------------------------------------------------------------------------
 # SF Open Data
 # ---------------------------------------------------------------------------
 
@@ -414,7 +529,7 @@ def _get_la_rates(lat: float, lon: float, population: int, radius_m: int) -> Opt
     # Bounding box area = (2r)² = 4r²; circle area = π×r².
     # Scale population up by 4/π so per-1k rates are circle-equivalent (matching NYC).
     adj_pop = max(1, int(population * (4.0 / _math.pi)))
-    return _open_data_rates(_fetch_la_part1, "la_open_data", lat, lon, adj_pop, radius_m)
+    return _open_data_rates(_fetch_la_county_part1, "la_open_data", lat, lon, adj_pop, radius_m)
 
 
 # ---------------------------------------------------------------------------
@@ -1371,6 +1486,7 @@ def get_crime_rates(
     population: int = 10000,
     fallback_city: Optional[str] = None,
     radius_m: Optional[int] = None,
+    incident_source: Optional[str] = None,
 ) -> Optional[Dict]:
     """
     Fetch violent and property crime rates per 1k population for a location.
@@ -1389,14 +1505,17 @@ def get_crime_rates(
         fallback_city: Jurisdiction city to try for agency matching when `city` is a
                        neighborhood name (e.g. "Rockridge" → "Oakland").
         radius_m:      Incident-search radius for open-data cities (default: by area type).
+        incident_source: 'nyc' / 'la' / 'sf' / 'lasd' from neighborhood_incident_source()
+                       to measure the place over a neighborhood-sized area.
     """
     if radius_m is None:
         radius_m = community_safety_crime_radius_m(area_type)
 
     # Route by coordinates — handles sub-neighborhoods that aren't named cities
-    open_city = open_data_city(lat, lon)
-    if open_city:
-        getter = {"nyc": _get_nyc_rates, "la": _get_la_rates, "sf": _get_sf_rates}[open_city]
+    source = incident_source if incident_source is not None else open_data_city(lat, lon)
+    if source:
+        getter = {"nyc": _get_nyc_rates, "la": _get_la_rates, "sf": _get_sf_rates,
+                  "lasd": _get_lasd_incident_rates}[source]
         result = getter(lat, lon, population, radius_m)
         if result:
             return result
