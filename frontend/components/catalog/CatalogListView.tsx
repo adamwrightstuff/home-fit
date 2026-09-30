@@ -31,7 +31,11 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
     string,
     { score?: number; weight?: number; status?: string; data_quality?: { fallback_used?: boolean; reason?: string } }
   >
-  const availablePillars = PILLAR_ORDER.filter((k) => Boolean(lp[k]))
+  const availablePillars: (PillarKey | 'commute_time' | 'social_connection')[] = [
+    ...PILLAR_ORDER.filter((k) => Boolean(lp[k])),
+    ...(lp.commute_time ? (['commute_time'] as const) : []),
+    ...(lp.social_connection ? (['social_connection'] as const) : []),
+  ]
   const schoolsDisabled =
     lp.quality_education?.data_quality?.fallback_used === true &&
     String(lp.quality_education?.data_quality?.reason ?? '').toLowerCase().includes('disabled')
@@ -44,7 +48,7 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
       </div>
       <WhyNotHigher
         livability_pillars={rw.livability_pillars}
-        available_pillars={availablePillars as PillarKey[]}
+        available_pillars={availablePillars}
         schoolsDisabled={Boolean(schoolsDisabled)}
         placeLabel={placeLabel}
       />

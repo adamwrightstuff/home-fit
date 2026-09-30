@@ -6,18 +6,56 @@ import { PILLAR_META, getPillarFailureType, type PillarKey } from '@/lib/pillars
 import { getPillarNarrative } from '@/lib/pillarNarratives'
 import { getPillarValue, getPillarString } from '@/lib/pillarDetailsSpec'
 
+/** Synthetic, client-side-only pillars (lib/reweight.ts) -- not in PillarKey/PILLAR_META, only
+ * present when applicable (work hub selected / a person added) and given a real weight once the
+ * user sets a priority for them. */
+type ExtraPillarKey = 'commute_time' | 'social_connection'
+type DragKey = PillarKey | ExtraPillarKey
+
+const EXTRA_PILLAR_META: Record<ExtraPillarKey, { icon: string; name: string }> = {
+  commute_time: { icon: '🚗', name: 'Commute Time' },
+  social_connection: { icon: '🤝', name: 'Social Connection' },
+}
+
+function metaFor(key: DragKey): { icon: string; name: string } {
+  return (PILLAR_META as Record<string, { icon: string; name: string }>)[key] ?? EXTRA_PILLAR_META[key as ExtraPillarKey]
+}
+
 interface WhyNotHigherProps {
   livability_pillars: LivabilityPillars
-  available_pillars: PillarKey[]
+  available_pillars: DragKey[]
   schoolsDisabled: boolean
   placeLabel: string
 }
 
 interface Drag {
-  key: PillarKey
+  key: DragKey
   score: number
   pointsLost: number
   cause: string
+}
+
+/** Cause text for the two synthetic pillars, built from their own breakdown shape (lib/reweight.ts'
+ * withCommuteTimePillar / withSocialConnectionPillar) since they have no narrative function. */
+function causeForExtraPillar(key: ExtraPillarKey, breakdown: Record<string, unknown>): string {
+  if (key === 'commute_time') {
+    const minutes = breakdown.minutes
+    if (typeof minutes === 'number') {
+      const rounded = Math.round(minutes)
+      const article = /^(8|11|18)/.test(String(rounded)) ? 'an' : 'a'
+      return `About ${article} ${rounded}-minute commute to your work location.`
+    }
+  } else {
+    const points = Array.isArray(breakdown.points) ? (breakdown.points as Array<{ minutes: number | null; label: string | null }>) : []
+    const nearest = points
+      .filter((p): p is { minutes: number; label: string | null } => typeof p.minutes === 'number')
+      .sort((a, b) => a.minutes - b.minutes)[0]
+    if (nearest) {
+      const who = nearest.label || 'Your closest connection'
+      return `${who} is about ${Math.round(nearest.minutes)} minutes away.`
+    }
+  }
+  return 'Not pulling its weight in your total yet.'
 }
 
 /** First sentence of a narrative (the location-specific one) — keeps the drag line skimmable. */
@@ -116,7 +154,7 @@ function narrativeLeadIsWeak(key: PillarKey, pillar: Record<string, unknown>): b
 
 function buildDrags(
   livability_pillars: LivabilityPillars,
-  available_pillars: PillarKey[],
+  available_pillars: DragKey[],
   schoolsDisabled: boolean,
   placeLabel: string
 ): Drag[] {
@@ -138,12 +176,18 @@ function buildDrags(
       if (pointsLost < 0.5) return null
 
       const pillarRecord = pillar as unknown as Record<string, unknown>
-      const narrative = narrativeLeadIsWeak(key, pillarRecord)
-        ? getPillarNarrative(key, placeLabel, pillarRecord)
-        : null
-      const cause = narrative
-        ? firstSentence(narrative)
-        : `Scored ${score.toFixed(0)}/100 here, below where it's pulling its weight in your total.`
+      const isExtra = key === 'commute_time' || key === 'social_connection'
+      let cause: string
+      if (isExtra) {
+        cause = causeForExtraPillar(key as ExtraPillarKey, (pillarRecord.breakdown as Record<string, unknown>) ?? {})
+      } else {
+        const narrative = narrativeLeadIsWeak(key as PillarKey, pillarRecord)
+          ? getPillarNarrative(key as PillarKey, placeLabel, pillarRecord)
+          : null
+        cause = narrative
+          ? firstSentence(narrative)
+          : `Scored ${score.toFixed(0)}/100 here, below where it's pulling its weight in your total.`
+      }
 
       return { key, score, pointsLost, cause }
     })
@@ -216,7 +260,7 @@ export default function WhyNotHigher({
           }}
         >
           {drags.map((drag, i) => {
-            const meta = PILLAR_META[drag.key]
+            const meta = metaFor(drag.key)
             return (
               <div
                 key={drag.key}
