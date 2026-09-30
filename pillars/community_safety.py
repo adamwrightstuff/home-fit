@@ -39,8 +39,14 @@ import json
 import os
 from typing import Any, Dict, Optional, Tuple
 
-from data_sources.crime_api import get_crime_rates
-from data_sources.lodes_h8_commuter_context import compute_commuter_denominator_boost
+from data_sources.crime_api import (
+    MIN_NEIGHBORHOOD_RESIDENTS,
+    NEIGHBORHOOD_RADII_M,
+    get_crime_rates,
+    open_data_city,
+)
+from data_sources.lodes_h8_commuter_context import jobs_in_disk
+from data_sources.people_present import WORK_WEEK_SHARE, people_present, people_present_multiplier
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -176,6 +182,43 @@ def _score_rates(
     return v_slot, p_slot, raw, v_pct
 
 
+def _neighborhood_ambient_population(
+    lat: float, lon: float, area_type: Optional[str]
+) -> Tuple[int, int, Dict[str, Any]]:
+    """
+    For open-data city neighborhoods: pick the smallest radius holding
+    MIN_NEIGHBORHOOD_RESIDENTS, then count residents plus workers for the share of
+    the week they're at work (never fewer than residents).
+    Returns (radius_m, ambient_population, denominator_meta).
+    """
+    from data_sources.census_api import estimate_community_safety_disk_population
+
+    radius, residents, meta = NEIGHBORHOOD_RADII_M[-1], 0, {}
+    for r in NEIGHBORHOOD_RADII_M:
+        residents, meta = estimate_community_safety_disk_population(lat, lon, r, area_type=area_type)
+        radius = r
+        if residents >= MIN_NEIGHBORHOOD_RESIDENTS:
+            break
+    ambient = float(residents)
+    jobs = jobs_in_disk(lat, lon, radius)
+    if jobs is not None:
+        workplace_jobs, resident_workers = jobs
+        ambient = people_present(residents, workplace_jobs, resident_workers)
+        meta = {
+            **meta,
+            "workplace_jobs_in_radius": int(round(workplace_jobs)),
+            "resident_workers_in_radius": int(round(resident_workers)),
+        }
+    meta = {
+        **meta,
+        "population_denominator_method": "ambient_residents_plus_workers",
+        "residents_in_radius": int(residents),
+        "ambient_population": int(round(ambient)),
+        "work_week_share": round(WORK_WEEK_SHARE, 3),
+    }
+    return radius, max(1, int(round(ambient))), meta
+
+
 def _trend_delta(trend_pct: Optional[float]) -> float:
     """
     Convert year-over-year violent crime change percentage to a score modifier.
@@ -225,6 +268,14 @@ def get_community_safety_score(
     pop = population or 10_000
     scale_meta = national_scale_meta()
 
+    # City neighborhoods with incident-level open data get a neighborhood-sized
+    # radius and an ambient (residents + workers) denominator.
+    radius_override: Optional[int] = None
+    ambient_neighborhood = False
+    if open_data_city(lat, lon):
+        radius_override, pop, population_denominator_meta = _neighborhood_ambient_population(lat, lon, area_type)
+        ambient_neighborhood = True
+
     rates = get_crime_rates(
         lat, lon,
         city=city,
@@ -232,6 +283,7 @@ def get_community_safety_score(
         area_type=area_type,
         population=pop,
         fallback_city=fallback_city,
+        radius_m=radius_override,
     )
 
     if rates is None:
@@ -287,11 +339,17 @@ def get_community_safety_score(
 
     violent_raw = float(rates["violent_per_1k"])
     property_raw = float(rates["property_per_1k"])
-    commuter_mult, commuter_meta = compute_commuter_denominator_boost(
-        lat, lon,
-        violent_per_1k=violent_raw,
-        property_per_1k=property_raw,
-    )
+    if ambient_neighborhood and str(rates.get("source", "")).endswith("_open_data"):
+        # Workers are already in the neighborhood's people-present denominator.
+        commuter_mult, commuter_meta = 1.0, {}
+    else:
+        # Agency-wide rates are per resident: scale to people present in the
+        # jurisdiction (the town, or the county for county-wide agencies).
+        agency = str(rates.get("agency_name") or "").lower()
+        county_wide = source == "lasd_station" or "sheriff" in agency or "county" in agency
+        commuter_mult, commuter_meta = people_present_multiplier(
+            lat, lon, "county" if county_wide else "municipal"
+        )
 
     violent_per_1k = violent_raw / commuter_mult
     property_per_1k = property_raw / commuter_mult
@@ -324,10 +382,10 @@ def get_community_safety_score(
         "agency_name": rates.get("agency_name"),
         "confidence": conf_i,
         "data_quality_index": dqi,
-        "commuter_context": commuter_meta,
+        "people_present": commuter_meta,
     }
-    if commuter_meta.get("commuter_denominator_boost"):
-        details["effective_pop_denominator_multiplier"] = commuter_meta.get("effective_pop_multiplier")
+    if commuter_mult != 1.0:
+        details["effective_pop_denominator_multiplier"] = round(commuter_mult, 4)
     if population_denominator_meta:
         details["population_denominator"] = population_denominator_meta
     return final_score, details

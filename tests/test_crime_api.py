@@ -157,3 +157,60 @@ def test_open_data_rates_use_full_calendar_year_and_trend():
     assert r["property_per_1k"] == 16.0
     assert r["trend_pct"] == -50.0
     assert r["data_period"] == "2025"
+
+
+def test_open_data_city_requires_point_inside_city_limits():
+    with mock.patch("data_sources.census_api.get_incorporated_place_geoid", return_value="3651000"):
+        assert crime_api.open_data_city(40.671, -73.977) == "nyc"          # Park Slope
+    with mock.patch("data_sources.census_api.get_incorporated_place_geoid", return_value=""):
+        assert crime_api.open_data_city(40.7695, -74.0204) is None         # Weehawken, NJ
+    with mock.patch("data_sources.census_api.get_incorporated_place_geoid", return_value="0606308"):
+        assert crime_api.open_data_city(34.0736, -118.4004) is None        # Beverly Hills
+    with mock.patch("data_sources.census_api.get_incorporated_place_geoid", return_value=None):
+        assert crime_api.open_data_city(37.7762, -122.4233) == "sf"        # lookup failed: bbox
+    assert crime_api.open_data_city(40.9582, -73.8121) is None             # outside every bbox
+
+
+def test_neighborhood_radius_widens_until_enough_residents_and_counts_workers():
+    import pillars.community_safety as cs
+
+    residents_by_radius = {600: 4000, 800: 7000, 1000: 12000}
+    with mock.patch("data_sources.census_api.estimate_community_safety_disk_population",
+                    side_effect=lambda lat, lon, r, area_type=None: (residents_by_radius.get(r, 20000), {})), \
+         mock.patch.object(cs, "jobs_in_disk", return_value=(50_000.0, 6_000.0)):
+        radius, ambient, meta = cs._neighborhood_ambient_population(34.0, -118.3, "urban_residential")
+    assert radius == 1000
+    assert ambient == round(12000 + (45 / 168) * (50_000 - 6_000))
+    assert meta["residents_in_radius"] == 12000
+
+
+def test_ambient_population_never_below_residents():
+    import pillars.community_safety as cs
+
+    with mock.patch("data_sources.census_api.estimate_community_safety_disk_population",
+                    return_value=(15000, {})), \
+         mock.patch.object(cs, "jobs_in_disk", return_value=(1_000.0, 9_000.0)):
+        radius, ambient, _ = cs._neighborhood_ambient_population(40.67, -73.98, "urban_residential")
+    assert (radius, ambient) == (600, 15000)
+
+
+@pytest.mark.parametrize("agency,place", [
+    ("Twentynine Palms Police Department", "twentynine palms"),
+    ("Weehawken Township Police Department", "weehawken"),
+    ("Rye Brook Village Police Department", "rye brook"),
+    ("New York City Police Department", "new york"),
+    ("Metropolitan Nashville Police Department", "metropolitan nashville"),
+])
+def test_agency_place_name(agency, place):
+    assert crime_api._agency_place_name(agency) == place
+
+
+def test_name_match_requires_exact_place_name():
+    agencies = [
+        {"ori": "CA9", "agency_name": "Twentynine Palms Police Department", "is_nibrs": True},
+        {"ori": "NY1", "agency_name": "Rye Brook Village Police Department", "is_nibrs": True},
+        {"ori": "NY2", "agency_name": "Rye City Police Department", "is_nibrs": True},
+    ]
+    assert crime_api._find_nibrs_agency_by_name(agencies, "Palms") is None
+    assert crime_api._find_nibrs_agency_by_name(agencies, "Rye")["ori"] == "NY2"
+    assert crime_api._find_nibrs_agency_by_name(agencies, "Village of Rye Brook")["ori"] == "NY1"

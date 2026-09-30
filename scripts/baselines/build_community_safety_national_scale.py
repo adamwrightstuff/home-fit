@@ -19,6 +19,10 @@ sampled in three strata so every kind of place is represented:
 Agencies count only if they reported all 12 months, serve at least
 MIN_POPULATION residents, and reported any crime.
 
+Rates are divided by people present (residents plus workers for the share of the
+week they're at work; data_sources/people_present.py), the same denominator
+community_safety uses for every scored place, so places are compared like for like.
+
 Usage (from project root):
   PYTHONPATH=. python3 scripts/baselines/build_community_safety_national_scale.py
   # Rebuild from saved samples instead of calling the APIs:
@@ -188,6 +192,28 @@ def sample_agencies(year: int, out_dir: str) -> List[dict]:
     return records
 
 
+def add_people_present_multipliers(records: List[dict]) -> None:
+    """Attach each agency's people-present multiplier (town for city agencies,
+    county for county agencies), located by the agency's FBI coordinates."""
+    from data_sources import crime_api
+    from data_sources.people_present import people_present_multiplier
+
+    coords: Dict[str, tuple] = {}
+    for st in {r["state"] for r in records}:
+        for a in crime_api._fetch_fbi_agencies(st) or []:
+            if a.get("latitude") is not None and a.get("longitude") is not None:
+                coords[a["ori"]] = (float(a["latitude"]), float(a["longitude"]))
+    for r in records:
+        if "people_present_multiplier" in r:
+            continue
+        ll = coords.get(r["ori"])
+        if not ll:
+            r["people_present_multiplier"] = 1.0
+            continue
+        mult, _ = people_present_multiplier(ll[0], ll[1], "county" if r.get("stratum") == "county" else "municipal")
+        r["people_present_multiplier"] = round(mult, 4)
+
+
 def _weighted_percentiles(points: List[tuple]) -> List[float]:
     """0..100 percentiles of (value, weight) points, midpoint-cumulative interpolation."""
     s = sorted(points)
@@ -240,8 +266,9 @@ def build_scale(records: List[dict], year: int) -> Dict:
             w = float(r["population"])
         else:
             w = r["population"] * frame[(r["state"], r["stratum"])] / sampled[(r["state"], r["stratum"])]
-        v_pts.append((r["violent-crime"] / r["population"] * 1000, w))
-        p_pts.append((r["property-crime"] / r["population"] * 1000, w))
+        present = r["population"] * float(r.get("people_present_multiplier") or 1.0)
+        v_pts.append((r["violent-crime"] / present * 1000, w))
+        p_pts.append((r["property-crime"] / present * 1000, w))
         weights[r["stratum"]] += w
     total_w = sum(weights.values())
     mean_v = sum(v * w for v, w in v_pts) / total_w
@@ -260,6 +287,7 @@ def build_scale(records: List[dict], year: int) -> Dict:
             "agencies_used": len(v_pts),
             "agencies_used_by_stratum": dict(Counter(r["stratum"] for r in filter(usable, records))),
             "population_share_by_stratum": {k: round(v / total_w, 3) for k, v in weights.items()},
+            "denominator": "people present (residents + workers x 45/168 hours), ACS 2022",
             "weighted_mean_violent_per_1k": round(mean_v, 2),
             "weighted_mean_property_per_1k": round(mean_p, 2),
             "filters": f"12 months reported, population >= {MIN_POPULATION}, any crime reported",
@@ -291,6 +319,17 @@ def main() -> None:
     else:
         records = sample_agencies(args.year, args.sample_out_dir)
 
+    add_people_present_multipliers(records)
+    if args.sample_jsonl:
+        # save multipliers back so rebuilds don't repeat the boundary lookups
+        mult = {r["ori"]: r.get("people_present_multiplier") for r in records}
+        for path in args.sample_jsonl:
+            with open(path, encoding="utf-8") as f:
+                rows = [json.loads(line) for line in f if line.strip()]
+            for row in rows:
+                row["people_present_multiplier"] = mult.get(row["ori"], row.get("people_present_multiplier"))
+            with open(path, "w", encoding="utf-8") as f:
+                f.writelines(json.dumps(row) + "\n" for row in rows)
     scale = build_scale(records, args.year)
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(scale, f, indent=2)

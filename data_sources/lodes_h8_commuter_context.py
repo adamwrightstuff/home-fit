@@ -91,6 +91,42 @@ def _ensure_table() -> None:
     _TABLE_LOADED = True
 
 
+def jobs_in_disk(lat: float, lon: float, radius_m: float) -> Optional[Tuple[float, float]]:
+    """
+    Area-weighted (workplace_jobs, resident_workers) inside a circle, summed over
+    the H3 res-8 cells it covers (each cell weighted by the share of it inside).
+    Returns None when the LODES table or h3 is unavailable.
+    """
+    _ensure_table()
+    if h3 is None or not _H8_INDEX:
+        return None
+    n = 12  # sample grid: (2n+1)^2 points over the circle's bounding square
+    step = float(radius_m) / n
+    dlat = step / 111_000.0
+    dlon = step / (111_000.0 * max(0.1, math.cos(math.radians(lat))))
+    pt_km2 = (step / 1000.0) ** 2
+    cell_km2 = h3.average_hexagon_area(8, unit="km^2")
+    hits: Dict[str, int] = {}
+    for i in range(-n, n + 1):
+        for j in range(-n, n + 1):
+            if (i * i + j * j) * step * step > radius_m * radius_m:
+                continue
+            try:
+                cell = str(h3.latlng_to_cell(lat + i * dlat, lon + j * dlon, 8))
+            except Exception:
+                continue
+            hits[cell] = hits.get(cell, 0) + 1
+    jobs = resident_workers = 0.0
+    for cell, count in hits.items():
+        row = _H8_INDEX.get(cell)
+        if not row:
+            continue
+        share = min(1.0, count * pt_km2 / cell_km2)
+        jobs += row["workplace_jobs"] * share
+        resident_workers += row["rac_c000"] * share
+    return jobs, resident_workers
+
+
 # Gated commuter denominator boost (aligned with pillar PRD iterations)
 _MIN_WRR = 5.0
 _MIN_PROPERTY_VIOLENT_RATIO = 10.0

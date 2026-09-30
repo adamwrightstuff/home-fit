@@ -1699,6 +1699,39 @@ def _project_geom_to_albers(geom):
         return None
 
 
+TIGERWEB_PLACE_LAYER_URL = (
+    "https://tigerweb.geo.census.gov/arcgis/rest/services/"
+    "TIGERweb/tigerWMS_Current/MapServer/28/query"  # Incorporated Places
+)
+
+
+@cached(ttl_seconds=CACHE_TTL["census_data"])
+def get_incorporated_place_geoid(lat: float, lon: float) -> Optional[str]:
+    """
+    Census GEOID of the incorporated place (city/town/village) containing the
+    point, "" when the point is in no incorporated place, or None on lookup failure.
+    """
+    data = {
+        "f": "json",
+        "geometry": json.dumps({"x": lon, "y": lat, "spatialReference": {"wkid": 4326}}),
+        "geometryType": "esriGeometryPoint",
+        "inSR": "4326",
+        "spatialRel": "esriSpatialRelIntersects",
+        "outFields": "GEOID",
+        "returnGeometry": "false",
+    }
+    resp = _make_post_request_with_retry(TIGERWEB_PLACE_LAYER_URL, data, timeout=30)
+    if resp is None:
+        return None
+    try:
+        feats = resp.json().get("features")
+    except Exception:
+        return None
+    if feats is None:
+        return None
+    return str(feats[0]["attributes"].get("GEOID") or "") if feats else ""
+
+
 @cached(ttl_seconds=CACHE_TTL["census_data"])
 def _tigerweb_tracts_intersecting_disk(lat: float, lon: float, radius_m: int) -> Optional[Dict]:
     """
@@ -1729,6 +1762,62 @@ def _tigerweb_tracts_intersecting_disk(lat: float, lon: float, radius_m: int) ->
         return resp.json()
     except Exception:
         return None
+
+
+@cached(ttl_seconds=CACHE_TTL["census_data"])
+def _acs_county_tract_populations(state_fips: str, county_fips: str, year: int) -> Dict[str, int]:
+    """Return tract_fips -> ACS 5-year population for every tract in one county."""
+    out: Dict[str, int] = {}
+    if not CENSUS_API_KEY:
+        return out
+    params = {
+        "get": "B01001_001E",
+        "for": "tract:*",
+        "in": f"state:{state_fips} county:{county_fips}",
+        "key": CENSUS_API_KEY,
+    }
+    resp = _make_request_with_retry(f"{CENSUS_BASE_URL}/{year}/acs/acs5", params, timeout=30)
+    if resp is None:
+        return out
+    try:
+        rows = resp.json()
+    except Exception:
+        return out
+    if not isinstance(rows, list) or len(rows) < 2:
+        return out
+    header = rows[0]
+    try:
+        idx_pop, idx_tr = header.index("B01001_001E"), header.index("tract")
+    except ValueError:
+        return out
+    for row in rows[1:]:
+        try:
+            pop = int(row[idx_pop])
+        except (TypeError, ValueError):
+            continue
+        if pop >= 0:
+            out[str(row[idx_tr]).zfill(6)] = pop
+    return out
+
+
+def _population_for_old_tract(state_fips: str, county_fips: str, tract_fips: str) -> Tuple[Optional[int], str]:
+    """
+    Population for a tract code that has no 2022 ACS row.
+
+    TIGERweb's tract layers return 2010-vintage tract codes, but 2022 ACS uses
+    2020 tracts, and tracts split in 2020 keep their base number with a suffix
+    (0128.00 -> 0128.01 + 0128.02) that nests inside the old tract.  Sum those
+    pieces; otherwise use the 2019 ACS (2010 geography, same as the polygon).
+    """
+    if tract_fips.endswith("00"):
+        current = _acs_county_tract_populations(state_fips, county_fips, 2022)
+        pieces = [p for tr, p in current.items() if tr[:4] == tract_fips[:4] and tr != tract_fips]
+        if pieces:
+            return sum(pieces), "split_pieces_2022"
+    legacy = _acs_county_tract_populations(state_fips, county_fips, 2019)
+    if tract_fips in legacy:
+        return legacy[tract_fips], "acs_2019_same_code"
+    return None, "missing"
 
 
 def _acs_population_batch(state_fips: str, county_fips: str, tract_fips_list: List[str]) -> Dict[str, int]:
@@ -1929,20 +2018,16 @@ def estimate_community_safety_disk_population(
 
     weighted = 0.0
     missing = 0
+    filled: Dict[str, int] = {}
     for gid, frac in overlap_by_geoid.items():
         pop = pop_by_geoid.get(gid)
         if pop is None:
-            tm = tract_meta_by_geoid.get(gid)
-            if tm:
-                td = {
-                    "state_fips": tm["state_fips"],
-                    "county_fips": tm["county_fips"],
-                    "tract_fips": tm["tract_fips"],
-                    "geoid": gid,
-                    "name": "",
-                    "basename": "",
-                }
-                pop = get_population(td)
+            tm = tract_meta_by_geoid.get(gid) or {}
+            pop, how = _population_for_old_tract(
+                tm.get("state_fips") or gid[:2], tm.get("county_fips") or gid[2:5], tm.get("tract_fips") or gid[5:11],
+            )
+            if pop is not None:
+                filled[how] = filled.get(how, 0) + 1
         if pop is None or pop <= 0:
             missing += 1
             continue
@@ -1969,4 +2054,6 @@ def estimate_community_safety_disk_population(
     meta["population_denominator_tracts_overlapping"] = len(overlap_by_geoid)
     meta["population_denominator_weighted_estimate"] = int(round(weighted))
     meta["population_denominator_missing_tract_pops"] = missing
+    if filled:
+        meta["population_denominator_tracts_filled"] = filled
     return final_pop, meta

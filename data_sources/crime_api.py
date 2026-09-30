@@ -88,7 +88,7 @@ _LASD_STATION_POPULATIONS: Dict[str, int] = {
     "CRESCENTA VALLEY":  40_000,   # La Cañada, La Crescenta, Montrose
     "LOMITA":            75_000,   # Lomita + RPV + Rolling Hills + RHE
     "MALIBU/LOST HILLS": 75_000,   # Malibu + Agoura Hills + Calabasas + unincorporated
-    "MARINA DEL REY":     9_000,   # Marina del Rey unincorporated
+    "MARINA DEL REY":    29_000,   # Marina del Rey + Ladera Heights + View Park-Windsor Hills CDPs (ACS 2022: 28,983)
     "NORWALK":          165_000,   # Norwalk + La Mirada + unincorporated
     "TEMPLE":           110_000,   # Temple City + Rosemead + unincorporated SGV
     "WEST HOLLYWOOD":    36_000,   # City of West Hollywood
@@ -136,6 +136,17 @@ _NYC_BBOX = (40.47, -74.27, 40.92, -73.68)   # (lat_min, lon_min, lat_max, lon_m
 
 # City and County of San Francisco (SFPD jurisdiction; excludes Daly City/Brisbane)
 _SF_BBOX = (37.703, -122.53, 37.835, -122.355)
+
+# Census incorporated-place GEOIDs for the cities whose police publish incident
+# data.  A bbox hit is only used when the point is inside that city, so nearby
+# towns (Weehawken, Beverly Hills, Valley Stream) use their own police data.
+_OPEN_DATA_CITY_GEOID = {"nyc": "3651000", "la": "0644000", "sf": "0667000"}
+
+# City neighborhoods scored from incident data: the smallest of these radii whose
+# disk holds MIN_NEIGHBORHOOD_RESIDENTS, so a pin in a thinly populated spot (hills,
+# waterfront, commercial core) widens until the rate rests on enough residents.
+NEIGHBORHOOD_RADII_M = (600, 800, 1000, 1200, 1500, 2000)
+MIN_NEIGHBORHOOD_RESIDENTS = 10_000
 
 # LAPD jurisdiction bounding box (City of Los Angeles proper)
 _LA_BBOX  = (33.70, -118.67, 34.34, -118.13)
@@ -683,12 +694,31 @@ def _find_nearest_agency(agencies: list, lat: float, lon: float) -> Optional[Dic
     return best if best_dist < 50 else None  # 50 km max
 
 
+_AGENCY_NAME_SUFFIX_WORDS = frozenset({
+    "police", "department", "dept", "sheriff", "sheriff's", "public", "safety", "pd",
+    "bureau", "division", "township", "twp", "village", "vg", "city", "town", "borough", "county",
+})
+_PLACE_PREFIX_RE = re.compile(r"^(?:city|town|township|village|borough)\s+of\s+", re.IGNORECASE)
+
+
+def _agency_place_name(agency_name: str) -> str:
+    """Place an agency is named for: "Twentynine Palms Police Department" ->
+    "twentynine palms", "Weehawken Township Police Department" -> "weehawken"."""
+    words = _PLACE_PREFIX_RE.sub("", agency_name or "").lower().split()
+    place = []
+    for w in words:
+        if w in _AGENCY_NAME_SUFFIX_WORDS:
+            break
+        place.append(w)
+    return " ".join(place)
+
+
 def _find_nibrs_agency_by_name(
     agencies: list, city_hint: str, lat: Optional[float] = None, lon: Optional[float] = None,
 ) -> Optional[Dict]:
     """
-    Scan all agencies for a PD whose name contains all words from city_hint
-    (len >= 3).  NIBRS reporters are preferred, but legacy-UCR agencies (e.g.
+    Scan all agencies for a PD named for exactly this place (so "Palms" never
+    matches Twentynine Palms and "Rye" never matches Rye Brook).  NIBRS reporters are preferred, but legacy-UCR agencies (e.g.
     Oakland PD) are still returned since CDE publishes their per-agency rates.  Used as a fallback when _find_nearest_agency
     selects the wrong agency due to bad lat/lon data in the FBI database.
 
@@ -701,18 +731,15 @@ def _find_nibrs_agency_by_name(
     """
     if not city_hint or not agencies:
         return None
-    words = [w.lower() for w in city_hint.split() if len(w) >= 3 and w.lower() not in _CITY_HINT_GENERIC]
-    if not words:
+    place = _PLACE_PREFIX_RE.sub("", city_hint).strip().lower()
+    if len(place) < 3:
         return None
     candidates = [
         ag for ag in agencies
         if not _is_special_purpose_agency(
             (ag.get("agency_name") or ag.get("agencyName") or "").lower()
         )
-        and all(
-            w in (ag.get("agency_name") or ag.get("agencyName") or "").lower()
-            for w in words
-        )
+        and _agency_place_name(ag.get("agency_name") or ag.get("agencyName") or "") == place
     ]
     if lat is not None and lon is not None:
         def _near(ag: Dict) -> bool:
@@ -1311,6 +1338,24 @@ def _radius_for_area_type(area_type: Optional[str]) -> int:
     return 1500
 
 
+def open_data_city(lat: float, lon: float) -> Optional[str]:
+    """'nyc' / 'la' / 'sf' when the point is inside a city whose police publish
+    incident-level open data, else None."""
+    boxes = (("nyc", _NYC_BBOX), ("la", _LA_BBOX), ("sf", _SF_BBOX))
+    key = next(
+        (k for k, (la0, lo0, la1, lo1) in boxes if la0 <= lat <= la1 and lo0 <= lon <= lo1),
+        None,
+    )
+    if key is None:
+        return None
+    from data_sources.census_api import get_incorporated_place_geoid
+
+    geoid = get_incorporated_place_geoid(round(lat, 5), round(lon, 5))
+    if geoid is None:
+        return key  # boundary lookup failed: fall back to the bbox
+    return key if geoid == _OPEN_DATA_CITY_GEOID[key] else None
+
+
 def community_safety_crime_radius_m(area_type: Optional[str]) -> int:
     """Public alias: crime query radius in meters (same footprint as population denominator)."""
     return _radius_for_area_type(area_type)
@@ -1325,6 +1370,7 @@ def get_crime_rates(
     area_type: Optional[str] = None,
     population: int = 10000,
     fallback_city: Optional[str] = None,
+    radius_m: Optional[int] = None,
 ) -> Optional[Dict]:
     """
     Fetch violent and property crime rates per 1k population for a location.
@@ -1342,26 +1388,16 @@ def get_crime_rates(
         population:    Estimated population in the scored area (for per-1k conversion).
         fallback_city: Jurisdiction city to try for agency matching when `city` is a
                        neighborhood name (e.g. "Rockridge" → "Oakland").
+        radius_m:      Incident-search radius for open-data cities (default: by area type).
     """
-    radius_m = community_safety_crime_radius_m(area_type)
-
-    def _in_bbox(bbox):
-        lat_min, lon_min, lat_max, lon_max = bbox
-        return lat_min <= lat <= lat_max and lon_min <= lon <= lon_max
+    if radius_m is None:
+        radius_m = community_safety_crime_radius_m(area_type)
 
     # Route by coordinates — handles sub-neighborhoods that aren't named cities
-    if _in_bbox(_NYC_BBOX):
-        result = _get_nyc_rates(lat, lon, population, radius_m)
-        if result:
-            return result
-
-    if _in_bbox(_LA_BBOX):
-        result = _get_la_rates(lat, lon, population, radius_m)
-        if result:
-            return result
-
-    if _in_bbox(_SF_BBOX):
-        result = _get_sf_rates(lat, lon, population, radius_m)
+    open_city = open_data_city(lat, lon)
+    if open_city:
+        getter = {"nyc": _get_nyc_rates, "la": _get_la_rates, "sf": _get_sf_rates}[open_city]
+        result = getter(lat, lon, population, radius_m)
         if result:
             return result
 

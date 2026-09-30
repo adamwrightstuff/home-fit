@@ -63,20 +63,9 @@ def recompute_record(score: dict) -> tuple[float | None, float | None, str]:
     area_type = _get_area_type(score)
     trend_pct = bd.get("trend_pct")
 
-    # Re-apply commuter multiplier from stored wrr_jobs (no H3 re-lookup — avoids
-    # coordinate drift between scoring time and recompute time).
-    _MIN_WRR = 5.0
-    _POP_MULT_CAP = 3.5
-    commuter_ctx = bd.get("commuter_context", {})
-    wrr = commuter_ctx.get("wrr_jobs") if commuter_ctx else None
-    if isinstance(wrr, (int, float)) and wrr > _MIN_WRR:
-        commuter_mult = float(min(_POP_MULT_CAP, max(1.0, 1.0 + math.log10(max(1.0, wrr)))))
-        commuter_meta = dict(commuter_ctx)
-        commuter_meta["commuter_denominator_boost"] = True
-        commuter_meta["effective_pop_multiplier"] = round(commuter_mult, 4)
-    else:
-        commuter_mult = 1.0
-        commuter_meta = dict(commuter_ctx) if commuter_ctx else {}
+    # Re-apply the stored people-present multiplier (1.0 for neighborhoods, whose
+    # stored rates already use the people-present denominator).
+    commuter_mult = float(bd.get("effective_pop_denominator_multiplier") or 1.0)
 
     v_adj = float(v_raw) / commuter_mult
     p_adj = float(p_raw) / commuter_mult
@@ -96,8 +85,6 @@ def recompute_record(score: dict) -> tuple[float | None, float | None, str]:
     bd["trend_delta"] = td
     bd.pop("area_type_baseline", None)
     bd["national_scale"] = national_scale_meta()
-    if commuter_meta:
-        bd["commuter_context"] = commuter_meta
 
     safety["score"] = new_score
 
