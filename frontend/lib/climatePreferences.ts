@@ -33,13 +33,15 @@ function linear(val: number, bad: number, good: number): number {
 
 function axisCold(jan_f: number, pref: ColdTolerance): number {
   if (pref === 'tolerable') return 50
-  if (pref === 'dealbreaker') return linear(jan_f, 35, 52)
+  // "brutal winters — heavy snow, months below freezing": score 0 at ≤25°F avg Jan (Chicago/Minneapolis-tier), 100 at ≥42°F (mild-winter cities)
+  if (pref === 'dealbreaker') return linear(jan_f, 25, 42)
   return linear(jan_f, 45, 20) // love cold
 }
 
 function axisHeat(jul_f: number, pref: HeatTolerance): number {
   if (pref === 'fine') return 50
-  if (pref === 'dealbreaker') return linear(jul_f, 80, 65)
+  // "sweltering summers — humid 90°F+ heat": score 0 at ≥88°F avg Jul (Dallas/Houston/Phoenix-tier), 100 at ≤73°F
+  if (pref === 'dealbreaker') return linear(jul_f, 88, 73)
   return linear(jul_f, 70, 85) // love heat
 }
 
@@ -55,7 +57,8 @@ function axisRain(avg_solar: number, annual_precip_in: number, pref: RainToleran
 function axisSeasons(swing_f: number, pref: SeasonsPref): number {
   if (pref === 'mild_ok') return 50
   if (pref === 'want_4') return linear(swing_f, 18, 40)
-  return linear(swing_f, 30, 10) // want consistency
+  // "extreme seasonal swings": score 0 at ≥55°F swing (Minneapolis/Chicago-tier), 100 at ≤20°F (coastal CA/FL)
+  return linear(swing_f, 55, 20) // want consistency
 }
 
 export function scoreClimateMatch(
