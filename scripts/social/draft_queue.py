@@ -153,34 +153,7 @@ PHOTO_SUGGESTIONS = {
 }
 
 
-def generate_post(client, angle, place):
-    context = ANGLE_CONTEXT.get(angle, "Write about what makes this place worth knowing.")
-    prompt = f"""Write an Instagram post for Trovamo about {place['name']}{', ' + place['state'] if place['state'] else ''}.
-
-Angle: {context}
-
-{TONE_RULES}
-
-Keep it under 120 words. No hashtags.
-"""
-    msg = client.messages.create(
-        model='claude-haiku-4-5-20251001',
-        max_tokens=350,
-        messages=[{'role': 'user', 'content': prompt}],
-    )
-    return msg.content[0].text.strip()
-
-
 def main():
-    import anthropic
-
-    api_key = os.environ.get('ANTHROPIC_API_KEY')
-    if not api_key:
-        print("Error: ANTHROPIC_API_KEY not set")
-        sys.exit(1)
-
-    client = anthropic.Anthropic(api_key=api_key)
-
     # Load catalogs
     all_places = []
     for metro in CATALOG_FILES:
@@ -193,25 +166,24 @@ def main():
     log = load_log()
     posted_names = [e['name'] for e in log]
     picks = pick_angles(all_places, posted_names)
-    print(f"Picked {len(picks)} angles:\n")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     today = date.today().isoformat()
     out = OUTPUT_DIR / f"drafts_{today}.md"
 
-    lines = [f"# Trovamo Social Drafts — {today}\n"]
+    lines = [f"# Trovamo Draft Picks — {today}\n",
+             f"Paste these into Claude to write the posts.\n"]
 
     for angle, place in picks:
         label = angle.replace('_', ' ').title()
         loc = f"{place['name']}, {place['state']}" if place['state'] else place['name']
-        print(f"  Drafting: {loc} ({label})...")
-        post = generate_post(client, angle, place)
+        context = ANGLE_CONTEXT.get(angle, "Write about what makes this place worth knowing.")
         photo = PHOTO_SUGGESTIONS.get(angle, f"Neighborhood scene in {place['name']}")
 
         lines.append(f"## {loc} — {label}")
         lines.append(f"*Metro: {place['metro'].upper()} | County: {place['county']}*\n")
-        lines.append(post)
-        lines.append(f"\n**Photo rec:** {photo}\n")
+        lines.append(f"**Angle:** {context}\n")
+        lines.append(f"**Photo rec:** {photo}\n")
         lines.append("---\n")
 
         log.append({
@@ -223,7 +195,7 @@ def main():
 
     out.write_text('\n'.join(lines))
     save_log(log)
-    print(f"\nDrafts saved to {out}")
+    print(f"\nPicks saved to {out}")
 
 
 if __name__ == '__main__':
