@@ -1548,7 +1548,7 @@ export default function CatalogPageClient({
             className="hidden md:flex flex-wrap gap-1.5 px-4 py-2 border-t border-[var(--hf-border)]"
             style={{ background: 'var(--hf-bg-subtle)' }}
           >
-            {PILLAR_INDEX_MODES.map((p) => (
+            {PILLAR_INDEX_MODES.filter((p) => (p.id !== 'commute_time' && p.id !== 'social_connection') || adjustedPlaces.some((pl) => typeof (pl.score.livability_pillars as any)?.[p.id]?.score === 'number')).map((p) => (
               <button
                 key={p.id}
                 type="button"
