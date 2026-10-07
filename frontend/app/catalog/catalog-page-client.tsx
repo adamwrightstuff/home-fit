@@ -681,7 +681,7 @@ export default function CatalogPageClient({
       if (filterMetro !== 'all' && inferCatalogMetro(p) !== filterMetro) return false
       if (filterAreaTypes.length > 0) {
         const at = p.score.data_quality_summary?.area_classification?.area_type
-        if (at && !filterAreaTypes.includes(at)) return false
+        if (at && at !== 'unknown' && !filterAreaTypes.includes(at)) return false
       }
       if (filterArchetypes.length > 0) {
         const ar = p.score.status_signal_breakdown?.archetype

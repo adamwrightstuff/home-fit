@@ -20,7 +20,7 @@ const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
 
 const NB_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'mountains', label: 'Mountains' },
-  { value: 'ocean', label: 'Ocean / Coast' },
+  { value: 'ocean', label: 'Ocean / Bay' },
   { value: 'lakes_rivers', label: 'Lakes & Rivers' },
   { value: 'canopy', label: 'Tree Canopy' },
 ]

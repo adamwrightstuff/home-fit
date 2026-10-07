@@ -62,7 +62,7 @@ export function builtEnvMatchScore(
 
 export const NB_PREFERENCE_LABELS: Record<NbPreference, string> = {
   mountains: 'Mountains',
-  ocean: 'Ocean / Coast',
+  ocean: 'Ocean / Bay',
   lakes_rivers: 'Lakes & Rivers',
   canopy: 'Tree Canopy',
 }
