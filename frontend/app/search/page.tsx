@@ -8,7 +8,7 @@ import LocationSearch from '@/components/LocationSearch'
 import SearchOptionsComponent, { DEFAULT_PRIORITIES, type SearchOptions, type PillarPriorities } from '@/components/SearchOptions'
 import ScoreDisplay from '@/components/ScoreDisplay'
 import ErrorMessage from '@/components/ErrorMessage'
-import PlaceValuesGame from '@/components/PlaceValuesGame'
+import QuizModal, { type QuizPayload } from '@/components/QuizModal'
 import PlaceView from '@/components/PlaceView'
 import AppHeader from '@/components/AppHeader'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
@@ -93,13 +93,15 @@ export default function SearchPage() {
       })
   }
 
-  const handle_apply_priorities = (priorities: PillarPriorities, naturalBeautyPreference?: string[], job_categories?: string[]) => {
+  const handle_apply_quiz = (payload: QuizPayload) => {
+    const priorities = { ...DEFAULT_PRIORITIES, ...payload.priorities } as PillarPriorities
+    const scenery = payload.filterNbTypes.slice(0, 2)
     set_search_options(prev => {
       const updated = {
         ...prev,
         priorities,
-        natural_beauty_preference: naturalBeautyPreference?.length ? naturalBeautyPreference : null,
-        ...(job_categories !== undefined ? { job_categories } : {}),
+        natural_beauty_preference: scenery.length ? scenery : null,
+        job_categories: [],
       }
       try {
         localStorage.setItem('homefit_search_options', JSON.stringify(updated))
@@ -109,10 +111,11 @@ export default function SearchPage() {
       return updated
     })
     setJustAppliedQuizPriorities(true)
+    set_show_game(false)
   }
 
   if (show_game) {
-    return <PlaceValuesGame onApplyPriorities={handle_apply_priorities} onBack={() => set_show_game(false)} />
+    return <QuizModal onApply={handle_apply_quiz} onBack={() => set_show_game(false)} />
   }
 
   if (!place && !score_data) {
