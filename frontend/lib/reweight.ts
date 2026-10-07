@@ -272,7 +272,7 @@ export function commuteTimeScore(minutes: number | null | undefined): number | n
 export function withCommuteTimePillar(data: ScoreResponse, minutes: number | null | undefined): ScoreResponse {
   const score = commuteTimeScore(minutes)
   if (score === null) return data
-  return {
+  const patched: ScoreResponse = {
     ...data,
     livability_pillars: {
       ...data.livability_pillars,
@@ -285,6 +285,9 @@ export function withCommuteTimePillar(data: ScoreResponse, minutes: number | nul
       },
     } as any,
   }
+  // The happiness index's commute component prefers this hub-based score over the area-mean one.
+  const newHI = computeHappinessIndex((patched.livability_pillars as any) ?? {})
+  return newHI !== null ? { ...patched, happiness_index: newHI } : patched
 }
 
 /**
@@ -643,9 +646,26 @@ function scoreLocalAffordability(homeValue: number, income: number): number {
 }
 
 /**
+ * Mirror of Python _score_rent_affordability — step function on annual housing cost as a share
+ * of income (0–50 pts). This is the curve for a user-entered monthly cost; scoreAffordabilityRatio
+ * is for home price / income (typically 2–7) and must never receive a cost share (typically
+ * 0.2–0.5), which it would read as an extremely cheap home. Interim curve (30% convention)
+ * until the cost-burden calibration replaces it.
+ */
+function scoreCostShareOfIncome(share: number): number {
+  if (share <= 0.20) return 50
+  if (share <= 0.25) return 43
+  if (share <= 0.30) return 35
+  if (share <= 0.35) return 25
+  if (share <= 0.40) return 15
+  if (share <= 0.50) return 7
+  return 0
+}
+
+/**
  * Recompute housing_value score using either a user-supplied income against area median,
  * or an actual monthly cost (mortgage + tax) for the user's current home.
- * When actualMonthlyCost is provided, uses (cost * 12) / income as the affordability ratio,
+ * When actualMonthlyCost is provided, scores (cost * 12) / income on the cost-share curve,
  * bypassing median_home_value — correct for existing owners with a locked-in cost basis.
  * Also recomputes happiness_index since housing_value is one of its components.
  * Returns original data unchanged when userIncome is null/zero.
@@ -659,19 +679,18 @@ export function applyUserIncomeToScore(
   const hv = (data.livability_pillars as any)?.housing_value
   if (!hv) return data
 
-  let ratio: number
+  let newAffordability: number
   if (actualMonthlyCost && actualMonthlyCost > 0) {
-    ratio = (actualMonthlyCost * 12) / userIncome
+    newAffordability = scoreCostShareOfIncome((actualMonthlyCost * 12) / userIncome)
   } else {
     const medianHomeValue = Number(hv.summary?.median_home_value ?? 0)
     if (medianHomeValue <= 0) return data
-    ratio = medianHomeValue / userIncome
+    newAffordability = scoreAffordabilityRatio(medianHomeValue / userIncome)
   }
 
   const bk = hv.breakdown ?? {}
   const space = Number(bk.space ?? 0)
   const valueEfficiency = Number(bk.value_efficiency ?? 0)
-  const newAffordability = scoreAffordabilityRatio(ratio)
   const newTotal = Math.min(100, Math.max(0, newAffordability + space + valueEfficiency))
 
   const patched: ScoreResponse = {

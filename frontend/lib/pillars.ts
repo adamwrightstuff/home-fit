@@ -94,8 +94,12 @@ export function computeHappinessIndex(pillars: Record<string, any>): number | nu
   let S: number | null = typeof pillars.social_fabric?.score === 'number' ? pillars.social_fabric.score : null
   const cs = pillars.community_safety
   const F: number | null = (!cs || cs.status === 'failed') ? null : typeof cs.score === 'number' ? cs.score : null
-  const C: number | null = typeof pillars.public_transit_access?.breakdown?.commute_time === 'number'
-    ? pillars.public_transit_access.breakdown.commute_time : null
+  // Personal commute (work hub selected -> synthetic commute_time pillar) wins over the area-mean
+  // commute score from public_transit_access.
+  const C: number | null = typeof pillars.commute_time?.score === 'number'
+    ? pillars.commute_time.score
+    : typeof pillars.public_transit_access?.breakdown?.commute_time === 'number'
+      ? pillars.public_transit_access.breakdown.commute_time : null
   const N: number | null = typeof pillars.neighborhood_amenities?.score === 'number' ? pillars.neighborhood_amenities.score : null
   const H: number | null = typeof pillars.housing_value?.score === 'number' ? pillars.housing_value.score : null
   const G: number | null = typeof pillars.natural_beauty?.score === 'number' ? pillars.natural_beauty.score : null
