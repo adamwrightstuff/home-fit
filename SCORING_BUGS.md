@@ -133,14 +133,11 @@ Newark and South San Francisco still have local+trail Overpass errors but region
 ---
 
 ## BUG-008 · economic_security outliers in LA urban_residential
-**Severity: LOW** | Van Nuys=76.0 (4.8σ), Playa del Rey=76.5 (4.5σ), Palms=77.3 (4.1σ)
+**Severity: LOW** | ✅ CLOSED 2026-10-06 — NOT A BUG
 
-urban_residential economic_security mean is 84.9±1.9 — it's extremely tight.
-These three LA neighborhoods are ~9 points below. Could be legitimately lower opportunity
-access (Van Nuys is further from job centers), or a metro-baseline mismatch.
-
-**Fix requires:** confirm whether LA metro baselines were applied correctly vs. NYC metro;
-check if the gravity model is using the right employment center data for LA.
+Bug filed against stale pillar name (`economic_security`); pillar is now `economic_opportunity`.
+LA metro mean is 79.7±4.3. Van Nuys=76.0, Playa del Rey=76.5 are <1σ below mean; Palms=86.0
+is above average. No outlier exists at the correct pillar name.
 
 ---
 

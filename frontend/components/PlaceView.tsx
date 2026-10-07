@@ -194,12 +194,15 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   useEffect(() => {
     if (!justAppliedQuizPriorities || !searchOptions?.priorities) return
     const priorities = searchOptions.priorities
-    setSelectedPillars(new Set(PILLAR_ORDER))
+    const selected = new Set<string>()
     const importance: Record<string, Importance> = {}
     for (const key of PILLAR_ORDER) {
       const p = priorities[key as keyof typeof priorities]
+      if (p === 'None') continue
+      selected.add(key)
       importance[key] = p === 'High' || p === 'Low' ? p : 'Medium'
     }
+    setSelectedPillars(selected)
     setSelectedPriorities(importance)
     onAppliedQuizPrioritiesConsumed?.()
   }, [justAppliedQuizPriorities, searchOptions?.priorities, onAppliedQuizPrioritiesConsumed])

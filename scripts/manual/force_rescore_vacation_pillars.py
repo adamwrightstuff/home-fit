@@ -32,6 +32,7 @@ FORCE_AMENITIES_CITY = False
 FORCE_NATURAL_BEAUTY_LOCATIONS: set = {
     "Newport, RI",            # NB=0, conf=0 — canopy+scenic both returned zero; ocean destination
     "South Lake Tahoe, CA",   # NB=0, conf=0 — Sierra Nevada/Lake Tahoe; clear GEE failure
+    "Denver, CO",             # BUG-004: GEE failed, all components 0
 }
 
 FORCE_ACTIVE_OUTDOORS_LOCATIONS: set = set()
@@ -179,18 +180,22 @@ def main():
             result = rescore_pillars(loc, tt, pillars)
             elapsed = time.time() - t0
 
-            new_pillars = {
-                k: {"score": v.get("score"), "weight": v.get("weight"), "confidence": v.get("confidence")}
-                for k, v in result.get("livability_pillars", {}).items()
-            }
-
+            # Only take back the pillars we explicitly requested, and skip any that
+            # failed (score=None) to avoid overwriting good existing scores.
+            api_pillars = result.get("livability_pillars", {})
             row = rows[(loc, tt)]
-            # Preserve original weights — single-pillar rescore jobs return weight=0
-            # for the rescored pillar because weight allocation requires all pillars.
-            for k, v in new_pillars.items():
+            new_pillars = {}
+            for k in pillars:
+                v = api_pillars.get(k)
+                if v is None or v.get("score") is None:
+                    continue
                 orig_weight = (row.get("pillars", {}).get(k) or {}).get("weight")
-                if (v.get("weight") or 0) == 0 and orig_weight:
-                    v["weight"] = orig_weight
+                new_pillars[k] = {
+                    "score": v.get("score"),
+                    "weight": orig_weight if orig_weight else v.get("weight"),
+                    "confidence": v.get("confidence"),
+                }
+            orig_pillar_scores = {p: (row.get("pillars", {}).get(p) or {}).get("score", "?") for p in pillars}
             merged = {**row.get("pillars", {}), **new_pillars}
 
             total_w = sum((v.get("weight") or 0) for v in merged.values())
@@ -199,15 +204,15 @@ def main():
                 if total_w > 0 else 0
             )
 
-            old_score = row.get("total_score", 0)
+            old_total = row.get("total_score", 0)
             row["pillars"] = merged
             row["total_score"] = round(total_score, 1)
 
             for p in pillars:
-                old = row.get("pillars", {}).get(p, {})
-                new = new_pillars.get(p, {})
-                print(f"    {p}: {old.get('score','?')} → {new.get('score','?')} (conf={new.get('confidence','?')})")
-            print(f"    total: {old_score} → {total_score:.1f}  ({elapsed:.0f}s)")
+                new = new_pillars.get(p)
+                new_score = new.get("score", "skipped") if new else "skipped (failed)"
+                print(f"    {p}: {orig_pillar_scores[p]} → {new_score} (conf={new.get('confidence','?') if new else '?'})")
+            print(f"    total: {old_total} → {total_score:.1f}  ({elapsed:.0f}s)")
 
         except Exception as e:
             print(f"    ❌ {e}")
