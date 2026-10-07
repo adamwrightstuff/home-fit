@@ -22,6 +22,7 @@ export default function QuizPage() {
           filterAoTypes: payload.filterAoTypes,
           filterNbTypes: payload.filterNbTypes,
           filterHousingType: payload.filterHousingType,
+          filterTenure: payload.filterTenure,
           filterPoliticalLean: payload.filterPoliticalLean,
           filterTrajectory: payload.filterTrajectory,
           filterCommuteMax: payload.filterCommuteMax,
