@@ -448,17 +448,11 @@ export default function ProfilePage() {
 
             <div>
               <Label>How do you get there?</Label>
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+              <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
                 <Chip active={mode === null} onClick={() => update({ commute_mode: null })}>Fastest</Chip>
                 <Chip active={mode === 'auto'} onClick={() => update({ commute_mode: mode === 'auto' ? null : 'auto' })}>Drive</Chip>
                 <Chip active={mode === 'transit'} onClick={() => update({ commute_mode: mode === 'transit' ? null : 'transit' })}>Transit</Chip>
-                <Chip active={mode === 'active'} onClick={() => update({ commute_mode: mode === 'active' ? null : 'active' })}>Walk or bike</Chip>
               </div>
-              {mode === 'active' && (
-                <p className="m-0 mt-1.5 text-xs text-[var(--hf-text-secondary)]">
-                  We don&rsquo;t have walk or bike routing yet, so the area-average commute is used.
-                </p>
-              )}
             </div>
 
             <div>

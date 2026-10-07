@@ -514,13 +514,7 @@ export default function FilterSheet({
                   {chip(commuteMode === null, 'Fastest', () => onCommuteModeChange(null))}
                   {chip(commuteMode === 'auto', 'Drive', () => onCommuteModeChange(commuteMode === 'auto' ? null : 'auto'))}
                   {chip(commuteMode === 'transit', 'Transit', () => onCommuteModeChange(commuteMode === 'transit' ? null : 'transit'))}
-                  {chip(commuteMode === 'active', 'Walk or bike', () => onCommuteModeChange(commuteMode === 'active' ? null : 'active'))}
                 </div>
-                {commuteMode === 'active' && (
-                  <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-                    No walk or bike routing yet, so the area-average commute is used.
-                  </div>
-                )}
                 <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6 }}>Days per week in the office</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {[0, 1, 2, 3, 4, 5].map((d) =>
