@@ -362,7 +362,7 @@
 </div>
 
 <script>
-// Pillars shown in sidebar — excludes economic_opportunity (metro-uniform) and air_travel (dealbreaker)
+// Pillars shown in sidebar — excludes economic_opportunity (derived from the work answer in applyAndClose) and air_travel (dealbreaker)
 const PILLARS = [
   { key: 'quality_education',      label: 'Schools' },
   { key: 'neighborhood_amenities', label: 'Walkability' },
@@ -737,7 +737,8 @@ function applyAndClose() {
   const priorities = {}
   PILLARS.forEach(p => priorities[p.key] = LEVEL[weights[p.key]])
   priorities['air_travel_access'] = answers.commute_mode === 'fly' ? 'High' : 'None'
-  priorities['economic_opportunity'] = 'None'
+  const ecoByWork = { office: 'Medium', hybrid: 'Low', remote: 'None' }
+  priorities['economic_opportunity'] = answers.life === 'empty' ? 'None' : (ecoByWork[answers.work] || 'None')
 
   const filterAoTypes = outdoorsPicks.filter(p => p !== 'none')
   const filterNbTypes = sceneryPicks.filter(Boolean)
