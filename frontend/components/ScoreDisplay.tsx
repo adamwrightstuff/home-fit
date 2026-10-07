@@ -377,7 +377,7 @@ export default function ScoreDisplay({
             <InteractiveMap
               location={mapLocationLabel}
               coordinates={{ lat: mapCoords.lat, lon: mapCoords.lon }}
-              completed_pillars={Object.keys(livability_pillars ?? {})}
+              completed_pillars={Object.keys(livability_pillars ?? {}).filter((k) => k !== 'commute_time' && k !== 'social_connection')}
               pois={mapPois.length > 0 ? mapPois : null}
             />
           </div>

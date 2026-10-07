@@ -16,6 +16,8 @@ import {
 } from '@/lib/pillars'
 import { getScoreSinglePillar, getScoreWithProgress, recomputeComposites } from '@/lib/api'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
+import { applyProfileToScore } from '@/lib/personalOverlay'
+import { useProfile } from '@/hooks/useProfile'
 import { builtEnvMatchScore, type BuiltEnvPreference } from '@/lib/nbPreference'
 import {
   buildResultsCacheKey,
@@ -227,15 +229,20 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
 
   const cacheKey = useMemo(() => (normalized ? buildResultsCacheKey(normalized) : null), [normalized])
 
+  const profile = useProfile()
+
   const displayData = useMemo(() => {
     if (!finalResponse || !searchOptions) return null
-    const rew = reweightScoreResponseFromPriorities(finalResponse, searchOptions.priorities)
+    // Personal profile (income, work hub, people) adjusts the cached score before weighting;
+    // income typed into this search wins over the saved profile's.
+    const personalized = applyProfileToScore(finalResponse, profile, { incomeOverride: searchOptions.household_income })
+    const rew = reweightScoreResponseFromPriorities(personalized, searchOptions.priorities)
     const li = longevityIndexFromLivabilityPillars(
       rew.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
     )
     if (li != null) return { ...rew, longevity_index: li }
     return rew
-  }, [finalResponse, searchOptions])
+  }, [finalResponse, searchOptions, profile])
 
   const progressivePayload = useMemo(() => {
     if (!normalized) return null
@@ -810,7 +817,9 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                 <InteractiveMap
                   location={locationLabel}
                   coordinates={mapCoords}
-                  completed_pillars={Object.keys(displayData!.livability_pillars ?? {})}
+                  completed_pillars={Object.keys(displayData!.livability_pillars ?? {}).filter(
+                    (k) => k !== 'commute_time' && k !== 'social_connection'
+                  )}
                 />
               </div>
             ) : null}

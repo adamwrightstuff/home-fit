@@ -12,6 +12,8 @@ import QuizModal, { type QuizPayload } from '@/components/QuizModal'
 import PlaceView from '@/components/PlaceView'
 import AppHeader from '@/components/AppHeader'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
+import { applyProfileToScore } from '@/lib/personalOverlay'
+import { useProfile } from '@/hooks/useProfile'
 import { getGeocode, getScoreWithProgress } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { saveScore } from '@/lib/savedScores'
@@ -65,10 +67,13 @@ export default function SearchPage() {
     }
   })
 
+  const profile = useProfile()
+
   const display_score_data = useMemo(() => {
     if (!score_data) return null
-    return reweightScoreResponseFromPriorities(score_data, configureState?.priorities ?? search_options.priorities)
-  }, [score_data, configureState?.priorities, search_options.priorities])
+    const personalized = applyProfileToScore(score_data, profile, { incomeOverride: search_options.household_income })
+    return reweightScoreResponseFromPriorities(personalized, configureState?.priorities ?? search_options.priorities)
+  }, [score_data, configureState?.priorities, search_options.priorities, search_options.household_income, profile])
 
   const handle_search = (location: string, preGeo?: { lat: number; lon: number; city: string; state: string; zip_code: string; display_name: string }) => {
     set_loading(true)

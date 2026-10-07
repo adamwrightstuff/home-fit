@@ -1,4 +1,4 @@
-import type { SocialConnectionPerson } from '@/lib/socialConnections'
+import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 
 export type CommuteMode = 'auto' | 'transit' | 'active'
 
@@ -64,6 +64,25 @@ export function sanitizeProfile(raw: unknown): Partial<UserProfile> {
   if ('people' in r && Array.isArray(r.people)) {
     out.people = r.people.filter(isPerson).slice(0, 50)
   }
+  return out
+}
+
+/**
+ * Profile fields recoverable without an account: the explorer already keeps income and the work
+ * hub in homefit_search_options and people in their own key, so anonymous users still get the
+ * overlay once they've set those in the explorer.
+ */
+export function readLocalProfile(): Partial<UserProfile> {
+  const out: Partial<UserProfile> = {}
+  try {
+    const opts = JSON.parse(localStorage.getItem('homefit_search_options') ?? 'null')
+    const income = opts?.household_income
+    if (typeof income === 'number' && income > 0) out.household_income = income
+    const zone = opts?.filters?.workZoneId
+    if (typeof zone === 'string' && zone) out.work_zone_id = zone
+  } catch { /* ignore */ }
+  const people = loadPeople()
+  if (people.length) out.people = people
   return out
 }
 
