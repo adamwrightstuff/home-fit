@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import Link from 'next/link'
 import { X } from 'lucide-react'
 import { fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
@@ -28,28 +28,25 @@ const GROUPS: { title: string; keys: PillarKey[] }[] = [
 
 const LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
 
+type PersonalKey = 'commute_time' | 'social_connection'
+const PERSONAL_ROWS: { key: PersonalKey; icon: string; name: string; needs: string }[] = [
+  { key: 'commute_time', icon: '🚆', name: 'Your commute', needs: 'Add a work hub to weigh your commute.' },
+  { key: 'social_connection', icon: '💛', name: 'Closeness to people you know', needs: 'Add people you want to live near to weigh this.' },
+]
+
 interface CatalogWeightPanelProps {
   open: boolean
   onClose: () => void
   priorities: PillarPriorities
   onChange: (next: PillarPriorities) => void
   onTakeQuiz?: () => void
+  /** Profile facts, shown read-only; they're edited on the profile page. */
   householdIncome?: number | null
-  incomeInputValue?: string
-  onIncomeInputChange?: (v: string) => void
-  onIncomeBlur?: () => void
-  onIncomeClear?: () => void
-  /** Current home monthly cost (mortgage + tax) — overrides area median for the matched place. */
-  currentHomeMonthlyCostInput?: string
-  onCurrentHomeMonthlyCostInputChange?: (v: string) => void
-  onCurrentHomeMonthlyCostBlur?: () => void
-  onCurrentHomeMonthlyCostClear?: () => void
-  /** The confirmed selected place name for the current home. */
-  currentHomeMatch?: string
-  /** Called with the exact catalog place name when user selects from the dropdown. */
-  onCurrentHomeSelect?: (name: string) => void
-  /** Options for the current home dropdown — pass catalog places as { name, sub }. */
-  currentHomePlaceOptions?: { name: string; sub: string }[]
+  currentHomeName?: string
+  currentHomeMonthlyCost?: number | null
+  /** Personal-fit weights only apply once the profile gives them something to measure. */
+  hasWorkHub?: boolean
+  hasPeople?: boolean
   /** Deal-breaker pillars (currently housing_value only). Independent of importance weight. */
   dealbreakers?: Partial<Record<PillarKey, boolean>>
   onDealbreakerToggle?: (key: PillarKey) => void
@@ -75,31 +72,15 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   social_fabric: 'Exclude places with weak community cohesion scores',
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, currentHomeMonthlyCostInput = '', onCurrentHomeMonthlyCostInputChange, onCurrentHomeMonthlyCostBlur, onCurrentHomeMonthlyCostClear, currentHomeMatch = '', onCurrentHomeSelect, currentHomePlaceOptions = [], dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
-  const [comboInput, setComboInput] = useState(currentHomeMatch)
-  const [comboOpen, setComboOpen] = useState(false)
-  const comboRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!currentHomeMatch) setComboInput('')
-  }, [currentHomeMatch])
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (comboRef.current && !comboRef.current.contains(e.target as Node)) setComboOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  const comboFiltered = comboInput.trim()
-    ? currentHomePlaceOptions.filter(o => o.name.toLowerCase().includes(comboInput.toLowerCase())).slice(0, 8)
-    : currentHomePlaceOptions.slice(0, 8)
-
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
     onChange({ ...priorities, [key]: level })
+  }
+
+  function setPersonalLevel(key: PersonalKey, level: PriorityLevel) {
+    onChange({ ...priorities, [key]: level } as PillarPriorities)
   }
 
   return (
@@ -202,129 +183,71 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
               </div>
             </details>
           ))}
+
+          <details className="mb-3 rounded-xl border border-[var(--hf-border)]" open>
+            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-bold text-[var(--hf-text-primary)]">
+              Personal fit
+            </summary>
+            <div className="space-y-3 border-t border-[var(--hf-border)] px-2 pb-3 pt-2">
+              <p className="text-[0.7rem] leading-snug text-[var(--hf-text-secondary)]">
+                Based on your profile. Rough estimates, not one of the research-backed pillars above.
+              </p>
+              {PERSONAL_ROWS.map((row) => {
+                const available = row.key === 'commute_time' ? hasWorkHub : hasPeople
+                const current = (priorities as unknown as Record<string, PriorityLevel | undefined>)[row.key] ?? 'None'
+                return (
+                  <div key={row.key}>
+                    <div className="mb-1 text-xs font-medium text-[var(--hf-text-primary)]">
+                      {row.icon} {row.name}
+                    </div>
+                    {available ? (
+                      <div className="flex flex-wrap gap-1">
+                        {LEVELS.map((lv) => (
+                          <button
+                            key={lv}
+                            type="button"
+                            className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
+                              current === lv ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
+                            }`}
+                            style={current === lv ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : undefined}
+                            onClick={() => setPersonalLevel(row.key, lv)}
+                          >
+                            {lv}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="m-0 text-xs text-[var(--hf-text-tertiary)]">
+                        {row.needs}{' '}
+                        <Link href="/profile" className="font-semibold text-[var(--hf-primary-1)]">
+                          Open your profile
+                        </Link>
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </details>
         </div>
 
-        {onIncomeInputChange && (
-          <div className="border-t border-[var(--hf-border)] px-4 py-3">
-            <div className="mb-2 text-xs font-bold text-[var(--hf-text-primary)]">Personalize scores</div>
+        <div className="border-t border-[var(--hf-border)] px-4 py-3 text-xs text-[var(--hf-text-secondary)]">
+          <div className="mb-1 font-bold text-[var(--hf-text-primary)]">Your profile</div>
+          {householdIncome || currentHomeName ? (
             <div>
-              <div className="mb-1 flex items-center gap-1 text-xs font-medium text-[var(--hf-text-primary)]">
-                Household income
-                <span
-                  className="inline-flex h-4 w-4 cursor-default items-center justify-center rounded-full border border-[var(--hf-border)] text-[0.65rem] font-bold text-[var(--hf-text-secondary)]"
-                  title="Used to calculate housing affordability in the Housing Value score. Has no effect on other pillars. Leave blank to use local median income."
-                >
-                  ?
-                </span>
-              </div>
-              <div className="relative flex items-center">
-                <span className="absolute left-2 text-xs text-[var(--hf-text-secondary)]">$</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="annual household"
-                  value={incomeInputValue}
-                  onChange={(e) => onIncomeInputChange(e.target.value)}
-                  onBlur={onIncomeBlur}
-                  className="w-full rounded-lg border border-[var(--hf-border)] py-1.5 pl-5 pr-8 text-xs"
-                />
-                {householdIncome && onIncomeClear && (
-                  <button
-                    type="button"
-                    className="absolute right-2 text-[var(--hf-text-tertiary)] hover:text-[var(--hf-text-secondary)]"
-                    onClick={onIncomeClear}
-                    aria-label="Clear income"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
+              {householdIncome ? `$${householdIncome.toLocaleString('en-US')} household income` : null}
+              {householdIncome && currentHomeName ? ' · ' : null}
+              {currentHomeName
+                ? `lives in ${currentHomeName}${currentHomeMonthlyCost ? ` ($${currentHomeMonthlyCost.toLocaleString('en-US')}/mo)` : ''}`
+                : null}
             </div>
-
-            {householdIncome && onCurrentHomeMonthlyCostInputChange && (
-              <div className="mt-3 rounded-lg border border-dashed border-[var(--hf-border)] p-2.5">
-                <div className="mb-2 text-xs font-medium text-[var(--hf-text-secondary)]">
-                  Current home override
-                  <span
-                    className="ml-1 inline-flex h-4 w-4 cursor-default items-center justify-center rounded-full border border-[var(--hf-border)] text-[0.65rem] font-bold text-[var(--hf-text-secondary)]"
-                    title="When set, your current home's housing score is computed from your actual monthly cost instead of the area median price. All other places still use area median."
-                  >
-                    ?
-                  </span>
-                </div>
-                <div className="mb-2" ref={comboRef}>
-                  <div className="mb-1 text-[0.65rem] uppercase tracking-wide text-[var(--hf-text-tertiary)]">Neighborhood</div>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search your neighborhood…"
-                      value={comboInput}
-                      onChange={(e) => { setComboInput(e.target.value); setComboOpen(true) }}
-                      onFocus={() => setComboOpen(true)}
-                      className="w-full rounded-lg border border-[var(--hf-border)] px-2 py-1.5 pr-6 text-xs"
-                    />
-                    {currentHomeMatch && (
-                      <button
-                        type="button"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--hf-text-tertiary)] hover:text-[var(--hf-text-secondary)]"
-                        onClick={() => { setComboInput(''); onCurrentHomeSelect?.('') }}
-                        aria-label="Clear neighborhood"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
-                    {comboOpen && comboFiltered.length > 0 && (
-                      <ul className="absolute bottom-full z-50 mb-0.5 max-h-48 w-full overflow-y-auto rounded-lg border border-[var(--hf-border)] bg-[var(--hf-surface)] py-1 shadow-lg">
-                        {comboFiltered.map((o) => (
-                          <li key={o.name}>
-                            <button
-                              type="button"
-                              className="flex w-full flex-col px-2.5 py-1.5 text-left hover:bg-[var(--hf-track)]"
-                              onMouseDown={(e) => {
-                                e.preventDefault()
-                                setComboInput(o.name)
-                                setComboOpen(false)
-                                onCurrentHomeSelect?.(o.name)
-                              }}
-                            >
-                              <span className="text-xs font-medium text-[var(--hf-text-primary)]">{o.name}</span>
-                              <span className="text-[0.65rem] text-[var(--hf-text-tertiary)]">{o.sub}</span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <div className="mb-1 text-[0.65rem] uppercase tracking-wide text-[var(--hf-text-tertiary)]">Monthly cost (mortgage + tax)</div>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-2 text-xs text-[var(--hf-text-secondary)]">$</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="monthly"
-                      value={currentHomeMonthlyCostInput}
-                      onChange={(e) => onCurrentHomeMonthlyCostInputChange(e.target.value)}
-                      onBlur={onCurrentHomeMonthlyCostBlur}
-                      className="w-full rounded-lg border border-[var(--hf-border)] py-1.5 pl-5 pr-8 text-xs"
-                    />
-                    {currentHomeMonthlyCostInput && onCurrentHomeMonthlyCostClear && (
-                      <button
-                        type="button"
-                        className="absolute right-2 text-[var(--hf-text-tertiary)] hover:text-[var(--hf-text-secondary)]"
-                        onClick={onCurrentHomeMonthlyCostClear}
-                        aria-label="Clear monthly cost"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+          ) : (
+            <div>Add your income and where you live now to personalize housing affordability.</div>
+          )}
+          <Link href="/profile" className="mt-1 inline-block font-semibold text-[var(--hf-primary-1)]">
+            Edit your profile
+          </Link>
+        </div>
 
         <div className="border-t border-[var(--hf-border)] px-4 py-3">
           <button

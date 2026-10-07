@@ -14,8 +14,7 @@ import TwinCandidateDetailContent from '@/components/catalog/TwinCandidateDetail
 import CatalogListView from '@/components/catalog/CatalogListView'
 import HeroBand from '@/components/catalog/HeroBand'
 import FilterSheet from '@/components/catalog/FilterSheet'
-import { type WorkAddressResult } from '@/components/catalog/WorkHubPicker'
-import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, minutesForMode, snapToWorkZone } from '@/lib/workZones'
+import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, minutesForMode } from '@/lib/workZones'
 import IndexInfoButton from '@/components/catalog/IndexInfoButton'
 import CompareTray from '@/components/catalog/CompareTray'
 import { DEFAULT_PRIORITIES, type PillarPriorities, type PriorityLevel } from '@/components/SearchOptions'
@@ -37,8 +36,8 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker, withCommuteTimePillar, withSocialConnectionPillar, estimatedDriveMinutes } from '@/lib/reweight'
-import { loadPeople, savePeople, type SocialConnectionPerson } from '@/lib/socialConnections'
-import { fetchProfile, saveProfile, type CommuteMode } from '@/lib/userProfile'
+import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
+import { fetchProfile, type CommuteMode } from '@/lib/userProfile'
 import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
@@ -185,21 +184,6 @@ export default function CatalogPageClient({
       return typeof d === 'number' && Number.isInteger(d) && d >= 0 && d <= 5 ? d : null
     } catch { return null }
   })
-  const persistLocalOption = useCallback((key: string, value: unknown) => {
-    try {
-      const stored = localStorage.getItem('homefit_search_options')
-      const opts = stored ? JSON.parse(stored) : {}
-      localStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, [key]: value }))
-    } catch { /* ignore */ }
-  }, [])
-  const handleCommuteModeChange = useCallback((v: CommuteMode | null) => {
-    setCommuteMode(v)
-    persistLocalOption('commute_mode', v)
-  }, [persistLocalOption])
-  const handleOfficeDaysChange = useCallback((v: number | null) => {
-    setOfficeDays(v)
-    persistLocalOption('office_days', v)
-  }, [persistLocalOption])
   const [climatePrefs, setClimatePrefs] = useState<ClimatePreferences>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
@@ -210,10 +194,6 @@ export default function CatalogPageClient({
   // doesn't reset every visit the way search filters should.
   const [people, setPeople] = useState<SocialConnectionPerson[]>([])
   useEffect(() => { setPeople(loadPeople()) }, [])
-  const handlePeopleChange = useCallback((next: SocialConnectionPerson[]) => {
-    setPeople(next)
-    savePeople(next)
-  }, [])
 /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>(() => {
     try {
@@ -262,18 +242,6 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
     return null
   })
-  const [incomeInputValue, setIncomeInputValue] = useState<string>(() => {
-    try {
-      const stored = localStorage.getItem('homefit_search_options')
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        return typeof parsed.household_income === 'number' && parsed.household_income > 0
-          ? String(parsed.household_income)
-          : ''
-      }
-    } catch { /* ignore */ }
-    return ''
-  })
   const [compareIds, setCompareIds] = useState<string[]>([])
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [hoverInfo, setHoverInfo] = useState<{ key: string; x: number; y: number } | null>(null)
@@ -284,28 +252,6 @@ export default function CatalogPageClient({
       if (prev.length >= 2) return prev
       return [...prev, key]
     })
-  }, [])
-
-  const handleIncomeBlur = useCallback((val: string, current: number | null) => {
-    const v = val === '' ? null : parseInt(val.replace(/,/g, ''), 10)
-    const next = Number.isFinite(v) && (v as number) >= 10000 ? (v as number) : null
-    if (next !== current) setHouseholdIncome(next)
-    setIncomeInputValue(next ? String(next) : '')
-    try {
-      const stored = localStorage.getItem('homefit_search_options')
-      const opts = stored ? JSON.parse(stored) : {}
-      localStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, household_income: next }))
-    } catch { /* ignore */ }
-  }, [])
-
-  const handleIncomeClear = useCallback(() => {
-    setHouseholdIncome(null)
-    setIncomeInputValue('')
-    try {
-      const stored = localStorage.getItem('homefit_search_options')
-      const opts = stored ? JSON.parse(stored) : {}
-      localStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, household_income: null }))
-    } catch { /* ignore */ }
   }, [])
 
   const [currentHomeMonthlyCost, setCurrentHomeMonthlyCost] = useState<number | null>(() => {
@@ -319,17 +265,6 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
     return null
   })
-  const [currentHomeMonthlyCostInput, setCurrentHomeMonthlyCostInput] = useState<string>(() => {
-    try {
-      const stored = localStorage.getItem('homefit_search_options')
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        return typeof parsed.current_home_monthly_cost === 'number' && parsed.current_home_monthly_cost > 0
-          ? String(parsed.current_home_monthly_cost) : ''
-      }
-    } catch { /* ignore */ }
-    return ''
-  })
   const [currentHomeMatch, setCurrentHomeMatch] = useState<string>(() => {
     try {
       const stored = localStorage.getItem('homefit_search_options')
@@ -340,37 +275,6 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
     return ''
   })
-
-  const handleCurrentHomeMonthlyCostBlur = useCallback((val: string) => {
-    const v = val === '' ? null : parseInt(val.replace(/,/g, ''), 10)
-    const next = Number.isFinite(v) && (v as number) >= 100 ? (v as number) : null
-    setCurrentHomeMonthlyCost(next)
-    setCurrentHomeMonthlyCostInput(next ? String(next) : '')
-    try {
-      const stored = localStorage.getItem('homefit_search_options')
-      const opts = stored ? JSON.parse(stored) : {}
-      localStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_monthly_cost: next }))
-    } catch { /* ignore */ }
-  }, [])
-
-  const handleCurrentHomeMonthlyCostClear = useCallback(() => {
-    setCurrentHomeMonthlyCost(null)
-    setCurrentHomeMonthlyCostInput('')
-    try {
-      const stored = localStorage.getItem('homefit_search_options')
-      const opts = stored ? JSON.parse(stored) : {}
-      localStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_monthly_cost: null }))
-    } catch { /* ignore */ }
-  }, [])
-
-  const handleCurrentHomeSelect = useCallback((name: string) => {
-    setCurrentHomeMatch(name)
-    try {
-      const stored = localStorage.getItem('homefit_search_options')
-      const opts = stored ? JSON.parse(stored) : {}
-      localStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, current_home_match: name }))
-    } catch { /* ignore */ }
-  }, [])
 
   const setIndexModeAndListSort = useCallback((mode: CatalogMapIndexMode) => {
     setIndexMode(mode)
@@ -480,10 +384,6 @@ export default function CatalogPageClient({
           setPriorities(merged)
         }
         if (opts.dealbreakers && typeof opts.dealbreakers === 'object') setDealbreakers(opts.dealbreakers)
-        if (typeof opts.household_income === 'number' && opts.household_income > 0) {
-          setHouseholdIncome(opts.household_income)
-          setIncomeInputValue(String(opts.household_income))
-        }
         const f = opts.filters
         if (f && typeof f === 'object') {
           if (Array.isArray(f.filterAreaTypes)) setFilterAreaTypes(f.filterAreaTypes)
@@ -497,7 +397,6 @@ export default function CatalogPageClient({
           if (typeof f.filterSchoolType === 'string') setFilterSchoolType(f.filterSchoolType)
           if (typeof f.filterLocalScene === 'string') setFilterLocalScene(f.filterLocalScene)
           if (typeof f.filterCommuteMax === 'string') setFilterCommuteMax(f.filterCommuteMax)
-          if (typeof f.workZoneId === 'string' && findWorkZone(f.workZoneId)) setWorkZoneId(f.workZoneId)
           if (f.climatePrefs && typeof f.climatePrefs === 'object') setClimatePrefs(f.climatePrefs)
         }
         hasRestoredRef.current = true
@@ -505,49 +404,25 @@ export default function CatalogPageClient({
       .catch(() => { hasRestoredRef.current = true /* silently ignore — sessionStorage fallback already applied */ })
   }, [user])
 
-  // Personal profile (income, current home, work hub, people) lives in user_preferences.profile,
-  // separate from the explorer UI state above. It overrides the explorer_options copy on login.
-  // Gated on profileReady so an empty server profile is seeded from local state, not wiped by it.
-  const [profileReady, setProfileReady] = useState(false)
+  // The personal profile (income, current home, work hub, mode, office days, people) is edited on
+  // the profile page; here it is only read, so a signed-in user's saved profile wins on load.
   useEffect(() => {
-    if (!user) { setProfileReady(false); return }
+    if (!user) return
     let cancelled = false
     fetchProfile().then((p) => {
-      if (cancelled) return
-      if (p) {
-        if (p.household_income != null) {
-          setHouseholdIncome(p.household_income)
-          setIncomeInputValue(String(p.household_income))
-        }
-        if (p.current_home) {
-          setCurrentHomeMatch(p.current_home.name)
-          setCurrentHomeMonthlyCost(p.current_home.monthly_cost)
-          setCurrentHomeMonthlyCostInput(p.current_home.monthly_cost ? String(p.current_home.monthly_cost) : '')
-        }
-        if (p.work_zone_id && findWorkZone(p.work_zone_id)) setWorkZoneId(p.work_zone_id)
-        if (p.commute_mode !== undefined) { setCommuteMode(p.commute_mode); persistLocalOption('commute_mode', p.commute_mode) }
-        if (p.office_days !== undefined) { setOfficeDays(p.office_days); persistLocalOption('office_days', p.office_days) }
-        if (p.people && p.people.length) { setPeople(p.people); savePeople(p.people) }
+      if (cancelled || !p) return
+      if (p.household_income != null) setHouseholdIncome(p.household_income)
+      if (p.current_home) {
+        setCurrentHomeMatch(p.current_home.name)
+        setCurrentHomeMonthlyCost(p.current_home.monthly_cost)
       }
-      setProfileReady(true)
+      if (p.work_zone_id && findWorkZone(p.work_zone_id)) setWorkZoneId(p.work_zone_id)
+      if (p.commute_mode !== undefined) setCommuteMode(p.commute_mode)
+      if (p.office_days !== undefined) setOfficeDays(p.office_days)
+      if (p.people && p.people.length) setPeople(p.people)
     })
     return () => { cancelled = true }
-  }, [user, persistLocalOption])
-
-  useEffect(() => {
-    if (!user || !profileReady) return
-    const t = setTimeout(() => {
-      saveProfile({
-        household_income: householdIncome,
-        current_home: currentHomeMatch ? { name: currentHomeMatch, monthly_cost: currentHomeMonthlyCost } : null,
-        work_zone_id: workZoneId,
-        commute_mode: commuteMode,
-        office_days: officeDays,
-        people,
-      })
-    }, 1500)
-    return () => clearTimeout(t)
-  }, [user, profileReady, householdIncome, currentHomeMatch, currentHomeMonthlyCost, workZoneId, commuteMode, officeDays, people])
+  }, [user])
 
   useEffect(() => {
     if (!user || !hasRestoredRef.current) return
@@ -559,7 +434,6 @@ export default function CatalogPageClient({
         body: JSON.stringify({
           priorities,
           dealbreakers,
-          household_income: householdIncome,
           filters: {
             filterAreaTypes,
             filterArchetypes,
@@ -573,14 +447,13 @@ export default function CatalogPageClient({
             filterSchoolType,
             filterLocalScene,
             filterCommuteMax,
-            workZoneId,
             climatePrefs,
           },
         }),
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, householdIncome, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterCommuteMax, workZoneId, climatePrefs])
+  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterCommuteMax, climatePrefs])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -626,13 +499,6 @@ export default function CatalogPageClient({
       return a.localeCompare(b)
     })
   }, [places])
-
-  const currentHomePlaceOptions = useMemo(() =>
-    places.map((p) => ({
-      name: p.catalog?.name ?? '',
-      sub: [p.catalog?.county_borough, p.catalog?.state_abbr].filter(Boolean).join(', '),
-    })).filter(o => o.name),
-  [places])
 
   const adjustedPlaces = useMemo(() => {
     const withIncome = householdIncome
@@ -718,22 +584,6 @@ export default function CatalogPageClient({
   ])
 
   const workZones = useMemo(() => availableWorkZones(places), [places])
-
-  /** Geocode a work address and snap it to the nearest precomputed work zone. */
-  const setWorkAddress = useCallback(async (address: string): Promise<WorkAddressResult> => {
-    try {
-      const res = await fetch(`/api/geocode?location=${encodeURIComponent(address)}`)
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok || typeof data?.lat !== 'number') return { error: data?.detail || 'We couldn\'t find that address.' }
-      const snapped = snapToWorkZone(data.lat, data.lon, workZones)
-      if (!snapped) return { error: 'That address isn\'t near a job hub we have commute times for yet.' }
-      setWorkZoneId(snapped.zone.id)
-      setFilterMetro(snapped.zone.metro)
-      return { zoneId: snapped.zone.id, miles: snapped.miles, address }
-    } catch {
-      return { error: 'Location service is temporarily unavailable.' }
-    }
-  }, [workZones])
 
   // Hand the current weights + score-affecting filters to Compare ("Your HomeFit" mode).
   useEffect(() => {
@@ -2087,17 +1937,10 @@ export default function CatalogPageClient({
 
         onTakeQuiz={() => { setWeightOpen(false); setShowQuiz(true) }}
         householdIncome={householdIncome}
-        incomeInputValue={incomeInputValue}
-        onIncomeInputChange={setIncomeInputValue}
-        onIncomeBlur={() => handleIncomeBlur(incomeInputValue, householdIncome)}
-        onIncomeClear={handleIncomeClear}
-        currentHomeMonthlyCostInput={currentHomeMonthlyCostInput}
-        onCurrentHomeMonthlyCostInputChange={setCurrentHomeMonthlyCostInput}
-        onCurrentHomeMonthlyCostBlur={() => handleCurrentHomeMonthlyCostBlur(currentHomeMonthlyCostInput)}
-        onCurrentHomeMonthlyCostClear={handleCurrentHomeMonthlyCostClear}
-        currentHomeMatch={currentHomeMatch}
-        onCurrentHomeSelect={handleCurrentHomeSelect}
-        currentHomePlaceOptions={currentHomePlaceOptions}
+        currentHomeName={currentHomeMatch}
+        currentHomeMonthlyCost={currentHomeMonthlyCost}
+        hasWorkHub={Boolean(findWorkZone(workZoneId))}
+        hasPeople={people.length > 0}
         dealbreakers={dealbreakers}
         onDealbreakerToggle={toggleDealbreaker}
       />
@@ -2147,22 +1990,8 @@ export default function CatalogPageClient({
         onFilterCommuteMaxChange={setFilterCommuteMax}
         workZoneId={workZoneId}
         commuteMode={commuteMode}
-        onCommuteModeChange={handleCommuteModeChange}
         officeDays={officeDays}
-        onOfficeDaysChange={handleOfficeDaysChange}
         workZones={workZones}
-        onWorkZoneChange={(id) => {
-          setWorkZoneId(id)
-          const zone = findWorkZone(id)
-          if (zone) setFilterMetro(zone.metro)
-        }}
-        onWorkAddressSubmit={setWorkAddress}
-        commutePriority={priorities.commute_time ?? 'None'}
-        onCommutePriorityChange={(v) => setPriorities((prev) => ({ ...prev, commute_time: v }))}
-        people={people}
-        onPeopleChange={handlePeopleChange}
-        socialConnectionPriority={priorities.social_connection ?? 'None'}
-        onSocialConnectionPriorityChange={(v) => setPriorities((prev) => ({ ...prev, social_connection: v }))}
         climatePrefs={climatePrefs}
         onClimatePrefsChange={setClimatePrefs}
         resultCount={gatedPlaces.length}

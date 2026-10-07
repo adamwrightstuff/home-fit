@@ -4,10 +4,8 @@ import { useEffect } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type ClimatePreferences } from '@/lib/climatePreferences'
 import { X } from 'lucide-react'
+import Link from 'next/link'
 import { type WorkZone, findWorkZone } from '@/lib/workZones'
-import WorkHubPicker, { type WorkAddressResult } from './WorkHubPicker'
-import PeopleYouKnowPicker from './PeopleYouKnowPicker'
-import type { SocialConnectionPerson } from '@/lib/socialConnections'
 
 const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'urban_core', label: 'Urban Core' },
@@ -58,26 +56,12 @@ interface FilterSheetProps {
   onFilterLocalSceneChange: (v: 'all' | 'Some' | 'High') => void
   filterCommuteMax: 'all' | '15' | '30' | '45' | '60'
   onFilterCommuteMaxChange: (v: 'all' | '15' | '30' | '45' | '60') => void
+  /** Work hub, mode and office days come from the profile and are read-only here. */
   workZoneId: string | null
-  /** Zones with precomputed commute data; the input is hidden when empty. */
+  /** Zones with precomputed commute data. */
   workZones: WorkZone[]
-  onWorkZoneChange: (id: string | null) => void
-  /** How the user commutes (personal profile); null = whichever is faster. */
   commuteMode: 'auto' | 'transit' | 'active' | null
-  onCommuteModeChange: (v: 'auto' | 'transit' | 'active' | null) => void
-  /** Days per week in the office (0 = fully remote); null = not set (treated as full-time). */
   officeDays: number | null
-  onOfficeDaysChange: (v: number | null) => void
-  /** Geocodes and snaps to the nearest zone. */
-  onWorkAddressSubmit: (address: string) => Promise<WorkAddressResult>
-  /** Opt-in commute_time pillar weight (see lib/reweight.ts); only shown once a work hub is selected. */
-  commutePriority: 'None' | 'Low' | 'Medium' | 'High'
-  onCommutePriorityChange: (v: 'None' | 'Low' | 'Medium' | 'High') => void
-  people: SocialConnectionPerson[]
-  onPeopleChange: (people: SocialConnectionPerson[]) => void
-  /** Opt-in social_connection pillar weight (see lib/reweight.ts); only shown once someone's added. */
-  socialConnectionPriority: 'None' | 'Low' | 'Medium' | 'High'
-  onSocialConnectionPriorityChange: (v: 'None' | 'Low' | 'Medium' | 'High') => void
   climatePrefs: ClimatePreferences
   onClimatePrefsChange: (v: ClimatePreferences) => void
   resultCount: number
@@ -131,18 +115,8 @@ export default function FilterSheet({
   onFilterCommuteMaxChange,
   workZoneId,
   workZones,
-  onWorkZoneChange,
   commuteMode,
-  onCommuteModeChange,
   officeDays,
-  onOfficeDaysChange,
-  onWorkAddressSubmit,
-  commutePriority,
-  onCommutePriorityChange,
-  people,
-  onPeopleChange,
-  socialConnectionPriority,
-  onSocialConnectionPriorityChange,
   climatePrefs,
   onClimatePrefsChange,
   resultCount,
@@ -489,7 +463,7 @@ export default function FilterSheet({
             </div>
           </div>
 
-          {/* Commute Time */}
+          {/* Commute Time: only the filter lives here; the hub, mode and days are profile facts. */}
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Commute Time</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
@@ -497,30 +471,16 @@ export default function FilterSheet({
                 ? workZone.transitOnly
                   ? `Weekday-morning transit time to ${workZone.label}. Driving doesn't count toward the filter here, since drive times leave out parking.`
                   : `Fastest weekday-morning commute to ${workZone.label}, by transit or car.`
-                : 'Transit travel time to the metro CBD (Penn Station or Grand Central for NYC, Financial District for SF, Downtown LA). ' + (workZones.length > 0 ? 'Add a work address to use your own commute.' : '')}
+                : 'Transit travel time to the metro CBD (Penn Station or Grand Central for NYC, Financial District for SF, Downtown LA).'}
             </div>
             {workZones.length > 0 && (
-              <WorkHubPicker
-                zones={workZones}
-                value={workZoneId}
-                onChange={onWorkZoneChange}
-                onAddressSubmit={onWorkAddressSubmit}
-              />
-            )}
-            {workZone && (
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6 }}>How do you get there?</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                  {chip(commuteMode === null, 'Fastest', () => onCommuteModeChange(null))}
-                  {chip(commuteMode === 'auto', 'Drive', () => onCommuteModeChange(commuteMode === 'auto' ? null : 'auto'))}
-                  {chip(commuteMode === 'transit', 'Transit', () => onCommuteModeChange(commuteMode === 'transit' ? null : 'transit'))}
-                </div>
-                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6 }}>Days per week in the office</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {[0, 1, 2, 3, 4, 5].map((d) =>
-                    chip(officeDays === d, d === 0 ? 'Remote' : String(d), () => onOfficeDaysChange(officeDays === d ? null : d))
-                  )}
-                </div>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 10 }}>
+                {workZone
+                  ? `Your profile: ${workZone.label}${commuteMode === 'auto' ? ', driving' : commuteMode === 'transit' ? ', transit' : ''}${officeDays === null ? '' : officeDays === 0 ? ', remote' : `, ${officeDays} office day${officeDays === 1 ? '' : 's'}`}. `
+                  : 'Add your work address to use your own commute. '}
+                <Link href="/profile" style={{ color: 'var(--hf-primary-1)', fontWeight: 600 }}>
+                  {workZone ? 'Edit in your profile' : 'Open your profile'}
+                </Link>
               </div>
             )}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -530,43 +490,6 @@ export default function FilterSheet({
               {chip(filterCommuteMax === '45', 'Under 45 min', () => onFilterCommuteMaxChange(filterCommuteMax === '45' ? 'all' : '45'))}
               {chip(filterCommuteMax === '60', 'Under 60 min', () => onFilterCommuteMaxChange(filterCommuteMax === '60' ? 'all' : '60'))}
             </div>
-            {workZone && (
-              <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-                  How much should commute time count toward your HomeFit score? Not a research-backed
-                  pillar like the 13 above -- a rough linear estimate, and off by default.
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {(['None', 'Low', 'Medium', 'High'] as const).map((level) =>
-                    chip(commutePriority === level, level, () => onCommutePriorityChange(level))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* People You Know */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>People You Know</div>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Add the people you&apos;d want to stay close to. A close family member or friend still
-              counts even if they&apos;re a bit of a drive; casual friends and neighbors mostly matter
-              nearby.
-            </div>
-            <PeopleYouKnowPicker people={people} onPeopleChange={onPeopleChange} />
-            {people.length > 0 && (
-              <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-                  How much should being close to them count toward your HomeFit score? Not a
-                  research-backed pillar like the 13 above -- a rough estimate, and off by default.
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {(['None', 'Low', 'Medium', 'High'] as const).map((level) =>
-                    chip(socialConnectionPriority === level, level, () => onSocialConnectionPriorityChange(level))
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Weather / Climate */}
