@@ -39,6 +39,9 @@ export default function AuthBar() {
       <Link href="/saved" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }} onClick={closeMobileMenu}>
         My places
       </Link>
+      <Link href="/profile" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }} onClick={closeMobileMenu}>
+        Profile
+      </Link>
       <button
         type="button"
         className="hf-auth-bar-btn"

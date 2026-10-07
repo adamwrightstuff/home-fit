@@ -84,6 +84,11 @@ export function readLocalProfile(): Partial<UserProfile> {
     if (MODES.includes(mode)) out.commute_mode = mode
     const days = opts?.office_days
     if (typeof days === 'number' && Number.isInteger(days) && days >= 0 && days <= 5) out.office_days = days
+    const homeName = opts?.current_home_match
+    if (typeof homeName === 'string' && homeName) {
+      const cost = opts?.current_home_monthly_cost
+      out.current_home = { name: homeName, monthly_cost: typeof cost === 'number' && cost > 0 ? cost : null }
+    }
   } catch { /* ignore */ }
   const people = loadPeople()
   if (people.length) out.people = people
@@ -101,14 +106,17 @@ export async function fetchProfile(): Promise<Partial<UserProfile> | null> {
   }
 }
 
-export async function saveProfile(patch: Partial<UserProfile>): Promise<void> {
+/** Resolves true when the server stored the patch. Local state still applies when it didn't. */
+export async function saveProfile(patch: Partial<UserProfile>): Promise<boolean> {
   try {
-    await fetch('/api/me/profile', {
+    const res = await fetch('/api/me/profile', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
+      keepalive: true,
     })
+    return res.ok
   } catch {
-    // Best-effort; local state still applies this session.
+    return false
   }
 }
