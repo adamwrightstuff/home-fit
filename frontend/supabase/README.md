@@ -24,3 +24,7 @@ Save (My places) will fail with **"Could not find the table 'public.saved_scores
 - **Policies:** The migration creates RLS policies. If you edited them or the table was created by hand, re-run the full `001_saved_scores.sql` script (it now ends with `NOTIFY pgrst, 'reload schema';` so the API picks up the table).
 
 After the table exists and the cache has updated, sign in and **Save this place** should work.
+
+## Add the `profile` column to `user_preferences`
+
+Run `migrations/005_user_profile.sql` the same way (SQL Editor → paste → Run). It adds a `profile` jsonb column to `user_preferences` for income, current home cost, work hub, commute mode, office days and people. Until it runs, `/api/me/profile` saves fail silently and the catalog falls back to its existing local state.

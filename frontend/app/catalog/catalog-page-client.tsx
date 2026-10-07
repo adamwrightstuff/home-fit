@@ -38,6 +38,7 @@ import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker, withCommuteTimePillar, withSocialConnectionPillar, estimatedDriveMinutes } from '@/lib/reweight'
 import { loadPeople, savePeople, type SocialConnectionPerson } from '@/lib/socialConnections'
+import { fetchProfile, saveProfile } from '@/lib/userProfile'
 import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
@@ -475,6 +476,46 @@ export default function CatalogPageClient({
       })
       .catch(() => { hasRestoredRef.current = true /* silently ignore — sessionStorage fallback already applied */ })
   }, [user])
+
+  // Personal profile (income, current home, work hub, people) lives in user_preferences.profile,
+  // separate from the explorer UI state above. It overrides the explorer_options copy on login.
+  // Gated on profileReady so an empty server profile is seeded from local state, not wiped by it.
+  const [profileReady, setProfileReady] = useState(false)
+  useEffect(() => {
+    if (!user) { setProfileReady(false); return }
+    let cancelled = false
+    fetchProfile().then((p) => {
+      if (cancelled) return
+      if (p) {
+        if (p.household_income != null) {
+          setHouseholdIncome(p.household_income)
+          setIncomeInputValue(String(p.household_income))
+        }
+        if (p.current_home) {
+          setCurrentHomeMatch(p.current_home.name)
+          setCurrentHomeMonthlyCost(p.current_home.monthly_cost)
+          setCurrentHomeMonthlyCostInput(p.current_home.monthly_cost ? String(p.current_home.monthly_cost) : '')
+        }
+        if (p.work_zone_id && findWorkZone(p.work_zone_id)) setWorkZoneId(p.work_zone_id)
+        if (p.people && p.people.length) { setPeople(p.people); savePeople(p.people) }
+      }
+      setProfileReady(true)
+    })
+    return () => { cancelled = true }
+  }, [user])
+
+  useEffect(() => {
+    if (!user || !profileReady) return
+    const t = setTimeout(() => {
+      saveProfile({
+        household_income: householdIncome,
+        current_home: currentHomeMatch ? { name: currentHomeMatch, monthly_cost: currentHomeMonthlyCost } : null,
+        work_zone_id: workZoneId,
+        people,
+      })
+    }, 1500)
+    return () => clearTimeout(t)
+  }, [user, profileReady, householdIncome, currentHomeMatch, currentHomeMonthlyCost, workZoneId, people])
 
   useEffect(() => {
     if (!user || !hasRestoredRef.current) return
