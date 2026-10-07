@@ -364,7 +364,7 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Housing Stock</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Based on Census ACS share of units by structure type. Single-Family/Townhouse = 1-unit detached/attached (40%+ of units). Small Multifamily = 2–4 unit buildings (15%+ of units). Apartment = 5+ unit buildings (50%+ of units). Neighborhoods can match more than one.
+              What the housing stock actually looks like. Select any that fit — a place can match more than one.
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterHousingType.includes('sf_townhouse'), 'Single-Family / Townhouse', () => {
