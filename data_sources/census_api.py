@@ -19,10 +19,15 @@ load_dotenv()
 CENSUS_API_KEY = os.getenv("CENSUS_API_KEY")
 CENSUS_BASE_URL = "https://api.census.gov/data"
 GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
-# ACS 2022 tract boundaries — point-in-polygon fallback when the coordinates geocoder fails.
+# 2020 Census tract boundaries.  ACS 2020+ estimates (incl. the 2022 ACS used here)
+# are tabulated on 2020 tracts; TIGERweb's tigerWMS_ACS2022 tract layer still serves
+# 2010-vintage tract codes, so tracts split or renumbered in 2020 (e.g. Palms
+# 06037271804) were missing from it.  Used for point-in-polygon tract fallback,
+# tract land area (density), and tracts intersecting a disk (safety denominator).
+TIGERWEB_TRACT_VINTAGE = "census2020"
 TIGERWEB_TRACT_LAYER_URL = (
     "https://tigerweb.geo.census.gov/arcgis/rest/services/"
-    "TIGERweb/tigerWMS_ACS2022/MapServer/6/query"
+    "TIGERweb/tigerWMS_Census2020/MapServer/6/query"
 )
 
 
@@ -264,10 +269,7 @@ def get_land_area(tract: Dict) -> Optional[float]:
         Land area in square miles
     """
     try:
-        base_url = (
-            "https://tigerweb.geo.census.gov/arcgis/rest/services/"
-            "TIGERweb/tigerWMS_ACS2022/MapServer/6/query"
-        )
+        base_url = TIGERWEB_TRACT_LAYER_URL
 
         where = (
             f"STATE='{tract['state_fips']}' AND "
@@ -1733,9 +1735,13 @@ def get_incorporated_place_geoid(lat: float, lon: float) -> Optional[str]:
 
 
 @cached(ttl_seconds=CACHE_TTL["census_data"])
-def _tigerweb_tracts_intersecting_disk(lat: float, lon: float, radius_m: int) -> Optional[Dict]:
+def _tigerweb_tracts_intersecting_disk(
+    lat: float, lon: float, radius_m: int, vintage: str = TIGERWEB_TRACT_VINTAGE
+) -> Optional[Dict]:
     """
-    Query TIGERweb ACS2022 tract layer for features intersecting a geodesic disk.
+    Query the 2020 Census tract layer for features intersecting a geodesic disk.
+    `vintage` is part of the cache key so results cached from the old 2010-vintage
+    layer are never reused.
 
     Returns raw ArcGIS JSON payload (with features) or None.
     """
@@ -1804,8 +1810,8 @@ def _population_for_old_tract(state_fips: str, county_fips: str, tract_fips: str
     """
     Population for a tract code that has no 2022 ACS row.
 
-    TIGERweb's tract layers return 2010-vintage tract codes, but 2022 ACS uses
-    2020 tracts, and tracts split in 2020 keep their base number with a suffix
+    Should be rare now that tract polygons come from the 2020 layer; kept as a
+    fallback for 2010-vintage codes.  Tracts split in 2020 keep their base number with a suffix
     (0128.00 -> 0128.01 + 0128.02) that nests inside the old tract.  Sum those
     pieces; otherwise use the 2019 ACS (2010 geography, same as the polygon).
     """

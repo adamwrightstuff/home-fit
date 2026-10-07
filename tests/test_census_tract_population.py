@@ -33,3 +33,33 @@ def test_suffixed_old_tract_does_not_borrow_sibling_populations():
     with mock.patch.object(census_api, "_acs_county_tract_populations", side_effect=_fake_county):
         pop, how = census_api._population_for_old_tract("06", "075", "012803")
     assert (pop, how) == (None, "missing")
+
+
+def test_tract_lookups_use_the_2020_census_tract_layer():
+    # ACS 2022 is tabulated on 2020 tracts; the tigerWMS_ACS2022 layer serves 2010 codes
+    assert "tigerWMS_Census2020" in census_api.TIGERWEB_TRACT_LAYER_URL
+
+
+def test_land_area_queries_the_2020_layer_by_tract_code():
+    calls = []
+
+    class _R:
+        def json(self):
+            return {"features": [{"attributes": {"AREALAND": 348_810, "AREAWATER": 0, "NAME": "Census Tract 2718.04", "GEOID": "06037271804"}}]}
+
+    def fake_request(url, params, timeout=None):
+        calls.append((url, params["where"]))
+        return _R()
+
+    tract = {"state_fips": "06", "county_fips": "037", "tract_fips": "271804"}
+    with mock.patch.object(census_api, "_make_request_with_retry", side_effect=fake_request):
+        area = census_api.get_land_area(tract)
+    assert area is not None and abs(area - 348_810 / 2_589_988.11) < 1e-3
+    url, where = calls[0]
+    assert "tigerWMS_Census2020" in url and "TRACT='271804'" in where
+
+
+def test_disk_tract_cache_key_includes_layer_vintage():
+    import inspect
+    sig = inspect.signature(census_api._tigerweb_tracts_intersecting_disk.__wrapped__)
+    assert sig.parameters["vintage"].default == census_api.TIGERWEB_TRACT_VINTAGE
