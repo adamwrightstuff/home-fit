@@ -137,15 +137,15 @@ def fetch_acs_counties(year: int = ACS_YEAR, api_key: Optional[str] = None) -> p
         wanted[f"own_b{i}"] = _find(o, "with a mortgage", lab, must_not=["without"])
 
     w = _group_vars("B08301", year)
-    wanted["workers"] = _find(w, "Total:", must_not=["!!"])
+    wanted["workers"] = _find(w, "Total:", must_not=["Total:!!"])
     wanted["wfh"] = _find(w, "Worked from home")
 
     p = _group_vars("B17001", year)
-    wanted["pov_total"] = _find(p, "Total:", must_not=["!!"])
+    wanted["pov_total"] = _find(p, "Total:", must_not=["Total:!!"])
     wanted["pov_below"] = _find(p, "below poverty level", must_not=["Male", "Female", "years", "Not"])
 
     e = _group_vars("B15003", year)
-    wanted["edu_total"] = _find(e, "Total:", must_not=["!!"])
+    wanted["edu_total"] = _find(e, "Total:", must_not=["Total:!!"])
     for k, lab in {"edu_ba": "Bachelor's degree", "edu_ma": "Master's degree", "edu_pr": "Professional school degree", "edu_dr": "Doctorate degree"}.items():
         wanted[k] = _find(e, lab)
 
