@@ -38,7 +38,6 @@ import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker, withCommuteTimePillar, withSocialConnectionPillar, estimatedDriveMinutes } from '@/lib/reweight'
 import { loadPeople, savePeople, type SocialConnectionPerson } from '@/lib/socialConnections'
-import { type WaterfrontSubPreference } from '@/lib/aoPreference'
 import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
@@ -139,7 +138,6 @@ export default function CatalogPageClient({
       return Array.isArray(f?.filterAoTypes) ? f.filterAoTypes : []
     } catch { return [] }
   })
-  const [filterWaterfrontSubPref, setFilterWaterfrontSubPref] = useState<WaterfrontSubPreference | null>(null)
   const [filterHousingType, setFilterHousingType] = useState<string[]>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
@@ -465,7 +463,6 @@ export default function CatalogPageClient({
           if (Array.isArray(f.filterPoliticalLean)) setFilterPoliticalLean(f.filterPoliticalLean)
           if (Array.isArray(f.filterNbTypes)) setFilterNbTypes(f.filterNbTypes)
           if (Array.isArray(f.filterAoTypes)) setFilterAoTypes(f.filterAoTypes)
-          if (typeof f.filterWaterfrontSubPref === 'string') setFilterWaterfrontSubPref(f.filterWaterfrontSubPref as WaterfrontSubPreference)
           if (Array.isArray(f.filterHousingType)) setFilterHousingType(f.filterHousingType)
           if (Array.isArray(f.filterTenure)) setFilterTenure(f.filterTenure)
           if (typeof f.filterSchoolType === 'string') setFilterSchoolType(f.filterSchoolType)
@@ -497,7 +494,7 @@ export default function CatalogPageClient({
             filterPoliticalLean,
             filterNbTypes,
             filterAoTypes,
-            filterWaterfrontSubPref,
+
             filterHousingType,
             filterTenure,
             filterSchoolType,
@@ -510,7 +507,7 @@ export default function CatalogPageClient({
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, householdIncome, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterCommuteMax, workZoneId, climatePrefs])
+  }, [user, priorities, dealbreakers, householdIncome, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterCommuteMax, workZoneId, climatePrefs])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -627,7 +624,7 @@ export default function CatalogPageClient({
     if (!hasScenaryOrOutdoorsPref) return withCommute
     return withCommute.map((p) => ({
       ...p,
-      score: applyScenerySubPreferencesToScore(p.score, filterAoTypes, filterWaterfrontSubPref, filterNbTypes),
+      score: applyScenerySubPreferencesToScore(p.score, filterAoTypes, null, filterNbTypes),
     }))
   }, [
     places,
@@ -639,7 +636,6 @@ export default function CatalogPageClient({
     people,
     filterNbTypes,
     filterAoTypes,
-    filterWaterfrontSubPref,
   ])
 
   const workZones = useMemo(() => availableWorkZones(places), [places])
@@ -664,11 +660,11 @@ export default function CatalogPageClient({
   useEffect(() => {
     writeCompareContext({
       priorities,
-      filters: { filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref },
+      filters: { filterSchoolType, filterNbTypes, filterAoTypes },
       householdIncome,
       currentHome: currentHomeMatch ? { name: currentHomeMatch, monthlyCost: currentHomeMonthlyCost } : null,
     })
-  }, [priorities, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, householdIncome, currentHomeMatch, currentHomeMonthlyCost])
+  }, [priorities, filterSchoolType, filterNbTypes, filterAoTypes, householdIncome, currentHomeMatch, currentHomeMonthlyCost])
 
   const effectivePriorities = useMemo(
     () => priorities,
@@ -1069,7 +1065,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterCommuteMax, filterHousingType, filterTenure, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterCommuteMax, filterHousingType, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
@@ -2059,12 +2055,7 @@ export default function CatalogPageClient({
         filterNbTypes={filterNbTypes}
         onFilterNbTypesChange={setFilterNbTypes}
         filterAoTypes={filterAoTypes}
-        onFilterAoTypesChange={(next) => {
-          setFilterAoTypes(next)
-          if (!next.includes('waterfront') || next.length >= 3) setFilterWaterfrontSubPref(null)
-        }}
-        filterWaterfrontSubPref={filterWaterfrontSubPref}
-        onFilterWaterfrontSubPrefChange={setFilterWaterfrontSubPref}
+        onFilterAoTypesChange={setFilterAoTypes}
         filterHousingType={filterHousingType}
         onFilterHousingTypeChange={setFilterHousingType}
         filterTenure={filterTenure}

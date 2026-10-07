@@ -1,7 +1,5 @@
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
-import type { WaterfrontSubPreference } from '@/lib/aoPreference'
-
 /** Explorer filters that rewrite pillar scores (as opposed to filters that only hide places). */
 export interface ScoreAffectingFilters {
   filterSchoolType: 'any' | 'public_only' | 'charter'
@@ -52,7 +50,6 @@ export interface CompareContext {
   filters: ScoreAffectingFilters & {
     filterNbTypes: string[]
     filterAoTypes: string[]
-    filterWaterfrontSubPref: WaterfrontSubPreference | null
   }
   /** Explorer's live income (signed-in users load it from their profile, not sessionStorage). */
   householdIncome?: number | null
@@ -86,7 +83,6 @@ export function readCompareContext(): CompareContext | null {
         filterSchoolType: f.filterSchoolType === 'public_only' || f.filterSchoolType === 'charter' ? f.filterSchoolType : 'any',
         filterNbTypes: Array.isArray(f.filterNbTypes) ? f.filterNbTypes : [],
         filterAoTypes: Array.isArray(f.filterAoTypes) ? f.filterAoTypes : [],
-        filterWaterfrontSubPref: typeof f.filterWaterfrontSubPref === 'string' ? f.filterWaterfrontSubPref : null,
       },
     }
   } catch {
