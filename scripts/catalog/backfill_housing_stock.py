@@ -91,9 +91,15 @@ def _parse_b25024_row(row: list, source: str) -> Optional[dict]:
     three_four = _census_int(row[4])  # 3–4 units
     if total is None or total == 0:
         return None
-    low_density = sum(v for v in (det, att, two, three_four) if v is not None)
+    sfh        = sum(v for v in (det, att) if v is not None)
+    small_multi = sum(v for v in (two, three_four) if v is not None)
+    low_density = sfh + small_multi
+    large_apt   = total - low_density
     return {
         "pct_low_density": round(low_density / total, 4),
+        "pct_sfh":         round(sfh / total, 4),
+        "pct_small_multi": round(small_multi / total, 4),
+        "pct_large_apt":   round(large_apt / total, 4),
         "total_units": total,
         "source": source,
     }
@@ -197,7 +203,7 @@ def backfill(input_path: str, output_path: str, dry_run: bool = False, skip_exis
     needs_backfill = []
     for i, row in enumerate(rows):
         existing = row.get("score", {}).get("housing_stock")
-        if skip_existing and existing and existing.get("pct_low_density") is not None:
+        if skip_existing and existing and existing.get("pct_sfh") is not None:
             continue
         needs_backfill.append(i)
 
@@ -221,7 +227,7 @@ def backfill(input_path: str, output_path: str, dry_run: bool = False, skip_exis
 
         pct = result["pct_low_density"]
         total = result["total_units"]
-        print(f"    ✓ pct_low_density={pct:.1%}  total_units={total:,}")
+        print(f"    ✓ sfh={result['pct_sfh']:.1%}  small_multi={result['pct_small_multi']:.1%}  large_apt={result['pct_large_apt']:.1%}  total={total:,}")
 
         if "score" not in row:
             row["score"] = {}

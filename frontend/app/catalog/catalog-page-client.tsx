@@ -712,12 +712,14 @@ export default function CatalogPageClient({
       }
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
         const hs = (p.score as any).housing_stock
-        const pctLow = typeof hs?.pct_low_density === 'number' ? hs.pct_low_density : null
-        if (pctLow !== null) {
+        const pctSfh = typeof hs?.pct_sfh === 'number' ? hs.pct_sfh : null
+        const pctSm = typeof hs?.pct_small_multi === 'number' ? hs.pct_small_multi : null
+        const pctLa = typeof hs?.pct_large_apt === 'number' ? hs.pct_large_apt : null
+        if (pctSfh !== null) {
           const passesAny = filterHousingType.some((t) => {
-            if (t === 'sf_townhouse') return pctLow >= 0.25
-            if (t === 'small_multifamily') return pctLow >= 0.1 && pctLow < 0.7
-            if (t === 'apartment') return pctLow < 0.3
+            if (t === 'sf_townhouse') return pctSfh >= 0.40
+            if (t === 'small_multifamily') return (pctSm ?? 0) >= 0.15
+            if (t === 'apartment') return (pctLa ?? 0) >= 0.50
             return false
           })
           if (!passesAny) return false
@@ -877,12 +879,14 @@ export default function CatalogPageClient({
       }
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
         const hs = (p.score as any).housing_stock
-        const pctLow = typeof hs?.pct_low_density === 'number' ? hs.pct_low_density : null
-        if (pctLow !== null) {
+        const pctSfh = typeof hs?.pct_sfh === 'number' ? hs.pct_sfh : null
+        const pctSm = typeof hs?.pct_small_multi === 'number' ? hs.pct_small_multi : null
+        const pctLa = typeof hs?.pct_large_apt === 'number' ? hs.pct_large_apt : null
+        if (pctSfh !== null) {
           const passesAny = filterHousingType.some((ht) => {
-            if (ht === 'sf_townhouse') return pctLow >= 0.25
-            if (ht === 'small_multifamily') return pctLow >= 0.1 && pctLow < 0.7
-            if (ht === 'apartment') return pctLow < 0.3
+            if (ht === 'sf_townhouse') return pctSfh >= 0.40
+            if (ht === 'small_multifamily') return (pctSm ?? 0) >= 0.15
+            if (ht === 'apartment') return (pctLa ?? 0) >= 0.50
             return false
           })
           if (!passesAny) r.push('Housing type')
@@ -1006,12 +1010,14 @@ export default function CatalogPageClient({
       }
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
         const hs = (p.score as any).housing_stock
-        const pctLow = typeof hs?.pct_low_density === 'number' ? hs.pct_low_density : null
-        if (pctLow !== null) {
+        const pctSfh = typeof hs?.pct_sfh === 'number' ? hs.pct_sfh : null
+        const pctSm = typeof hs?.pct_small_multi === 'number' ? hs.pct_small_multi : null
+        const pctLa = typeof hs?.pct_large_apt === 'number' ? hs.pct_large_apt : null
+        if (pctSfh !== null) {
           const passesAny = filterHousingType.some((ht) => {
-            if (ht === 'sf_townhouse') return pctLow >= 0.25
-            if (ht === 'small_multifamily') return pctLow >= 0.1 && pctLow < 0.7
-            if (ht === 'apartment') return pctLow < 0.3
+            if (ht === 'sf_townhouse') return pctSfh >= 0.40
+            if (ht === 'small_multifamily') return (pctSm ?? 0) >= 0.15
+            if (ht === 'apartment') return (pctLa ?? 0) >= 0.50
             return false
           })
           if (!passesAny) r.push('Housing type')
