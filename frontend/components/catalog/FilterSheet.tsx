@@ -62,6 +62,12 @@ interface FilterSheetProps {
   /** Zones with precomputed commute data; the input is hidden when empty. */
   workZones: WorkZone[]
   onWorkZoneChange: (id: string | null) => void
+  /** How the user commutes (personal profile); null = whichever is faster. */
+  commuteMode: 'auto' | 'transit' | 'active' | null
+  onCommuteModeChange: (v: 'auto' | 'transit' | 'active' | null) => void
+  /** Days per week in the office (0 = fully remote); null = not set (treated as full-time). */
+  officeDays: number | null
+  onOfficeDaysChange: (v: number | null) => void
   /** Geocodes and snaps to the nearest zone. */
   onWorkAddressSubmit: (address: string) => Promise<WorkAddressResult>
   /** Opt-in commute_time pillar weight (see lib/reweight.ts); only shown once a work hub is selected. */
@@ -126,6 +132,10 @@ export default function FilterSheet({
   workZoneId,
   workZones,
   onWorkZoneChange,
+  commuteMode,
+  onCommuteModeChange,
+  officeDays,
+  onOfficeDaysChange,
   onWorkAddressSubmit,
   commutePriority,
   onCommutePriorityChange,
@@ -496,6 +506,28 @@ export default function FilterSheet({
                 onChange={onWorkZoneChange}
                 onAddressSubmit={onWorkAddressSubmit}
               />
+            )}
+            {workZone && (
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6 }}>How do you get there?</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                  {chip(commuteMode === null, 'Fastest', () => onCommuteModeChange(null))}
+                  {chip(commuteMode === 'auto', 'Drive', () => onCommuteModeChange(commuteMode === 'auto' ? null : 'auto'))}
+                  {chip(commuteMode === 'transit', 'Transit', () => onCommuteModeChange(commuteMode === 'transit' ? null : 'transit'))}
+                  {chip(commuteMode === 'active', 'Walk or bike', () => onCommuteModeChange(commuteMode === 'active' ? null : 'active'))}
+                </div>
+                {commuteMode === 'active' && (
+                  <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+                    No walk or bike routing yet, so the area-average commute is used.
+                  </div>
+                )}
+                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6 }}>Days per week in the office</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {[0, 1, 2, 3, 4, 5].map((d) =>
+                    chip(officeDays === d, d === 0 ? 'Remote' : String(d), () => onOfficeDaysChange(officeDays === d ? null : d))
+                  )}
+                </div>
+              </div>
             )}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterCommuteMax === 'all', 'Any', () => onFilterCommuteMaxChange('all'))}

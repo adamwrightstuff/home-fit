@@ -67,6 +67,22 @@ export function commuteToZone(
   return { filterMinutes: usable.length ? Math.min(...usable) : null, transit, drive }
 }
 
+/**
+ * Minutes for the user's commute mode. Null when that mode has no usable time (active modes have
+ * no routing; drive to a transit-only hub is unrealistic since drive times leave out parking).
+ * No mode set means the faster usable mode.
+ */
+export function minutesForMode(
+  c: { filterMinutes: number | null; transit: number | null; drive: number | null },
+  zone: WorkZone,
+  mode: 'auto' | 'transit' | 'active' | null | undefined,
+): number | null {
+  if (mode === 'transit') return c.transit
+  if (mode === 'auto') return zone.transitOnly ? null : c.drive
+  if (mode === 'active') return null
+  return c.filterMinutes
+}
+
 /** Card line, e.g. "Financial District: 57 min transit · 67 min drive". */
 export function formatZoneCommute(zone: WorkZone, c: { transit: number | null; drive: number | null }): string {
   const parts = [

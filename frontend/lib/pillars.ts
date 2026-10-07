@@ -96,7 +96,9 @@ export function computeHappinessIndex(pillars: Record<string, any>): number | nu
   const F: number | null = (!cs || cs.status === 'failed') ? null : typeof cs.score === 'number' ? cs.score : null
   // Personal commute (work hub selected -> synthetic commute_time pillar) wins over the area-mean
   // commute score from public_transit_access.
-  const C: number | null = typeof pillars.commute_time?.score === 'number'
+  const C: number | null = pillars.commute_time?.skip_commute
+    ? null
+    : typeof pillars.commute_time?.score === 'number'
     ? pillars.commute_time.score
     : typeof pillars.public_transit_access?.breakdown?.commute_time === 'number'
       ? pillars.public_transit_access.breakdown.commute_time : null

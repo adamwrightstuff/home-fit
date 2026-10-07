@@ -80,6 +80,10 @@ export function readLocalProfile(): Partial<UserProfile> {
     if (typeof income === 'number' && income > 0) out.household_income = income
     const zone = opts?.filters?.workZoneId
     if (typeof zone === 'string' && zone) out.work_zone_id = zone
+    const mode = opts?.commute_mode
+    if (MODES.includes(mode)) out.commute_mode = mode
+    const days = opts?.office_days
+    if (typeof days === 'number' && Number.isInteger(days) && days >= 0 && days <= 5) out.office_days = days
   } catch { /* ignore */ }
   const people = loadPeople()
   if (people.length) out.people = people

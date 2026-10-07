@@ -269,9 +269,30 @@ export function commuteTimeScore(minutes: number | null | undefined): number | n
  * is null (no work hub selected, or no precomputed time to this place), so the pillar simply
  * doesn't appear and gets no weight.
  */
-export function withCommuteTimePillar(data: ScoreResponse, minutes: number | null | undefined): ScoreResponse {
-  const score = commuteTimeScore(minutes)
-  if (score === null) return data
+export function withCommuteTimePillar(
+  data: ScoreResponse,
+  minutes: number | null | undefined,
+  officeDays?: number | null
+): ScoreResponse {
+  // Fully remote: commute doesn't touch daily life, so it drops out of the happiness index and
+  // gets no pillar score (no numeric score means reweighting ignores it too).
+  if (officeDays === 0) {
+    const remote: ScoreResponse = {
+      ...data,
+      livability_pillars: {
+        ...data.livability_pillars,
+        commute_time: { score: null, skip_commute: true, weight: 0, contribution: 0, importance_level: null, breakdown: { office_days: 0 } },
+      } as any,
+    }
+    const hi = computeHappinessIndex((remote.livability_pillars as any) ?? {})
+    return hi !== null ? { ...remote, happiness_index: hi } : remote
+  }
+  const base = commuteTimeScore(minutes)
+  if (base === null) return data
+  // Exposure scales with days commuted: a placeholder linear blend toward a no-penalty score,
+  // pending the calibration against health outcomes.
+  const days = typeof officeDays === 'number' ? Math.min(5, Math.max(1, officeDays)) : 5
+  const score = 100 - (100 - base) * (days / 5)
   const patched: ScoreResponse = {
     ...data,
     livability_pillars: {
@@ -281,7 +302,7 @@ export function withCommuteTimePillar(data: ScoreResponse, minutes: number | nul
         weight: 0,
         contribution: 0,
         importance_level: null,
-        breakdown: { minutes: Math.round((minutes as number) * 10) / 10 },
+        breakdown: { minutes: Math.round((minutes as number) * 10) / 10, office_days: days },
       },
     } as any,
   }

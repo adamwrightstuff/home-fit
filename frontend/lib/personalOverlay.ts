@@ -53,13 +53,18 @@ export function applyProfileToScore(
   const income = opts.incomeOverride ?? profile.household_income ?? null
   if (income) out = applyUserIncomeToScore(out, income)
 
+  // Fully remote drops commute from the happiness index whether or not a hub is set.
+  if (profile.office_days === 0) out = withCommuteTimePillar(out, null, 0)
+
   const lat = Number((out.coordinates as any)?.lat)
   const lon = Number((out.coordinates as any)?.lon)
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return out
   const areaType = (out as any).data_quality_summary?.area_classification?.area_type ?? null
 
   const commuteMinutes = estimateHubCommuteMinutes(lat, lon, areaType, profile.work_zone_id, profile.commute_mode)
-  if (commuteMinutes !== null) out = withCommuteTimePillar(out, commuteMinutes)
+  if (commuteMinutes !== null && profile.office_days !== 0) {
+    out = withCommuteTimePillar(out, commuteMinutes, profile.office_days)
+  }
 
   if (profile.people?.length) {
     const points = profile.people.map((person) => ({

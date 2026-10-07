@@ -15,7 +15,7 @@ import CatalogListView from '@/components/catalog/CatalogListView'
 import HeroBand from '@/components/catalog/HeroBand'
 import FilterSheet from '@/components/catalog/FilterSheet'
 import { type WorkAddressResult } from '@/components/catalog/WorkHubPicker'
-import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, snapToWorkZone } from '@/lib/workZones'
+import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, minutesForMode, snapToWorkZone } from '@/lib/workZones'
 import IndexInfoButton from '@/components/catalog/IndexInfoButton'
 import CompareTray from '@/components/catalog/CompareTray'
 import { DEFAULT_PRIORITIES, type PillarPriorities, type PriorityLevel } from '@/components/SearchOptions'
@@ -38,7 +38,7 @@ import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker, withCommuteTimePillar, withSocialConnectionPillar, estimatedDriveMinutes } from '@/lib/reweight'
 import { loadPeople, savePeople, type SocialConnectionPerson } from '@/lib/socialConnections'
-import { fetchProfile, saveProfile } from '@/lib/userProfile'
+import { fetchProfile, saveProfile, type CommuteMode } from '@/lib/userProfile'
 import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
@@ -172,6 +172,34 @@ export default function CatalogPageClient({
       return findWorkZone(f?.workZoneId)?.id ?? null
     } catch { return null }
   })
+  // Personal commute inputs (profile): how they get there and days per week in the office.
+  const [commuteMode, setCommuteMode] = useState<CommuteMode | null>(() => {
+    try {
+      const m = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.commute_mode
+      return m === 'auto' || m === 'transit' || m === 'active' ? m : null
+    } catch { return null }
+  })
+  const [officeDays, setOfficeDays] = useState<number | null>(() => {
+    try {
+      const d = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.office_days
+      return typeof d === 'number' && Number.isInteger(d) && d >= 0 && d <= 5 ? d : null
+    } catch { return null }
+  })
+  const persistLocalOption = useCallback((key: string, value: unknown) => {
+    try {
+      const stored = localStorage.getItem('homefit_search_options')
+      const opts = stored ? JSON.parse(stored) : {}
+      localStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, [key]: value }))
+    } catch { /* ignore */ }
+  }, [])
+  const handleCommuteModeChange = useCallback((v: CommuteMode | null) => {
+    setCommuteMode(v)
+    persistLocalOption('commute_mode', v)
+  }, [persistLocalOption])
+  const handleOfficeDaysChange = useCallback((v: number | null) => {
+    setOfficeDays(v)
+    persistLocalOption('office_days', v)
+  }, [persistLocalOption])
   const [climatePrefs, setClimatePrefs] = useState<ClimatePreferences>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
@@ -497,12 +525,14 @@ export default function CatalogPageClient({
           setCurrentHomeMonthlyCostInput(p.current_home.monthly_cost ? String(p.current_home.monthly_cost) : '')
         }
         if (p.work_zone_id && findWorkZone(p.work_zone_id)) setWorkZoneId(p.work_zone_id)
+        if (p.commute_mode !== undefined) { setCommuteMode(p.commute_mode); persistLocalOption('commute_mode', p.commute_mode) }
+        if (p.office_days !== undefined) { setOfficeDays(p.office_days); persistLocalOption('office_days', p.office_days) }
         if (p.people && p.people.length) { setPeople(p.people); savePeople(p.people) }
       }
       setProfileReady(true)
     })
     return () => { cancelled = true }
-  }, [user])
+  }, [user, persistLocalOption])
 
   useEffect(() => {
     if (!user || !profileReady) return
@@ -511,11 +541,13 @@ export default function CatalogPageClient({
         household_income: householdIncome,
         current_home: currentHomeMatch ? { name: currentHomeMatch, monthly_cost: currentHomeMonthlyCost } : null,
         work_zone_id: workZoneId,
+        commute_mode: commuteMode,
+        office_days: officeDays,
         people,
       })
     }, 1500)
     return () => clearTimeout(t)
-  }, [user, profileReady, householdIncome, currentHomeMatch, currentHomeMonthlyCost, workZoneId, people])
+  }, [user, profileReady, householdIncome, currentHomeMatch, currentHomeMonthlyCost, workZoneId, commuteMode, officeDays, people])
 
   useEffect(() => {
     if (!user || !hasRestoredRef.current) return
@@ -629,9 +661,13 @@ export default function CatalogPageClient({
             commute_text: formatZoneCommute(workZone, commute),
             // Optional commute_time pillar (see reweight.ts) -- only meaningful once a work hub is
             // picked, and only when this place has a usable precomputed time to it.
-            score: withCommuteTimePillar(adjusted.score, commute.filterMinutes),
+            score: withCommuteTimePillar(adjusted.score, minutesForMode(commute, workZone, commuteMode), officeDays),
           }
         }
+      }
+      // Fully remote drops commute from the happiness index even without a work hub.
+      if (officeDays === 0) {
+        adjusted = { ...adjusted, score: withCommuteTimePillar(adjusted.score, null, 0) }
       }
 
       // Optional social_connection pillar (see lib/reweight.ts) -- only meaningful once at least
@@ -674,6 +710,8 @@ export default function CatalogPageClient({
     currentHomeMonthlyCost,
     currentHomeMatch,
     workZoneId,
+    commuteMode,
+    officeDays,
     people,
     filterNbTypes,
     filterAoTypes,
@@ -2108,6 +2146,10 @@ export default function CatalogPageClient({
         filterCommuteMax={filterCommuteMax}
         onFilterCommuteMaxChange={setFilterCommuteMax}
         workZoneId={workZoneId}
+        commuteMode={commuteMode}
+        onCommuteModeChange={handleCommuteModeChange}
+        officeDays={officeDays}
+        onOfficeDaysChange={handleOfficeDaysChange}
         workZones={workZones}
         onWorkZoneChange={(id) => {
           setWorkZoneId(id)
