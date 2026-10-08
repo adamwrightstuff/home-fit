@@ -79,8 +79,24 @@ Air travel access:
 
 ## 2b. Verification status (checked October 2026)
 
-Verified against the full text: Clark et al. 2020; Dickerson, Hole and Munford 2014; IZA DP 16454; NBER WP 16025.
-Could not verify: Alcock et al. 2014 (Exeter's repository returns a bot challenge, no text retrievable) and the JAMA Psychiatry heat study (JAMA returns a bot-protection block); both still rest on search summaries. Not attempted: Stutzer and Frey 2008, White et al. 2019, Schuch et al. 2018, Helliwell and Putnam 2004, the safety, housing, air-pollution and diversity studies, and the Boemerman commute meta-analysis. Re-check these before any public claim.
+Verified against full text or the official abstract (PubMed or publisher):
+- Stutzer and Frey 2008 (full text): one hour of one-way commuting is -0.20 points; one standard deviation (18 minutes) is -0.086 (t = -3.52), about half the effect of a single person finding a partner and about one-eighth of becoming unemployed (-0.671).
+- Clark et al. 2020; Dickerson, Hole and Munford 2014; IZA DP 16454; NBER WP 16025 (full text, see above).
+- Alcock et al. 2014 (PubMed abstract, BHPS, n = 1,064 movers): greener-area movers (n = 594) had better mental health in all three post-move years (P = .015, .016, .008); less-green movers (n = 470) were worse only in the pre-move year.
+- White et al. 2019 (full text): 19,806 people; 120-179 minutes a week of nature contact, odds ratio 1.59 (health) and 1.23 (wellbeing); peaks at 200-300 minutes; controlled for residential greenspace; cross-sectional.
+- Schuch et al. 2018 (PubMed abstract, 49 cohorts, 266,939 people): adjusted odds ratio 0.83 (0.79-0.88) for incident depression in people with high physical activity.
+- Helliwell and Putnam 2004 (PMC abstract).
+- Victimization panel (Springer abstract): two-wave panel of 2,928 people in two German cities, random effects; within-person victimization effects hit fear of crime, trust and neighborhood satisfaction but not emotional wellbeing or life satisfaction.
+- UK PM2.5 study (abstract, Understanding Society, 59,492 people): about 45% of the PM2.5 effect on life satisfaction runs through health.
+- Luechinger 2009 (abstract): SO2 lowers wellbeing, larger in instrumental-variable estimates.
+- JAMA Psychiatry 2022 heat study (PubMed abstract): 3,496,762 ED visits, 2,775 counties; extreme heat incidence rate ratio 1.08 (1.07-1.09) for any mental-health ED visit.
+- Korean housing study (PubMed abstract, 14 waves): cost burden b = 0.126 on depressive symptoms; leaving burden b = -0.171; stronger for renters.
+- Sturgis et al. 2011 (abstract): no effect of ethnic diversity on generalized trust.
+- Boemerman meta-analysis (abstract, 26 studies): commute length and life satisfaction r = -0.13.
+- Killingsworth, Kahneman and Mellers 2023 (PubMed abstract): flattening of happiness with income holds only for the least happy.
+- Kahneman et al. 2004 day reconstruction method (abstract, 909 employed women): confirms the method, but the abstract does not state that commuting ranks least enjoyable; that claim rests on a press summary.
+
+Still unverified (search summaries only): Roberts et al. 2011; Milner et al. (HILDA commuting); Eberl et al. 2022 unemployment scarring; Moving to Opportunity mental-health results; the English relocation panel (Chen and Wan); Foye 2017 (UCL site blocks us); the Berlin aircraft-noise study; HILDA housing stress; the Chinese older-adult healthcare-access study; the Dinesen et al. diversity meta-analysis; the walkability smartphone study.
 
 ## 3. Corrections made along the way
 
@@ -97,7 +113,7 @@ Taken: housing as financial strain (cost-to-income, renter burden, evictions) in
 
 - Noise data (flight-path and highway noise maps) so noise can be added to climate and air.
 - Eviction and housing-stability data for renters.
-- Finish primary-source verification (see 2b): Alcock 2014 and the JAMA heat study need a browser, since their sites block automated downloads; the unattempted papers need their publisher sites allowed.
+- Finish primary-source verification of the papers still listed as unverified in 2b.
 
 ## 4. Open questions
 
