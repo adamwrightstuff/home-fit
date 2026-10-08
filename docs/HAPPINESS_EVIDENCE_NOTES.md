@@ -106,6 +106,23 @@ Verified in a later pass (abstracts):
 
 Still unverified (search summaries only, not found in PubMed or blocked): Roberts et al. 2011; Chen and Wan English relocation panel (PMC shows a bot check); Foye 2017 (UCL blocks us); HILDA housing-stress study; the Chinese older-adult healthcare-access study; the Dinesen et al. diversity meta-analysis; the walkability smartphone study.
 
+
+## 2c. Social fabric versus social proximity (research check, October 2026)
+
+No study compares a place's social fabric with closeness to a person's own network, so no evidence-based split exists; any split is judgment.
+
+Social fabric (place-level: residential stability, civic groups, gathering places):
+- Perceived neighborhood social cohesion predicts later depression in prospective designs: ELSA/HAPIEE older adults in four countries (low cohesion predicts more depressive symptoms at follow-up; [PMC6728599](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6728599/)); an individual-participant-data meta-analysis (lack of social cohesion, odds ratio 1.76); a Peruvian cohort (high cohesion, 46% lower risk over 30 months). Caveat: these measure perceived cohesion by survey, not our objective inputs.
+- Residential stability alone is mixed: in one cross-sectional study it is negatively associated with health where neighborhood affluence is low. Collective efficacy falls with instability and disadvantage ([Fragile Families summary](https://pmc.ncbi.nlm.nih.gov/articles/PMC4066733)).
+- Civic organization density and third places: cross-sectional only; small community-level effects on volunteering; third places raise interaction and cohesion (LA Family and Neighborhood Study), no wellbeing outcome; causal claims contested.
+
+Social proximity (closeness to the user's own people):
+- Sun and Schafer 2023 (J Gerontology B; SHARE waves 4 and 6, fixed effects, older Europeans; VERIFIED abstract): losing a child raises loneliness at any distance; losing relatives within 1 km or non-kin within 5 km also raises loneliness, largely offset by new close ties. Older adults, loneliness outcome, tie loss rather than moving. [paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC10645308/)
+- Shen, Chen and Ruan 2021 (Demographic Research; Chinese older adults, one survey wave): relationship quality matters most; living close does not help when the relationship is poor; it helps disadvantaged groups when the relationship is good. [paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8153673/)
+- Healy and Dunifon 2025 (Demographic Research 52:34, PSID): about half of US grandchildren live within 10 miles of a grandparent and 13% within a mile; the hours-of-help figures cited in the frontend curve (208 and 186 per year) were NOT verified. The Demographic Research site was unreachable.
+
+Implication: the proximity evidence is narrower (older adults, loneliness, depends on relationship quality) and the social fabric evidence is broader but about perceived cohesion, which our objective proxies only approximate. An even 50/50 split has no support; a smaller proximity share is more defensible.
+
 ## 3. Corrections made along the way
 
 - An outside analysis claimed commute is a "massive" and "reliable" destroyer of life satisfaction; the careful panels and meta-analysis do not support that.
