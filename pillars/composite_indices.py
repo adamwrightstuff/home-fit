@@ -18,13 +18,15 @@ LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
     # healthcare_access removed: RWJF evidence is county-level rural-vs-urban; within a metro
     # the pillar measures OSM pharmacy/clinic density on commercial corridors, not care access.
     # That signal does not meaningfully predict longevity differences between nearby neighborhoods.
+    # climate_risk slot is scored from air quality + heat only (see _longevity_pillar_score);
+    # flood zone and 30-yr temperature trend are property/forward risk, not mortality drivers.
     "climate_risk": 8.0,         # Pope (2009): reducing fine particles → 0.61yr life expectancy gain
     "natural_beauty": 5.0,       # Independent stress-reduction / cortisol pathway; partially overlaps active_outdoors
     "quality_education": 3.0,    # Cutler & Lleras-Muney (2008): each year of education → 1.8% lower mortality
     "community_safety": 8.0,     # Trauma and chronic stress from crime are real mortality factors; renormalized when degraded
 }
 
-INDEX_VERSION_LONGEVITY = "3"
+INDEX_VERSION_LONGEVITY = "4"
 INDEX_VERSION_STATUS = "6"
 INDEX_VERSION_HAPPINESS = "5"
 INDEX_VERSION_HOTNESS = "1"
@@ -117,6 +119,27 @@ def build_total_score_breakdown(
     return breakdown
 
 
+LONGEVITY_ENV_AIR_SHARE = 5.0 / 8.0   # air quality share of the 8% environmental slot
+LONGEVITY_ENV_HEAT_SHARE = 3.0 / 8.0  # heat exposure share (excess summer mortality)
+
+
+def _longevity_pillar_score(name: str, pdata: Any) -> Optional[float]:
+    """
+    Score used for a pillar inside the Longevity Index. For climate_risk this is air quality
+    and heat only (from the stored breakdown), falling back to the full pillar score when the
+    sub-scores are absent.
+    """
+    if not isinstance(pdata, dict):
+        return None
+    raw = pdata.get("score")
+    if name == "climate_risk":
+        bd = pdata.get("breakdown") or {}
+        aqi, lst = bd.get("aqi_score"), bd.get("lst_score")
+        if isinstance(aqi, (int, float)) and isinstance(lst, (int, float)):
+            return float(aqi) * LONGEVITY_ENV_AIR_SHARE + float(lst) * LONGEVITY_ENV_HEAT_SHARE
+    return float(raw) if isinstance(raw, (int, float)) else None
+
+
 def compute_longevity_index(
     livability_pillars: Dict[str, Any],
     token_allocation: Optional[Dict[str, float]] = None,
@@ -151,7 +174,7 @@ def compute_longevity_index(
             return 0.0, contributions
         total = 0.0
         for p in eligible:
-            score = float((livability_pillars.get(p) or {}).get("score", 0.0) or 0.0)
+            score = _longevity_pillar_score(p, livability_pillars.get(p)) or 0.0
             weight_pct = LONGEVITY_INDEX_WEIGHTS[p] / total_weight
             contrib = score * weight_pct
             contributions[p] = round(contrib, 2)
@@ -160,7 +183,7 @@ def compute_longevity_index(
 
     total = 0.0
     for pillar, weight in LONGEVITY_INDEX_WEIGHTS.items():
-        score = float((livability_pillars.get(pillar) or {}).get("score", 0.0) or 0.0)
+        score = _longevity_pillar_score(pillar, livability_pillars.get(pillar)) or 0.0
         contrib = score * weight / 100.0
         contributions[pillar] = round(contrib, 2)
         total += contrib
