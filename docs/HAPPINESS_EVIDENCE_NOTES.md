@@ -84,8 +84,13 @@ Air travel access:
 - Social Connection ("Social proximity") and Commute Time are personal, client-side scores (closeness to people the user knows; time to the user's workplace), not scores of the place, and are excluded from the general index.
 - Economic Security pillar measures reachable jobs and market quality, not residents' income or job security.
 
+## 3b. Outside proposal reviewed (five-pillar index, weights 35/30/20/15)
+
+Taken: housing as financial strain (cost-to-income, renter burden, evictions) instead of square footage; noise from flight paths and highways as a penalty. Not taken: omission of green space (strong panel evidence, stable in our catalog check); 15% for daily friction (commute and walkable amenities have weak individual-level support and bring back urban-density bias); the "nothing else matters" framing for safety and air quality, which is a judgment, not a finding. Inputs it names that HomeFit does not have: lighting density, neighborhood trust surveys, eviction rates, noise maps. Third-place density as the core of social fabric is plausible but we did not verify the evidence.
+
 ## 4. Open questions
 
 - Individual-level evidence for school quality, amenities and walkability on life satisfaction, healthcare distance, and a ranking of neighborhood factors in a national panel (Understanding Society, SOEP, HILDA).
+- Data sources for noise (flight path and highway maps) and eviction rates.
 - Whether Active Outdoors and Natural Beauty double count (both read parks, canopy, water).
 - Verify the key papers' effect sizes at source before any public claim.
