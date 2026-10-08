@@ -80,8 +80,8 @@ export const SCENE_COPY: Record<string, InfoCopy> = {
 
 export const AURA_COPY: InfoCopy = {
   title: 'Aura',
-  body: 'A rare combination of status, local energy, and everyday livability. Only neighborhoods that stand out across all three dimensions earn the Aura distinction.',
-  detail: 'Awarded only when a neighborhood ranks highly across economic status, independent local scene, and overall livability.',
+  body: 'Aura marks a neighborhood with a standout local scene, backed by strong everyday livability. It goes to the top 5% of places in each metro.',
+  detail: 'Scored mostly on local scene (independent cafés, bars, bookstores and galleries), then livability, with a small weight on socioeconomic standing. It is ranked within each metro, so it shows how a neighborhood compares with others in its own region.',
 }
 
 export const INDEX_COPY: Record<string, InfoCopy> = {

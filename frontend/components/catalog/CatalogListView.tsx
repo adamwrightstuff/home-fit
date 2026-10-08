@@ -313,7 +313,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       />
                       <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
                       <LocalSceneChip bucket={p.score.local_scene_bucket ?? null} compact />
-                      <AuraBadge itScore={p.score.it_score ?? null} compact />
+                      <AuraBadge aura={p.score.aura ?? null} compact />
                       {p.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
                         <span
                           title="No commute data to your work hub from here (different metro) -- this place isn't scored on commute time, and isn't being helped or hurt by that weight."

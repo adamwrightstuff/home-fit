@@ -193,7 +193,7 @@ export default function CatalogDetailPanel({
               {allIdx?.trajectory && (
                 <TrajectoryChip trajectory={allIdx.trajectory} />
               )}
-              <AuraBadge itScore={typeof place.score.it_score === 'number' ? place.score.it_score : null} />
+              <AuraBadge aura={place.score.aura ?? null} />
               {place.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
                 <span
                   title="No commute data to your work hub from here (different metro) -- this place isn't scored on commute time, and isn't being helped or hurt by that weight."

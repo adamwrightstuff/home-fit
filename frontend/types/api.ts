@@ -175,8 +175,10 @@ export interface ScoreResponse {
   local_scene_score?: number;
   /** Local Scene bucket: 'High' | 'Some' | 'Low'. */
   local_scene_bucket?: 'High' | 'Some' | 'Low';
-  /** It Score (0–100): combined signal of status, scene, home cost, and livability. Displayed as "Aura" badge when ≥ 75. */
+  /** Aura score (0–100): 50% local scene, 35% livability (non-overlapping pillars), 15% socioeconomic standing. Catalog-only. */
   it_score?: number;
+  /** True when the place is in the top 5% of it_score within its metro. Drives the "Aura" badge. Catalog-only. */
+  aura?: boolean;
   /** Happiness Index: commute (35%), social fabric (30%), housing value (20%), natural beauty (15%); renormalized if missing. Not a pillar. */
   happiness_index?: number;
   happiness_index_breakdown?: Record<string, unknown>;

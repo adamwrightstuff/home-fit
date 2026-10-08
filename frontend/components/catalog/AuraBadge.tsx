@@ -5,18 +5,16 @@ import InfoSheet from '@/components/catalog/InfoSheet'
 import { AURA_COPY } from '@/lib/catalogInfoCopy'
 
 export default function AuraBadge({
-  itScore,
+  aura,
   compact = false,
-  threshold = 75,
 }: {
-  itScore: number | null | undefined
+  aura: boolean | null | undefined
   compact?: boolean
-  threshold?: number
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLButtonElement>(null)
 
-  if (typeof itScore !== 'number' || !Number.isFinite(itScore) || itScore < threshold) return null
+  if (aura !== true) return null
 
   return (
     <>

@@ -43,6 +43,9 @@ GENERIC_WORDS = re.compile(
 POSSESSIVE = re.compile(r"^[A-Z][a-z]+'s\b|^[A-Z][a-z]+ [A-Z][a-z]+'s\b")
 AMPERSAND  = re.compile(r'\s&\s')
 
+# Ratio sub-scores (bar_ratio, cafe_social, indie) are meaningless over a handful of listings.
+MIN_BUSINESSES_FOR_RATIOS = 15
+
 
 def _score_name(name: str) -> int:
     nl = name.lower()
@@ -81,11 +84,12 @@ def _compute(biz: list) -> tuple[float, str, dict]:
         sum(1 for s in name_scores if s == -1)
     ) / total
 
+    enough = total >= MIN_BUSINESSES_FOR_RATIOS
     sub = {
         'cultural':   round(min(math.log(1 + cultural), 3.5) / 3.5 * 100, 1),
-        'bar_ratio':  round(min(bar / (rest + 1), 0.7) / 0.7 * 100, 1),
-        'cafe_social': round(min((cafe + bar) / (salon + 1), 10.0) / 10.0 * 100, 1),
-        'indie':      round(max(0, indie_ratio + 0.2) / 0.7 * 100, 1),
+        'bar_ratio':  round(min(bar / (rest + 1), 0.7) / 0.7 * 100, 1) if enough else 0.0,
+        'cafe_social': round(min((cafe + bar) / (salon + 1), 10.0) / 10.0 * 100, 1) if enough else 0.0,
+        'indie':      round(min(max(0, indie_ratio + 0.2) / 0.7, 1.0) * 100, 1) if enough else 0.0,
         'volume':     round(min(math.log(1 + total), 6.0) / 6.0 * 100, 1),
     }
 
