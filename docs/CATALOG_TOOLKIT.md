@@ -116,7 +116,7 @@ These re-derive scores from numbers already in the JSONL. No external calls.
 
 | Script | What it recomputes |
 |--------|-------------------|
-| `recompute_catalog_composites.py` | longevity_index, status_signal, happiness_index. **Run after every API rescore.** |
+| `recompute_catalog_composites.py` | longevity_index, status_signal (Socioeconomic Standing), happiness_index. **Run after every API rescore.** |
 | `recompute_active_outdoors_offline.py` | AO score from stored OSM summary data. |
 | `recompute_built_environment_offline.py` | Built environment from stored form metrics. |
 | `recompute_social_fabric_v15_offline.py` | Social fabric v16 (no API calls). |

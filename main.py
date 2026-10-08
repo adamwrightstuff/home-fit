@@ -1050,7 +1050,7 @@ def _compute_status_signal_for_response(
     zip_code: Optional[str] = None,
 ) -> Optional[tuple]:
     """
-    Compute Status Signal (0-100) and breakdown (wealth, home_cost, education, occupation, luxury_presence, wealth_character).
+    Compute Socioeconomic Standing (status_signal, 0-100) and breakdown (wealth, home_cost, education, occupation, luxury_presence, wealth_character).
     When city is provided, uses CBSA baseline (e.g. nyc_metro) when the location is in a known metro cluster.
     Returns (score, breakdown) or None when score cannot be computed.
     """

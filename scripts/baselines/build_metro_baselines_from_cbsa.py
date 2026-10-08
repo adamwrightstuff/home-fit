@@ -67,6 +67,12 @@ CBSA_TO_KEY = {
     "42660": "seattle_metro",
 }
 
+# CBSAs that reuse another metro's baseline without contributing tracts to it.
+# 14860 = Bridgeport-Stamford-Norwalk (Fairfield County CT), the NYC commuter belt.
+CBSA_ALIAS_TO_KEY = {
+    "14860": "nyc_metro",
+}
+
 # S2401 white-collar component variables (management through health practitioners)
 S2401_VARS = [
     "S2401_C01_001E",  # total employed
@@ -357,6 +363,7 @@ def main() -> None:
         print(f"  Updated {key} in baselines")
 
     baselines["cbsa_to_baseline"] = {cbsa: key for cbsa, key in cbsa_to_key.items()}
+    baselines["cbsa_to_baseline"].update(CBSA_ALIAS_TO_KEY)
     print(f"\ncbsa_to_baseline: {baselines['cbsa_to_baseline']}")
 
     with open(baselines_path, "w", encoding="utf-8") as f:

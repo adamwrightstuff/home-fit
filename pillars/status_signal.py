@@ -1,5 +1,6 @@
 """
-Status Signal: Universal Logic Engine (status + desirability).
+Socioeconomic Standing (SES; internal key `status_signal`): Universal Logic Engine.
+Measures resident wealth, home cost, education and occupation, not prestige or cultural signaling.
 
 Data-driven principles (no location-specific tuning):
 - Credential-First Education: 80% graduate/professional, 20% bachelors (no self-employed).
@@ -20,7 +21,7 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-# High-barrier services for Status Signal luxury presence (brand fallback when merged list / OSM luxury unavailable).
+# High-barrier services for SES luxury presence (brand fallback when merged list / OSM luxury unavailable).
 # business_list comes from deduped OSM+Places neighborhood amenities; we use simple
 # name-based matching here as a proxy for richer tagging:
 # - Architectural firms (e.g. "Architects", "Architecture")
@@ -147,7 +148,7 @@ def _get_status_label(archetype: str) -> str:
 
 def _signal_strength_band(score: float) -> Tuple[str, str]:
     """
-    Map composite Status Signal (0-100) to a strength tier (clarity of the archetype-weighted blend).
+    Map composite SES (0-100) to a strength tier (clarity of the archetype-weighted blend).
 
     Bands: faint [0,25), moderate [25,50), strong [50,75), dominant [75,100].
     """
@@ -843,7 +844,7 @@ def _composite_score_from_weights(
     education: Optional[float],
     occupation: Optional[float],
 ) -> Optional[float]:
-    """Weighted mean; mirrors final Status Signal aggregation (missing occupation drops occ weight)."""
+    """Weighted mean; mirrors final SES aggregation (missing occupation drops occ weight)."""
     total_w = 0.0
     score = 0.0
     if wealth is not None:
@@ -970,7 +971,7 @@ def _merge_social_and_diversity_for_signal(
     social_fabric_details: Optional[Dict[str, Any]],
     diversity_details: Optional[Dict[str, Any]],
 ) -> Dict[str, Any]:
-    """Diversity pillar wins on education_attainment and self_employed_pct for Status Signal."""
+    """Diversity pillar wins on education_attainment and self_employed_pct for SES."""
     merged: Dict[str, Any] = dict(social_fabric_details or {})
     div = diversity_details or {}
     if div.get("education_attainment") is not None:
@@ -987,7 +988,7 @@ def _backfill_status_signal_social_inputs(
     lon: Optional[float],
 ) -> Dict[str, Any]:
     """
-    Preserve Social Fabric split while restoring Status Signal classifier inputs.
+    Preserve Social Fabric split while restoring SES classifier inputs.
     Backfill only missing education_attainment / self_employed_pct from census diversity data.
     """
     needs_edu = not isinstance(merged_sf.get("education_attainment"), dict)
@@ -1026,7 +1027,7 @@ def compute_status_signal(
     diversity_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[float]:
     """
-    Compute Status Signal (0-100): wealth + home_cost + education + occupation + luxury_presence.
+    Compute Socioeconomic Standing (0-100): wealth + home_cost + education + occupation + luxury_presence.
 
     Returns None if required data is missing.
     """

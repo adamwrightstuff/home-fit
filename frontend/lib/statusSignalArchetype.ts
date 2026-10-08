@@ -329,7 +329,7 @@ export function statusTooltipCopy(
 
 export function archetypeOneLiner(archetype: string | null | undefined): string {
   const a = (archetype ?? '').trim()
-  if (!a) return 'Every neighborhood has a social character. Status Signal classifies places by how wealth and status are expressed — using income, education, occupation, and housing data.'
+  if (!a) return 'Every neighborhood has a social character. Socioeconomic Standing classifies places by how wealth and status are expressed — using income, education, occupation, and housing data.'
   const ses = ARCHETYPE_ONE_LINERS[a as SESBand]
   if (ses) return ses
   return API_ARCHETYPE_ONE_LINERS[a] ?? 'A distinct status profile for this area.'

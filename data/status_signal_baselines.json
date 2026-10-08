@@ -203,6 +203,7 @@
     }
   },
   "cbsa_to_baseline": {
+    "14860": "nyc_metro",
     "31080": "la_metro",
     "35620": "nyc_metro",
     "41860": "sf_metro",
@@ -946,6 +947,30 @@
       "white_collar_pct": {
         "max": 64.1796,
         "min": 16.5007
+      }
+    }
+  },
+  "sf_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 84.8575,
+        "min": 16.045
+      },
+      "grad_pct": {
+        "max": 49.7625,
+        "min": 3.4450000000000003
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 2000001.0,
+        "min": 580792.5
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 69.66499999999999,
+        "min": 17.60345
       }
     }
   },

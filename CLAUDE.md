@@ -50,7 +50,7 @@ Set `HOMEFIT_PILLARS_SEQUENTIAL=true` to run pillars one-at-a-time (useful for r
 
 ## Baselines & Normalization
 
-Pre-computed JSON files in `data/` provide metro-specific and area-type-specific baselines for economic, status signal, stability, IRS engagement, voter turnout, and social fabric scoring. Rebuild them via scripts in `scripts/baselines/` when underlying data changes.
+Pre-computed JSON files in `data/` provide metro-specific and area-type-specific baselines for economic, socioeconomic standing (status_signal), stability, IRS engagement, voter turnout, and social fabric scoring. Rebuild them via scripts in `scripts/baselines/` when underlying data changes.
 
 ## Batch / Catalog Workflows
 
