@@ -123,6 +123,13 @@ Social proximity (closeness to the user's own people):
 
 Implication: the proximity evidence is narrower (older adults, loneliness, depends on relationship quality) and the social fabric evidence is broader but about perceived cohesion, which our objective proxies only approximate. An even 50/50 split has no support; a smaller proximity share is more defensible.
 
+Claims checked from an outside summary on proximity (October 2026):
+- "Waldinger and Schulz 2010" is real but is a different study: 47 older married couples followed for eight days (Psychology and Aging 25:422). It does not report the 80-year Harvard result. [record](https://worlddatabaseofhappiness.eur.nl/publications/whats-love-got-to-do-with-it-social-functioning-perceived-health-and-daily-happiness-in-married-octogenarians-10513/)
+- Scellato et al. 2011 is real but studies online location-based networks (Foursquare, Gowalla): people are more likely to form ties with nearby people, about 40% of links under 100 km. It says nothing about maintaining friendships or wellbeing. [paper](https://ojs.aaai.org/index.php/ICWSM/article/view/14094)
+- World Happiness Report 2025, chapter 4 is real but is about household size (peak around four members; living alone lower, mainly via relational satisfaction), correlational, Mexican and Colombian data; not proximity to extended family. [chapter](https://worldhappiness.report/ed/2025/living-with-others-how-household-size-and-family-bonds-relate-to-happiness/)
+- "Song et al. 2023" (contact frequency and the Cantril ladder): NOT FOUND; do not cite.
+- Contact frequency and wellbeing: separate studies (Korean 2019 survey, Swiss momentary-assessment study, UK loneliness data) point the same way, but none was verified here and none measures distance.
+
 ## 3. Corrections made along the way
 
 - An outside analysis claimed commute is a "massive" and "reliable" destroyer of life satisfaction; the careful panels and meta-analysis do not support that.
