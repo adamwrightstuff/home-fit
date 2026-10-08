@@ -14,9 +14,13 @@ Transit fallback (mirrors fix_cbd_station_coords.py): if the best arrival_time r
 missing or >150 min (arrival_time failure mode for sparse schedules), also try
 departure_time at 8:00 and keep the smaller.
 
---station-origins: for NYC commuter-rail towns, the transit origin is the town's train
-station (same station address strings as fix_cbd_station_coords.py, which produced
-cbd_transit_minutes), not the catalog centroid. Drive origins stay the centroid.
+SF / LA / Seattle sample departure_time at 7:30, 8:00, 8:30 instead (arrival_time inflates
+times on sparse schedules; same convention as fix_cbd_station_coords.py), with no fallback.
+Drive is skipped for transitOnly hubs.
+
+--station-origins: for commuter-rail towns, the transit origin is the town's train station as
+COORDINATES from data/rail_station_coords.json (scripts/work_commute/fetch_station_coords.py),
+never station-name text. Drive origins stay the catalog centroid.
 
 Stores `work_commute: {zone_id: {"transit": min, "transit_centroid", "transit_station", "drive": min}}` top-level on each
 catalog entry. Skips pairs/modes already set (safe to re-run / resume).
@@ -79,6 +83,21 @@ NO_ROUTE = float('inf')
 TRANSIT_FALLBACK_OVER_MIN = 150
 TRANSIT_FALLBACK_DEPARTURE = '08:00'
 
+# Sparse-schedule metros sample departures instead of arrivals: arrival_time inflates times there
+# (same convention as fix_cbd_station_coords.py). No arrival fallback needed.
+DEPARTURE_TRANSIT_METROS = {'sf', 'la', 'seattle'}
+DEPARTURE_TRANSIT_SAMPLES = ['07:30', '08:00', '08:30']
+
+STATION_COORDS_PATH = 'data/rail_station_coords.json'
+
+
+def samples_for(metro: str, mode: str) -> tuple:
+    """(time param, local HH:MM samples, use arrival fallback) for a metro and mode."""
+    if mode == 'transit' and metro in DEPARTURE_TRANSIT_METROS:
+        return 'departure_time', DEPARTURE_TRANSIT_SAMPLES, False
+    param, samples = MODE_SAMPLES[mode]
+    return param, samples, mode == 'transit'
+
 # Distance Matrix list prices per 1,000 elements (Essentials vs Pro/traffic).
 PRICE_PER_1000 = {'transit': 5.0, 'drive': 10.0}
 
@@ -124,19 +143,30 @@ def next_tuesday_ts(metro: str, hhmm: str) -> int:
 
 
 def load_station_origins(metro: str, places: list) -> dict:
-    """Map place index -> station address string, for commuter-rail towns."""
-    if metro != 'nyc':
-        return {}
-    from scripts.manual.fix_cbd_station_coords import NYC_STATIONS
+    """
+    Map place index -> "lat,lon" of its commuter-rail station.
+
+    Origins are coordinates from data/rail_station_coords.json (built by
+    scripts/work_commute/fetch_station_coords.py), never station-name text: Distance Matrix
+    silently resolved several names to town or ZIP centers. Towns whose station is missing
+    from that file (closed or nonexistent stations) get town-center origins only.
+    """
+    from scripts.manual.fix_cbd_station_coords import STATIONS_BY_METRO
+    stations = STATIONS_BY_METRO.get(metro, {})
+    coords = json.load(open(STATION_COORDS_PATH)).get(metro, {})
     out = {}
     for i, p in enumerate(places):
         name = p['catalog'].get('name')
-        if name not in NYC_STATIONS:
+        if name not in stations:
             continue
         # Ridgewood NJ (NJT station) vs Ridgewood Queens: same rule as fix_cbd_station_coords.py
         if name == 'Ridgewood' and float(p['catalog'].get('lon') or 0) >= -74.05:
             continue
-        out[i] = NYC_STATIONS[name]
+        c = coords.get(stations[name])
+        if c is None:
+            print(f'  no station coordinates for {name} ("{stations[name]}"); town center only')
+            continue
+        out[i] = f"{c['lat']},{c['lon']}"
     return out
 
 
@@ -209,12 +239,12 @@ def process_metro(metro: str, zones: list, modes: list, force: bool, dry_run: bo
 
     say(f'\n=== {metro.upper()}: {len(candidates)} places x {len(zones)} zones ===')
     for mode in modes:
-        time_param, samples = MODE_SAMPLES[mode]
+        time_param, samples, use_fallback = samples_for(metro, mode)
         stamps = ', '.join(
             datetime.datetime.fromtimestamp(next_tuesday_ts(metro, h), ZoneInfo(TIMEZONES[metro])).strftime('%a %Y-%m-%d %H:%M %Z')
             for h in samples)
         say(f'  {mode}: {time_param} samples = {stamps}; keep the minimum')
-        if mode == 'transit':
+        if use_fallback:
             fb = datetime.datetime.fromtimestamp(next_tuesday_ts(metro, TRANSIT_FALLBACK_DEPARTURE), ZoneInfo(TIMEZONES[metro]))
             say(f'    fallback if best is missing or >{TRANSIT_FALLBACK_OVER_MIN} min: departure_time {fb.strftime("%a %Y-%m-%d %H:%M %Z")}')
     if dry_run:
@@ -229,12 +259,14 @@ def process_metro(metro: str, zones: list, modes: list, force: bool, dry_run: bo
     est_cost = 0.0
     for zone in zones:
         for mode in modes:
-            time_param, samples = MODE_SAMPLES[mode]
+            if mode == 'drive' and zone.get('transitOnly'):
+                continue  # filter ignores drive for transit-only hubs; don't pay for it
+            time_param, samples, use_fallback = samples_for(metro, mode)
             todo = [i for i in candidates
                     if force or stored_key(i, mode, station_origins)
                     not in (places[i].get('work_commute') or {}).get(zone['id'], {})]
             elements = len(todo) * len(samples)
-            worst = elements + (len(todo) if mode == 'transit' else 0)  # every place could need the fallback
+            worst = elements + (len(todo) if use_fallback else 0)  # every place could need the fallback
             planned[mode] = planned.get(mode, 0) + worst
             est_cost += worst * PRICE_PER_1000[mode] / 1000
             if not todo:
@@ -261,7 +293,7 @@ def process_metro(metro: str, zones: list, modes: list, force: bool, dry_run: bo
             try:
                 for hhmm in samples:
                     run_sample(time_param, hhmm, list(range(len(todo))))
-                if mode == 'transit':
+                if use_fallback:
                     retry = [k for k, m in enumerate(best) if m is None or m == NO_ROUTE or m > TRANSIT_FALLBACK_OVER_MIN]
                     if retry:
                         say(f'    fallback departure_time for {len(retry)} places')

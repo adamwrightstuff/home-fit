@@ -1,0 +1,914 @@
+{
+ "la": {
+  "Arcadia Metrolink Station, Arcadia, CA 91006": {
+   "lat": 34.142883,
+   "lon": -118.029241,
+   "osm_name": "Arcadia",
+   "towns": [
+    "Arcadia"
+   ]
+  },
+  "Burbank Downtown Metrolink Station, 201 N Front St, Burbank, CA 91502": {
+   "lat": 34.178619,
+   "lon": -118.311766,
+   "osm_name": "Downtown Burbank",
+   "towns": [
+    "Burbank"
+   ]
+  },
+  "Chatsworth Metrolink Station, Chatsworth, CA 91311": {
+   "lat": 34.252933,
+   "lon": -118.599297,
+   "osm_name": "Chatsworth",
+   "towns": [
+    "Chatsworth",
+    "Porter Ranch"
+   ]
+  },
+  "Del Mar Metrolink Station, Pasadena, CA 91103": {
+   "lat": 34.141985,
+   "lon": -118.14821,
+   "osm_name": "Del Mar",
+   "towns": [
+    "Pasadena"
+   ]
+  },
+  "El Monte Metrolink Station, El Monte, CA 91731": {
+   "lat": 34.076737,
+   "lon": -118.03565,
+   "osm_name": "El Monte",
+   "towns": [
+    "El Monte"
+   ]
+  },
+  "Norwalk/Santa Fe Springs Metrolink Station, Norwalk, CA 90650": {
+   "lat": 33.916362,
+   "lon": -118.059832,
+   "osm_name": "Norwalk/Santa Fe Springs",
+   "towns": [
+    "Cerritos",
+    "La Mirada"
+   ]
+  },
+  "San Fernando Metrolink Station, San Fernando, CA 91340": {
+   "lat": 34.292145,
+   "lon": -118.449574,
+   "osm_name": "Sylmar/San Fernando",
+   "towns": [
+    "San Fernando"
+   ]
+  },
+  "Sylmar/San Fernando Metrolink Station, Sylmar, CA 91342": {
+   "lat": 34.292145,
+   "lon": -118.449574,
+   "osm_name": "Sylmar/San Fernando",
+   "towns": [
+    "Sylmar"
+   ]
+  },
+  "Whittier/Norwalk Metrolink Station, Whittier, CA 90601": {
+   "lat": 33.916362,
+   "lon": -118.059832,
+   "osm_name": "Norwalk/Santa Fe Springs",
+   "towns": [
+    "Whittier"
+   ]
+  }
+ },
+ "nyc": {
+  "Babylon Long Island Rail Road Station, Babylon, NY 11702": {
+   "lat": 40.700628,
+   "lon": -73.324259,
+   "osm_name": "Babylon",
+   "towns": [
+    "Babylon"
+   ]
+  },
+  "Bay Street Train Station, Montclair, NJ 07042": {
+   "lat": 40.808189,
+   "lon": -74.208741,
+   "osm_name": "Bay Street",
+   "towns": [
+    "Montclair"
+   ]
+  },
+  "Bayside Long Island Rail Road Station, Bayside, NY 11361": {
+   "lat": 40.763104,
+   "lon": -73.771899,
+   "osm_name": "Bayside",
+   "towns": [
+    "Bayside"
+   ]
+  },
+  "Bedford Hills Metro-North Railroad Station, Bedford Hills, NY 10507": {
+   "lat": 41.23712,
+   "lon": -73.700305,
+   "osm_name": "Bedford Hills",
+   "towns": [
+    "Bedford"
+   ]
+  },
+  "Bellmore Long Island Rail Road Station, Bellmore, NY 11710": {
+   "lat": 40.668929,
+   "lon": -73.528389,
+   "osm_name": "Bellmore",
+   "towns": [
+    "Bellmore"
+   ]
+  },
+  "Bronxville Metro-North Railroad Station, Bronxville, NY 10708": {
+   "lat": 40.941266,
+   "lon": -73.834939,
+   "osm_name": "Bronxville",
+   "towns": [
+    "Bronxville"
+   ]
+  },
+  "Cedarhurst Long Island Rail Road Station, Cedarhurst, NY 11516": {
+   "lat": 40.622314,
+   "lon": -73.72596,
+   "osm_name": "Cedarhurst",
+   "towns": [
+    "Cedarhurst"
+   ]
+  },
+  "Chappaqua Metro-North Railroad Station, Chappaqua, NY 10514": {
+   "lat": 41.158093,
+   "lon": -73.77489,
+   "osm_name": "Chappaqua",
+   "towns": [
+    "Chappaqua"
+   ]
+  },
+  "Chatham Train Station, Chatham, NJ 07928": {
+   "lat": 40.740107,
+   "lon": -74.385096,
+   "osm_name": "Chatham",
+   "towns": [
+    "Chatham"
+   ]
+  },
+  "Cos Cob Metro-North Railroad Station, Cos Cob, Greenwich, CT 06807": {
+   "lat": 41.029862,
+   "lon": -73.600101,
+   "osm_name": "Cos Cob",
+   "towns": [
+    "Cos Cob"
+   ]
+  },
+  "Cranford Train Station, Cranford, NJ 07016": {
+   "lat": 40.655544,
+   "lon": -74.302875,
+   "osm_name": "Cranford",
+   "towns": [
+    "Cranford"
+   ]
+  },
+  "Croton-Harmon Metro-North Railroad Station, Croton-on-Hudson, NY 10520": {
+   "lat": 41.18984,
+   "lon": -73.882623,
+   "osm_name": "Croton-Harmon",
+   "towns": [
+    "Croton-on-Hudson"
+   ]
+  },
+  "Dobbs Ferry Metro-North Railroad Station, Dobbs Ferry, NY 10522": {
+   "lat": 41.012265,
+   "lon": -73.879517,
+   "osm_name": "Dobbs Ferry",
+   "towns": [
+    "Ardsley",
+    "Dobbs Ferry"
+   ]
+  },
+  "Fairfield Metro-North Railroad Station, Fairfield, CT 06824": {
+   "lat": 41.142895,
+   "lon": -73.258412,
+   "osm_name": "Fairfield",
+   "towns": [
+    "Fairfield"
+   ]
+  },
+  "Floral Park Long Island Rail Road Station, Floral Park, NY 11001": {
+   "lat": 40.724643,
+   "lon": -73.70626,
+   "osm_name": "Floral Park",
+   "towns": [
+    "Floral Park"
+   ]
+  },
+  "Forest Hills Long Island Rail Road Station, Forest Hills, NY 11375": {
+   "lat": 40.719594,
+   "lon": -73.844855,
+   "osm_name": "Forest Hills",
+   "towns": [
+    "Forest Hills"
+   ]
+  },
+  "Freeport Long Island Rail Road Station, Freeport, NY 11520": {
+   "lat": 40.657453,
+   "lon": -73.582294,
+   "osm_name": "Freeport",
+   "towns": [
+    "Freeport"
+   ]
+  },
+  "Garden City Long Island Rail Road Station, Garden City, NY 11530": {
+   "lat": 40.723122,
+   "lon": -73.640239,
+   "osm_name": "Garden City",
+   "towns": [
+    "Garden City"
+   ]
+  },
+  "Glen Ridge Train Station, Glen Ridge, NJ 07028": {
+   "lat": 40.800301,
+   "lon": -74.20461,
+   "osm_name": "Glen Ridge",
+   "towns": [
+    "Glen Ridge"
+   ]
+  },
+  "Glen Rock Borough Hall Train Station, Glen Rock, NJ 07452": {
+   "lat": 40.962022,
+   "lon": -74.129394,
+   "osm_name": "Glen Rock-Boro Hall",
+   "towns": [
+    "Glen Rock"
+   ]
+  },
+  "Great Neck Long Island Rail Road Station, Great Neck, NY 11021": {
+   "lat": 40.787033,
+   "lon": -73.726756,
+   "osm_name": "Great Neck",
+   "towns": [
+    "Great Neck"
+   ]
+  },
+  "Greenwich Metro-North Railroad Station, Greenwich, CT 06830": {
+   "lat": 41.021446,
+   "lon": -73.625634,
+   "osm_name": "Greenwich",
+   "towns": [
+    "Greenwich"
+   ]
+  },
+  "Harrison Metro-North Railroad Station, Harrison, NY 10528": {
+   "lat": 40.969598,
+   "lon": -73.711817,
+   "osm_name": "Harrison",
+   "towns": [
+    "Harrison"
+   ]
+  },
+  "Hempstead Long Island Rail Road Station, Hempstead, NY 11550": {
+   "lat": 40.712186,
+   "lon": -73.62485,
+   "osm_name": "Hempstead",
+   "towns": [
+    "Hempstead"
+   ]
+  },
+  "Hewlett Long Island Rail Road Station, Hewlett, NY 11557": {
+   "lat": 40.63683,
+   "lon": -73.704977,
+   "osm_name": "Hewlett",
+   "towns": [
+    "Hewlett"
+   ]
+  },
+  "Huntington Long Island Rail Road Station, Huntington, NY 11743": {
+   "lat": 40.852686,
+   "lon": -73.410938,
+   "osm_name": "Huntington",
+   "towns": [
+    "Huntington"
+   ]
+  },
+  "Irvington Metro-North Railroad Station, Irvington, NY 10533": {
+   "lat": 41.040251,
+   "lon": -73.87299,
+   "osm_name": "Irvington",
+   "towns": [
+    "Irvington"
+   ]
+  },
+  "Jamaica Long Island Rail Road Station, Jamaica, NY 11435": {
+   "lat": 40.698763,
+   "lon": -73.808825,
+   "osm_name": "Jamaica",
+   "towns": [
+    "Jamaica"
+   ]
+  },
+  "Katonah Metro-North Railroad Station, Katonah, NY 10536": {
+   "lat": 41.259938,
+   "lon": -73.68407,
+   "osm_name": "Katonah",
+   "towns": [
+    "Katonah"
+   ]
+  },
+  "Larchmont Metro-North Railroad Station, 1 Railroad Way, Larchmont, NY 10538": {
+   "lat": 40.934541,
+   "lon": -73.758356,
+   "osm_name": "Larchmont",
+   "towns": [
+    "Larchmont"
+   ]
+  },
+  "Lawrence Long Island Rail Road Station, Lawrence, NY 11559": {
+   "lat": 40.615148,
+   "lon": -73.736922,
+   "osm_name": "Lawrence",
+   "towns": [
+    "Lawrence"
+   ]
+  },
+  "Long Beach Long Island Rail Road Station, Long Beach, NY 11561": {
+   "lat": 40.5892,
+   "lon": -73.664808,
+   "osm_name": "Long Beach",
+   "towns": [
+    "Long Beach"
+   ]
+  },
+  "Lynbrook Long Island Rail Road Station, Lynbrook, NY 11563": {
+   "lat": 40.655905,
+   "lon": -73.675222,
+   "osm_name": "Lynbrook",
+   "towns": [
+    "Lynbrook"
+   ]
+  },
+  "Madison Train Station, Madison, NJ 07940": {
+   "lat": 40.757028,
+   "lon": -74.415312,
+   "osm_name": "Madison",
+   "towns": [
+    "Madison"
+   ]
+  },
+  "Malverne Long Island Rail Road Station, Malverne, NY 11565": {
+   "lat": 40.675311,
+   "lon": -73.669132,
+   "osm_name": "Malverne",
+   "towns": [
+    "Malverne"
+   ]
+  },
+  "Mamaroneck Metro-North Railroad Station, Mamaroneck, NY 10543": {
+   "lat": 40.953956,
+   "lon": -73.736342,
+   "osm_name": "Mamaroneck",
+   "towns": [
+    "Mamaroneck"
+   ]
+  },
+  "Maplewood Train Station, Maplewood, NJ 07040": {
+   "lat": 40.731009,
+   "lon": -74.27539,
+   "osm_name": "Maplewood",
+   "towns": [
+    "Maplewood"
+   ]
+  },
+  "Merrick Long Island Rail Road Station, Merrick, NY 11566": {
+   "lat": 40.663818,
+   "lon": -73.550503,
+   "osm_name": "Merrick",
+   "towns": [
+    "Merrick"
+   ]
+  },
+  "Millburn Train Station, Millburn, NJ 07041": {
+   "lat": 40.725732,
+   "lon": -74.303701,
+   "osm_name": "Millburn",
+   "towns": [
+    "Millburn"
+   ]
+  },
+  "Mineola Long Island Rail Road Station, Mineola, NY 11501": {
+   "lat": 40.740408,
+   "lon": -73.640573,
+   "osm_name": "Mineola",
+   "towns": [
+    "Mineola"
+   ]
+  },
+  "Morristown Train Station, Morristown, NJ 07960": {
+   "lat": 40.797401,
+   "lon": -74.474298,
+   "osm_name": "Morristown",
+   "towns": [
+    "Morristown"
+   ]
+  },
+  "Mount Kisco Metro-North Railroad Station, Mount Kisco, NY 10549": {
+   "lat": 41.208596,
+   "lon": -73.729653,
+   "osm_name": "Mount Kisco",
+   "towns": [
+    "Mount Kisco"
+   ]
+  },
+  "New Hyde Park Long Island Rail Road Station, New Hyde Park, NY 11040": {
+   "lat": 40.730845,
+   "lon": -73.68055,
+   "osm_name": "New Hyde Park",
+   "towns": [
+    "New Hyde Park"
+   ]
+  },
+  "Noroton Heights Metro-North Railroad Station, Darien, CT 06820": {
+   "lat": 41.069,
+   "lon": -73.497473,
+   "osm_name": "Noroton Heights",
+   "towns": [
+    "Darien"
+   ]
+  },
+  "Old Greenwich Metro-North Railroad Station, Old Greenwich, CT 06870": {
+   "lat": 41.033377,
+   "lon": -73.567877,
+   "osm_name": "Old Greenwich",
+   "towns": [
+    "Old Greenwich"
+   ]
+  },
+  "Ossining Metro-North Railroad Station, Ossining, NY 10562": {
+   "lat": 41.157506,
+   "lon": -73.869159,
+   "osm_name": "Ossining",
+   "towns": [
+    "Ossining"
+   ]
+  },
+  "Peekskill Metro-North Railroad Station, Peekskill, NY 10566": {
+   "lat": 41.284422,
+   "lon": -73.931934,
+   "osm_name": "Peekskill",
+   "towns": [
+    "Peekskill"
+   ]
+  },
+  "Philipse Manor Metro-North Railroad Station, Sleepy Hollow, NY 10591": {
+   "lat": 41.094612,
+   "lon": -73.869682,
+   "osm_name": "Philipse Manor",
+   "towns": [
+    "Sleepy Hollow"
+   ]
+  },
+  "Plandome Long Island Rail Road Station, Manhasset, NY 11030": {
+   "lat": 40.81006,
+   "lon": -73.695249,
+   "osm_name": "Plandome",
+   "towns": [
+    "Manhasset"
+   ]
+  },
+  "Pleasantville Metro-North Railroad Station, Pleasantville, NY 10570": {
+   "lat": 41.134253,
+   "lon": -73.792209,
+   "osm_name": "Pleasantville",
+   "towns": [
+    "Pleasantville"
+   ]
+  },
+  "Port Chester Metro-North Railroad Station, Port Chester, NY 10573": {
+   "lat": 41.001977,
+   "lon": -73.663566,
+   "osm_name": "Port Chester",
+   "towns": [
+    "Port Chester"
+   ]
+  },
+  "Port Washington Long Island Rail Road Station, Port Washington, NY 11050": {
+   "lat": 40.83021,
+   "lon": -73.687778,
+   "osm_name": "Port Washington",
+   "towns": [
+    "Port Washington"
+   ]
+  },
+  "Ridgewood Train Station, Ridgewood, NJ 07450": {
+   "lat": 40.98125,
+   "lon": -74.120563,
+   "osm_name": "Ridgewood",
+   "towns": [
+    "Ridgewood"
+   ]
+  },
+  "Riverside Metro-North Railroad Station, Riverside, CT 06878": {
+   "lat": 41.031739,
+   "lon": -73.587189,
+   "osm_name": "Riverside",
+   "towns": [
+    "Riverside"
+   ]
+  },
+  "Rockville Centre Long Island Rail Road Station, Rockville Centre, NY 11570": {
+   "lat": 40.658333,
+   "lon": -73.646845,
+   "osm_name": "Rockville Centre",
+   "towns": [
+    "Rockville Centre"
+   ]
+  },
+  "Roslyn Long Island Rail Road Station, Roslyn Heights, NY 11577": {
+   "lat": 40.79079,
+   "lon": -73.64325,
+   "osm_name": "Roslyn",
+   "towns": [
+    "Roslyn"
+   ]
+  },
+  "Rye Metro-North Railroad Station, Rye, NY 10580": {
+   "lat": 40.986151,
+   "lon": -73.682041,
+   "osm_name": "Rye",
+   "towns": [
+    "Rye"
+   ]
+  },
+  "Scarsdale Metro-North Railroad Station, Scarsdale, NY 10583": {
+   "lat": 40.989847,
+   "lon": -73.808414,
+   "osm_name": "Scarsdale",
+   "towns": [
+    "Scarsdale"
+   ]
+  },
+  "Short Hills Train Station, Short Hills, NJ 07078": {
+   "lat": 40.725151,
+   "lon": -74.323806,
+   "osm_name": "Short Hills",
+   "towns": [
+    "Short Hills"
+   ]
+  },
+  "South Norwalk Metro-North Railroad Station, Norwalk, CT 06854": {
+   "lat": 41.095672,
+   "lon": -73.421925,
+   "osm_name": "South Norwalk",
+   "towns": [
+    "Norwalk"
+   ]
+  },
+  "South Orange Train Station, South Orange, NJ 07079": {
+   "lat": 40.746013,
+   "lon": -74.260589,
+   "osm_name": "South Orange",
+   "towns": [
+    "South Orange"
+   ]
+  },
+  "Southport Metro-North Railroad Station, 591 Pequot Ave, Southport, CT 06890": {
+   "lat": 41.135773,
+   "lon": -73.287205,
+   "osm_name": "Southport",
+   "towns": [
+    "Southport"
+   ]
+  },
+  "Stamford Transportation Center, Stamford, CT 06901": {
+   "lat": 41.046904,
+   "lon": -73.542025,
+   "osm_name": "Stamford",
+   "towns": [
+    "Stamford"
+   ]
+  },
+  "Summit Train Station, Summit, NJ 07901": {
+   "lat": 40.716572,
+   "lon": -74.357698,
+   "osm_name": "Summit",
+   "towns": [
+    "Summit"
+   ]
+  },
+  "Tarrytown Metro-North Railroad Station, Tarrytown, NY 10591": {
+   "lat": 41.076215,
+   "lon": -73.864935,
+   "osm_name": "Tarrytown",
+   "towns": [
+    "Tarrytown"
+   ]
+  },
+  "Tuckahoe Metro-North Railroad Station, Tuckahoe, NY 10707": {
+   "lat": 40.950565,
+   "lon": -73.828573,
+   "osm_name": "Tuckahoe",
+   "towns": [
+    "Eastchester",
+    "Tuckahoe"
+   ]
+  },
+  "Valley Stream Long Island Rail Road Station, Valley Stream, NY 11580": {
+   "lat": 40.661476,
+   "lon": -73.704592,
+   "osm_name": "Valley Stream",
+   "towns": [
+    "Valley Stream"
+   ]
+  },
+  "Westfield Train Station, Westfield, NJ 07090": {
+   "lat": 40.64928,
+   "lon": -74.347603,
+   "osm_name": "Westfield",
+   "towns": [
+    "Westfield"
+   ]
+  },
+  "Westport Train Station, 46 Railroad Pl, Westport, CT 06880": {
+   "lat": 41.119008,
+   "lon": -73.371136,
+   "osm_name": "Westport",
+   "towns": [
+    "Westport"
+   ]
+  },
+  "Westwood Train Station, Westwood, NJ 07675": {
+   "lat": 40.990757,
+   "lon": -74.032874,
+   "osm_name": "Westwood",
+   "towns": [
+    "Westwood"
+   ]
+  },
+  "White Plains Metro-North Railroad Station, White Plains, NY 10601": {
+   "lat": 41.033309,
+   "lon": -73.775206,
+   "osm_name": "White Plains",
+   "towns": [
+    "White Plains"
+   ]
+  },
+  "Woodmere Long Island Rail Road Station, Woodmere, NY 11598": {
+   "lat": 40.631627,
+   "lon": -73.713337,
+   "osm_name": "Woodmere",
+   "towns": [
+    "Woodmere"
+   ]
+  },
+  "Yonkers Metro-North Railroad Station, Yonkers, NY 10701": {
+   "lat": 40.935591,
+   "lon": -73.902347,
+   "osm_name": "Yonkers",
+   "towns": [
+    "Yonkers"
+   ]
+  }
+ },
+ "sf": {
+  "Belmont Caltrain Station, Belmont, CA 94002": {
+   "lat": 37.521263,
+   "lon": -122.276316,
+   "osm_name": "Belmont",
+   "towns": [
+    "Belmont"
+   ]
+  },
+  "Burlingame Caltrain Station, Burlingame, CA 94010": {
+   "lat": 37.579975,
+   "lon": -122.345102,
+   "osm_name": "Burlingame",
+   "towns": [
+    "Burlingame"
+   ]
+  },
+  "Castro Valley BART Station, Castro Valley, CA 94546": {
+   "lat": 37.691213,
+   "lon": -122.075923,
+   "osm_name": "Castro Valley",
+   "towns": [
+    "Castro Valley"
+   ]
+  },
+  "Concord BART Station, Concord, CA 94520": {
+   "lat": 37.973781,
+   "lon": -122.029071,
+   "osm_name": "Concord",
+   "towns": [
+    "Concord"
+   ]
+  },
+  "Dublin/Pleasanton BART Station, Dublin, CA 94568": {
+   "lat": 37.701647,
+   "lon": -121.899239,
+   "osm_name": "Dublin/Pleasanton",
+   "towns": [
+    "Dublin"
+   ]
+  },
+  "Dublin/Pleasanton BART Station, Pleasanton, CA 94566": {
+   "lat": 37.701647,
+   "lon": -121.899239,
+   "osm_name": "Dublin/Pleasanton",
+   "towns": [
+    "Pleasanton"
+   ]
+  },
+  "El Cerrito del Norte BART Station, El Cerrito, CA 94530": {
+   "lat": 37.925182,
+   "lon": -122.316907,
+   "osm_name": "El Cerrito del Norte",
+   "towns": [
+    "El Cerrito"
+   ]
+  },
+  "Fremont BART Station, Fremont, CA 94538": {
+   "lat": 37.55748,
+   "lon": -121.976632,
+   "osm_name": "Fremont",
+   "towns": [
+    "Fremont"
+   ]
+  },
+  "Hayward BART Station, Hayward, CA 94541": {
+   "lat": 37.66971,
+   "lon": -122.086984,
+   "osm_name": "Hayward",
+   "towns": [
+    "Hayward"
+   ]
+  },
+  "Lafayette BART Station, Lafayette, CA 94549": {
+   "lat": 37.893186,
+   "lon": -122.124637,
+   "osm_name": "Lafayette",
+   "towns": [
+    "Lafayette"
+   ]
+  },
+  "Lawrence Caltrain Station, Sunnyvale, CA 94086": {
+   "lat": 37.370579,
+   "lon": -121.997078,
+   "osm_name": "Lawrence",
+   "towns": [
+    "Cupertino",
+    "Saratoga"
+   ]
+  },
+  "Menlo Park Caltrain Station, Menlo Park, CA 94025": {
+   "lat": 37.454802,
+   "lon": -122.182572,
+   "osm_name": "Menlo Park",
+   "towns": [
+    "Menlo Park"
+   ]
+  },
+  "Millbrae Caltrain Station, Millbrae, CA 94030": {
+   "lat": 37.600114,
+   "lon": -122.387009,
+   "osm_name": "Millbrae",
+   "towns": [
+    "Millbrae"
+   ]
+  },
+  "Milpitas BART Station, Milpitas, CA 95035": {
+   "lat": 37.41004,
+   "lon": -121.890972,
+   "osm_name": "Milpitas",
+   "towns": [
+    "Milpitas"
+   ]
+  },
+  "Mountain View Caltrain Station, Mountain View, CA 94041": {
+   "lat": 37.39434,
+   "lon": -122.075877,
+   "osm_name": "Mountain View",
+   "towns": [
+    "Mountain View"
+   ]
+  },
+  "Orinda BART Station, Orinda, CA 94563": {
+   "lat": 37.878488,
+   "lon": -122.183681,
+   "osm_name": "Orinda",
+   "towns": [
+    "Orinda"
+   ]
+  },
+  "Palo Alto Caltrain Station, Palo Alto, CA 94301": {
+   "lat": 37.44347,
+   "lon": -122.1652,
+   "osm_name": "Palo Alto",
+   "towns": [
+    "Palo Alto"
+   ]
+  },
+  "Pleasant Hill BART Station, Pleasant Hill, CA 94523": {
+   "lat": 37.92844,
+   "lon": -122.055985,
+   "osm_name": "Pleasant Hill/Contra Costa Centre",
+   "towns": [
+    "Pleasant Hill"
+   ]
+  },
+  "Redwood City Caltrain Station, Redwood City, CA 94063": {
+   "lat": 37.485828,
+   "lon": -122.231722,
+   "osm_name": "Redwood City",
+   "towns": [
+    "Portola Valley",
+    "Redwood City",
+    "Woodside"
+   ]
+  },
+  "Richmond BART Station, Richmond, CA 94801": {
+   "lat": 37.936868,
+   "lon": -122.35316,
+   "osm_name": "Richmond",
+   "towns": [
+    "Richmond"
+   ]
+  },
+  "San Antonio Caltrain Station, Mountain View, CA 94040": {
+   "lat": 37.407411,
+   "lon": -122.107241,
+   "osm_name": "San Antonio",
+   "towns": [
+    "Los Altos",
+    "Los Altos Hills"
+   ]
+  },
+  "San Bruno Caltrain Station, San Bruno, CA 94066": {
+   "lat": 37.63022,
+   "lon": -122.411501,
+   "osm_name": "San Bruno",
+   "towns": [
+    "San Bruno"
+   ]
+  },
+  "San Carlos Caltrain Station, San Carlos, CA 94070": {
+   "lat": 37.507567,
+   "lon": -122.259971,
+   "osm_name": "San Carlos",
+   "towns": [
+    "San Carlos"
+   ]
+  },
+  "San Leandro BART Station, San Leandro, CA 94577": {
+   "lat": 37.72156,
+   "lon": -122.160584,
+   "osm_name": "San Leandro",
+   "towns": [
+    "San Leandro"
+   ]
+  },
+  "San Mateo Caltrain Station, San Mateo, CA 94401": {
+   "lat": 37.568112,
+   "lon": -122.324125,
+   "osm_name": "San Mateo",
+   "towns": [
+    "Hillsborough",
+    "San Mateo"
+   ]
+  },
+  "Santa Clara Caltrain Station, Santa Clara, CA 95050": {
+   "lat": 37.353103,
+   "lon": -121.936229,
+   "osm_name": "Santa Clara",
+   "towns": [
+    "Campbell",
+    "Santa Clara"
+   ]
+  },
+  "South San Francisco Caltrain Station, South San Francisco, CA 94080": {
+   "lat": 37.654856,
+   "lon": -122.406075,
+   "osm_name": "South San Francisco",
+   "towns": [
+    "South San Francisco"
+   ]
+  },
+  "Sunnyvale Caltrain Station, Sunnyvale, CA 94086": {
+   "lat": 37.378419,
+   "lon": -122.030776,
+   "osm_name": "Sunnyvale",
+   "towns": [
+    "Sunnyvale"
+   ]
+  },
+  "Union City BART Station, Union City, CA 94587": {
+   "lat": 37.590629,
+   "lon": -122.017397,
+   "osm_name": "Union City",
+   "towns": [
+    "Union City"
+   ]
+  },
+  "Walnut Creek BART Station, Walnut Creek, CA 94596": {
+   "lat": 37.905796,
+   "lon": -122.067344,
+   "osm_name": "Walnut Creek",
+   "towns": [
+    "Walnut Creek"
+   ]
+  }
+ }
+}
