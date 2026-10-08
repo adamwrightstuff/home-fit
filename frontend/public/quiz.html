@@ -891,6 +891,11 @@ function applyAndClose() {
 
   const dealbreakers = {}
   if (flyOften) dealbreakers['air_travel_access'] = true
+  // Fine-tune answers that are clear must-haves become dealbreakers (only if the question was actually asked)
+  const asked = id => visibleQuestions().some(q => q.id === id)
+  if (asked('ft_safety') && answers.ft_safety === 'calm') dealbreakers['community_safety'] = true
+  if (asked('ft_amenities') && answers.ft_amenities === 'busy') dealbreakers['neighborhood_amenities'] = true
+  if (asked('ft_nature') && answers.ft_nature === 'nature') dealbreakers['active_outdoors'] = true
   if (answers.life === 'kids') {
     dealbreakers['quality_education'] = true
     dealbreakers['community_safety'] = true
