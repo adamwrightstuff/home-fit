@@ -96,7 +96,15 @@ Verified against full text or the official abstract (PubMed or publisher):
 - Killingsworth, Kahneman and Mellers 2023 (PubMed abstract): flattening of happiness with income holds only for the least happy.
 - Kahneman et al. 2004 day reconstruction method (abstract, 909 employed women): confirms the method, but the abstract does not state that commuting ranks least enjoyable; that claim rests on a press summary.
 
-Still unverified (search summaries only): Roberts et al. 2011; Milner et al. (HILDA commuting); Eberl et al. 2022 unemployment scarring; Moving to Opportunity mental-health results; the English relocation panel (Chen and Wan); Foye 2017 (UCL site blocks us); the Berlin aircraft-noise study; HILDA housing stress; the Chinese older-adult healthcare-access study; the Dinesen et al. diversity meta-analysis; the walkability smartphone study.
+Verified in a later pass (abstracts):
+- Milner et al. 2017 (HILDA, 13 waves, fixed effects): commuting over 6 hours a week versus 2 or less lowers the Mental Health Inventory score by 0.33 (CI -0.62 to -0.04); larger declines in low-job-control jobs. Small.
+- Eberl, Collischon and Wolbring 2022, Social Forces (SOEP): large negative effect of unemployment on life satisfaction; scarring lasts at least 5 years after reemployment, driven by repeated unemployment.
+- Osypuk et al. 2012 (Moving to Opportunity, randomized, 2,829 youth): mental-health effects of moving out of high-poverty neighborhoods differ by gender and family health.
+- NEW, Ludwig et al. 2012, Science (Moving to Opportunity, randomized, adults, 10-15 years): moving from a high-poverty to a lower-poverty neighborhood improved adult physical and mental health and subjective wellbeing; a 1 standard deviation (13 point) fall in neighborhood poverty raised wellbeing as much as a $13,000 income gap. The strongest causal neighborhood evidence we have; relevant to economic and safety signals, not currently a separate weight.
+- Eibich et al. 2015, DIW Economic Bulletin (Berlin Aging Study II, SOEP-based; not peer-reviewed): aircraft noise, including objective measures, goes with lower wellbeing, lower satisfaction with living environment and poorer health; a 100 meter lower crossing altitude is comparable to losing 30-117 euros a month.
+- Kessler et al. 2014 (MTO adolescents): the original JAMA paper carries a retraction-and-replacement notice (2016); do not cite the original numbers without checking the replacement.
+
+Still unverified (search summaries only, not found in PubMed or blocked): Roberts et al. 2011; Chen and Wan English relocation panel (PMC shows a bot check); Foye 2017 (UCL blocks us); HILDA housing-stress study; the Chinese older-adult healthcare-access study; the Dinesen et al. diversity meta-analysis; the walkability smartphone study.
 
 ## 3. Corrections made along the way
 
