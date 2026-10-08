@@ -16,7 +16,7 @@ The current weights (S .30, F .20, C .15, N .05, H .10, G .12, E .08) were tuned
 | Natural beauty | 12% | 12% | Moving to greener areas improved mental health; stable for 2 outcomes |
 | Economic opportunity | modifier only | 8% | Measures reachable jobs and market quality; individual-level unemployment and income evidence is indirect; catalog sign unstable |
 | Active outdoors | 0% | 7% | Exercise treats depression; 120+ min/week in nature; catalog check held for only 1 outcome |
-| Climate, air and noise | 0% | 6% | PM2.5 lowers life satisfaction; heat raises mental-health ER visits; aircraft noise under flight paths lowers wellbeing (noise data not yet in HomeFit); catalog sign unstable |
+| Climate and air (heat, air quality, flood, trend) | 0% | 6% | PM2.5 lowers life satisfaction; heat raises mental-health ER visits; catalog sign unstable. Noise is NOT included: we have no noise data, so it is a future addition only |
 | Commute time | 15% | 5% | Small mood/leisure cost, no general life-satisfaction effect in careful panels; also a personal score, so may move to a user setting |
 | Daily amenities | 5% | 4% | Walkability raises walking; no wellbeing outcome found |
 | Healthcare access | 0% | 0% | Links to self-rated health only; no catalog support |
@@ -48,6 +48,6 @@ The current weights (S .30, F .20, C .15, N .05, H .10, G .12, E .08) were tuned
 
 ## Revision log
 
-- Rev 3: folded in two ideas from an outside proposal: noise as part of the climate and air component (needs new data), and renter and owner cost burden as the main housing input. Rejected from it: dropping nature, and a 15% weight for daily friction (commute and walkable amenities have weak individual-level support).
+- Rev 3: folded in two ideas from an outside proposal: noise as a possible future addition to climate and air (we have no noise data, so nothing is weighted for it now), and renter and owner cost burden as the main housing input. Rejected from it: dropping nature, and a 15% weight for daily friction (commute and walkable amenities have weak individual-level support).
 - Rev 1: first draft from literature only (education 3%, healthcare 3%, economic 12%).
 - Rev 2: added our own catalog-versus-PLACES check; economic cut to 8% because the pillar measures job-market opportunity; education and healthcare set to 0; safety raised to 18%; commute and social proximity treated as personal settings.
