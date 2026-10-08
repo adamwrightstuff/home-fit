@@ -71,6 +71,8 @@ CBSA_TO_KEY = {
 # 14860 = Bridgeport-Stamford-Norwalk (Fairfield County CT), the NYC commuter belt.
 CBSA_ALIAS_TO_KEY = {
     "14860": "nyc_metro",
+    "37100": "la_metro",  # Oxnard-Thousand Oaks-Ventura, in the LA CSA
+    "14740": "seattle_metro",  # Bremerton-Silverdale (Kitsap, already in the Seattle build)
 }
 
 # S2401 white-collar component variables (management through health practitioners)

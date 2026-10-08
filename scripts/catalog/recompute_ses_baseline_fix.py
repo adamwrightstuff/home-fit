@@ -22,8 +22,7 @@ sys.path.insert(0, str(REPO))
 
 CBSA = {"nyc": "35620", "sf": "41860", "la": "31080", "seattle": "42660"}
 KEY = {"nyc": "nyc_metro", "sf": "sf_metro", "la": "la_metro", "seattle": "seattle_metro"}
-# Places whose mismatch has an unexplained cause; left untouched.
-SKIP = {"East Harlem", "Thousand Oaks", "Bainbridge Island"}
+SKIP: set = set()
 
 
 def _mm(v, lo, hi):

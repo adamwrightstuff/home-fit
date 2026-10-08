@@ -203,9 +203,11 @@
     }
   },
   "cbsa_to_baseline": {
+    "14740": "seattle_metro",
     "14860": "nyc_metro",
     "31080": "la_metro",
     "35620": "nyc_metro",
+    "37100": "la_metro",
     "41860": "sf_metro",
     "41940": "sf_metro",
     "42660": "seattle_metro"
