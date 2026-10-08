@@ -390,11 +390,10 @@ let politicalPicks = []
 let outdoorsPicks = []
 let sceneryPicks = []
 let housingPicks = []
-let tenurePicks = []
 
-const CHIP_TYPES = new Set(['weather', 'political', 'outdoors', 'scenery', 'housing', 'tenure'])
+const CHIP_TYPES = new Set(['weather', 'political', 'outdoors', 'scenery', 'housing'])
 function pickArr(type) {
-  return { weather: weatherPicks, political: politicalPicks, outdoors: outdoorsPicks, scenery: sceneryPicks, housing: housingPicks, tenure: tenurePicks }[type] || outdoorsPicks
+  return { weather: weatherPicks, political: politicalPicks, outdoors: outdoorsPicks, scenery: sceneryPicks, housing: housingPicks }[type] || outdoorsPicks
 }
 
 function setWeight(k, v) {
@@ -587,20 +586,6 @@ const QUESTIONS = [
       { id: 'single_family', icon: '🏡', label: 'Single-family home' },
       { id: 'rowhouse',      icon: '🏘️', label: 'Rowhouse or townhouse' },
       { id: 'condo',         icon: '🏢', label: 'Apartment or condo' },
-    ],
-    apply() { /* filter only */ }
-  },
-
-  // Filter — Tenure mix (multi-select)
-  {
-    id: 'tenure',
-    type: 'tenure',
-    q: 'Renting or buying?',
-    sub: 'Pick all you\'d consider. Skip if you\'re open to either.',
-    chips: [
-      { id: 'renter',    icon: '🔑', label: 'Renting' },
-      { id: 'balanced',  icon: '⚖️', label: 'Open to either' },
-      { id: 'homeowner', icon: '🏠', label: 'Buying' },
     ],
     apply() { /* filter only */ }
   },
@@ -825,9 +810,7 @@ function renderResults() {
   const sceneryNote = sceneryPicks.map(p => sceneryLabels[p]).filter(Boolean).join(' · ')
   const housingLabels = { single_family: 'Single-family', rowhouse: 'Rowhouse/Townhouse', condo: 'Apartment/Condo' }
   const housingNote = housingPicks.map(p => housingLabels[p]).filter(Boolean).join(' or ')
-  const tenureLabels = { renter: 'Renting', balanced: 'Renting or buying', homeowner: 'Buying' }
-  const tenureNote = tenurePicks.map(p => tenureLabels[p]).filter(Boolean).join(' or ')
-  const filterNotes = [politicalNote, commuteNote, stabilityNote, outdoorsNote, sceneryNote, housingNote, tenureNote, ...weatherNotes].filter(Boolean)
+  const filterNotes = [politicalNote, commuteNote, stabilityNote, outdoorsNote, sceneryNote, housingNote, ...weatherNotes].filter(Boolean)
 
   document.getElementById('qwrap').innerHTML = `
     <div class="results-wrap">
@@ -861,7 +844,7 @@ function applyAndClose() {
   if (housingPicks.includes('single_family') || housingPicks.includes('rowhouse')) filterHousingType.push('sf_townhouse')
   if (housingPicks.includes('condo')) filterHousingType.push('apartment')
 
-  const filterTenure = tenurePicks.filter(Boolean)
+  const filterTenure = []
 
   const filterPoliticalLean = politicalPicks.filter(p => p !== 'skip')
 
