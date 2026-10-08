@@ -21,9 +21,9 @@ Reference record of what we tested and what the research says, so the weighting 
 
 Commute:
 - Stutzer and Frey 2008 (German panel): +18 minutes lowered life satisfaction by about 0.09 on a 10-point scale. [paper](https://wwz.unibas.ch/fileadmin/user_upload/wwz/00_Professuren/Stutzer_Politische_Oekonomie/Publications/Stutzer_Frey_CommutingStress_SJEa.pdf)
-- Roberts et al. 2011 (British panel): no effect in fixed-effects models. [paper](https://eprints.whiterose.ac.uk/81608/1/WRRO_81608.pdf)
-- Dickerson, Hole and Munford 2014: no general evidence that longer commutes lower wellbeing. [abstract](https://ideas.repec.org:443/a/eee/regeco/v49y2014icp321-329.html)
-- Clark et al. 2020 (English panel, 26,000 workers): lower leisure and job satisfaction, more strain, worse GHQ mental health, but not lower life satisfaction unless the commute persisted all six waves. [paper](https://eprints.whiterose.ac.uk/id/eprint/144512/)
+- Roberts et al. 2011 (British household panel, no effect in fixed-effects models): UNVERIFIED. It came from a search summary; the White Rose file we linked for it (WRRO_81608) is actually Dickerson, Hole and Munford 2014 (next line).
+- Dickerson, Hole and Munford 2014 (British Household Panel Survey, fixed-effects ordered models): no general evidence that longer commutes lower wellbeing; linear and ordered models give similar results. VERIFIED against the full paper. [paper](https://eprints.whiterose.ac.uk/81608/1/WRRO_81608.pdf)
+- Clark et al. 2020, Transportation 47 (English panel, 26,000 workers; VERIFIED against the full paper): lower leisure and job satisfaction, more strain, worse GHQ mental health, but not lower life satisfaction unless the commute persisted all six waves. [paper](https://eprints.whiterose.ac.uk/id/eprint/144512/)
 - Meta-analysis of 26 studies (conference poster): r = -0.13 with life satisfaction. [summary](https://www.iser.essex.ac.uk/?p=221568)
 - Milner et al. (Australian HILDA, fixed effects): small mental-health decline with more weekly commute hours. [abstract](https://findanexpert.unimelb.edu.au/scholarlywork/1227746-time-spent-commuting-to-work-and-mental-health--evidence-from-13-waves-of-an-australian-cohort-study)
 - Kahneman et al. 2004 day reconstruction: commuting is the least enjoyable daily activity. [summary](https://www.sciencedaily.com/releases/2004/12/041203082806.htm)
@@ -36,7 +36,7 @@ Green space and outdoors:
 
 Social ties:
 - Helliwell and Putnam 2004. [paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC1693420)
-- Helliwell and Barrington-Leigh 2010, "How much is social capital worth?" [paper](https://www.nber.org/system/files/working_papers/w16025/w16025.pdf)
+- Helliwell and Barrington-Leigh 2010, "How much is social capital worth?" (NBER WP 16025; Gallup World Poll and Canadian General Social Survey): trust and social network size and use are strong predictors of life satisfaction, valued as compensating household income. VERIFIED, but it is cross-sectional survey data, so association, not cause. [paper](https://www.nber.org/system/files/working_papers/w16025/w16025.pdf)
 - Harvard Study of Adult Development (since 1938): relationship quality predicts happiness and health better than income, class or IQ; observational. [Harvard Gazette](https://news.harvard.edu/Gazette/Story/2023/02/Work-Out-Daily-Ok-But-How-Socially-Fit-Are-You/)
 
 Safety:
@@ -64,7 +64,7 @@ Amenities and walkability:
 - Walkable neighborhoods go with higher life satisfaction cross-sectionally; relocation evidence shows wellbeing gains mainly when the move changes neighborhood type, with no walkability-specific effect found. [England panel](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10929527/)
 
 Education and schools:
-- Causal (instrumental-variable) evidence finds essentially no effect of years of schooling on life satisfaction. [IZA DP 16454](https://docs.iza.org/dp16454.pdf)
+- Bertermann, Kamhöfer and Schildberg-Hörisch 2023, "More Education Does Make You Happier – Unless You Are Unemployed" (IZA DP 16454; German compulsory-schooling reforms and school openings as instruments): a solid NULL average effect of years of schooling on life satisfaction, but positive for employed people (one extra year is similar in size to going from single to partnered) and negative for non-employed people (opposite sign, more than twice as large). VERIFIED against the full paper. Implication: schooling pays off in wellbeing only when it leads to work, which fits economic opportunity, not a stand-alone education weight. [paper](https://docs.iza.org/dp16454.pdf)
 - No study found on school quality and parents' wellbeing. Treat schools as a family setting, not a general weight.
 
 Diversity:
@@ -76,6 +76,11 @@ Healthcare access:
 
 Air travel access:
 - Aircraft noise under flight paths lowers wellbeing (Berlin panel-based study); simple distance to an airport shows no correlation. No evidence found that airport access raises residential wellbeing. [DIW](https://www.diw.de/de/diw_01.c.767630.de/s_8812.html)
+
+## 2b. Verification status (checked October 2026)
+
+Verified against the full text: Clark et al. 2020; Dickerson, Hole and Munford 2014; IZA DP 16454; NBER WP 16025.
+Could not verify: Alcock et al. 2014 (Exeter's repository returns a bot challenge, no text retrievable) and the JAMA Psychiatry heat study (JAMA returns a bot-protection block); both still rest on search summaries. Not attempted: Stutzer and Frey 2008, White et al. 2019, Schuch et al. 2018, Helliwell and Putnam 2004, the safety, housing, air-pollution and diversity studies, and the Boemerman commute meta-analysis. Re-check these before any public claim.
 
 ## 3. Corrections made along the way
 
@@ -92,7 +97,7 @@ Taken: housing as financial strain (cost-to-income, renter burden, evictions) in
 
 - Noise data (flight-path and highway noise maps) so noise can be added to climate and air.
 - Eviction and housing-stability data for renters.
-- Primary-source verification of the papers cited above: blocked in the cloud environment (ore.exeter.ac.uk, docs.iza.org, www.nber.org, jamanetwork.com, eprints.whiterose.ac.uk are not on its network allowlist). Do this from a session whose network access allows those hosts, or by hand.
+- Finish primary-source verification (see 2b): Alcock 2014 and the JAMA heat study need a browser, since their sites block automated downloads; the unattempted papers need their publisher sites allowed.
 
 ## 4. Open questions
 

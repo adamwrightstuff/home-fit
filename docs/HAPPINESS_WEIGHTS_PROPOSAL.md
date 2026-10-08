@@ -20,7 +20,7 @@ The current weights (S .30, F .20, C .15, N .05, H .10, G .12, E .08) were tuned
 | Commute time | 15% | 5% | Small mood/leisure cost, no general life-satisfaction effect in careful panels; also a personal score, so may move to a user setting |
 | Daily amenities | 5% | 4% | Walkability raises walking; no wellbeing outcome found |
 | Healthcare access | 0% | 0% | Links to self-rated health only; no catalog support |
-| Schools | 8% | 0% | Schooling has no causal effect on life satisfaction; no school-quality study; treat as a family setting |
+| Schools | 8% | 0% | Average causal effect of schooling on life satisfaction is null (positive for the employed, negative for the non-employed, IZA DP 16454, verified); no school-quality study; treat as a family setting |
 | Diversity | 0% | 0% | No link to trust in large British study |
 | Air travel access | 0% | 0% | No wellbeing evidence; noise under flight paths lowers wellbeing |
 | Built environment, political lean, status signal | 0% | 0% | No evidence or not a residential pillar |
