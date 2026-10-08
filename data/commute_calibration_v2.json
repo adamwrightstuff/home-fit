@@ -1,0 +1,971 @@
+{
+  "outcomes": {
+    "MHLTH": {
+      "label": "frequent mental distress",
+      "n": 2953,
+      "spread_p90_p10": 5.0,
+      "mean": 17.24,
+      "single": {
+        "share_30p": {
+          "share_30p": {
+            "estimate": -1.3042,
+            "ci95": [
+              -2.0301,
+              -0.5238
+            ],
+            "loro_estimates": {
+              "Northeast": -1.111,
+              "Midwest": -1.2464,
+              "South": -1.659,
+              "West": -1.3077
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": true
+          },
+          "rent_burden_30p": {
+            "estimate": 1.0288,
+            "ci95": [
+              -0.7465,
+              2.4328
+            ],
+            "loro_estimates": {
+              "Northeast": 1.1253,
+              "Midwest": 0.8109,
+              "South": 1.3454,
+              "West": 0.6984
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": false,
+            "supported": false
+          },
+          "owner_burden_30p": {
+            "estimate": -4.2837,
+            "ci95": [
+              -5.7411,
+              -2.0749
+            ],
+            "loro_estimates": {
+              "Northeast": -4.1528,
+              "Midwest": -4.3099,
+              "South": -3.7316,
+              "West": -4.9189
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": false
+          }
+        },
+        "share_45p": {
+          "share_45p": {
+            "estimate": -1.6843,
+            "ci95": [
+              -2.8646,
+              -0.4133
+            ],
+            "loro_estimates": {
+              "Northeast": -1.2789,
+              "Midwest": -1.6158,
+              "South": -2.4785,
+              "West": -1.7096
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": true
+          },
+          "rent_burden_30p": {
+            "estimate": 1.1112,
+            "ci95": [
+              -0.7388,
+              2.5716
+            ],
+            "loro_estimates": {
+              "Northeast": 1.1887,
+              "Midwest": 0.8733,
+              "South": 1.4143,
+              "West": 0.777
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": false,
+            "supported": false
+          },
+          "owner_burden_30p": {
+            "estimate": -4.3048,
+            "ci95": [
+              -5.8272,
+              -2.0188
+            ],
+            "loro_estimates": {
+              "Northeast": -4.3453,
+              "Midwest": -4.2663,
+              "South": -3.4307,
+              "West": -4.9567
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": false
+          }
+        },
+        "share_60p": {
+          "share_60p": {
+            "estimate": -2.2575,
+            "ci95": [
+              -4.0297,
+              -0.0428
+            ],
+            "loro_estimates": {
+              "Northeast": -1.7024,
+              "Midwest": -2.1612,
+              "South": -3.5921,
+              "West": -2.166
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": true
+          },
+          "rent_burden_30p": {
+            "estimate": 1.1317,
+            "ci95": [
+              -0.721,
+              2.5764
+            ],
+            "loro_estimates": {
+              "Northeast": 1.17,
+              "Midwest": 0.8757,
+              "South": 1.4939,
+              "West": 0.8082
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": false,
+            "supported": false
+          },
+          "owner_burden_30p": {
+            "estimate": -4.297,
+            "ci95": [
+              -5.8658,
+              -1.9646
+            ],
+            "loro_estimates": {
+              "Northeast": -4.41,
+              "Midwest": -4.2234,
+              "South": -3.2844,
+              "West": -4.9798
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": false
+          }
+        },
+        "mean_minutes": {
+          "mean_minutes": {
+            "estimate": -0.0269,
+            "ci95": [
+              -0.0472,
+              -0.0021
+            ],
+            "loro_estimates": {
+              "Northeast": -0.0202,
+              "Midwest": -0.0261,
+              "South": -0.04,
+              "West": -0.0259
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": true
+          },
+          "rent_burden_30p": {
+            "estimate": 1.118,
+            "ci95": [
+              -0.6962,
+              2.5349
+            ],
+            "loro_estimates": {
+              "Northeast": 1.1734,
+              "Midwest": 0.8787,
+              "South": 1.5047,
+              "West": 0.7757
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": false,
+            "supported": false
+          },
+          "owner_burden_30p": {
+            "estimate": -4.3595,
+            "ci95": [
+              -5.8642,
+              -2.0967
+            ],
+            "loro_estimates": {
+              "Northeast": -4.3617,
+              "Midwest": -4.3211,
+              "South": -3.6271,
+              "West": -5.0154
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": false
+          }
+        }
+      },
+      "joint": {
+        "share_30p": {
+          "estimate": -1.2222,
+          "ci95": [
+            -2.2362,
+            0.2647
+          ],
+          "loro_estimates": {
+            "Northeast": -1.5235,
+            "Midwest": -1.0435,
+            "South": -0.9501,
+            "West": -1.0437
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": false,
+          "supported": false
+        },
+        "share_45p": {
+          "estimate": 0.5715,
+          "ci95": [
+            -2.2302,
+            3.0772
+          ],
+          "loro_estimates": {
+            "Northeast": 1.5111,
+            "Midwest": 0.2965,
+            "South": 0.584,
+            "West": -0.2992
+          },
+          "same_sign_all_regions": false,
+          "ci_excludes_zero": false,
+          "supported": false
+        },
+        "share_60p": {
+          "estimate": -1.4275,
+          "ci95": [
+            -4.8244,
+            2.568
+          ],
+          "loro_estimates": {
+            "Northeast": -1.7344,
+            "Midwest": -1.2044,
+            "South": -3.1826,
+            "West": -0.3063
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": false,
+          "supported": false
+        },
+        "rent_burden_30p": {
+          "estimate": 1.0344,
+          "ci95": [
+            -0.7724,
+            2.4143
+          ],
+          "loro_estimates": {
+            "Northeast": 1.1002,
+            "Midwest": 0.8061,
+            "South": 1.3873,
+            "West": 0.7129
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": false,
+          "supported": false
+        },
+        "owner_burden_30p": {
+          "estimate": -4.1537,
+          "ci95": [
+            -5.7558,
+            -1.8257
+          ],
+          "loro_estimates": {
+            "Northeast": -4.0634,
+            "Midwest": -4.1787,
+            "South": -3.1928,
+            "West": -4.8733
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": true,
+          "supported": false
+        }
+      },
+      "owner_burden_check": {
+        "base_controls_pp": -5.952,
+        "strong_controls_pp": -4.36,
+        "rent_base_pp": 0.983,
+        "rent_strong_pp": 1.118
+      }
+    },
+    "DEPRESSION": {
+      "label": "depression",
+      "n": 2953,
+      "spread_p90_p10": 8.6,
+      "mean": 22.114,
+      "single": {
+        "share_30p": {
+          "share_30p": {
+            "estimate": -3.0997,
+            "ci95": [
+              -4.5434,
+              -1.0945
+            ],
+            "loro_estimates": {
+              "Northeast": -2.9368,
+              "Midwest": -3.2569,
+              "South": -2.6149,
+              "West": -3.4372
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": true
+          },
+          "rent_burden_30p": {
+            "estimate": 0.1661,
+            "ci95": [
+              -3.0026,
+              3.2103
+            ],
+            "loro_estimates": {
+              "Northeast": -0.0475,
+              "Midwest": -0.7997,
+              "South": 4.3459,
+              "West": -1.4174
+            },
+            "same_sign_all_regions": false,
+            "ci_excludes_zero": false,
+            "supported": false
+          },
+          "owner_burden_30p": {
+            "estimate": -15.5423,
+            "ci95": [
+              -17.8264,
+              -10.851
+            ],
+            "loro_estimates": {
+              "Northeast": -14.5033,
+              "Midwest": -15.5423,
+              "South": -13.2522,
+              "West": -16.8405
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": false
+          }
+        },
+        "share_45p": {
+          "share_45p": {
+            "estimate": -3.8,
+            "ci95": [
+              -5.7937,
+              -0.7323
+            ],
+            "loro_estimates": {
+              "Northeast": -2.9199,
+              "Midwest": -4.3258,
+              "South": -3.8893,
+              "West": -3.9471
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": true
+          },
+          "rent_burden_30p": {
+            "estimate": 0.3686,
+            "ci95": [
+              -2.8218,
+              3.418
+            ],
+            "loro_estimates": {
+              "Northeast": 0.0899,
+              "Midwest": -0.6414,
+              "South": 4.4563,
+              "West": -1.1948
+            },
+            "same_sign_all_regions": false,
+            "ci_excludes_zero": false,
+            "supported": false
+          },
+          "owner_burden_30p": {
+            "estimate": -15.6587,
+            "ci95": [
+              -18.0698,
+              -10.9552
+            ],
+            "loro_estimates": {
+              "Northeast": -15.157,
+              "Midwest": -15.398,
+              "South": -12.7867,
+              "West": -17.0976
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": false
+          }
+        },
+        "share_60p": {
+          "share_60p": {
+            "estimate": -5.8852,
+            "ci95": [
+              -8.8045,
+              -0.8969
+            ],
+            "loro_estimates": {
+              "Northeast": -3.5969,
+              "Midwest": -6.6319,
+              "South": -6.8274,
+              "West": -6.1747
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": true
+          },
+          "rent_burden_30p": {
+            "estimate": 0.4027,
+            "ci95": [
+              -2.8501,
+              3.4654
+            ],
+            "loro_estimates": {
+              "Northeast": 0.0363,
+              "Midwest": -0.6642,
+              "South": 4.5213,
+              "West": -1.1331
+            },
+            "same_sign_all_regions": false,
+            "ci_excludes_zero": false,
+            "supported": false
+          },
+          "owner_burden_30p": {
+            "estimate": -15.4457,
+            "ci95": [
+              -18.111,
+              -10.7991
+            ],
+            "loro_estimates": {
+              "Northeast": -15.3622,
+              "Midwest": -15.0804,
+              "South": -12.0917,
+              "West": -16.8961
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": false
+          }
+        },
+        "mean_minutes": {
+          "mean_minutes": {
+            "estimate": -0.0594,
+            "ci95": [
+              -0.0969,
+              -0.001
+            ],
+            "loro_estimates": {
+              "Northeast": -0.0412,
+              "Midwest": -0.0694,
+              "South": -0.0519,
+              "West": -0.0696
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": true
+          },
+          "rent_burden_30p": {
+            "estimate": 0.3859,
+            "ci95": [
+              -2.8507,
+              3.4565
+            ],
+            "loro_estimates": {
+              "Northeast": 0.0387,
+              "Midwest": -0.6256,
+              "South": 4.6442,
+              "West": -1.2175
+            },
+            "same_sign_all_regions": false,
+            "ci_excludes_zero": false,
+            "supported": false
+          },
+          "owner_burden_30p": {
+            "estimate": -15.8044,
+            "ci95": [
+              -18.2413,
+              -11.0397
+            ],
+            "loro_estimates": {
+              "Northeast": -15.2868,
+              "Midwest": -15.5528,
+              "South": -13.3817,
+              "West": -17.0665
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": false
+          }
+        }
+      },
+      "joint": {
+        "share_30p": {
+          "estimate": -5.1073,
+          "ci95": [
+            -7.4677,
+            -2.2324
+          ],
+          "loro_estimates": {
+            "Northeast": -5.0224,
+            "Midwest": -4.1089,
+            "South": -4.3847,
+            "West": -6.398
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": true,
+          "supported": true
+        },
+        "share_45p": {
+          "estimate": 8.6263,
+          "ci95": [
+            2.1553,
+            13.5634
+          ],
+          "loro_estimates": {
+            "Northeast": 5.6815,
+            "Midwest": 6.2915,
+            "South": 11.7417,
+            "West": 10.5738
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": true,
+          "supported": true
+        },
+        "share_60p": {
+          "estimate": -11.0336,
+          "ci95": [
+            -18.4703,
+            -0.7523
+          ],
+          "loro_estimates": {
+            "Northeast": -4.6841,
+            "Midwest": -9.8719,
+            "South": -17.0685,
+            "West": -12.3825
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": true,
+          "supported": true
+        },
+        "rent_burden_30p": {
+          "estimate": 0.0681,
+          "ci95": [
+            -3.0618,
+            3.056
+          ],
+          "loro_estimates": {
+            "Northeast": -0.2022,
+            "Midwest": -0.9359,
+            "South": 4.3692,
+            "West": -1.507
+          },
+          "same_sign_all_regions": false,
+          "ci_excludes_zero": false,
+          "supported": false
+        },
+        "owner_burden_30p": {
+          "estimate": -14.7548,
+          "ci95": [
+            -17.2068,
+            -10.3537
+          ],
+          "loro_estimates": {
+            "Northeast": -14.2451,
+            "Midwest": -14.7314,
+            "South": -11.5183,
+            "West": -16.0012
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": true,
+          "supported": false
+        }
+      },
+      "owner_burden_check": {
+        "base_controls_pp": -17.522,
+        "strong_controls_pp": -15.804,
+        "rent_base_pp": 0.819,
+        "rent_strong_pp": 0.386
+      }
+    },
+    "SLEEP": {
+      "label": "short sleep",
+      "n": 3140,
+      "spread_p90_p10": 10.5,
+      "mean": 36.945,
+      "single": {
+        "share_30p": {
+          "share_30p": {
+            "estimate": 3.313,
+            "ci95": [
+              0.9552,
+              5.0495
+            ],
+            "loro_estimates": {
+              "Northeast": 4.1021,
+              "Midwest": 3.8936,
+              "South": 3.6991,
+              "West": 2.0581
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": true
+          },
+          "rent_burden_30p": {
+            "estimate": 7.198,
+            "ci95": [
+              3.2365,
+              10.1019
+            ],
+            "loro_estimates": {
+              "Northeast": 7.0925,
+              "Midwest": 7.8819,
+              "South": 5.5753,
+              "West": 6.3718
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": false
+          },
+          "owner_burden_30p": {
+            "estimate": 5.6566,
+            "ci95": [
+              -0.7033,
+              12.3222
+            ],
+            "loro_estimates": {
+              "Northeast": 4.873,
+              "Midwest": 6.0952,
+              "South": 2.2628,
+              "West": 5.7805
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": false,
+            "supported": false
+          }
+        },
+        "share_45p": {
+          "share_45p": {
+            "estimate": 4.2018,
+            "ci95": [
+              0.2281,
+              6.9291
+            ],
+            "loro_estimates": {
+              "Northeast": 5.4037,
+              "Midwest": 4.9113,
+              "South": 4.3917,
+              "West": 2.2047
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": true
+          },
+          "rent_burden_30p": {
+            "estimate": 6.9678,
+            "ci95": [
+              3.0234,
+              9.7627
+            ],
+            "loro_estimates": {
+              "Northeast": 6.8188,
+              "Midwest": 7.6522,
+              "South": 5.2576,
+              "West": 6.2141
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": false
+          },
+          "owner_burden_30p": {
+            "estimate": 5.7562,
+            "ci95": [
+              -0.6246,
+              12.8321
+            ],
+            "loro_estimates": {
+              "Northeast": 5.3784,
+              "Midwest": 6.0458,
+              "South": 2.2069,
+              "West": 6.0016
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": false,
+            "supported": false
+          }
+        },
+        "share_60p": {
+          "share_60p": {
+            "estimate": 6.3728,
+            "ci95": [
+              -0.4807,
+              10.6973
+            ],
+            "loro_estimates": {
+              "Northeast": 8.0003,
+              "Midwest": 7.4445,
+              "South": 5.8721,
+              "West": 3.4833
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": false,
+            "supported": false
+          },
+          "rent_burden_30p": {
+            "estimate": 6.903,
+            "ci95": [
+              3.0037,
+              9.7777
+            ],
+            "loro_estimates": {
+              "Northeast": 6.8679,
+              "Midwest": 7.6314,
+              "South": 5.0409,
+              "West": 6.1666
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": false
+          },
+          "owner_burden_30p": {
+            "estimate": 5.5829,
+            "ci95": [
+              -0.4777,
+              12.8439
+            ],
+            "loro_estimates": {
+              "Northeast": 5.4899,
+              "Midwest": 5.758,
+              "South": 2.2002,
+              "West": 5.897
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": false,
+            "supported": false
+          }
+        },
+        "mean_minutes": {
+          "mean_minutes": {
+            "estimate": 0.0808,
+            "ci95": [
+              0.0142,
+              0.1264
+            ],
+            "loro_estimates": {
+              "Northeast": 0.1024,
+              "Midwest": 0.0962,
+              "South": 0.0805,
+              "West": 0.0477
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": true
+          },
+          "rent_burden_30p": {
+            "estimate": 6.9701,
+            "ci95": [
+              3.0463,
+              9.8139
+            ],
+            "loro_estimates": {
+              "Northeast": 6.8274,
+              "Midwest": 7.6691,
+              "South": 5.1315,
+              "West": 6.2436
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": true,
+            "supported": false
+          },
+          "owner_burden_30p": {
+            "estimate": 5.6343,
+            "ci95": [
+              -0.6759,
+              12.4983
+            ],
+            "loro_estimates": {
+              "Northeast": 5.1134,
+              "Midwest": 5.928,
+              "South": 2.3052,
+              "West": 5.8255
+            },
+            "same_sign_all_regions": true,
+            "ci_excludes_zero": false,
+            "supported": false
+          }
+        }
+      },
+      "joint": {
+        "share_30p": {
+          "estimate": 4.7883,
+          "ci95": [
+            1.5014,
+            7.5628
+          ],
+          "loro_estimates": {
+            "Northeast": 4.6886,
+            "Midwest": 5.6764,
+            "South": 4.9299,
+            "West": 4.3935
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": true,
+          "supported": true
+        },
+        "share_45p": {
+          "estimate": -7.2979,
+          "ci95": [
+            -15.3744,
+            1.3627
+          ],
+          "loro_estimates": {
+            "Northeast": -5.2741,
+            "Midwest": -8.7964,
+            "South": -5.7271,
+            "West": -7.6497
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": false,
+          "supported": false
+        },
+        "share_60p": {
+          "estimate": 10.0649,
+          "ci95": [
+            -1.7773,
+            17.5417
+          ],
+          "loro_estimates": {
+            "Northeast": 8.9832,
+            "Midwest": 12.0106,
+            "South": 7.2887,
+            "West": 8.2314
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": false,
+          "supported": false
+        },
+        "rent_burden_30p": {
+          "estimate": 7.2494,
+          "ci95": [
+            3.2475,
+            10.023
+          ],
+          "loro_estimates": {
+            "Northeast": 7.084,
+            "Midwest": 8.0365,
+            "South": 5.5601,
+            "West": 6.4414
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": true,
+          "supported": false
+        },
+        "owner_burden_30p": {
+          "estimate": 4.93,
+          "ci95": [
+            -1.0701,
+            12.0461
+          ],
+          "loro_estimates": {
+            "Northeast": 4.4384,
+            "Midwest": 5.2234,
+            "South": 1.6563,
+            "West": 5.2634
+          },
+          "same_sign_all_regions": true,
+          "ci_excludes_zero": false,
+          "supported": false
+        }
+      },
+      "owner_burden_check": {
+        "base_controls_pp": 1.549,
+        "strong_controls_pp": 5.634,
+        "rent_base_pp": 6.591,
+        "rent_strong_pp": 6.97
+      }
+    }
+  },
+  "pass_table": {
+    "share_30p": {
+      "MHLTH": true,
+      "DEPRESSION": true,
+      "SLEEP": true
+    },
+    "share_45p": {
+      "MHLTH": true,
+      "DEPRESSION": true,
+      "SLEEP": true
+    },
+    "share_60p": {
+      "MHLTH": true,
+      "DEPRESSION": true,
+      "SLEEP": false
+    },
+    "mean_minutes": {
+      "MHLTH": true,
+      "DEPRESSION": true,
+      "SLEEP": true
+    }
+  },
+  "harmful_pass_table": {
+    "share_30p": {
+      "MHLTH": false,
+      "DEPRESSION": false,
+      "SLEEP": true
+    },
+    "share_45p": {
+      "MHLTH": false,
+      "DEPRESSION": false,
+      "SLEEP": true
+    },
+    "share_60p": {
+      "MHLTH": false,
+      "DEPRESSION": false,
+      "SLEEP": false
+    },
+    "mean_minutes": {
+      "MHLTH": false,
+      "DEPRESSION": false,
+      "SLEEP": true
+    }
+  },
+  "curve": null,
+  "conclusion": "No cumulative exposure is both stable (same sign in every leave-one-region-out fit, bootstrap interval excluding zero) and harmful for two or more outcomes: county data cannot support a data-derived commute curve.",
+  "metadata": {
+    "generated_at": "2026-10-08T00:00:42+00:00",
+    "acs_year": 2022,
+    "geography": "county",
+    "weights": "county population",
+    "counties": 3143,
+    "bootstrap_resamples": 500,
+    "bootstrap": "state-clustered, percentile 95%",
+    "controls": [
+      "wfh_share",
+      "poverty_rate",
+      "bachelors_share",
+      "median_age",
+      "log_median_income",
+      "log_median_income_sq",
+      "log_population",
+      "log_density",
+      "log_home_value",
+      "renter_share",
+      "share_65p"
+    ],
+    "density_included": true,
+    "report_step": {
+      "share_30p": 0.1,
+      "share_45p": 0.1,
+      "share_60p": 0.1,
+      "mean_minutes": 5.0
+    },
+    "variable_check": {
+      "agg_time_label": "B08013_001E: Aggregate travel time to work (in minutes), workers 16+ who did not work at home"
+    },
+    "caveat": "Ecological county-level fit; PLACES estimates are model-based; not individual effects."
+  }
+}
