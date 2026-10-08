@@ -4,7 +4,8 @@ Recompute local scene, the Aura score (it_score) and the per-metro Aura flag, of
 
 For each metro's composites_recomputed catalog: rescore local scene from the stored business_list,
 recompute it_score = 0.50 local scene + 0.35 livability (non-overlapping pillars) + 0.15 SES, then
-set score["aura"] = True for the top AURA_TOP_PCT of scored places in that metro.
+set score["aura"] = True for places in the top AURA_TOP_PCT of scored places in that metro whose
+local scene score is at least AURA_MIN_SCENE (failing places are dropped, not backfilled).
 Metros with fewer than AURA_MIN_METRO_PLACES scored places get no Aura flags (a percentile over a
 handful of places is meaningless).
 
@@ -22,6 +23,7 @@ from pillars.composite_indices import compute_aura_score  # noqa: E402
 
 AURA_TOP_PCT = 0.05
 AURA_MIN_METRO_PLACES = 20
+AURA_MIN_SCENE = 45  # judgment call, not researched: a standout-scene badge needs a real scene
 
 
 def process(metro: str) -> None:
@@ -42,10 +44,11 @@ def process(metro: str) -> None:
               and isinstance(d["score"].get("it_score"), (int, float))]
     n = math.ceil(len(scored) * AURA_TOP_PCT) if len(scored) >= AURA_MIN_METRO_PLACES else 0
     scored.sort(key=lambda d: -d["score"]["it_score"])
-    for d in scored[:n]:
+    winners = [d for d in scored[:n] if (d["score"].get("local_scene_score") or 0) >= AURA_MIN_SCENE]
+    for d in winners:
         d["score"]["aura"] = True
     path.write_text("\n".join(json.dumps(d, ensure_ascii=False) for d in rows) + "\n")
-    print(f"{metro}: {len(scored)} scored, {n} Aura: {[d['catalog']['name'] for d in scored[:n]]}")
+    print(f"{metro}: {len(scored)} scored, {len(winners)} Aura (top {n}, scene floor {AURA_MIN_SCENE}): {[d['catalog']['name'] for d in winners]}")
 
 
 if __name__ == "__main__":
