@@ -140,6 +140,17 @@ Claims checked from an outside summary on proximity (October 2026):
 - Equal weights give a rank correlation of 0.954 with the current weights, so the weights change rankings little. Safety is the weight with the largest effect (mean swing 1.9 points for +/-30%), then social (1.6), home space (1.1).
 - Implication: precision is limited more by the quality of the pillar scores (proxies, saturation, fallbacks) than by the weights.
 
+## 2e. Pillar precision audit (scripts/catalog/pillar_precision_audit.py, October 2026)
+
+411 catalog places. Pillars in the happiness index are mostly clean: none relies on fallback data, and ceilings are rare (transit 7%, active outdoors 3%, amenities 3%, safety 2%). Problems that cost precision:
+- Natural beauty: failed for 10% of places (40), which then lose its 12% weight.
+- Active outdoors: low confidence (below 50) for 18% of places.
+- Social fabric: degraded for 11%, failed for 1%.
+- Public transit: failed 2%, low confidence 5%.
+- Narrow spread (SD about 7 points, so little separation between places): social fabric, economic opportunity, climate risk, diversity. Climate varies mostly by metro. These differentiate places weakly regardless of weight.
+- Safety has the widest spread (SD 28) and no quality flags, which is why its weight matters most.
+Not in the index, and rightly so: healthcare access (64% low confidence, 45% fallback, 20% at the 100 ceiling), quality education (28% failed), air travel (13% at the ceiling).
+
 ## 3. Corrections made along the way
 
 - An outside analysis claimed commute is a "massive" and "reliable" destroyer of life satisfaction; the careful panels and meta-analysis do not support that.
