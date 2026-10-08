@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 Rescore one place's neighborhood_amenities pillar in-process (Google Places fallback on),
-merge it into the NYC composites_recomputed catalog, then recompute totals, composites and Aura.
+merge it into the metro's composites_recomputed catalog (default nyc), then recompute totals, composites and Aura.
 
-Usage: PYTHONPATH=. HOMEFIT_PLACES_FALLBACK_ENABLED=1 HOMEFIT_PLACES_COMPLETENESS_THRESHOLD=1.01 python3 scripts/manual/rescore_amenities_places.py "Cold Spring Harbor"
+Usage: PYTHONPATH=. HOMEFIT_PLACES_FALLBACK_ENABLED=1 HOMEFIT_PLACES_COMPLETENESS_THRESHOLD=1.01 python3 scripts/manual/rescore_amenities_places.py "Cold Spring Harbor" [metro]
 """
 import json, sys
 from pathlib import Path
@@ -15,8 +15,9 @@ from pillars.composite_indices import recompute_composites_from_payload  # noqa:
 from rerun_failed_catalog_pillars import recompute_totals  # noqa: E402
 from recompute_catalog_composites import _merge_composites_into_score  # noqa: E402
 
-PATH = ROOT / "data" / "nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
 name = sys.argv[1]
+metro = sys.argv[2] if len(sys.argv) > 2 else "nyc"
+PATH = ROOT / "data" / f"{metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
 rows = [json.loads(l) for l in PATH.read_text().splitlines() if l.strip()]
 for d in rows:
     if d["catalog"]["name"] != name:
