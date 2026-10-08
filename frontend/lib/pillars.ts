@@ -152,7 +152,7 @@ export function allLongevityPillarsInOnlyKeys(onlyKeys: string[]): boolean {
 
 /** Longevity index from merged livability_pillars (saved/API shape). */
 export function longevityIndexFromLivabilityPillars(
-  pillars: Record<string, { score?: number; status?: string; error?: string; breakdown?: Record<string, unknown> } | undefined>
+  pillars: Record<string, { score?: number; status?: string; error?: string; confidence?: number | null; breakdown?: Record<string, unknown> } | undefined>
 ): number | null {
   const pillarScores: Record<string, { score?: number; failed?: boolean }> = {}
   for (const k of Object.keys(LONGEVITY_INDEX_WEIGHTS) as PillarKey[]) {
@@ -161,7 +161,7 @@ export function longevityIndexFromLivabilityPillars(
     if (!p || score == null) continue
     pillarScores[k] = {
       score,
-      failed: Boolean(p.error) || p.status === 'failed',
+      failed: Boolean(p.error) || p.status === 'failed' || p.status === 'no_data' || p.confidence === 0,
     }
   }
   return computeLongevityIndex(pillarScores)

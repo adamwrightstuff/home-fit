@@ -26,7 +26,7 @@ LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
     "community_safety": 8.0,     # Trauma and chronic stress from crime are real mortality factors; renormalized when degraded
 }
 
-INDEX_VERSION_LONGEVITY = "4"
+INDEX_VERSION_LONGEVITY = "5"
 INDEX_VERSION_STATUS = "6"
 INDEX_VERSION_HAPPINESS = "5"
 INDEX_VERSION_HOTNESS = "1"
@@ -123,6 +123,21 @@ LONGEVITY_ENV_AIR_SHARE = 5.0 / 8.0   # air quality share of the 8% environmenta
 LONGEVITY_ENV_HEAT_SHARE = 3.0 / 8.0  # heat exposure share (excess summer mortality)
 
 
+def _longevity_pillar_usable(pdata: Any) -> bool:
+    """
+    False for a pillar that failed, returned no data, or has zero confidence. Such a pillar
+    carries a placeholder score (often 0) that is a data gap, not a real measurement, so the
+    index drops it and renormalizes instead of scoring the place as if it had nothing there.
+    """
+    if not isinstance(pdata, dict):
+        return False
+    if pdata.get("status") in ("failed", "no_data") or pdata.get("error"):
+        return False
+    if pdata.get("confidence") == 0:
+        return False
+    return True
+
+
 def _longevity_pillar_score(name: str, pdata: Any) -> Optional[float]:
     """
     Score used for a pillar inside the Longevity Index. For climate_risk this is air quality
@@ -156,8 +171,9 @@ def compute_longevity_index(
     if token_allocation is not None:
 
         def _has_score(p: str) -> bool:
-            raw = (livability_pillars.get(p) or {}).get("score")
-            return raw is not None and isinstance(raw, (int, float))
+            pdata = livability_pillars.get(p) or {}
+            raw = pdata.get("score")
+            return isinstance(raw, (int, float)) and _longevity_pillar_usable(pdata)
 
         def _eligible(p: str) -> bool:
             has_weight = float(token_allocation.get(p, 0.0) or 0.0) > 0

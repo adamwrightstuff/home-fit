@@ -76,8 +76,8 @@ function getScoreFromPillar(pillar: unknown): number | null {
 
 function isPillarFailed(pillar: unknown): boolean {
   if (!pillar || typeof pillar !== 'object') return true
-  const p = pillar as { error?: string; status?: string }
-  return Boolean(p.error) || p.status === 'failed'
+  const p = pillar as { error?: string; status?: string; confidence?: number | null }
+  return Boolean(p.error) || p.status === 'failed' || p.status === 'no_data' || p.confidence === 0
 }
 
 /** Build pillarScores map for computeLongevityIndex from merged livability_pillars (longevity pillars only). */

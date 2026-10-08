@@ -1,6 +1,6 @@
 # Longevity Index
 
-**Version:** 4 (2026-10-07)
+**Version:** 5 (2026-10-08)
 **Status:** Implemented. Separate from the user-priority total score.
 
 ---
@@ -39,6 +39,7 @@ All other pillars (transit, air travel, housing, economic opportunity, diversity
 ## Implementation
 
 - **Backend:** `pillars/composite_indices.py` defines `LONGEVITY_INDEX_WEIGHTS`, `_longevity_pillar_score`, and `compute_longevity_index`. Responses carry `longevity_index` and `longevity_index_contributions`.
+- **Failed pillars (v5):** a pillar with status `failed` or `no_data`, an error, or confidence 0 is dropped and the remaining weights renormalize, instead of being scored as its placeholder 0. The frontend applies the same rule (`failed` flag in `computeLongevityIndex`).
 - **Eligibility:** with a token allocation, only pillars with a non-zero weight (or requested in a partial run) and a score are used; weights renormalize over that subset. Catalog rows use the stored allocation, so pillars weighted 0 there (e.g. natural beauty, education) drop out.
 - **Partial `only=` requests:** the index is omitted unless all seven longevity pillars were requested (`should_emit_longevity_index`).
 - **Frontend:** `LONGEVITY_INDEX_WEIGHTS`, `longevityPillarScore`, and `computeLongevityIndex` in `frontend/lib/pillars.ts` mirror the backend and must be kept in sync. Saved-score merges (`mergeSavedScores.ts`) and `PlaceView` recompute from merged pillars.
