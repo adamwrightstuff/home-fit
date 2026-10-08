@@ -158,6 +158,12 @@ export default function CatalogPageClient({
       return v === 'Some' || v === 'High' ? v : 'all'
     } catch { return 'all' }
   })
+  const [filterAura, setFilterAura] = useState<boolean>(() => {
+    try {
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      return f?.filterAura === true
+    } catch { return false }
+  })
   const [filterCommuteMax, setFilterCommuteMax] = useState<'all' | '15' | '30' | '45' | '60'>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
@@ -309,13 +315,14 @@ export default function CatalogPageClient({
           filterTenure,
           filterSchoolType,
           filterLocalScene,
+          filterAura,
           filterCommuteMax,
           workZoneId,
           climatePrefs,
         },
       }))
     } catch { /* ignore */ }
-  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterCommuteMax, workZoneId, climatePrefs])
+  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
 
   useEffect(() => {
     const ac = new AbortController()
@@ -396,6 +403,7 @@ export default function CatalogPageClient({
           if (Array.isArray(f.filterTenure)) setFilterTenure(f.filterTenure)
           if (typeof f.filterSchoolType === 'string') setFilterSchoolType(f.filterSchoolType)
           if (typeof f.filterLocalScene === 'string') setFilterLocalScene(f.filterLocalScene)
+          if (typeof f.filterAura === 'boolean') setFilterAura(f.filterAura)
           if (typeof f.filterCommuteMax === 'string') setFilterCommuteMax(f.filterCommuteMax)
           if (f.climatePrefs && typeof f.climatePrefs === 'object') setClimatePrefs(f.climatePrefs)
         }
@@ -446,6 +454,7 @@ export default function CatalogPageClient({
             filterTenure,
             filterSchoolType,
             filterLocalScene,
+            filterAura,
             filterCommuteMax,
             climatePrefs,
           },
@@ -453,7 +462,7 @@ export default function CatalogPageClient({
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterCommuteMax, climatePrefs])
+  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -631,6 +640,7 @@ export default function CatalogPageClient({
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') return false
       if (filterLocalScene === 'High' && p.score.local_scene_bucket && p.score.local_scene_bucket !== 'High') return false
+      if (filterAura && p.score.aura !== true) return false
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) return false
@@ -707,6 +717,7 @@ export default function CatalogPageClient({
     filterPoliticalLean,
     filterSchoolType,
     filterLocalScene,
+    filterAura,
     filterCommuteMax,
     filterHousingType,
     filterTenure,
@@ -798,6 +809,7 @@ export default function CatalogPageClient({
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
       if (filterLocalScene === 'High' && p.score.local_scene_bucket && p.score.local_scene_bucket !== 'High') r.push('Local scene')
+      if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) r.push('Commute')
@@ -865,7 +877,7 @@ export default function CatalogPageClient({
       reasons[key] = r.length > 0 ? r : ['Filters']
     }
     return reasons
-  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterCommuteMax, filterHousingType, filterTenure, filterPoliticalLean, climatePrefs])
+  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterTenure, filterPoliticalLean, climatePrefs])
   const { gatedPlaces, excludedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) {
       return { gatedPlaces: filteredPlaces, excludedPlaces: metroFilterExcluded, dealbreakerExcludedCount: metroFilterExcluded.length, dealbreakerZeroSurvivors: false }
@@ -929,6 +941,7 @@ export default function CatalogPageClient({
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
       if (filterLocalScene === 'High' && p.score.local_scene_bucket && p.score.local_scene_bucket !== 'High') r.push('Local scene')
+      if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) r.push('Commute')
@@ -994,7 +1007,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterCommuteMax, filterHousingType, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
@@ -1386,9 +1399,9 @@ export default function CatalogPageClient({
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount > 0 && (
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount}
+                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount}
                     </span>
                   )}
                 </button>
@@ -1524,9 +1537,9 @@ export default function CatalogPageClient({
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
               Filters
-              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount > 0 && (
+              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount}
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount}
                 </span>
               )}
             </button>
@@ -1986,6 +1999,8 @@ export default function CatalogPageClient({
         onFilterSchoolTypeChange={setFilterSchoolType}
         filterLocalScene={filterLocalScene}
         onFilterLocalSceneChange={setFilterLocalScene}
+        filterAura={filterAura}
+        onFilterAuraChange={setFilterAura}
         filterCommuteMax={filterCommuteMax}
         onFilterCommuteMaxChange={setFilterCommuteMax}
         workZoneId={workZoneId}

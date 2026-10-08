@@ -54,6 +54,8 @@ interface FilterSheetProps {
   onFilterSchoolTypeChange: (v: 'any' | 'public_only' | 'charter') => void
   filterLocalScene: 'all' | 'Some' | 'High'
   onFilterLocalSceneChange: (v: 'all' | 'Some' | 'High') => void
+  filterAura: boolean
+  onFilterAuraChange: (v: boolean) => void
   filterCommuteMax: 'all' | '15' | '30' | '45' | '60'
   onFilterCommuteMaxChange: (v: 'all' | '15' | '30' | '45' | '60') => void
   /** Work hub, mode and office days come from the profile and are read-only here. */
@@ -111,6 +113,8 @@ export default function FilterSheet({
   onFilterSchoolTypeChange,
   filterLocalScene,
   onFilterLocalSceneChange,
+  filterAura,
+  onFilterAuraChange,
   filterCommuteMax,
   onFilterCommuteMaxChange,
   workZoneId,
@@ -147,6 +151,7 @@ export default function FilterSheet({
     (filterTenure.length > 0 ? 1 : 0) +
     (filterSchoolType !== 'any' ? 1 : 0) +
     (filterLocalScene !== 'all' ? 1 : 0) +
+    (filterAura ? 1 : 0) +
     (climatePrefs.cold_tolerance ? 1 : 0) +
     (climatePrefs.heat_tolerance ? 1 : 0) +
     (climatePrefs.rain_tolerance ? 1 : 0) +
@@ -164,6 +169,7 @@ export default function FilterSheet({
     onFilterTenureChange([])
     onFilterSchoolTypeChange('any')
     onFilterLocalSceneChange('all')
+    onFilterAuraChange(false)
     onClimatePrefsChange({})
   }
 
@@ -460,6 +466,20 @@ export default function FilterSheet({
               {chip(filterLocalScene === 'all', 'All', () => onFilterLocalSceneChange('all'))}
               {chip(filterLocalScene === 'Some', 'Some+', () => onFilterLocalSceneChange(filterLocalScene === 'Some' ? 'all' : 'Some'))}
               {chip(filterLocalScene === 'High', 'High only', () => onFilterLocalSceneChange(filterLocalScene === 'High' ? 'all' : 'High'))}
+            </div>
+          </div>
+
+          {/* Aura */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 8 }}>
+              <div style={LABEL_STYLE}>Aura</div>
+            </div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+              The top 5% of places in each metro: a standout local scene backed by strong everyday livability.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {chip(!filterAura, 'All', () => onFilterAuraChange(false))}
+              {chip(filterAura, 'Aura only', () => onFilterAuraChange(!filterAura))}
             </div>
           </div>
 
