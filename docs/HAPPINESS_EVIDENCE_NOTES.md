@@ -88,9 +88,14 @@ Air travel access:
 
 Taken: housing as financial strain (cost-to-income, renter burden, evictions) instead of square footage; noise from flight paths and highways as a penalty. Not taken: omission of green space (strong panel evidence, stable in our catalog check); 15% for daily friction (commute and walkable amenities have weak individual-level support and bring back urban-density bias); the "nothing else matters" framing for safety and air quality, which is a judgment, not a finding. Inputs it names that HomeFit does not have: lighting density, neighborhood trust surveys, eviction rates, noise maps. Third-place density as the core of social fabric is plausible but we did not verify the evidence.
 
+## 3c. Backlog
+
+- Noise data (flight-path and highway noise maps) so noise can be added to climate and air.
+- Eviction and housing-stability data for renters.
+- Primary-source verification of the papers cited above: blocked in the cloud environment (ore.exeter.ac.uk, docs.iza.org, www.nber.org, jamanetwork.com, eprints.whiterose.ac.uk are not on its network allowlist). Do this from a session whose network access allows those hosts, or by hand.
+
 ## 4. Open questions
 
 - Individual-level evidence for school quality, amenities and walkability on life satisfaction, healthcare distance, and a ranking of neighborhood factors in a national panel (Understanding Society, SOEP, HILDA).
 - Data sources for noise (flight path and highway maps) and eviction rates.
-- Whether Active Outdoors and Natural Beauty double count (both read parks, canopy, water).
 - Verify the key papers' effect sizes at source before any public claim.

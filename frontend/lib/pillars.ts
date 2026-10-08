@@ -85,15 +85,18 @@ export function computeLongevityIndex(
 }
 
 /**
- * Compute Happiness Index (0–100) client-side from livability_pillars. Mirrors backend pillars/happiness_index.py.
- * Weights: social 0.30, safety 0.20, commute 0.15, amenities 0.05, housing 0.10, beauty 0.12, education 0.08.
- * Renormalizes over available components; safety/education excluded when failed/missing/confidence=0.
- * Social fabric is modified by economic_opportunity when available (eco_modifier 0.85–1.15).
+ * Compute Happiness Index (0–100) client-side from livability_pillars. Mirrors backend pillars/happiness_index.py (v5).
+ * Weights: social 0.26, safety 0.18, housing 0.14, natural beauty 0.12, economic opportunity 0.08,
+ * active outdoors 0.07, climate 0.06, commute 0.05, amenities 0.04. Schools carry no weight.
+ * Renormalizes over available components; a pillar that failed to score (status 'failed', or score 0
+ * with confidence 0) is missing data, not a real zero.
  */
 export function computeHappinessIndex(pillars: Record<string, any>): number | null {
-  let S: number | null = typeof pillars.social_fabric?.score === 'number' ? pillars.social_fabric.score : null
-  const cs = pillars.community_safety
-  const F: number | null = (!cs || cs.status === 'failed') ? null : typeof cs.score === 'number' ? cs.score : null
+  const pillarScore = (p: any): number | null => {
+    if (!p || p.status === 'failed') return null
+    if (p.confidence === 0 && p.score === 0) return null
+    return typeof p.score === 'number' ? p.score : null
+  }
   // Personal commute (work hub selected -> synthetic commute_time pillar) wins over the area-mean
   // commute score from public_transit_access.
   const C: number | null = pillars.commute_time?.skip_commute
@@ -101,15 +104,20 @@ export function computeHappinessIndex(pillars: Record<string, any>): number | nu
     : typeof pillars.commute_time?.score === 'number'
     ? pillars.commute_time.score
     : typeof pillars.public_transit_access?.breakdown?.commute_time === 'number'
-      ? pillars.public_transit_access.breakdown.commute_time : null
-  const N: number | null = typeof pillars.neighborhood_amenities?.score === 'number' ? pillars.neighborhood_amenities.score : null
-  const H: number | null = typeof pillars.housing_value?.score === 'number' ? pillars.housing_value.score : null
-  const G: number | null = typeof pillars.natural_beauty?.score === 'number' ? pillars.natural_beauty.score : null
-  const edu = pillars.quality_education
-  const E: number | null = (edu?.confidence === 0) ? null : typeof edu?.score === 'number' ? edu.score : null
-  const ecoScore: number | null = typeof pillars.economic_opportunity?.score === 'number' ? pillars.economic_opportunity.score : null
-  if (S !== null && ecoScore !== null) S = Math.max(0, Math.min(100, S * (0.85 + (ecoScore / 100) * 0.30)))
-  const cmps: [number | null, number][] = [[S, 0.30], [F, 0.20], [C, 0.15], [N, 0.05], [H, 0.10], [G, 0.12], [E, 0.08]]
+      ? pillars.public_transit_access.breakdown.commute_time
+      : typeof pillars.public_transit_access?.details?.commute_time?.score === 'number'
+        ? pillars.public_transit_access.details.commute_time.score : null
+  const cmps: [number | null, number][] = [
+    [pillarScore(pillars.social_fabric), 0.26],
+    [pillarScore(pillars.community_safety), 0.18],
+    [pillarScore(pillars.housing_value), 0.14],
+    [pillarScore(pillars.natural_beauty), 0.12],
+    [pillarScore(pillars.economic_opportunity), 0.08],
+    [pillarScore(pillars.active_outdoors), 0.07],
+    [pillarScore(pillars.climate_risk), 0.06],
+    [C, 0.05],
+    [pillarScore(pillars.neighborhood_amenities), 0.04],
+  ]
   const avail = cmps.filter((c): c is [number, number] => c[0] !== null)
   if (!avail.length) return null
   const tw = avail.reduce((s, [, w]) => s + w, 0)

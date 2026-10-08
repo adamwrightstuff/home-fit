@@ -35,7 +35,7 @@ The current weights (S .30, F .20, C .15, N .05, H .10, G .12, E .08) were tuned
 ## Judgment calls to review
 
 - Economic opportunity at 8% is a judgment; the pillar measures a place's job market, not an individual's job security. The old modifier that scaled social fabric by 0.85-1.15 would be removed, since it had no evidence.
-- Active outdoors and natural beauty overlap; combined 19% may double count. Consider merging.
+- Active outdoors and natural beauty overlap in the data they read, but they measure different things (doing things outdoors versus scenery) and both have their own evidence. DECISION: keep them separate.
 - Safety is held near 18% because our own data ranks it first, even though research on life satisfaction is mixed.
 - Commute at 5% only reflects the small mood cost; consider removing it from the general index and keeping it as a personal setting.
 
@@ -51,3 +51,5 @@ The current weights (S .30, F .20, C .15, N .05, H .10, G .12, E .08) were tuned
 - Rev 3: folded in two ideas from an outside proposal: noise as a possible future addition to climate and air (we have no noise data, so nothing is weighted for it now), and renter and owner cost burden as the main housing input. Rejected from it: dropping nature, and a 15% weight for daily friction (commute and walkable amenities have weak individual-level support).
 - Rev 1: first draft from literature only (education 3%, healthcare 3%, economic 12%).
 - Rev 2: added our own catalog-versus-PLACES check; economic cut to 8% because the pillar measures job-market opportunity; education and healthcare set to 0; safety raised to 18%; commute and social proximity treated as personal settings.
+
+- Rev 4 (applied): keep active outdoors and natural beauty separate; frontend client-side formula (`frontend/lib/pillars.ts`) updated to mirror the backend v5 weights, verified identical on all 411 catalog rows.
