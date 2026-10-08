@@ -3,7 +3,7 @@
  * Used by POST /api/me/saved-scores to merge incoming pillars with existing so we don't lose previous pillars.
  */
 
-import { PILLAR_ORDER, LONGEVITY_INDEX_WEIGHTS, computeLongevityIndex } from '@/lib/pillars'
+import { PILLAR_ORDER, LONGEVITY_INDEX_WEIGHTS, computeLongevityIndex, longevityPillarScore } from '@/lib/pillars'
 import type { PillarKey } from '@/lib/pillars'
 
 function prioritiesToTokens(priorities: Record<string, unknown> | null | undefined): Record<string, number> {
@@ -85,7 +85,9 @@ function longevityScoresFromMergedPillars(mergedPillars: Record<string, unknown>
   const out: Record<string, { score: number; failed?: boolean }> = {}
   for (const k of Object.keys(LONGEVITY_INDEX_WEIGHTS) as PillarKey[]) {
     const pillar = mergedPillars[k]
-    const score = getScoreFromPillar(pillar)
+    const score = getScoreFromPillar(pillar) != null
+      ? longevityPillarScore(k, pillar as { score?: number; breakdown?: Record<string, unknown> })
+      : null
     if (score != null) out[k] = { score, failed: isPillarFailed(pillar) }
   }
   return out

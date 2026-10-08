@@ -10,7 +10,7 @@ import HappinessInfo from './HappinessInfo'
 import TrajectoryInfo from './TrajectoryInfo'
 import ExportScoresModal from './ExportScoresModal'
 import { buildExportRow } from '@/lib/exportScores'
-import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, allLongevityPillarsInOnlyKeys, STATUS_SIGNAL_ONLY_PILLARS, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, longevityIndexFromLivabilityPillars, allLongevityPillarsInOnlyKeys, STATUS_SIGNAL_ONLY_PILLARS, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores, getPillarWeightsAndContributions, getPillarWeightsFromPriorities } from '@/lib/reweight'
 import { getScoreWithProgress, recomputeComposites } from '@/lib/api'
 import type { GeocodeResult, StatusSignalBreakdown } from '@/types/api'
@@ -156,13 +156,13 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   /** Backend longevity index when set (from initial payload, full run, or recompute); else we use client-computed. */
   const [longevityIndexState, setLongevityIndexState] = useState<number | null>(() => initialPayload?.longevity_index ?? null)
   const longevityIndex = useMemo(() => {
-    const fromPillars = computeLongevityIndex(pillarScores)
+    const fromPillars = longevityIndexFromLivabilityPillars(fullPillarData as Record<string, { score?: number; breakdown?: Record<string, unknown> }>)
     if (fromPillars != null) return fromPillars
     if (longevityIndexState != null && Number.isFinite(longevityIndexState)) return longevityIndexState
     const fromPayload = initialPayload?.longevity_index
     if (typeof fromPayload === 'number' && Number.isFinite(fromPayload)) return fromPayload
     return null
-  }, [longevityIndexState, initialPayload?.longevity_index, pillarScores])
+  }, [longevityIndexState, initialPayload?.longevity_index, fullPillarData])
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [scoreProgress, setScoreProgress] = useState<Record<string, { score: number }>>({})

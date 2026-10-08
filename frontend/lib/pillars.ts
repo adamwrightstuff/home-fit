@@ -38,6 +38,7 @@ export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
   'natural_beauty',
   'climate_risk',
   'quality_education',
+  'community_safety',
 ])
 
 /** Pillars that feed the Happiness Index (tag dot on pillar cards). */
@@ -50,12 +51,31 @@ export const HAPPINESS_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
 
 /** Weights for Longevity Index (must match backend LONGEVITY_INDEX_WEIGHTS). */
 export const LONGEVITY_INDEX_WEIGHTS: Record<string, number> = {
-  social_fabric: 40,
-  neighborhood_amenities: 25,
-  active_outdoors: 15,
-  natural_beauty: 10,
+  social_fabric: 35,
+  active_outdoors: 22,
+  neighborhood_amenities: 15,
   climate_risk: 8,
-  quality_education: 2,
+  natural_beauty: 5,
+  quality_education: 3,
+  community_safety: 8,
+}
+
+/**
+ * Score a pillar contributes to the Longevity Index. climate_risk counts air quality (5/8) and
+ * heat (3/8) only, from the stored breakdown; flood and temperature trend are excluded.
+ * Mirrors backend _longevity_pillar_score.
+ */
+export function longevityPillarScore(
+  key: string,
+  pillar: { score?: number; breakdown?: Record<string, unknown> } | undefined | null
+): number | null {
+  if (!pillar) return null
+  if (key === 'climate_risk') {
+    const aqi = pillar.breakdown?.aqi_score
+    const lst = pillar.breakdown?.lst_score
+    if (typeof aqi === 'number' && typeof lst === 'number') return (aqi * 5 + lst * 3) / 8
+  }
+  return typeof pillar.score === 'number' && Number.isFinite(pillar.score) ? pillar.score : null
 }
 
 /**
@@ -132,14 +152,15 @@ export function allLongevityPillarsInOnlyKeys(onlyKeys: string[]): boolean {
 
 /** Longevity index from merged livability_pillars (saved/API shape). */
 export function longevityIndexFromLivabilityPillars(
-  pillars: Record<string, { score?: number; status?: string; error?: string } | undefined>
+  pillars: Record<string, { score?: number; status?: string; error?: string; breakdown?: Record<string, unknown> } | undefined>
 ): number | null {
   const pillarScores: Record<string, { score?: number; failed?: boolean }> = {}
   for (const k of Object.keys(LONGEVITY_INDEX_WEIGHTS) as PillarKey[]) {
     const p = pillars[k]
-    if (!p || typeof p.score !== 'number' || !Number.isFinite(p.score)) continue
+    const score = longevityPillarScore(k, p)
+    if (!p || score == null) continue
     pillarScores[k] = {
-      score: p.score,
+      score,
       failed: Boolean(p.error) || p.status === 'failed',
     }
   }
@@ -153,7 +174,7 @@ export const LONGEVITY_COPY = {
     "Predicts long-term health outcomes based on Blue Zone–style research. Same formula for everyone — ignores your Trovamo weights.",
   /** Short version for subtitle or card label. */
   short:
-    'Six Blue Zone–style pillars (social fabric, amenities, outdoors, nature, climate, schools) — same formula for everyone.',
+    'Seven research-based pillars (social fabric, outdoors, amenities, air and heat, safety, nature, schools) — same formula for everyone.',
   /** One-line tooltip next to the score. */
   tooltip:
     'Predicts long-term health outcomes based on Blue Zone–style research. Same formula for everyone — ignores your Trovamo weights.',
