@@ -130,6 +130,16 @@ Claims checked from an outside summary on proximity (October 2026):
 - "Song et al. 2023" (contact frequency and the Cantril ladder): NOT FOUND; do not cite.
 - Contact frequency and wellbeing: separate studies (Korean 2019 survey, Swiss momentary-assessment study, UK loneliness data) point the same way, but none was verified here and none measures distance.
 
+## 2d. Weight sensitivity (scripts/catalog/happiness_weight_sensitivity.py, October 2026)
+
+411 catalog places (NYC, LA, SF), 2,000 random weight sets with every weight varied by up to +/-30%:
+- A place's score moves by a median SD of 1.0 point (90% band about 3.4 points wide, at most 6.3).
+- A place's rank moves by a median SD of 7 places out of 411.
+- Two places swap order in 29% of draws when they are within 1 point, 5% when 1-2 points apart, under 1% beyond 2 points. Treat gaps under about 1.5 points as ties.
+- 15 of the current top 20 stay in the top 20 in at least 90% of draws; least stable: Westwood, West Orange, Greenwich.
+- Equal weights give a rank correlation of 0.954 with the current weights, so the weights change rankings little. Safety is the weight with the largest effect (mean swing 1.9 points for +/-30%), then social (1.6), home space (1.1).
+- Implication: precision is limited more by the quality of the pillar scores (proxies, saturation, fallbacks) than by the weights.
+
 ## 3. Corrections made along the way
 
 - An outside analysis claimed commute is a "massive" and "reliable" destroyer of life satisfaction; the careful panels and meta-analysis do not support that.
