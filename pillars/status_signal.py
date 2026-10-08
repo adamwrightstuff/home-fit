@@ -191,7 +191,7 @@ _DRIVER_LABELS_AFFLUENT: Dict[str, str] = {
 
 def _build_top_drivers(
     wealth: Optional[float],
-    home_cost: float,
+    home_cost: Optional[float],
     education: Optional[float],
     occupation: Optional[float],
     archetype: str,
@@ -203,7 +203,8 @@ def _build_top_drivers(
     items: List[Tuple[str, float]] = []
     if wealth is not None:
         items.append(("wealth", round(wealth, 1)))
-    items.append(("home_cost", round(home_cost, 1)))
+    if home_cost is not None:
+        items.append(("home_cost", round(home_cost, 1)))
     if education is not None:
         items.append(("education", round(education, 1)))
     if occupation is not None:
@@ -617,10 +618,13 @@ def compute_home_cost(
     median_home_value: Optional[float],
     keys_to_try: Optional[List[str]] = None,
     baselines: Optional[Dict[str, Any]] = None,
-) -> float:
-    """Desirability: normalized by baseline median_home_value min/max when available; else 0 below $1M, linear 0-100 from $1M to $3M."""
-    if median_home_value is None or not isinstance(median_home_value, (int, float)):
-        return 0.0
+) -> Optional[float]:
+    """Desirability: normalized by baseline median_home_value min/max when available; else 0 below $1M, linear 0-100 from $1M to $3M.
+
+    Returns None when the Census median is missing or non-positive (renter-dominated or
+    non-residential tracts), so callers drop the component instead of scoring it as 0."""
+    if median_home_value is None or not isinstance(median_home_value, (int, float)) or median_home_value <= 0:
+        return None
     val = float(median_home_value)
     if keys_to_try and baselines:
         min_v, max_v = _get_baseline(baselines, keys_to_try, "home_cost", "median_home_value")
@@ -840,7 +844,7 @@ def _composite_score_from_weights(
     w_edu: float,
     w_occ: float,
     wealth: Optional[float],
-    home_cost: float,
+    home_cost: Optional[float],
     education: Optional[float],
     occupation: Optional[float],
 ) -> Optional[float]:
@@ -850,8 +854,9 @@ def _composite_score_from_weights(
     if wealth is not None:
         total_w += w_wealth
         score += w_wealth * wealth
-    total_w += w_home
-    score += w_home * home_cost
+    if home_cost is not None:
+        total_w += w_home
+        score += w_home * home_cost
     if education is not None:
         total_w += w_edu
         score += w_edu * education
@@ -867,7 +872,7 @@ def _classify_archetype(
     *,
     education: Optional[float],
     wealth: Optional[float],
-    home_cost: float,
+    home_cost: Optional[float],
     wealth_gap: Optional[float],
     occupation_neutral: Optional[float],
     stability: Optional[float] = None,
@@ -907,7 +912,7 @@ def _classify_archetype(
 def _classify_trajectory(
     *,
     wealth: Optional[float],
-    home_cost: float,
+    home_cost: Optional[float],
     stability: Optional[float] = None,
     appreciation_3yr: Optional[float] = None,
     velocity_6mo: Optional[float] = None,
@@ -952,11 +957,11 @@ def _classify_trajectory(
                 (appreciation_3yr is not None and appreciation_3yr >= 0.05) or
                 (appreciation_3yr is None and velocity_6mo is not None and velocity_6mo >= 0.05)
             )
-            _has_pressure = home_cost >= wealth_val - 5
+            _has_pressure = home_cost is not None and home_cost >= wealth_val - 5
             if _strong_momentum or (_normal_momentum and _has_pressure):
                 return "Up-and-Coming", "uac_velocity"
         else:
-            if (home_cost >= 65 and home_cost >= wealth_val + 15
+            if (home_cost is not None and home_cost >= 65 and home_cost >= wealth_val + 15
                     and stab_val is not None and stab_val < 45):
                 return "Up-and-Coming", "uac_stability_fallback"
 
@@ -1232,8 +1237,9 @@ def compute_status_signal_with_breakdown(
     if wealth is not None:
         total_w += w_wealth
         score += w_wealth * wealth
-    total_w += w_home_cost
-    score += w_home_cost * home_cost
+    if home_cost is not None:
+        total_w += w_home_cost
+        score += w_home_cost * home_cost
     if education is not None:
         total_w += w_education
         score += w_education * education
