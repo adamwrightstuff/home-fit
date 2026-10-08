@@ -1,48 +1,45 @@
 # Longevity Index
 
-**Date:** 2026-02-28  
+**Version:** 4 (2026-10-07)
 **Status:** Implemented. Separate from the user-priority total score.
 
 ---
 
 ## Overview
 
-The **Longevity Index** is a fixed weighted score over six pillars (Social Fabric, Neighborhood Amenities, Active Outdoors, Natural Beauty, Climate Risk, Quality Education), designed to signal “living longer, healthier.” It is **independent of HomeFit pillar weights** and appears alongside the main score. **User-facing tooltips/modal:** `LONGEVITY_COPY` in `frontend/lib/pillars.ts`.
+The **Longevity Index** is a fixed weighted score over seven pillars, designed to signal "living longer, healthier." It is **independent of HomeFit pillar weights** and appears alongside the main score. User-facing copy lives in `LONGEVITY_COPY` (`frontend/lib/pillars.ts`) and `INDEX_COPY.longevity` (`frontend/lib/catalogInfoCopy.ts`).
 
-- **Total score** = weighted average of all 12 pillars using the user’s priority allocation (tokens/priorities).
-- **Longevity Index** = fixed weights over 6 pillars only; same 0–100 scale.
+- **Total score** = weighted average of all pillars using the user's priority allocation.
+- **Longevity Index** = fixed weights over the pillars below; same 0-100 scale.
 
 ---
 
 ## Pillar weights
 
-| Pillar                  | Weight | Rationale |
-|-------------------------|--------|-----------|
-| Social Fabric           | 40%    | Single strongest longevity predictor; core Blue Zone factor |
-| Neighborhood Amenities  | 25%    | Walkable daily life enables movement + social connection |
-| Active Outdoors         | 15%    | Natural movement and access to outdoor activity |
-| Natural Beauty          | 10%    | Stress reduction, restorative environment |
-| Climate Risk            | 8%     | Direct health impact, Blue Zone climate correlation |
-| Quality Education       | 2%     | Purpose, cognitive engagement |
+| Pillar                 | Weight | Rationale |
+|------------------------|--------|-----------|
+| Social Fabric          | 35%    | Holt-Lunstad (2015): social isolation linked to 29% higher mortality |
+| Active Outdoors        | 22%    | Li (2019 JAMA): greenspace linked to 12-24% lower all-cause mortality; fitness is a top longevity predictor |
+| Neighborhood Amenities | 15%    | Walkable daily life (movement without a gym) and food access |
+| Climate Risk (air + heat only) | 8% | Pope (2009): fine particles and life expectancy; heat and excess summer mortality |
+| Community Safety       | 8%     | Chronic stress and trauma from crime |
+| Natural Beauty         | 5%     | Stress-reduction pathway; partly overlaps Active Outdoors |
+| Quality Education      | 3%     | Cutler and Lleras-Muney (2008): education and lower mortality |
 
-Total: 100%. All other pillars (e.g. built beauty, air travel, transit, healthcare, economic security, housing) are not included in the Longevity Index.
+Weights are judgment calls grounded in the cited effects, not fitted to outcome data. Renormalized over pillars that are eligible and scored.
+
+**Climate slot:** scored from air quality (5/8) and heat exposure (3/8) using the stored `aqi_score` and `lst_score` in the climate_risk breakdown. Flood zone and the 30-year temperature trend are excluded (property and forward risk, not mortality drivers). If the sub-scores are absent, the full climate_risk score is used.
+
+**Removed:** Healthcare Access (v3). Its evidence is county-level rural vs urban; within a metro the pillar measures OSM clinic and pharmacy density on commercial corridors, which does not predict longevity differences between nearby neighborhoods.
+
+All other pillars (transit, air travel, housing, economic opportunity, diversity, built environment, political lean) are not included.
 
 ---
 
 ## Implementation
 
-- **Backend:** `pillars/composite_indices.py` defines `LONGEVITY_INDEX_WEIGHTS` and `compute_longevity_index(...)`. The index is added to score responses as:
-  - `longevity_index`: number (0–100)
-  - `longevity_index_contributions`: `Record<pillar_name, contribution>`
-
-**Full score (no `only=`):** When `token_allocation` is provided, eligible longevity pillars (non-zero weight in the request or full run) are used; weights renormalize over that subset.
-
-**Partial `only=` requests:** `longevity_index` and `longevity_index_contributions` are **omitted (null)** unless **all six** longevity pillars were included in that request (`should_emit_longevity_index` in `pillars/composite_indices.py`). Otherwise a single pillar (e.g. schools at 100) would incorrectly dominate the index. The client recomputes longevity from merged pillar scores using `computeLongevityIndex` / `longevityIndexFromLivabilityPillars`.
-
-- **Frontend:** Prefers longevity computed from current `livability_pillars` over stale `longevity_index` on the payload. Saved-score merges recompute from merged pillars. `ScoreDisplay` shows the index when the derived value is present.
-
----
-
-## Data
-
-Uses the same pillar scores as the main livability score (no extra API or pillar runs). Only longevity pillars that have been run and are currently selected (non-zero weight) are included; their fixed weights are renormalized to sum to 100% so the index remains 0–100.
+- **Backend:** `pillars/composite_indices.py` defines `LONGEVITY_INDEX_WEIGHTS`, `_longevity_pillar_score`, and `compute_longevity_index`. Responses carry `longevity_index` and `longevity_index_contributions`.
+- **Eligibility:** with a token allocation, only pillars with a non-zero weight (or requested in a partial run) and a score are used; weights renormalize over that subset. Catalog rows use the stored allocation, so pillars weighted 0 there (e.g. natural beauty, education) drop out.
+- **Partial `only=` requests:** the index is omitted unless all seven longevity pillars were requested (`should_emit_longevity_index`).
+- **Frontend:** `LONGEVITY_INDEX_WEIGHTS`, `longevityPillarScore`, and `computeLongevityIndex` in `frontend/lib/pillars.ts` mirror the backend and must be kept in sync. Saved-score merges (`mergeSavedScores.ts`) and `PlaceView` recompute from merged pillars.
+- **Catalog:** recompute offline with `scripts/catalog/recompute_catalog_composites.py --no-census`. No API calls needed.

@@ -92,8 +92,8 @@ export const INDEX_COPY: Record<string, InfoCopy> = {
   },
   longevity: {
     title: 'Longevity',
-    body: 'How well the neighborhood\'s environment supports a long, healthy life. It looks beyond healthcare to the everyday conditions associated with long-term health, including movement, nature, social connection, safety, and the built environment.',
-    detail: 'Based on neighborhood conditions associated with longevity research, including physical activity, green space, social connection, safety, environmental quality, and access to health resources.',
+    body: 'How well the neighborhood\'s environment supports a long, healthy life. It looks at the everyday conditions associated with long-term health: social connection, outdoor activity, walkable daily life, clean air and moderate heat, safety, nature, and schools.',
+    detail: 'Based on neighborhood conditions associated with longevity research: social connection (largest weight), outdoor activity and green space, walkable amenities, air quality and heat exposure, community safety, natural beauty, and education. Healthcare access is not included.',
   },
   happiness: {
     title: 'Happiness',
