@@ -75,16 +75,28 @@ def main() -> int:
         r = json.loads(raw)
         s = r.get("score") if r.get("success") else None
         b = (s or {}).get("status_signal_breakdown")
-        if isinstance(b, dict) and b.get("archetype"):
+        if isinstance(b, dict) and b.get("archetype") and s.get("status_signal") is not None:
             name = r["catalog"]["name"]
             hv = (((s.get("livability_pillars") or {}).get("housing_value") or {}).get("summary") or {}).get("median_home_value")
             # Wealth also missing (non-residential/campus tracts): only education and occupation
             # would remain, so hold those rows back for a separate decision.
-            fix_hc = (
-                (not isinstance(hv, (int, float)) or hv <= 0)
-                and b.get("home_cost") == 0
-                and b.get("wealth") is not None
-            )
+            hv_missing = not isinstance(hv, (int, float)) or hv <= 0
+            if hv_missing and b.get("home_cost") in (0, None) and b.get("wealth") is None:
+                # Income and home value both missing: no score (insufficient data).
+                old = s["status_signal"]
+                for k in ("archetype", "archetype_rule", "trajectory", "trajectory_rule", "status_label", "status_insight"):
+                    b[k] = None
+                b.update({"home_cost": None, "top_drivers": [], "insufficient_data": True,
+                          "composite_score": None, "provisional_composite_score": None,
+                          "signal_strength": None, "signal_strength_label": None})
+                (b.get("classifier_inputs") or {})["home_cost"] = None
+                s["status_signal"] = None
+                s["it_score"] = compute_hotness_score(
+                    None, s.get("local_scene_score"), None, s.get("happiness_index"), s.get("total_score"))
+                changes.append((r["catalog"]["name"], old, 0.0, "no score", None, True, False))
+                out.append(json.dumps(r, ensure_ascii=False))
+                continue
+            fix_hc = hv_missing and b.get("home_cost") == 0 and b.get("wealth") is not None
             fix_occ = b.get("occupation") is None and name in old_occ
             if fix_hc or fix_occ:
                 old = s["status_signal"]

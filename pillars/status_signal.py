@@ -1232,6 +1232,15 @@ def compute_status_signal_with_breakdown(
     if wealth is None and education is None and occupation_neutral is None:
         return None, breakdown
 
+    # Income and home value both missing (campus, commercial or other non-residential tracts):
+    # education and occupation alone would not describe resident socioeconomic standing.
+    if wealth is None and home_cost is None:
+        for k in ("archetype", "archetype_rule", "trajectory", "trajectory_rule", "status_label", "status_insight"):
+            breakdown[k] = None
+        breakdown["top_drivers"] = []
+        breakdown["insufficient_data"] = True
+        return None, breakdown
+
     total_w = 0.0
     score = 0.0
     if wealth is not None:
