@@ -1,5 +1,7 @@
 """Unit tests for diversity_preference parsing and scoring mode."""
 
+import pytest
+
 from pillars.diversity import get_diversity_score, parse_diversity_preference
 
 
@@ -19,7 +21,10 @@ def test_parse_diversity_preference_valid_and_filters():
 def test_get_diversity_score_accepts_preference_without_crash():
     """Smoke: ensure get_diversity_score runs; values depend on Census availability."""
     lat, lon = 40.6782, -73.9442
-    score, details = get_diversity_score(lat, lon, diversity_preference=["race", "income"])
+    try:
+        score, details = get_diversity_score(lat, lon, diversity_preference=["race", "income"])
+    except RuntimeError as exc:
+        pytest.skip(f"Census diversity data unavailable: {exc}")
     assert isinstance(score, float)
     assert "summary" in details
     assert details["summary"].get("diversity_preference") == ["race", "income"]

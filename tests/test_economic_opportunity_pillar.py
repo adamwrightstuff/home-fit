@@ -113,7 +113,9 @@ class TestEconomicSecurityPillar(unittest.TestCase):
         self.assertIn("base_score", details)
         self.assertIn("selected_job_categories", details)
         self.assertEqual(details.get("selected_job_categories"), ["tech_professional"])
-        # If overlay applied, personalized score should differ from base_score (not strictly guaranteed,
-        # but in our fake overlay it should increase).
-        self.assertGreaterEqual(float(details.get("score") or 0.0), float(details.get("base_score") or 0.0))
+        # The overlay must change the personalized score relative to the base score. Direction is not
+        # asserted: the pillar blends the overlay with other category terms, so it can lower the score.
+        self.assertNotEqual(float(details.get("score") or 0.0), float(details.get("base_score") or 0.0))
+        self.assertGreaterEqual(float(details.get("score") or 0.0), 0.0)
+        self.assertLessEqual(float(details.get("score") or 0.0), 100.0)
 

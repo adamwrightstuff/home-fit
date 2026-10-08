@@ -27,7 +27,8 @@ class TestSfPlacesClassification(unittest.TestCase):
         self.assertEqual(_classify_civic_node_type(["community_center"]), "community_centre")
 
     def test_skip_unmapped(self):
-        self.assertIsNone(_classify_civic_node_type(["restaurant"]))
+        self.assertIsNone(_classify_civic_node_type(["gas_station"]))
+        self.assertEqual(_classify_civic_node_type(["restaurant"]), "restaurant")
 
 
 class TestSfPlacesAugment(unittest.TestCase):
