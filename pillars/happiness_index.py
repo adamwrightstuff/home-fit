@@ -1,22 +1,24 @@
 """
 Happiness Index: 0–100 composite from existing pillar data (not a pillar).
 
-Components (all 0–100, renormalized when missing):
-- S (Social Fabric): Strongest cross-study predictor of wellbeing (Putnam, Helliwell).
-  Modified by economic opportunity: eco=0 → S×0.85, eco=100 → S×1.15.
-- F (Safety): Community Safety pillar. Fear of crime is a primary wellbeing drag (Loukaitou-Sideris 2006).
-- C (Commute): Commute score from public_transit (shorter = better). Stutzer & Frey (2004).
-- N (Neighborhood): Neighborhood Amenities. Walkable access to daily life; weight reduced from 0.15
-  because amenities proxies density stress in catalog regression; kept at 0.05 as tiebreaker.
-- H (Home Space-to-Price): Home Price to Space pillar score.
-- G (Green): Natural Beauty pillar — daily nature contact → stress reduction (Bratman 2015).
-  Empirically #2 predictor in non-urban regression; raised from 0.05.
-- E (Education): Quality Education pillar. Community human capital predictor (Helliwell & Barrington-Leigh).
-  Empirically #3 predictor in non-urban regression.
+Version 5. Weights follow docs/HAPPINESS_WEIGHTS_PROPOSAL.md; evidence and sources are in
+docs/HAPPINESS_EVIDENCE_NOTES.md. A pillar carries weight only where individual-level research and
+our own catalog check do not contradict each other. The weights are judgment, not a fit: county-level
+fits against CDC PLACES were shown to be confounded by wealth and place type.
 
-Base weights: S 0.30, F 0.20, C 0.15, N 0.05, H 0.10, G 0.12, E 0.08 (renormalized over available).
-Empirically validated: R²=0.305 (all), R²=0.388 (non-urban) vs CDC PLACES mental distress.
-Safety renormalizes out when degraded/missing.
+Components (all 0–100, renormalized over those available):
+- S (Social Fabric) 0.26: relationship quality and trust are among the strongest wellbeing predictors.
+- F (Safety) 0.18: strongest predictor in the catalog check; research clearer on trust than life satisfaction.
+- H (Housing cost burden and space) 0.14: cost burden raises depression, mostly for renters.
+- G (Natural beauty) 0.12: moving to greener areas improved mental health in panel data.
+- X (Economic opportunity) 0.08: reachable jobs and market quality (individual evidence is indirect).
+- A (Active outdoors) 0.07: exercise and nature contact protect against depression.
+- L (Climate and air) 0.06: heat, air quality, flood and trend (higher = safer). No noise data yet.
+- C (Commute) 0.05: small mood and leisure cost; also a personal score for the user's own workplace.
+- N (Neighborhood amenities) 0.04: walkability raises walking; no wellbeing outcome found.
+Schools, healthcare, diversity, air travel and the other pillars carry zero weight (education is still
+reported in the breakdown for display).
+Safety and any missing component renormalize out.
 """
 
 from __future__ import annotations
@@ -26,18 +28,16 @@ import os
 from typing import Any, Dict, Optional, Tuple
 
 # Weights (must sum to 1.0 before renormalization over available components)
-W_SOCIAL = 0.30
-W_SAFETY = 0.20
-W_COMMUTE = 0.15
-W_NEIGHBORHOOD = 0.05
-W_HOME = 0.10
+W_SOCIAL = 0.26
+W_SAFETY = 0.18
+W_HOME = 0.14
 W_GREEN = 0.12
-W_EDUCATION = 0.08
-
-# Economic opportunity modifier on social fabric (Putnam: opportunity conditions the happiness
-# return on social capital).  Range: eco=0 → ×0.85, eco=50 → ×1.00, eco=100 → ×1.15.
-_ECO_MOD_MIN = 0.85
-_ECO_MOD_RANGE = 0.30  # 1.15 - 0.85
+W_ECONOMIC = 0.08
+W_ACTIVE = 0.07
+W_CLIMATE = 0.06
+W_COMMUTE = 0.05
+W_NEIGHBORHOOD = 0.04
+W_EDUCATION = 0.0  # no individual-level support; still reported in the breakdown
 
 _BASELINES_CACHE: Optional[Dict[str, Any]] = None
 
@@ -78,6 +78,16 @@ def _get_wealth_gap_baseline(baselines: Dict[str, Any], division: str) -> Tuple[
     return None, None
 
 
+def _failed(details: Optional[Dict[str, Any]]) -> bool:
+    """A pillar that failed to score is stored as 0 with status 'failed' / confidence 0; that is missing
+    data, not a real zero, so it must renormalize out instead of dragging the index down."""
+    if not details:
+        return True
+    if details.get("status") == "failed":
+        return True
+    return details.get("confidence") == 0 and details.get("score") == 0
+
+
 def _component_commute(public_transit_details: Optional[Dict[str, Any]]) -> Optional[float]:
     """C: 0–100 from public_transit commute_time (already scored)."""
     if not public_transit_details:
@@ -94,7 +104,7 @@ def _component_commute(public_transit_details: Optional[Dict[str, Any]]) -> Opti
  
 def _component_social(social_fabric_details: Optional[Dict[str, Any]]) -> Optional[float]:
     """S: 0–100 = Social Fabric pillar score (neighbors, civic spaces, rootedness)."""
-    if not social_fabric_details:
+    if _failed(social_fabric_details):
         return None
     score = social_fabric_details.get("score")
     if isinstance(score, (int, float)):
@@ -104,7 +114,7 @@ def _component_social(social_fabric_details: Optional[Dict[str, Any]]) -> Option
 
 def _component_home_space(housing_details: Optional[Dict[str, Any]]) -> Optional[float]:
     """H: 0–100 = Home Price-to-Space pillar score (more space and quality for your money)."""
-    if not housing_details:
+    if _failed(housing_details):
         return None
     score = housing_details.get("score")
     if isinstance(score, (int, float)):
@@ -114,7 +124,7 @@ def _component_home_space(housing_details: Optional[Dict[str, Any]]) -> Optional
 
 def _component_green(natural_beauty_details: Optional[Dict[str, Any]]) -> Optional[float]:
     """G: 0–100 = full Natural Beauty pillar score."""
-    if not natural_beauty_details:
+    if _failed(natural_beauty_details):
         return None
     score = natural_beauty_details.get("score")
     if isinstance(score, (int, float)):
@@ -137,9 +147,19 @@ def _component_safety(community_safety_details: Optional[Dict[str, Any]]) -> Opt
 
 def _component_neighborhood(neighborhood_details: Optional[Dict[str, Any]]) -> Optional[float]:
     """N: 0–100 = Neighborhood Amenities pillar score."""
-    if not neighborhood_details:
+    if _failed(neighborhood_details):
         return None
     score = neighborhood_details.get("score")
+    if isinstance(score, (int, float)):
+        return max(0.0, min(100.0, float(score)))
+    return None
+
+
+def _component_score(details: Optional[Dict[str, Any]]) -> Optional[float]:
+    """0–100 = a pillar's own score; missing or non-numeric → None (renormalized out)."""
+    if _failed(details):
+        return None
+    score = details.get("score")
     if isinstance(score, (int, float)):
         return max(0.0, min(100.0, float(score)))
     return None
@@ -167,17 +187,16 @@ def compute_happiness_index_with_breakdown(
     community_safety_details: Optional[Dict[str, Any]] = None,
     neighborhood_amenities_details: Optional[Dict[str, Any]] = None,
     education_details: Optional[Dict[str, Any]] = None,
+    climate_risk_details: Optional[Dict[str, Any]] = None,
+    active_outdoors_details: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Compute Happiness Index (0–100) and component breakdown.
 
     Returns (score, breakdown) with breakdown keys: social, safety, commute, neighborhood,
-    home_space, green, education, and component_weights used (after renormalization for missing).
-    Safety and education renormalize out when degraded/missing.
+    home_space, green, economic, active_outdoors, climate, education (reported only, zero weight),
+    and component_weights used (after renormalization for missing components).
     """
-    from data_sources.us_census_divisions import get_division
-    division = get_division(state_abbrev) if state_abbrev else "all"
-
     breakdown: Dict[str, Any] = {
         "social": None,
         "safety": None,
@@ -185,73 +204,49 @@ def compute_happiness_index_with_breakdown(
         "neighborhood": None,
         "home_space": None,
         "green": None,
+        "economic": None,
+        "active_outdoors": None,
+        "climate": None,
         "education": None,
-        "eco_modifier": 1.0,
+        "eco_modifier": 1.0,  # retained for stored-data compatibility; the modifier was removed in v5
         "component_weights": {},
     }
 
-    # Components
-    S = _component_social(social_fabric_details)
-    F = _component_safety(community_safety_details)
-    C = _component_commute(public_transit_details)
-    N = _component_neighborhood(neighborhood_amenities_details)
-    H = _component_home_space(housing_details)
-    G = _component_green(natural_beauty_details)
-    E = _component_education(education_details)
+    values = {
+        "social": _component_social(social_fabric_details),
+        "safety": _component_safety(community_safety_details),
+        "home_space": _component_home_space(housing_details),
+        "green": _component_green(natural_beauty_details),
+        "economic": _component_score(economic_opportunity_details),
+        "active_outdoors": _component_score(active_outdoors_details),
+        "climate": _component_score(climate_risk_details),
+        "commute": _component_commute(public_transit_details),
+        "neighborhood": _component_neighborhood(neighborhood_amenities_details),
+        "education": _component_education(education_details),
+    }
+    base_weights = {
+        "social": W_SOCIAL,
+        "safety": W_SAFETY,
+        "home_space": W_HOME,
+        "green": W_GREEN,
+        "economic": W_ECONOMIC,
+        "active_outdoors": W_ACTIVE,
+        "climate": W_CLIMATE,
+        "commute": W_COMMUTE,
+        "neighborhood": W_NEIGHBORHOOD,
+        "education": W_EDUCATION,
+    }
+    for key, val in values.items():
+        breakdown[key] = round(val, 1) if val is not None else None
 
-    # Economic opportunity modifier on social fabric (Putnam): economic stress erodes the
-    # happiness return on community bonds; opportunity amplifies it.  Applied only when both
-    # S and an economic score are available; otherwise S is used unmodified.
-    eco_score: Optional[float] = None
-    if economic_opportunity_details:
-        _raw = economic_opportunity_details.get("score")
-        if isinstance(_raw, (int, float)) and _raw >= 0:
-            eco_score = float(_raw)
-    eco_modifier = (_ECO_MOD_MIN + (eco_score / 100.0) * _ECO_MOD_RANGE) if eco_score is not None else 1.0
-    if S is not None and eco_score is not None:
-        S = max(0.0, min(100.0, S * eco_modifier))
-
-    breakdown["social"] = round(S, 1) if S is not None else None
-    breakdown["eco_modifier"] = round(eco_modifier, 3)
-    breakdown["safety"] = round(F, 1) if F is not None else None
-    breakdown["commute"] = round(C, 1) if C is not None else None
-    breakdown["neighborhood"] = round(N, 1) if N is not None else None
-    breakdown["home_space"] = round(H, 1) if H is not None else None
-    breakdown["green"] = round(G, 1) if G is not None else None
-    breakdown["education"] = round(E, 1) if E is not None else None
-
-    weights = []
-    components = []
-    if S is not None:
-        weights.append(W_SOCIAL)
-        components.append((S, "social"))
-    if F is not None:
-        weights.append(W_SAFETY)
-        components.append((F, "safety"))
-    if C is not None:
-        weights.append(W_COMMUTE)
-        components.append((C, "commute"))
-    if N is not None:
-        weights.append(W_NEIGHBORHOOD)
-        components.append((N, "neighborhood"))
-    if H is not None:
-        weights.append(W_HOME)
-        components.append((H, "home_space"))
-    if G is not None:
-        weights.append(W_GREEN)
-        components.append((G, "green"))
-    if E is not None:
-        weights.append(W_EDUCATION)
-        components.append((E, "education"))
-
-    if not components:
+    used = [(key, val, base_weights[key]) for key, val in values.items() if val is not None and base_weights[key] > 0]
+    if not used:
         return None, breakdown
 
-    total_w = sum(weights)
-    score = sum(s * w for (s, _), w in zip(components, weights)) / total_w
-    breakdown["component_weights"] = {k: round(w / total_w, 3) for (_, k), w in zip(components, weights)}
-    final = round(max(0.0, min(100.0, score)), 1)
-    return final, breakdown
+    total_w = sum(w for _, _, w in used)
+    score = sum(val * w for _, val, w in used) / total_w
+    breakdown["component_weights"] = {key: round(w / total_w, 3) for key, _, w in used}
+    return round(max(0.0, min(100.0, score)), 1), breakdown
 
 
 def compute_happiness_index(
@@ -264,6 +259,8 @@ def compute_happiness_index(
     community_safety_details: Optional[Dict[str, Any]] = None,
     neighborhood_amenities_details: Optional[Dict[str, Any]] = None,
     education_details: Optional[Dict[str, Any]] = None,
+    climate_risk_details: Optional[Dict[str, Any]] = None,
+    active_outdoors_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[float]:
     """Convenience: return only the score."""
     result, _ = compute_happiness_index_with_breakdown(
@@ -276,5 +273,7 @@ def compute_happiness_index(
         community_safety_details=community_safety_details,
         neighborhood_amenities_details=neighborhood_amenities_details,
         education_details=education_details,
+        climate_risk_details=climate_risk_details,
+        active_outdoors_details=active_outdoors_details,
     )
     return result

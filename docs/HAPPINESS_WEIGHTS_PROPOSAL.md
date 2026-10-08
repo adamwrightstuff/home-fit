@@ -1,6 +1,6 @@
-# Happiness Index weight proposal (DRAFT, not applied)
+# Happiness Index weights (APPLIED, index version 5)
 
-Status: proposal only (revision 2). No scoring code, frontend code or catalog data has been changed. Full evidence, links and our own test results are in `HAPPINESS_EVIDENCE_NOTES.md`.
+Status: applied October 2026. `pillars/happiness_index.py` now uses these weights, the callers pass economic opportunity, climate risk and active outdoors, the economic modifier on social fabric is removed, and the catalog was recomputed offline with `scripts/catalog/recompute_happiness_only.py`. Pillars stored as failed (score 0, confidence 0) now drop out and renormalize instead of counting as a real zero. Full evidence, links and our own test results are in `HAPPINESS_EVIDENCE_NOTES.md`.
 
 ## Why change anything
 

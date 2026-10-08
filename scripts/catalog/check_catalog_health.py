@@ -125,13 +125,15 @@ ZERO_SUSPICIOUS_SUBCOMPONENTS: Dict[str, Dict[str, Any]] = {
 }
 
 HAPPINESS_COMPONENT_WEIGHTS = {
-    "social":       0.30,
-    "safety":       0.20,
-    "commute":      0.15,
-    "neighborhood": 0.05,
-    "home_space":   0.10,
-    "green":        0.12,
-    "education":    0.08,
+    "social":          0.26,
+    "safety":          0.18,
+    "home_space":      0.14,
+    "green":           0.12,
+    "economic":        0.08,
+    "active_outdoors": 0.07,
+    "climate":         0.06,
+    "commute":         0.05,
+    "neighborhood":    0.04,
 }
 
 # Pillars that store confidence on 0-1 scale instead of 0-100

@@ -185,13 +185,13 @@ export const STATUS_SIGNAL_COPY = {
 export const HAPPINESS_INDEX_COPY = {
   /** One-line tooltip next to the score. */
   tooltip:
-    'Captures day-to-day livability, weighted toward commute and social connection.',
+    'Weighted toward social fabric, safety, housing cost burden and nature.',
   /** Full version for modal. */
   full:
-    'Captures day-to-day livability, weighted toward commute and social connection.',
+    'Weighted toward social fabric, safety, housing cost burden and nature.',
   /** Short version for subtitle or card label. */
   short:
-    'Commute, social fabric, housing space-for-price, nature, and neighborhood amenities — fixed weights when all five are available.',
+    'Social fabric, safety, housing cost burden, nature, economic opportunity, outdoor access, climate and air, commute, and amenities — weights renormalize when a piece is unavailable.',
 } as const
 
 /** Copy for Trajectory UX: tooltip and per-state modal copy. */

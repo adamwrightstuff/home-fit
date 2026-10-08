@@ -26,7 +26,7 @@ LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
 
 INDEX_VERSION_LONGEVITY = "3"
 INDEX_VERSION_STATUS = "6"
-INDEX_VERSION_HAPPINESS = "4"
+INDEX_VERSION_HAPPINESS = "5"
 INDEX_VERSION_HOTNESS = "1"
 
 INDICES_VERSION_METADATA = {
@@ -270,6 +270,8 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
                 community_safety_details=pillars.get("community_safety"),
                 neighborhood_amenities_details=amenities,
                 education_details=pillars.get("quality_education"),
+                climate_risk_details=pillars.get("climate_risk"),
+                active_outdoors_details=pillars.get("active_outdoors"),
             )
             if hi is not None:
                 hi_score, hi_breakdown = hi
@@ -438,6 +440,8 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
             community_safety_details=pillars.get("community_safety"),
             neighborhood_amenities_details=pillars.get("neighborhood_amenities"),
             education_details=pillars.get("quality_education"),
+            climate_risk_details=pillars.get("climate_risk"),
+            active_outdoors_details=pillars.get("active_outdoors"),
         )
         if happiness_result is not None:
             hi_score, hi_breakdown = happiness_result
