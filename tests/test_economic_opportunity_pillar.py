@@ -173,5 +173,7 @@ class TestEconomicSecurityPillar(unittest.TestCase):
         self.assertIn("selected_job_categories", details)
         self.assertEqual(details.get("selected_job_categories"), ["tech_professional"])
         # The fake overlay raises job-market strength, so the personalized score should not fall below base.
-        self.assertGreaterEqual(float(details.get("score") or 0.0), float(details.get("base_score") or 0.0))
+        # Compare market quality to base: the final score also blends in job access, which is unrelated to the overlay.
+        market_quality = float((details.get("summary") or {}).get("market_quality_score") or 0.0)
+        self.assertGreaterEqual(market_quality, float(details.get("base_score") or 0.0))
 
