@@ -89,3 +89,7 @@ data/irs_bmf_raw/
 .disk_cache/
 shortlist_results.json
 frontend/data/
+
+# Transit routing (r5py) environment and GTFS/OSM cache (scripts/work_commute/)
+.venv-r5/
+data/cache/transit/
