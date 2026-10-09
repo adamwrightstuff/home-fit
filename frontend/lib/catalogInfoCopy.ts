@@ -92,8 +92,8 @@ export const INDEX_COPY: Record<string, InfoCopy> = {
   },
   longevity: {
     title: 'Longevity',
-    body: 'How well the neighborhood\'s environment supports a long, healthy life. It looks at the everyday conditions associated with long-term health: social connection, outdoor activity, walkable daily life, clean air and moderate heat, safety, nature, and schools.',
-    detail: 'Based on neighborhood conditions associated with longevity research: social connection (largest weight), outdoor activity and green space, walkable amenities, air quality and heat exposure, community safety, natural beauty, and education. Healthcare access is not included.',
+    body: 'How many of the everyday conditions that health research links to longer lives this place has: social connection, outdoor activity, walkable amenities, clean air and moderate heat, safety, nature, and schools.',
+    detail: 'A fixed-weight score inspired by Blue Zone research: social connection (largest weight), outdoor activity and green space, walkable amenities, air quality and heat exposure, community safety, natural beauty, and education. It describes the neighborhood, not a forecast of how long you will live. Healthcare access is not included.',
   },
   happiness: {
     title: 'Happiness',

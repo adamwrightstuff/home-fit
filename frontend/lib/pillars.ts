@@ -171,16 +171,16 @@ export function longevityIndexFromLivabilityPillars(
 export const LONGEVITY_COPY = {
   /** Full version for modal. */
   full:
-    "Predicts long-term health outcomes based on Blue Zone–style research. Same formula for everyone — ignores your Trovamo weights.",
+    "Blue Zone-inspired score of the neighborhood conditions linked to long, healthy lives. Same formula for everyone, ignores your weights.",
   /** Short version for subtitle or card label. */
   short:
     'Seven research-based pillars (social fabric, outdoors, amenities, air and heat, safety, nature, schools) — same formula for everyone.',
   /** One-line tooltip next to the score. */
   tooltip:
-    'Predicts long-term health outcomes based on Blue Zone–style research. Same formula for everyone — ignores your Trovamo weights.',
+    'Blue Zone-inspired score of the neighborhood conditions linked to long, healthy lives. Same formula for everyone, ignores your weights.',
   /** Key distinction to communicate. */
   distinction:
-    'Trovamo = right for you. Longevity = right for your health over time.',
+    'Trovamo = right for you. Longevity = Blue Zone-inspired conditions for health over time.',
 } as const
 
 /** Copy for HomeFit Score UX: tooltip, subtitle, full modal, and callout distinction. */
