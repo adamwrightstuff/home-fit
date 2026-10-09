@@ -100,6 +100,7 @@ export default function SearchPage() {
 
   const handle_apply_quiz = (payload: QuizPayload) => {
     const priorities = { ...DEFAULT_PRIORITIES, ...payload.priorities } as PillarPriorities
+    priorities.commute_time = 'None'
     const scenery = payload.filterNbTypes.slice(0, 2)
     set_search_options(prev => {
       const updated = {
