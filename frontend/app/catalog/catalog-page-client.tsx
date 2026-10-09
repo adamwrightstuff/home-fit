@@ -1203,24 +1203,30 @@ export default function CatalogPageClient({
           const merged = { ...DEFAULT_PRIORITIES, ...payload.priorities } as PillarPriorities
           setPriorities(merged)
 
-          // Filters
-          if (payload.filterAoTypes.length > 0) setFilterAoTypes(payload.filterAoTypes)
-          if (payload.filterNbTypes.length > 0) setFilterNbTypes(payload.filterNbTypes)
-          if (payload.filterHousingType.length > 0) setFilterHousingType(payload.filterHousingType)
-          if (payload.filterTenure.length > 0) setFilterTenure(payload.filterTenure)
+          // Filters the quiz controls are replaced outright (an empty answer clears the old value,
+          // so filters from a previous quiz run or an older quiz version can't linger).
+          setFilterAoTypes(payload.filterAoTypes)
+          setFilterNbTypes(payload.filterNbTypes)
+          setFilterHousingType(payload.filterHousingType)
+          setFilterTenure(payload.filterTenure)
+          setFilterLocalScene(payload.filterLocalScene ?? 'all')
+          setFilterPoliticalLean(payload.filterPoliticalLean)
+          setFilterTrajectory((payload.filterTrajectory || 'all') as typeof filterTrajectory)
+          setFilterCommuteMax((payload.filterCommuteMax || 'all') as typeof filterCommuteMax)
+          setClimatePrefs(payload.climatePrefs ?? {})
+          // Profile-owned commute inputs are only set when the quiz actually has an answer
           if (payload.workZoneId) setWorkZoneId(payload.workZoneId)
           if (payload.commuteMode) setCommuteMode(payload.commuteMode)
           if (payload.officeDays) setOfficeDays(payload.officeDays)
-          if (payload.filterLocalScene && payload.filterLocalScene !== 'all') setFilterLocalScene(payload.filterLocalScene)
-          if (payload.filterPoliticalLean.length > 0) setFilterPoliticalLean(payload.filterPoliticalLean)
-          if (payload.filterTrajectory && payload.filterTrajectory !== 'all') setFilterTrajectory(payload.filterTrajectory as typeof filterTrajectory)
-          if (payload.filterCommuteMax && payload.filterCommuteMax !== 'all') setFilterCommuteMax(payload.filterCommuteMax as typeof filterCommuteMax)
-          if (payload.climatePrefs && Object.keys(payload.climatePrefs).length > 0) setClimatePrefs(payload.climatePrefs)
 
-          // Dealbreakers
-          if (payload.dealbreakers && Object.keys(payload.dealbreakers).length > 0) {
-            setDealbreakers(prev => ({ ...prev, ...payload.dealbreakers }))
-          }
+          // Dealbreakers: reset the ones the quiz owns, leave any others the user set by hand
+          setDealbreakers(prev => {
+            const next = { ...prev }
+            for (const k of ['air_travel_access', 'quality_education', 'community_safety', 'neighborhood_amenities', 'active_outdoors'] as const) {
+              next[k] = !!payload.dealbreakers?.[k]
+            }
+            return next
+          })
 
           // Persist to sessionStorage
           try {
