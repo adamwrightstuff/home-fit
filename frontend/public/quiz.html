@@ -571,6 +571,19 @@ const QUESTIONS = [
     }
   },
 
+  // Dimension 3b — Local scene (filter only)
+  {
+    id: 'scene',
+    q: 'What\'s the local scene like where you live?',
+    sub: 'Independent cafes, bars, bookstores and galleries.',
+    opts: [
+      { id: 'real', icon: '☕', label: 'A real scene',      desc: 'It\'s part of why I\'d live there' },
+      { id: 'some', icon: '🥐', label: 'Some character',   desc: 'A few good local spots is plenty' },
+      { id: 'none', icon: '🏡', label: 'Not a priority',   desc: '' },
+    ],
+    apply() { /* filter only */ }
+  },
+
   // Dimension 4 — Outdoor identity (multi-select)
   {
     id: 'outdoors',
@@ -905,7 +918,8 @@ function renderResults() {
   const sceneryNote = sceneryPicks.map(p => sceneryLabels[p]).filter(Boolean).join(' · ')
   const housingLabels = { single_family: 'Single-family', rowhouse: 'Rowhouse/Townhouse', condo: 'Apartment/Condo' }
   const housingNote = housingPicks.map(p => housingLabels[p]).filter(Boolean).join(' or ')
-  const filterNotes = [politicalNote, commuteNote, stabilityNote, outdoorsNote, sceneryNote, housingNote, ...weatherNotes].filter(Boolean)
+  const sceneNote = { real: 'Local scene: high', some: 'Local scene: some or better' }[answers.scene] || ''
+  const filterNotes = [politicalNote, commuteNote, stabilityNote, sceneNote, outdoorsNote, sceneryNote, housingNote, ...weatherNotes].filter(Boolean)
 
   document.getElementById('qwrap').innerHTML = `
     <div class="results-wrap">
@@ -940,6 +954,7 @@ function applyAndClose() {
   if (housingPicks.includes('condo')) filterHousingType.push('apartment')
 
   const filterTenure = []
+  const filterLocalScene = { real: 'High', some: 'Some' }[answers.scene] || 'all'
   const workZoneId = shown('work_hub') && WORK_HUBS[answers.work_metro].some(h => h.id === answers.work_hub) ? answers.work_hub : null
   // Commute only counts toward the score once a hub is chosen (the Explorer ignores it otherwise)
   priorities['commute_time'] = workZoneId ? (answers.work === 'office' ? 'Medium' : 'Low') : 'None'
@@ -964,6 +979,7 @@ function applyAndClose() {
     filterNbTypes,
     filterHousingType,
     filterTenure,
+    filterLocalScene,
     workZoneId,
     filterPoliticalLean,
     filterTrajectory,

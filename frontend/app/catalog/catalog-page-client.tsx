@@ -1205,6 +1205,7 @@ export default function CatalogPageClient({
           if (payload.filterHousingType.length > 0) setFilterHousingType(payload.filterHousingType)
           if (payload.filterTenure.length > 0) setFilterTenure(payload.filterTenure)
           if (payload.workZoneId) setWorkZoneId(payload.workZoneId)
+          if (payload.filterLocalScene && payload.filterLocalScene !== 'all') setFilterLocalScene(payload.filterLocalScene)
           if (payload.filterPoliticalLean.length > 0) setFilterPoliticalLean(payload.filterPoliticalLean)
           if (payload.filterTrajectory && payload.filterTrajectory !== 'all') setFilterTrajectory(payload.filterTrajectory as typeof filterTrajectory)
           if (payload.filterCommuteMax && payload.filterCommuteMax !== 'all') setFilterCommuteMax(payload.filterCommuteMax as typeof filterCommuteMax)
@@ -1229,6 +1230,7 @@ export default function CatalogPageClient({
                 filterHousingType: payload.filterHousingType,
                 filterTenure: payload.filterTenure,
                 workZoneId: payload.workZoneId ?? null,
+                filterLocalScene: payload.filterLocalScene ?? 'all',
                 filterPoliticalLean: payload.filterPoliticalLean,
                 filterTrajectory: payload.filterTrajectory,
                 filterCommuteMax: payload.filterCommuteMax,

@@ -11,6 +11,7 @@ export interface QuizPayload {
   filterHousingType: string[]
   filterTenure: string[]
   workZoneId?: string | null
+  filterLocalScene?: 'all' | 'Some' | 'High'
   filterPoliticalLean: string[]
   filterTrajectory: string
   filterCommuteMax: string
