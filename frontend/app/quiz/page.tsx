@@ -25,6 +25,7 @@ export default function QuizPage() {
           filterTenure: payload.filterTenure,
           ...(payload.workZoneId ? { workZoneId: payload.workZoneId } : {}),
           ...(payload.commuteMode ? { commuteMode: payload.commuteMode } : {}),
+          ...(payload.officeDays ? { officeDays: payload.officeDays } : {}),
           filterLocalScene: payload.filterLocalScene ?? 'all',
           filterPoliticalLean: payload.filterPoliticalLean,
           filterTrajectory: payload.filterTrajectory,

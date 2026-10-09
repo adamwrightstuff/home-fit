@@ -939,7 +939,9 @@ function applyAndClose() {
   const filterLocalScene = { real: 'High', some: 'Some' }[answers.scene] || 'all'
   const workZoneId = shown('work_hub') && WORK_HUBS[answers.work_metro].some(h => h.id === answers.work_hub) ? answers.work_hub : null
   // Commute only counts toward the score once a hub is chosen (the Explorer ignores it otherwise)
-  priorities['commute_time'] = workZoneId ? (answers.work === 'office' ? 'Medium' : 'Low') : 'None'
+  priorities['commute_time'] = workZoneId ? 'Medium' : 'None'
+  // Exposure: days commuted per week (the Explorer scales the commute score by this)
+  const officeDays = workZoneId ? (answers.work === 'office' ? 5 : 3) : null
 
   const filterPoliticalLean = politicalPicks.filter(p => p !== 'skip')
 
@@ -965,6 +967,7 @@ function applyAndClose() {
     filterLocalScene,
     workZoneId,
     commuteMode,
+    officeDays,
     filterPoliticalLean,
     filterTrajectory,
     filterCommuteMax,

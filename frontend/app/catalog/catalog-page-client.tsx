@@ -188,6 +188,8 @@ export default function CatalogPageClient({
   })
   const [officeDays, setOfficeDays] = useState<number | null>(() => {
     try {
+      const fromQuiz = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters?.officeDays
+      if (typeof fromQuiz === 'number' && Number.isInteger(fromQuiz) && fromQuiz >= 1 && fromQuiz <= 5) return fromQuiz
       const d = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.office_days
       return typeof d === 'number' && Number.isInteger(d) && d >= 0 && d <= 5 ? d : null
     } catch { return null }
@@ -1208,6 +1210,7 @@ export default function CatalogPageClient({
           if (payload.filterTenure.length > 0) setFilterTenure(payload.filterTenure)
           if (payload.workZoneId) setWorkZoneId(payload.workZoneId)
           if (payload.commuteMode) setCommuteMode(payload.commuteMode)
+          if (payload.officeDays) setOfficeDays(payload.officeDays)
           if (payload.filterLocalScene && payload.filterLocalScene !== 'all') setFilterLocalScene(payload.filterLocalScene)
           if (payload.filterPoliticalLean.length > 0) setFilterPoliticalLean(payload.filterPoliticalLean)
           if (payload.filterTrajectory && payload.filterTrajectory !== 'all') setFilterTrajectory(payload.filterTrajectory as typeof filterTrajectory)
@@ -1234,6 +1237,7 @@ export default function CatalogPageClient({
                 filterTenure: payload.filterTenure,
                 ...(payload.workZoneId ? { workZoneId: payload.workZoneId } : {}),
                 ...(payload.commuteMode ? { commuteMode: payload.commuteMode } : {}),
+                ...(payload.officeDays ? { officeDays: payload.officeDays } : {}),
                 filterLocalScene: payload.filterLocalScene ?? 'all',
                 filterPoliticalLean: payload.filterPoliticalLean,
                 filterTrajectory: payload.filterTrajectory,
