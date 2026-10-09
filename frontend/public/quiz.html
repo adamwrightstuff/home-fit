@@ -931,15 +931,17 @@ function applyAndClose() {
   const filterAoTypes = outdoorsPicks.filter(p => p !== 'none')
   const filterNbTypes = shown('scenery') ? sceneryPicks.filter(Boolean) : []
 
+  // Rowhouse and single-family picks both include 2 to 4 unit buildings (e.g. brownstone neighborhoods)
   const filterHousingType = []
-  if (housingPicks.includes('single_family') || housingPicks.includes('rowhouse')) filterHousingType.push('sf_townhouse')
+  if (housingPicks.includes('single_family') || housingPicks.includes('rowhouse')) filterHousingType.push('sf_townhouse', 'small_multifamily')
   if (housingPicks.includes('condo')) filterHousingType.push('apartment')
 
   const filterTenure = []
   const filterLocalScene = { real: 'High', some: 'Some' }[answers.scene] || 'all'
   const workZoneId = shown('work_hub') && WORK_HUBS[answers.work_metro].some(h => h.id === answers.work_hub) ? answers.work_hub : null
   // Commute only counts toward the score once a hub is chosen (the Explorer ignores it otherwise)
-  priorities['commute_time'] = workZoneId ? 'Medium' : 'None'
+  // How much commute matters follows the max-commute answer: a tight cap means it matters most
+  priorities['commute_time'] = workZoneId ? ({ u30: 'High', u45: 'Medium', u60: 'Low', any: 'None' }[ans('commute_time')] || 'Medium') : 'None'
   // Exposure: days commuted per week (the Explorer scales the commute score by this)
   const officeDays = workZoneId ? (answers.work === 'office' ? 5 : 3) : null
 
