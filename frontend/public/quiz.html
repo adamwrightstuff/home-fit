@@ -390,11 +390,10 @@ let politicalPicks = []
 let outdoorsPicks = []
 let sceneryPicks = []
 let housingPicks = []
-let extrasPicks = []
 
-const CHIP_TYPES = new Set(['weather', 'political', 'outdoors', 'scenery', 'housing', 'extras'])
+const CHIP_TYPES = new Set(['weather', 'political', 'outdoors', 'scenery', 'housing'])
 function pickArr(type) {
-  return { weather: weatherPicks, political: politicalPicks, outdoors: outdoorsPicks, scenery: sceneryPicks, housing: housingPicks, extras: extrasPicks }[type] || outdoorsPicks
+  return { weather: weatherPicks, political: politicalPicks, outdoors: outdoorsPicks, scenery: sceneryPicks, housing: housingPicks }[type] || outdoorsPicks
 }
 
 function setWeight(k, v) {
@@ -817,23 +816,6 @@ const QUESTIONS = [
     apply() { /* handled in applyAndClose */ }
   },
 
-  // Fine-tune 7 — pillars the core quiz doesn't ask about (they start at Low)
-  {
-    id: 'ft_extras', ext: true, type: 'extras',
-    q: 'Anything else that matters to you?',
-    sub: 'Pick any. Skip if none.',
-    showIf: () => wantsMore(),
-    chips: [
-      { id: 'climate',    icon: '🌊', label: 'Climate and flood safety' },
-      { id: 'diversity',  icon: '🌍', label: 'A diverse community' },
-      { id: 'healthcare', icon: '🏥', label: 'Healthcare nearby' },
-    ],
-    apply(ids) {
-      if (ids.includes('climate'))    setWeight('climate_risk', 3)
-      if (ids.includes('diversity'))  setWeight('diversity', 3)
-      if (ids.includes('healthcare')) setWeight('healthcare_access', 3)
-    }
-  },
 ]
 
 function visibleQuestions() {
