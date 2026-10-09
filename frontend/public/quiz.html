@@ -542,7 +542,7 @@ const QUESTIONS = [
     id: 'commute_time',
     q: 'What\'s your max commute each way?',
     get sub() { return hubLabel() ? 'To ' + hubLabel() + '.' : 'To the city center.' },
-    showIf: () => (answers.work === 'office' || answers.work === 'hybrid') && answers.commute_mode !== 'fly',
+    showIf: () => (answers.work === 'office' || answers.work === 'hybrid') && answers.commute_mode !== 'fly' && !(answers.commute_mode === 'drive' && !hubLabel()),
     opts: [
       { id: 'u30', icon: '⚡', label: 'Under 30 minutes', desc: '' },
       { id: 'u45', icon: '🕐', label: 'Under 45 minutes', desc: 'The typical threshold' },
@@ -948,6 +948,7 @@ function applyAndClose() {
 
   const commuteMap = { u30: '30', u45: '45', u60: '60', any: 'all' }
   const filterCommuteMax = commuteMap[ans('commute_time')] || 'all'
+  const commuteMode = ans('commute_mode') === 'transit' ? 'transit' : null
 
   const climatePrefs = {}
   if (weatherPicks.includes('cold'))   climatePrefs.cold_tolerance = 'dealbreaker'
@@ -963,6 +964,7 @@ function applyAndClose() {
     filterTenure,
     filterLocalScene,
     workZoneId,
+    commuteMode,
     filterPoliticalLean,
     filterTrajectory,
     filterCommuteMax,

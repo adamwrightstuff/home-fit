@@ -180,6 +180,8 @@ export default function CatalogPageClient({
   // Personal commute inputs (profile): how they get there and days per week in the office.
   const [commuteMode, setCommuteMode] = useState<CommuteMode | null>(() => {
     try {
+      const fromQuiz = JSON.parse(sessionStorage.getItem('homefit_search_options') ?? '{}')?.filters?.commuteMode
+      if (fromQuiz === 'transit') return fromQuiz
       const m = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.commute_mode
       return m === 'auto' || m === 'transit' || m === 'active' ? m : null
     } catch { return null }
@@ -1205,6 +1207,7 @@ export default function CatalogPageClient({
           if (payload.filterHousingType.length > 0) setFilterHousingType(payload.filterHousingType)
           if (payload.filterTenure.length > 0) setFilterTenure(payload.filterTenure)
           if (payload.workZoneId) setWorkZoneId(payload.workZoneId)
+          if (payload.commuteMode) setCommuteMode(payload.commuteMode)
           if (payload.filterLocalScene && payload.filterLocalScene !== 'all') setFilterLocalScene(payload.filterLocalScene)
           if (payload.filterPoliticalLean.length > 0) setFilterPoliticalLean(payload.filterPoliticalLean)
           if (payload.filterTrajectory && payload.filterTrajectory !== 'all') setFilterTrajectory(payload.filterTrajectory as typeof filterTrajectory)
@@ -1229,7 +1232,8 @@ export default function CatalogPageClient({
                 filterNbTypes: payload.filterNbTypes,
                 filterHousingType: payload.filterHousingType,
                 filterTenure: payload.filterTenure,
-                workZoneId: payload.workZoneId ?? null,
+                ...(payload.workZoneId ? { workZoneId: payload.workZoneId } : {}),
+                ...(payload.commuteMode ? { commuteMode: payload.commuteMode } : {}),
                 filterLocalScene: payload.filterLocalScene ?? 'all',
                 filterPoliticalLean: payload.filterPoliticalLean,
                 filterTrajectory: payload.filterTrajectory,
