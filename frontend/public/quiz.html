@@ -412,6 +412,51 @@ function nudgeWeight(k, delta) {
 let baseWeights = {}
 const wantsMore = () => answers.extend === 'more'
 
+// Work hubs: ids and labels must match lib/workZones.json
+const WORK_HUBS = {
+  nyc: [
+    { id: 'nyc_midtown_east', label: 'Midtown East / Grand Central' },
+    { id: 'nyc_midtown_west', label: 'Midtown West / Hudson Yards' },
+    { id: 'nyc_union_square', label: 'Union Square / Flatiron' },
+    { id: 'nyc_fidi', label: 'Financial District' },
+    { id: 'nyc_downtown_brooklyn', label: 'Downtown Brooklyn' },
+    { id: 'nyc_lic', label: 'Long Island City' },
+    { id: 'nyc_jersey_city', label: 'Jersey City (Exchange Place)' },
+    { id: 'nyc_newark', label: 'Downtown Newark' },
+    { id: 'nyc_white_plains', label: 'White Plains' },
+    { id: 'nyc_stamford', label: 'Stamford' },
+  ],
+  sf: [
+    { id: 'sf_fidi', label: 'SF Financial District' },
+    { id: 'sf_mission_bay', label: 'SoMa / Mission Bay' },
+    { id: 'sf_oakland', label: 'Downtown Oakland' },
+    { id: 'sf_palo_alto', label: 'Palo Alto / Menlo Park' },
+    { id: 'sf_mountain_view', label: 'Mountain View' },
+    { id: 'sf_san_jose', label: 'Downtown San Jose' },
+  ],
+  la: [
+    { id: 'la_downtown', label: 'Downtown LA' },
+    { id: 'la_century_city', label: 'Century City' },
+    { id: 'la_santa_monica', label: 'Santa Monica' },
+    { id: 'la_hollywood', label: 'Hollywood' },
+    { id: 'la_burbank', label: 'Burbank' },
+    { id: 'la_culver_city', label: 'Culver City' },
+    { id: 'la_el_segundo', label: 'El Segundo / LAX' },
+    { id: 'la_pasadena', label: 'Pasadena' },
+  ],
+  seattle: [
+    { id: 'sea_downtown', label: 'Downtown Seattle' },
+    { id: 'sea_slu', label: 'South Lake Union' },
+    { id: 'sea_bellevue', label: 'Downtown Bellevue' },
+    { id: 'sea_redmond', label: 'Redmond' },
+  ],
+}
+function hubLabel() {
+  const hubs = WORK_HUBS[answers.work_metro] || []
+  const h = hubs.find(x => x.id === answers.work_hub)
+  return h ? h.label : ''
+}
+
 const QUESTIONS = [
   // Dimension 1 — Life stage
   {
@@ -462,10 +507,38 @@ const QUESTIONS = [
     }
   },
 
+  // Dimension 2 — Where you work (conditional, sets the commute hub)
+  {
+    id: 'work_metro',
+    q: 'Which metro do you work in?',
+    sub: 'So we can measure commute to where you actually go.',
+    showIf: () => (answers.work === 'office' || answers.work === 'hybrid') && answers.commute_mode !== 'fly',
+    opts: [
+      { id: 'nyc',     icon: '🗽', label: 'New York area',  desc: '' },
+      { id: 'sf',      icon: '🌉', label: 'SF Bay Area',    desc: '' },
+      { id: 'la',      icon: '🌴', label: 'Los Angeles',    desc: '' },
+      { id: 'seattle', icon: '🏔️', label: 'Seattle area',   desc: '' },
+      { id: 'other',   icon: '🤷', label: 'Somewhere else', desc: 'We\'ll measure to the city center' },
+    ],
+    apply() { /* handled by work_hub */ }
+  },
+  {
+    id: 'work_hub',
+    q: 'Where do you work?',
+    sub: 'Pick the closest hub.',
+    showIf: () => (answers.work === 'office' || answers.work === 'hybrid') && answers.commute_mode !== 'fly' && !!WORK_HUBS[answers.work_metro],
+    get opts() {
+      return [...WORK_HUBS[answers.work_metro].map(h => ({ id: h.id, icon: '📍', label: h.label, desc: '' })),
+              { id: 'none', icon: '🤷', label: 'Somewhere else', desc: 'We\'ll measure to the city center' }]
+    },
+    apply() { /* sets workZoneId in applyAndClose */ }
+  },
+
   // Dimension 2 — Commute time cap (conditional, filter only)
   {
     id: 'commute_time',
     q: 'What\'s your max commute each way?',
+    get sub() { return hubLabel() ? 'To ' + hubLabel() + '.' : 'To the city center.' },
     showIf: () => (answers.work === 'office' || answers.work === 'hybrid') && answers.commute_mode !== 'fly',
     opts: [
       { id: 'u30', icon: '⚡', label: 'Under 30 minutes', desc: '' },
@@ -597,7 +670,7 @@ const QUESTIONS = [
     sub: 'Pick anything that would rule a place out.',
     type: 'weather',
     chips: [
-      { id: 'cold',   icon: '🥶', label: 'Brutal winters — heavy snow, months below freezing' },
+      { id: 'cold',   icon: '🥶', label: 'Cold winters, months below freezing' },
       { id: 'hot',    icon: '🥵', label: 'Sweltering summers — humid 90°F+ heat' },
       { id: 'rain',   icon: '🌧️', label: 'Rain and grey skies most of the year' },
       { id: 'swings', icon: '🍂', label: 'Extreme seasonal swings' },
@@ -800,7 +873,7 @@ function renderResults() {
   const activePolitical = politicalPicks.filter(p => p !== 'skip')
   const politicalNote = activePolitical.length > 0 ? activePolitical.map(p => politicalLabels[p]).join('/') + ' lean preferred' : ''
 
-  const weatherLabels = { cold: 'No brutal winters', hot: 'No humid summers', rain: 'No constant rain', swings: 'No extreme seasonal swings' }
+  const weatherLabels = { cold: 'No cold winters', hot: 'No humid summers', rain: 'No constant rain', swings: 'No extreme seasonal swings' }
   const weatherNotes = weatherPicks.filter(w => w !== 'none').map(w => weatherLabels[w] || w)
   const commuteNote = { u30: 'Commute under 30 min', u45: 'Commute under 45 min', u60: 'Commute under 60 min' }[answers.commute_time] || ''
   const stabilityNote = { arrived: 'Arrived/Stable neighborhoods', upside: 'Up-and-coming neighborhoods' }[answers.stability] || ''
@@ -845,6 +918,7 @@ function applyAndClose() {
   if (housingPicks.includes('condo')) filterHousingType.push('apartment')
 
   const filterTenure = []
+  const workZoneId = (answers.work === 'office' || answers.work === 'hybrid') && answers.commute_mode !== 'fly' && WORK_HUBS[answers.work_metro] && WORK_HUBS[answers.work_metro].some(h => h.id === answers.work_hub) ? answers.work_hub : null
 
   const filterPoliticalLean = politicalPicks.filter(p => p !== 'skip')
 
@@ -866,6 +940,7 @@ function applyAndClose() {
     filterNbTypes,
     filterHousingType,
     filterTenure,
+    workZoneId,
     filterPoliticalLean,
     filterTrajectory,
     filterCommuteMax,

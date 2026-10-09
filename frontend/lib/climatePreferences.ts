@@ -58,6 +58,27 @@ function axisSeasons(swing_f: number, pref: SeasonsPref): number {
   return linear(swing_f, 30, 10) // want consistency
 }
 
+/** "Cold winters" dealbreaker: two or more months with a mean temperature below freezing. */
+export const COLD_DEALBREAKER_FREEZING_MONTHS = 2
+/** "Extreme seasonal swings" dealbreaker: July minus January mean above this many °F. */
+export const SWING_DEALBREAKER_F = 45
+
+export function failsColdDealbreaker(climate: ClimateIndicators | undefined, prefs: ClimatePreferences): boolean {
+  return (
+    prefs.cold_tolerance === 'dealbreaker' &&
+    typeof climate?.months_below_freezing === 'number' &&
+    climate.months_below_freezing >= COLD_DEALBREAKER_FREEZING_MONTHS
+  )
+}
+
+export function failsSwingDealbreaker(climate: ClimateIndicators | undefined, prefs: ClimatePreferences): boolean {
+  return (
+    prefs.seasons === 'want_consistency' &&
+    typeof climate?.swing_f === 'number' &&
+    climate.swing_f > SWING_DEALBREAKER_F
+  )
+}
+
 export function scoreClimateMatch(
   climate: ClimateIndicators | undefined,
   prefs: ClimatePreferences,

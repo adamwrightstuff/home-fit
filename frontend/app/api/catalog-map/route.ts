@@ -79,6 +79,7 @@ function loadClimateIndex(): Map<string, ClimateIndicators> {
           jan_f: jan.avg_temp_f,
           jul_f: jul.avg_temp_f,
           swing_f: jul.avg_temp_f - jan.avg_temp_f,
+          months_below_freezing: months.filter((m) => m.avg_temp_f < 32).length,
           annual_precip_in: Math.round(annual_precip_in * 10) / 10,
           avg_solar: Math.round(avg_solar * 100) / 100,
         })

@@ -39,7 +39,7 @@ import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScene
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { fetchProfile, type CommuteMode } from '@/lib/userProfile'
 import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
-import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
+import { scoreClimateMatch, hasClimatePreferences, failsColdDealbreaker, failsSwingDealbreaker, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -693,9 +693,9 @@ export default function CatalogPageClient({
         // Threshold 15: rejects places greyer/colder/hotter than Seattle-level extremes.
         // NYC cluster scores ~15.8 on rain_grey; threshold of 30 incorrectly killed the entire metro.
         if (climatePrefs.rain_tolerance === 'dealbreaker' && typeof cm.axes.rain_grey === 'number' && !isNaN(cm.axes.rain_grey) && cm.axes.rain_grey < 15) return false
-        if (climatePrefs.cold_tolerance === 'dealbreaker' && typeof cm.axes.cold_winter === 'number' && !isNaN(cm.axes.cold_winter) && cm.axes.cold_winter < 15) return false
+        if (failsColdDealbreaker(p.climate, climatePrefs)) return false
         if (climatePrefs.heat_tolerance === 'dealbreaker' && typeof cm.axes.summer_heat === 'number' && !isNaN(cm.axes.summer_heat) && cm.axes.summer_heat < 15) return false
-        if (climatePrefs.seasons === 'want_consistency' && typeof cm.axes.seasonal === 'number' && !isNaN(cm.axes.seasonal) && cm.axes.seasonal < 15) return false
+        if (failsSwingDealbreaker(p.climate, climatePrefs)) return false
         // Positive preferences also checked independently — a neutral axis (50) must not rescue
         // a place that scores 0 on something the user said they actively want.
         if (climatePrefs.heat_tolerance === 'love' && typeof cm.axes.summer_heat === 'number' && !isNaN(cm.axes.summer_heat) && cm.axes.summer_heat < 15) return false
@@ -863,9 +863,9 @@ export default function CatalogPageClient({
           const ax = cm.axes
           const fails =
             (climatePrefs.rain_tolerance === 'dealbreaker' && typeof ax.rain_grey === 'number' && !isNaN(ax.rain_grey) && ax.rain_grey < 15) ||
-            (climatePrefs.cold_tolerance === 'dealbreaker' && typeof ax.cold_winter === 'number' && !isNaN(ax.cold_winter) && ax.cold_winter < 15) ||
+            failsColdDealbreaker(p.climate, climatePrefs) ||
             (climatePrefs.heat_tolerance === 'dealbreaker' && typeof ax.summer_heat === 'number' && !isNaN(ax.summer_heat) && ax.summer_heat < 15) ||
-            (climatePrefs.seasons === 'want_consistency' && typeof ax.seasonal === 'number' && !isNaN(ax.seasonal) && ax.seasonal < 15) ||
+            failsSwingDealbreaker(p.climate, climatePrefs) ||
             (climatePrefs.heat_tolerance === 'love' && typeof ax.summer_heat === 'number' && !isNaN(ax.summer_heat) && ax.summer_heat < 15) ||
             (climatePrefs.cold_tolerance === 'love' && typeof ax.cold_winter === 'number' && !isNaN(ax.cold_winter) && ax.cold_winter < 15) ||
             (climatePrefs.rain_tolerance === 'vibe' && typeof ax.rain_grey === 'number' && !isNaN(ax.rain_grey) && ax.rain_grey < 15) ||
@@ -984,9 +984,9 @@ export default function CatalogPageClient({
           const ax = cm.axes
           const fails =
             (climatePrefs.rain_tolerance === 'dealbreaker' && typeof ax.rain_grey === 'number' && !isNaN(ax.rain_grey) && ax.rain_grey < 15) ||
-            (climatePrefs.cold_tolerance === 'dealbreaker' && typeof ax.cold_winter === 'number' && !isNaN(ax.cold_winter) && ax.cold_winter < 15) ||
+            failsColdDealbreaker(p.climate, climatePrefs) ||
             (climatePrefs.heat_tolerance === 'dealbreaker' && typeof ax.summer_heat === 'number' && !isNaN(ax.summer_heat) && ax.summer_heat < 15) ||
-            (climatePrefs.seasons === 'want_consistency' && typeof ax.seasonal === 'number' && !isNaN(ax.seasonal) && ax.seasonal < 15) ||
+            failsSwingDealbreaker(p.climate, climatePrefs) ||
             (climatePrefs.heat_tolerance === 'love' && typeof ax.summer_heat === 'number' && !isNaN(ax.summer_heat) && ax.summer_heat < 15) ||
             (climatePrefs.cold_tolerance === 'love' && typeof ax.cold_winter === 'number' && !isNaN(ax.cold_winter) && ax.cold_winter < 15) ||
             (climatePrefs.rain_tolerance === 'vibe' && typeof ax.rain_grey === 'number' && !isNaN(ax.rain_grey) && ax.rain_grey < 15) ||
@@ -1204,6 +1204,7 @@ export default function CatalogPageClient({
           if (payload.filterNbTypes.length > 0) setFilterNbTypes(payload.filterNbTypes)
           if (payload.filterHousingType.length > 0) setFilterHousingType(payload.filterHousingType)
           if (payload.filterTenure.length > 0) setFilterTenure(payload.filterTenure)
+          if (payload.workZoneId) setWorkZoneId(payload.workZoneId)
           if (payload.filterPoliticalLean.length > 0) setFilterPoliticalLean(payload.filterPoliticalLean)
           if (payload.filterTrajectory && payload.filterTrajectory !== 'all') setFilterTrajectory(payload.filterTrajectory as typeof filterTrajectory)
           if (payload.filterCommuteMax && payload.filterCommuteMax !== 'all') setFilterCommuteMax(payload.filterCommuteMax as typeof filterCommuteMax)
@@ -1227,6 +1228,7 @@ export default function CatalogPageClient({
                 filterNbTypes: payload.filterNbTypes,
                 filterHousingType: payload.filterHousingType,
                 filterTenure: payload.filterTenure,
+                workZoneId: payload.workZoneId ?? null,
                 filterPoliticalLean: payload.filterPoliticalLean,
                 filterTrajectory: payload.filterTrajectory,
                 filterCommuteMax: payload.filterCommuteMax,
