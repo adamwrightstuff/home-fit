@@ -66,26 +66,19 @@ PYTHONPATH=. python3 scripts/baselines/build_metro_baselines_from_cbsa.py \
 
 ---
 
-## Phase B — Frontend registration (one-time, before first deploy)
+## Phase B — Frontend and server registration (before first deploy)
 
-Three files. All three must be done or the catalog page won't load the new metro.
+The metro slug is a closed union in several places. Grep for an existing slug (e.g. `seattle`) and extend every hit; do not rely on the three files below alone.
 
-**1. `frontend/app/api/catalog-map/route.ts`** — add the JSONL to `METRO_FILES`:
-```typescript
-xx: ['xx_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
+```bash
+grep -rn "'seattle'" frontend --include=*.ts --include=*.tsx --include=*.js | grep -v node_modules
 ```
 
-**2. `frontend/next.config.js`** — add to `outputFileTracingIncludes` so Vercel deploys it:
-```javascript
-"./data/xx_metro_place_catalog_scores_merged.composites_recomputed.jsonl",
-```
-
-**3. `frontend/lib/catalogMapTypes.ts`** — extend `inferCatalogMetro` if the new metro is in a new state:
-```typescript
-if (p.catalog.state_abbr === 'XX') {
-  return XX_COUNTIES.has(p.catalog.county_borough) ? 'xx' : 'other_metro'
-}
-```
+1. `frontend/app/api/catalog-map/route.ts` — `CatalogMapMetro`, `METRO_FILES`, `METRO_TO_SOURCE`, the `metro=all` loader, and the valid-metro check.
+2. `frontend/next.config.js` — add the JSONL to `outputFileTracingIncludes` so Vercel bundles it.
+3. `frontend/lib/catalogMapTypes.ts` — the metro union and `inferCatalogMetro`. It defaults to `nyc` for any state it does not know, so a new state must be added or its places show as NYC.
+4. Catalog UI: `catalog-page-client.tsx`, `FilterSheet.tsx`, `CatalogListView.tsx`, `CatalogMapView.tsx` (map bounds), `MetroDot.tsx` (color and label), `WorkHubPicker.tsx`, `lib/workZones.ts`.
+5. Server: add the JSONL to `catalog_files` in `main.py` (`_load_catalog_index`). `agent_recommend.py` and `catalog_contribution.py` default to the NYC file; check whether the new metro needs to be included there.
 
 ---
 
@@ -107,12 +100,17 @@ if (p.catalog.state_abbr === 'XX') {
 
 ---
 
-## Prerequisites that are NOT automatic (check before scoring)
+## Phase A2 — Per-state and per-city data (check for EVERY new metro)
 
-- **Political lean needs a precinct file per state** (`data/election/<state>_precincts.json`, built by `scripts/collectors/build_election_lookup.py`). Only CA, CT, NJ, NY, WA exist. Austin (TX), Chicago (IL, IN) and Philadelphia (PA, DE, MD) have none, so phase 5 silently writes empty lean until they are built.
-- **Neighborhood crime needs an incident-level source** in `data_sources/crime_api.py` (`open_data_city`, bbox + city GEOID). Only NYC, LA and SF have one. Without it every place in the same police department gets the same city-wide rate. Chicago, Philadelphia and Austin all publish incident data and need a source added; Seattle has the same gap.
-- **Frontend metro type is a closed union** (`nyc | la | sf | seattle`) in `route.ts`, `catalogMapTypes.ts`, `workZones.ts` and the catalog components; `inferCatalogMetro` falls back to `nyc` for any unknown state. Extend all of them, not just the three files in Phase B.
-- **Single-metro defaults**: `agent_recommend.py` defaults to the NYC catalog and `main.py`'s startup index loads only NYC and LA.
+`score_metro.py` does not create these. Each one fails silently (empty or flat values), so check them before Phase 1, for every state the metro touches, not only the core city's.
+
+| Need | How to check | If missing |
+|------|--------------|-----------|
+| **Political lean precinct file per state** | `ls data/election/<state>_precincts.json` for each state in the CBSA (a metro can span 3–4 states) | Download VEST shapefiles with `scripts/collectors/download_vest_shapefiles.py`, then `scripts/collectors/build_election_lookup.py --state XX`. Phase 5 writes empty lean without it. |
+| **Incident-level crime source for the core city** | Is the city in `open_data_city()` / `_OPEN_DATA_CITY_GEOID` in `data_sources/crime_api.py`? | If the city's police publish incident data, add a fetcher, bbox and city GEOID alongside NYC/LA/SF. If not, every place in the same police department gets one city-wide rate, which is acceptable only for small suburbs. |
+| **Airports, hospitals, transit centers** | `grep` the metro's main airport code in `pillars/air_travel_access.py`, major hospitals in `pillars/healthcare_access.py`, city in `MAJOR_METROS` in `pillars/public_transit_access.py` | Add to the static lists (these are data, not city exceptions). |
+| **Regional / street-tree / NPI city lists** | Check `data_sources/regional_baselines.py`, `street_tree_api.py`, `npi_specialty_client.py` for the city | Add an entry or confirm the generic fallback is acceptable. |
+| **NCES charter flag** | `data/nces_schools.csv` exists and covers the state | Phase 8 skips without it. |
 
 ---
 
@@ -207,15 +205,15 @@ PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py --no-unversioned
 
 ---
 
-## Adding a 4th metro (checklist summary)
+## Adding a new metro (checklist summary)
 
-- [ ] Look up CBSA code(s) and county FIPS at census.gov
-- [ ] Add CBSA to `CBSA_COUNTIES` and `CBSA_TO_KEY` in `build_metro_baselines_from_cbsa.py`
-- [ ] Register JSONL in `frontend/app/api/catalog-map/route.ts`
-- [ ] Register JSONL in `frontend/next.config.js` outputFileTracingIncludes
-- [ ] Extend `inferCatalogMetro` in `frontend/lib/catalogMapTypes.ts` if new state
+- [ ] Look up CBSA code(s) and county FIPS (Census delineation file); list every state the CBSA spans
+- [ ] Add CBSA to `CBSA_COUNTIES`, `CBSA_TO_KEY` in `build_metro_baselines_from_cbsa.py`
+- [ ] Phase A2: precinct file for each state, crime source for the core city, airport/hospital/transit lists, NCES file
+- [ ] Phase B: extend every frontend and server registration point
 - [ ] Create place catalog CSV (`data/xx_metro_place_catalog.csv`) with columns: `name, county_borough, state_abbr, search_query, lat, lon`
 - [ ] Run `score_metro.py` with all env vars set
 - [ ] Verify coverage ≥95% for housing_stock, political_lean, local_scene_bucket, built_environment
+- [ ] Spot-check community_safety spread across the core city (not one flat value) and political_lean is non-empty in every state
 - [ ] Run `check_catalog_health.py --no-unversioned` against all metros
 - [ ] Work commute feature: follow `docs/WORK_COMMUTE_PLAYBOOK.md` (job hubs, precomputed commutes, station access)
