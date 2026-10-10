@@ -28,13 +28,17 @@
   ],
   "la": [
     { "id": "la_downtown", "label": "Downtown LA", "lat": 34.0487, "lon": -118.2595 },
+    { "id": "la_civic_center", "label": "Civic Center / Little Tokyo", "lat": 34.0537, "lon": -118.2433 },
+    { "id": "la_koreatown", "label": "Koreatown", "lat": 34.0628, "lon": -118.2995 },
+    { "id": "la_hollywood", "label": "Hollywood", "lat": 34.1016, "lon": -118.3267 },
+    { "id": "la_beverly_hills", "label": "Beverly Hills / Wilshire", "lat": 34.0676, "lon": -118.3998 },
     { "id": "la_century_city", "label": "Century City", "lat": 34.0556, "lon": -118.417 },
     { "id": "la_santa_monica", "label": "Santa Monica", "lat": 34.017, "lon": -118.496 },
-    { "id": "la_hollywood", "label": "Hollywood", "lat": 34.1016, "lon": -118.3267 },
-    { "id": "la_burbank", "label": "Burbank", "lat": 34.1561, "lon": -118.3295 },
-    { "id": "la_culver_city", "label": "Culver City", "lat": 34.0233, "lon": -118.3964 },
-    { "id": "la_el_segundo", "label": "El Segundo / LAX", "lat": 33.9192, "lon": -118.4165 },
-    { "id": "la_pasadena", "label": "Pasadena", "lat": 34.1461, "lon": -118.144 }
+    { "id": "la_el_segundo", "label": "El Segundo / LAX Aerospace", "lat": 33.9253, "lon": -118.3901 },
+    { "id": "la_burbank", "label": "Burbank Studios", "lat": 34.1561, "lon": -118.3295 },
+    { "id": "la_glendale", "label": "Downtown Glendale", "lat": 34.1506, "lon": -118.2546 },
+    { "id": "la_pasadena", "label": "Pasadena", "lat": 34.1461, "lon": -118.144 },
+    { "id": "la_woodland_hills", "label": "Woodland Hills", "lat": 34.1782, "lon": -118.5995 }
   ],
   "seattle": [
     { "id": "sea_downtown", "label": "Downtown Seattle", "lat": 47.6038, "lon": -122.3301 },
