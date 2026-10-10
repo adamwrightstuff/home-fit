@@ -5,7 +5,7 @@
     { "id": "nyc_midtown_north", "label": "Midtown North / Plaza District", "lat": 40.7602, "lon": -73.9753, "transitOnly": true },
     { "id": "nyc_union_square", "label": "Union Square / Flatiron", "lat": 40.7359, "lon": -73.9906, "transitOnly": true },
     { "id": "nyc_soho", "label": "SoHo / Hudson Square", "lat": 40.7209, "lon": -74.0052, "transitOnly": true },
-    { "id": "nyc_fidi", "label": "Financial District", "lat": 40.7075, "lon": -74.0110, "transitOnly": true },
+    { "id": "nyc_fidi", "label": "Financial District", "lat": 40.7075, "lon": -74.011, "transitOnly": true },
     { "id": "nyc_downtown_brooklyn", "label": "Downtown Brooklyn", "lat": 40.6928, "lon": -73.9903, "transitOnly": true },
     { "id": "nyc_lic", "label": "Long Island City", "lat": 40.7447, "lon": -73.9485, "transitOnly": true },
     { "id": "nyc_jersey_city", "label": "Jersey City (Exchange Place)", "lat": 40.7163, "lon": -74.0331, "transitOnly": true },
@@ -14,27 +14,32 @@
     { "id": "nyc_stamford", "label": "Stamford", "lat": 41.0469, "lon": -73.5416 }
   ],
   "sf": [
-    { "id": "sf_fidi", "label": "SF Financial District", "lat": 37.7894, "lon": -122.4013 },
-    { "id": "sf_mission_bay", "label": "SoMa / Mission Bay", "lat": 37.7706, "lon": -122.3915 },
+    { "id": "sf_fidi", "label": "SF Financial District", "lat": 37.7894, "lon": -122.4013, "transitOnly": true },
+    { "id": "sf_civic_center", "label": "Civic Center / Mid-Market", "lat": 37.7796, "lon": -122.4139, "transitOnly": true },
+    { "id": "sf_soma", "label": "SoMa / Caltrain (4th & King)", "lat": 37.7764, "lon": -122.3942, "transitOnly": true },
+    { "id": "sf_south_sf", "label": "South San Francisco Biotech", "lat": 37.6542, "lon": -122.3941 },
     { "id": "sf_oakland", "label": "Downtown Oakland", "lat": 37.8044, "lon": -122.2712 },
-    { "id": "sf_palo_alto", "label": "Palo Alto / Menlo Park", "lat": 37.4419, "lon": -122.1430 },
-    { "id": "sf_mountain_view", "label": "Mountain View", "lat": 37.3894, "lon": -122.0819 },
+    { "id": "sf_palo_alto", "label": "Palo Alto / Stanford", "lat": 37.4447, "lon": -122.1628 },
+    { "id": "sf_mountain_view", "label": "Mountain View / North Bayshore", "lat": 37.4197, "lon": -122.0806 },
+    { "id": "sf_sunnyvale", "label": "Sunnyvale / Moffett Park", "lat": 37.4096, "lon": -122.025 },
+    { "id": "sf_cupertino", "label": "Cupertino / Apple Park", "lat": 37.3349, "lon": -122.009 },
+    { "id": "sf_north_san_jose", "label": "North San Jose / Santa Clara", "lat": 37.3772, "lon": -121.9211 },
     { "id": "sf_san_jose", "label": "Downtown San Jose", "lat": 37.3352, "lon": -121.8881 }
   ],
   "la": [
     { "id": "la_downtown", "label": "Downtown LA", "lat": 34.0487, "lon": -118.2595 },
-    { "id": "la_century_city", "label": "Century City", "lat": 34.0556, "lon": -118.4170 },
-    { "id": "la_santa_monica", "label": "Santa Monica", "lat": 34.0170, "lon": -118.4960 },
+    { "id": "la_century_city", "label": "Century City", "lat": 34.0556, "lon": -118.417 },
+    { "id": "la_santa_monica", "label": "Santa Monica", "lat": 34.017, "lon": -118.496 },
     { "id": "la_hollywood", "label": "Hollywood", "lat": 34.1016, "lon": -118.3267 },
     { "id": "la_burbank", "label": "Burbank", "lat": 34.1561, "lon": -118.3295 },
     { "id": "la_culver_city", "label": "Culver City", "lat": 34.0233, "lon": -118.3964 },
     { "id": "la_el_segundo", "label": "El Segundo / LAX", "lat": 33.9192, "lon": -118.4165 },
-    { "id": "la_pasadena", "label": "Pasadena", "lat": 34.1461, "lon": -118.1440 }
+    { "id": "la_pasadena", "label": "Pasadena", "lat": 34.1461, "lon": -118.144 }
   ],
   "seattle": [
     { "id": "sea_downtown", "label": "Downtown Seattle", "lat": 47.6038, "lon": -122.3301 },
     { "id": "sea_slu", "label": "South Lake Union", "lat": 47.6256, "lon": -122.3386 },
-    { "id": "sea_bellevue", "label": "Downtown Bellevue", "lat": 47.6150, "lon": -122.1950 },
+    { "id": "sea_bellevue", "label": "Downtown Bellevue", "lat": 47.615, "lon": -122.195 },
     { "id": "sea_redmond", "label": "Redmond", "lat": 47.6423, "lon": -122.1391 }
   ]
 }
