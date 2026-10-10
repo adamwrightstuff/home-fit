@@ -306,7 +306,7 @@ def main() -> int:
     )
     p.add_argument("--csv", type=Path, required=True, help="Place catalog CSV")
     p.add_argument("--out", type=Path, required=True, help="Output JSONL (working file + final result)")
-    p.add_argument("--metro", required=True, help="Metro slug: nyc | la | sf | <new>")
+    p.add_argument("--metro", required=True, help="Metro slug: nyc | la | sf | seattle | austin | chicago | philadelphia | <new>")
     p.add_argument("--delay", type=float, default=2.0, help="Seconds between API calls (default 2)")
     p.add_argument("--timeout", type=int, default=900, help="GET /score timeout in seconds")
     p.add_argument("--job-timeout", type=int, default=900, help="Job polling timeout in seconds")
@@ -346,7 +346,8 @@ def main() -> int:
     print(f"Output: {args.out}")
     print(f"API:    {os.environ.get('HOMEFIT_API_BASE', 'http://127.0.0.1:8000')}")
 
-    known_metros = {"nyc", "la", "sf"}
+    from scripts.baselines.build_metro_baselines_from_cbsa import CBSA_TO_KEY
+    known_metros = {k.removesuffix("_metro") for k in CBSA_TO_KEY.values()}
     if not args.skip_baselines:
         if args.metro in known_metros:
             _banner(0, f"Status signal CBSA baselines ({args.metro}_metro)")

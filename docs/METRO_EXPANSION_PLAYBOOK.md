@@ -20,7 +20,7 @@ PYTHONPATH=. python3 scripts/catalog/score_metro.py \
   --metro xx
 ```
 
-`score_metro.py` handles all 11 phases in order. It's resumable — re-run if interrupted.
+`score_metro.py` handles phases 0–10 in order. It's resumable — re-run if interrupted.
 
 ---
 
@@ -50,6 +50,10 @@ CBSA codes and county FIPS: https://www.census.gov/geographies/reference-files/t
 | LA | 31080 | `la_metro` | Los Angeles + Orange |
 | NYC | 35620 | `nyc_metro` | 5 boroughs + NJ suburbs + Pike PA |
 | SF | 41860 + 41940 | `sf_metro` | Alameda, Contra Costa, Marin, SF, San Mateo + Santa Clara, San Benito |
+| Seattle | 42660 | `seattle_metro` | King, Kitsap, Pierce, Snohomish |
+| Austin | 12420 | `austin_metro` | Bastrop, Caldwell, Hays, Travis, Williamson |
+| Chicago | 16980 | `chicago_metro` | 9 IL counties + Jasper, Lake, Newton, Porter IN |
+| Philadelphia | 37980 | `philadelphia_metro` | 5 PA + 4 NJ counties + New Castle DE + Cecil MD |
 
 ### Or pass it at runtime without touching the file:
 
@@ -85,7 +89,7 @@ if (p.catalog.state_abbr === 'XX') {
 
 ---
 
-## What `score_metro.py` does (all 11 phases)
+## What `score_metro.py` does (phases 0–10)
 
 | Phase | What it does | Data source | Pillar(s) affected |
 |-------|-------------|-------------|-------------------|
@@ -100,7 +104,15 @@ if (p.catalog.state_abbr === 'XX') {
 | 8 | Charter school flag | NCES school data | Education filter |
 | 9 | Archetype summaries | Claude API (~$5–15) | Agent recommendations |
 | 10 | Composite recompute | Stored pillar scores (no API) | `total_score`, longevity, happiness |
-| 11 | Safety baselines rebuild | All metro catalog files | `community_safety` normalization |
+
+---
+
+## Prerequisites that are NOT automatic (check before scoring)
+
+- **Political lean needs a precinct file per state** (`data/election/<state>_precincts.json`, built by `scripts/collectors/build_election_lookup.py`). Only CA, CT, NJ, NY, WA exist. Austin (TX), Chicago (IL, IN) and Philadelphia (PA, DE, MD) have none, so phase 5 silently writes empty lean until they are built.
+- **Neighborhood crime needs an incident-level source** in `data_sources/crime_api.py` (`open_data_city`, bbox + city GEOID). Only NYC, LA and SF have one. Without it every place in the same police department gets the same city-wide rate. Chicago, Philadelphia and Austin all publish incident data and need a source added; Seattle has the same gap.
+- **Frontend metro type is a closed union** (`nyc | la | sf | seattle`) in `route.ts`, `catalogMapTypes.ts`, `workZones.ts` and the catalog components; `inferCatalogMetro` falls back to `nyc` for any unknown state. Extend all of them, not just the three files in Phase B.
+- **Single-metro defaults**: `agent_recommend.py` defaults to the NYC catalog and `main.py`'s startup index loads only NYC and LA.
 
 ---
 

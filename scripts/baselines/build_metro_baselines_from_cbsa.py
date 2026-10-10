@@ -57,6 +57,19 @@ CBSA_COUNTIES: Dict[str, Dict[str, List[str]]] = {
     "42660": {  # Seattle-Tacoma-Bellevue, WA
         "53": ["033", "035", "053", "061"],  # King, Kitsap, Pierce, Snohomish
     },
+    "12420": {  # Austin-Round Rock-Georgetown, TX
+        "48": ["021", "055", "209", "453", "491"],  # Bastrop, Caldwell, Hays, Travis, Williamson
+    },
+    "16980": {  # Chicago-Naperville-Elgin, IL-IN
+        "17": ["031", "037", "043", "063", "089", "093", "097", "111", "197"],
+        "18": ["073", "089", "111", "127"],  # Jasper, Lake, Newton, Porter IN
+    },
+    "37980": {  # Philadelphia-Camden-Wilmington, PA-NJ-DE-MD
+        "42": ["017", "029", "045", "091", "101"],
+        "34": ["005", "007", "015", "033"],
+        "10": ["003"],  # New Castle DE
+        "24": ["015"],  # Cecil MD
+    },
 }
 
 CBSA_TO_KEY = {
@@ -65,6 +78,9 @@ CBSA_TO_KEY = {
     "41860": "sf_metro",
     "41940": "sf_metro",  # South Bay maps to same sf_metro key; data is merged
     "42660": "seattle_metro",
+    "12420": "austin_metro",
+    "16980": "chicago_metro",
+    "37980": "philadelphia_metro",
 }
 
 # CBSAs that reuse another metro's baseline without contributing tracts to it.
