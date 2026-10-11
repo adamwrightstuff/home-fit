@@ -136,6 +136,30 @@
     "occupation": {},
     "wealth": {}
   },
+  "austin_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 81.765,
+        "min": 15.01
+      },
+      "grad_pct": {
+        "max": 38.89,
+        "min": 3.2
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 803550.0,
+        "min": 196875.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 62.6091,
+        "min": 17.3039
+      }
+    }
+  },
   "baltimore,_maryland": {
     "brand": {},
     "education": {},
@@ -203,11 +227,14 @@
     }
   },
   "cbsa_to_baseline": {
+    "12420": "austin_metro",
     "14740": "seattle_metro",
     "14860": "nyc_metro",
+    "16980": "chicago_metro",
     "31080": "la_metro",
     "35620": "nyc_metro",
     "37100": "la_metro",
+    "37980": "philadelphia_metro",
     "41860": "sf_metro",
     "41940": "sf_metro",
     "42660": "seattle_metro"
@@ -244,6 +271,30 @@
     },
     "occupation": {},
     "wealth": {}
+  },
+  "chicago_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 82.0,
+        "min": 8.505
+      },
+      "grad_pct": {
+        "max": 40.4,
+        "min": 1.9
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 675550.0,
+        "min": 115200.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 58.5734,
+        "min": 10.4278
+      }
+    }
   },
   "cincinnati,_ohio": {
     "brand": {},
@@ -826,6 +877,30 @@
       "wealth_gap_ratio": {
         "max": 0.34646360209394284,
         "min": 0.0
+      }
+    }
+  },
+  "philadelphia_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 77.71,
+        "min": 9.845
+      },
+      "grad_pct": {
+        "max": 41.555,
+        "min": 2.145
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 635550.0,
+        "min": 94180.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 55.4065,
+        "min": 12.7871
       }
     }
   },
