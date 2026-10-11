@@ -49,6 +49,14 @@ _LA_SOCRATA = "https://data.lacity.org/resource/y8y3-fqfu.json"
 # SFPD "Police Department Incident Reports: 2018 to Present" (updated daily).
 _SF_SOCRATA = "https://data.sf.gov/resource/wg3w-h783.json"
 
+# Chicago PD "Crimes - 2001 to Present" (Socrata; FBI code per row).
+_CHI_SOCRATA = "https://data.cityofchicago.org/resource/ijzp-q8t2.json"
+# Philadelphia PD incidents (CARTO SQL API).
+_PHL_CARTO = "https://phl.carto.com/api/v2/sql"
+# Austin PD "Crime Reports" (Socrata).  Carries NIBRS category but NO coordinates,
+# only a census block group, so counts are apportioned to a circle by polygon overlap.
+_AUS_SOCRATA = "https://data.austintexas.gov/resource/fdj4-gpfu.json"
+
 # FBI Crime Data Explorer
 _FBI_CDE_BASE = "https://api.usa.gov/crime/fbi/cde"
 
@@ -145,7 +153,10 @@ _SF_BBOX = (37.703, -122.53, 37.835, -122.355)
 # Census incorporated-place GEOIDs for the cities whose police publish incident
 # data.  A bbox hit is only used when the point is inside that city, so nearby
 # towns (Weehawken, Beverly Hills, Valley Stream) use their own police data.
-_OPEN_DATA_CITY_GEOID = {"nyc": "3651000", "la": "0644000", "sf": "0667000"}
+_OPEN_DATA_CITY_GEOID = {
+    "nyc": "3651000", "la": "0644000", "sf": "0667000",
+    "chicago": "1714000", "philadelphia": "4260000", "austin": "4805000",
+}
 
 # City neighborhoods scored from incident data: the smallest of these radii whose
 # disk holds MIN_NEIGHBORHOOD_RESIDENTS, so a pin in a thinly populated spot (hills,
@@ -155,6 +166,11 @@ MIN_NEIGHBORHOOD_RESIDENTS = 10_000
 
 # LAPD jurisdiction bounding box (City of Los Angeles proper)
 _LA_BBOX  = (33.70, -118.67, 34.34, -118.13)
+
+# Chicago city limits, Philadelphia (city = county), Austin (city limits + ETJ, trimmed by GEOID)
+_CHI_BBOX = (41.64, -87.94, 42.03, -87.52)
+_PHL_BBOX = (39.86, -75.29, 40.14, -74.95)
+_AUS_BBOX = (30.07, -98.07, 30.52, -97.56)
 
 # Minimum incident count to trust the data (low counts = unreliable rate)
 _MIN_INCIDENTS = 5
@@ -177,6 +193,14 @@ _SF_VIOLENT_WHERE = (
 _SF_PROPERTY_WHERE = (
     "incident_category in ('Burglary', 'Larceny Theft', 'Motor Vehicle Theft', 'Motor Vehicle Theft?')"
 )
+# CPD FBI codes: 01A homicide, 02 criminal sexual assault, 03 robbery, 04A/04B aggravated
+# assault/battery; 05 burglary, 06 larceny-theft, 07 motor vehicle theft, 09 arson.
+_CHI_VIOLENT_FBI = ("01A", "02", "03", "04A", "04B")
+_CHI_PROPERTY_FBI = ("05", "06", "07", "09")
+# Philadelphia UCR general codes: 100 homicide, 200 rape, 300 robbery, 400 aggravated assault;
+# 500 burglary, 600 theft (incl. from vehicle), 700 motor vehicle theft.  800 is simple assault.
+_PHL_VIOLENT_UCR = (100, 200, 300, 400)
+_PHL_PROPERTY_UCR = (500, 600, 700)
 # LAPD NIBRS offense codes (FBI NIBRS code list).
 _LA_VIOLENT_NIBRS = ("09A", "11A", "11B", "11C", "120", "13A")
 _LA_PROPERTY_NIBRS = ("220", "23A", "23B", "23C", "23D", "23E", "23F", "23G", "23H", "240")
@@ -451,6 +475,148 @@ def _fetch_sf_part1(lat: float, lon: float, radius_m: int, year: int) -> Optiona
         return None
     return {"violent": v, "property": p}
 
+
+
+# ---------------------------------------------------------------------------
+# Chicago Data Portal
+# ---------------------------------------------------------------------------
+
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _fetch_chicago_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
+    """Part I violent/property incident counts within a circle for one calendar year."""
+    base = f"within_circle(location, {lat}, {lon}, {radius_m}) AND " + _year_bounds(year, "date")
+    v = _socrata_count(_CHI_SOCRATA, "count(*)", f"{base} AND fbi_code in ({_soql_list(_CHI_VIOLENT_FBI)})", "Chicago")
+    p = _socrata_count(_CHI_SOCRATA, "count(*)", f"{base} AND fbi_code in ({_soql_list(_CHI_PROPERTY_FBI)})", "Chicago")
+    if v is None or p is None:
+        return None
+    return {"violent": v, "property": p}
+
+
+def _get_chicago_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
+    return _open_data_rates(_fetch_chicago_part1, "chicago_open_data", lat, lon, population, radius_m)
+
+
+# ---------------------------------------------------------------------------
+# Philadelphia (CARTO SQL)
+# ---------------------------------------------------------------------------
+
+def _carto_count(where: str) -> Optional[int]:
+    q = f"select count(*) as n from incidents_part1_part2 where {where}"
+    try:
+        resp = requests.get(_PHL_CARTO, params={"q": q}, timeout=_REQUEST_TIMEOUT)
+        if resp.status_code != 200:
+            logger.warning("Philadelphia crime API returned %d", resp.status_code)
+            return None
+        rows = resp.json().get("rows") or []
+        return int(rows[0].get("n", 0) or 0) if rows else 0
+    except Exception as e:
+        logger.warning("Philadelphia crime fetch failed: %s", e)
+        return None
+
+
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _fetch_philadelphia_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
+    base = (
+        f"dispatch_date_time >= '{year}-01-01' AND dispatch_date_time < '{year + 1}-01-01' "
+        f"AND ST_DWithin(the_geom::geography, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326)::geography, {radius_m})"
+    )
+    v = _carto_count(f"{base} AND ucr_general::int in ({','.join(map(str, _PHL_VIOLENT_UCR))})")
+    p = _carto_count(f"{base} AND ucr_general::int in ({','.join(map(str, _PHL_PROPERTY_UCR))})")
+    if v is None or p is None:
+        return None
+    return {"violent": v, "property": p}
+
+
+def _get_philadelphia_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
+    return _open_data_rates(_fetch_philadelphia_part1, "philadelphia_open_data", lat, lon, population, radius_m)
+
+
+# ---------------------------------------------------------------------------
+# Austin (block-group apportionment)
+# ---------------------------------------------------------------------------
+
+_AUS_VIOLENT_UCR = ("09A", "11A", "11B", "11C", "120", "13A")
+_AUS_PROPERTY_UCR = ("220", "23A", "23B", "23C", "23D", "23E", "23F", "23G", "23H", "240")
+_AUS_BG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "data", "austin_block_groups.json")
+_aus_bg_cache: Dict = {}
+
+
+def _austin_block_groups():
+    """(geoid list, shapely polygons, STRtree) from data/austin_block_groups.json, loaded once."""
+    if "v" not in _aus_bg_cache:
+        from shapely.geometry import Polygon, MultiPolygon
+        from shapely.strtree import STRtree
+        with open(_AUS_BG_PATH) as f:
+            raw = json.load(f)
+        ids, geoms = [], []
+        for gid, polys in raw.items():
+            parts = [Polygon(r) for r in polys]
+            ids.append(gid)
+            geoms.append(parts[0] if len(parts) == 1 else MultiPolygon(parts))
+        _aus_bg_cache["v"] = (ids, geoms, STRtree(geoms))
+    return _aus_bg_cache["v"]
+
+
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _austin_bg_counts(year: int) -> Optional[Dict]:
+    """{block_group: {'violent': n, 'property': n}} for one calendar year."""
+    out: Dict = {}
+    for kind, codes in (("violent", _AUS_VIOLENT_UCR), ("property", _AUS_PROPERTY_UCR)):
+        try:
+            resp = requests.get(_AUS_SOCRATA, params={
+                "$select": "census_block_group, count(*) as n",
+                "$where": f"ucr_category in ({_soql_list(codes)}) AND " + _year_bounds(year, "occ_date"),
+                "$group": "census_block_group",
+                "$limit": 50000,
+            }, timeout=_REQUEST_TIMEOUT)
+            if resp.status_code != 200:
+                logger.warning("Austin crime API returned %d", resp.status_code)
+                return None
+            for row in resp.json():
+                bg = (row.get("census_block_group") or "").split(".")[0]
+                if bg:
+                    out.setdefault(bg, {"violent": 0, "property": 0})[kind] += int(row.get("n", 0) or 0)
+        except Exception as e:
+            logger.warning("Austin crime fetch failed: %s", e)
+            return None
+    return out
+
+
+def _austin_circle_overlaps(lat: float, lon: float, radius_m: int) -> Dict[str, float]:
+    """Fraction of each block group's area that falls inside the circle."""
+    import math
+    from shapely.geometry import Point
+    ids, geoms, tree = _austin_block_groups()
+    dlat = radius_m / 111_000.0
+    dlon = radius_m / (111_000.0 * math.cos(math.radians(lat)))
+    # Work in a locally scaled plane so the circle is round (x scaled by cos(lat)).
+    k = math.cos(math.radians(lat))
+    from shapely import affinity
+    circle = Point(lon * k, lat).buffer(dlat, 64)
+    out: Dict[str, float] = {}
+    for i in tree.query(Point(lon, lat).buffer(max(dlat, dlon) * 1.05)):
+        g = affinity.scale(geoms[i], xfact=k, yfact=1.0, origin=(0, 0))
+        if g.area <= 0:
+            continue
+        frac = g.intersection(circle).area / g.area
+        if frac > 0:
+            out[ids[i]] = frac
+    return out
+
+
+def _fetch_austin_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
+    counts = _austin_bg_counts(year)
+    if counts is None:
+        return None
+    overlaps = _austin_circle_overlaps(lat, lon, radius_m)
+    v = sum(counts.get(bg, {}).get("violent", 0) * f for bg, f in overlaps.items())
+    p = sum(counts.get(bg, {}).get("property", 0) * f for bg, f in overlaps.items())
+    return {"violent": int(round(v)), "property": int(round(p))}
+
+
+def _get_austin_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
+    return _open_data_rates(_fetch_austin_part1, "austin_open_data", lat, lon, population, radius_m)
 
 # ---------------------------------------------------------------------------
 # LA Open Data
@@ -1456,7 +1622,8 @@ def _radius_for_area_type(area_type: Optional[str]) -> int:
 def open_data_city(lat: float, lon: float) -> Optional[str]:
     """'nyc' / 'la' / 'sf' when the point is inside a city whose police publish
     incident-level open data, else None."""
-    boxes = (("nyc", _NYC_BBOX), ("la", _LA_BBOX), ("sf", _SF_BBOX))
+    boxes = (("nyc", _NYC_BBOX), ("la", _LA_BBOX), ("sf", _SF_BBOX),
+             ("chicago", _CHI_BBOX), ("philadelphia", _PHL_BBOX), ("austin", _AUS_BBOX))
     key = next(
         (k for k, (la0, lo0, la1, lo1) in boxes if la0 <= lat <= la1 and lo0 <= lon <= lo1),
         None,
@@ -1515,6 +1682,8 @@ def get_crime_rates(
     source = incident_source if incident_source is not None else open_data_city(lat, lon)
     if source:
         getter = {"nyc": _get_nyc_rates, "la": _get_la_rates, "sf": _get_sf_rates,
+                  "chicago": _get_chicago_rates, "philadelphia": _get_philadelphia_rates,
+                  "austin": _get_austin_rates,
                   "lasd": _get_lasd_incident_rates}[source]
         result = getter(lat, lon, population, radius_m)
         if result:

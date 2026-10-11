@@ -260,3 +260,32 @@ def test_la_county_area_sums_lapd_and_lasd_incidents():
     with mock.patch.object(crime_api, "_fetch_la_part1", return_value={"violent": 16, "property": 164}), \
          mock.patch.object(crime_api, "_fetch_lasd_community_part1", return_value={"violent": 39, "property": 212}):
         assert crime_api._fetch_la_county_part1(33.98, -118.45, 1000, 2025) == {"violent": 55, "property": 376}
+
+
+def test_open_data_city_covers_chicago_philadelphia_austin():
+    for geoid, lat, lon, want in (
+        ("1714000", 41.9214, -87.6513, "chicago"),
+        ("4260000", 39.9526, -75.1652, "philadelphia"),
+        ("4805000", 30.2672, -97.7431, "austin"),
+    ):
+        with mock.patch("data_sources.census_api.get_incorporated_place_geoid", return_value=geoid):
+            assert crime_api.open_data_city(lat, lon) == want
+    # Evanston borders Chicago but polices itself
+    with mock.patch("data_sources.census_api.get_incorporated_place_geoid", return_value="1724582"):
+        assert crime_api.open_data_city(42.0451, -87.6877) is None
+
+
+def test_austin_circle_overlap_apportions_block_group_incidents():
+    # A circle in Hyde Park overlaps several block groups; fractions are within [0, 1].
+    overlaps = crime_api._austin_circle_overlaps(30.3053, -97.7289, 1000)
+    assert overlaps and all(0.0 < f <= 1.0000001 for f in overlaps.values())
+    # Far outside the Austin area: nothing to apportion.
+    assert crime_api._austin_circle_overlaps(31.5, -100.0, 1000) == {}
+
+
+def test_austin_part1_scales_counts_by_overlap():
+    counts = {"4530003022": {"violent": 10, "property": 100}}
+    with mock.patch.object(crime_api, "_austin_bg_counts", return_value=counts), \
+         mock.patch.object(crime_api, "_austin_circle_overlaps", return_value={"4530003022": 0.5}):
+        r = crime_api._fetch_austin_part1(30.3, -97.7, 1000, 2025)
+    assert r == {"violent": 5, "property": 50}
