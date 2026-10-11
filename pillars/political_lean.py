@@ -75,6 +75,7 @@ def get_political_lean_score(
         if (result["dem_2024"] + result["rep_2024"]) > 0 else None,
         "precinct_count": result["precinct_count"],
         "preference": pref,
+        "lean_2024_estimated": bool(result.get("lean_2024_estimated")),
     }
 
     return (round(score, 1) if score is not None else None), {

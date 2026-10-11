@@ -40,6 +40,12 @@ _SHPZIP_2020: dict[str, int] = {
     "NJ": 12070367,  # nj_2020.zip  (7 MB)
     "NY": 5259468,   # ny_2020.zip  (24 MB)
     "CA": 5206371,   # ca_2020.zip
+    "DE": 4773531,
+    "IL": 14304793,
+    "IN": 5143396,
+    "MD": 12070366,
+    "PA": 14304796,
+    "TX": 12070365,
 }
 
 # 2024 per-state CSV/tab: doi:10.7910/DVN/NYTPDU
@@ -48,6 +54,12 @@ _CSV_2024: dict[str, tuple[int, str]] = {
     "NJ": (13731174, "2024-nj-precinct-general.tab"),
     "NY": (13731135, "2024-ny-precinct-general.csv"),
     "CA": (13731130, "2024-ca-precinct-general.csv"),
+    "DE": (13731141, "2024-de-precinct-general.tab"),
+    "IL": (13731173, "2024-il-precinct-general.csv"),
+    "IN": (13731143, "2024-in-precinct-general.tab"),
+    "MD": (13731175, "2024-md-precinct-general.tab"),
+    "PA": (13731153, "2024-pa-precinct-general.tab"),
+    "TX": (13731167, "2024-tx-precinct-general.tab"),
 }
 
 

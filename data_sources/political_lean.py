@@ -125,6 +125,11 @@ def lookup_political_lean(
                 if p.get("match_tier") not in ("county", "none"):
                     granular.append(p)
     pool = granular if granular else nearby
+    # Precincts the 2024 results could not be joined to carry zero 2024 votes; don't let
+    # them drag a mixed pool toward a false "competitive" read.
+    with_2024 = [p for p in pool if p.get("dem_2024", 0) + p.get("rep_2024", 0) > 0]
+    if with_2024:
+        pool = with_2024
 
     dem_24 = rep_24 = dem_20 = rep_20 = 0
     count = 0
@@ -140,8 +145,10 @@ def lookup_political_lean(
 
     total_24 = dem_24 + rep_24
     total_20 = dem_20 + rep_20
-    lean_2024 = (dem_24 - rep_24) / total_24 if total_24 > 0 else 0.0
     lean_2020 = (dem_20 - rep_20) / total_20 if total_20 > 0 else 0.0
+    # No joined 2024 votes anywhere nearby: report the 2020 lean (flagged) rather than a fake 0.0.
+    lean_2024_estimated = total_24 <= 0
+    lean_2024 = lean_2020 if lean_2024_estimated else (dem_24 - rep_24) / total_24
 
     return {
         "lean_2024": round(lean_2024, 4),
@@ -152,6 +159,7 @@ def lookup_political_lean(
         "dem_2020": dem_20,
         "rep_2020": rep_20,
         "precinct_count": count,
+        "lean_2024_estimated": lean_2024_estimated,
     }
 
 

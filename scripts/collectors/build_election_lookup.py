@@ -180,7 +180,7 @@ def _county_fips_from_row(row, state_fips: str) -> str | None:
     fipsc = str(row.get("FIPS_CODE") or "").strip()
     if fipsc:
         return fipsc.zfill(5)
-    cnty = str(row.get("CNTY_CODE") or "").strip()
+    cnty = str(row.get("CNTY_CODE") or row.get("CNTY") or "").strip()
     if cnty and state_fips:
         return f"{state_fips.zfill(2)}{cnty.zfill(3)}"
     # WA and some states: COUNTY column already holds the 5-digit FIPS code
@@ -273,6 +273,239 @@ def _load_2024_votes(csv_path: str) -> tuple[dict, dict, dict]:
     return precinct_votes, municipality_votes, county_votes
 
 
+
+# ---------------------------------------------------------------------------
+# State-specific exact matchers (TX, DE, MD, IL-Chicago) and rank alignment (PA).
+#
+# 2024 precinct IDs rarely share a naming scheme with the 2020 shapefile. Where a
+# deterministic key exists we join on it; where only the *order* is shared (PA),
+# we align by rank within a county and accept it only if the 2020 and 2024 lean
+# correlate (>= _RANK_MIN_CORR), so a misaligned join falls back to the county tier
+# instead of producing confident wrong numbers.
+# ---------------------------------------------------------------------------
+
+_RANK_MIN_CORR = 0.90
+# States whose precinct names/boundaries changed between 2020 and 2024 (DE redistricting,
+# Chicago's 2022 ward remap): an unmatched precinct gets NO 2024 votes instead of the
+# county aggregate, so the lookup reports a flagged 2020 lean rather than a flat county one.
+_PRECINCT_ONLY_STATES = {"IL", "DE", "IN"}
+
+
+def _ints(s: str) -> tuple | None:
+    nums = re.findall(r"\d+", s or "")
+    return tuple(int(n) for n in nums) if nums else None
+
+
+def _shp_key_tx(row) -> tuple | None:
+    try:
+        return ("48" + str(int(row["CNTY"])).zfill(3), f"{int(row['CNTYKEY'])}{row['PREC']}")
+    except (KeyError, ValueError, TypeError):
+        return None
+
+
+def _csv_key_tx(fips: str, prec: str) -> tuple:
+    return (fips, prec.strip())
+
+
+def _shp_key_de(row) -> tuple | None:
+    return ("10", str(row.get("PRECINCT") or "").strip())
+
+
+def _csv_key_de(fips: str, prec: str) -> tuple:
+    return ("10", prec.strip())
+
+
+def _shp_key_md(row) -> tuple | None:
+    n = _ints(str(row.get("NUMBER") or ""))
+    code = str(row.get("JURSCODE") or "").strip().upper()
+    return (code, n) if n else None
+
+
+def _shp_key_il(row) -> tuple | None:
+    """Chicago only: 'CHICAGO WD 50 PCT 27' -> ('17031', ('W', 50, 27))."""
+    m = re.match(r"^CHICAGO WD (\d+) PCT (\d+)$", str(row.get("NAME") or "").upper().strip())
+    if m:
+        return ("17031", ("W", int(m.group(1)), int(m.group(2))))
+    return None
+
+
+def _csv_key_il(fips: str, prec: str) -> tuple | None:
+    m = re.match(r"^WARD (\d+) PRECINCT (\d+)$", prec.upper().strip())
+    if m:
+        return ("17031", ("W", int(m.group(1)), int(m.group(2))))
+    return None
+
+
+_EXACT_MATCHERS = {
+    "TX": (_shp_key_tx, _csv_key_tx),
+    "DE": (_shp_key_de, _csv_key_de),
+    "IL": (_shp_key_il, _csv_key_il),
+}
+
+# Pennsylvania: order-aligned within county, validated by correlation.
+_RANK_STATES = {"PA": ("PRECINCT", "COUNTYFP")}
+
+
+def _load_raw_precinct_votes(csv_path: str) -> tuple[dict, dict]:
+    """Return ({(county_fips, raw_precinct): (dem, rep)}, {county_fips: county_name}).
+
+    Uses the TOTAL mode when a file carries it, otherwise sums all modes
+    (never both -- summing TOTAL plus its splits double counts)."""
+    import collections
+    csv.field_size_limit(10**9)
+    sep = "\t" if csv_path.endswith(".tab") else ","
+    total = collections.defaultdict(lambda: [0, 0])
+    split = collections.defaultdict(lambda: [0, 0])
+    names: dict = {}
+    # no newline="": some Dataverse .tab files carry stray \r that otherwise swallows rows
+    with open(csv_path, encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f, delimiter=sep):
+            if "PRESIDENT" not in (row.get("office") or "").upper():
+                continue
+            party = (row.get("party_simplified") or "").upper().strip()
+            if party not in ("DEMOCRAT", "REPUBLICAN"):
+                continue
+            try:
+                votes = int(row.get("votes") or 0)
+            except ValueError:
+                continue
+            fips = str(row.get("county_fips") or "").strip()
+            key = (fips, (row.get("precinct") or "").strip())
+            names[fips] = (row.get("county_name") or "").strip().upper()
+            idx = 0 if party == "DEMOCRAT" else 1
+            if (row.get("mode") or "").upper().strip() == "TOTAL":
+                total[key][idx] += votes
+            else:
+                split[key][idx] += votes
+    out = {k: tuple(v) for k, v in split.items()}
+    out.update({k: tuple(v) for k, v in total.items()})
+    return out, names
+
+
+def _md_code_to_fips(names: dict) -> dict:
+    """MD shapefile JURSCODE is the first 4 letters of the county name; ambiguous prefixes are dropped."""
+    seen: dict = {}
+    for fips, name in names.items():
+        seen.setdefault(name[:4], set()).add(fips)
+    return {code: next(iter(f)) for code, f in seen.items() if len(f) == 1}
+
+
+def _rank_align_county(l20: list, ids_votes: list) -> tuple[list, float] | None:
+    """Align CSV precincts (sorted by id) to shapefile rows (sorted by id) by rank.
+
+    ids_votes is [(dem, rep)] sorted. l20 is [lean_2020] sorted. When counts differ by
+    one, drop the single CSV/shapefile element that maximises correlation. Returns
+    (list of csv index per shp index, correlation) or None."""
+    import numpy as np
+    n_s, n_c = len(l20), len(ids_votes)
+    if abs(n_s - n_c) > 1 or n_s < 5:
+        return None
+    l24 = np.array([(d - r) / max(1, d + r) for d, r in ids_votes])
+    a20 = np.array(l20)
+    best = None
+    if n_s == n_c:
+        c = float(np.corrcoef(l24, a20)[0, 1])
+        return list(range(n_c)), c
+    if n_c == n_s + 1:  # one extra CSV precinct
+        for drop in range(n_c):
+            keep = [i for i in range(n_c) if i != drop]
+            c = float(np.corrcoef(l24[keep], a20)[0, 1])
+            if best is None or c > best[1]:
+                best = (keep, c)
+    else:  # one extra shapefile precinct: that precinct gets no 2024 match
+        for drop in range(n_s):
+            keep = [i for i in range(n_s) if i != drop]
+            c = float(np.corrcoef(l24, a20[keep])[0, 1])
+            if best is None or c > best[1]:
+                mapping = [-1] * n_s
+                for ci, si in enumerate(keep):
+                    mapping[si] = ci
+                best = (mapping, c)
+    return best
+
+
+
+def _validated(state: str, gdf, overrides: dict, dem_cols: list, rep_cols: list) -> dict:
+    """Keep an exact join only if 2020 and 2024 precinct leans correlate (>= _RANK_MIN_CORR).
+    A name that was reused for a different geography shows up as near-zero correlation."""
+    import numpy as np
+    a, b = [], []
+    for idx, (d24, r24, _) in overrides.items():
+        row = gdf.loc[idx]
+        d20, r20 = _sum_cols(row, dem_cols), _sum_cols(row, rep_cols)
+        if d20 + r20 >= 50 and d24 + r24 >= 50:
+            a.append((d20 - r20) / (d20 + r20))
+            b.append((d24 - r24) / (d24 + r24))
+    if len(a) < 20:
+        print(f"  VALIDATION ({state}): too few joined precincts ({len(a)}); discarding")
+        return {}
+    c = float(np.corrcoef(a, b)[0, 1])
+    print(f"  VALIDATION ({state}): 2020 vs 2024 precinct-lean corr = {c:.3f} (need >= {_RANK_MIN_CORR})")
+    return overrides if c >= _RANK_MIN_CORR else {}
+
+
+def _build_overrides(state: str, gdf, csv_2024: str, dem_cols: list, rep_cols: list) -> dict:
+    out: dict = {}
+    raw, names = _load_raw_precinct_votes(csv_2024)
+
+    if state in _EXACT_MATCHERS:
+        shp_key, csv_key = _EXACT_MATCHERS[state]
+        votes: dict = {}
+        for (fips, prec), v in raw.items():
+            k = csv_key(fips, prec)
+            if k:
+                votes[k] = v
+        for idx, row in gdf.iterrows():
+            k = shp_key(row)
+            if k and k in votes:
+                out[idx] = (votes[k][0], votes[k][1], "precinct")
+        print(f"  exact join ({state}): {len(out)} of {len(gdf)} shapefile precincts")
+        out = _validated(state, gdf, out, dem_cols, rep_cols)
+
+    elif state == "MD":
+        code_to_fips = _md_code_to_fips(names)
+        votes = {}
+        for (fips, prec), v in raw.items():
+            n = _ints(prec)
+            if n:
+                votes[(fips, n)] = v
+        for idx, row in gdf.iterrows():
+            k = _shp_key_md(row)
+            fips = code_to_fips.get(k[0]) if k else None
+            if fips and (fips, k[1]) in votes:
+                out[idx] = (votes[(fips, k[1])][0], votes[(fips, k[1])][1], "precinct")
+        print(f"  exact join (MD): {len(out)} of {len(gdf)} shapefile precincts")
+        out = _validated(state, gdf, out, dem_cols, rep_cols)
+
+    elif state in _RANK_STATES:
+        pcol, ccol = _RANK_STATES[state]
+        by_county: dict = {}
+        for (fips, prec), v in raw.items():
+            if prec.isdigit():
+                by_county.setdefault(fips, []).append((int(prec), v))
+        sfp = _STATE_FIPS[state]
+        ok = bad = 0
+        for fips, items in by_county.items():
+            items.sort()
+            sub = gdf[gdf[ccol].astype(str).str.zfill(3) == fips[2:]].sort_values(pcol)
+            l20 = [
+                (_sum_cols(r, dem_cols) - _sum_cols(r, rep_cols)) / max(1, _sum_cols(r, dem_cols) + _sum_cols(r, rep_cols))
+                for _, r in sub.iterrows()
+            ]
+            res = _rank_align_county(l20, [v for _, v in items])
+            if not res or res[1] < _RANK_MIN_CORR:
+                bad += 1
+                continue
+            mapping, corr = res
+            shp_idx = list(sub.index)
+            for si, ci in enumerate(mapping):
+                if ci is not None and ci >= 0:
+                    dem, rep = items[ci][1]
+                    out[shp_idx[si]] = (dem, rep, "precinct")
+            ok += 1
+        print(f"  rank join ({state}): {ok} counties aligned (corr>={_RANK_MIN_CORR}), {bad} fell back to county tier; {len(out)} precincts")
+    return out
+
 def process(state: str, shp_2020: str, csv_2024: str | None) -> list[dict]:
     print(f"Loading 2020 shapefile: {shp_2020}")
     gdf = gpd.read_file(shp_2020).to_crs(epsg=4326)
@@ -309,6 +542,11 @@ def process(state: str, shp_2020: str, csv_2024: str | None) -> list[dict]:
 
     gdf["_centroid"] = gdf.geometry.to_crs(epsg=3857).centroid.to_crs(epsg=4326)
 
+    # State-specific exact / rank-aligned 2024 joins: shapefile index -> (dem, rep, tier)
+    overrides: dict = {}
+    if csv_2024:
+        overrides = _build_overrides(state.upper(), gdf, csv_2024, dem_cols, rep_cols)
+
     records = []
     matched_precinct = 0
     matched_municipality = 0
@@ -331,10 +569,13 @@ def process(state: str, shp_2020: str, csv_2024: str | None) -> list[dict]:
             county_name_raw = str(row.get("COUNTY") or "").strip().upper()
             fips5 = county_name_to_fips.get(county_name_raw)
 
-        # Get 2024 votes — precinct → municipality → county
+        # Get 2024 votes — exact/rank override → precinct → municipality → county
         dem_24, rep_24 = 0, 0
         match_tier = "none"
-        if csv_2024 and fips5:
+        if row.name in overrides:
+            dem_24, rep_24, match_tier = overrides[row.name]
+            matched_precinct += 1
+        elif csv_2024 and fips5:
             prec_raw = str(row.get(prec_col) or "") if prec_col else ""
             prec_name = _normalize_shp(prec_raw)
             prec_key = (fips5, prec_name)
@@ -348,7 +589,7 @@ def process(state: str, shp_2020: str, csv_2024: str | None) -> list[dict]:
                 dem_24, rep_24 = municipality_votes[muni_key]
                 matched_municipality += 1
                 match_tier = "municipality"
-            elif fips5 in county_votes:
+            elif fips5 in county_votes and state.upper() not in _PRECINCT_ONLY_STATES:
                 dem_24, rep_24 = county_votes[fips5]
                 matched_county += 1
                 match_tier = "county"
