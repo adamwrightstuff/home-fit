@@ -16,7 +16,7 @@ Usage:
 Phases (all run unless --skip-* flags used):
   0. baselines — build status_signal CBSA baselines for the new metro (Census API)
   1. batch     — API score every place in --csv (resumable)
-  2. retry     — re-run any failed pillars
+  2. retry     — re-run any failed pillars, then re-score places whose Overpass queries failed
   3. housing   — Census ACS B25024 housing stock (housing-type filter)
   4. zips      — Nominatim ZIP code backfill
   5. lean      — political lean data
@@ -238,6 +238,15 @@ def phase_retry(out_path: Path, args) -> None:
         print(f"  WARNING: retry phase exited {result.returncode}")
 
 
+def phase_overpass_retry(out_path: Path, args) -> None:
+    """Re-score places whose Overpass queries failed (silent zeros in Active Outdoors)."""
+    from scripts.catalog.retry_overpass_errors import run
+    run(out_path, rounds=args.overpass_rounds, delay=args.retry_delay, dry_run=False,
+        base_url=os.environ.get("HOMEFIT_API_BASE", "http://127.0.0.1:8000").rstrip("/"),
+        secret=os.environ.get("HOMEFIT_PROXY_SECRET", "").strip(),
+        poll=args.poll_interval, job_timeout=args.job_timeout)
+
+
 def phase_housing(out_path: Path) -> None:
     from scripts.catalog.backfill_housing_stock import backfill
     backfill(str(out_path), str(out_path), dry_run=False, skip_existing=True)
@@ -313,6 +322,9 @@ def main() -> int:
     p.add_argument("--poll-interval", type=float, default=2.0, help="Job poll interval in seconds")
     p.add_argument("--archs", action="store_true",
                    help="Run archetype summaries phase (Claude API, ~$5-15; auto-enabled if ANTHROPIC_API_KEY set)")
+    p.add_argument("--overpass-rounds", type=int, default=5, help="Max rounds re-scoring places with failed Overpass queries")
+    p.add_argument("--retry-delay", type=float, default=6.0, help="Seconds between places during Overpass retries")
+    p.add_argument("--skip-overpass-retry", action="store_true", help="Skip the Overpass retry loop (phase 2b)")
     p.add_argument("--skip-baselines", action="store_true", help="Skip phase 0 (status_signal CBSA baselines)")
     p.add_argument("--skip-batch",     action="store_true", help="Skip phase 1 (API scoring)")
     p.add_argument("--skip-retry",     action="store_true", help="Skip phase 2 (retry failures)")
@@ -372,6 +384,13 @@ def main() -> int:
             print(f"  WARNING: retry phase failed: {e}")
     else:
         print("\n[skip] Phase 2: retry")
+
+    if not args.skip_retry and not args.skip_overpass_retry:
+        _banner(2, "Overpass retry loop (re-score places with failed queries)")
+        try:
+            phase_overpass_retry(args.out, args)
+        except Exception as e:
+            print(f"  WARNING: Overpass retry loop failed: {e}")
 
     if not args.skip_housing:
         _banner(3, "Housing stock (Census ACS B25024)")
