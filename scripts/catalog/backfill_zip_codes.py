@@ -70,7 +70,9 @@ def backfill_zips(input_path: str) -> None:
             rows.append(json.loads(line))
 
     needs_zip = [(i, r) for i, r in enumerate(rows)
-                 if not r.get("score", {}).get("location_info", {}).get("zip")]
+                 if r.get("success", True) and isinstance(r.get("score"), dict)
+                 and isinstance(r["score"].get("location_info"), dict)
+                 and not r["score"]["location_info"].get("zip")]
 
     print(f"{path.name}: {len(rows)} total, {len(needs_zip)} need ZIP backfill")
 

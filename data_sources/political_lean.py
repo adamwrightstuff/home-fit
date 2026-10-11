@@ -141,6 +141,9 @@ def lookup_political_lean(
             count += 1
 
     if count == 0:
+        # Rural precincts are large and their centroids can sit miles away: widen once.
+        if radius_miles < 6.0:
+            return lookup_political_lean(lat, lon, state_abbr, radius_miles=6.0)
         return None
 
     total_24 = dem_24 + rep_24
