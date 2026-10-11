@@ -1,6 +1,7 @@
 import zonesByMetro from './workZones.json'
+import type { CatalogMetro } from './catalogMetros'
 
-export type WorkZoneMetro = 'nyc' | 'sf' | 'la' | 'seattle'
+export type WorkZoneMetro = CatalogMetro
 
 export interface WorkZone {
   id: string

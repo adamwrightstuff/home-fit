@@ -1,5 +1,6 @@
 'use client'
 
+import { CATALOG_METROS, CATALOG_METRO_META, zeroMetroCounts, type CatalogMetro } from '@/lib/catalogMetros'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -91,7 +92,7 @@ function sortPlaces(
 export default function CatalogPageClient({
   initialMetroFilter = 'all',
 }: {
-  initialMetroFilter?: 'all' | 'nyc' | 'la' | 'sf' | 'seattle'
+  initialMetroFilter?: 'all' | CatalogMetro
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -227,7 +228,7 @@ export default function CatalogPageClient({
   const [twinSameBand, setTwinSameBand] = useState(false)
   const [twinPillars, setTwinPillars] = useState<Set<PillarKey>>(() => defaultTwinPillarSet())
   const [filterText, setFilterText] = useState('')
-  const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la' | 'sf' | 'seattle'>(initialMetroFilter)
+  const [filterMetro, setFilterMetro] = useState<'all' | CatalogMetro>(initialMetroFilter)
   const [filterAreaTypes, setFilterAreaTypes] = useState<string[]>([])
   const [filterArchetypes, setFilterArchetypes] = useState<string[]>([])
   const [filterTrajectory, setFilterTrajectory] = useState<'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'>(() => {
@@ -1015,7 +1016,7 @@ export default function CatalogPageClient({
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
-    const counts = { nyc: 0, la: 0, sf: 0, seattle: 0 }
+    const counts = zeroMetroCounts()
     for (const p of gatedPlaces) counts[inferCatalogMetro(p)]++
     return counts
   }, [filterMetro, gatedPlaces])
@@ -1351,7 +1352,7 @@ export default function CatalogPageClient({
               <div className="h-4 w-px bg-[var(--hf-border)] shrink-0" />
               {/* Metro — segmented control */}
               <div className="flex items-center shrink-0 overflow-hidden rounded-lg border border-[var(--hf-border)]">
-                {(['all', 'nyc', 'la', 'sf', 'seattle'] as const).map((m) => (
+                {(['all', ...CATALOG_METROS] as const).map((m) => (
                   <button
                     key={m}
                     type="button"
@@ -1359,7 +1360,7 @@ export default function CatalogPageClient({
                     style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
                     onClick={() => setFilterMetro(m)}
                   >
-                    {m === 'all' ? 'All' : m === 'seattle' ? 'SEA' : m.toUpperCase()}
+                    {m === 'all' ? 'All' : CATALOG_METRO_META[m].label}
                     {m !== 'all' && metroResultCounts && (
                       <span className="ml-0.5 font-normal opacity-60">({metroResultCounts[m]})</span>
                     )}
@@ -1566,7 +1567,7 @@ export default function CatalogPageClient({
         {/* Row 2: metro pills */}
           {catalogMode === 'explorer' && (
             <div className="flex gap-2 px-3 pb-3 pt-1">
-              {(['all', 'nyc', 'la', 'sf', 'seattle'] as const).map((m) => (
+              {(['all', ...CATALOG_METROS] as const).map((m) => (
                 <button
                   key={m}
                   type="button"
@@ -1574,7 +1575,7 @@ export default function CatalogPageClient({
                   style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
                   onClick={() => setFilterMetro(m)}
                 >
-                  {m === 'all' ? 'All' : m === 'seattle' ? 'SEA' : m.toUpperCase()}
+                  {m === 'all' ? 'All' : CATALOG_METRO_META[m].label}
                   {m !== 'all' && metroResultCounts && (
                     <span className="ml-0.5 font-normal opacity-60">({metroResultCounts[m]})</span>
                   )}

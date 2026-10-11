@@ -5,12 +5,13 @@ import type { ExpressionSpecification, Map as MapLibreMap, GeoJSONSource } from 
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
 import MapLegend from '@/components/catalog/MapLegend'
+import { CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 
 type CatalogMapGeoJson =
   | ReturnType<typeof import('@/lib/catalogMapGeo').buildCatalogFeatureCollection>
   | ReturnType<typeof import('@/lib/catalogMapGeo').buildTwinMatchFeatureCollection>
 
-export type CatalogMapRegion = 'nyc' | 'la' | 'sf' | 'seattle' | 'both'
+export type CatalogMapRegion = CatalogMetro | 'both'
 
 interface CatalogMapViewProps {
   data: CatalogMapGeoJson
@@ -38,26 +39,6 @@ interface CatalogMapViewProps {
   /** Called with hover info when the mouse enters/moves over a bubble, null on leave. */
   onHover?: (info: { key: string; x: number; y: number } | null) => void
 }
-
-const NYC_METRO_BOUNDS: [[number, number], [number, number]] = [
-  [-74.35, 40.45],
-  [-73.65, 41.05],
-]
-
-const LA_METRO_BOUNDS: [[number, number], [number, number]] = [
-  [-118.75, 33.55],
-  [-117.55, 34.45],
-]
-
-const SF_METRO_BOUNDS: [[number, number], [number, number]] = [
-  [-122.7, 37.2],
-  [-121.7, 38.2],
-]
-
-const SEATTLE_METRO_BOUNDS: [[number, number], [number, number]] = [
-  [-122.65, 47.45],
-  [-122.10, 47.85],
-]
 
 const BOTH_METRO_BOUNDS: [[number, number], [number, number]] = [
   [-122.8, 33.5],
@@ -148,8 +129,7 @@ export default function CatalogMapView({
           ],
         }
 
-        const initialBounds =
-          region === 'la' ? LA_METRO_BOUNDS : region === 'sf' ? SF_METRO_BOUNDS : region === 'seattle' ? SEATTLE_METRO_BOUNDS : region === 'both' ? BOTH_METRO_BOUNDS : NYC_METRO_BOUNDS
+        const initialBounds = region === 'both' ? BOTH_METRO_BOUNDS : CATALOG_METRO_META[region].bounds
         const map = new maplibregl.Map({
           container: container_ref.current,
           style,

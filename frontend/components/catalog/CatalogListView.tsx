@@ -13,6 +13,7 @@ import {
 import { catalogRampKey } from '@/lib/catalogIndexColors'
 import { scoreBandFill, homefitPillarBarFill, RAMP_HEX } from '@/lib/indexColorSystem'
 import { isPillarIndexMode, PILLAR_INDEX_MODES } from '@/lib/catalogMapTypes'
+import { CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import WhyNotHigher from '@/components/WhyNotHigher'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
@@ -20,9 +21,8 @@ import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
 import AuraBadge from '@/components/catalog/AuraBadge'
 
-const METRO_DOT_COLOR: Record<'nyc' | 'la' | 'sf' | 'seattle', string> = { nyc: '#6B5CE7', la: '#E76B5C', sf: '#2A9D8F', seattle: '#1A8FBF' }
-function MetroDot({ metro }: { metro: 'nyc' | 'la' | 'sf' | 'seattle' }) {
-  return <span className="inline-block h-2 w-2 rounded-full" style={{ background: METRO_DOT_COLOR[metro] }} title={metro.toUpperCase()} />
+function MetroDot({ metro }: { metro: CatalogMetro }) {
+  return <span className="inline-block h-2 w-2 rounded-full" style={{ background: CATALOG_METRO_META[metro].color }} title={CATALOG_METRO_META[metro].label} />
 }
 
 function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; priorities: PillarPriorities }) {
@@ -225,7 +225,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
             const idx = getAllCatalogIndexDisplay(p, priorities)
             const rw = reweightScoreResponseFromPriorities(p.score, priorities)
             const hf = rw.total_score
-            const metro = inferCatalogMetro(p as CatalogMapPlace & { metro?: 'nyc' | 'la' | 'sf' | 'seattle' })
+            const metro = inferCatalogMetro(p as CatalogMapPlace & { metro?: CatalogMetro })
             const expanded = expandedKey === key
             const bar = (v: number | null, mode: CatalogMapIndexMode) => {
               if (v == null || !Number.isFinite(v)) return <span className="text-[var(--hf-text-tertiary)]">—</span>

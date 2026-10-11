@@ -6,6 +6,7 @@ import { type ClimatePreferences } from '@/lib/climatePreferences'
 import { X } from 'lucide-react'
 import Link from 'next/link'
 import { type WorkZone, findWorkZone } from '@/lib/workZones'
+import { CATALOG_METROS, CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 
 const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'urban_core', label: 'Urban Core' },
@@ -31,8 +32,8 @@ const AO_TYPE_OPTIONS: { value: string; label: string }[] = [
 interface FilterSheetProps {
   open: boolean
   onClose: () => void
-  filterMetro: 'all' | 'nyc' | 'la' | 'sf' | 'seattle'
-  onFilterMetroChange: (v: 'all' | 'nyc' | 'la' | 'sf' | 'seattle') => void
+  filterMetro: 'all' | CatalogMetro
+  onFilterMetroChange: (v: 'all' | CatalogMetro) => void
   filterAreaTypes: string[]
   onFilterAreaTypesChange: (v: string[]) => void
   filterArchetypes: string[]
@@ -240,8 +241,8 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Metro</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {(['all', 'nyc', 'la', 'sf', 'seattle'] as const).map((m) =>
-                chip(filterMetro === m, m === 'all' ? 'All metros' : m === 'seattle' ? 'SEA' : m.toUpperCase(), () => onFilterMetroChange(m))
+              {(['all', ...CATALOG_METROS] as const).map((m) =>
+                chip(filterMetro === m, m === 'all' ? 'All metros' : CATALOG_METRO_META[m].label, () => onFilterMetroChange(m))
               )}
             </div>
           </div>

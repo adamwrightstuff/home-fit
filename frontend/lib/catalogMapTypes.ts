@@ -1,3 +1,4 @@
+import { isCatalogMetro, type CatalogMetro } from '@/lib/catalogMetros'
 import type { WorkCommute } from './workZones'
 import type { ScoreResponse } from '@/types/api'
 
@@ -83,7 +84,7 @@ export interface CatalogMapPlace {
 }
 
 /** After `metro=all`, each place is tagged with its source metro. */
-export type CatalogMapPlaceWithMetro = CatalogMapPlace & { metro: 'nyc' | 'la' | 'sf' | 'seattle' }
+export type CatalogMapPlaceWithMetro = CatalogMapPlace & { metro: CatalogMetro }
 
 export interface CatalogMapApiResponse {
   places: CatalogMapPlace[] | CatalogMapPlaceWithMetro[]
@@ -95,13 +96,21 @@ export function catalogRowKey(c: Pick<CatalogRow, 'name' | 'county_borough' | 's
 }
 
 const SF_COUNTIES = new Set(['San Francisco', 'San Mateo', 'Santa Clara', 'Alameda', 'Contra Costa', 'Marin'])
+const PHILLY_NJ_COUNTIES = new Set(['Burlington', 'Camden', 'Gloucester', 'Salem'])
 
-/** Single-metro API responses omit `metro`; infer from catalog fields when missing. */
-export function inferCatalogMetro(p: CatalogMapPlace & { metro?: 'nyc' | 'la' | 'sf' | 'seattle' }): 'nyc' | 'la' | 'sf' | 'seattle' {
-  if (p.metro === 'nyc' || p.metro === 'la' || p.metro === 'sf' || p.metro === 'seattle') return p.metro
-  if (p.catalog.state_abbr === 'WA') return 'seattle'
-  if (p.catalog.state_abbr === 'CA') {
-    return SF_COUNTIES.has(p.catalog.county_borough) ? 'sf' : 'la'
-  }
+/**
+ * Fallback when a place carries no `metro` tag (the API tags every place; this only runs on stale
+ * data). State alone decides unambiguous states; CA and NJ are split by county. Add new states here.
+ */
+export function inferCatalogMetro(p: CatalogMapPlace & { metro?: CatalogMetro }): CatalogMetro {
+  if (isCatalogMetro(p.metro)) return p.metro
+  const state = p.catalog.state_abbr
+  const county = p.catalog.county_borough
+  if (state === 'WA') return 'seattle'
+  if (state === 'TX') return 'austin'
+  if (state === 'IL' || state === 'IN') return 'chicago'
+  if (state === 'PA' || state === 'DE' || state === 'MD') return 'philadelphia'
+  if (state === 'NJ' && PHILLY_NJ_COUNTIES.has(county)) return 'philadelphia'
+  if (state === 'CA') return SF_COUNTIES.has(county) ? 'sf' : 'la'
   return 'nyc'
 }

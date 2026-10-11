@@ -66,19 +66,17 @@ PYTHONPATH=. python3 scripts/baselines/build_metro_baselines_from_cbsa.py \
 
 ---
 
-## Phase B — Frontend and server registration (before first deploy)
+## Phase B — Frontend registration (before first deploy)
 
-The metro slug is a closed union in several places. Grep for an existing slug (e.g. `seattle`) and extend every hit; do not rely on the three files below alone.
+The metro list lives in one registry; everything else derives from it.
 
-```bash
-grep -rn "'seattle'" frontend --include=*.ts --include=*.tsx --include=*.js | grep -v node_modules
-```
+1. `frontend/lib/catalogMetros.ts` — add the slug to `CATALOG_METROS` and an entry in `CATALOG_METRO_META` (short label, picker name, dot color, map bounds). The route, filter chips, map, dots, work-hub picker and `WorkZoneMetro` type all follow.
+2. `frontend/next.config.js` — add `data/<slug>_metro_place_catalog_scores_merged.composites_recomputed.jsonl` to `outputFileTracingIncludes` so Vercel bundles it. (The API route finds the file by that naming convention, so name the output file exactly that.)
+3. `frontend/lib/catalogMapTypes.ts` — `inferCatalogMetro` is only a fallback for untagged rows, but add the metro's states (and county split if a state is shared, like CA and NJ) so it never defaults to `nyc`.
+4. Optional: `frontend/lib/workZones.json` hubs (see `docs/WORK_COMMUTE_PLAYBOOK.md`); `catalog_climate_profiles.jsonl` rows with `source: "<slug>_metro"` via `scripts/catalog/batch_climate_profiles.py`.
+5. Optional server speedups, not required for correctness: `main.py` `_load_catalog_index` (catalog fast path; SF and Seattle are not in it either), `agent_recommend.py` (`HOMEFIT_AGENT_CATALOG_JSONL`, NYC by default) and `catalog_contribution.py` (NYC CSV only, off by default).
 
-1. `frontend/app/api/catalog-map/route.ts` — `CatalogMapMetro`, `METRO_FILES`, `METRO_TO_SOURCE`, the `metro=all` loader, and the valid-metro check.
-2. `frontend/next.config.js` — add the JSONL to `outputFileTracingIncludes` so Vercel bundles it.
-3. `frontend/lib/catalogMapTypes.ts` — the metro union and `inferCatalogMetro`. It defaults to `nyc` for any state it does not know, so a new state must be added or its places show as NYC.
-4. Catalog UI: `catalog-page-client.tsx`, `FilterSheet.tsx`, `CatalogListView.tsx`, `CatalogMapView.tsx` (map bounds), `MetroDot.tsx` (color and label), `WorkHubPicker.tsx`, `lib/workZones.ts`.
-5. Server: add the JSONL to `catalog_files` in `main.py` (`_load_catalog_index`). `agent_recommend.py` and `catalog_contribution.py` default to the NYC file; check whether the new metro needs to be included there.
+Check: `cd frontend && npx tsc --noEmit`.
 
 ---
 
@@ -210,7 +208,7 @@ PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py --no-unversioned
 - [ ] Look up CBSA code(s) and county FIPS (Census delineation file); list every state the CBSA spans
 - [ ] Add CBSA to `CBSA_COUNTIES`, `CBSA_TO_KEY` in `build_metro_baselines_from_cbsa.py`
 - [ ] Phase A2: precinct file for each state, crime source for the core city, airport/hospital/transit lists, NCES file
-- [ ] Phase B: extend every frontend and server registration point
+- [ ] Phase B: add the metro to `frontend/lib/catalogMetros.ts` and `next.config.js`; `npx tsc --noEmit`
 - [ ] Grep `scripts/` for hardcoded metro lists (`"nyc", "la", "sf"`, e.g. `recompute_ses_baseline_fix.py`, `daily_education_rescore.py`, `map_catalog_to_usaleep.py`) and add the new metro
 - [ ] Create place catalog CSV (`data/xx_metro_place_catalog.csv`) with columns: `name, county_borough, state_abbr, search_query, lat, lon`
 - [ ] Run `score_metro.py` with all env vars set

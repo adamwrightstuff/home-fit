@@ -3,15 +3,13 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Briefcase, Building2, Loader2, MapPin, Search, X } from 'lucide-react'
 import { type WorkZone, type WorkZoneMetro } from '@/lib/workZones'
+import { CATALOG_METROS, CATALOG_METRO_META } from '@/lib/catalogMetros'
 
 export type WorkAddressResult = { error: string } | { zoneId: string; miles: number; address: string }
 
-const METRO_LABELS: Record<WorkZoneMetro, string> = {
-  nyc: 'New York metro',
-  sf: 'Bay Area',
-  la: 'Los Angeles metro',
-  seattle: 'Seattle metro',
-}
+const METRO_LABELS: Record<WorkZoneMetro, string> = Object.fromEntries(
+  CATALOG_METROS.map((m) => [m, CATALOG_METRO_META[m].longLabel]),
+) as Record<WorkZoneMetro, string>
 
 interface WorkHubPickerProps {
   zones: WorkZone[]

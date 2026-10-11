@@ -3,19 +3,17 @@ import fs from 'fs'
 import path from 'path'
 import type { CatalogMapApiResponse, CatalogMapPlace, CatalogMapPlaceWithMetro, ClimateIndicators } from '@/lib/catalogMapTypes'
 import type { ScoreResponse } from '@/types/api'
+import { CATALOG_METROS, isCatalogMetro, type CatalogMetro } from '@/lib/catalogMetros'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-export type CatalogMapMetro = 'nyc' | 'la' | 'sf' | 'seattle'
+export type CatalogMapMetro = CatalogMetro
 
 /** Single canonical file per metro (composites live inside each row's `score`). */
-const METRO_FILES: Record<CatalogMapMetro, readonly string[]> = {
-  nyc: ['nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
-  la: ['la_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
-  sf: ['sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
-  seattle: ['seattle_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
-}
+const METRO_FILES = Object.fromEntries(
+  CATALOG_METROS.map((m) => [m, [`${m}_metro_place_catalog_scores_merged.composites_recomputed.jsonl`]]),
+) as unknown as Record<CatalogMapMetro, readonly string[]>
 
 function dataRoots(): string[] {
   return [path.join(process.cwd(), '..', 'data'), path.join(process.cwd(), 'data')]
@@ -42,12 +40,9 @@ function missingDetail(metro: CatalogMapMetro): string {
   return `Catalog file not found for ${metro.toUpperCase()}. Add repo data/${names} (or copy into frontend/data).`
 }
 
-const METRO_TO_SOURCE: Record<CatalogMapMetro, string> = {
-  nyc: 'nyc_metro',
-  la: 'la_metro',
-  sf: 'sf_metro',
-  seattle: 'seattle_metro',
-}
+const METRO_TO_SOURCE = Object.fromEntries(
+  CATALOG_METROS.map((m) => [m, `${m}_metro`]),
+) as Record<CatalogMapMetro, string>
 
 /** Load catalog_climate_profiles.jsonl → map of "${source}::${name}" → ClimateIndicators */
 function loadClimateIndex(): Map<string, ClimateIndicators> {
@@ -122,21 +117,18 @@ export async function GET(request: Request) {
   const climateIndex = loadClimateIndex()
 
   if (raw === 'all') {
-    const nyc = loadMetroFile('nyc', climateIndex)
-    const la = loadMetroFile('la', climateIndex)
-    const sf = loadMetroFile('sf', climateIndex)
-    const seattle = loadMetroFile('seattle', climateIndex)
-    const places: CatalogMapPlaceWithMetro[] = [...nyc, ...la, ...sf, ...seattle]
-    const sources = [nyc.length ? 'nyc' : null, la.length ? 'la' : null, sf.length ? 'sf' : null, seattle.length ? 'seattle' : null].filter(Boolean).join('+') || 'missing'
+    const loaded = CATALOG_METROS.map((m) => [m, loadMetroFile(m, climateIndex)] as const)
+    const places: CatalogMapPlaceWithMetro[] = loaded.flatMap(([, rows]) => rows)
+    const sources = loaded.filter(([, rows]) => rows.length).map(([m]) => m).join('+') || 'missing'
     return NextResponse.json({
       places,
       source: sources === 'missing' ? 'missing' : `all:${sources}`,
     } satisfies CatalogMapApiResponse & { detail?: string })
   }
 
-  if (raw !== 'nyc' && raw !== 'la' && raw !== 'sf' && raw !== 'seattle') {
+  if (!isCatalogMetro(raw)) {
     return NextResponse.json(
-      { error: 'Invalid metro. Use metro=nyc, metro=la, metro=sf, metro=seattle, or metro=all.' },
+      { error: `Invalid metro. Use ${CATALOG_METROS.map((m) => `metro=${m}`).join(', ')}, or metro=all.` },
       { status: 400 }
     )
   }
@@ -151,7 +143,7 @@ export async function GET(request: Request) {
     } satisfies CatalogMapApiResponse & { detail?: string })
   }
 
-  const places = loadMetroFile(metro, climateIndex).map(({ metro: _m, ...rest }) => rest as CatalogMapPlace)
+  const places = loadMetroFile(metro, climateIndex)
 
   return NextResponse.json({ places, source: path.basename(filePath) } satisfies CatalogMapApiResponse)
 }
