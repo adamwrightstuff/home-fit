@@ -38,6 +38,11 @@ def main() -> int:
     p6.add_argument("--input", type=Path, required=True)
     p6.add_argument("--apply", action="store_true", help="record confirmed-genuine gaps so the gate accepts them")
 
+    p7 = sub.add_parser("fbi", help="why does community safety have no data here, and which agency could serve it")
+    p7.add_argument("--input", type=Path, required=True)
+    p7.add_argument("--places", help="comma-separated place names to limit to")
+    p7.add_argument("--suggest", action="store_true", help="write <input>.fbi_suggestions.json (nothing is applied)")
+
     p5 = sub.add_parser("probe", help="ask the upstream services directly about places resolve could not fix")
     p5.add_argument("--input", type=Path, required=True)
 
@@ -60,6 +65,12 @@ def main() -> int:
         if a.apply:
             print(f"\n{vd.write_accepted(a.input, verdicts)} accepted gaps recorded in {vd.accepted_path(a.input).name}")
         return 1 if any(v.kind == vd.CONTRADICTED for v in verdicts) else 0
+    if a.cmd == "fbi":
+        from . import fbi_probe as fp
+        pf._load_env()
+        fp.run(dg.load_rows(a.input), only=[x.strip() for x in a.places.split(",")] if a.places else None,
+               suggest_path=a.input.with_suffix(".fbi_suggestions.json") if a.suggest else None)
+        return 0
     if a.cmd == "probe":
         from . import probe as pr
         pf._load_env()

@@ -56,6 +56,14 @@ PYTHONPATH=. python -m scripts.metro_agent resolve --input data/xx_metro_place_c
 
 `resolve` exits non-zero while any place has a material gap, so it doubles as the publish gate.
 
+For gaps retrying cannot fix, ask the sources directly:
+
+```bash
+PYTHONPATH=. python -m scripts.metro_agent probe    --input FILE   # raw Overpass / Transitland data for unresolved amenities and transit
+PYTHONPATH=. python -m scripts.metro_agent validate --input FILE --apply   # Census business counts, commuting, peers; records genuine gaps
+PYTHONPATH=. python -m scripts.metro_agent fbi      --input FILE --suggest # which police agency could serve a place with no crime data
+```
+
 Do not start scoring while `preflight` reports a blocking failure. `diagnose` groups findings as
 `RETRY_PILLAR` (an upstream lookup failed; re-run just that pillar), `RETRY_THEN_VERIFY`, and
 `NEEDS_DATA_SOURCE` (retrying will not help). If one pillar fails for 40%+ of places it is called
