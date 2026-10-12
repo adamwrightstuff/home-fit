@@ -264,13 +264,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                   onClick={() => toggleRow(key)}
                 >
                   <td className="py-2 pr-2">
-                    <Link
-                      href={`/neighborhoods/${placeSlug(p.catalog)}`}
-                      className="text-sm font-semibold text-[var(--hf-text-primary)] hover:underline"
-                      onClick={(e) => { e.stopPropagation() }}
-                    >
-                      {p.catalog.name}
-                    </Link>
+                    <div className="text-sm font-semibold text-[var(--hf-text-primary)]">{p.catalog.name}</div>
                     <div className="text-[0.6rem] text-[var(--hf-text-tertiary)]">
                       {p.catalog.county_borough}, {p.catalog.state_abbr}
                     </div>
@@ -363,6 +357,14 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 {expanded && (
                   <tr className="border-b border-[var(--hf-border)] bg-[var(--hf-bg-subtle)]">
                     <td colSpan={5} className="p-0">
+                      <div style={{ padding: '0.75rem 1rem 0' }}>
+                        <Link
+                          href={`/neighborhoods/${placeSlug(p.catalog)}`}
+                          className="text-xs font-bold text-[var(--hf-primary-1)] hover:underline"
+                        >
+                          View full breakdown →
+                        </Link>
+                      </div>
                       {(p.score.local_scene_bucket || p.score.status_signal_breakdown?.llm_summary) && (
                         <div style={{ padding: '0.75rem 1rem 0' }}>
                           {p.score.local_scene_bucket && (
