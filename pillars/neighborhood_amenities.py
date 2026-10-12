@@ -134,11 +134,13 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
                 "summary": {},
                 "data_quality": {"confidence": 0},
             }
-        logger.warning("neighborhood_amenities: no businesses found, returning None")
+        # A failed Overpass query must not be reported as "no businesses here".
+        no_biz_reason = "osm_unavailable (non-urban area)" if osm_query_failed else "no_businesses_found"
+        logger.warning("neighborhood_amenities: no businesses found, returning None (%s)", no_biz_reason)
         return None, {
             "score": None,
             "failed": True,
-            "failure_reason": "no_businesses_found",
+            "failure_reason": no_biz_reason,
             "confidence": 0,
             "data_quality_index": 0.0,
             "business_list": [],

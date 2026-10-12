@@ -4,6 +4,7 @@ Queries Overpass API for green spaces and nature features
 """
 
 import os
+import re
 import requests
 import math
 import time
@@ -128,6 +129,27 @@ _last_query_time = 0.0
 _query_lock = threading.Lock()
 _BASE_MIN_QUERY_INTERVAL = 0.5  # 500ms base pacing; prevents Overpass IP bans under batch load
 _current_min_query_interval = _BASE_MIN_QUERY_INTERVAL
+
+_OVERPASS_REMARK_ERROR_RE = re.compile(r"runtime error|out of memory|timed out|Dispatcher_Client|too many requests", re.I)
+
+
+def _overpass_remark_error(resp: Optional[requests.Response]) -> Optional[str]:
+    """Overpass reports a timed-out or memory-limited query as HTTP 200 with an EMPTY element list and a
+    top-level "remark".  Treating that as a valid empty result silently zeroes whole pillars, so callers
+    must treat it as a failure.  Returns the remark text if the body is such an error, else None."""
+    try:
+        if resp is None or getattr(resp, "status_code", None) != 200:
+            return None
+        text = resp.text or ""
+        if '"remark"' not in text:
+            return None
+        remark = (resp.json() or {}).get("remark")
+    except Exception:
+        return None
+    if isinstance(remark, str) and _OVERPASS_REMARK_ERROR_RE.search(remark):
+        return remark
+    return None
+
 
 def _retry_overpass(
     request_fn,
@@ -256,6 +278,18 @@ def _retry_overpass(
                         else:
                             logger.warning(f"OSM rate limited (429), max retries reached")
                             return None  # Return None instead of resp on final failure
+                # HTTP 200 carrying a runtime-error remark is a failed query, not an empty result:
+                # retry on the next endpoint instead of returning "no data".
+                remark = _overpass_remark_error(resp)
+                if remark:
+                    if i < max_attempts - 1:
+                        wait_time = min(base_wait * (1.5 ** i) if retry_config.exponential_backoff else base_wait, max_wait)
+                        logger.warning(f"OSM query failed server-side ({remark[:80]}), waiting {wait_time:.1f}s before retry ({i+1}/{max_attempts})...")
+                        time.sleep(wait_time)
+                        endpoint_idx = _rotate_overpass_endpoint(endpoint_idx)
+                        continue
+                    logger.warning(f"OSM query failed server-side after {max_attempts} attempts: {remark[:80]}")
+                    return None
                 # Successful response - gently relax throttling back toward base
                 with _query_lock:
                     if _current_min_query_interval > _BASE_MIN_QUERY_INTERVAL:
