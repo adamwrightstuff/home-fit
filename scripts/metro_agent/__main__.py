@@ -41,7 +41,8 @@ def main() -> int:
                              include_minor=a.include_minor, dry_run=a.dry_run,
                              recompute=None if a.skip_composites else rs._default_recompute)
         print(rs.format_summary(summary))
-        a.input.with_suffix(".resolution.json").write_text(json.dumps(summary, indent=2))
+        if not a.dry_run:
+            a.input.with_suffix(".resolution.json").write_text(json.dumps(summary, indent=2))
         return 1 if summary["material_places_left"] else 0
     if a.cmd == "preflight":
         csv_path = a.csv or pf.REPO / "data" / f"{a.metro}_metro_place_catalog.csv"
