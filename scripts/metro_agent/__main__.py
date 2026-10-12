@@ -34,6 +34,9 @@ def main() -> int:
     p3.add_argument("--dry-run", action="store_true")
     p3.add_argument("--skip-composites", action="store_true")
 
+    p5 = sub.add_parser("probe", help="ask the upstream services directly about places resolve could not fix")
+    p5.add_argument("--input", type=Path, required=True)
+
     p4 = sub.add_parser("run", help="whole launch in one command: preflight, score, resolve, gate")
     p4.add_argument("--metro", required=True)
     p4.add_argument("--api-base", default=os.environ.get("HOMEFIT_API_BASE", "http://127.0.0.1:8000"))
@@ -45,6 +48,11 @@ def main() -> int:
     p4.add_argument("--no-server", action="store_true", help="do not start a local API automatically")
 
     a = ap.parse_args()
+    if a.cmd == "probe":
+        from . import probe as pr
+        pf._load_env()
+        pr.probe(dg.load_rows(a.input))
+        return 0
     if a.cmd == "run":
         from . import run as runner
         pf._load_env()
