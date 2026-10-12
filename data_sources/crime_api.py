@@ -936,6 +936,25 @@ _CA_SUBURB_TO_AGENCY: Dict[str, str] = {
 }
 
 
+_AGENCY_MAP_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "crime_agency_map.json")
+_AGENCY_MAP_CACHE: Optional[dict] = None
+
+
+def _mapped_agency(state_abbr: str, place: str) -> Optional[Tuple[str, str]]:
+    """(agency name, kind) from data/crime_agency_map.json for places the automatic match cannot resolve."""
+    global _AGENCY_MAP_CACHE
+    if _AGENCY_MAP_CACHE is None:
+        try:
+            with open(_AGENCY_MAP_PATH) as f:
+                _AGENCY_MAP_CACHE = json.load(f)
+        except (OSError, ValueError):
+            _AGENCY_MAP_CACHE = {}
+    entry = (_AGENCY_MAP_CACHE.get((state_abbr or "").upper()) or {}).get((place or "").strip().lower())
+    if not entry or not entry.get("agency"):
+        return None
+    return entry["agency"], entry.get("kind", "own")
+
+
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     import math
     R = 6371.0
@@ -1482,17 +1501,23 @@ def _get_fbi_rates(
                 )
                 break
 
-    # Tier 2c: CA explicit suburb → serving agency.
+    # Tier 2c: explicit place -> serving agency (CA dict, then data/crime_agency_map.json for any state).
     # Handles unincorporated communities (served by county sheriff) and small cities
-    # whose own PD is absent from the FBI database.  Only agencies confirmed to
-    # report real non-zero data are listed in _CA_SUBURB_TO_AGENCY.
-    if not nibrs_city_match and city_hint and state_abbr.upper() == "CA":
-        ca_agency_name = _CA_SUBURB_TO_AGENCY.get(city_hint.lower())
-        if ca_agency_name:
+    # whose own PD is absent from the FBI database or not matched by name/distance.
+    mapped_kind = "own"
+    if not nibrs_city_match and city_hint:
+        mapped_name = None
+        if state_abbr.upper() == "CA":
+            mapped_name = _CA_SUBURB_TO_AGENCY.get(city_hint.lower())
+        if not mapped_name:
+            m = _mapped_agency(state_abbr, city_hint)
+            if m:
+                mapped_name, mapped_kind = m
+        if mapped_name:
             ca_ag = next(
                 (ag for ag in agencies
                  if (ag.get("agency_name") or ag.get("agencyName") or "").lower()
-                 == ca_agency_name.lower()),
+                 == mapped_name.lower()),
                 None,
             )
             if ca_ag:
@@ -1501,8 +1526,8 @@ def _get_fbi_rates(
                 is_nibrs = bool(ca_ag.get("is_nibrs"))
                 nibrs_city_match = True
                 logger.debug(
-                    "FBI CDE: CA suburb '%s' → explicit agency %s (NIBRS=%s, ORI %s)",
-                    city_hint, agency_display_name, is_nibrs, ori,
+                    "FBI CDE: '%s' -> explicit agency %s (NIBRS=%s, ORI %s, %s)",
+                    city_hint, agency_display_name, is_nibrs, ori, mapped_kind,
                 )
 
     agency_name_hint = agency_display_name if nibrs_city_match else None
@@ -1561,6 +1586,8 @@ def _get_fbi_rates(
     #   "state"/"national" tier → only state/national aggregate was available
     if nibrs_city_match and violent_tier == "agency":
         source = "fbi_nibrs_agency" if is_nibrs else "fbi_ucr_agency"
+        if mapped_kind == "county":
+            source = "fbi_county_agency"
     else:
         # FBI CDE has no per-agency data for this location.  For CA cities,
         # try the CA DOJ "Crimes and Clearances" dataset which covers all CA

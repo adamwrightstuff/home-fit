@@ -289,3 +289,16 @@ def test_austin_part1_scales_counts_by_overlap():
          mock.patch.object(crime_api, "_austin_circle_overlaps", return_value={"4530003022": 0.5}):
         r = crime_api._fetch_austin_part1(30.3, -97.7, 1000, 2025)
     assert r == {"violent": 5, "property": 50}
+
+
+def test_agency_map_resolves_unmatched_places():
+    from data_sources import crime_api
+    assert crime_api._mapped_agency("TX", "Cedar Park") == ("Cedar Park Police Department", "own")
+    assert crime_api._mapped_agency("TX", "Wimberley") == ("Hays County Sheriff's Office", "county")
+    assert crime_api._mapped_agency("TX", "Austin") is None
+    assert crime_api._mapped_agency("CA", "Cedar Park") is None
+
+
+def test_county_agency_source_is_lower_precision_not_degraded():
+    from pillars.community_safety import _PRECISION_MAP
+    assert _PRECISION_MAP["fbi_county_agency"] == "PRECINCT_PROXY"
