@@ -71,7 +71,7 @@ export default function MetroPicker({ value, onChange, counts }: MetroPickerProp
       </button>
 
       {open && createPortal(
-        <div className="fixed inset-0 z-[1000] flex items-end" role="dialog" aria-modal="true" aria-label="Choose metro">
+        <div className="fixed inset-0 z-[9999] flex items-end" role="dialog" aria-modal="true" aria-label="Choose metro">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <div className="relative flex max-h-[80dvh] w-full flex-col rounded-t-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between px-4 pb-2 pt-4">
