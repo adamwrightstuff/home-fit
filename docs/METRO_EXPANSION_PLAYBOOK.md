@@ -24,6 +24,25 @@ PYTHONPATH=. python3 scripts/catalog/score_metro.py \
 
 ---
 
+## Before and after every run: the metro agent
+
+```bash
+# Before scoring: checks Python, keys, a healthy Overpass server, Census, Transitland, the API,
+# the place list, baselines, precinct files, crime source, and frontend registration.
+PYTHONPATH=. python -m scripts.metro_agent preflight --metro xx
+
+# After scoring: classifies every failed or empty pillar by cause and says what fixes it.
+PYTHONPATH=. python -m scripts.metro_agent diagnose --input data/xx_metro_place_catalog_scores_merged.composites_recomputed.jsonl --json
+```
+
+Do not start scoring while `preflight` reports a blocking failure. `diagnose` groups findings as
+`RETRY_PILLAR` (an upstream lookup failed; re-run just that pillar), `RETRY_THEN_VERIFY`, and
+`NEEDS_DATA_SOURCE` (retrying will not help). If one pillar fails for 40%+ of places it is called
+out as systemic: fix the dependency first, then retry. A place with a material gap should not be
+published.
+
+---
+
 ## Phase A — Add the CBSA to the status signal baseline builder
 
 **Why this comes first:** The status signal pillar normalizes income/home value/education against metro-specific p5/p95 bands. Without a CBSA entry, every place in the new metro falls back to a generic Census division average, producing flat, meaningless status signal scores.

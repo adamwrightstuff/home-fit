@@ -2441,6 +2441,7 @@ def _compute_single_score_internal(
             "contribution": round((amenities_score or 0.0) * token_allocation["neighborhood_amenities"] / 100, 2),
             "breakdown": _na_breakdown_with_business,
             "summary": amenities_details.get("summary", {}),
+            "failure_reason": amenities_details.get("failure_reason"),
             "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": amenities_details.get("data_quality", {}),
             "area_classification": amenities_details.get("area_classification", {})
@@ -4162,6 +4163,7 @@ async def _stream_score_with_progress(
                 "contribution": round((amenities_score or 0.0) * token_allocation["neighborhood_amenities"] / 100, 2),
                 "breakdown": _na_breakdown_with_business,
                 "summary": amenities_details.get("summary", {}),
+                "failure_reason": amenities_details.get("failure_reason"),
                 "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
                 "data_quality": amenities_details.get("data_quality", {}),
                 "area_classification": amenities_details.get("area_classification", {})
