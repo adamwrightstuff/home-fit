@@ -37,6 +37,11 @@ CATALOGS = {
 METRO_NAMES = {
     "nyc": "New York City",
     "la":  "Los Angeles",
+    "sf": "San Francisco Bay Area",
+    "seattle": "Seattle",
+    "austin": "Austin",
+    "chicago": "Chicago",
+    "philadelphia": "Philadelphia",
 }
 
 PLACE_POPULATION_THRESHOLD = 300_000
@@ -185,7 +190,7 @@ def process_catalog(path: str, metro: str, dry_run: bool, force: bool) -> list:
                 entries.append(json.loads(line))
 
     client = anthropic.Anthropic()
-    metro_label = METRO_NAMES[metro]
+    metro_label = METRO_NAMES.get(metro, metro.replace("_", " ").title())
 
     ok = skip = err = 0
 
