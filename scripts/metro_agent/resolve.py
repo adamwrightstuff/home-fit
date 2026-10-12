@@ -112,7 +112,7 @@ def resolve(
 
     for rnd in range(1, max_rounds + 1):
         rows = dg.load_rows(path)
-        result = dg.diagnose(rows)
+        result = dg.diagnose(rows, accepted=dg.load_accepted(path))
 
         todo: Dict[str, Set[str]] = defaultdict(set)
         for f in result["findings"]:
@@ -189,7 +189,7 @@ def resolve(
         log("\nrecomputing composites…")
         recompute(path)
 
-    final = dg.diagnose(dg.load_rows(path))
+    final = dg.diagnose(dg.load_rows(path), accepted=dg.load_accepted(path))
     left = defaultdict(list)
     for f in final["findings"]:
         if f["material"]:

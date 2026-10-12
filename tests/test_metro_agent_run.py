@@ -58,7 +58,7 @@ def test_clean_run_goes_through_every_stage_in_order(tmp_path, monkeypatch):
 
 def test_blocked_gate_never_publishes(tmp_path, monkeypatch):
     import scripts.metro_agent.run as r
-    monkeypatch.setattr(r.dg, "diagnose", lambda rows: {"material_places": ["A"], "findings": [], "systemic": [], "places": 1, "clean": 0, "counts": {}})
+    monkeypatch.setattr(r.dg, "diagnose", lambda rows, **kw: {"material_places": ["A"], "findings": [], "systemic": [], "places": 1, "clean": 0, "counts": {}})
     monkeypatch.setattr(r.dg, "format_report", lambda *a, **k: "")
     rec = Recorder(material=1)
     rc, _ = _go(rec, tmp_path, monkeypatch, push=True)

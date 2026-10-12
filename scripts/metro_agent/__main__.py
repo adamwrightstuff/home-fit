@@ -34,6 +34,10 @@ def main() -> int:
     p3.add_argument("--dry-run", action="store_true")
     p3.add_argument("--skip-composites", action="store_true")
 
+    p6 = sub.add_parser("validate", help="check results against independent sources (Census, peers)")
+    p6.add_argument("--input", type=Path, required=True)
+    p6.add_argument("--apply", action="store_true", help="record confirmed-genuine gaps so the gate accepts them")
+
     p5 = sub.add_parser("probe", help="ask the upstream services directly about places resolve could not fix")
     p5.add_argument("--input", type=Path, required=True)
 
@@ -48,6 +52,14 @@ def main() -> int:
     p4.add_argument("--no-server", action="store_true", help="do not start a local API automatically")
 
     a = ap.parse_args()
+    if a.cmd == "validate":
+        from . import validate as vd
+        pf._load_env()
+        verdicts = vd.validate(dg.load_rows(a.input))
+        print(vd.format_report(verdicts))
+        if a.apply:
+            print(f"\n{vd.write_accepted(a.input, verdicts)} accepted gaps recorded in {vd.accepted_path(a.input).name}")
+        return 1 if any(v.kind == vd.CONTRADICTED for v in verdicts) else 0
     if a.cmd == "probe":
         from . import probe as pr
         pf._load_env()
@@ -75,7 +87,7 @@ def main() -> int:
         print(pf.format_report(checks))
         return 1 if any(c.status == pf.FAIL for c in checks) else 0
     rows = dg.load_rows(a.input)
-    result = dg.diagnose(rows)
+    result = dg.diagnose(rows, accepted=dg.load_accepted(a.input))
     print(dg.format_report(result, a.input.name))
     if a.json:
         dest = a.input.with_suffix(".diagnosis.json")

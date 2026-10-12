@@ -7,8 +7,9 @@ Stages (stops at the first blocking problem, resumable by simply running it agai
   1. preflight        blocking failures stop the run before any scoring
   2. score            scripts/catalog/score_metro.py, then once more if any place failed outright
   3. resolve          retry upstream failures, hand off what retrying cannot fix
-  4. diagnose + gate  PUBLISH: OK or BLOCKED
-  5. optional push    only the metro's catalog file, only when the gate passes (--push)
+  4. validate         check against independent sources; confirmed-genuine gaps are accepted
+  5. gate             PUBLISH: OK or BLOCKED
+  6. optional push    only the metro's catalog file, only when the gate passes (--push)
 """
 from __future__ import annotations
 
@@ -23,6 +24,7 @@ from typing import Any, Callable, Dict, List, Optional
 from . import diagnose as dg
 from . import preflight as pf
 from . import resolve as rs
+from . import validate as vd
 
 REPO = pf.REPO
 
@@ -105,6 +107,7 @@ def run_pipeline(
     resolve_fn: Callable = rs.resolve,
     publish_fn: Callable = git_publish,
     failed_fn: Callable = _failed_places,
+    validate_fn: Callable = vd.validate,
 ) -> int:
     csv_path = csv_path or REPO / "data" / f"{metro}_metro_place_catalog.csv"
     out_path = out_path or REPO / "data" / f"{metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
@@ -144,8 +147,17 @@ def run_pipeline(
         log(rs.format_summary(summary))
         out_path.with_suffix(".resolution.json").write_text(json.dumps(summary, indent=2))
 
-        banner("4. GATE")
-        result = dg.diagnose(dg.load_rows(out_path))
+        banner("4. VALIDATE against independent sources (Census business counts, commuting, peers)")
+        try:
+            verdicts = validate_fn(dg.load_rows(out_path))
+            log(vd.format_report(verdicts))
+            n = vd.write_accepted(out_path, verdicts)
+            log(f"\n{n} gaps recorded as genuine in {vd.accepted_path(out_path).name}")
+        except Exception as e:  # noqa: BLE001 - validation must not take the run down
+            log(f"validation skipped: {type(e).__name__}: {str(e)[:100]}")
+
+        banner("5. GATE")
+        result = dg.diagnose(dg.load_rows(out_path), accepted=dg.load_accepted(out_path))
         log(dg.format_report(result, out_path.name))
         if result["material_places"]:
             log(f"\nPUBLISH: BLOCKED. {len(result['material_places'])} places have a material gap. "
@@ -154,7 +166,7 @@ def run_pipeline(
 
         log("\nPUBLISH: OK, no material gaps.")
         if push:
-            banner("5. PUBLISH")
+            banner("6. PUBLISH")
             publish_fn(metro, out_path)
             log("committed and pushed.")
         else:

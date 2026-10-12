@@ -169,11 +169,28 @@ def load_rows(path: Path) -> List[Dict[str, Any]]:
     return rows
 
 
-def diagnose(rows: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
+def load_accepted(scores_path: Path) -> Dict[tuple, str]:
+    """Gaps confirmed genuine by `validate` (sidecar <scores>.accepted.json): {(place, pillar): reason}."""
+    p = Path(scores_path).with_suffix(".accepted.json")
+    if not p.is_file():
+        return {}
+    try:
+        return {(a["place"], a["pillar"]): a.get("reason", "") for a in json.loads(p.read_text())}
+    except (ValueError, KeyError, TypeError):
+        return {}
+
+
+def diagnose(rows: Iterable[Dict[str, Any]], accepted: Optional[Dict[tuple, str]] = None) -> Dict[str, Any]:
     rows = list(rows)
+    accepted = accepted or {}
     findings: List[Finding] = []
     for r in rows:
-        findings.extend(classify_place(r))
+        for f in classify_place(r):
+            reason = accepted.get((f.place, f.pillar))
+            if reason and f.material and f.remedy in (VERIFY, SOURCE):
+                f.material, f.remedy = False, NONE
+                f.evidence = f"{f.evidence} [accepted: {reason}]"
+            findings.append(f)
 
     n = max(len(rows), 1)
     by_pc: Dict[tuple, List[Finding]] = defaultdict(list)
