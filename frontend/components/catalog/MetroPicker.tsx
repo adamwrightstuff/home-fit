@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Check, ChevronDown, MapPin, Search, X } from 'lucide-react'
 import { CATALOG_METROS, CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 
@@ -69,10 +70,10 @@ export default function MetroPicker({ value, onChange, counts }: MetroPickerProp
         <ChevronDown className="h-4 w-4 shrink-0 text-[var(--hf-text-tertiary)]" aria-hidden />
       </button>
 
-      {open && (
+      {open && createPortal(
         <div className="fixed inset-0 z-[1000] flex items-end" role="dialog" aria-modal="true" aria-label="Choose metro">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <div className="relative flex max-h-[80vh] w-full flex-col rounded-t-2xl bg-white shadow-xl">
+          <div className="relative flex max-h-[80dvh] w-full flex-col rounded-t-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between px-4 pb-2 pt-4">
               <h2 className="text-base font-bold">Choose a metro</h2>
               <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="p-1 text-[var(--hf-text-tertiary)]">
@@ -92,13 +93,14 @@ export default function MetroPicker({ value, onChange, counts }: MetroPickerProp
                 </div>
               </div>
             )}
-            <ul className="overflow-y-auto pb-[env(safe-area-inset-bottom)]">
+            <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]">
               {!query.trim() && row('all', value === 'all', 'All metros', total, null, 'all')}
               {options.map((m) => row(m, value === m, CATALOG_METRO_META[m].longLabel, counts ? counts[m] : null, CATALOG_METRO_META[m].color, m))}
               {options.length === 0 && <li className="px-4 py-6 text-center text-sm text-[var(--hf-text-tertiary)]">No matching metros</li>}
             </ul>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   )
