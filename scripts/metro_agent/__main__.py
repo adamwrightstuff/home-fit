@@ -25,7 +25,24 @@ def main() -> int:
     p2.add_argument("--input", type=Path, required=True)
     p2.add_argument("--json", action="store_true", help="write <input>.diagnosis.json")
 
+    p3 = sub.add_parser("resolve", help="retry what can be retried, hand off what cannot")
+    p3.add_argument("--input", type=Path, required=True)
+    p3.add_argument("--api-base", default=os.environ.get("HOMEFIT_API_BASE", "http://127.0.0.1:8000"))
+    p3.add_argument("--rounds", type=int, default=3)
+    p3.add_argument("--delay", type=float, default=2.0)
+    p3.add_argument("--include-minor", action="store_true", help="also retry minor findings")
+    p3.add_argument("--dry-run", action="store_true")
+    p3.add_argument("--skip-composites", action="store_true")
+
     a = ap.parse_args()
+    if a.cmd == "resolve":
+        from . import resolve as rs
+        summary = rs.resolve(a.input, a.api_base.rstrip("/"), max_rounds=a.rounds, delay=a.delay,
+                             include_minor=a.include_minor, dry_run=a.dry_run,
+                             recompute=None if a.skip_composites else rs._default_recompute)
+        print(rs.format_summary(summary))
+        a.input.with_suffix(".resolution.json").write_text(json.dumps(summary, indent=2))
+        return 1 if summary["material_places_left"] else 0
     if a.cmd == "preflight":
         csv_path = a.csv or pf.REPO / "data" / f"{a.metro}_metro_place_catalog.csv"
         out = a.out or pf.REPO / "data" / f"{a.metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"

@@ -42,6 +42,7 @@ class Finding:
     material: bool
     remedy: str
     evidence: str
+    severity: int = 1  # how many things failed inside this pillar (used to tell better from worse)
 
 
 def _pillars(row: Dict[str, Any]) -> Dict[str, Any]:
@@ -64,8 +65,8 @@ def classify_place(row: Dict[str, Any]) -> List[Finding]:
     name = (row.get("catalog") or {}).get("name", "?")
     out: List[Finding] = []
 
-    def add(pillar, cause, material, remedy, evidence):
-        out.append(Finding(name, pillar, cause, material, remedy, evidence))
+    def add(pillar, cause, material, remedy, evidence, severity=1):
+        out.append(Finding(name, pillar, cause, material, remedy, evidence, severity))
 
     if not row.get("success"):
         add("(place)", UPSTREAM_ERROR, True, RETRY, f"scoring failed: {str(row.get('error'))[:120]}")
@@ -81,7 +82,7 @@ def classify_place(row: Dict[str, Any]) -> List[Finding]:
         if failed:
             material = any(q in ("local", "regional") for q in failed)
             add("active_outdoors", UPSTREAM_ERROR, material, RETRY,
-                f"Overpass failed on: {', '.join(failed)}; score {ao.get('score')}")
+                f"Overpass failed on: {', '.join(failed)}; score {ao.get('score')}", severity=len(failed))
 
     # Healthcare: flags api_error when a lookup failed, but still computes a score.
     hc = lp.get("healthcare_access")

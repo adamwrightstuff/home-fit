@@ -33,7 +33,14 @@ PYTHONPATH=. python -m scripts.metro_agent preflight --metro xx
 
 # After scoring: classifies every failed or empty pillar by cause and says what fixes it.
 PYTHONPATH=. python -m scripts.metro_agent diagnose --input data/xx_metro_place_catalog_scores_merged.composites_recomputed.jsonl --json
+
+# Fix what can be fixed: retries only the affected pillars for only the affected places (needs the
+# API running), keeps the better result, hands off what retrying cannot fix, recomputes composites.
+PYTHONPATH=. python -m scripts.metro_agent resolve --input data/xx_metro_place_catalog_scores_merged.composites_recomputed.jsonl --dry-run
+PYTHONPATH=. python -m scripts.metro_agent resolve --input data/xx_metro_place_catalog_scores_merged.composites_recomputed.jsonl
 ```
+
+`resolve` exits non-zero while any place has a material gap, so it doubles as the publish gate.
 
 Do not start scoring while `preflight` reports a blocking failure. `diagnose` groups findings as
 `RETRY_PILLAR` (an upstream lookup failed; re-run just that pillar), `RETRY_THEN_VERIFY`, and
