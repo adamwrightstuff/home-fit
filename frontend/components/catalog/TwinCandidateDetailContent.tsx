@@ -1,5 +1,7 @@
 'use client'
 
+import { neighborhoodHref } from '@/lib/neighborhoodPriorities'
+import { placeSlug } from '@/lib/neighborhoodSlug'
 import { useRouter } from 'next/navigation'
 import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import type { CatalogMapPlace } from '@/lib/catalogMapTypes'
@@ -9,8 +11,6 @@ import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { pillarDiffs } from '@/lib/twinSimilarity'
 import RadarChart from '@/components/catalog/RadarChart'
 import TwinDiffRows from '@/components/catalog/TwinDiffRows'
-import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
-import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 interface TwinCandidateDetailContentProps {
   query: CatalogMapPlace
   twin: CatalogMapPlace
@@ -50,19 +50,7 @@ export default function TwinCandidateDetailContent({
     : []
 
   const handleFullBreakdown = () => {
-    const prioritiesJson = JSON.stringify(priorities)
-    const routeParams = {
-      location: twin.catalog.search_query,
-      prioritiesJson,
-      job_categories: null as string | null,
-      include_chains: false,
-      enable_schools: false,
-      natural_beauty_preference: null as string | null,
-      built_density_preference: null as string | null,
-    }
-    const cacheKey = buildResultsCacheKey(routeParams)
-    writeCatalogResultsHydrate({ v: 1, cacheKey, score: twin.score })
-    router.push(buildResultsUrl(routeParams))
+    router.push(neighborhoodHref(placeSlug(twin.catalog), priorities))
   }
 
   return (

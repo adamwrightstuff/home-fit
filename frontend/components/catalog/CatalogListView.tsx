@@ -3,6 +3,7 @@
 import { Fragment, useMemo, useState } from 'react'
 import Link from 'next/link'
 import type { PillarPriorities } from '@/components/SearchOptions'
+import { neighborhoodHref } from '@/lib/neighborhoodPriorities'
 import { placeSlug } from '@/lib/neighborhoodSlug'
 import { getAllCatalogIndexDisplay } from '@/lib/catalogMapGeo'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
@@ -359,7 +360,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                     <td colSpan={5} className="p-0">
                       <div style={{ padding: '0.75rem 1rem 0' }}>
                         <Link
-                          href={`/neighborhoods/${placeSlug(p.catalog)}`}
+                          href={neighborhoodHref(placeSlug(p.catalog), priorities)}
                           className="text-xs font-bold text-[var(--hf-primary-1)] hover:underline"
                         >
                           View full breakdown →

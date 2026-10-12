@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import type { ScoreResponse } from '@/types/api'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
@@ -14,6 +14,7 @@ import LongevityInfo from '@/components/LongevityInfo'
 import StatusSignalInfo from '@/components/StatusSignalInfo'
 import HappinessInfo from '@/components/HappinessInfo'
 import ArchetypeTrajectoryInfo from '@/components/ArchetypeTrajectoryInfo'
+import { resolveNeighborhoodPriorities } from '@/lib/neighborhoodPriorities'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 
 /**
@@ -31,6 +32,11 @@ export default function NeighborhoodBreakdown({
   twinHref: string
 }) {
   const [priorities, setPriorities] = useState<PillarPriorities>(DEFAULT_PRIORITIES)
+
+  // Shared-link weights or the visitor's saved weights apply after hydration, so the static HTML stays default.
+  useEffect(() => {
+    setPriorities(resolveNeighborhoodPriorities(window.location.search))
+  }, [])
 
   const displayData = useMemo(() => {
     const rew = reweightScoreResponseFromPriorities(score, priorities)

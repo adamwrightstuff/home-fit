@@ -1,5 +1,7 @@
 'use client'
 
+import { neighborhoodHref } from '@/lib/neighborhoodPriorities'
+import { placeSlug } from '@/lib/neighborhoodSlug'
 import { CATALOG_METROS, CATALOG_METRO_META, zeroMetroCounts, type CatalogMetro } from '@/lib/catalogMetros'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -34,8 +36,6 @@ import {
   type CatalogMapPlace,
   type CatalogMapPlaceWithMetro,
 } from '@/lib/catalogMapTypes'
-import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
-import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker, withCommuteTimePillar, withSocialConnectionPillar, estimatedDriveMinutes } from '@/lib/reweight'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { fetchProfile, type CommuteMode } from '@/lib/userProfile'
@@ -1136,20 +1136,7 @@ export default function CatalogPageClient({
 
   const handleFullBreakdown = useCallback(
     (place: CatalogMapPlace) => {
-      const prioritiesJson = JSON.stringify(priorities)
-      const routeParams = {
-        location: place.catalog.search_query,
-        prioritiesJson,
-        job_categories: null as string | null,
-        include_chains: false,
-        enable_schools: false,
-        natural_beauty_preference: null as string | null,
-        built_density_preference: null as string | null,
-        political_preference: null,
-      }
-      const cacheKey = buildResultsCacheKey(routeParams)
-      writeCatalogResultsHydrate({ v: 1, cacheKey, score: place.score })
-      router.push(buildResultsUrl(routeParams))
+      router.push(neighborhoodHref(placeSlug(place.catalog), priorities))
     },
     [priorities, router]
   )
