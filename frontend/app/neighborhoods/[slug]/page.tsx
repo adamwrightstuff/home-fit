@@ -38,7 +38,7 @@ function pageTitle(entry: NeighborhoodEntry): string {
   const { catalog, score } = entry
   const total = typeof score.total_score === 'number' ? Math.round(score.total_score) : null
   const where = [catalog.county_borough, catalog.state_abbr].filter(Boolean).join(', ')
-  return `${catalog.name}${where ? `, ${where}` : ''} — HomeFit${total != null ? ` ${total}` : ''} | Trovamo`
+  return `${catalog.name}${where ? `, ${where}` : ''}: HomeFit${total != null ? ` ${total}` : ''} | Trovamo`
 }
 
 function pageDescription(entry: NeighborhoodEntry): string {
@@ -48,7 +48,7 @@ function pageDescription(entry: NeighborhoodEntry): string {
   }
   const { catalog, score } = entry
   const total = typeof score.total_score === 'number' ? Math.round(score.total_score) : null
-  return `${catalog.name} scores${total != null ? ` ${total}` : ''} for livability across Trovamo's 13 pillars — schools, safety, transit, nature, and more.`
+  return `${catalog.name} scores${total != null ? ` ${total}` : ''} for livability across Trovamo's 13 pillars: schools, safety, transit, nature, and more.`
 }
 
 export async function generateMetadata({
@@ -101,7 +101,7 @@ function ScoreHero({
         {label}
       </div>
       <div className="mt-1 text-4xl font-bold tabular-nums" style={{ color: accent }}>
-        {value != null && Number.isFinite(value) ? value.toFixed(0) : '—'}
+        {value != null && Number.isFinite(value) ? value.toFixed(0) : 'n/a'}
       </div>
       <div className="mt-1 text-[0.7rem] text-[var(--hf-text-tertiary)]">out of 100</div>
     </div>
@@ -160,19 +160,19 @@ export default async function NeighborhoodPage({
           label="HomeFit"
           value={typeof score.total_score === 'number' ? score.total_score : null}
           tooltip={HOMEFIT_COPY.tooltip}
-          accent="#6B5CE7"
+          accent="var(--hf-primary-1)"
         />
         <ScoreHero
           label="Longevity"
           value={typeof score.longevity_index === 'number' ? score.longevity_index : null}
           tooltip={LONGEVITY_COPY.tooltip}
-          accent="#2A9D8F"
+          accent="var(--hf-primary-2)"
         />
         <ScoreHero
           label="Happiness"
           value={typeof score.happiness_index === 'number' ? score.happiness_index : null}
           tooltip={HAPPINESS_INDEX_COPY.tooltip}
-          accent="#3B82C4"
+          accent="var(--tr-accent-800)"
         />
       </section>
 
@@ -216,7 +216,7 @@ export default async function NeighborhoodPage({
                       </span>
                     )}
                     <span className="w-8 text-right text-sm font-bold tabular-nums text-[var(--hf-text-primary)]">
-                      {v != null ? v.toFixed(0) : '—'}
+                      {v != null ? v.toFixed(0) : 'n/a'}
                     </span>
                   </div>
                 </div>
@@ -247,7 +247,7 @@ export default async function NeighborhoodPage({
         <Link
           href="/quiz"
           className="flex-1 rounded-xl py-3 text-center text-sm font-bold text-white"
-          style={{ background: '#6B5CE7' }}
+          style={{ background: 'var(--hf-primary-gradient)' }}
         >
           Take the quiz →
         </Link>
