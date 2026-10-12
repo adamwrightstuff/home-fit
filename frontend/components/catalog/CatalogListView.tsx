@@ -1,7 +1,9 @@
 'use client'
 
 import { Fragment, useMemo, useState } from 'react'
+import Link from 'next/link'
 import type { PillarPriorities } from '@/components/SearchOptions'
+import { placeSlug } from '@/lib/neighborhoodSlug'
 import { getAllCatalogIndexDisplay } from '@/lib/catalogMapGeo'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import {
@@ -262,7 +264,13 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                   onClick={() => toggleRow(key)}
                 >
                   <td className="py-2 pr-2">
-                    <div className="text-sm font-semibold text-[var(--hf-text-primary)]">{p.catalog.name}</div>
+                    <Link
+                      href={`/neighborhoods/${placeSlug(p.catalog)}`}
+                      className="text-sm font-semibold text-[var(--hf-text-primary)] hover:underline"
+                      onClick={(e) => { e.stopPropagation() }}
+                    >
+                      {p.catalog.name}
+                    </Link>
                     <div className="text-[0.6rem] text-[var(--hf-text-tertiary)]">
                       {p.catalog.county_borough}, {p.catalog.state_abbr}
                     </div>

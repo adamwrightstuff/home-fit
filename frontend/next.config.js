@@ -1,5 +1,19 @@
 const path = require('path')
 
+// Pre-scored catalog JSONL files (copied into frontend/data/ by the Vercel
+// buildCommand before next build runs). Needed by any route that reads the
+// catalog at build/request time.
+const CATALOG_DATA_FILES = [
+  'data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  'data/la_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  'data/sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  'data/seattle_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  'data/austin_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  'data/chicago_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  'data/philadelphia_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  'data/catalog_climate_profiles.jsonl',
+]
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -7,16 +21,9 @@ const nextConfig = {
     // Tell the file tracer to bundle the catalog JSONL files (copied into
     // frontend/data/ by the Vercel buildCommand before next build runs).
     outputFileTracingIncludes: {
-      '/api/catalog-map': [
-        'data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-        'data/la_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-        'data/sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-        'data/seattle_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-        'data/austin_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-        'data/chicago_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-        'data/philadelphia_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-        'data/catalog_climate_profiles.jsonl',
-      ],
+      '/api/catalog-map': CATALOG_DATA_FILES,
+      '/neighborhoods/[slug]': CATALOG_DATA_FILES,
+      '/sitemap.xml': CATALOG_DATA_FILES,
     },
   },
   eslint: {
