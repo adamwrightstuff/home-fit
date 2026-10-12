@@ -71,6 +71,33 @@ def _failed_places(path: Path) -> int:
     return sum(1 for r in dg.load_rows(path) if not r.get("success"))
 
 
+def drop_stale_pins(csv_path: Path, out_path: Path, log: Callable[[str], None] = print, tol: float = 0.0005) -> int:
+    """Remove scored rows whose pin in the place list has changed, so the resumable scorer redoes them."""
+    import csv as csv_mod
+    if not out_path.is_file() or not csv_path.is_file():
+        return 0
+    with csv_path.open(newline="", encoding="utf-8") as f:
+        pins = {(r["name"], r["county_borough"], r["state_abbr"]): (float(r["lat"]), float(r["lon"]))
+                for r in csv_mod.DictReader(f)}
+    rows, keep, dropped = dg.load_rows(out_path), [], []
+    for r in rows:
+        c = r.get("catalog") or {}
+        k = (c.get("name"), c.get("county_borough"), c.get("state_abbr"))
+        want = pins.get(k)
+        try:
+            have = (float(c["lat"]), float(c["lon"]))
+        except (KeyError, TypeError, ValueError):
+            have = None
+        if want and have and (abs(want[0] - have[0]) > tol or abs(want[1] - have[1]) > tol):
+            dropped.append(c.get("name"))
+        else:
+            keep.append(r)
+    if dropped:
+        out_path.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in keep), encoding="utf-8")
+        log(f"pin changed since scoring; will re-score: {', '.join(dropped)}")
+    return len(dropped)
+
+
 def run_score(metro: str, csv_path: Path, out_path: Path, api_base: str) -> int:
     cmd = [sys.executable, str(REPO / "scripts" / "catalog" / "score_metro.py"),
            "--csv", str(csv_path), "--out", str(out_path), "--metro", metro,
@@ -129,6 +156,7 @@ def run_pipeline(
 
         if not skip_score:
             banner("2. SCORE (resumable)")
+            drop_stale_pins(csv_path, out_path, log)
             for attempt in (1, 2):
                 rc = score_fn(metro, csv_path, out_path, api_base)
                 bad = failed_fn(out_path)

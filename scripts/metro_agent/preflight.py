@@ -80,12 +80,18 @@ def check_env(api_base: Optional[str]) -> List[Check]:
 
 # ── network ─────────────────────────────────────────────────────────────────
 
+# Health is judged at fixed, known-dense US reference points (Times Square, Central Park), NOT at a
+# metro's first pin: a pin in a quiet spot returns nothing and would look like a dead server.
+REF_DENSE = (40.7580, -73.9855)
+REF_PARKS = (40.7829, -73.9654)
+
+
 def _probe_overpass(url: str, lat: float, lon: float, timeout: float = 30.0) -> Dict[str, object]:
     import requests
-    tiny = f"[out:json][timeout:25];node(around:500,{lat},{lon})[amenity];out 3;"
+    tiny = f"[out:json][timeout:25];node(around:500,{REF_DENSE[0]},{REF_DENSE[1]})[amenity];out 3;"
     # Same shape as the app's heaviest local query: a parks count within the daily-use radius.
-    heavy = (f"[out:json][timeout:30];(way[\"leisure\"~\"^(park|garden)$\"](around:1500,{lat},{lon});"
-             f"relation[\"leisure\"~\"^(park|garden)$\"](around:1500,{lat},{lon}););out count;")
+    heavy = (f"[out:json][timeout:30];(way[\"leisure\"~\"^(park|garden)$\"](around:1500,{REF_PARKS[0]},{REF_PARKS[1]});"
+             f"relation[\"leisure\"~\"^(park|garden)$\"](around:1500,{REF_PARKS[0]},{REF_PARKS[1]}););out count;")
     res: Dict[str, object] = {"url": url, "ok": False, "seconds": None, "error": ""}
     t0 = time.time()
     try:
@@ -193,6 +199,63 @@ def check_csv(rows: List[Dict[str, str]]) -> List[Check]:
     return [Check("csv", PASS, f"{len(rows)} places in {', '.join(states)}")]
 
 
+GAZETTEER_URL = "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2023_Gazetteer/2023_Gaz_place_national.zip"
+PIN_WARN_KM = 5.0
+
+
+def _load_gazetteer() -> Dict[tuple, List[tuple]]:
+    """Census place internal points: {(state, lowercased name): [(lat, lon), ...]}, cached under data_cache/."""
+    import re
+    import urllib.request
+    import zipfile
+    cache = REPO / "data_cache" / "gazetteer_places_2023.zip"
+    if not cache.is_file():
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        urllib.request.urlretrieve(GAZETTEER_URL, cache)
+    z = zipfile.ZipFile(cache)
+    lines = z.read(z.namelist()[0]).decode("latin1").splitlines()
+    head = [x.strip() for x in lines[0].split("\t")]
+    out: Dict[tuple, List[tuple]] = {}
+    for line in lines[1:]:
+        r = dict(zip(head, [x.strip() for x in line.split("\t")]))
+        nm = re.sub(r"\s+(city|town|village|borough|CDP|township|municipality)$", "", r["NAME"], flags=re.I).lower()
+        out.setdefault((r["USPS"], nm), []).append((float(r["INTPTLAT"]), float(r["INTPTLONG"])))
+    return out
+
+
+def _km(a, b) -> float:
+    import math
+    p = math.pi / 180
+    h = 0.5 - math.cos((b[0] - a[0]) * p) / 2 + math.cos(a[0] * p) * math.cos(b[0] * p) * (1 - math.cos((b[1] - a[1]) * p)) / 2
+    return 12742 * math.asin(math.sqrt(h))
+
+
+def check_pins(rows: List[Dict[str, str]], gazetteer: Optional[Dict[tuple, List[tuple]]] = None) -> Check:
+    """Independent check of the place list itself: a suburb whose pin is far from the Census center of the
+    place of that name is probably geocoded to the wrong town. Warns only (townships are not in the gazetteer)."""
+    try:
+        gaz = gazetteer if gazetteer is not None else _load_gazetteer()
+    except Exception as e:  # noqa: BLE001
+        return Check("pins", WARN, f"could not load the Census gazetteer ({type(e).__name__}); pins unchecked")
+    far = []
+    for r in rows:
+        if r.get("type") != "suburb":
+            continue
+        cands = gaz.get((r["state_abbr"], r["name"].lower()))
+        if not cands:
+            continue
+        d = min(_km((float(r["lat"]), float(r["lon"])), c) for c in cands)
+        if d > PIN_WARN_KM:
+            far.append((round(d, 1), r["name"], r["state_abbr"]))
+    if far:
+        far.sort(reverse=True)
+        return Check("pins", WARN, "pins far from the Census center of the town of that name (km, town): "
+                     + "; ".join(f"{d} {n}, {s}" for d, n, s in far[:12]),
+                     "open each in a map; a wrong pin scores a different place. Big-city downtowns and townships "
+                     "can be legitimate")
+    return Check("pins", PASS, "every suburb pin is near its Census town center")
+
+
 def check_baseline(metro: str) -> Check:
     sys.path.insert(0, str(REPO))
     from scripts.baselines.build_metro_baselines_from_cbsa import CBSA_TO_KEY
@@ -264,6 +327,8 @@ def run(metro: str, csv_path: Path, api_base: Optional[str], out_path: Optional[
     checks += check_env(api_base)
     rows = read_csv(csv_path) if csv_path.is_file() else []
     checks += check_csv(rows)
+    if rows and checks[-1].status != FAIL:
+        checks.append(check_pins(rows))
     if rows:
         lat, lon = float(rows[0]["lat"]), float(rows[0]["lon"])
         checks += [check_baseline(metro), *check_precincts(rows), check_crime_source(metro), *check_registration(metro)]

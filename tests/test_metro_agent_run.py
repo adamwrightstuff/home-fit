@@ -75,3 +75,15 @@ def test_places_that_never_score_stop_the_run(tmp_path, monkeypatch):
     rec = Recorder(failed_seq=[3])
     rc, _ = _go(rec, tmp_path, monkeypatch)
     assert rc == 3 and "resolve" not in rec.calls
+
+
+def test_changed_pin_drops_the_scored_row_so_it_is_rescored(tmp_path):
+    import json
+    csv_path = tmp_path / "x.csv"
+    csv_path.write_text("name,county_borough,state_abbr,search_query,lat,lon\nA,K,TX,A,30.1111,-97.3182\nB,K,TX,B,30.0,-97.0\n")
+    out = tmp_path / "o.jsonl"
+    def row(n, la, lo):
+        return json.dumps({"catalog": {"name": n, "county_borough": "K", "state_abbr": "TX", "lat": str(la), "lon": str(lo)}, "success": True}) + "\n"
+    out.write_text(row("A", 30.0541, -97.3888) + row("B", 30.0, -97.0))
+    assert rn.drop_stale_pins(csv_path, out, log=lambda s: None) == 1
+    assert [json.loads(l)["catalog"]["name"] for l in out.read_text().splitlines()] == ["B"]

@@ -100,3 +100,19 @@ def test_registration_and_baseline_for_registered_and_unknown_metro():
     assert all(c.status == pf.PASS for c in pf.check_registration("austin"))
     assert any(c.status == pf.FAIL for c in pf.check_registration("denver"))
     assert pf.check_baseline("denver").status == pf.FAIL
+
+
+def test_overpass_probe_uses_fixed_reference_points_not_the_metro_pin():
+    import inspect
+    src = inspect.getsource(pf._probe_overpass)
+    assert "REF_DENSE" in src and "around:500,{lat}" not in src
+
+
+def test_pin_check_warns_on_far_pins_and_passes_good_ones():
+    gaz = {("TX", "bastrop"): [(30.111, -97.318)], ("TX", "lakeway"): [(30.36, -97.98)]}
+    rows = [{"type": "suburb", "name": "Bastrop", "state_abbr": "TX", "lat": "30.054", "lon": "-97.389"},
+            {"type": "suburb", "name": "Lakeway", "state_abbr": "TX", "lat": "30.3645", "lon": "-97.9875"},
+            {"type": "neighborhood", "name": "Zilker", "state_abbr": "TX", "lat": "30.26", "lon": "-97.77"}]
+    c = pf.check_pins(rows, gazetteer=gaz)
+    assert c.status == pf.WARN and "Bastrop" in c.detail and "Lakeway" not in c.detail
+    assert pf.check_pins(rows[1:], gazetteer=gaz).status == pf.PASS
