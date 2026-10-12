@@ -6,8 +6,17 @@ import {
   getAllNeighborhoodSlugs,
   type NeighborhoodEntry,
 } from '@/lib/catalogServer'
+import {
+  PILLAR_ORDER,
+  PILLAR_META,
+  getScoreBand,
+  HOMEFIT_COPY,
+  LONGEVITY_COPY,
+  HAPPINESS_INDEX_COPY,
+} from '@/lib/pillars'
 import { CATALOG_METRO_META } from '@/lib/catalogMetros'
-import NeighborhoodBreakdown from '@/components/NeighborhoodBreakdown'
+import NeighborhoodMap from '@/components/NeighborhoodMap'
+import NeighborhoodPersonal from '@/components/NeighborhoodPersonal'
 
 export const dynamicParams = false
 
@@ -15,6 +24,16 @@ const SITE_URL = 'https://www.trovamo.co'
 
 export async function generateStaticParams() {
   return getAllNeighborhoodSlugs().map((slug) => ({ slug }))
+}
+
+function pillarScores(entry: NeighborhoodEntry): Record<string, number | null> {
+  const pillars = (entry.score.livability_pillars ?? {}) as Record<string, { score?: number }>
+  const out: Record<string, number | null> = {}
+  for (const key of PILLAR_ORDER) {
+    const v = pillars[key]?.score
+    out[key] = typeof v === 'number' && Number.isFinite(v) ? v : null
+  }
+  return out
 }
 
 function pageTitle(entry: NeighborhoodEntry): string {
@@ -64,6 +83,33 @@ export async function generateMetadata({
   }
 }
 
+function ScoreHero({
+  label,
+  value,
+  tooltip,
+  accent,
+}: {
+  label: string
+  value: number | null
+  tooltip: string
+  accent: string
+}) {
+  return (
+    <div
+      className="flex flex-col items-center rounded-2xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)] px-4 py-5"
+      title={tooltip}
+    >
+      <div className="text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-[var(--hf-text-tertiary)]">
+        {label}
+      </div>
+      <div className="mt-1 text-4xl font-bold tabular-nums" style={{ color: accent }}>
+        {value != null && Number.isFinite(value) ? value.toFixed(0) : 'n/a'}
+      </div>
+      <div className="mt-1 text-[0.7rem] text-[var(--hf-text-tertiary)]">out of 100</div>
+    </div>
+  )
+}
+
 export default async function NeighborhoodPage({
   params,
 }: {
@@ -75,6 +121,7 @@ export default async function NeighborhoodPage({
 
   const { catalog, score, metro } = entry
   const metroLabel = CATALOG_METRO_META[metro]?.label ?? metro.toUpperCase()
+  const scores = pillarScores(entry)
   const twinKey = encodeURIComponent(
     `${catalog.name}|${catalog.county_borough ?? ''}|${catalog.state_abbr ?? ''}`
   )
@@ -109,11 +156,126 @@ export default async function NeighborhoodPage({
         </p>
       </header>
 
-      <NeighborhoodBreakdown
-        score={score}
-        locationLabel={`${catalog.name}, ${catalog.county_borough ?? ''} ${catalog.state_abbr ?? ''}`.replace(/\s+/g, ' ').trim()}
-        twinHref={`/catalog?mode=twin&key=${twinKey}`}
-      />
+      {/* Map */}
+      <div className="mb-6">
+        <NeighborhoodMap
+          location={`${catalog.name}, ${catalog.county_borough ?? ''} ${catalog.state_abbr ?? ''}`.replace(/\s+/g, ' ').trim()}
+          score={score}
+        />
+      </div>
+
+      {/* Score hero */}
+      <section className="mb-6 grid grid-cols-3 gap-3" aria-label="Scores">
+        <ScoreHero
+          label="HomeFit"
+          value={typeof score.total_score === 'number' ? score.total_score : null}
+          tooltip={HOMEFIT_COPY.tooltip}
+          accent="var(--hf-primary-1)"
+        />
+        <ScoreHero
+          label="Longevity"
+          value={typeof score.longevity_index === 'number' ? score.longevity_index : null}
+          tooltip={LONGEVITY_COPY.tooltip}
+          accent="var(--hf-primary-2)"
+        />
+        <ScoreHero
+          label="Happiness"
+          value={typeof score.happiness_index === 'number' ? score.happiness_index : null}
+          tooltip={HAPPINESS_INDEX_COPY.tooltip}
+          accent="var(--tr-accent-800)"
+        />
+      </section>
+
+      {/* Summary */}
+      {typeof score.place_summary === 'string' && score.place_summary.trim() && (
+        <p className="mb-8 text-[0.95rem] leading-relaxed text-[var(--hf-text-secondary)]">
+          {score.place_summary}
+        </p>
+      )}
+
+      {/* Pillar breakdown */}
+      <section className="mb-8" aria-label="Pillar breakdown">
+        <h2 className="mb-3 text-lg font-bold text-[var(--hf-text-primary)]">
+          The 13 pillars
+        </h2>
+        <div className="overflow-hidden rounded-2xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)]">
+          {PILLAR_ORDER.map((key, i) => {
+            const meta = PILLAR_META[key]
+            const v = scores[key]
+            const band = v != null ? getScoreBand(v) : null
+            return (
+              <div
+                key={key}
+                className={`px-4 py-3 ${i > 0 ? 'border-t border-[var(--hf-border)]' : ''}`}
+                title={meta.description}
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="mr-1.5">{meta.icon}</span>
+                    <span className="text-sm font-semibold text-[var(--hf-text-primary)]">
+                      {meta.name}
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 items-baseline gap-2">
+                    {band && (
+                      <span
+                        className="text-[0.7rem] font-semibold"
+                        style={{ color: band.color }}
+                      >
+                        {band.label}
+                      </span>
+                    )}
+                    <span className="w-8 text-right text-sm font-bold tabular-nums text-[var(--hf-text-primary)]">
+                      {v != null ? v.toFixed(0) : 'n/a'}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${v != null ? Math.max(0, Math.min(100, v)) : 0}%`,
+                      background: band?.color ?? 'var(--hf-border)',
+                    }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-[var(--hf-text-tertiary)]">
+          Scores are computed across 13 pillars with equal weights by default.{' '}
+          <Link href="/quiz" className="font-semibold text-[var(--hf-primary-1)] hover:underline">
+            Take the quiz
+          </Link>{' '}
+          to re-weight them around what matters most to you.
+        </p>
+      </section>
+
+      <NeighborhoodPersonal score={score} />
+
+      {/* CTAs */}
+      <section className="flex flex-col gap-2 sm:flex-row" aria-label="Next steps">
+        <Link
+          href="/quiz"
+          className="flex-1 rounded-xl py-3 text-center text-sm font-bold text-white"
+          style={{ background: 'var(--hf-primary-gradient)' }}
+        >
+          Take the quiz →
+        </Link>
+        <Link
+          href={`/catalog?mode=twin&key=${twinKey}`}
+          className="flex-1 rounded-xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)] py-3 text-center text-sm font-bold text-[var(--hf-text-primary)]"
+        >
+          Find its twin →
+        </Link>
+        <Link
+          href="/catalog"
+          className="flex-1 rounded-xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)] py-3 text-center text-sm font-bold text-[var(--hf-text-primary)]"
+        >
+          Browse all →
+        </Link>
+      </section>
     </main>
   )
 }
