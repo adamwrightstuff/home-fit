@@ -17,6 +17,7 @@ import TwinCandidateDetailContent from '@/components/catalog/TwinCandidateDetail
 import CatalogListView from '@/components/catalog/CatalogListView'
 import HeroBand from '@/components/catalog/HeroBand'
 import FilterSheet from '@/components/catalog/FilterSheet'
+import MetroPicker from '@/components/catalog/MetroPicker'
 import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, minutesForMode } from '@/lib/workZones'
 import IndexInfoButton from '@/components/catalog/IndexInfoButton'
 import CompareTray from '@/components/catalog/CompareTray'
@@ -1551,23 +1552,10 @@ export default function CatalogPageClient({
             </button>
           </div>
         </div>
-        {/* Row 2: metro pills */}
+        {/* Row 2: metro picker */}
           {catalogMode === 'explorer' && (
-            <div className="flex gap-2 px-3 pb-3 pt-1">
-              {(['all', ...CATALOG_METROS] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  className={`flex-1 rounded-full py-1.5 text-[0.7rem] font-semibold transition-colors ${filterMetro === m ? 'text-white shadow-sm' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
-                  style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
-                  onClick={() => setFilterMetro(m)}
-                >
-                  {m === 'all' ? 'All' : CATALOG_METRO_META[m].label}
-                  {m !== 'all' && metroResultCounts && (
-                    <span className="ml-0.5 font-normal opacity-60">({metroResultCounts[m]})</span>
-                  )}
-                </button>
-              ))}
+            <div className="px-3 pb-3 pt-1">
+              <MetroPicker value={filterMetro} onChange={setFilterMetro} counts={metroResultCounts} />
             </div>
           )}
         </div>
