@@ -111,7 +111,8 @@ def judge_amenities(estab: Optional[int], kept: int) -> tuple:
     if kept > 0:
         return INCONCLUSIVE, f"{kept} businesses kept; nothing to contradict"
     if estab >= AMEN_IMPOSSIBLE_MIN_ESTAB:
-        return CONTRADICTED, f"Census counts {estab} retail/food/arts establishments in this ZIP but we kept 0"
+        return CONTRADICTED, (f"Census counts {estab} retail/food/arts establishments in this ZIP (wider than the pillar's radius) "
+                              "but none are within it: confirm the pin sits where people live and shop")
     if estab < AMEN_GENUINE_MAX_ESTAB:
         return CONSISTENT, f"Census counts only {estab} retail/food/arts establishments in this ZIP; an empty result is plausible"
     return INCONCLUSIVE, f"Census counts {estab} establishments; neither clearly impossible nor clearly genuine"

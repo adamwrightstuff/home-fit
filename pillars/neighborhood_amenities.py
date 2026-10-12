@@ -97,31 +97,16 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
             places_fallback_meta.get("mapped_added", 0), osm_completeness_pre,
         )
 
-    # Still empty after Places (or Places disabled / no API key): density-area imputed score vs 0
+    # Still empty after Places (or Places disabled / no API key).
+    empty_walkable_area = False
     if not all_businesses:
         if osm_query_failed:
+            # The lookup itself failed: that is a missing measurement, not a measured zero. Do not score.
             logger.warning("OSM business data unavailable")
-        else:
-            logger.warning("No indie businesses found in OSM data")
-        # Apply fallback score for urban/suburban areas (likely OSM gap — include after Places exhausted)
-        should_apply_fallback = False
-        fallback_reason = ""
-
-        if area_type in ("urban_core", "urban_residential", "suburban"):
-            should_apply_fallback = True
-            fallback_reason = f"{area_type} area"
-        elif density and density > 1500:
-            should_apply_fallback = True
-            fallback_reason = f"moderate-high density ({density:.0f} people/km², area_type={area_type})"
-        elif area_type is None and density and density > 1000:
-            should_apply_fallback = True
-            fallback_reason = f"moderate density ({density:.0f} people/km²)"
-
-        if should_apply_fallback:
-            failure_reason = (
-                f"osm_unavailable ({fallback_reason})" if osm_query_failed
-                else f"osm_data_gap ({fallback_reason})"
-            )
+            if area_type in ("urban_core", "urban_residential", "suburban") or (density and density > 1000):
+                failure_reason = f"osm_unavailable ({area_type or 'density ' + str(round(density or 0))})"
+            else:
+                failure_reason = "osm_unavailable (non-urban area)"
             logger.warning("neighborhood_amenities returning None: %s", failure_reason)
             return None, {
                 "score": None,
@@ -134,20 +119,11 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
                 "summary": {},
                 "data_quality": {"confidence": 0},
             }
-        # A failed Overpass query must not be reported as "no businesses here".
-        no_biz_reason = "osm_unavailable (non-urban area)" if osm_query_failed else "no_businesses_found"
-        logger.warning("neighborhood_amenities: no businesses found, returning None (%s)", no_biz_reason)
-        return None, {
-            "score": None,
-            "failed": True,
-            "failure_reason": no_biz_reason,
-            "confidence": 0,
-            "data_quality_index": 0.0,
-            "business_list": [],
-            "breakdown": {},
-            "summary": {},
-            "data_quality": {"confidence": 0},
-        }
+        # Overpass answered and (after the Places fallback) there is still nothing: this place has no
+        # businesses within walking range. That is a real, low result for a mover, so score it through
+        # the normal curve (zero density, variety and proximity) instead of hiding it as "no data".
+        logger.warning("neighborhood_amenities: no businesses within radius; scoring as an empty walkable area")
+        empty_walkable_area = True
 
     # Step 1: Home Walkability (0-60) - What's within walkable distance?
     profile = get_radius_profile('neighborhood_amenities', area_type, location_scope)
@@ -204,6 +180,10 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
         area_type = data_quality.detect_area_type(lat, lon, density)
     combined_data["places_augmented"] = bool(places_fallback_meta.get("used"))
     quality_metrics = data_quality.assess_pillar_data_quality('neighborhood_amenities', combined_data, lat, lon, area_type)
+    if empty_walkable_area:
+        quality_metrics = dict(quality_metrics)
+        quality_metrics["confidence"] = min(int(quality_metrics.get("confidence") or 0), 40)
+        quality_metrics["data_warnings"] = list(quality_metrics.get("data_warnings") or []) + ["no_businesses_within_radius"]
     
     # Build response with enhanced breakdown
     breakdown = {
@@ -224,6 +204,7 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
         "data_source": "blended" if places_fallback_meta.get("used") else "osm",
         "places_fallback": places_fallback_meta,
         "data_quality": quality_metrics,
+        "empty_walkable_area": empty_walkable_area,
         "version": "neighborhood_amenities_v2_places_fallback",
         "raw_total": round(raw_total, 1),
         "calibration": {"a": None, "b": None, "note": "Calibration removed - using pure data-backed scoring per design principles"},

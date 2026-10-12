@@ -10,6 +10,7 @@ Causes
   SUSPECTED_UPSTREAM  looks like a failed lookup but could be genuine absence; retry, then verify
   NO_DATA_SOURCE      no usable source exists for this place; retrying will not help
   DISABLED            switched off by configuration (e.g. school scoring)
+  GENUINE_LOW         measured and low by design (e.g. no businesses within walking range); informational
 """
 from __future__ import annotations
 
@@ -23,6 +24,7 @@ UPSTREAM_ERROR = "UPSTREAM_ERROR"
 SUSPECTED_UPSTREAM = "SUSPECTED_UPSTREAM"
 NO_DATA_SOURCE = "NO_DATA_SOURCE"
 DISABLED = "DISABLED"
+GENUINE_LOW = "GENUINE_LOW"
 
 RETRY = "RETRY_PILLAR"
 VERIFY = "RETRY_THEN_VERIFY"
@@ -92,7 +94,10 @@ def classify_place(row: Dict[str, Any]) -> List[Finding]:
 
     # Neighborhood amenities: empty result with no diagnostics means the query never produced data.
     na = lp.get("neighborhood_amenities")
-    if na is not None:
+    if na is not None and "no_businesses_within_radius" in _warnings(na):
+        add("neighborhood_amenities", GENUINE_LOW, False, NONE,
+            f"no businesses within walking range; scored {na.get('score')} by design (confidence capped)")
+    elif na is not None:
         bd = na.get("breakdown") or {}
         if na.get("score") is None and na.get("status") in ("no_data", "failed", "error"):
             reason = na.get("failure_reason")  # stored by the API once the pillar reports it

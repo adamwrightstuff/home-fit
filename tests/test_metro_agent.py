@@ -116,3 +116,10 @@ def test_pin_check_warns_on_far_pins_and_passes_good_ones():
     c = pf.check_pins(rows, gazetteer=gaz)
     assert c.status == pf.WARN and "Bastrop" in c.detail and "Lakeway" not in c.detail
     assert pf.check_pins(rows[1:], gazetteer=gaz).status == pf.PASS
+
+
+def test_empty_walkable_area_scored_low_is_informational_not_a_gap():
+    row = {"catalog": {"name": "Lakeway"}, "success": True, "score": {"livability_pillars": {"neighborhood_amenities": {
+        "score": 2.0, "data_quality": {"data_warnings": ["no_businesses_within_radius"], "confidence": 40}}}}}
+    f = dg.classify_place(row)[0]
+    assert (f.cause, f.material) == (dg.GENUINE_LOW, False)
