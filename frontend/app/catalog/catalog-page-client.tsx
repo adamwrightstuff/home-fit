@@ -1655,7 +1655,8 @@ export default function CatalogPageClient({
           />
           {/* Mobile floating score + sort strip */}
           {catalogMode === 'explorer' && (
-            <div className="md:hidden absolute top-2 left-0 right-0 z-10 pointer-events-none">
+            <div className="md:hidden absolute top-2 left-0 right-0 z-10 pointer-events-none flex items-start gap-1.5 pr-3">
+              <div className="relative min-w-0 flex-1">
               {/* Right-edge fade hint */}
               <div className="absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.7))' }} />
               <div
@@ -1689,15 +1690,17 @@ export default function CatalogPageClient({
                     : { background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }
                   }
                 >A–Z</button>
-                {indexMode === 'homefit' && !sortByName && (
-                  <button
-                    type="button"
-                    onClick={() => setWeightOpen(true)}
-                    className="shrink-0 rounded-full px-3 py-1.5 text-xs font-bold shadow-sm"
-                    style={{ background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }}
-                  >⚖ Weights</button>
-                )}
               </div>
+              </div>
+              {indexMode === 'homefit' && !sortByName && (
+                <button
+                  type="button"
+                  onClick={() => setWeightOpen(true)}
+                  aria-label="Adjust weights"
+                  className="pointer-events-auto shrink-0 rounded-full px-3 py-1.5 text-xs font-bold shadow-sm"
+                  style={{ background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }}
+                >⚖ Weights</button>
+              )}
             </div>
           )}
 
