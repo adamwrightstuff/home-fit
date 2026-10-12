@@ -229,9 +229,8 @@ def phase_retry(out_path: Path, args) -> None:
     import subprocess
     cmd = [
         sys.executable, str(REPO_ROOT / "scripts/catalog/rerun_failed_catalog_pillars.py"),
-        str(out_path),
+        "--input", str(out_path), "--output", str(out_path),
         "--base-url", os.environ.get("HOMEFIT_API_BASE", "http://127.0.0.1:8000"),
-        "--in-place",
     ]
     result = subprocess.run(cmd, env={**os.environ, "PYTHONPATH": str(REPO_ROOT)})
     if result.returncode != 0:

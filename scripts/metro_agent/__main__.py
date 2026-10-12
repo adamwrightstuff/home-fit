@@ -34,7 +34,23 @@ def main() -> int:
     p3.add_argument("--dry-run", action="store_true")
     p3.add_argument("--skip-composites", action="store_true")
 
+    p4 = sub.add_parser("run", help="whole launch in one command: preflight, score, resolve, gate")
+    p4.add_argument("--metro", required=True)
+    p4.add_argument("--api-base", default=os.environ.get("HOMEFIT_API_BASE", "http://127.0.0.1:8000"))
+    p4.add_argument("--csv", type=Path)
+    p4.add_argument("--out", type=Path)
+    p4.add_argument("--rounds", type=int, default=3)
+    p4.add_argument("--push", action="store_true", help="commit and push the catalog file if the gate passes")
+    p4.add_argument("--skip-score", action="store_true", help="only resolve and gate an existing file")
+    p4.add_argument("--no-server", action="store_true", help="do not start a local API automatically")
+
     a = ap.parse_args()
+    if a.cmd == "run":
+        from . import run as runner
+        pf._load_env()
+        return runner.run_pipeline(a.metro, api_base=a.api_base.rstrip("/"), csv_path=a.csv, out_path=a.out,
+                                   rounds=a.rounds, push=a.push, skip_score=a.skip_score,
+                                   manage_server=not a.no_server)
     if a.cmd == "resolve":
         from . import resolve as rs
         summary = rs.resolve(a.input, a.api_base.rstrip("/"), max_rounds=a.rounds, delay=a.delay,

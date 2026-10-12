@@ -24,6 +24,20 @@ PYTHONPATH=. python3 scripts/catalog/score_metro.py \
 
 ---
 
+## The one-command launch
+
+```bash
+PYTHONPATH=. python -m scripts.metro_agent run --metro chicago          # stops for review at the gate
+PYTHONPATH=. python -m scripts.metro_agent run --metro chicago --push   # commits + pushes only if the gate passes
+```
+
+`run` starts the local API if it is not running, runs preflight (a blocking failure stops it before any
+scoring), scores the place list (resumable: if interrupted, run the same command again), retries upstream
+failures, and ends with `PUBLISH: OK` or `PUBLISH: BLOCKED`. Exit codes: 0 published/ready, 1 blocked by a
+material gap, 2 preflight failed, 3 places that never score. Before the first launch of a new metro, finish the
+checklist at the bottom (CBSA, place list, precinct files, frontend registry); preflight will tell you what is missing.
+The stages below can also be run one at a time.
+
 ## Before and after every run: the metro agent
 
 ```bash
