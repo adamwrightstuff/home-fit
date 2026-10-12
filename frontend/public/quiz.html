@@ -587,13 +587,13 @@ const QUESTIONS = [
   {
     id: 'outdoors',
     type: 'outdoors',
-    q: 'What does the outdoors mean to you?',
-    sub: 'Pick everything that fits.',
+    q: 'What kind of outdoor spaces do you want near home?',
+    sub: 'Pick everything you\'d like within easy reach.',
     chips: [
-      { id: 'local_parks',    icon: '🌳', label: 'Local Parks' },
-      { id: 'trails_regional', icon: '🥾', label: 'Trails & Regional Parks' },
-      { id: 'waterfront',     icon: '🌊', label: 'Waterfront' },
-      { id: 'none',        icon: '🛋️', label: 'Mostly indoors — not a factor' },
+      { id: 'local_parks',    icon: '🌳', label: 'Neighborhood parks' },
+      { id: 'trails_regional', icon: '🥾', label: 'Hiking trails & large parks' },
+      { id: 'waterfront',     icon: '🌊', label: 'Beach, lake or river' },
+      { id: 'none',        icon: '🛋️', label: 'Not important to me' },
     ],
     apply(ids) {
       if (ids.includes('none') && ids.length === 1) { setWeight('active_outdoors', 0); return }
