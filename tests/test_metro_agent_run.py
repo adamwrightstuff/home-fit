@@ -87,3 +87,20 @@ def test_changed_pin_drops_the_scored_row_so_it_is_rescored(tmp_path):
     out.write_text(row("A", 30.0541, -97.3888) + row("B", 30.0, -97.0))
     assert rn.drop_stale_pins(csv_path, out, log=lambda s: None) == 1
     assert [json.loads(l)["catalog"]["name"] for l in out.read_text().splitlines()] == ["B"]
+
+
+def test_blocked_gate_gathers_evidence_before_stopping(tmp_path, monkeypatch):
+    import scripts.metro_agent.run as r
+    monkeypatch.setattr(r.dg, "diagnose", lambda rows, **kw: {"material_places": ["A"], "findings": [], "systemic": [], "places": 1, "clean": 0, "counts": {}})
+    monkeypatch.setattr(r.dg, "format_report", lambda *a, **k: "")
+    rec = Recorder(material=1)
+    explained = []
+    rc, _ = _go(rec, tmp_path, monkeypatch, explain_fn=lambda rows, out, log: explained.append(1))
+    assert rc == 1 and explained == [1]
+
+
+def test_clean_gate_does_not_run_the_explainers(tmp_path, monkeypatch):
+    rec = Recorder()
+    explained = []
+    rc, _ = _go(rec, tmp_path, monkeypatch, explain_fn=lambda rows, out, log: explained.append(1))
+    assert rc == 0 and explained == []

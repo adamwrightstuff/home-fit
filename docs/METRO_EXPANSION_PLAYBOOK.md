@@ -29,6 +29,8 @@ PYTHONPATH=. python3 scripts/catalog/score_metro.py \
 ```bash
 PYTHONPATH=. python -m scripts.metro_agent run --metro chicago          # stops for review at the gate
 PYTHONPATH=. python -m scripts.metro_agent run --metro chicago --push   # commits + pushes only if the gate passes
+
+If the gate is BLOCKED, `run` automatically runs the probe (and the FBI agency probe when an FBI key is set) and prints raw upstream evidence for every remaining gap, so no separate diagnostic commands are needed.
 ```
 
 `run` starts the local API if it is not running, runs preflight (a blocking failure stops it before any

@@ -8,7 +8,7 @@ Stages (stops at the first blocking problem, resumable by simply running it agai
   2. score            scripts/catalog/score_metro.py, then once more if any place failed outright
   3. resolve          retry upstream failures, hand off what retrying cannot fix
   4. validate         check against independent sources; confirmed-genuine gaps are accepted
-  5. gate             PUBLISH: OK or BLOCKED
+  5. gate             PUBLISH: OK or BLOCKED; if blocked, gathers the evidence for every remaining gap
   6. optional push    only the metro's catalog file, only when the gate passes (--push)
 """
 from __future__ import annotations
@@ -25,6 +25,8 @@ from . import diagnose as dg
 from . import preflight as pf
 from . import resolve as rs
 from . import validate as vd
+from . import probe as pr
+from . import fbi_probe as fp
 
 REPO = pf.REPO
 
@@ -98,6 +100,15 @@ def drop_stale_pins(csv_path: Path, out_path: Path, log: Callable[[str], None] =
     return len(dropped)
 
 
+def explain_blocked(rows: List[Dict[str, Any]], out_path: Path, log: Callable[[str], None] = print) -> None:
+    """Gather the evidence for every remaining gap: raw Overpass/Transitland data and FBI agency options."""
+    pr.probe(rows, log=log)
+    if os.getenv("FBI_CRIME_API_KEY") or os.getenv("FBI_API_KEY"):
+        fp.run(rows, suggest_path=out_path.with_suffix(".fbi_suggestions.json"), log=log)
+    else:
+        log("FBI probe skipped: no FBI API key in the environment")
+
+
 def run_score(metro: str, csv_path: Path, out_path: Path, api_base: str) -> int:
     cmd = [sys.executable, str(REPO / "scripts" / "catalog" / "score_metro.py"),
            "--csv", str(csv_path), "--out", str(out_path), "--metro", metro,
@@ -135,6 +146,7 @@ def run_pipeline(
     publish_fn: Callable = git_publish,
     failed_fn: Callable = _failed_places,
     validate_fn: Callable = vd.validate,
+    explain_fn: Optional[Callable] = None,
 ) -> int:
     csv_path = csv_path or REPO / "data" / f"{metro}_metro_place_catalog.csv"
     out_path = out_path or REPO / "data" / f"{metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
@@ -188,8 +200,13 @@ def run_pipeline(
         result = dg.diagnose(dg.load_rows(out_path), accepted=dg.load_accepted(out_path))
         log(dg.format_report(result, out_path.name))
         if result["material_places"]:
+            banner("WHY IT IS BLOCKED (raw upstream data for every remaining gap)")
+            try:
+                (explain_fn or explain_blocked)(dg.load_rows(out_path), out_path, log)
+            except Exception as e:  # noqa: BLE001 - explanation is best effort
+                log(f"explanation skipped: {type(e).__name__}: {str(e)[:100]}")
             log(f"\nPUBLISH: BLOCKED. {len(result['material_places'])} places have a material gap. "
-                "See NEEDS A DATA SOURCE / HUMAN CHECK above; send me that summary to decide.")
+                "The evidence above says what each one needs; send me the output from 'WHY IT IS BLOCKED' down.")
             return 1
 
         log("\nPUBLISH: OK, no material gaps.")
