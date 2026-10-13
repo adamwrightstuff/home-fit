@@ -99,7 +99,7 @@ def _coverage(path: Path) -> None:
                 checks["political_lean.lean_2024"] += 1
             if s.get("local_scene_bucket") is not None:
                 checks["local_scene_bucket"] += 1
-            if cat.get("zip_code") or s.get("zip_code"):
+            if cat.get("zip_code") or s.get("zip_code") or (s.get("location_info") or {}).get("zip"):
                 checks["zip_code"] += 1
             ss = s.get("status_signal_breakdown") or {}
             if ss.get("archetype"):
