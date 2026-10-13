@@ -63,7 +63,18 @@ def main() -> int:
     p8.add_argument("--api-base", default=os.environ.get("HOMEFIT_API_BASE", "http://127.0.0.1:8000"))
     p8.add_argument("--json", type=Path, help="also write the full report here")
 
+    p9 = sub.add_parser("accept", help="consciously accept a remaining gap so the gate stops blocking on it")
+    p9.add_argument("--input", type=Path, required=True)
+    p9.add_argument("--place", required=True)
+    p9.add_argument("--pillar", required=True)
+    p9.add_argument("--reason", required=True, help="why this gap is genuine or acceptable (recorded in the accepted file)")
+
     a = ap.parse_args()
+    if a.cmd == "accept":
+        from . import validate as vd
+        n = vd.write_accepted(a.input, [vd.Verdict(a.place, a.pillar, vd.CONSISTENT, f"accepted by hand: {a.reason}")])
+        print(f"recorded; {n} accepted gaps in {vd.accepted_path(a.input).name}")
+        return 0
     if a.cmd == "health":
         from . import health as hl
         from . import run as runner

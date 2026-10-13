@@ -165,6 +165,12 @@ def fix(reports: List[Dict[str, Any]], api_base: str, log: Callable[[str], None]
             continue
         _, out = paths(r["metro"])
         log(f"\n--- fixing {r['metro']} (resolve) ---")
-        resolve_fn(out, api_base, max_rounds=rounds)
-        fixed.append(r["metro"])
+        try:
+            resolve_fn(out, api_base, max_rounds=rounds)
+            fixed.append(r["metro"])
+        except Exception as e:  # noqa: BLE001 - one metro failing must not stop the others
+            log(f"!! {r['metro']}: fix stopped ({type(e).__name__}: {str(e)[:120]}). Its pillar fixes are saved but its "
+                "composites were not recomputed; rerun after the cause (often a Census timeout) clears: "
+                f"PYTHONPATH=. python scripts/catalog/recompute_catalog_composites.py --input {out} --output {out}")
+            fixed.append(r["metro"])
     return fixed

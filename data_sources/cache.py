@@ -5,6 +5,8 @@ Provides in-memory caching for expensive operations like OSM queries and API cal
 
 import time
 import hashlib
+import threading
+import uuid
 import os
 import json
 import base64
@@ -122,7 +124,7 @@ def _disk_set(cache_key: str, value: Any, timestamp: float) -> None:
     try:
         os.makedirs(_DISK_CACHE_DIR, exist_ok=True)
         path = _disk_path(cache_key)
-        tmp = path + ".tmp"
+        tmp = f"{path}.{os.getpid()}.{threading.get_ident()}.{uuid.uuid4().hex[:8]}.tmp"  # unique: parallel pillars write the same key
         with open(tmp, "w") as fh:
             json.dump({"value": value, "timestamp": timestamp}, fh)
         os.replace(tmp, path)  # atomic, never leaves a half-written cache file

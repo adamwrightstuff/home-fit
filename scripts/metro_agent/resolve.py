@@ -116,11 +116,14 @@ def resolve(
 
         todo: Dict[str, Set[str]] = defaultdict(set)
         for f in result["findings"]:
-            if f["remedy"] not in (dg.RETRY, dg.VERIFY) or not (f["material"] or include_minor):
+            # Crime has data-file fixes (data/crime_agency_map.json): a missing agency mapping can be added without
+            # code, so give community_safety one retry per run even though it is a "needs data source" finding.
+            retry_source = f["remedy"] == dg.SOURCE and f["pillar"] == "community_safety"
+            if (f["remedy"] not in (dg.RETRY, dg.VERIFY) and not retry_source) or not (f["material"] or include_minor):
                 continue
             if f["pillar"] == "(place)" or (valid_pillars is not None and f["pillar"] not in valid_pillars):
                 continue
-            limit = 1 if f["remedy"] == dg.VERIFY else max_rounds
+            limit = 1 if f["remedy"] in (dg.VERIFY, dg.SOURCE) else max_rounds
             if attempts[(f["place"], f["pillar"])] >= limit:
                 continue
             todo[f["place"]].add(f["pillar"])

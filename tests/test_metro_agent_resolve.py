@@ -58,10 +58,10 @@ def test_verify_findings_are_retried_exactly_once(tmp_path):
     assert out["needs_human_check"][0]["place"] == "A"
 
 
-def test_missing_data_source_is_never_retried(tmp_path):
+def test_missing_crime_source_is_retried_once_because_the_agency_map_is_data(tmp_path):
     p = _write(tmp_path, [_row("A", community_safety=NO_CRIME)])
     out, calls = _run(p, lambda loc, ps: {"livability_pillars": {}})
-    assert calls == []
+    assert len(calls) == 1
     assert out["needs_data_source"][0]["pillar"] == "community_safety"
     assert out["material_places_left"] == 1
 
