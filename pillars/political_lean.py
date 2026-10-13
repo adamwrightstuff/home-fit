@@ -76,6 +76,10 @@ def get_political_lean_score(
         "precinct_count": result["precinct_count"],
         "preference": pref,
         "lean_2024_estimated": bool(result.get("lean_2024_estimated")),
+        "data_vintage": (
+            "2020 results (2024 precinct results are not available for this area; the 2024 fields repeat 2020)"
+            if result.get("lean_2024_estimated") else "2024 results"
+        ),
     }
 
     return (round(score, 1) if score is not None else None), {

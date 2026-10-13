@@ -308,6 +308,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
   political_lean: {
     topLine: 'Based on 2020 and 2024 presidential election results at the precinct level within ~1 mile of this location.',
     metrics: [
+      { label: 'Election data used', path: 'breakdown.data_vintage', format: 'text' },
       { label: 'Lean 2024 (D-R / total)', path: 'breakdown.lean_2024', format: 'text' },
       { label: 'Lean 2020', path: 'breakdown.lean_2020', format: 'text' },
       { label: 'Trend (2020→2024)', path: 'breakdown.trend', format: 'text' },
