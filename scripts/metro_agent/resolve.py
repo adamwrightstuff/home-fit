@@ -48,7 +48,10 @@ def _default_merge(existing: Dict[str, Any], new_score: Dict[str, Any], pillars:
 
 def _default_recompute(path: Path) -> None:
     subprocess.run([sys.executable, str(REPO / "scripts" / "catalog" / "recompute_catalog_composites.py"),
-                    "--input", str(path), "--output", str(path)],
+                    "--input", str(path), "--output", str(path),
+                    # Live Census lookups at a single pin are tract-boundary-sensitive and move status_signal by up to
+                    # ~9 pts with no data change; a pillar retry must not touch it.
+                    "--no-census"],
                    env={**os.environ, "PYTHONPATH": str(REPO)}, check=True)
 
 
