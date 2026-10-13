@@ -91,6 +91,12 @@ def classify_place(row: Dict[str, Any]) -> List[Finding]:
     if hc is not None and "api_error" in _warnings(hc):
         add("healthcare_access", UPSTREAM_ERROR, True, RETRY,
             f"lookup failed (completeness {_dq(hc).get('completeness')}); score {hc.get('score')} rests on partial data")
+    elif hc is not None and _dq(hc).get("completeness") == 0 and not any(
+            (hc.get("summary") or {}).get(k) for k in ("urgent_care_count", "pharmacy_count", "clinic_count", "hospital_count")):
+        # Older runs cleared the error flag when a retry came back empty: no clinics, pharmacies or hospitals at all
+        # with zero completeness is a failed lookup until Census data says the area really has none (validate).
+        add("healthcare_access", SUSPECTED_UPSTREAM, True, VERIFY,
+            f"no clinics, pharmacies or hospitals found (completeness 0.0); score {hc.get('score')} rests on the nearest hospital only")
 
     # Neighborhood amenities: empty result with no diagnostics means the query never produced data.
     na = lp.get("neighborhood_amenities")

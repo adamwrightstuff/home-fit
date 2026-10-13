@@ -123,3 +123,11 @@ def test_empty_walkable_area_scored_low_is_informational_not_a_gap():
         "score": 2.0, "data_quality": {"data_warnings": ["no_businesses_within_radius"], "confidence": 40}}}}}
     f = dg.classify_place(row)[0]
     assert (f.cause, f.material) == (dg.GENUINE_LOW, False)
+
+
+def test_healthcare_with_no_facilities_and_zero_completeness_is_retried_even_without_error_flag():
+    row = {"success": True, "catalog": {"name": "W"}, "score": {"livability_pillars": {"healthcare_access": {
+        "score": 2.1, "data_quality": {"completeness": 0.0}, "summary": {"urgent_care_count": 0, "pharmacy_count": 0,
+                                                                         "clinic_count": 0, "hospital_count": 0}}}}}
+    fs = [f for f in dg.classify_place(row) if f.pillar == "healthcare_access"]
+    assert fs and fs[0].material and fs[0].remedy == dg.VERIFY

@@ -140,6 +140,7 @@ def judge_amenities(estab: Optional[int], kept: int) -> tuple:
 
 
 HEALTH_IMPOSSIBLE_MIN_ESTAB = 10
+HEALTH_GENUINE_MAX_ESTAB = 3
 
 
 def judge_healthcare(estab: Optional[int], local_facilities: int) -> tuple:
@@ -151,6 +152,8 @@ def judge_healthcare(estab: Optional[int], local_facilities: int) -> tuple:
     if estab >= HEALTH_IMPOSSIBLE_MIN_ESTAB:
         return CONTRADICTED, (f"Census counts {estab} doctor/clinic/pharmacy establishments in this ZIP (wider than the "
                               "pillar's radius) but we found none: the lookup likely returned empty, not the place")
+    if estab < HEALTH_GENUINE_MAX_ESTAB:
+        return CONSISTENT, f"Census counts only {estab} doctor/clinic/pharmacy establishments in this ZIP; none found is plausible"
     return INCONCLUSIVE, f"Census counts {estab} healthcare establishments; absence not clearly impossible"
 
 
@@ -234,7 +237,7 @@ def validate(rows: List[Dict[str, Any]], log: Callable[[str], None] = print,
         local = sum(int(sm.get(k) or 0) for k in ("urgent_care_count", "pharmacy_count", "clinic_count", "hospital_count"))
         if z and hc and local == 0:
             kind, ev = judge_healthcare(health_fn(z), local)
-            if kind == CONTRADICTED:
+            if kind in (CONTRADICTED, CONSISTENT):
                 verdicts.append(Verdict(name, "healthcare_access", kind, f"ZIP {z}: {ev}"))
     verdicts += peer_collapses(rows)
     return verdicts
