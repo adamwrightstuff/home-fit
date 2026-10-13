@@ -1504,15 +1504,16 @@ def _get_fbi_rates(
     # Tier 2c: explicit place -> serving agency (CA dict, then data/crime_agency_map.json for any state).
     # Handles unincorporated communities (served by county sheriff) and small cities
     # whose own PD is absent from the FBI database or not matched by name/distance.
+    # The data-file map is explicit, so it overrides an automatic name match (which can pick a park district,
+    # forest preserve or a neighbouring PD); the CA dict only fills gaps.
     mapped_kind = "own"
-    if not nibrs_city_match and city_hint:
+    _file_map = _mapped_agency(state_abbr, city_hint) if city_hint else None
+    if city_hint and (_file_map or not nibrs_city_match):
         mapped_name = None
-        if state_abbr.upper() == "CA":
+        if _file_map:
+            mapped_name, mapped_kind = _file_map
+        elif state_abbr.upper() == "CA":
             mapped_name = _CA_SUBURB_TO_AGENCY.get(city_hint.lower())
-        if not mapped_name:
-            m = _mapped_agency(state_abbr, city_hint)
-            if m:
-                mapped_name, mapped_kind = m
         if mapped_name:
             ca_ag = next(
                 (ag for ag in agencies

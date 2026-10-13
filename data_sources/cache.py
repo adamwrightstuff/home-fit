@@ -219,6 +219,10 @@ def cached(ttl_seconds: int = 3600):
                     _cache[cache_key] = disk_value
                     _cache_ttl[cache_key] = disk_time
 
+            # A cached upstream failure must never be served: it would make every retry return the same failure.
+            if isinstance(cache_entry, dict) and cache_entry.get("_query_failed"):
+                cache_entry = None
+
             # Check if cached entry is still valid
             if cache_entry is not None and (current_time - cache_time) < ttl_seconds:
                 logger.debug(f"Cache hit for {func.__name__}")

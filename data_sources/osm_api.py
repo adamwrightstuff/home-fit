@@ -3678,27 +3678,40 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
             return None
 
     from concurrent.futures import ThreadPoolExecutor as _HCPool
+
+    def _merge(cat_result):
+        for k in ("hospitals", "urgent_care", "clinics", "pharmacies", "doctors"):
+            results[k].extend(cat_result.get(k, []))
+
+    failed_cats = []
     with _HCPool(max_workers=4) as _pool:
-        futures = {_pool.submit(_fetch_category, cat, q): cat for cat, q in queries}
+        futures = {_pool.submit(_fetch_category, cat, q): (cat, q) for cat, q in queries}
         for fut in futures:
-            cat = futures[fut]
+            cat, q = futures[fut]
             try:
                 cat_result = fut.result(timeout=40)
             except Exception:
                 cat_result = None
             if cat_result is None:
-                # Only flag the whole query as failed when the hospital category fails —
-                # that's the critical data source. Failures in urgent_care/clinics/pharmacies
-                # are partial misses but shouldn't suppress confidence for hospitals found.
-                if cat == "hospitals":
-                    results["_query_failed"] = True
+                failed_cats.append((cat, q))
             else:
-                results["hospitals"].extend(cat_result.get("hospitals", []))
-                results["urgent_care"].extend(cat_result.get("urgent_care", []))
-                results["clinics"].extend(cat_result.get("clinics", []))
-                results["pharmacies"].extend(cat_result.get("pharmacies", []))
-                results["doctors"].extend(cat_result.get("doctors", []))
-    
+                _merge(cat_result)
+
+    # Retry failed categories one at a time (the parallel burst is what usually trips public Overpass limits).
+    still_failed = []
+    for cat, q in failed_cats:
+        cat_result = _fetch_category(cat, q)
+        if cat_result is None:
+            still_failed.append(cat)
+        else:
+            _merge(cat_result)
+
+    # A silent miss in clinics/pharmacies/urgent care is a wrong score, not "no facilities": flag any failure.
+    if still_failed:
+        results["_query_failed"] = True
+        results["_failed_categories"] = still_failed
+        results["_cache_skip"] = True
+
     # Log final results
     total_found = (len(results["hospitals"]) + len(results["urgent_care"]) + 
                    len(results["clinics"]) + len(results["pharmacies"]) + len(results["doctors"]))

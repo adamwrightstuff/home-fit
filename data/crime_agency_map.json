@@ -1,9 +1,51 @@
 {
   "_doc": "Place -> FBI agency that polices it, for places the automatic name/distance match cannot resolve. Keyed by state then lowercase place name. kind 'own' = the place's own agency (AGENCY_VERIFIED); kind 'county' = the county sheriff, whose rate spans the whole county (PRECINCT_PROXY, lower confidence). Only add agencies confirmed to report agency-level data (scripts/metro_agent fbi --suggest).",
   "TX": {
-    "cedar park":       {"agency": "Cedar Park Police Department", "kind": "own"},
-    "dripping springs": {"agency": "Hays County Sheriff's Office", "kind": "county"},
-    "wimberley":        {"agency": "Hays County Sheriff's Office", "kind": "county"},
-    "manchaca":         {"agency": "Travis County Sheriff's Office", "kind": "county"}
+    "cedar park": {
+      "agency": "Cedar Park Police Department",
+      "kind": "own"
+    },
+    "dripping springs": {
+      "agency": "Hays County Sheriff's Office",
+      "kind": "county"
+    },
+    "wimberley": {
+      "agency": "Hays County Sheriff's Office",
+      "kind": "county"
+    },
+    "manchaca": {
+      "agency": "Travis County Sheriff's Office",
+      "kind": "county"
+    }
+  },
+  "IL": {
+    "crystal lake": {
+      "agency": "Crystal Lake Police Department",
+      "kind": "own"
+    },
+    "highland park": {
+      "agency": "Highland Park Police Department",
+      "kind": "own"
+    },
+    "naperville": {
+      "agency": "Naperville Police Department",
+      "kind": "own"
+    },
+    "oak park": {
+      "agency": "Oak Park Police Department",
+      "kind": "own"
+    },
+    "orland park": {
+      "agency": "Orland Park Police Department",
+      "kind": "own"
+    },
+    "river forest": {
+      "agency": "River Forest Police Department",
+      "kind": "own"
+    },
+    "tinley park": {
+      "agency": "Tinley Park Police Department",
+      "kind": "own"
+    }
   }
 }

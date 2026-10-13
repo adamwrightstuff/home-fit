@@ -35,6 +35,8 @@ AMEN_GENUINE_MAX_ESTAB = 10
 # transit: share of commuters riding transit above which "zero routes" is implausible / below which it is genuine
 TRANSIT_IMPLAUSIBLE_SHARE = 0.02
 TRANSIT_GENUINE_SHARE = 0.01
+# above this share, zero routes is more likely a failed lookup than commuters reaching distant service
+TRANSIT_FAILURE_SHARE = 0.05
 # peers: a collapsed score vs healthy neighbours
 PEER_K, PEER_MIN, PEER_COLLAPSED_AT_MOST, PEER_HEALTHY_MEDIAN_AT_LEAST = 5, 4, 5.0, 50.0
 
@@ -158,8 +160,11 @@ def judge_transit(share: Optional[float], routes: int) -> tuple:
     if routes > 0:
         return INCONCLUSIVE, f"{routes} routes found; nothing to contradict"
     pct = f"{share * 100:.1f}%"
-    if share >= TRANSIT_IMPLAUSIBLE_SHARE:
+    if share >= TRANSIT_FAILURE_SHARE:
         return CONTRADICTED, f"{pct} of commuters in this ZIP ride transit but we found 0 routes"
+    if share >= TRANSIT_IMPLAUSIBLE_SHARE:
+        return CONSISTENT, (f"{pct} of commuters in this ZIP ride transit, but they reach service outside the pillar's walking "
+                            "radius (commuter rail or a distant stop); 0 routes within it scores low by design")
     if share < TRANSIT_GENUINE_SHARE:
         return CONSISTENT, f"only {pct} of commuters in this ZIP ride transit; no routes is plausible"
     return INCONCLUSIVE, f"{pct} of commuters ride transit; inconclusive"
