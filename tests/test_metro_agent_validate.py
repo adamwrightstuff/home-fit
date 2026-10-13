@@ -61,3 +61,13 @@ def test_validate_end_to_end_with_fake_sources():
     v = vd.validate([row], estab_fn=lambda z: 171, share_fn=lambda z: 0.003, log=lambda s: None)
     by = {x.pillar: x.kind for x in v}
     assert by["neighborhood_amenities"] == vd.CONTRADICTED and by["public_transit_access"] == vd.CONSISTENT
+
+
+def test_healthcare_zero_facilities_with_many_census_establishments_is_contradicted():
+    row = {"success": True, "catalog": {"name": "Wimberley"},
+           "score": {"location_info": {"zip": "78676"}, "livability_pillars": {"healthcare_access": {
+               "score": 2.1, "summary": {"urgent_care_count": 0, "pharmacy_count": 0, "clinic_count": 0, "hospital_count": 0}}}}}
+    v = vd.validate([row], estab_fn=lambda z: 5, share_fn=lambda z: 0.0, health_fn=lambda z: 14, log=lambda s: None)
+    assert [(x.pillar, x.kind) for x in v if x.pillar == "healthcare_access"] == [("healthcare_access", vd.CONTRADICTED)]
+    v = vd.validate([row], estab_fn=lambda z: 5, share_fn=lambda z: 0.0, health_fn=lambda z: 3, log=lambda s: None)
+    assert not [x for x in v if x.pillar == "healthcare_access"]

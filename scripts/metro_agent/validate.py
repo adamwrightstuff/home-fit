@@ -82,6 +82,25 @@ def establishments(zip_code: str, get: Optional[Callable] = None) -> Optional[in
     return out
 
 
+def healthcare_establishments(zip_code: str, get: Optional[Callable] = None) -> Optional[int]:
+    """Ambulatory care (NAICS 621) + pharmacies (44611) establishments in a ZIP (CBP), or None."""
+    key = ("cbp_health", zip_code)
+    if key in _cache and get is None:
+        return _cache[key]
+    total, got = 0, False
+    for naics in ("621", "44611"):
+        for year in CBP_YEARS:
+            data = _census_get(f"https://api.census.gov/data/{year}/cbp",
+                               {"get": "ESTAB", "for": f"zipcode:{zip_code}", "NAICS2017": naics}, get)
+            if data and len(data) > 1:
+                total += int(data[1][0]); got = True
+                break
+    out = total if got else None
+    if get is None:
+        _cache[key] = out
+    return out
+
+
 def transit_commute_share(zip_code: str, get: Optional[Callable] = None) -> Optional[float]:
     key = ("acs", zip_code)
     if key in _cache and get is None:
@@ -116,6 +135,21 @@ def judge_amenities(estab: Optional[int], kept: int) -> tuple:
     if estab < AMEN_GENUINE_MAX_ESTAB:
         return CONSISTENT, f"Census counts only {estab} retail/food/arts establishments in this ZIP; an empty result is plausible"
     return INCONCLUSIVE, f"Census counts {estab} establishments; neither clearly impossible nor clearly genuine"
+
+
+HEALTH_IMPOSSIBLE_MIN_ESTAB = 10
+
+
+def judge_healthcare(estab: Optional[int], local_facilities: int) -> tuple:
+    """Zero clinics, pharmacies and urgent care found while the ZIP has many healthcare establishments."""
+    if estab is None:
+        return INCONCLUSIVE, "Census healthcare counts unavailable"
+    if local_facilities > 0:
+        return INCONCLUSIVE, f"{local_facilities} facilities found; nothing to contradict"
+    if estab >= HEALTH_IMPOSSIBLE_MIN_ESTAB:
+        return CONTRADICTED, (f"Census counts {estab} doctor/clinic/pharmacy establishments in this ZIP (wider than the "
+                              "pillar's radius) but we found none: the lookup likely returned empty, not the place")
+    return INCONCLUSIVE, f"Census counts {estab} healthcare establishments; absence not clearly impossible"
 
 
 def judge_transit(share: Optional[float], routes: int) -> tuple:
@@ -167,7 +201,8 @@ def peer_collapses(rows: List[Dict[str, Any]], pillars: Optional[List[str]] = No
 
 
 def validate(rows: List[Dict[str, Any]], log: Callable[[str], None] = print,
-             estab_fn: Callable = establishments, share_fn: Callable = transit_commute_share) -> List[Verdict]:
+             estab_fn: Callable = establishments, share_fn: Callable = transit_commute_share,
+             health_fn: Callable = healthcare_establishments) -> List[Verdict]:
     from . import diagnose as dg
     verdicts: List[Verdict] = []
     for r in rows:
@@ -187,6 +222,15 @@ def validate(rows: List[Dict[str, Any]], log: Callable[[str], None] = print,
             else:
                 continue
             verdicts.append(Verdict(name, f.pillar, kind, f"ZIP {z}: {ev}"))
+        # Healthcare: the resolver clears the api_error flag when a retry returns cleanly but empty, so check
+        # every place, not just flagged ones.
+        hc = (r["score"]["livability_pillars"] or {}).get("healthcare_access") or {}
+        sm = hc.get("summary") or {}
+        local = sum(int(sm.get(k) or 0) for k in ("urgent_care_count", "pharmacy_count", "clinic_count", "hospital_count"))
+        if z and hc and local == 0:
+            kind, ev = judge_healthcare(health_fn(z), local)
+            if kind == CONTRADICTED:
+                verdicts.append(Verdict(name, "healthcare_access", kind, f"ZIP {z}: {ev}"))
     verdicts += peer_collapses(rows)
     return verdicts
 

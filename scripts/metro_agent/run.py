@@ -187,9 +187,11 @@ def run_pipeline(
         log(rs.format_summary(summary))
         out_path.with_suffix(".resolution.json").write_text(json.dumps(summary, indent=2))
 
+        contradicted = []
         banner("4. VALIDATE against independent sources (Census business counts, commuting, peers)")
         try:
             verdicts = validate_fn(dg.load_rows(out_path))
+            contradicted = [v for v in verdicts if v.kind == vd.CONTRADICTED]
             log(vd.format_report(verdicts))
             n = vd.write_accepted(out_path, verdicts)
             log(f"\n{n} gaps recorded as genuine in {vd.accepted_path(out_path).name}")
@@ -207,6 +209,11 @@ def run_pipeline(
                 log(f"explanation skipped: {type(e).__name__}: {str(e)[:100]}")
             log(f"\nPUBLISH: BLOCKED. {len(result['material_places'])} places have a material gap. "
                 "The evidence above says what each one needs; send me the output from 'WHY IT IS BLOCKED' down.")
+            return 1
+
+        if contradicted:
+            log(f"\nPUBLISH: BLOCKED. {len(contradicted)} values are contradicted by independent data "
+                "(listed under CONTRADICTED above); fix the lookup, do not accept.")
             return 1
 
         log("\nPUBLISH: OK, no material gaps.")
