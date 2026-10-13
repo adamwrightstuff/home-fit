@@ -56,7 +56,35 @@ def main() -> int:
     p4.add_argument("--skip-score", action="store_true", help="only resolve and gate an existing file")
     p4.add_argument("--no-server", action="store_true", help="do not start a local API automatically")
 
+    p8 = sub.add_parser("health", help="audit every launched metro like the launch playbook; --fix retries what can be retried")
+    p8.add_argument("--metro", action="append", help="limit to a metro (repeatable); default all")
+    p8.add_argument("--offline", action="store_true", help="skip the Census cross-checks")
+    p8.add_argument("--fix", action="store_true", help="run the resolver on metros with retryable problems, then re-audit")
+    p8.add_argument("--api-base", default=os.environ.get("HOMEFIT_API_BASE", "http://127.0.0.1:8000"))
+    p8.add_argument("--json", type=Path, help="also write the full report here")
+
     a = ap.parse_args()
+    if a.cmd == "health":
+        from . import health as hl
+        from . import run as runner
+        pf._load_env()
+        reports = hl.audit_all(a.metro, offline=a.offline)
+        print(hl.format_report(reports))
+        if a.fix:
+            base = a.api_base.rstrip("/")
+            proc = runner.start_server(base, print) if runner.is_local(base) else None
+            try:
+                fixed = hl.fix(reports, base)
+            finally:
+                if proc is not None:
+                    proc.terminate()
+            if fixed:
+                print("\n\nRE-AUDIT AFTER FIXES\n")
+                reports = hl.audit_all(a.metro, offline=a.offline)
+                print(hl.format_report(reports))
+        if a.json:
+            a.json.write_text(json.dumps(reports, indent=2))
+        return 1 if any(r["verdict"] == hl.UNHEALTHY for r in reports) else 0
     if a.cmd == "validate":
         from . import validate as vd
         pf._load_env()

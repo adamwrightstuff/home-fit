@@ -33,6 +33,10 @@ PYTHONPATH=. python -m scripts.metro_agent run --metro chicago --push   # commit
 If the gate is BLOCKED, `run` automatically runs the probe (and the FBI agency probe when an FBI key is set) and prints raw upstream evidence for every remaining gap, so no separate diagnostic commands are needed.
 ```
 
+### Auditing launched metros
+
+`PYTHONPATH=. python -m scripts.metro_agent health` audits every launched metro with the same checks as the launch gate (coverage of the place list, pins, prerequisites, per-pillar diagnosis, Census cross-checks) and gives each a HEALTHY / ATTENTION / UNHEALTHY verdict. `--fix` runs the resolver on the retryable problems and re-audits; `--metro X` limits it; `--offline` skips the Census calls.
+
 `run` starts the local API if it is not running, runs preflight (a blocking failure stops it before any
 scoring), scores the place list (resumable: if interrupted, run the same command again), retries upstream
 failures, and ends with `PUBLISH: OK` or `PUBLISH: BLOCKED`. Exit codes: 0 published/ready, 1 blocked by a
