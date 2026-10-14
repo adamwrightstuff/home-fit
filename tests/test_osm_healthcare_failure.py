@@ -30,12 +30,14 @@ def test_partial_category_failure_is_flagged_not_silent():
 
 def test_cached_failure_is_not_served(monkeypatch):
     from data_sources import cache
+    import uuid
     calls = []
+    key = uuid.uuid4().hex  # unique so a disk cache from an earlier run cannot interfere
 
     @cache.cached(ttl_seconds=60)
     def f(x):
         calls.append(x)
         return {"_query_failed": True} if len(calls) == 1 else {"ok": 1}
 
-    assert f("k")["_query_failed"]
-    assert f("k") == {"ok": 1}
+    assert f(key)["_query_failed"]
+    assert f(key) == {"ok": 1}
