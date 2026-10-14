@@ -65,6 +65,13 @@ def _default_dependency_check(rows: List[Dict[str, Any]]) -> Optional[str]:
     return "; ".join(f"{c.detail} -> {c.fix}" for c in bad) if bad else None
 
 
+def _default_lean_refresh(path: Path) -> None:
+    """Political lean reads local precinct files (no API); rerun it so a changed radius or precinct file takes effect."""
+    subprocess.run([sys.executable, str(REPO / "scripts" / "catalog" / "rescore_political_lean.py"),
+                    "--input", str(path), "--in-place", "--no-backup"],
+                   env={**os.environ, "PYTHONPATH": str(REPO)}, check=True)
+
+
 def _write_atomic(path: Path, rows: List[Dict[str, Any]]) -> None:
     fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
     with os.fdopen(fd, "w", encoding="utf-8") as f:
@@ -92,6 +99,7 @@ def resolve(
     merge: Callable = _default_merge,
     recompute: Optional[Callable[[Path], None]] = _default_recompute,
     dependency_check: Callable = _default_dependency_check,
+    lean_refresh: Optional[Callable[[Path], None]] = _default_lean_refresh,
     log: Callable[[str], None] = print,
 ) -> Dict[str, Any]:
     if session is None and not dry_run:
@@ -112,6 +120,16 @@ def resolve(
     stop = "max_rounds"
     rounds_run = 0
     api_calls = 0
+
+    if lean_refresh is not None and not dry_run:
+        first = dg.diagnose(dg.load_rows(path), accepted=dg.load_accepted(path))
+        if any(f["pillar"] == "political_lean" and f["remedy"] != dg.NONE for f in first["findings"]):
+            log("political lean: refreshing from the local precinct files…")
+            try:
+                lean_refresh(path)
+                changed = True
+            except Exception as e:  # noqa: BLE001
+                log(f"political lean refresh failed: {str(e)[:100]}")
 
     for rnd in range(1, max_rounds + 1):
         rows = dg.load_rows(path)

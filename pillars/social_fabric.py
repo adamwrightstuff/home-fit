@@ -269,9 +269,9 @@ def get_social_fabric_score(
         info = census_api.get_place_fips_for_coordinates(lat, lon)
         if not info:
             return None, None, None
-        sf, pf = info["state_fips"], info["place_fips"]
-        pct = census_api.get_place_same_house_pct(sf, pf)
-        long_pct = census_api.get_place_long_tenure_housing_pct(sf, pf)
+        sf, pf = info["state_fips"], info.get("place_fips")  # New England towns are county subdivisions: no place_fips
+        pct = census_api.get_place_same_house_pct(sf, pf, geo=info)
+        long_pct = census_api.get_place_long_tenure_housing_pct(sf, pf, geo=info)
         return info, pct, long_pct
 
     def _get_tract_long_tenure():

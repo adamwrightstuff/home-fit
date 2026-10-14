@@ -1094,17 +1094,26 @@ def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str,
 @cached(ttl_seconds=CACHE_TTL['census_data'])
 @safe_api_call("census", required=False)
 @handle_api_timeout(timeout_seconds=15)
-def get_place_same_house_pct(state_fips: str, place_fips: str) -> Optional[float]:
-    """ACS B07003 same-house rate (0–100) for a Census place."""
-    if not CENSUS_API_KEY or not state_fips or not place_fips:
+def _municipal_geo_params(state_fips: str, place_fips: Optional[str], geo: Optional[Dict[str, str]] = None):
+    """ACS `for` / `in` clauses for a place, or for a county subdivision (New England towns have no place)."""
+    if geo and geo.get("geo_type") == "county_subdivision":
+        return (f"county subdivision:{str(geo['cousub_fips']).zfill(5)}",
+                f"state:{str(state_fips).zfill(2)} county:{str(geo['county_fips']).zfill(3)}")
+    return f"place:{str(place_fips).zfill(5)}", f"state:{str(state_fips).zfill(2)}"
+
+
+def get_place_same_house_pct(state_fips: str, place_fips: Optional[str], geo: Optional[Dict[str, str]] = None) -> Optional[float]:
+    """ACS B07003 same-house rate (0–100) for a Census place (or county subdivision when `geo` says so)."""
+    is_cousub = bool(geo and geo.get("geo_type") == "county_subdivision")
+    if not CENSUS_API_KEY or not state_fips or not (place_fips or is_cousub):
         return None
     try:
         url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
-        pf = str(place_fips).zfill(5)
+        for_, in_ = _municipal_geo_params(state_fips, place_fips, geo)
         params = {
             "get": "B07003_001E,B07003_004E,NAME",
-            "for": f"place:{pf}",
-            "in": f"state:{str(state_fips).zfill(2)}",
+            "for": for_,
+            "in": in_,
             "key": CENSUS_API_KEY,
         }
         response = _make_request_with_retry(url, params, timeout=15, max_retries=3)
@@ -1190,21 +1199,22 @@ def get_tract_long_tenure_housing_pct(tract: Dict) -> Optional[float]:
 @cached(ttl_seconds=CACHE_TTL["census_data"])
 @safe_api_call("census", required=False)
 @handle_api_timeout(timeout_seconds=15)
-def get_place_long_tenure_housing_pct(state_fips: str, place_fips: str) -> Optional[float]:
-    """B25038 long-tenure % for a Census place (same definition as tract)."""
-    if not CENSUS_API_KEY or not state_fips or not place_fips:
+def get_place_long_tenure_housing_pct(state_fips: str, place_fips: Optional[str], geo: Optional[Dict[str, str]] = None) -> Optional[float]:
+    """B25038 long-tenure % for a Census place (same definition as tract); county subdivision when `geo` says so."""
+    is_cousub = bool(geo and geo.get("geo_type") == "county_subdivision")
+    if not CENSUS_API_KEY or not state_fips or not (place_fips or is_cousub):
         return None
     try:
         url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
-        pf = str(place_fips).zfill(5)
+        for_, in_ = _municipal_geo_params(state_fips, place_fips, geo)
         params = {
             "get": (
                 "B25038_001E,B25038_002E,B25038_003E,B25038_004E,B25038_005E,B25038_006E,"
                 "B25038_007E,B25038_008E,B25038_009E,B25038_010E,B25038_011E,B25038_012E,"
                 "B25038_013E,B25038_014E,B25038_015E"
             ),
-            "for": f"place:{pf}",
-            "in": f"state:{str(state_fips).zfill(2)}",
+            "for": for_,
+            "in": in_,
             "key": CENSUS_API_KEY,
         }
         response = _make_request_with_retry(url, params, timeout=15, max_retries=3)

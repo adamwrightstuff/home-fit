@@ -33,6 +33,7 @@ def _run(path, scorer, **kw):
         calls.append((loc, tuple(pillars)))
         return scorer(loc, pillars)
     kw.setdefault("recompute", None)
+    kw.setdefault("lean_refresh", None)
     kw.setdefault("delay", 0)
     kw.setdefault("dependency_check", lambda rows: None)
     kw.setdefault("log", lambda s: None)
@@ -104,3 +105,11 @@ def test_publish_gate_text():
     ok = rs.format_summary({"stopped": "x", "rounds": 1, "api_calls": 0, "material_places_left": 0,
                             "needs_data_source": [], "needs_human_check": [], "still_failing_after_retries": []})
     assert "PUBLISH: OK" in ok
+
+
+def test_political_lean_findings_trigger_one_offline_refresh(tmp_path):
+    no_lean = {"score": None, "breakdown": {"lean_2024": None}}
+    p = _write(tmp_path, [_row("A", political_lean=no_lean)])
+    seen = []
+    _run(p, lambda loc, ps: {"livability_pillars": {}}, lean_refresh=lambda path: seen.append(path))
+    assert len(seen) == 1
