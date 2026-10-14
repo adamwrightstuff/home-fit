@@ -91,7 +91,7 @@ def resolve(
     *,
     max_rounds: int = 3,
     delay: float = 2.0,
-    timeout: int = 900,
+    timeout: int = 300,
     include_minor: bool = False,
     dry_run: bool = False,
     session: Any = None,
@@ -153,11 +153,15 @@ def resolve(
             stop = "nothing_actionable"
             break
 
-        if result["systemic"]:
+        # Most pillars query Overpass. If it is down, every retry just waits out timeouts (minutes per place) and
+        # fails, so check once per round whenever any retry depends on it, not only for systemic failures.
+        overpass_pillars = {"active_outdoors", "neighborhood_amenities", "healthcare_access", "natural_beauty",
+                            "built_environment", "social_fabric", "public_transit_access"}
+        if result["systemic"] or any(overpass_pillars & ps for ps in todo.values()):
             problem = dependency_check(rows)
             if problem:
                 stop = "dependency_down"
-                log(f"STOP: systemic failures and the dependency is unhealthy: {problem}")
+                log(f"STOP: the data source these retries need is down, so retrying would only wait out timeouts: {problem}")
                 break
 
         n_places = len(todo)
