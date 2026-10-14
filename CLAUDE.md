@@ -56,7 +56,7 @@ Pre-computed JSON files in `data/` provide metro-specific and area-type-specific
 
 Scripts in `scripts/catalog/` handle batch scoring of place catalogs to JSONL, re-running failed pillars, rescoring single pillars, recomputing composites, and exporting CSVs. These are not production code — they're admin tools. Full inventory with commands and decision guide: **`docs/CATALOG_TOOLKIT.md`**.
 
-**Catalog health check** — always run with `--no-unversioned` to suppress unversioned-pillar noise:
+**Health check and launches:** see `docs/METRO_RUNBOOK.md`. `PYTHONPATH=. python -m scripts.metro_agent health` audits every metro (`--fix` retries what can be retried). Per-pillar detail — always run with `--no-unversioned` to suppress unversioned-pillar noise:
 ```bash
 PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py --no-unversioned
 ```

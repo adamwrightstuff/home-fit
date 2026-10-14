@@ -1,5 +1,7 @@
 # Catalog Toolkit
 
+> **Launching a metro or running a health check? Start with [METRO_RUNBOOK.md](METRO_RUNBOOK.md).** This file is the reference for the individual scripts behind it.
+
 All scripts run from the **repo root** with `PYTHONPATH=.` unless noted.  
 Production API: `https://home-fit-production.up.railway.app`  
 Auth header (if `HOMEFIT_PROXY_SECRET` is set): `X-HomeFit-Proxy-Secret: $HOMEFIT_PROXY_SECRET`
@@ -48,7 +50,7 @@ PYTHONPATH=. python3 scripts/catalog/recompute_catalog_composites.py \
 | `analyze_built_environment_patterns.py` | Cross-catalog built environment pattern analysis. |
 | `analyze_vibe_vs_status.py` | Scatter: vibe score vs status signal across NYC + LA. |
 
-**Canonical health check:**
+**Canonical health check:** `PYTHONPATH=. python -m scripts.metro_agent health` (all metros, with fixes via `--fix`). The per-pillar scan it builds on:
 ```bash
 PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py --no-unversioned
 # One pillar:   --pillar active_outdoors
@@ -96,12 +98,8 @@ PYTHONPATH=. python3 scripts/catalog/rescore_catalog_pillar.py \
 
 | Script | What it targets |
 |--------|----------------|
-| `rescore_ao_overpass_errors.py` | AO places where Overpass failed during original batch. |
 | `rescore_ao_waterfront.py` | AO places with known waterfront data issues. |
-| `refetch_ao_local_parks.py` | Re-fetch only the local parks Overpass query for `overpass_local` failures. |
-| `rescore_built_environment_api_errors.py` | Built environment where Overpass failed. |
 | `rescore_built_environment_full.py` | Full built environment rescore for both catalog files. |
-| `refetch_built_environment.py` | Live refetch of built_environment where stored data is unusable. |
 | `rescore_social_fabric_targeted.py` | Social fabric places with known data issues. |
 | `rescore_political_lean.py` | Add/refresh political_lean data. |
 | `rescore_housing_blend.py` | Housing value — tenure-weighted blend update. |
@@ -176,43 +174,7 @@ Not part of the fix pipeline — used for investigation or one-off generation.
 
 ## New Metro Expansion
 
-Use `score_metro.py` — a single command that runs all phases in order and produces a deployment-ready JSONL. Never use individual scripts for a new metro.
-
-### Step 0 — Frontend registration (one-time, before scoring)
-
-Three files to edit:
-- `frontend/app/api/catalog-map/route.ts` — add `xx: ['xx_metro_...jsonl']` to `METRO_FILES`
-- `frontend/next.config.js` — add the JSONL path to `outputFileTracingIncludes` (Vercel deploys it)
-- `frontend/lib/catalogMapTypes.ts` — extend `inferCatalogMetro` if the metro is in a new state
-
-### Step 1 — Run the all-in-one scorer
-
-```bash
-HOMEFIT_API_BASE=https://home-fit-production.up.railway.app \
-HOMEFIT_PROXY_SECRET=<secret> \
-HOMEFIT_TRANSIT_STABLE_COMMUTE=true \
-ANTHROPIC_API_KEY=<key> \
-PYTHONPATH=. python3 scripts/catalog/score_metro.py \
-  --csv  data/xx_metro_place_catalog.csv \
-  --out  data/xx_metro_place_catalog_scores_merged.composites_recomputed.jsonl \
-  --metro xx
-```
-
-This runs all 11 phases in sequence: CBSA baselines → batch scoring → retry failures → housing stock (Census) → ZIP codes (Nominatim) → political lean → local scene → best-fit labels → charter school flag → archetype summaries (Claude) → composite recompute → community safety baselines. Coverage report is printed at the end.
-
-The job is resumable — re-run if interrupted; already-scored places are skipped.
-
-Skip individual phases with `--skip-batch`, `--skip-housing`, `--skip-archs`, etc.
-
-### Step 2 — Verify
-
-```bash
-PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py \
-  --no-unversioned \
-  --input data/xx_metro_place_catalog_scores_merged.composites_recomputed.jsonl
-```
-
-All key fields (`housing_stock`, `built_environment`, `political_lean`, `local_scene_bucket`) should print ≥95% in the coverage table `score_metro.py` already printed.
+Use `PYTHONPATH=. python -m scripts.metro_agent run --metro <metro>`; see [METRO_RUNBOOK.md](METRO_RUNBOOK.md) and [METRO_EXPANSION_PLAYBOOK.md](METRO_EXPANSION_PLAYBOOK.md). It wraps `score_metro.py` (all scoring phases) with preflight, retries, cross-checks and a publish gate. Frontend registration is one entry in `frontend/lib/catalogMetros.ts` plus the file path in `frontend/next.config.js`.
 
 ---
 
@@ -240,3 +202,9 @@ All key fields (`housing_stock`, `built_environment`, `political_lean`, `local_s
 
 5. Re-run health check to confirm no regressions.
 ```
+
+---
+
+## Archived scripts
+
+One-off analyses, simulations and migrations that nothing references live in `scripts/catalog/archive/` (history is kept in git). The Overpass-error rescore scripts there (`rescore_ao_overpass_errors`, `rescore_built_environment_api_errors`, `refetch_ao_local_parks`, `refetch_built_environment`) are superseded by `metro_agent resolve` / `health --fix`.

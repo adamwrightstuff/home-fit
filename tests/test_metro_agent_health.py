@@ -30,3 +30,8 @@ def test_fix_only_touches_retryable_metros():
             {"metro": "c", "verdict": hl.HEALTHY, "retryable": True, "coverage": {"failed": []}}]
     done = hl.fix(reps, "http://x", log=lambda s: None, resolve_fn=lambda p, b, max_rounds=3: calls.append(p.name))
     assert done == ["a"] and len(calls) == 1
+
+
+def test_quality_drift_reports_shape_on_empty_input():
+    q = hl.quality_drift([])
+    assert q == {"old_version": {}, "composite_drift": [], "other_flags": 0}

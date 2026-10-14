@@ -107,6 +107,14 @@ def audit(metro: str, offline: bool = False, validate_fn: Callable = vd.validate
         P.append(f"{k}: {len(places)} places ({', '.join(places[:5])}{', ...' if len(places) > 5 else ''})")
     rep["retryable"] = any(f["remedy"] in (dg.RETRY, dg.VERIFY) for f in material)
 
+    q = quality_drift(rows)
+    rep["quality"] = q
+    if q["composite_drift"]:
+        P.append(f"stored composites disagree with their pillars at {len(q['composite_drift'])} places "
+                 f"(e.g. {q['composite_drift'][0]}): recompute offline with --no-census")
+    for pillar, places in sorted(q["old_version"].items()):
+        rep["notes"].append(f"{pillar}: {len(places)} places scored under an older scoring version (rescore when convenient)")
+
     rep["validation"] = None
     if not offline:
         try:
@@ -123,6 +131,30 @@ def audit(metro: str, offline: bool = False, validate_fn: Callable = vd.validate
 
     rep["verdict"] = UNHEALTHY if P else (ATTENTION if rep["notes"] else HEALTHY)
     return rep
+
+
+def quality_drift(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Version drift, composite drift and other per-pillar quality flags, from scripts/catalog/check_catalog_health.py."""
+    import sys
+    sys.path.insert(0, str(REPO))
+    from scripts.catalog import check_catalog_health as cc
+    old: Dict[str, List[str]] = {}
+    drift: List[str] = []
+    other = 0
+    for r in rows:
+        if not r.get("success"):
+            continue
+        name, place_flags, pillar_flags = cc.check_row(r, None, False)
+        for f in place_flags:
+            if f.endswith("_drift") or "_drift:" in f:
+                drift.append(f"{name} ({f})")
+        for pillar, flags in pillar_flags.items():
+            for f in flags:
+                if f.startswith("OLD_VERSION:"):
+                    old.setdefault(pillar, []).append(name)
+                else:
+                    other += 1
+    return {"old_version": old, "composite_drift": drift, "other_flags": other}
 
 
 def _static_checks(metro: str, csv_rows: List[Dict[str, str]]):
