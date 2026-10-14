@@ -17,6 +17,7 @@ import {
 import { CATALOG_METRO_META } from '@/lib/catalogMetros'
 import NeighborhoodMap from '@/components/NeighborhoodMap'
 import NeighborhoodPersonal from '@/components/NeighborhoodPersonal'
+import NeighborhoodPhoto from '@/components/NeighborhoodPhoto'
 
 export const dynamicParams = false
 
@@ -155,6 +156,9 @@ export default async function NeighborhoodPage({
           {typeLabel ? ` · ${typeLabel}` : ''}
         </p>
       </header>
+
+      {/* Hero photo from Wikipedia */}
+      <NeighborhoodPhoto name={catalog.name} state={catalog.state_abbr ?? null} />
 
       {/* Map */}
       <div className="mb-6">
