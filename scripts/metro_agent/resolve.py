@@ -140,7 +140,7 @@ def resolve(
             # Crime has data-file fixes (data/crime_agency_map.json): a missing agency mapping can be added without
             # code, so give community_safety one retry per run even though it is a "needs data source" finding.
             retry_source = f["remedy"] == dg.SOURCE and f["pillar"] == "community_safety"
-            if (f["remedy"] not in (dg.RETRY, dg.VERIFY) and not retry_source) or not (f["material"] or include_minor):
+            if (f["remedy"] not in (dg.RETRY, dg.VERIFY) and not retry_source) or not (f["material"] or include_minor or f["evidence"].startswith("withheld")):
                 continue
             if f["pillar"] == "(place)" or (valid_pillars is not None and f["pillar"] not in valid_pillars):
                 continue

@@ -105,6 +105,9 @@ def audit(metro: str, offline: bool = False, validate_fn: Callable = vd.validate
         by.setdefault(f"{f['pillar']} ({f['cause']})", []).append(f["place"])
     for k, places in sorted(by.items()):
         P.append(f"{k}: {len(places)} places ({', '.join(places[:5])}{', ...' if len(places) > 5 else ''})")
+    n_withheld = sum(1 for f in result["findings"] if f["evidence"].startswith("withheld"))
+    if n_withheld:
+        rep["notes"].append(f"{n_withheld} pillar values withheld (shown as unknown) until their lookups can be rescored")
     rep["retryable"] = any(f["remedy"] in (dg.RETRY, dg.VERIFY) for f in material)
 
     q = quality_drift(rows)

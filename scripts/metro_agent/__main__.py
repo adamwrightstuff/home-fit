@@ -69,7 +69,16 @@ def main() -> int:
     p9.add_argument("--pillar", required=True)
     p9.add_argument("--reason", required=True, help="why this gap is genuine or acceptable (recorded in the accepted file)")
 
+    p10 = sub.add_parser("withhold", help="blank pillars whose lookups failed (shown as unknown) so the metro can publish; rescore fills them in")
+    p10.add_argument("--input", type=Path, required=True)
+    p10.add_argument("--dry-run", action="store_true")
+
     a = ap.parse_args()
+    if a.cmd == "withhold":
+        from . import withhold as wh
+        n = wh.withhold(a.input, dry_run=a.dry_run)
+        print(f"\n{n} pillar values {'would be ' if a.dry_run else ''}withheld")
+        return 0
     if a.cmd == "accept":
         from . import validate as vd
         n = vd.write_accepted(a.input, [vd.Verdict(a.place, a.pillar, vd.CONSISTENT, f"accepted by hand: {a.reason}")])

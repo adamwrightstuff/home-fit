@@ -76,6 +76,12 @@ def classify_place(row: Dict[str, Any]) -> List[Finding]:
 
     lp = _pillars(row)
 
+    # Pillars withheld because their lookup failed: unknown on purpose, still on the rescore list.
+    withheld = {k for k, v in lp.items() if "withheld_pending_rescore" in _warnings(v)}
+    for k in sorted(withheld):
+        add(k, UPSTREAM_ERROR, False, RETRY, "withheld pending rescore (shown as unknown until the lookup succeeds)")
+    lp = {k: v for k, v in lp.items() if k not in withheld}
+
     # Active outdoors: records each Overpass query outcome.
     ao = lp.get("active_outdoors")
     if ao is not None:
