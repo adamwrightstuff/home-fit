@@ -113,3 +113,11 @@ def test_political_lean_findings_trigger_one_offline_refresh(tmp_path):
     seen = []
     _run(p, lambda loc, ps: {"livability_pillars": {}}, lean_refresh=lambda path: seen.append(path))
     assert len(seen) == 1
+
+
+def test_two_places_with_the_same_name_are_retried_independently(tmp_path):
+    a = _row("Ridgewood", active_outdoors=BAD_AO); a["catalog"]["state_abbr"] = "NY"
+    b = _row("Ridgewood", active_outdoors=GOOD_AO); b["catalog"]["state_abbr"] = "NJ"
+    p = _write(tmp_path, [a, b])
+    out, calls = _run(p, lambda loc, ps: {"livability_pillars": {"active_outdoors": GOOD_AO}})
+    assert len(calls) == 1 and out["material_places_left"] == 0

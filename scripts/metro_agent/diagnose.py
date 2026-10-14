@@ -191,12 +191,23 @@ def load_accepted(scores_path: Path) -> Dict[tuple, str]:
         return {}
 
 
+def place_labels(rows: List[Dict[str, Any]]) -> List[str]:
+    """One label per row: the place name, or 'Name (ST)' when two rows share a name (Ridgewood, NJ vs Ridgewood, Queens)."""
+    names = [(r.get("catalog") or {}).get("name", "?") for r in rows]
+    counts: Dict[str, int] = {}
+    for n in names:
+        counts[n] = counts.get(n, 0) + 1
+    return [n if counts[n] == 1 else f"{n} ({(r.get('catalog') or {}).get('state_abbr', '?')})"
+            for n, r in zip(names, rows)]
+
+
 def diagnose(rows: Iterable[Dict[str, Any]], accepted: Optional[Dict[tuple, str]] = None) -> Dict[str, Any]:
     rows = list(rows)
     accepted = accepted or {}
     findings: List[Finding] = []
-    for r in rows:
+    for r, label in zip(rows, place_labels(rows)):
         for f in classify_place(r):
+            f.place = label
             reason = accepted.get((f.place, f.pillar))
             if reason and f.material and f.remedy in (VERIFY, SOURCE):
                 f.material, f.remedy = False, NONE

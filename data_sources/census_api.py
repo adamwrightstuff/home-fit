@@ -1091,9 +1091,6 @@ def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str,
         return None
 
 
-@cached(ttl_seconds=CACHE_TTL['census_data'])
-@safe_api_call("census", required=False)
-@handle_api_timeout(timeout_seconds=15)
 def _municipal_geo_params(state_fips: str, place_fips: Optional[str], geo: Optional[Dict[str, str]] = None):
     """ACS `for` / `in` clauses for a place, or for a county subdivision (New England towns have no place)."""
     if geo and geo.get("geo_type") == "county_subdivision":
@@ -1102,6 +1099,9 @@ def _municipal_geo_params(state_fips: str, place_fips: Optional[str], geo: Optio
     return f"place:{str(place_fips).zfill(5)}", f"state:{str(state_fips).zfill(2)}"
 
 
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=15)
 def get_place_same_house_pct(state_fips: str, place_fips: Optional[str], geo: Optional[Dict[str, str]] = None) -> Optional[float]:
     """ACS B07003 same-house rate (0–100) for a Census place (or county subdivision when `geo` says so)."""
     is_cousub = bool(geo and geo.get("geo_type") == "county_subdivision")

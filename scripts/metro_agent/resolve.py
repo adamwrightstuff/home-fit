@@ -170,7 +170,7 @@ def resolve(
             rounds_run = rnd
             break
 
-        index = {(r.get("catalog") or {}).get("name"): i for i, r in enumerate(rows)}
+        index = {label: i for i, label in enumerate(dg.place_labels(rows))}
         improved = 0
         for n, (place, pillars) in enumerate(sorted(todo.items()), 1):
             i = index[place]
