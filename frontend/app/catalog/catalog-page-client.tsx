@@ -41,7 +41,7 @@ import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScene
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { fetchProfile, type CommuteMode } from '@/lib/userProfile'
 import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
-import { scoreClimateMatch, hasClimatePreferences, climateMustHaveFails, hasClimateMustHaves, normalizeClimatePrefs, type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
+import { climateMustHaveFails, hasClimateMustHaves, normalizeClimatePrefs, type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -691,20 +691,6 @@ export default function CatalogPageClient({
     if (hasClimateMustHaves(climatePrefs.must_haves)) {
       list = list.filter((p) => climateMustHaveFails(p.climate, climatePrefs.must_haves).length === 0)
     }
-    if (hasClimatePreferences(climatePrefs)) {
-      list = list.filter((p) => {
-        const cm = scoreClimateMatch(p.climate, climatePrefs)
-        // No climate data at all (null) or empty object producing NaN score → pass
-        if (!cm || isNaN(cm.score)) return true
-        // Positive preferences also checked independently — a neutral axis (50) must not rescue
-        // a place that scores 0 on something the user said they actively want.
-        if (climatePrefs.heat_tolerance === 'love' && typeof cm.axes.summer_heat === 'number' && !isNaN(cm.axes.summer_heat) && cm.axes.summer_heat < 15) return false
-        if (climatePrefs.cold_tolerance === 'love' && typeof cm.axes.cold_winter === 'number' && !isNaN(cm.axes.cold_winter) && cm.axes.cold_winter < 15) return false
-        if (climatePrefs.rain_tolerance === 'vibe' && typeof cm.axes.rain_grey === 'number' && !isNaN(cm.axes.rain_grey) && cm.axes.rain_grey < 15) return false
-        if (climatePrefs.seasons === 'want_4' && typeof cm.axes.seasonal === 'number' && !isNaN(cm.axes.seasonal) && cm.axes.seasonal < 15) return false
-        return cm.score >= 15
-      })
-    }
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
     return sortPlaces(list, sortKey, sortDir, effectivePriorities)
   }, [
@@ -872,19 +858,6 @@ export default function CatalogPageClient({
       // Scenery/outdoors preferences reweight each place's own score now (see
       // applyScenerySubPreferencesToScore), not an exclusion reason.
       if (climateMustHaveFails(p.climate, climatePrefs.must_haves).length > 0) r.push('Climate must-have')
-      if (hasClimatePreferences(climatePrefs)) {
-        const cm = scoreClimateMatch(p.climate, climatePrefs)
-        if (cm && !isNaN(cm.score)) {
-          const ax = cm.axes
-          const fails =
-            (climatePrefs.heat_tolerance === 'love' && typeof ax.summer_heat === 'number' && !isNaN(ax.summer_heat) && ax.summer_heat < 15) ||
-            (climatePrefs.cold_tolerance === 'love' && typeof ax.cold_winter === 'number' && !isNaN(ax.cold_winter) && ax.cold_winter < 15) ||
-            (climatePrefs.rain_tolerance === 'vibe' && typeof ax.rain_grey === 'number' && !isNaN(ax.rain_grey) && ax.rain_grey < 15) ||
-            (climatePrefs.seasons === 'want_4' && typeof ax.seasonal === 'number' && !isNaN(ax.seasonal) && ax.seasonal < 15) ||
-            cm.score < 15
-          if (fails) r.push('Climate')
-        }
-      }
       reasons[key] = r.length > 0 ? r : ['Filters']
     }
     return reasons
@@ -990,19 +963,6 @@ export default function CatalogPageClient({
         if (!DEALBREAKER_CHECKS[k]?.(p)) r.push(`${PILLAR_META[k].name} must-have`)
       }
       if (climateMustHaveFails(p.climate, climatePrefs.must_haves).length > 0) r.push('Climate must-have')
-      if (hasClimatePreferences(climatePrefs)) {
-        const cm = scoreClimateMatch(p.climate, climatePrefs)
-        if (cm && !isNaN(cm.score)) {
-          const ax = cm.axes
-          const fails =
-            (climatePrefs.heat_tolerance === 'love' && typeof ax.summer_heat === 'number' && !isNaN(ax.summer_heat) && ax.summer_heat < 15) ||
-            (climatePrefs.cold_tolerance === 'love' && typeof ax.cold_winter === 'number' && !isNaN(ax.cold_winter) && ax.cold_winter < 15) ||
-            (climatePrefs.rain_tolerance === 'vibe' && typeof ax.rain_grey === 'number' && !isNaN(ax.rain_grey) && ax.rain_grey < 15) ||
-            (climatePrefs.seasons === 'want_4' && typeof ax.seasonal === 'number' && !isNaN(ax.seasonal) && ax.seasonal < 15) ||
-            cm.score < 15
-          if (fails) r.push('Climate')
-        }
-      }
       if (r.length > 0) reasons[key] = r
     }
 
@@ -1180,11 +1140,6 @@ export default function CatalogPageClient({
     [router]
   )
 
-  const climateActiveCount =
-    (climatePrefs.cold_tolerance ? 1 : 0) +
-    (climatePrefs.heat_tolerance ? 1 : 0) +
-    (climatePrefs.rain_tolerance ? 1 : 0) +
-    (climatePrefs.seasons ? 1 : 0)
 
   if (showQuiz) {
     return (
@@ -1408,9 +1363,9 @@ export default function CatalogPageClient({
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0) + climateActiveCount > 0 && (
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0) > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0) + climateActiveCount}
+                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)}
                     </span>
                   )}
                 </button>
@@ -1546,9 +1501,9 @@ export default function CatalogPageClient({
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
               Filters
-              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0) + climateActiveCount > 0 && (
+              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0) > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0) + climateActiveCount}
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)}
                 </span>
               )}
             </button>

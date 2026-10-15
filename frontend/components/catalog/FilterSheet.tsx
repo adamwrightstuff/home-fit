@@ -147,10 +147,7 @@ export default function FilterSheet({
     (filterTenure.length > 0 ? 1 : 0) +
     (filterLocalScene !== 'all' ? 1 : 0) +
     (filterAura ? 1 : 0) +
-    (climatePrefs.cold_tolerance ? 1 : 0) +
-    (climatePrefs.heat_tolerance ? 1 : 0) +
-    (climatePrefs.rain_tolerance ? 1 : 0) +
-    (climatePrefs.seasons ? 1 : 0)
+    (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
 
   function handleClearAll() {
     onFilterMetroChange('all')
@@ -463,74 +460,6 @@ export default function FilterSheet({
             </div>
           </div>
 
-          {/* Weather / Climate */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Weather preferences</div>
-            {/* Cold winters */}
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 6 }}>Cold winters</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {chip(climatePrefs.cold_tolerance === 'tolerable', "I can deal", () =>
-                  onClimatePrefsChange({ ...climatePrefs, cold_tolerance: climatePrefs.cold_tolerance === 'tolerable' ? undefined : 'tolerable' })
-                )}
-                {chip(climatePrefs.cold_tolerance === 'love', 'Love them', () =>
-                  onClimatePrefsChange({ ...climatePrefs, cold_tolerance: climatePrefs.cold_tolerance === 'love' ? undefined : 'love' })
-                )}
-              </div>
-            </div>
-
-            {/* Hot summers */}
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 6 }}>Hot summers</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {chip(climatePrefs.heat_tolerance === 'fine', "Fine by me", () =>
-                  onClimatePrefsChange({ ...climatePrefs, heat_tolerance: climatePrefs.heat_tolerance === 'fine' ? undefined : 'fine' })
-                )}
-                {chip(climatePrefs.heat_tolerance === 'love', 'Love them', () =>
-                  onClimatePrefsChange({ ...climatePrefs, heat_tolerance: climatePrefs.heat_tolerance === 'love' ? undefined : 'love' })
-                )}
-              </div>
-            </div>
-
-            {/* Rain & grey days */}
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 6 }}>Rain & grey days</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {chip(climatePrefs.rain_tolerance === 'meh', "Whatever", () =>
-                  onClimatePrefsChange({ ...climatePrefs, rain_tolerance: climatePrefs.rain_tolerance === 'meh' ? undefined : 'meh' })
-                )}
-                {chip(climatePrefs.rain_tolerance === 'vibe', 'My vibe', () =>
-                  onClimatePrefsChange({ ...climatePrefs, rain_tolerance: climatePrefs.rain_tolerance === 'vibe' ? undefined : 'vibe' })
-                )}
-              </div>
-            </div>
-
-            {/* Four seasons */}
-            <div style={{ marginBottom: 4 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 6 }}>Seasonal variation</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {chip(climatePrefs.seasons === 'want_4', 'Want four seasons', () =>
-                  onClimatePrefsChange({ ...climatePrefs, seasons: climatePrefs.seasons === 'want_4' ? undefined : 'want_4' })
-                )}
-                {chip(climatePrefs.seasons === 'mild_ok', 'Mild is fine', () =>
-                  onClimatePrefsChange({ ...climatePrefs, seasons: climatePrefs.seasons === 'mild_ok' ? undefined : 'mild_ok' })
-                )}
-                {chip(climatePrefs.seasons === 'want_consistency', 'Year-round consistency', () =>
-                  onClimatePrefsChange({ ...climatePrefs, seasons: climatePrefs.seasons === 'want_consistency' ? undefined : 'want_consistency' })
-                )}
-              </div>
-            </div>
-
-            {(climatePrefs.cold_tolerance || climatePrefs.heat_tolerance || climatePrefs.rain_tolerance || climatePrefs.seasons) && (
-              <button
-                type="button"
-                onClick={() => onClimatePrefsChange({})}
-                style={{ marginTop: 8, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              >
-                Clear
-              </button>
-            )}
-          </div>
 
         </div>
 
