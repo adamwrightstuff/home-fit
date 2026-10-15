@@ -107,7 +107,8 @@ def get_schools(
     city: Optional[str] = None,
     lat: Optional[float] = None,
     lon: Optional[float] = None,
-    area_type: Optional[str] = None
+    area_type: Optional[str] = None,
+    place_name: Optional[str] = None
 ) -> Optional[List[Dict]]:
     """
     Query SchoolDigger API for schools.
@@ -199,12 +200,35 @@ def get_schools(
                 return schools
             print(f"   CSD #{csd['csd_number']} returned {_rated_count(schools or [])} rated schools — falling through")
 
+    # PRIORITY 0.1: Census boundary lookup. The district polygon(s) containing the point say exactly
+    # which district serves it (unified, or elementary + secondary where a place is split).
+    # Schools come from those districts only, plus charters inside the area radius (independent
+    # charters carry their own district ID and admit by lottery, so they are not district-bound).
+    if lat is not None and lon is not None and state:
+        boundary = _schools_from_boundary_districts(lat, lon, state, base_params, _radius_miles())
+        if boundary:
+            return boundary
+
+    # PRIORITY 0.5: a school district named after the place the user asked for.
+    # Geocoders often relabel a hamlet as its township (Cold Spring Harbor -> "Huntington"), and
+    # SchoolDigger's "nearest district" then points at the township's district. When a district
+    # is named for the place itself, that district is the one that serves it.
+    if place_name and city and place_name.strip().lower() != city.strip().lower() and lat is not None and lon is not None:
+        named = _district_named_for_place(place_name, state, lat, lon, base_params)
+        if named:
+            named_schools = _fetch_schools({**base_params, "districtID": named[0]})
+            if named_schools and _rated_count(named_schools) >= 1:
+                print(f"🏫 Using district named for the place: {named[1]} ({named[0]}), "
+                      f"{_rated_count(named_schools)} rated schools")
+                return named_schools
+
     # PRIORITY 1: City + State — respects actual school district boundaries.
     # Requires at least 1 rated school; urban sub-neighborhoods without a real city match
     # (e.g. Crown Heights) typically return 0 rated schools and fall through to coordinate search.
     # Skip for "Los Angeles" — LAUSD covers the entire city and returns the same 31 schools for
     # every neighborhood. ZIP-based routing (PRIORITY 2) gives neighborhood-specific pools.
     _skip_city_query = city and city.lower() in ("los angeles",)
+    thin_candidates: List[List[Dict]] = []  # results with 1..MIN_RATED_SCHOOLS-1 rated schools
     if city and not _skip_city_query:
         print(f"🏙️  Attempting city-based query ({city})...")
         params_city = {**base_params, "city": city}
@@ -234,9 +258,28 @@ def get_schools(
                         print(f"   ⚠️  City-query district {city_district_ids} doesn't match "
                               f"nearest coordinate district {nearest_coord_district} — falling through")
                         filtered = []
-            if filtered and _rated_count(filtered) >= 1:
+            if filtered and _rated_count(filtered) >= MIN_RATED_SCHOOLS:
                 print(f"✅ City-based query returned {len(filtered)} schools ({_rated_count(filtered)} rated)")
                 return filtered
+            if filtered and _rated_count(filtered) >= 1:
+                # Thin town result: the town query only returns schools with an address in the
+                # town, but its district may have more (e.g. Cedarhurst kids attend Lawrence UFSD
+                # schools in neighboring villages). Widen to the town's OWN district only; never
+                # to neighboring districts, and never by distance.
+                own = Counter(
+                    str(s["district"]["districtID"]) for s in filtered
+                    if s.get("district") and s["district"].get("districtID")
+                )
+                best = filtered
+                if own:
+                    district_id = own.most_common(1)[0][0]
+                    district_schools = _fetch_schools({**base_params, "districtID": district_id})
+                    if district_schools and _rated_count(district_schools) > _rated_count(best):
+                        print(f"   Town result thin; using all schools in its own district {district_id} "
+                              f"({_rated_count(district_schools)} rated)")
+                        best = district_schools
+                print(f"✅ City-based query returned {len(best)} schools ({_rated_count(best)} rated)")
+                return best
         if schools:
             print(f"   City query only found {_rated_count(schools)} rated schools — trying coordinate fallback")
 
@@ -253,15 +296,12 @@ def get_schools(
                 # If the coordinate district list is large (many nearby districts, e.g. dense Long
                 # Island), it may not include the target district (pagination / centroid offset) and
                 # would remove all schools. Fall back to modal-district filter in that case.
-                target_districts = _find_districts_by_coordinates(lat, lon, state, base_params) if (lat is not None and lon is not None) else None
-                schools_filtered = _filter_by_district(schools, target_districts or None)
-                if not schools_filtered and target_districts:
-                    print(f"   ↩️  Coordinate district filter removed all schools — using modal fallback")
-                    schools_filtered = _filter_by_district(schools)
-                schools = schools_filtered
-            if schools and _rated_count(schools) >= 1:
+                schools = _filter_to_home_district(schools, lat, lon)
+            if schools and _rated_count(schools) >= MIN_RATED_SCHOOLS:
                 print(f"✅ ZIP-based query returned {len(schools)} schools ({_rated_count(schools)} rated)")
                 return schools
+            if schools and _rated_count(schools) >= 1:
+                thin_candidates.append(schools)
             if schools:
                 print(f"   ZIP query only found {_rated_count(schools)} rated schools — trying coordinate fallback")
 
@@ -271,17 +311,98 @@ def get_schools(
         print(f"📍 Attempting coordinate-based query (radius: {radius} miles)...")
         # Pin to correct district via tight coordinate lookup BEFORE fetching schools —
         # prevents cross-boundary bleed (e.g. Bronx charter schools in Pelham Manor results)
-        target_districts = _find_districts_by_coordinates(lat, lon, state, base_params)
         schools = _fetch_schools_by_coordinates(lat, lon, radius, base_params)
         if schools:
             schools = _filter_schools_by_distance(schools, lat, lon, radius)
             if schools:
-                schools = _filter_by_district(schools, target_districts or None)
+                schools = _filter_to_home_district(schools, lat, lon)
+            if schools and thin_candidates:
+                best_thin = max(thin_candidates, key=_rated_count)
+                if _rated_count(best_thin) > _rated_count(schools):
+                    print(f"   Coordinate search found fewer rated schools than the town/ZIP result — keeping that")
+                    return best_thin
             if schools:
                 print(f"✅ Coordinate-based query returned {len(schools)} schools")
                 return schools
 
+    if thin_candidates:
+        best_thin = max(thin_candidates, key=_rated_count)
+        print(f"✅ Using thin town/ZIP result ({_rated_count(best_thin)} rated schools)")
+        return best_thin
+
     print("⚠️  No schools found with any query method")
+    return None
+
+
+def _schools_from_boundary_districts(
+    lat: float, lon: float, state: str, base_params: Dict, radius_miles: float
+) -> Optional[List[Dict]]:
+    """Schools of the Census district(s) containing the point; None when the lookup has no answer."""
+    try:
+        from data_sources.school_districts import districts_for_point
+    except Exception:
+        return None
+    districts = districts_for_point(lat, lon, state)
+    if not districts:
+        return None
+
+    combined: List[Dict] = []
+    seen = set()
+
+    def _add(lst: List[Dict]) -> None:
+        for s in lst or []:
+            key = s.get("schoolid") or s.get("schoolID") or (s.get("schoolName"), s.get("distance"))
+            if key not in seen:
+                seen.add(key)
+                combined.append(s)
+
+    for d in districts:
+        lst = _fetch_schools({
+            **base_params, "districtID": d["id"],
+            "nearLatitude": lat, "nearLongitude": lon, "sortBy": "distance",
+        }) or []
+        if len(lst) >= int(base_params.get("perPage", 50)):
+            # Large district (LAUSD, Round Rock): the whole district is not "this place", so keep
+            # the schools inside the area radius.
+            lst = _filter_schools_by_distance(lst, lat, lon, radius_miles)
+        _add(lst)
+
+    near = _fetch_schools_by_coordinates(lat, lon, radius_miles, base_params) or []
+    near = _filter_schools_by_distance(near, lat, lon, radius_miles)
+    _add([s for s in near if s.get("isCharterSchool") == "Yes"])
+
+    if not combined or not any((s.get("rankHistory") or []) for s in combined):
+        return None
+    names = ", ".join(d["name"] for d in districts)
+    print(f"🗺️  Census boundary district(s): {names}; {len(combined)} schools")
+    return combined
+
+
+def _district_named_for_place(
+    place_name: str, state: str, lat: float, lon: float, base_params: Dict
+) -> Optional[tuple]:
+    """Return (districtID, districtName) of the nearest boundary district whose name contains place_name."""
+    import re
+    name = re.sub(r"[^a-z0-9 ]+", " ", place_name.lower()).strip()
+    if not name:
+        return None
+    try:
+        resp = requests.get(
+            "https://api.schooldigger.com/v2.1/districts",
+            params={**base_params, "q": place_name, "nearLatitude": lat, "nearLongitude": lon,
+                    "distanceMiles": 15.0, "sortBy": "distance"},
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            return None
+        for d in resp.json().get("districtList", []):
+            dname = re.sub(r"[^a-z0-9 ]+", " ", (d.get("districtName") or "").lower())
+            # K-12 districts only: a K-8 or high-school-only district is half of what serves the place
+            unified = (d.get("highGrade") == "12" and d.get("lowGrade") in ("PK", "KG", "K", "1"))
+            if d.get("hasBoundary", True) and unified and re.search(rf"\b{re.escape(name)}\b", dname):
+                return str(d["districtID"]), d.get("districtName", "")
+    except Exception as e:
+        print(f"   District-by-name lookup failed: {e}")
     return None
 
 
@@ -296,19 +417,24 @@ def _find_districts_by_coordinates(
     """
     try:
         # Use districts endpoint with coordinate search
-        # Note: v1 endpoint for districts, v2.1 for schools
-        url = "https://api.schooldigger.com/v1/districts"
+        # v1 ignores distanceMiles and returns an alphabetical page of the whole state,
+        # so index 0 was never the nearest district. v2.1 honors sortBy=distance.
+        url = "https://api.schooldigger.com/v2.1/districts"
         params = {
             **base_params,
             "nearLatitude": lat,
             "nearLongitude": lon,
             "distanceMiles": 2.0,  # Conservative radius for district lookup
+            "sortBy": "distance",
         }
         
         resp = requests.get(url, params=params, timeout=10)
         if resp.status_code == 200:
             data = resp.json()
             districts = data.get("districtList", [])
+            # Geographic districts (with attendance boundaries) first, nearest first;
+            # charter/BOCES entries after, so [0] is the district the address belongs to.
+            districts = sorted(districts, key=lambda d: (not d.get("hasBoundary", True), d.get("distance") or 0))
             district_ids = [str(d.get("districtID", "")) for d in districts if d.get("districtID")]
             if district_ids:
                 print(f"   Found districts: {district_ids}")
@@ -361,8 +487,18 @@ def _fetch_schools_by_coordinates(
         "nearLatitude": lat,
         "nearLongitude": lon,
         "distanceMiles": radius_miles,
+        # Default order is alphabetical, so a 50-school page in a dense area was just the A-C names.
+        "sortBy": "distance",
     }
     return _fetch_schools(params)
+
+
+# Elementary / middle median school-trip distance (2017 NHTS): 2.1 mi / 3.2 mi.
+ELEMENTARY_RADIUS_FACTOR = 2.1 / 3.2
+
+# A town or ZIP result with fewer rated schools than this is too thin to represent the place;
+# the search widens, and the thin result is kept only if nothing wider finds more rated schools.
+MIN_RATED_SCHOOLS = 3
 
 
 def _filter_schools_by_distance(
@@ -376,8 +512,16 @@ def _filter_schools_by_distance(
     if not schools:
         return []
 
+    area_radius = max_radius_miles
     filtered = []
     for school in schools:
+        # Elementary kids travel least (2017 NHTS medians: elementary 2.1 mi vs middle 3.2 mi),
+        # so elementary schools get a tighter radius; middle/high keep the area-type radius.
+        level = (school.get("schoolLevel") or "").lower()
+        max_radius_miles = (
+            area_radius * ELEMENTARY_RADIUS_FACTOR
+            if ("elementary" in level or "primary" in level) else area_radius
+        )
         # API returns distance in miles directly — use it when present
         api_distance = school.get("distance")
         if api_distance is not None:
@@ -414,6 +558,60 @@ def _filter_schools_by_distance(
     if len(filtered) < len(schools):
         print(f"   📏 Distance filtering: {len(schools)} -> {len(filtered)} schools")
 
+    return filtered
+
+
+def _filter_to_home_district(schools: List[Dict], lat: Optional[float], lon: Optional[float]) -> List[Dict]:
+    """
+    Keep only schools in the point's own school district.
+
+    Home district = the most common district among the nearest rated public schools (SchoolDigger
+    cannot say which district contains an address; it only lists districts by office distance,
+    which breaks for big districts like LAUSD). Independent charters (their own district ID) and
+    private schools (no district) are kept; the caller already limits everything to the radius.
+    """
+    if not schools:
+        return schools
+
+    def _dist(s: Dict) -> float:
+        d = s.get("distance")
+        if d is not None:
+            try:
+                return float(d)
+            except (TypeError, ValueError):
+                pass
+        ll = (s.get("address") or {}).get("latLong") or {}
+        if lat is not None and lon is not None and ll.get("latitude") is not None and ll.get("longitude") is not None:
+            return haversine_distance(lat, lon, float(ll["latitude"]), float(ll["longitude"])) / 1609.34
+        return 999.0
+
+    def _is_rated(s: Dict) -> bool:
+        rh = s.get("rankHistory") or []
+        return bool(rh) and (rh[0].get("rankStars") is not None or rh[0].get("rankStatewidePercentage") is not None)
+
+    def _is_charter(s: Dict) -> bool:
+        return s.get("isCharterSchool") == "Yes"
+
+    nearest = sorted(
+        (s for s in schools if _is_rated(s) and not _is_charter(s)
+         and (s.get("district") or {}).get("districtID")),
+        key=_dist,
+    )[:5]
+    if not nearest:
+        return schools
+    home_id = Counter(str(s["district"]["districtID"]) for s in nearest).most_common(1)[0][0]
+
+    filtered = [
+        s for s in schools
+        if not s.get("district") or _is_charter(s)
+        or str((s.get("district") or {}).get("districtID", "")) == home_id
+    ]
+    removed = len(schools) - len(filtered)
+    if removed > 0:
+        name = next((s["district"].get("districtName", home_id) for s in nearest
+                     if str(s["district"]["districtID"]) == home_id), home_id)
+        print(f"   🏫 Home district {name}: kept {len(filtered)} of {len(schools)} schools; "
+              f"removed {removed} from other districts")
     return filtered
 
 

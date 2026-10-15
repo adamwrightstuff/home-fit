@@ -40,7 +40,7 @@ from rescore_catalog_pillar import (  # noqa: E402
 )
 
 PILLAR = "quality_education"
-METRO_ORDER = ["nyc", "la", "seattle", "sf"]
+METRO_ORDER = ["nyc", "la", "seattle", "sf", "chicago", "austin"]
 STATE_PATH = REPO_ROOT / "analysis" / "education_queue_state.json"
 MAX_ATTEMPTS = 2
 
@@ -51,7 +51,10 @@ def catalog_file(metro: str) -> Path:
 
 def is_missing(obj: Dict[str, Any]) -> bool:
     p = ((obj.get("score") or {}).get("livability_pillars") or {}).get(PILLAR) or {}
-    return not p.get("score") or (p.get("confidence") or 0) < 1
+    if not p.get("score") or (p.get("confidence") or 0) < 1:
+        return True
+    # scored before the full rated-school list was stored; needed for the public/charter split
+    return "rated_schools" not in (p.get("breakdown") or {})
 
 
 def write_atomic(path: Path, last: Dict[str, Dict[str, Any]]) -> None:
@@ -68,6 +71,7 @@ def main() -> int:
     ap.add_argument("--delay", type=float, default=65.0, help="Seconds between places (plan limit is 1/min).")
     ap.add_argument("--max-places", type=int, default=0, help="Cap places this run (0 = until quota stops it).")
     ap.add_argument("--timeout", type=int, default=900)
+    ap.add_argument("--force-keys", help="JSON list of 'metro:key' to re-run even if already scored (attempt cap ignored).")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -75,6 +79,9 @@ def main() -> int:
     if STATE_PATH.is_file():
         state = json.loads(STATE_PATH.read_text())
 
+    forced = set(json.loads(Path(args.force_keys).read_text())) if args.force_keys else set()
+    done_forced_path = REPO_ROOT / "analysis" / "education_force_done.json"
+    done_forced = set(json.loads(done_forced_path.read_text())) if (forced and done_forced_path.is_file()) else set()
     data: Dict[str, Dict[str, Dict[str, Any]]] = {}
     queue: List[tuple] = []
     for metro in METRO_ORDER:
@@ -87,7 +94,11 @@ def main() -> int:
             cat = obj.get("catalog") or {}
             if not obj.get("success") or not (cat.get("search_query") or "").strip():
                 continue
-            if is_missing(obj) and state.get(f"{metro}:{key}", 0) < MAX_ATTEMPTS:
+            fk = f"{metro}:{key}"
+            if forced:
+                if fk in forced and fk not in done_forced:
+                    queue.append((metro, key))
+            elif is_missing(obj) and state.get(fk, 0) < MAX_ATTEMPTS:
                 queue.append((metro, key))
 
     print(f"Queue: {len(queue)} places still missing education")
@@ -99,6 +110,7 @@ def main() -> int:
     session = requests.Session()
     session.headers.update(proxy_headers())
     done = 0
+    bad_streak = 0
     for metro, key in queue:
         if args.max_places and done >= args.max_places:
             break
@@ -120,10 +132,19 @@ def main() -> int:
         if not new_p.get("score"):
             state[f"{metro}:{key}"] = state.get(f"{metro}:{key}", 0) + 1
             STATE_PATH.write_text(json.dumps(state, indent=1))
-            print("    bad result (no score, likely quota exhausted). Stopping for today.")
-            break
+            bad_streak += 1
+            print(f"    bad result (no score); old value kept. {bad_streak} in a row.")
+            if bad_streak >= 3:
+                print("    3 bad results in a row, likely quota exhausted. Stopping.")
+                break
+            time.sleep(args.delay)
+            continue
+        bad_streak = 0
         data[metro][key] = merge_pillar_response(obj, resp, [PILLAR])
         write_atomic(catalog_file(metro), data[metro])
+        if forced:
+            done_forced.add(f"{metro}:{key}")
+            done_forced_path.write_text(json.dumps(sorted(done_forced)))
         done += 1
         print(f"    saved {PILLAR}={new_p['score']}", flush=True)
         time.sleep(args.delay)

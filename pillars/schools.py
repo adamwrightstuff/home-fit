@@ -14,7 +14,8 @@ def get_school_data(
     city: Optional[str] = None,
     lat: Optional[float] = None,
     lon: Optional[float] = None,
-    area_type: Optional[str] = None
+    area_type: Optional[str] = None,
+    place_name: Optional[str] = None
 ) -> Tuple[float, Dict[str, List[Dict]], Dict]:
     """
     Calculate school score (0-100) and return schools by level.
@@ -36,7 +37,7 @@ def get_school_data(
     print(f"📚 Fetching school data...")
 
     # Get schools from API using bulletproof approach
-    schools = schools_api.get_schools(zip_code, state, city, lat, lon, area_type)
+    schools = schools_api.get_schools(zip_code, state, city, lat, lon, area_type, place_name)
 
     if not schools:
         print("⚠️  No schools found")
@@ -74,6 +75,7 @@ def get_school_data(
         "high": []
     }
     all_ratings = []
+    rated_schools = []  # every school that feeds the score (by_level keeps only the top 3 per level)
 
     for school in schools:
         # Get school info - SchoolDigger API sometimes returns generic "School #ID" in schoolName field
@@ -178,6 +180,18 @@ def get_school_data(
         }
 
         # Categorize by level
+        if "elementary" in school_level or "primary" in school_level:
+            _lvl = "elementary"
+        elif "middle" in school_level:
+            _lvl = "middle"
+        else:
+            _lvl = "high" if "high" in school_level else "elementary"
+        rated_schools.append({
+            "name": name,
+            "level": _lvl,
+            "rating": round(rating, 2),
+            "is_charter_school": school_info["is_charter_school"],
+        })
         if "elementary" in school_level or "primary" in school_level:
             schools_by_level["elementary"].append(school_info)
         elif "middle" in school_level:
@@ -289,7 +303,8 @@ def get_school_data(
         "access_bonus": round(access_bonus, 2),
         "early_ed_bonus": round(early_ed_bonus, 2),
         "total_schools_rated": len(all_ratings),
-        "elite_schools_count": elite_count
+        "elite_schools_count": elite_count,
+        "rated_schools": rated_schools,
     }
 
     return round(total_score, 2), schools_by_level, breakdown

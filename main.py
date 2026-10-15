@@ -133,6 +133,14 @@ MAX_BATCH_SIZE = int(os.getenv("MAX_BATCH_SIZE", "10"))
 # Log hygiene: avoid logging raw user-provided addresses by default
 LOG_RAW_LOCATIONS = _env_bool("LOG_RAW_LOCATIONS", default=False)
 
+def _place_name_from_location(location: Optional[str]) -> Optional[str]:
+    """First comma-part of the requested location ("Cold Spring Harbor, NY" -> "Cold Spring Harbor")."""
+    if not location:
+        return None
+    first = location.split(",")[0].strip()
+    return first if first and not any(c.isdigit() for c in first) else None
+
+
 def _safe_location_for_logs(location: str) -> str:
     if LOG_RAW_LOCATIONS:
         return location
@@ -2006,7 +2014,8 @@ def _compute_single_score_internal(
         pillar_tasks.append(
             ('quality_education', get_school_data, {
                 'zip_code': zip_code, 'state': state, 'city': city,
-                'lat': lat, 'lon': lon, 'area_type': area_type
+                'lat': lat, 'lon': lon, 'area_type': area_type,
+                'place_name': _place_name_from_location(location)
             })
         )
 
@@ -3717,7 +3726,8 @@ async def _stream_score_with_progress(
             pillar_tasks.append(
                 ('quality_education', get_school_data, {
                     'zip_code': zip_code, 'state': state, 'city': city,
-                    'lat': lat, 'lon': lon, 'area_type': area_type
+                    'lat': lat, 'lon': lon, 'area_type': area_type,
+                    'place_name': _place_name_from_location(location)
                 })
             )
 
