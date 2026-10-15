@@ -12,7 +12,7 @@ handful of places is meaningless).
 
 Usage: PYTHONPATH=. python3 scripts/catalog/apply_aura.py nyc la seattle
 """
-import json, math, sys
+import json, math, os, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -70,7 +70,9 @@ def process(metro: str) -> None:
         winners.append(d)
     for d in winners:
         d["score"]["aura"] = True
-    path.write_text("\n".join(json.dumps(d, ensure_ascii=False) for d in rows) + "\n")
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text("\n".join(json.dumps(d, ensure_ascii=False) for d in rows) + "\n")
+    os.replace(tmp, path)  # atomic: a crash mid-write leaves the original file intact
     print(f"{metro}: {len(scored)} scored, {len(winners)} Aura (top {n}, scene floor {AURA_MIN_SCENE}, jobs/resident <= {AURA_MAX_JOBS_PER_RESIDENT:g}): {[d['catalog']['name'] for d in winners]}")
 
 
