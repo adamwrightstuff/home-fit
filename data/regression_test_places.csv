@@ -1,0 +1,10 @@
+name,type,county_borough,state_full,state_abbr,lat,lon,search_query
+Ridgewood,suburb,Bergen,New Jersey,NJ,40.9793,-74.116,"Ridgewood, NJ"
+Ridgewood,neighborhood,Queens,New York,NY,40.7051,-73.9058,"Ridgewood, Queens, New York"
+Greenwich,suburb,Fairfield,Connecticut,CT,41.0262,-73.6282,"Greenwich, CT"
+Wimberley,suburb,Hays,Texas,TX,29.9977,-98.0988,"Wimberley, TX"
+Cedar Park,suburb,Williamson,Texas,TX,30.5217,-97.8278,"Cedar Park, TX"
+Oak Park,suburb,Cook,Illinois,IL,41.8878,-87.7888,"Oak Park, IL"
+Lake Zurich,suburb,Lake,Illinois,IL,42.1970,-88.0934,"Lake Zurich, IL"
+Hutto,suburb,Williamson,Texas,TX,30.5428,-97.5469,"Hutto, TX"
+Thousand Oaks,suburb,Los Angeles,California,CA,34.1706,-118.8376,"Thousand Oaks, California"
