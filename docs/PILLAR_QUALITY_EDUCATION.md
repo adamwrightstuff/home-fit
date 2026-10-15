@@ -138,6 +138,29 @@ rating. Elite districts do not separate from each other.
 - A run that "stops on quota" is usually the cache, a dead API server, or a place with no rated
   schools. Check the API log before assuming the quota.
 
+## Education check (pass/fail, offline)
+`PYTHONPATH=. python3 scripts/catalog/check_education.py [--metro la]` (exit 1 on any failure).
+Also runs inside `check_catalog_health.py` and `metro_agent health` (a failing education check
+makes the metro UNHEALTHY there). "Done" for this pillar means every metro passes.
+
+| Check | Fails when |
+|---|---|
+| no_score | no usable education score and not an accepted exception |
+| no_school_list | scored but `breakdown.rated_schools` missing |
+| weight_zero | usable score but weight 0 while other pillars are weighted |
+| no_split / formula_mismatch | split missing, or score/split differs from the formula on `rated_schools` |
+| thin_big_district | fewer than 3 rated schools although its Census district has 6+ schools (radius limit, not a real shortage) |
+| mostly_outside_district | half or more of matched stored schools are in other districts |
+
+Warnings (do not fail): `thin_small_district` (real shortage), `thin_unverified` (no Census/NCES
+files), `some_outside_district` (25% or more; noisy because of school-name collisions).
+Accepted gaps go in `data/education_check_exceptions.json` as `"<metro>:<place>": "reason"`.
+The district checks need `data_cache/tiger_sd_2024` (Census) and `data_cache/nces_ccd_2324` (NCES
+school directory); without them they are skipped.
+First run (2026-10-14): all six metros FAIL, which is the real remaining work: 28 thin places in
+big districts (Humboldt Park, Windsor Park, Leimert Park...), 14 places with stored schools mostly
+in another district (5 are hamlet coordinates, see backlog), Seattle Ballard and Kirkland unscored.
+
 ## Backlog (as of 2026-10-14, after commit 0d4ce7c)
 Priority order, none blocking the current catalog.
 

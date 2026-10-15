@@ -14,6 +14,7 @@ from __future__ import annotations
 import csv
 import json
 from pathlib import Path
+import collections
 from typing import Any, Callable, Dict, List, Optional
 
 from . import diagnose as dg
@@ -115,6 +116,18 @@ def audit(metro: str, offline: bool = False, validate_fn: Callable = vd.validate
     if q["composite_drift"]:
         P.append(f"stored composites disagree with their pillars at {len(q['composite_drift'])} places "
                  f"(e.g. {q['composite_drift'][0]}): recompute offline with --no-census")
+    try:
+        from scripts.catalog import check_education as ce
+        er = ce.evaluate(rows, metro)
+        rep["education"] = {"verdict": er["verdict"], "failures": len(er["failures"]), "warnings": len(er["warnings"])}
+        kinds = collections.Counter(f["check"] for f in er["failures"])
+        if kinds:
+            P.append("education check failed: " + ", ".join(f"{k} x{v}" for k, v in sorted(kinds.items()))
+                     + " (python3 scripts/catalog/check_education.py --metro " + metro + ")")
+        if er["warnings"]:
+            rep["notes"].append(f"education check: {len(er['warnings'])} warnings (thin or partly out-of-district school sets)")
+    except Exception as e:  # noqa: BLE001 - best effort add-on
+        rep["notes"].append(f"education check skipped: {type(e).__name__}: {str(e)[:80]}")
     for pillar, places in sorted(q["old_version"].items()):
         rep["notes"].append(f"{pillar}: {len(places)} places scored under an older scoring version (rescore when convenient)")
 

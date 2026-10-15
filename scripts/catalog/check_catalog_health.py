@@ -848,6 +848,22 @@ def main() -> int:
     lean_missing = len(missing_composites.get("lean_2024", []))
     print(f"  Missing lean_2024       : {lean_missing} / {len(results)} places (election data gap)")
     print(f"  Missing cbd_transit_min : {len(cbd_missing)} / {len(results)} places")
+
+    # Pass/fail education check (offline). Skipped when focusing on a different pillar.
+    if args.pillar in (None, "quality_education"):
+        try:
+            try:
+                from scripts.catalog import check_education as _ce
+            except ImportError:
+                import check_education as _ce  # run as a script from scripts/catalog
+            _metro = args.input.name.split("_metro")[0]
+            _rep = _ce.evaluate(rows, _metro)
+            print("\n── EDUCATION CHECK (pass/fail) ────────────────────────────────────")
+            print(_ce.format_report(_rep))
+            print(f"  Education check         : {_rep['verdict']} ({len(_rep['failures'])} failures, "
+                  f"{len(_rep['warnings'])} warnings)")
+        except Exception as _e:  # noqa: BLE001 - never break the health check on the education add-on
+            print(f"\n  Education check         : skipped ({type(_e).__name__}: {str(_e)[:80]})")
     print()
 
     return 0
