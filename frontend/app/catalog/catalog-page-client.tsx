@@ -779,6 +779,13 @@ export default function CatalogPageClient({
       return passesPublicTransitDealbreaker(rail, bus)
     },
   }
+  const commuteFailCount = useMemo(() => {
+    if (filterCommuteMax === 'all') return 0
+    return adjustedPlaces.filter((p) => {
+      const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
+      return typeof cbd === 'number' && cbd > Number(filterCommuteMax)
+    }).length
+  }, [adjustedPlaces, filterCommuteMax])
   const dealbreakerFailCounts = useMemo(() => {
     const out: Partial<Record<PillarKey, number>> = {}
     for (const k of Object.keys(DEALBREAKER_CHECKS) as PillarKey[]) {
@@ -1954,6 +1961,10 @@ export default function CatalogPageClient({
         dealbreakers={dealbreakers}
         onDealbreakerToggle={toggleDealbreaker}
         dealbreakerFailCounts={dealbreakerFailCounts}
+        filterCommuteMax={filterCommuteMax}
+        onFilterCommuteMaxChange={setFilterCommuteMax}
+        workZoneLabel={findWorkZone(workZoneId)?.label ?? null}
+        commuteFailCount={commuteFailCount}
       />
 
       <PillarTwinDrawer
@@ -1999,12 +2010,6 @@ export default function CatalogPageClient({
         onFilterLocalSceneChange={setFilterLocalScene}
         filterAura={filterAura}
         onFilterAuraChange={setFilterAura}
-        filterCommuteMax={filterCommuteMax}
-        onFilterCommuteMaxChange={setFilterCommuteMax}
-        workZoneId={workZoneId}
-        commuteMode={commuteMode}
-        officeDays={officeDays}
-        workZones={workZones}
         climatePrefs={climatePrefs}
         onClimatePrefsChange={setClimatePrefs}
         resultCount={gatedPlaces.length}

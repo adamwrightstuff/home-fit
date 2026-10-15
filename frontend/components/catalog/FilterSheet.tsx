@@ -4,8 +4,6 @@ import { useEffect } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type ClimatePreferences } from '@/lib/climatePreferences'
 import { X } from 'lucide-react'
-import Link from 'next/link'
-import { type WorkZone, findWorkZone } from '@/lib/workZones'
 import { CATALOG_METROS, CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 
 const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
@@ -57,14 +55,6 @@ interface FilterSheetProps {
   onFilterLocalSceneChange: (v: 'all' | 'Some' | 'High') => void
   filterAura: boolean
   onFilterAuraChange: (v: boolean) => void
-  filterCommuteMax: 'all' | '15' | '30' | '45' | '60'
-  onFilterCommuteMaxChange: (v: 'all' | '15' | '30' | '45' | '60') => void
-  /** Work hub, mode and office days come from the profile and are read-only here. */
-  workZoneId: string | null
-  /** Zones with precomputed commute data. */
-  workZones: WorkZone[]
-  commuteMode: 'auto' | 'transit' | 'active' | null
-  officeDays: number | null
   climatePrefs: ClimatePreferences
   onClimatePrefsChange: (v: ClimatePreferences) => void
   resultCount: number
@@ -116,17 +106,10 @@ export default function FilterSheet({
   onFilterLocalSceneChange,
   filterAura,
   onFilterAuraChange,
-  filterCommuteMax,
-  onFilterCommuteMaxChange,
-  workZoneId,
-  workZones,
-  commuteMode,
-  officeDays,
   climatePrefs,
   onClimatePrefsChange,
   resultCount,
 }: FilterSheetProps) {
-  const workZone = findWorkZone(workZoneId)
   type TrajectoryOption = 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
   useEffect(() => {
     if (open) {
@@ -481,35 +464,6 @@ export default function FilterSheet({
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(!filterAura, 'All', () => onFilterAuraChange(false))}
               {chip(filterAura, 'Aura only', () => onFilterAuraChange(!filterAura))}
-            </div>
-          </div>
-
-          {/* Commute Time: only the filter lives here; the hub, mode and days are profile facts. */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Commute Time</div>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              {workZone
-                ? workZone.transitOnly
-                  ? `Weekday-morning transit time to ${workZone.label}. Driving doesn't count toward the filter here, since drive times leave out parking.`
-                  : `Fastest weekday-morning commute to ${workZone.label}, by transit or car.`
-                : 'Transit travel time to the metro CBD (Penn Station or Grand Central for NYC, Financial District for SF, Downtown LA).'}
-            </div>
-            {workZones.length > 0 && (
-              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 10 }}>
-                {workZone
-                  ? `Your profile: ${workZone.label}${commuteMode === 'auto' ? ', driving' : commuteMode === 'transit' ? ', transit' : ''}${officeDays === null ? '' : officeDays === 0 ? ', remote' : `, ${officeDays} office day${officeDays === 1 ? '' : 's'}`}. `
-                  : 'Add your work address to use your own commute. '}
-                <Link href="/profile" style={{ color: 'var(--hf-primary-1)', fontWeight: 600 }}>
-                  {workZone ? 'Edit in your profile' : 'Open your profile'}
-                </Link>
-              </div>
-            )}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {chip(filterCommuteMax === 'all', 'Any', () => onFilterCommuteMaxChange('all'))}
-              {chip(filterCommuteMax === '15', 'Under 15 min', () => onFilterCommuteMaxChange(filterCommuteMax === '15' ? 'all' : '15'))}
-              {chip(filterCommuteMax === '30', 'Under 30 min', () => onFilterCommuteMaxChange(filterCommuteMax === '30' ? 'all' : '30'))}
-              {chip(filterCommuteMax === '45', 'Under 45 min', () => onFilterCommuteMaxChange(filterCommuteMax === '45' ? 'all' : '45'))}
-              {chip(filterCommuteMax === '60', 'Under 60 min', () => onFilterCommuteMaxChange(filterCommuteMax === '60' ? 'all' : '60'))}
             </div>
           </div>
 

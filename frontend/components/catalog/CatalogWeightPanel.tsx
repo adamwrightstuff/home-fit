@@ -52,6 +52,11 @@ interface CatalogWeightPanelProps {
   onDealbreakerToggle?: (key: PillarKey) => void
   /** How many places in the current results each must-have would remove on its own. */
   dealbreakerFailCounts?: Partial<Record<PillarKey, number>>
+  /** Commute cap, a must-have that depends on the profile's work hub (or the metro CBD without one). */
+  filterCommuteMax?: 'all' | '15' | '30' | '45' | '60'
+  onFilterCommuteMaxChange?: (v: 'all' | '15' | '30' | '45' | '60') => void
+  workZoneLabel?: string | null
+  commuteFailCount?: number
 }
 
 /** Pillars with a deal-breaker gate wired up. Independent axis from importance — see housing_value MVP. */
@@ -71,7 +76,7 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   public_transit_access: 'No rail and very few bus stops',
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, dealbreakers, onDealbreakerToggle, dealbreakerFailCounts }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, dealbreakers, onDealbreakerToggle, dealbreakerFailCounts, filterCommuteMax = 'all', onFilterCommuteMaxChange, workZoneLabel, commuteFailCount = 0 }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
@@ -154,6 +159,28 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                   </label>
                 )
               })}
+              <div className="text-xs font-medium text-[var(--hf-text-primary)]">
+                <div>🚆 Commute over this many minutes</div>
+                <div className="mb-1 font-normal text-[var(--hf-text-secondary)]">
+                  {workZoneLabel ? `To ${workZoneLabel}.` : 'To the metro downtown by transit. Add a work address in your profile to use your own commute.'}
+                  {filterCommuteMax !== 'all' && commuteFailCount > 0 ? ` Removes ${commuteFailCount} place${commuteFailCount === 1 ? '' : 's'}.` : ''}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {(['all', '15', '30', '45', '60'] as const).map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
+                        filterCommuteMax === v ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
+                      }`}
+                      style={filterCommuteMax === v ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : undefined}
+                      onClick={() => onFilterCommuteMaxChange?.(filterCommuteMax === v ? 'all' : v)}
+                    >
+                      {v === 'all' ? 'Any' : `Under ${v}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </details>
 
