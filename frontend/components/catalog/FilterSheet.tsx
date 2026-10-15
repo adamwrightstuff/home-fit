@@ -147,6 +147,8 @@ export default function FilterSheet({
     (filterTenure.length > 0 ? 1 : 0) +
     (filterLocalScene !== 'all' ? 1 : 0) +
     (filterAura ? 1 : 0) +
+    (filterCommuteMax !== 'all' ? 1 : 0) +
+    MUST_HAVE_PILLARS.filter((k) => dealbreakers?.[k]).length +
     (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
 
   function handleClearAll() {
@@ -160,6 +162,8 @@ export default function FilterSheet({
     onFilterLocalSceneChange('all')
     onFilterAuraChange(false)
     onClimatePrefsChange({})
+    onFilterCommuteMaxChange('all')
+    MUST_HAVE_PILLARS.forEach((k) => { if (dealbreakers?.[k]) onDealbreakerToggle?.(k) })
   }
 
   function toggleAreaType(value: string) {
