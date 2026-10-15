@@ -157,8 +157,8 @@ files), `some_outside_district` (25% or more; noisy because of school-name colli
 Accepted gaps go in `data/education_check_exceptions.json` as `"<metro>:<place>": "reason"`.
 The district checks need `data_cache/tiger_sd_2024` (Census) and `data_cache/nces_ccd_2324` (NCES
 school directory); without them they are skipped.
-First run (2026-10-14): all six metros FAIL, which is the real remaining work: 28 thin places in
-big districts (Humboldt Park, Windsor Park, Leimert Park...), 14 places with stored schools mostly
+First run (2026-10-14): all six metros FAIL, which is the real remaining work: 33 thin places in
+big districts (Humboldt Park, Windsor Park, Leimert Park...), 9 places with stored schools mostly
 in another district (5 are hamlet coordinates, see backlog), Seattle Ballard and Kirkland unscored.
 
 ## Backlog (as of 2026-10-14, after commit 0d4ce7c)
