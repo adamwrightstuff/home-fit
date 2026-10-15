@@ -128,3 +128,41 @@ rating. Elite districts do not separate from each other.
   by design; it is not a per-place signal.
 - A run that "stops on quota" is usually the cache, a dead API server, or a place with no rated
   schools. Check the API log before assuming the quota.
+
+## Backlog (as of 2026-10-14, after commit 0d4ce7c)
+Priority order, none blocking the current catalog.
+
+1. **Public vs charter split.** Original ask: the headline score counts both, a filter separates them.
+   Derive `public_only` and `charter_only` scores offline from `breakdown.rated_schools`
+   (same formula), store them next to the combined score, mark low confidence when a side has
+   fewer than 3 rated schools, then add the frontend filter. No API calls needed.
+2. **Hamlet coordinates.** Cold Spring Harbor, Mamaroneck, Woodmere, Valley Stream and Los Altos
+   Hills have catalog coordinates inside the neighboring district's polygon, so the Census lookup
+   would pick the wrong district. Fix: use the Census place (village/CDP) outline and take the
+   district covering most of it; keep the point for neighborhoods that have no outline.
+3. **Ship the Census boundary files to production** (80 MB raw in `data_cache/tiger_sd_2024`, not
+   in git; override with `HOMEFIT_TIGER_SD_DIR`). Until then production uses the SchoolDigger
+   fallback chain. Consider a slimmed file (GEOID, NAME, simplified geometry) and a
+   `.gitignore` entry for `data_cache/`.
+4. **Seattle:** Ballard and Kirkland rows failed (API was down) and need their failed pillars
+   re-run; the Seattle catalog has only 5 places.
+5. **Austin:** Dripping Springs has no ZIP (78620).
+6. **Belvedere CA:** no rated school within the radius (its schools are in Tiburon, just past 2 mi).
+   Candidate fix: with the boundary lookup, take the place's district regardless of radius when
+   the district is small.
+7. **Validate low scores** (Lawrence NY, Englewood Chicago, Gary, Hammond, East Palo Alto, Elgin TX)
+   against state test proficiency; SchoolDigger ratings are the only source so far.
+8. **Large-district neighborhoods** (Montclair/Oakland, LA, Chicago) rely on the radius, which
+   pulls in schools that are not the address's zoned schools. Real fix is attendance zones
+   (SchoolDigger Enterprise `boundaryAddress`). Ask for a quote.
+9. **Tests:** no unit tests cover the lookup chain, `school_districts.py`, or the home-district
+   filter. Add fixtures for Bronxville, Cedarhurst, Studio City, Cupertino, Oak Park.
+10. **Offline verification** (`offline_check`, NCES CCD 2023-24 school directory, 41 MB in
+    `data_cache/nces_ccd_2324`): 425 of 457 places fully inside their Census district. Turn the
+    check into a script in `scripts/catalog/` and run it after any education rescore. Known noise:
+    name collisions (Chicago), NYC boroughs (NCES splits them into 32 districts).
+11. **Housekeeping:** `.bak` / `.bakEdu` files in `data/`, `scripts/cron/daily_school_cache.sh`
+    (written for the old Developer quota; decide whether to retire), `metro_agent health --fix`
+    starts its own API on port 8000 and will kill a runner using that port.
+12. **Playbook:** fold the "Re-scoring a metro" runbook above into
+    `docs/METRO_EXPANSION_PLAYBOOK.md` and `docs/CATALOG_TOOLKIT.md`.
