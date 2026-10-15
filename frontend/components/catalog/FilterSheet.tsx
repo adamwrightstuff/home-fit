@@ -18,20 +18,20 @@ const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
 const MUST_HAVE_PILLARS: PillarKey[] = ['housing_value', 'quality_education', 'community_safety', 'healthcare_access', 'air_travel_access', 'public_transit_access']
 
 /** What "fails" means per pillar; mirrors the thresholds in lib/reweight.ts. Keep in sync. */
-const MUST_HAVE_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
-  housing_value: 'Home price over 3x your household income',
-  quality_education: 'School ratings below 3-star equivalent',
-  community_safety: 'In the highest-crime quarter nationally',
-  healthcare_access: 'More than 30 min drive from a hospital',
-  air_travel_access: 'More than 60 min drive from an airport',
-  public_transit_access: 'No rail and very few bus stops',
+const MUST_HAVE_LABELS: Partial<Record<PillarKey, { short: string; full: string }>> = {
+  housing_value: { short: 'Price over 3x income', full: 'Home price over 3x your household income' },
+  quality_education: { short: 'Schools under 3-star', full: 'School ratings below 3-star equivalent' },
+  community_safety: { short: 'Highest-crime quarter', full: 'In the highest-crime quarter nationally' },
+  healthcare_access: { short: '30+ min to hospital', full: 'More than 30 min drive from a hospital' },
+  air_travel_access: { short: '60+ min to airport', full: 'More than 60 min drive from an airport' },
+  public_transit_access: { short: 'No rail, few buses', full: 'No rail and very few bus stops' },
 }
 
-const CLIMATE_MUST_HAVES: { key: keyof ClimateMustHaves; label: string }[] = [
-  { key: 'no_cold_winters', label: '❄️ Cold winters (2+ months below freezing)' },
-  { key: 'no_hot_summers', label: '☀️ Hot summers (July average 78°F or higher)' },
-  { key: 'no_grey_days', label: '🌧️ Very grey, rainy climate' },
-  { key: 'no_big_swings', label: '🌡️ Big seasonal swings (over 45°F July to January)' },
+const CLIMATE_MUST_HAVES: { key: keyof ClimateMustHaves; short: string; full: string }[] = [
+  { key: 'no_cold_winters', short: '❄️ Cold winters', full: 'Cold winters: 2+ months below freezing' },
+  { key: 'no_hot_summers', short: '☀️ Hot summers', full: 'Hot summers: July average 78°F or higher' },
+  { key: 'no_grey_days', short: '🌧️ Very grey & rainy', full: 'Very grey, rainy climate' },
+  { key: 'no_big_swings', short: '🌡️ Big seasonal swings', full: 'Big seasonal swings: over 45°F July to January' },
 ]
 
 interface FilterSheetProps {
@@ -170,11 +170,12 @@ export default function FilterSheet({
     }
   }
 
-  function chip(active: boolean, label: string, onClick: () => void) {
+  function chip(active: boolean, label: string, onClick: () => void, title?: string) {
     return (
       <button
         key={label}
         type="button"
+        title={title}
         onClick={onClick}
         style={{
           ...CHIP_BASE,
@@ -220,45 +221,28 @@ export default function FilterSheet({
           {/* Must-haves: the hard "never show me" filters */}
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Never show places with</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {MUST_HAVE_PILLARS.map((key) => {
                 const fails = dealbreakerFailCounts?.[key]
-                return (
-                  <label key={key} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13 }}>
-                    <input type="checkbox" style={{ marginTop: 3 }} checked={Boolean(dealbreakers?.[key])} onChange={() => onDealbreakerToggle?.(key)} />
-                    <span>
-                      {PILLAR_META[key].icon} {MUST_HAVE_DESCRIPTIONS[key]}
-                      {key === 'housing_value' && !householdIncome && (
-                        <span style={{ display: 'block', fontSize: 11, color: '#9ca3af' }}>Add your household income in your profile to use this.</span>
-                      )}
-                      {typeof fails === 'number' && fails > 0 && (key !== 'housing_value' || householdIncome) && (
-                        <span style={{ display: 'block', fontSize: 11, color: '#9ca3af' }}>Removes {fails} place{fails === 1 ? '' : 's'}</span>
-                      )}
-                    </span>
-                  </label>
-                )
+                const lbl = MUST_HAVE_LABELS[key]!
+                const count = typeof fails === 'number' && fails > 0 && (key !== 'housing_value' || householdIncome) ? ` · ${fails}` : ''
+                return chip(Boolean(dealbreakers?.[key]), `${PILLAR_META[key].icon} ${lbl.short}${count}`, () => onDealbreakerToggle?.(key), lbl.full)
               })}
-              {CLIMATE_MUST_HAVES.map(({ key, label }) => {
+              {CLIMATE_MUST_HAVES.map(({ key, short, full }) => {
                 const fails = climateMustHaveFailCounts?.[key]
-                return (
-                  <label key={key} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13 }}>
-                    <input
-                      type="checkbox"
-                      style={{ marginTop: 3 }}
-                      checked={Boolean(climatePrefs.must_haves?.[key])}
-                      onChange={() => onClimatePrefsChange({ ...climatePrefs, must_haves: { ...climatePrefs.must_haves, [key]: !climatePrefs.must_haves?.[key] } })}
-                    />
-                    <span>
-                      {label}
-                      {typeof fails === 'number' && fails > 0 && (
-                        <span style={{ display: 'block', fontSize: 11, color: '#9ca3af' }}>Removes {fails} place{fails === 1 ? '' : 's'}</span>
-                      )}
-                    </span>
-                  </label>
+                const count = typeof fails === 'number' && fails > 0 ? ` · ${fails}` : ''
+                return chip(
+                  Boolean(climatePrefs.must_haves?.[key]),
+                  `${short}${count}`,
+                  () => onClimatePrefsChange({ ...climatePrefs, must_haves: { ...climatePrefs.must_haves, [key]: !climatePrefs.must_haves?.[key] } }),
+                  full,
                 )
               })}
             </div>
-            <div style={{ fontSize: 13, fontWeight: 600, marginTop: 12, marginBottom: 6 }}>🚆 Commute over this many minutes</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
+              Numbers show places removed.{!householdIncome ? ' Add your income in your profile to use the price filter.' : ''}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginTop: 12, marginBottom: 6 }}>🚆 Commute over</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
               {workZoneLabel ? `To ${workZoneLabel}.` : 'To the metro downtown by transit. Add a work address in your profile to use your own commute.'}
               {filterCommuteMax !== 'all' && commuteFailCount > 0 ? ` Removes ${commuteFailCount} place${commuteFailCount === 1 ? '' : 's'}.` : ''}

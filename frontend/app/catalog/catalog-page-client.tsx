@@ -783,6 +783,11 @@ export default function CatalogPageClient({
   }, [filteredPlaces, householdIncome])
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])
   const dealbreakerActive = activeDealbreakerKeys.length > 0
+  // Saved filters are read from localStorage on the client only, so the server render has none;
+  // showing the count before mount made the Filters badge differ between server and client HTML.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
   // Places blocked by regular filters — always shown in "Show excluded"
   const metroFilterExcluded = useMemo(() => {
     const filteredSet = new Set(filteredPlaces)
@@ -1363,9 +1368,9 @@ export default function CatalogPageClient({
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0) > 0 && (
+                  {filterBadgeCount > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)}
+                      {filterBadgeCount}
                     </span>
                   )}
                 </button>
@@ -1501,9 +1506,9 @@ export default function CatalogPageClient({
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
               Filters
-              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0) > 0 && (
+              {filterBadgeCount > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)}
+                  {filterBadgeCount}
                 </span>
               )}
             </button>
