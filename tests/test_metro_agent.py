@@ -114,8 +114,10 @@ def test_pin_check_warns_on_far_pins_and_passes_good_ones():
             {"type": "suburb", "name": "Lakeway", "state_abbr": "TX", "lat": "30.3645", "lon": "-97.9875"},
             {"type": "neighborhood", "name": "Zilker", "state_abbr": "TX", "lat": "30.26", "lon": "-97.77"}]
     c = pf.check_pins(rows, gazetteer=gaz)
-    assert c.status == pf.WARN and "Bastrop" in c.detail and "Lakeway" not in c.detail
+    assert c.status == pf.FAIL and "Bastrop" in c.detail and "Lakeway" not in c.detail
     assert pf.check_pins(rows[1:], gazetteer=gaz).status == pf.PASS
+    # a far pin with a reviewed reason passes
+    assert pf.check_pins(rows, gazetteer=gaz, exceptions={"Bastrop|TX": "verified"}).status == pf.PASS
 
 
 def test_empty_walkable_area_scored_low_is_informational_not_a_gap():

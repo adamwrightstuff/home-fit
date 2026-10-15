@@ -230,14 +230,28 @@ def _km(a, b) -> float:
     return 12742 * math.asin(math.sqrt(h))
 
 
-def check_pins(rows: List[Dict[str, str]], gazetteer: Optional[Dict[tuple, List[tuple]]] = None) -> Check:
-    """Independent check of the place list itself: a suburb whose pin is far from the Census center of the
-    place of that name is probably geocoded to the wrong town. Warns only (townships are not in the gazetteer)."""
+PIN_EXCEPTIONS = REPO / "data" / "pin_exceptions.json"
+
+
+def _pin_exceptions() -> Dict[str, str]:
+    try:
+        return {k: v for k, v in json.loads(PIN_EXCEPTIONS.read_text()).items() if not k.startswith("_")}
+    except (OSError, ValueError):
+        return {}
+
+
+def check_pins(rows: List[Dict[str, str]], gazetteer: Optional[Dict[tuple, List[tuple]]] = None,
+               exceptions: Optional[Dict[str, str]] = None) -> Check:
+    """Mandatory check of the place list: a suburb whose pin is far from the Census center of the place of that
+    name is probably geocoded to the wrong town and would be scored as a different place. A far pin must either be
+    fixed or listed with a reason in data/pin_exceptions.json (keys "Name|ST")."""
+    exceptions = _pin_exceptions() if exceptions is None else exceptions
     try:
         gaz = gazetteer if gazetteer is not None else _load_gazetteer()
     except Exception as e:  # noqa: BLE001
         return Check("pins", WARN, f"could not load the Census gazetteer ({type(e).__name__}); pins unchecked")
     far = []
+    reviewed = 0
     for r in rows:
         if r.get("type") != "suburb":
             continue
@@ -246,14 +260,18 @@ def check_pins(rows: List[Dict[str, str]], gazetteer: Optional[Dict[tuple, List[
             continue
         d = min(_km((float(r["lat"]), float(r["lon"])), c) for c in cands)
         if d > PIN_WARN_KM:
-            far.append((round(d, 1), r["name"], r["state_abbr"]))
+            if f"{r['name']}|{r['state_abbr']}" in exceptions:
+                reviewed += 1
+            else:
+                far.append((round(d, 1), r["name"], r["state_abbr"]))
     if far:
         far.sort(reverse=True)
-        return Check("pins", WARN, "pins far from the Census center of the town of that name (km, town): "
+        return Check("pins", FAIL, "pins far from the Census center of the town of that name (km, town): "
                      + "; ".join(f"{d} {n}, {s}" for d, n, s in far[:12]),
-                     "open each in a map; a wrong pin scores a different place. Big-city downtowns and townships "
-                     "can be legitimate")
-    return Check("pins", PASS, "every suburb pin is near its Census town center")
+                     "open each in a map and fix the pin, or if it is right add \"Name|ST\": \"reason\" to "
+                     "data/pin_exceptions.json")
+    note = f" ({reviewed} far pins covered by reviewed exceptions)" if reviewed else ""
+    return Check("pins", PASS, "every suburb pin is near its Census town center" + note)
 
 
 def check_baseline(metro: str) -> Check:

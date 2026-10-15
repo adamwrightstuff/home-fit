@@ -73,7 +73,28 @@ def main() -> int:
     p10.add_argument("--input", type=Path, required=True)
     p10.add_argument("--dry-run", action="store_true")
 
+    p11 = sub.add_parser("state", help="check (and with --build, create) a state's election data; shows crime-map coverage")
+    p11.add_argument("--state", action="append", help="state abbreviation (repeatable)")
+    p11.add_argument("--metro", help="use the states found in this metro's place list")
+    p11.add_argument("--build", action="store_true", help="download and build precinct data for states that lack it")
+
     a = ap.parse_args()
+    if a.cmd == "state":
+        from . import state_data as sd
+        states = [x.upper() for x in (a.state or [])]
+        if a.metro:
+            states += sorted({r["state_abbr"] for r in pf.read_csv(pf.REPO / "data" / f"{a.metro}_metro_place_catalog.csv")})
+        if not states:
+            print("give --state XX or --metro name")
+            return 2
+        reps = [sd.report(st) for st in dict.fromkeys(states)]
+        if a.build:
+            for r in reps:
+                if not r["election"]["file"] and r["sources"]["shapefile_2020"] and r["sources"]["results_2024"]:
+                    sd.build(r["state"])
+            reps = [sd.report(st) for st in dict.fromkeys(states)]
+        print(sd.format_report(reps))
+        return 1 if any(r["issues"] for r in reps) else 0
     if a.cmd == "withhold":
         from . import withhold as wh
         n = wh.withhold(a.input, dry_run=a.dry_run)

@@ -10,7 +10,7 @@ All commands are `PYTHONPATH=. python -m scripts.metro_agent <command>`. Details
 
 ## 1. Launch a new metro
 
-Before the first run, the metro needs its place list (`data/<metro>_metro_place_catalog.csv`), baselines, precinct file for its state, a crime source, and an entry in `frontend/lib/catalogMetros.ts` and `frontend/next.config.js`. `preflight` tells you exactly which of these is missing.
+Before the first run, `state --metro <metro>` shows whether each state's election data is built (`--build` creates it), and the metro needs its place list (`data/<metro>_metro_place_catalog.csv`), baselines, precinct file for its state, a crime source, and an entry in `frontend/lib/catalogMetros.ts` and `frontend/next.config.js`. `preflight` tells you exactly which of these is missing. A suburb pin far from its Census town center now blocks the run until it is fixed or listed with a reason in `data/pin_exceptions.json`.
 
 ```
 run --metro <metro>
