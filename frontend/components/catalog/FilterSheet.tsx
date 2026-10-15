@@ -469,14 +469,11 @@ export default function FilterSheet({
 
           {/* Weather / Climate */}
           <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Weather</div>
+            <div style={LABEL_STYLE}>Weather preferences</div>
             {/* Cold winters */}
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 6 }}>Cold winters</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {chip(climatePrefs.cold_tolerance === 'dealbreaker', 'Dealbreaker', () =>
-                  onClimatePrefsChange({ ...climatePrefs, cold_tolerance: climatePrefs.cold_tolerance === 'dealbreaker' ? undefined : 'dealbreaker' })
-                )}
                 {chip(climatePrefs.cold_tolerance === 'tolerable', "I can deal", () =>
                   onClimatePrefsChange({ ...climatePrefs, cold_tolerance: climatePrefs.cold_tolerance === 'tolerable' ? undefined : 'tolerable' })
                 )}
@@ -490,9 +487,6 @@ export default function FilterSheet({
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 6 }}>Hot summers</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {chip(climatePrefs.heat_tolerance === 'dealbreaker', 'Dealbreaker', () =>
-                  onClimatePrefsChange({ ...climatePrefs, heat_tolerance: climatePrefs.heat_tolerance === 'dealbreaker' ? undefined : 'dealbreaker' })
-                )}
                 {chip(climatePrefs.heat_tolerance === 'fine', "Fine by me", () =>
                   onClimatePrefsChange({ ...climatePrefs, heat_tolerance: climatePrefs.heat_tolerance === 'fine' ? undefined : 'fine' })
                 )}
@@ -506,9 +500,6 @@ export default function FilterSheet({
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 6 }}>Rain & grey days</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {chip(climatePrefs.rain_tolerance === 'dealbreaker', 'Dealbreaker', () =>
-                  onClimatePrefsChange({ ...climatePrefs, rain_tolerance: climatePrefs.rain_tolerance === 'dealbreaker' ? undefined : 'dealbreaker' })
-                )}
                 {chip(climatePrefs.rain_tolerance === 'meh', "Whatever", () =>
                   onClimatePrefsChange({ ...climatePrefs, rain_tolerance: climatePrefs.rain_tolerance === 'meh' ? undefined : 'meh' })
                 )}

@@ -1,5 +1,6 @@
 'use client'
 
+import type { ClimateMustHaves } from '@/lib/climatePreferences'
 import Link from 'next/link'
 import { X } from 'lucide-react'
 import { fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
@@ -57,7 +58,17 @@ interface CatalogWeightPanelProps {
   onFilterCommuteMaxChange?: (v: 'all' | '15' | '30' | '45' | '60') => void
   workZoneLabel?: string | null
   commuteFailCount?: number
+  climateMustHaves?: ClimateMustHaves
+  onClimateMustHaveToggle?: (k: keyof ClimateMustHaves) => void
+  climateMustHaveFailCounts?: Partial<Record<keyof ClimateMustHaves, number>>
 }
+
+const CLIMATE_MUST_HAVES: { key: keyof ClimateMustHaves; label: string }[] = [
+  { key: 'no_cold_winters', label: '❄️ Cold winters (2+ months below freezing)' },
+  { key: 'no_hot_summers', label: '☀️ Hot summers (July average 78°F or higher)' },
+  { key: 'no_grey_days', label: '🌧️ Very grey, rainy climate' },
+  { key: 'no_big_swings', label: '🌡️ Big seasonal swings (over 45°F July to January)' },
+]
 
 /** Pillars with a deal-breaker gate wired up. Independent axis from importance — see housing_value MVP. */
 const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value', 'quality_education', 'community_safety', 'healthcare_access', 'air_travel_access', 'public_transit_access']
@@ -76,7 +87,7 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   public_transit_access: 'No rail and very few bus stops',
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, dealbreakers, onDealbreakerToggle, dealbreakerFailCounts, filterCommuteMax = 'all', onFilterCommuteMaxChange, workZoneLabel, commuteFailCount = 0 }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, dealbreakers, onDealbreakerToggle, dealbreakerFailCounts, filterCommuteMax = 'all', onFilterCommuteMaxChange, workZoneLabel, commuteFailCount = 0, climateMustHaves, onClimateMustHaveToggle, climateMustHaveFailCounts }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
@@ -159,6 +170,30 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                   </label>
                 )
               })}
+              <div className="text-xs font-medium text-[var(--hf-text-primary)]">
+                <div className="mb-1">No places with:</div>
+                <div className="space-y-2">
+                  {CLIMATE_MUST_HAVES.map(({ key, label }) => {
+                    const fails = climateMustHaveFailCounts?.[key]
+                    return (
+                      <label key={key} className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          className="mt-0.5"
+                          checked={Boolean(climateMustHaves?.[key])}
+                          onChange={() => onClimateMustHaveToggle?.(key)}
+                        />
+                        <span>
+                          {label}
+                          {typeof fails === 'number' && fails > 0 && (
+                            <span className="block font-normal text-[var(--hf-text-secondary)]">Removes {fails} place{fails === 1 ? '' : 's'}</span>
+                          )}
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
               <div className="text-xs font-medium text-[var(--hf-text-primary)]">
                 <div>🚆 Commute over this many minutes</div>
                 <div className="mb-1 font-normal text-[var(--hf-text-secondary)]">

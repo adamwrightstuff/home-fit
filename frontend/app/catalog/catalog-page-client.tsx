@@ -41,7 +41,7 @@ import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScene
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { fetchProfile, type CommuteMode } from '@/lib/userProfile'
 import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
-import { scoreClimateMatch, hasClimatePreferences, failsColdDealbreaker, failsSwingDealbreaker, type ClimatePreferences } from '@/lib/climatePreferences'
+import { scoreClimateMatch, hasClimatePreferences, climateMustHaveFails, hasClimateMustHaves, normalizeClimatePrefs, type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -199,7 +199,7 @@ export default function CatalogPageClient({
   const [climatePrefs, setClimatePrefs] = useState<ClimatePreferences>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
-      return f?.climatePrefs && typeof f.climatePrefs === 'object' ? f.climatePrefs : {}
+      return f?.climatePrefs && typeof f.climatePrefs === 'object' ? normalizeClimatePrefs(f.climatePrefs) : {}
     } catch { return {} }
   })
   // Long-lived (localStorage, not the sessionStorage filters above) -- who you're close to
@@ -411,7 +411,7 @@ export default function CatalogPageClient({
           if (typeof f.filterLocalScene === 'string') setFilterLocalScene(f.filterLocalScene)
           if (typeof f.filterAura === 'boolean') setFilterAura(f.filterAura)
           if (typeof f.filterCommuteMax === 'string') setFilterCommuteMax(f.filterCommuteMax)
-          if (f.climatePrefs && typeof f.climatePrefs === 'object') setClimatePrefs(f.climatePrefs)
+          if (f.climatePrefs && typeof f.climatePrefs === 'object') setClimatePrefs(normalizeClimatePrefs(f.climatePrefs))
         }
         hasRestoredRef.current = true
       })
@@ -688,20 +688,14 @@ export default function CatalogPageClient({
       const st = (p.catalog.state_abbr || '').toLowerCase()
       return name.includes(t) || county.includes(t) || st.includes(t)
     })
+    if (hasClimateMustHaves(climatePrefs.must_haves)) {
+      list = list.filter((p) => climateMustHaveFails(p.climate, climatePrefs.must_haves).length === 0)
+    }
     if (hasClimatePreferences(climatePrefs)) {
       list = list.filter((p) => {
         const cm = scoreClimateMatch(p.climate, climatePrefs)
         // No climate data at all (null) or empty object producing NaN score → pass
         if (!cm || isNaN(cm.score)) return true
-        // Each dealbreaker axis must pass independently — averaging neutral axes (50) with a
-        // failing dealbreaker axis can raise the average above the threshold, letting rainy/cold/hot
-        // places slip through when the user said they're dealbreakers.
-        // Threshold 15: rejects places greyer/colder/hotter than Seattle-level extremes.
-        // NYC cluster scores ~15.8 on rain_grey; threshold of 30 incorrectly killed the entire metro.
-        if (climatePrefs.rain_tolerance === 'dealbreaker' && typeof cm.axes.rain_grey === 'number' && !isNaN(cm.axes.rain_grey) && cm.axes.rain_grey < 15) return false
-        if (failsColdDealbreaker(p.climate, climatePrefs)) return false
-        if (climatePrefs.heat_tolerance === 'dealbreaker' && typeof cm.axes.summer_heat === 'number' && !isNaN(cm.axes.summer_heat) && cm.axes.summer_heat < 15) return false
-        if (failsSwingDealbreaker(p.climate, climatePrefs)) return false
         // Positive preferences also checked independently — a neutral axis (50) must not rescue
         // a place that scores 0 on something the user said they actively want.
         if (climatePrefs.heat_tolerance === 'love' && typeof cm.axes.summer_heat === 'number' && !isNaN(cm.axes.summer_heat) && cm.axes.summer_heat < 15) return false
@@ -786,6 +780,13 @@ export default function CatalogPageClient({
       return typeof cbd === 'number' && cbd > Number(filterCommuteMax)
     }).length
   }, [adjustedPlaces, filterCommuteMax])
+  const climateMustHaveFailCounts = useMemo(() => {
+    const out: Partial<Record<keyof ClimateMustHaves, number>> = {}
+    for (const k of ['no_cold_winters', 'no_hot_summers', 'no_grey_days', 'no_big_swings'] as const) {
+      out[k] = adjustedPlaces.filter((p) => climateMustHaveFails(p.climate, { [k]: true }).length > 0).length
+    }
+    return out
+  }, [adjustedPlaces])
   const dealbreakerFailCounts = useMemo(() => {
     const out: Partial<Record<PillarKey, number>> = {}
     for (const k of Object.keys(DEALBREAKER_CHECKS) as PillarKey[]) {
@@ -870,15 +871,12 @@ export default function CatalogPageClient({
       }
       // Scenery/outdoors preferences reweight each place's own score now (see
       // applyScenerySubPreferencesToScore), not an exclusion reason.
+      if (climateMustHaveFails(p.climate, climatePrefs.must_haves).length > 0) r.push('Climate must-have')
       if (hasClimatePreferences(climatePrefs)) {
         const cm = scoreClimateMatch(p.climate, climatePrefs)
         if (cm && !isNaN(cm.score)) {
           const ax = cm.axes
           const fails =
-            (climatePrefs.rain_tolerance === 'dealbreaker' && typeof ax.rain_grey === 'number' && !isNaN(ax.rain_grey) && ax.rain_grey < 15) ||
-            failsColdDealbreaker(p.climate, climatePrefs) ||
-            (climatePrefs.heat_tolerance === 'dealbreaker' && typeof ax.summer_heat === 'number' && !isNaN(ax.summer_heat) && ax.summer_heat < 15) ||
-            failsSwingDealbreaker(p.climate, climatePrefs) ||
             (climatePrefs.heat_tolerance === 'love' && typeof ax.summer_heat === 'number' && !isNaN(ax.summer_heat) && ax.summer_heat < 15) ||
             (climatePrefs.cold_tolerance === 'love' && typeof ax.cold_winter === 'number' && !isNaN(ax.cold_winter) && ax.cold_winter < 15) ||
             (climatePrefs.rain_tolerance === 'vibe' && typeof ax.rain_grey === 'number' && !isNaN(ax.rain_grey) && ax.rain_grey < 15) ||
@@ -991,15 +989,12 @@ export default function CatalogPageClient({
       for (const k of activeDealbreakerKeys) {
         if (!DEALBREAKER_CHECKS[k]?.(p)) r.push(`${PILLAR_META[k].name} must-have`)
       }
+      if (climateMustHaveFails(p.climate, climatePrefs.must_haves).length > 0) r.push('Climate must-have')
       if (hasClimatePreferences(climatePrefs)) {
         const cm = scoreClimateMatch(p.climate, climatePrefs)
         if (cm && !isNaN(cm.score)) {
           const ax = cm.axes
           const fails =
-            (climatePrefs.rain_tolerance === 'dealbreaker' && typeof ax.rain_grey === 'number' && !isNaN(ax.rain_grey) && ax.rain_grey < 15) ||
-            failsColdDealbreaker(p.climate, climatePrefs) ||
-            (climatePrefs.heat_tolerance === 'dealbreaker' && typeof ax.summer_heat === 'number' && !isNaN(ax.summer_heat) && ax.summer_heat < 15) ||
-            failsSwingDealbreaker(p.climate, climatePrefs) ||
             (climatePrefs.heat_tolerance === 'love' && typeof ax.summer_heat === 'number' && !isNaN(ax.summer_heat) && ax.summer_heat < 15) ||
             (climatePrefs.cold_tolerance === 'love' && typeof ax.cold_winter === 'number' && !isNaN(ax.cold_winter) && ax.cold_winter < 15) ||
             (climatePrefs.rain_tolerance === 'vibe' && typeof ax.rain_grey === 'number' && !isNaN(ax.rain_grey) && ax.rain_grey < 15) ||
@@ -1209,7 +1204,7 @@ export default function CatalogPageClient({
           setFilterPoliticalLean(payload.filterPoliticalLean)
           setFilterTrajectory((payload.filterTrajectory || 'all') as typeof filterTrajectory)
           setFilterCommuteMax((payload.filterCommuteMax || 'all') as typeof filterCommuteMax)
-          setClimatePrefs(payload.climatePrefs ?? {})
+          setClimatePrefs(normalizeClimatePrefs(payload.climatePrefs))
           // Profile-owned commute inputs are only set when the quiz actually has an answer
           if (payload.workZoneId) setWorkZoneId(payload.workZoneId)
           if (payload.commuteMode) setCommuteMode(payload.commuteMode)
@@ -1965,6 +1960,9 @@ export default function CatalogPageClient({
         onFilterCommuteMaxChange={setFilterCommuteMax}
         workZoneLabel={findWorkZone(workZoneId)?.label ?? null}
         commuteFailCount={commuteFailCount}
+        climateMustHaves={climatePrefs.must_haves}
+        onClimateMustHaveToggle={(k) => setClimatePrefs((prev) => ({ ...prev, must_haves: { ...prev.must_haves, [k]: !prev.must_haves?.[k] } }))}
+        climateMustHaveFailCounts={climateMustHaveFailCounts}
       />
 
       <PillarTwinDrawer
