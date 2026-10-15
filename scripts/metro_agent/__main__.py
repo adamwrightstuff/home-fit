@@ -69,6 +69,10 @@ def main() -> int:
     p9.add_argument("--pillar", required=True)
     p9.add_argument("--reason", required=True, help="why this gap is genuine or acceptable (recorded in the accepted file)")
 
+    p11 = sub.add_parser("reweight", help="make pillar weights sum to 100 and rebuild totals offline (fixes rows inflated by old retries)")
+    p11.add_argument("--input", required=True, type=Path)
+    p11.add_argument("--dry-run", action="store_true")
+    p11.add_argument("--all", action="store_true", help="rebuild every row, not just those whose weights are off")
     p10 = sub.add_parser("withhold", help="blank pillars whose lookups failed (shown as unknown) so the metro can publish; rescore fills them in")
     p10.add_argument("--input", type=Path, required=True)
     p10.add_argument("--dry-run", action="store_true")
@@ -108,6 +112,10 @@ def main() -> int:
             reps = [sd.report(st) for st in dict.fromkeys(states)]
         print(sd.format_report(reps))
         return 1 if any(r["issues"] for r in reps) else 0
+    if a.cmd == "reweight":
+        from . import reweight as rw
+        rw.run(a.input, dry_run=a.dry_run, all_rows=a.all)
+        return 0
     if a.cmd == "withhold":
         from . import withhold as wh
         n = wh.withhold(a.input, dry_run=a.dry_run)

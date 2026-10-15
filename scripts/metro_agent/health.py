@@ -148,6 +148,9 @@ def quality_drift(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         if not r.get("success"):
             continue
         name, place_flags, pillar_flags = cc.check_row(r, None, False)
+        from .reweight import row_weight_sum
+        if abs(row_weight_sum(r) - 100.0) > 1.0:
+            drift.append(f"{name} (weights_sum_{row_weight_sum(r):.0f})")
         has_withheld = any((v or {}).get("status") == "withheld"
                            for v in ((r.get("score") or {}).get("livability_pillars") or {}).values())
         for f in place_flags:

@@ -102,12 +102,15 @@ def recompute_totals(score: Dict[str, Any]) -> None:
     pillars = score.get("livability_pillars")
     if not isinstance(pillars, dict):
         return
-    alloc = apply_schools_disabled_weights(default_equal_allocation())
+    # Same rule as well-formed rows: equal over 13 pillars incl. natural_beauty (education only with a real score), summing to 100.
+    from scripts.metro_agent.reweight import weights_for
+
+    alloc = weights_for(pillars)
     score["token_allocation"] = alloc
-    score["allocation_type"] = "equal_default_schools_off"
+    score["allocation_type"] = "equal_13_schools_on" if alloc.get("quality_education") else "equal_12_schools_off"
     total = 0.0
     avail_w = 0.0
-    for k in PILLAR_ORDER:
+    for k in list(PILLAR_ORDER) + [x for x in alloc if x not in PILLAR_ORDER]:
         p = pillars.get(k)
         if not isinstance(p, dict):
             continue
