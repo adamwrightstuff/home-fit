@@ -52,7 +52,10 @@ def start_server(api_base: str, log: Callable[[str], None], wait_s: int = 180) -
         return None
     port = api_base.rsplit(":", 1)[-1].split("/")[0]
     log(f"starting local API on port {port}…")
-    env = {**os.environ, "PYTHONPATH": str(REPO), "HOMEFIT_TRANSIT_STABLE_COMMUTE": "true"}
+    env = {**os.environ, "PYTHONPATH": str(REPO), "HOMEFIT_TRANSIT_STABLE_COMMUTE": "true",
+           # batch scoring: failed lookups come back as unknown, and good Overpass answers are kept for replay
+           "HOMEFIT_STRICT_LOOKUPS": "true"}
+    env.setdefault("HOMEFIT_OSM_CACHE_DIR", str(REPO / ".osm_cache"))
     proc = subprocess.Popen([sys.executable, "-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", port],
                             cwd=str(REPO), env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     deadline = time.time() + wait_s

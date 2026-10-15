@@ -41,6 +41,7 @@ from data_sources.cache import (
 )
 from data_sources.error_handling import check_api_credentials
 from data_sources.telemetry import record_request_metrics, record_error, get_telemetry_stats
+from pillars.strict_lookups import apply_strict_lookup_failures
 from pillars.schools import get_school_data
 from pillars.active_outdoors import get_active_outdoors_score_v2
 from pillars import built_environment, natural_beauty
@@ -2602,6 +2603,7 @@ def _compute_single_score_internal(
     }
 
     _apply_pillar_failure_overrides(livability_pillars, exceptions)
+    apply_strict_lookup_failures(livability_pillars)
     _set_pillar_status(livability_pillars, exceptions)
 
     # When only specific pillars were requested, strip the rest so the frontend doesn't render them.
@@ -4322,6 +4324,7 @@ async def _stream_score_with_progress(
         }
 
         _apply_pillar_failure_overrides(livability_pillars, exceptions)
+        apply_strict_lookup_failures(livability_pillars)
         _set_pillar_status(livability_pillars, exceptions)
 
         # Build final response

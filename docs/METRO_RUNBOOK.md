@@ -54,6 +54,11 @@ git commit -m "<Metro> metro scores" && git push origin main
 
 Vercel redeploys from main. Or use `run --metro <metro> --push`.
 
+## Batch scoring behaviour (set automatically by `run` and `health --fix`)
+
+- **Strict lookups** (`HOMEFIT_STRICT_LOOKUPS=true`): a pillar whose lookup failed comes back as unknown instead of a number built on partial data. The live site is unaffected.
+- **Raw Overpass cache** (`HOMEFIT_OSM_CACHE_DIR`, default `.osm_cache/`, git-ignored): good answers are saved and replayed, so a rescore re-asks only what failed and a logic change needs no network. Empty or error answers are never saved. Set `HOMEFIT_OSM_CACHE_MODE=replay` to run fully offline, or delete `.osm_cache/` to refresh. Both need the API restarted by the agent (kill a leftover server first: `lsof -ti:8000 | xargs kill`).
+
 ## Rules of thumb
 
 - Offline first. If a fix can be computed from numbers already stored in the catalog, do it offline. The API is for data that is not stored.

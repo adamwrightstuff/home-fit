@@ -93,3 +93,4 @@ frontend/data/
 # Transit routing (r5py) environment and GTFS/OSM cache (scripts/work_commute/)
 .venv-r5/
 data/cache/transit/
+.osm_cache/

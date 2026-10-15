@@ -6,6 +6,8 @@ Queries Overpass API for green spaces and nature features
 import os
 import re
 import requests
+from data_sources import overpass_cache as _overpass_cache
+_overpass_cache.install()  # no-op unless HOMEFIT_OSM_CACHE_DIR is set (batch scoring only)
 import math
 import time
 import threading
