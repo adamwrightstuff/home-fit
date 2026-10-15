@@ -233,6 +233,8 @@ def validate(rows: List[Dict[str, Any]], log: Callable[[str], None] = print,
         # Healthcare: the resolver clears the api_error flag when a retry returns cleanly but empty, so check
         # every place, not just flagged ones.
         hc = (r["score"]["livability_pillars"] or {}).get("healthcare_access") or {}
+        if hc.get("status") == "withheld":
+            continue  # blanked on purpose until it can be rescored: nothing to contradict
         sm = hc.get("summary") or {}
         local = sum(int(sm.get(k) or 0) for k in ("urgent_care_count", "pharmacy_count", "clinic_count", "hospital_count"))
         if z and hc and local == 0:

@@ -148,7 +148,13 @@ def quality_drift(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         if not r.get("success"):
             continue
         name, place_flags, pillar_flags = cc.check_row(r, None, False)
+        has_withheld = any((v or {}).get("status") == "withheld"
+                           for v in ((r.get("score") or {}).get("livability_pillars") or {}).values())
         for f in place_flags:
+            # Rows with withheld pillars were just recomputed by the authoritative composite code; the checker's
+            # independent total does not model how that code spreads the blanked pillars' weight, so don't compare.
+            if f.startswith("total_score_drift") and has_withheld:
+                continue
             if f.endswith("_drift") or "_drift:" in f:
                 drift.append(f"{name} ({f})")
         for pillar, flags in pillar_flags.items():

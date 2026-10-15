@@ -34,3 +34,11 @@ def test_dry_run_changes_nothing(tmp_path):
     p.write_text(body)
     assert wh.withhold(p, dry_run=True, log=lambda s: None) == 1
     assert p.read_text() == body
+
+
+def test_validate_does_not_call_a_withheld_healthcare_pillar_contradicted(tmp_path):
+    from scripts.metro_agent import validate as vd
+    row = {"success": True, "catalog": {"name": "A"}, "score": {"location_info": {"zip": "94530"}, "livability_pillars": {
+        "healthcare_access": {"score": None, "status": "withheld", "summary": {}}}}}
+    v = vd.validate([row], estab_fn=lambda z: 5, share_fn=lambda z: 0.0, health_fn=lambda z: 99, log=lambda s: None)
+    assert not [x for x in v if x.kind == vd.CONTRADICTED]
