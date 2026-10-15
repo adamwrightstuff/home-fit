@@ -2,7 +2,8 @@
 
 import { useEffect } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
-import { type ClimatePreferences } from '@/lib/climatePreferences'
+import { type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
+import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 import { X } from 'lucide-react'
 import { CATALOG_METROS, CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 
@@ -14,17 +15,23 @@ const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'rural', label: 'Rural' },
 ]
 
-const NB_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'mountains', label: 'Mountains' },
-  { value: 'ocean', label: 'Ocean / Bay' },
-  { value: 'lakes_rivers', label: 'Lakes & Rivers' },
-  { value: 'canopy', label: 'Tree Canopy' },
-]
+const MUST_HAVE_PILLARS: PillarKey[] = ['housing_value', 'quality_education', 'community_safety', 'healthcare_access', 'air_travel_access', 'public_transit_access']
 
-const AO_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'local_parks', label: 'Local Parks' },
-  { value: 'trails_regional', label: 'Trails & Regional Parks' },
-  { value: 'waterfront', label: 'Waterfront' },
+/** What "fails" means per pillar; mirrors the thresholds in lib/reweight.ts. Keep in sync. */
+const MUST_HAVE_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
+  housing_value: 'Home price over 3x your household income',
+  quality_education: 'School ratings below 3-star equivalent',
+  community_safety: 'In the highest-crime quarter nationally',
+  healthcare_access: 'More than 30 min drive from a hospital',
+  air_travel_access: 'More than 60 min drive from an airport',
+  public_transit_access: 'No rail and very few bus stops',
+}
+
+const CLIMATE_MUST_HAVES: { key: keyof ClimateMustHaves; label: string }[] = [
+  { key: 'no_cold_winters', label: '❄️ Cold winters (2+ months below freezing)' },
+  { key: 'no_hot_summers', label: '☀️ Hot summers (July average 78°F or higher)' },
+  { key: 'no_grey_days', label: '🌧️ Very grey, rainy climate' },
+  { key: 'no_big_swings', label: '🌡️ Big seasonal swings (over 45°F July to January)' },
 ]
 
 interface FilterSheetProps {
@@ -41,20 +48,24 @@ interface FilterSheetProps {
   onFilterTrajectoryChange: (v: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining') => void
   filterPoliticalLean: string[]
   onFilterPoliticalLeanChange: (v: string[]) => void
-  filterNbTypes: string[]
-  onFilterNbTypesChange: (v: string[]) => void
-  filterAoTypes: string[]
-  onFilterAoTypesChange: (v: string[]) => void
   filterHousingType: string[]
   onFilterHousingTypeChange: (v: string[]) => void
   filterTenure: string[]
   onFilterTenureChange: (v: string[]) => void
-  filterSchoolType: 'any' | 'public_only' | 'charter'
-  onFilterSchoolTypeChange: (v: 'any' | 'public_only' | 'charter') => void
   filterLocalScene: 'all' | 'Some' | 'High'
   onFilterLocalSceneChange: (v: 'all' | 'Some' | 'High') => void
   filterAura: boolean
   onFilterAuraChange: (v: boolean) => void
+  /** Must-haves: places that fail any checked box are hidden. */
+  dealbreakers?: Partial<Record<PillarKey, boolean>>
+  onDealbreakerToggle?: (key: PillarKey) => void
+  dealbreakerFailCounts?: Partial<Record<PillarKey, number>>
+  householdIncome?: number | null
+  filterCommuteMax: 'all' | '15' | '30' | '45' | '60'
+  onFilterCommuteMaxChange: (v: 'all' | '15' | '30' | '45' | '60') => void
+  workZoneLabel?: string | null
+  commuteFailCount?: number
+  climateMustHaveFailCounts?: Partial<Record<keyof ClimateMustHaves, number>>
   climatePrefs: ClimatePreferences
   onClimatePrefsChange: (v: ClimatePreferences) => void
   resultCount: number
@@ -92,20 +103,23 @@ export default function FilterSheet({
   onFilterTrajectoryChange,
   filterPoliticalLean,
   onFilterPoliticalLeanChange,
-  filterNbTypes,
-  onFilterNbTypesChange,
-  filterAoTypes,
-  onFilterAoTypesChange,
   filterHousingType,
   onFilterHousingTypeChange,
   filterTenure,
   onFilterTenureChange,
-  filterSchoolType,
-  onFilterSchoolTypeChange,
   filterLocalScene,
   onFilterLocalSceneChange,
   filterAura,
   onFilterAuraChange,
+  dealbreakers,
+  onDealbreakerToggle,
+  dealbreakerFailCounts,
+  householdIncome,
+  filterCommuteMax,
+  onFilterCommuteMaxChange,
+  workZoneLabel,
+  commuteFailCount = 0,
+  climateMustHaveFailCounts,
   climatePrefs,
   onClimatePrefsChange,
   resultCount,
@@ -129,11 +143,8 @@ export default function FilterSheet({
     (filterArchetypes.length > 0 ? 1 : 0) +
     (filterTrajectory !== 'all' ? 1 : 0) +
     (filterPoliticalLean.length > 0 ? 1 : 0) +
-    (filterNbTypes.length > 0 ? 1 : 0) +
-    (filterAoTypes.length > 0 ? 1 : 0) +
     (filterHousingType.length > 0 ? 1 : 0) +
     (filterTenure.length > 0 ? 1 : 0) +
-    (filterSchoolType !== 'any' ? 1 : 0) +
     (filterLocalScene !== 'all' ? 1 : 0) +
     (filterAura ? 1 : 0) +
     (climatePrefs.cold_tolerance ? 1 : 0) +
@@ -147,11 +158,8 @@ export default function FilterSheet({
     onFilterArchetypesChange([])
     onFilterTrajectoryChange('all')
     onFilterPoliticalLeanChange([])
-    onFilterNbTypesChange([])
-    onFilterAoTypesChange([])
     onFilterHousingTypeChange([])
     onFilterTenureChange([])
-    onFilterSchoolTypeChange('any')
     onFilterLocalSceneChange('all')
     onFilterAuraChange(false)
     onClimatePrefsChange({})
@@ -162,14 +170,6 @@ export default function FilterSheet({
       onFilterAreaTypesChange(filterAreaTypes.filter((v) => v !== value))
     } else {
       onFilterAreaTypesChange([...filterAreaTypes, value])
-    }
-  }
-
-  function toggleNbType(value: string) {
-    if (filterNbTypes.includes(value)) {
-      onFilterNbTypesChange(filterNbTypes.filter((v) => v !== value))
-    } else {
-      onFilterNbTypesChange([...filterNbTypes, value])
     }
   }
 
@@ -220,6 +220,60 @@ export default function FilterSheet({
         </div>
 
         <div style={{ padding: '16px 16px 0' }}>
+          {/* Must-haves: the hard "never show me" filters */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Never show places with</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {MUST_HAVE_PILLARS.map((key) => {
+                const fails = dealbreakerFailCounts?.[key]
+                return (
+                  <label key={key} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13 }}>
+                    <input type="checkbox" style={{ marginTop: 3 }} checked={Boolean(dealbreakers?.[key])} onChange={() => onDealbreakerToggle?.(key)} />
+                    <span>
+                      {PILLAR_META[key].icon} {MUST_HAVE_DESCRIPTIONS[key]}
+                      {key === 'housing_value' && !householdIncome && (
+                        <span style={{ display: 'block', fontSize: 11, color: '#9ca3af' }}>Add your household income in your profile to use this.</span>
+                      )}
+                      {typeof fails === 'number' && fails > 0 && (key !== 'housing_value' || householdIncome) && (
+                        <span style={{ display: 'block', fontSize: 11, color: '#9ca3af' }}>Removes {fails} place{fails === 1 ? '' : 's'}</span>
+                      )}
+                    </span>
+                  </label>
+                )
+              })}
+              {CLIMATE_MUST_HAVES.map(({ key, label }) => {
+                const fails = climateMustHaveFailCounts?.[key]
+                return (
+                  <label key={key} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13 }}>
+                    <input
+                      type="checkbox"
+                      style={{ marginTop: 3 }}
+                      checked={Boolean(climatePrefs.must_haves?.[key])}
+                      onChange={() => onClimatePrefsChange({ ...climatePrefs, must_haves: { ...climatePrefs.must_haves, [key]: !climatePrefs.must_haves?.[key] } })}
+                    />
+                    <span>
+                      {label}
+                      {typeof fails === 'number' && fails > 0 && (
+                        <span style={{ display: 'block', fontSize: 11, color: '#9ca3af' }}>Removes {fails} place{fails === 1 ? '' : 's'}</span>
+                      )}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginTop: 12, marginBottom: 6 }}>🚆 Commute over this many minutes</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+              {workZoneLabel ? `To ${workZoneLabel}.` : 'To the metro downtown by transit. Add a work address in your profile to use your own commute.'}
+              {filterCommuteMax !== 'all' && commuteFailCount > 0 ? ` Removes ${commuteFailCount} place${commuteFailCount === 1 ? '' : 's'}.` : ''}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {chip(filterCommuteMax === 'all', 'Any', () => onFilterCommuteMaxChange('all'))}
+              {(['15', '30', '45', '60'] as const).map((v) =>
+                chip(filterCommuteMax === v, `Under ${v} min`, () => onFilterCommuteMaxChange(filterCommuteMax === v ? 'all' : v))
+              )}
+            </div>
+          </div>
+
           {/* Metro */}
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Metro</div>
@@ -285,54 +339,6 @@ export default function FilterSheet({
               )}
             </div>
           </div>
-
-          {/* Scenery type */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Scenery (select multiple)</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {NB_TYPE_OPTIONS.map(({ value, label }) =>
-                chip(filterNbTypes.includes(value), label, () => toggleNbType(value))
-              )}
-            </div>
-            {filterNbTypes.length > 0 && (
-              <button
-                type="button"
-                onClick={() => onFilterNbTypesChange([])}
-                style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-
-          {/* Active Outdoors type */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Active Outdoors (select multiple)</div>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Reweights the Active Outdoors score toward your selected dimensions.
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {AO_TYPE_OPTIONS.map(({ value, label }) =>
-                chip(filterAoTypes.includes(value), label, () => {
-                  if (filterAoTypes.includes(value)) {
-                    onFilterAoTypesChange(filterAoTypes.filter((v) => v !== value))
-                  } else {
-                    onFilterAoTypesChange([...filterAoTypes, value])
-                  }
-                })
-              )}
-            </div>
-            {filterAoTypes.length > 0 && (
-              <button
-                type="button"
-                onClick={() => { onFilterAoTypesChange([]) }}
-                style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-
 
           {/* Housing Stock */}
           <div style={{ marginBottom: 20 }}>
@@ -400,16 +406,6 @@ export default function FilterSheet({
                 Clear
               </button>
             )}
-          </div>
-
-          {/* School type */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Schools</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {chip(filterSchoolType === 'any', 'Any', () => onFilterSchoolTypeChange('any'))}
-              {chip(filterSchoolType === 'public_only', 'Public only', () => onFilterSchoolTypeChange(filterSchoolType === 'public_only' ? 'any' : 'public_only'))}
-              {chip(filterSchoolType === 'charter', 'Charter', () => onFilterSchoolTypeChange(filterSchoolType === 'charter' ? 'any' : 'charter'))}
-            </div>
           </div>
 
           {/* Political lean */}

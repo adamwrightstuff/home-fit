@@ -1408,9 +1408,9 @@ export default function CatalogPageClient({
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount > 0 && (
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0) + climateActiveCount > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount}
+                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0) + climateActiveCount}
                     </span>
                   )}
                 </button>
@@ -1546,9 +1546,9 @@ export default function CatalogPageClient({
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
               Filters
-              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount > 0 && (
+              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0) + climateActiveCount > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + climateActiveCount}
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0) + climateActiveCount}
                 </span>
               )}
             </button>
@@ -1953,16 +1953,12 @@ export default function CatalogPageClient({
         currentHomeMonthlyCost={currentHomeMonthlyCost}
         hasWorkHub={Boolean(findWorkZone(workZoneId))}
         hasPeople={people.length > 0}
-        dealbreakers={dealbreakers}
-        onDealbreakerToggle={toggleDealbreaker}
-        dealbreakerFailCounts={dealbreakerFailCounts}
-        filterCommuteMax={filterCommuteMax}
-        onFilterCommuteMaxChange={setFilterCommuteMax}
-        workZoneLabel={findWorkZone(workZoneId)?.label ?? null}
-        commuteFailCount={commuteFailCount}
-        climateMustHaves={climatePrefs.must_haves}
-        onClimateMustHaveToggle={(k) => setClimatePrefs((prev) => ({ ...prev, must_haves: { ...prev.must_haves, [k]: !prev.must_haves?.[k] } }))}
-        climateMustHaveFailCounts={climateMustHaveFailCounts}
+        filterNbTypes={filterNbTypes}
+        onFilterNbTypesChange={setFilterNbTypes}
+        filterAoTypes={filterAoTypes}
+        onFilterAoTypesChange={setFilterAoTypes}
+        filterSchoolType={filterSchoolType}
+        onFilterSchoolTypeChange={setFilterSchoolType}
       />
 
       <PillarTwinDrawer
@@ -1994,20 +1990,23 @@ export default function CatalogPageClient({
         onFilterTrajectoryChange={setFilterTrajectory}
         filterPoliticalLean={filterPoliticalLean}
         onFilterPoliticalLeanChange={setFilterPoliticalLean}
-        filterNbTypes={filterNbTypes}
-        onFilterNbTypesChange={setFilterNbTypes}
-        filterAoTypes={filterAoTypes}
-        onFilterAoTypesChange={setFilterAoTypes}
         filterHousingType={filterHousingType}
         onFilterHousingTypeChange={setFilterHousingType}
         filterTenure={filterTenure}
         onFilterTenureChange={setFilterTenure}
-        filterSchoolType={filterSchoolType}
-        onFilterSchoolTypeChange={setFilterSchoolType}
         filterLocalScene={filterLocalScene}
         onFilterLocalSceneChange={setFilterLocalScene}
         filterAura={filterAura}
         onFilterAuraChange={setFilterAura}
+        dealbreakers={dealbreakers}
+        onDealbreakerToggle={toggleDealbreaker}
+        dealbreakerFailCounts={dealbreakerFailCounts}
+        householdIncome={householdIncome}
+        filterCommuteMax={filterCommuteMax}
+        onFilterCommuteMaxChange={setFilterCommuteMax}
+        workZoneLabel={findWorkZone(workZoneId)?.label ?? null}
+        commuteFailCount={commuteFailCount}
+        climateMustHaveFailCounts={climateMustHaveFailCounts}
         climatePrefs={climatePrefs}
         onClimatePrefsChange={setClimatePrefs}
         resultCount={gatedPlaces.length}

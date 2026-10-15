@@ -1,6 +1,5 @@
 'use client'
 
-import type { ClimateMustHaves } from '@/lib/climatePreferences'
 import Link from 'next/link'
 import { X } from 'lucide-react'
 import { fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
@@ -48,46 +47,62 @@ interface CatalogWeightPanelProps {
   /** Personal-fit weights only apply once the profile gives them something to measure. */
   hasWorkHub?: boolean
   hasPeople?: boolean
-  /** Deal-breaker pillars (currently housing_value only). Independent of importance weight. */
-  dealbreakers?: Partial<Record<PillarKey, boolean>>
-  onDealbreakerToggle?: (key: PillarKey) => void
-  /** How many places in the current results each must-have would remove on its own. */
-  dealbreakerFailCounts?: Partial<Record<PillarKey, number>>
-  /** Commute cap, a must-have that depends on the profile's work hub (or the metro CBD without one). */
-  filterCommuteMax?: 'all' | '15' | '30' | '45' | '60'
-  onFilterCommuteMaxChange?: (v: 'all' | '15' | '30' | '45' | '60') => void
-  workZoneLabel?: string | null
-  commuteFailCount?: number
-  climateMustHaves?: ClimateMustHaves
-  onClimateMustHaveToggle?: (k: keyof ClimateMustHaves) => void
-  climateMustHaveFailCounts?: Partial<Record<keyof ClimateMustHaves, number>>
+  /** Kind-of-place choices that reweight a pillar's score (not filters). */
+  filterNbTypes?: string[]
+  onFilterNbTypesChange?: (v: string[]) => void
+  filterAoTypes?: string[]
+  onFilterAoTypesChange?: (v: string[]) => void
+  filterSchoolType?: 'any' | 'public_only' | 'charter'
+  onFilterSchoolTypeChange?: (v: 'any' | 'public_only' | 'charter') => void
 }
-
-const CLIMATE_MUST_HAVES: { key: keyof ClimateMustHaves; label: string }[] = [
-  { key: 'no_cold_winters', label: '❄️ Cold winters (2+ months below freezing)' },
-  { key: 'no_hot_summers', label: '☀️ Hot summers (July average 78°F or higher)' },
-  { key: 'no_grey_days', label: '🌧️ Very grey, rainy climate' },
-  { key: 'no_big_swings', label: '🌡️ Big seasonal swings (over 45°F July to January)' },
-]
 
 /** Pillars with a deal-breaker gate wired up. Independent axis from importance — see housing_value MVP. */
-const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value', 'quality_education', 'community_safety', 'healthcare_access', 'air_travel_access', 'public_transit_access']
+const NB_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'mountains', label: 'Mountains' },
+  { value: 'ocean', label: 'Ocean / Bay' },
+  { value: 'lakes_rivers', label: 'Lakes & Rivers' },
+  { value: 'canopy', label: 'Tree Canopy' },
+]
 
-/**
- * Human-readable statement of what "fails" means per dealbreaker pillar — mirrors the exact
- * thresholds in lib/reweight.ts's passesXDealbreaker functions. Keep these in sync if a
- * threshold changes.
- */
-const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
-  housing_value: 'Home price over 3x your household income',
-  quality_education: 'School ratings below 3-star equivalent',
-  community_safety: 'In the highest-crime quarter nationally',
-  healthcare_access: 'More than 30 min drive from a hospital',
-  air_travel_access: 'More than 60 min drive from an airport',
-  public_transit_access: 'No rail and very few bus stops',
+const AO_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'local_parks', label: 'Local Parks' },
+  { value: 'trails_regional', label: 'Trails & Regional Parks' },
+  { value: 'waterfront', label: 'Waterfront' },
+]
+
+const SCHOOL_TYPE_OPTIONS: { value: 'any' | 'public_only' | 'charter'; label: string }[] = [
+  { value: 'any', label: 'Any' },
+  { value: 'public_only', label: 'Public only' },
+  { value: 'charter', label: 'Charter' },
+]
+
+function KindChips({ label, options, selected, onToggle }: {
+  label: string
+  options: { value: string; label: string }[]
+  selected: string[]
+  onToggle: (v: string) => void
+}) {
+  return (
+    <div className="mt-1.5">
+      <div className="mb-1 text-[0.7rem] text-[var(--hf-text-secondary)]">{label}</div>
+      <div className="flex flex-wrap gap-1">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onToggle(o.value)}
+            className={`rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${selected.includes(o.value) ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+            style={selected.includes(o.value) ? { background: 'var(--hf-primary-1)' } : undefined}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, dealbreakers, onDealbreakerToggle, dealbreakerFailCounts, filterCommuteMax = 'all', onFilterCommuteMaxChange, workZoneLabel, commuteFailCount = 0, climateMustHaves, onClimateMustHaveToggle, climateMustHaveFailCounts }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, filterNbTypes = [], onFilterNbTypesChange, filterAoTypes = [], onFilterAoTypesChange, filterSchoolType = 'any', onFilterSchoolTypeChange }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
@@ -140,85 +155,6 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-          <details className="mb-3 rounded-xl border border-[var(--hf-border)]" open>
-            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-bold text-[var(--hf-text-primary)]">
-              Must-haves
-            </summary>
-            <div className="space-y-2 border-t border-[var(--hf-border)] px-3 pb-3 pt-2">
-              <p className="text-[0.7rem] leading-snug text-[var(--hf-text-secondary)]">
-                Hide places that match any box you check. These only filter; they never change scores or ranking.
-              </p>
-              {DEALBREAKER_PILLARS.map((key) => {
-                const fails = dealbreakerFailCounts?.[key]
-                return (
-                  <label key={key} className="flex items-start gap-2 text-xs font-medium text-[var(--hf-text-primary)]">
-                    <input
-                      type="checkbox"
-                      className="mt-0.5"
-                      checked={Boolean(dealbreakers?.[key])}
-                      onChange={() => onDealbreakerToggle?.(key)}
-                    />
-                    <span>
-                      {PILLAR_META[key].icon} {DEALBREAKER_DESCRIPTIONS[key]}
-                      {key === 'housing_value' && !householdIncome && (
-                        <span className="block font-normal text-[var(--hf-text-secondary)]">Add your household income in your profile to use this.</span>
-                      )}
-                      {typeof fails === 'number' && fails > 0 && (key !== 'housing_value' || householdIncome) && (
-                        <span className="block font-normal text-[var(--hf-text-secondary)]">Removes {fails} place{fails === 1 ? '' : 's'}</span>
-                      )}
-                    </span>
-                  </label>
-                )
-              })}
-              <div className="text-xs font-medium text-[var(--hf-text-primary)]">
-                <div className="mb-1">No places with:</div>
-                <div className="space-y-2">
-                  {CLIMATE_MUST_HAVES.map(({ key, label }) => {
-                    const fails = climateMustHaveFailCounts?.[key]
-                    return (
-                      <label key={key} className="flex items-start gap-2">
-                        <input
-                          type="checkbox"
-                          className="mt-0.5"
-                          checked={Boolean(climateMustHaves?.[key])}
-                          onChange={() => onClimateMustHaveToggle?.(key)}
-                        />
-                        <span>
-                          {label}
-                          {typeof fails === 'number' && fails > 0 && (
-                            <span className="block font-normal text-[var(--hf-text-secondary)]">Removes {fails} place{fails === 1 ? '' : 's'}</span>
-                          )}
-                        </span>
-                      </label>
-                    )
-                  })}
-                </div>
-              </div>
-              <div className="text-xs font-medium text-[var(--hf-text-primary)]">
-                <div>🚆 Commute over this many minutes</div>
-                <div className="mb-1 font-normal text-[var(--hf-text-secondary)]">
-                  {workZoneLabel ? `To ${workZoneLabel}.` : 'To the metro downtown by transit. Add a work address in your profile to use your own commute.'}
-                  {filterCommuteMax !== 'all' && commuteFailCount > 0 ? ` Removes ${commuteFailCount} place${commuteFailCount === 1 ? '' : 's'}.` : ''}
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {(['all', '15', '30', '45', '60'] as const).map((v) => (
-                    <button
-                      key={v}
-                      type="button"
-                      className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
-                        filterCommuteMax === v ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
-                      }`}
-                      style={filterCommuteMax === v ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : undefined}
-                      onClick={() => onFilterCommuteMaxChange?.(filterCommuteMax === v ? 'all' : v)}
-                    >
-                      {v === 'all' ? 'Any' : `Under ${v}`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </details>
-
           {GROUPS.map((g) => (
             <details key={g.title} className="mb-3 rounded-xl border border-[var(--hf-border)]" open>
               <summary className="cursor-pointer select-none px-3 py-2 text-sm font-bold text-[var(--hf-text-primary)]">
@@ -255,6 +191,18 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           </button>
                         ))}
                       </div>
+                      {key === 'natural_beauty' && (
+                        <KindChips label="Which scenery? (blank = all)" options={NB_TYPE_OPTIONS} selected={filterNbTypes}
+                          onToggle={(v) => onFilterNbTypesChange?.(filterNbTypes.includes(v) ? filterNbTypes.filter((x) => x !== v) : [...filterNbTypes, v])} />
+                      )}
+                      {key === 'active_outdoors' && (
+                        <KindChips label="Which kind? (blank = all)" options={AO_TYPE_OPTIONS} selected={filterAoTypes}
+                          onToggle={(v) => onFilterAoTypesChange?.(filterAoTypes.includes(v) ? filterAoTypes.filter((x) => x !== v) : [...filterAoTypes, v])} />
+                      )}
+                      {key === 'quality_education' && (
+                        <KindChips label="Which schools?" options={SCHOOL_TYPE_OPTIONS} selected={[filterSchoolType]}
+                          onToggle={(v) => onFilterSchoolTypeChange?.(v as 'any' | 'public_only' | 'charter')} />
+                      )}
                     </div>
                   )
                 })}
