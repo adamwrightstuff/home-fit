@@ -78,7 +78,20 @@ def main() -> int:
     p11.add_argument("--metro", help="use the states found in this metro's place list")
     p11.add_argument("--build", action="store_true", help="download and build precinct data for states that lack it")
 
+    p12 = sub.add_parser("diff", help="what changed in a catalog file since the last commit (catches scripts that moved scores)")
+    p12.add_argument("--metro", action="append", help="metro (repeatable); default all launched metros")
+    p12.add_argument("--ref", default="HEAD")
+    p12.add_argument("--threshold", type=float, default=3.0, help="report composite moves of at least this many points")
+
     a = ap.parse_args()
+    if a.cmd == "diff":
+        from . import changes as ch
+        from . import health as hl
+        for m in (a.metro or hl.known_metros()):
+            _, out = hl.paths(m)
+            if out.is_file():
+                print(ch.format_report(m, ch.diff_against(out, a.ref, a.threshold)) + "\n")
+        return 0
     if a.cmd == "state":
         from . import state_data as sd
         states = [x.upper() for x in (a.state or [])]
