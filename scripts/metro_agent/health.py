@@ -221,6 +221,10 @@ def fix(reports: List[Dict[str, Any]], api_base: str, log: Callable[[str], None]
         if r["verdict"] == HEALTHY or not (r.get("retryable") or (r.get("coverage") or {}).get("failed")):
             continue
         _, out = paths(r["metro"])
+        failed = (r.get("coverage") or {}).get("failed")
+        if failed:
+            log(f"\n{r['metro']}: {len(failed)} places failed to score at all ({', '.join(failed[:6])}). Retries of single pillars "
+                f"can't fix those; rescore them with: PYTHONPATH=. python -m scripts.metro_agent run --metro {r['metro']}")
         log(f"\n--- fixing {r['metro']} (resolve) ---")
         try:
             resolve_fn(out, api_base, max_rounds=rounds)
