@@ -1753,10 +1753,10 @@ export default function CatalogPageClient({
         <div className="flex items-center gap-2 border-b border-[var(--hf-border)] bg-[var(--hf-hover-bg)] px-4 py-2 text-xs text-[var(--hf-text-secondary)]">
           <span>
             {dealbreakerZeroSurvivors
-              ? 'No places clear all your must-haves — showing closest matches anyway'
+              ? 'No places clear all your filters — showing closest matches anyway'
               : dealbreakerExcludedCount > 0
-                ? `${gatedPlaces.length} match all your must-haves · ${dealbreakerExcludedCount} excluded`
-                : `All ${gatedPlaces.length} shown clear your must-haves`}
+                ? `${gatedPlaces.length} match all your filters · ${dealbreakerExcludedCount} excluded`
+                : `All ${gatedPlaces.length} shown clear your filters`}
           </span>
           {dealbreakerExcludedCount > 0 && (
             <button
@@ -1784,7 +1784,7 @@ export default function CatalogPageClient({
               ),
               ...metroFilterExcludedReasons,
             } : undefined}
-            dividerLabel="Outside your must-haves"
+            dividerLabel="Outside your filters"
             priorities={effectivePriorities}
             indexMode={indexMode}
             onTwinRow={onTwinRow}
