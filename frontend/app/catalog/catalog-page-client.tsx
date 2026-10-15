@@ -37,7 +37,7 @@ import {
   type CatalogMapPlace,
   type CatalogMapPlaceWithMetro,
 } from '@/lib/catalogMapTypes'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker, withCommuteTimePillar, withSocialConnectionPillar, estimatedDriveMinutes } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar, estimatedDriveMinutes } from '@/lib/reweight'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { fetchProfile, type CommuteMode } from '@/lib/userProfile'
 import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
@@ -765,28 +765,28 @@ export default function CatalogPageClient({
       const score = typeof cs?.score === 'number' ? cs.score : null
       return passesCommunitySafetyDealbreaker(score)
     },
-    neighborhood_amenities: (p) => {
-      const na = (p.score.livability_pillars as any)?.neighborhood_amenities
-      const score = na?.score
-      return passesNeighborhoodAmenitiesDealbreaker(typeof score === 'number' ? score : null)
-    },
     healthcare_access: (p) => {
-      const score = (p.score.livability_pillars as any)?.healthcare_access?.score
-      return passesHealthcareAccessDealbreaker(typeof score === 'number' ? score : null)
+      const ha = (p.score.livability_pillars as any)?.healthcare_access
+      const nearestHospitalKm = Number(ha?.summary?.nearest_hospital_km ?? 0) || null
+      const areaType = ha?.area_classification?.area_type ?? null
+      return passesHealthcareAccessDealbreaker(nearestHospitalKm, areaType)
     },
-    active_outdoors: (p) => {
-      const score = (p.score.livability_pillars as any)?.active_outdoors?.score
-      return passesActiveOutdoorsDealbreaker(typeof score === 'number' ? score : null)
-    },
-    climate_risk: (p) => {
-      const score = (p.score.livability_pillars as any)?.climate_risk?.score
-      return passesClimateRiskDealbreaker(typeof score === 'number' ? score : null)
-    },
-    social_fabric: (p) => {
-      const score = (p.score.livability_pillars as any)?.social_fabric?.score
-      return passesSocialFabricDealbreaker(typeof score === 'number' ? score : null)
+    public_transit_access: (p) => {
+      const ts = (p.score.livability_pillars as any)?.public_transit_access?.summary
+      if (!ts) return true
+      const rail = (Number(ts.heavy_rail_stops) || 0) + (Number(ts.light_rail_stops) || 0)
+      const bus = typeof ts.bus_stops === 'number' ? ts.bus_stops : null
+      return passesPublicTransitDealbreaker(rail, bus)
     },
   }
+  const dealbreakerFailCounts = useMemo(() => {
+    const out: Partial<Record<PillarKey, number>> = {}
+    for (const k of Object.keys(DEALBREAKER_CHECKS) as PillarKey[]) {
+      out[k] = filteredPlaces.filter((p) => !DEALBREAKER_CHECKS[k]!(p)).length
+    }
+    return out
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredPlaces, householdIncome])
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])
   const dealbreakerActive = activeDealbreakerKeys.length > 0
   // Places blocked by regular filters — always shown in "Show excluded"
@@ -1211,7 +1211,7 @@ export default function CatalogPageClient({
           // Dealbreakers: reset the ones the quiz owns, leave any others the user set by hand
           setDealbreakers(prev => {
             const next = { ...prev }
-            for (const k of ['air_travel_access', 'quality_education', 'community_safety', 'neighborhood_amenities', 'active_outdoors'] as const) {
+            for (const k of ['air_travel_access', 'quality_education', 'community_safety'] as const) {
               next[k] = !!payload.dealbreakers?.[k]
             }
             return next
@@ -1953,6 +1953,7 @@ export default function CatalogPageClient({
         hasPeople={people.length > 0}
         dealbreakers={dealbreakers}
         onDealbreakerToggle={toggleDealbreaker}
+        dealbreakerFailCounts={dealbreakerFailCounts}
       />
 
       <PillarTwinDrawer

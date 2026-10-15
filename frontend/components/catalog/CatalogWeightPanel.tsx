@@ -50,10 +50,12 @@ interface CatalogWeightPanelProps {
   /** Deal-breaker pillars (currently housing_value only). Independent of importance weight. */
   dealbreakers?: Partial<Record<PillarKey, boolean>>
   onDealbreakerToggle?: (key: PillarKey) => void
+  /** How many places in the current results each must-have would remove on its own. */
+  dealbreakerFailCounts?: Partial<Record<PillarKey, number>>
 }
 
 /** Pillars with a deal-breaker gate wired up. Independent axis from importance — see housing_value MVP. */
-const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value', 'air_travel_access', 'quality_education', 'community_safety', 'neighborhood_amenities', 'healthcare_access', 'active_outdoors', 'climate_risk', 'social_fabric']
+const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value', 'quality_education', 'community_safety', 'healthcare_access', 'air_travel_access', 'public_transit_access']
 
 /**
  * Human-readable statement of what "fails" means per dealbreaker pillar — mirrors the exact
@@ -61,18 +63,15 @@ const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value', 'air_travel_access', 
  * threshold changes.
  */
 const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
-  housing_value: 'Exclude places where home price exceeds 3x your household income',
-  air_travel_access: 'Exclude places more than 60 min drive from an airport',
-  quality_education: 'Exclude places with school ratings below 3-star equivalent',
-  community_safety: "Exclude places in the highest-crime quarter nationally (more crime than where 75% of Americans live)",
-  neighborhood_amenities: 'Exclude places with poor access to daily amenities — combines street-level walkability and town center vibrancy',
-  healthcare_access: 'Exclude places with below-average access to hospitals and clinics',
-  active_outdoors: 'Exclude places with limited trails, parks, or outdoor recreation',
-  climate_risk: 'Exclude places with below-average climate safety (flood, heat, fire exposure)',
-  social_fabric: 'Exclude places with weak community cohesion scores',
+  housing_value: 'Home price over 3x your household income',
+  quality_education: 'School ratings below 3-star equivalent',
+  community_safety: 'In the highest-crime quarter nationally',
+  healthcare_access: 'More than 30 min drive from a hospital',
+  air_travel_access: 'More than 60 min drive from an airport',
+  public_transit_access: 'No rail and very few bus stops',
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, dealbreakers, onDealbreakerToggle, dealbreakerFailCounts }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
@@ -125,6 +124,39 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+          <details className="mb-3 rounded-xl border border-[var(--hf-border)]" open>
+            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-bold text-[var(--hf-text-primary)]">
+              Must-haves
+            </summary>
+            <div className="space-y-2 border-t border-[var(--hf-border)] px-3 pb-3 pt-2">
+              <p className="text-[0.7rem] leading-snug text-[var(--hf-text-secondary)]">
+                Hide places that match any box you check. These only filter; they never change scores or ranking.
+              </p>
+              {DEALBREAKER_PILLARS.map((key) => {
+                const fails = dealbreakerFailCounts?.[key]
+                return (
+                  <label key={key} className="flex items-start gap-2 text-xs font-medium text-[var(--hf-text-primary)]">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={Boolean(dealbreakers?.[key])}
+                      onChange={() => onDealbreakerToggle?.(key)}
+                    />
+                    <span>
+                      {PILLAR_META[key].icon} {DEALBREAKER_DESCRIPTIONS[key]}
+                      {key === 'housing_value' && !householdIncome && (
+                        <span className="block font-normal text-[var(--hf-text-secondary)]">Add your household income in your profile to use this.</span>
+                      )}
+                      {typeof fails === 'number' && fails > 0 && (key !== 'housing_value' || householdIncome) && (
+                        <span className="block font-normal text-[var(--hf-text-secondary)]">Removes {fails} place{fails === 1 ? '' : 's'}</span>
+                      )}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+          </details>
+
           {GROUPS.map((g) => (
             <details key={g.title} className="mb-3 rounded-xl border border-[var(--hf-border)]" open>
               <summary className="cursor-pointer select-none px-3 py-2 text-sm font-bold text-[var(--hf-text-primary)]">
@@ -161,22 +193,6 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           </button>
                         ))}
                       </div>
-                      {DEALBREAKER_PILLARS.includes(key) && (
-                        <label className="mt-2 flex items-start gap-2 text-xs font-medium text-[var(--hf-text-primary)]">
-                          <input
-                            type="checkbox"
-                            className="mt-0.5"
-                            checked={Boolean(dealbreakers?.[key])}
-                            onChange={() => onDealbreakerToggle?.(key)}
-                          />
-                          <span>
-                            🚫 Deal breaker
-                            <span className="block font-normal text-[var(--hf-text-secondary)]">
-                              {DEALBREAKER_DESCRIPTIONS[key]}
-                            </span>
-                          </span>
-                        </label>
-                      )}
                     </div>
                   )
                 })}

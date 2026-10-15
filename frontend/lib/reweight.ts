@@ -581,69 +581,38 @@ export function passesCommunitySafetyDealbreaker(score: number | null | undefine
 }
 
 /**
- * Deal-breaker gate for neighborhood_amenities: business count within walking distance must
- * clear the "adequate" tier from pillars/neighborhood_amenities.py's _score_density —
- * 15 businesses (suburban baseline), scaled +20% for urban_core (18) and -30% for
- * exurban/rural (11). Anchors to that pillar's own research-backed floor, not an invented
- * count.
+ * Deal-breaker gate for healthcare_access: estimated drive time to the nearest hospital must
+ * clear 30 minutes. ED-closure studies (Shen & Hsia, NBER w16690 / w22861) find heart-attack
+ * and injury mortality rises when closures add 30+ minutes of driving; they measure the
+ * increase from losing a nearby facility, not living far from one, so 30 is a research-grouped
+ * cutoff, not a proven tipping point. Same distance-to-minutes conversion as air travel.
  */
-const AMENITIES_SCORE_THRESHOLD = 30
+export const HEALTHCARE_DEALBREAKER_MINUTES = 30
 
-export function passesNeighborhoodAmenitiesDealbreaker(
-  score: number | null | undefined
+export function passesHealthcareAccessDealbreaker(
+  nearestHospitalKm: number | null | undefined,
+  areaType: string | null | undefined
 ): boolean {
-  if (score === null || score === undefined) return true
-  return score >= AMENITIES_SCORE_THRESHOLD
+  if (!nearestHospitalKm || nearestHospitalKm <= 0) return true
+  const kmh = AIRPORT_DRIVE_KMH[(areaType || '').toLowerCase()] ?? 50.0
+  const minutes = (nearestHospitalKm * ROAD_CIRCUITY) / kmh * 60.0
+  return minutes <= HEALTHCARE_DEALBREAKER_MINUTES
 }
 
 /**
- * Deal-breaker gate for public_transit_access: mean commute time must clear 45 minutes,
- * applied uniformly regardless of area type. Unlike neighborhood_amenities (where walkable
- * business density is physically impossible to replicate at rural scale), commute tolerance
- * is a property of the person, not the area -- Marchetti's constant (transportation/urban
- * planning research) finds humans budget ~30min one-way for travel across history and
- * geography regardless of context, so the dealbreaker shouldn't grade that tolerance on an
- * area-type curve just because the pillar's own *score* does for relative-grading reasons.
- * 45 (not the research-ideal 30) accounts for mean_commute_minutes being a Census-style
- * area aggregate, not a measurement of any specific person's actual commute to their actual
- * job -- padding past the strict ideal absorbs that measurement uncertainty. A flat 30 would
- * exclude 75% of NYC and 50% of LA; 45 gives 11%/1%, in line with the other dealbreakers.
+ * Deal-breaker gate for public_transit_access: fails when the area has no rail stops and
+ * only a handful of bus stops. Town-level counts, not distance from a pin (the catalog
+ * scores an arbitrary point per town). The bus-stop cutoff is a judgment call, picked from
+ * the catalog distribution (about 8% of current places fail), not a research-backed number.
  */
-const PUBLIC_TRANSIT_DEALBREAKER_MINUTES = 45
+export const PUBLIC_TRANSIT_DEALBREAKER_MAX_BUS_STOPS = 10
 
 export function passesPublicTransitDealbreaker(
-  meanCommuteMinutes: number | null | undefined
+  railStops: number | null | undefined,
+  busStops: number | null | undefined
 ): boolean {
-  if (meanCommuteMinutes === null || meanCommuteMinutes === undefined || meanCommuteMinutes <= 0) return true
-  return meanCommuteMinutes <= PUBLIC_TRANSIT_DEALBREAKER_MINUTES
-}
-
-// z=0 midpoint — only truly underserved areas (bottom ~10% of catalog) fail
-export const HEALTHCARE_ACCESS_DEALBREAKER_SCORE = 50
-export function passesHealthcareAccessDealbreaker(score: number | null | undefined): boolean {
-  if (score === null || score === undefined) return true
-  return score >= HEALTHCARE_ACCESS_DEALBREAKER_SCORE
-}
-
-// SCORE_BANDS "Fair" floor — meaningful minimum for outdoor recreation
-export const ACTIVE_OUTDOORS_DEALBREAKER_SCORE = SCORE_BANDS.find((b) => b.label === 'Fair')?.min ?? 45
-export function passesActiveOutdoorsDealbreaker(score: number | null | undefined): boolean {
-  if (score === null || score === undefined) return true
-  return score >= ACTIVE_OUTDOORS_DEALBREAKER_SCORE
-}
-
-// Below catalog p25 — flags places with meaningfully elevated climate exposure
-export const CLIMATE_RISK_DEALBREAKER_SCORE = 60
-export function passesClimateRiskDealbreaker(score: number | null | undefined): boolean {
-  if (score === null || score === undefined) return true
-  return score >= CLIMATE_RISK_DEALBREAKER_SCORE
-}
-
-// SCORE_BANDS "Fair" floor — catches the bottom quintile of social cohesion
-export const SOCIAL_FABRIC_DEALBREAKER_SCORE = SCORE_BANDS.find((b) => b.label === 'Fair')?.min ?? 45
-export function passesSocialFabricDealbreaker(score: number | null | undefined): boolean {
-  if (score === null || score === undefined) return true
-  return score >= SOCIAL_FABRIC_DEALBREAKER_SCORE
+  if (railStops === null || railStops === undefined || busStops === null || busStops === undefined) return true
+  return railStops > 0 || busStops > PUBLIC_TRANSIT_DEALBREAKER_MAX_BUS_STOPS
 }
 
 /** Step function on price-to-income ratio (0–50 pts). */
