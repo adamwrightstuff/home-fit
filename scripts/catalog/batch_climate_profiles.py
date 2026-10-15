@@ -20,12 +20,17 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-CATALOG_FILES = [
-    ("data/sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl", "sf_metro"),
-    ("data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl", "nyc_metro"),
-    ("data/la_metro_place_catalog_scores_merged.composites_recomputed.jsonl", "la_metro"),
-    ("data/vacation_destinations_scores.jsonl", "vacation"),
-]
+def _catalog_files() -> list[tuple[str, str]]:
+    """Every metro catalog in data/ (so new metros are included automatically), plus vacation."""
+    root = Path(__file__).resolve().parents[2]
+    out = [
+        (str(p.relative_to(root)), p.name.split("_metro_")[0] + "_metro")
+        for p in sorted((root / "data").glob("*_metro_place_catalog_scores_merged.composites_recomputed.jsonl"))
+    ]
+    return out + [("data/vacation_destinations_scores.jsonl", "vacation")]
+
+
+CATALOG_FILES = _catalog_files()
 
 OUTPUT_PATH = Path("data/catalog_climate_profiles.jsonl")
 MAX_WORKERS = 1

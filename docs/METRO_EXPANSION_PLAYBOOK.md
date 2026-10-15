@@ -127,7 +127,7 @@ The metro list lives in one registry; everything else derives from it.
 1. `frontend/lib/catalogMetros.ts` — add the slug to `CATALOG_METROS` and an entry in `CATALOG_METRO_META` (short label, picker name, dot color, map bounds). The route, filter chips, map, dots, work-hub picker and `WorkZoneMetro` type all follow.
 2. `frontend/next.config.js` — add `data/<slug>_metro_place_catalog_scores_merged.composites_recomputed.jsonl` to `outputFileTracingIncludes` so Vercel bundles it. (The API route finds the file by that naming convention, so name the output file exactly that.)
 3. `frontend/lib/catalogMapTypes.ts` — `inferCatalogMetro` is only a fallback for untagged rows, but add the metro's states (and county split if a state is shared, like CA and NJ) so it never defaults to `nyc`.
-4. Optional: `frontend/lib/workZones.json` hubs (see `docs/WORK_COMMUTE_PLAYBOOK.md`); `catalog_climate_profiles.jsonl` rows with `source: "<slug>_metro"` via `scripts/catalog/batch_climate_profiles.py`.
+4. Required: climate profiles. Run `PYTHONPATH=. python3 scripts/catalog/batch_climate_profiles.py` (picks up every metro catalog automatically, resumable, ~3 s per place) and commit `data/catalog_climate_profiles.jsonl`. Optional: `frontend/lib/workZones.json` hubs (see `docs/WORK_COMMUTE_PLAYBOOK.md`).
 5. Optional server speedups, not required for correctness: `main.py` `_load_catalog_index` (catalog fast path; SF and Seattle are not in it either), `agent_recommend.py` (`HOMEFIT_AGENT_CATALOG_JSONL`, NYC by default) and `catalog_contribution.py` (NYC CSV only, off by default).
 
 Check: `cd frontend && npx tsc --noEmit`.

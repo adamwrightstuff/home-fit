@@ -48,7 +48,8 @@ For per-pillar detail on one file: `python scripts/catalog/check_catalog_health.
 Only a HEALTHY or ATTENTION metro. Add just that metro's file, never `git add .`:
 
 ```
-git add data/<metro>_metro_place_catalog_scores_merged.composites_recomputed.jsonl
+PYTHONPATH=. python3 scripts/catalog/batch_climate_profiles.py   # climate for the new places (resumable, ~3 s each)
+git add data/<metro>_metro_place_catalog_scores_merged.composites_recomputed.jsonl data/catalog_climate_profiles.jsonl
 git commit -m "<Metro> metro scores" && git push origin main
 ```
 
