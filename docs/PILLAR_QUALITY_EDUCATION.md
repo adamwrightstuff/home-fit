@@ -110,11 +110,20 @@ like NCES LEA IDs (state FIPS plus 5 digits), which would let the polygon IDs be
 containing the point, fetch their schools by `districtID`, apply the area radius only inside
 very large districts. That removes nearest-office, name-match and modal-district guesses.
 
-## Public vs charter split (not built)
-`rated_schools` carries `is_charter_school`, so a public-only score and a charter-only score
-can be derived offline for every re-scored place. The combined total stays the headline score.
-Open design point: independent charters admit by lottery, so whether they belong in a town's
-score at all is a product decision.
+## Public vs charter split
+`breakdown.split` = `{public: {score, n_rated, confidence}, charter: {...}}`, computed from every
+rated school with the same formula as the total (`pillars.schools.split_scores`, which shares
+`score_from_ratings` with the live scorer). The combined score is unchanged and stays the
+headline. `confidence`: `ok` (3+ rated), `thin` (1-2), `none` (0, score null).
+- Live scorer writes it for new scores. For the catalog run
+  `PYTHONPATH=. python3 scripts/catalog/add_education_split.py` (offline, also re-derives every
+  stored combined score from `rated_schools` and reports mismatches; 0 of 574 differ).
+- Explorer: the existing school-type filter (`any` / `public_only` / `charter`) in
+  `frontend/lib/explorerScoreAdjust.ts` now reads the split; payloads without it fall back to
+  the old top-3-per-level approximation.
+- "Public" means schools without the charter flag. Independent charters are public schools in law
+  but admit by lottery, so they are separated here. 91 of 574 places have a charter in their set.
+  Re-run `add_education_split.py` after any education rescore.
 
 ## Elite-district ceiling
 About 23 catalog places score exactly 95 (Chappaqua, Darien, Short Hills, Westport, Great Neck,
@@ -132,10 +141,8 @@ rating. Elite districts do not separate from each other.
 ## Backlog (as of 2026-10-14, after commit 0d4ce7c)
 Priority order, none blocking the current catalog.
 
-1. **Public vs charter split.** Original ask: the headline score counts both, a filter separates them.
-   Derive `public_only` and `charter_only` scores offline from `breakdown.rated_schools`
-   (same formula), store them next to the combined score, mark low confidence when a side has
-   fewer than 3 rated schools, then add the frontend filter. No API calls needed.
+1. ~~Public vs charter split~~ built 2026-10-14 (see section above). Left: show the `thin`
+   confidence in the Explorer UI when a filtered side has fewer than 3 rated schools.
 2. **Hamlet coordinates.** Cold Spring Harbor, Mamaroneck, Woodmere, Valley Stream and Los Altos
    Hills have catalog coordinates inside the neighboring district's polygon, so the Census lookup
    would pick the wrong district. Fix: use the Census place (village/CDP) outline and take the

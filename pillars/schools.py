@@ -8,6 +8,56 @@ from typing import Dict, Tuple, Optional, List
 from data_sources import schools_api
 
 
+import math as _math
+
+MIN_RATED_FOR_SPLIT = 3  # a public-only or charter-only view with fewer rated schools is flagged thin
+
+
+def score_from_ratings(ratings: List[float], early_ed_bonus: float = 0.0) -> Dict[str, float]:
+    """
+    The education formula on a list of school ratings (0-100): mean of the lower two thirds, plus
+    an access bonus (+2 per rating >= 85 in the upper third, capped at +5), plus the early-ed bonus.
+    Used by the live scorer and by the public/charter split so both always agree.
+    """
+    sorted_ratings = sorted(ratings)
+    n_base = max(1, _math.ceil(len(sorted_ratings) * 2 / 3))
+    base_ratings = sorted_ratings[:n_base]
+    top_ratings = sorted_ratings[n_base:]
+    base_avg = sum(base_ratings) / len(base_ratings)
+    elite_count = sum(1 for r in top_ratings if r >= 85)
+    access_bonus = min(5.0, elite_count * 2.0)
+    return {
+        "base_avg_rating": base_avg,
+        "access_bonus": access_bonus,
+        "elite_count": elite_count,
+        "n_base": n_base,
+        "score": min(100.0, base_avg + access_bonus + early_ed_bonus),
+    }
+
+
+def split_scores(rated_schools: List[Dict], early_ed_bonus: float = 0.0) -> Dict[str, Dict]:
+    """
+    Public-only and charter-only scores from the stored rated schools (same formula as the total).
+    'public' = schools without the charter flag; independent charters are public schools in law
+    but are separated here because they admit by lottery rather than by address.
+    confidence: 'ok' (>= 3 rated), 'thin' (1-2), 'none' (0, score is None).
+    """
+    out: Dict[str, Dict] = {}
+    for key, want_charter in (("public", False), ("charter", True)):
+        ratings = [float(s["rating"]) for s in rated_schools
+                   if bool(s.get("is_charter_school")) == want_charter and s.get("rating") is not None]
+        if not ratings:
+            out[key] = {"score": None, "n_rated": 0, "confidence": "none"}
+            continue
+        r = score_from_ratings(ratings, early_ed_bonus)
+        out[key] = {
+            "score": round(r["score"], 2),
+            "n_rated": len(ratings),
+            "confidence": "ok" if len(ratings) >= MIN_RATED_FOR_SPLIT else "thin",
+        }
+    return out
+
+
 def get_school_data(
     zip_code: Optional[str] = None,
     state: Optional[str] = None,
@@ -218,18 +268,14 @@ def get_school_data(
 
     # Lower-two-thirds average: removes selective/screened outliers from the base score
     # so families see realistic typical school quality, not inflated by a few elite schools
-    import math as _math
-    sorted_ratings = sorted(all_ratings)
-    n_base = max(1, _math.ceil(len(sorted_ratings) * 2 / 3))
-    base_ratings = sorted_ratings[:n_base]
-    top_ratings = sorted_ratings[n_base:]
-    base_avg_rating = sum(base_ratings) / len(base_ratings)
-    avg_rating = base_avg_rating
-
     # Access bonus (0-5 pts): rewards districts with elite selective options available,
     # even though those schools aren't included in the base score
-    elite_count = sum(1 for r in top_ratings if r >= 85)
-    access_bonus = min(5.0, elite_count * 2.0)
+    _r = score_from_ratings(all_ratings)
+    base_avg_rating = _r["base_avg_rating"]
+    avg_rating = base_avg_rating
+    elite_count = _r["elite_count"]
+    access_bonus = _r["access_bonus"]
+    base_ratings = all_ratings[:_r["n_base"]]  # count only, used in the log line below
 
     # Log results
     print(f"\n📚 Schools by Level:")
@@ -305,6 +351,7 @@ def get_school_data(
         "total_schools_rated": len(all_ratings),
         "elite_schools_count": elite_count,
         "rated_schools": rated_schools,
+        "split": split_scores(rated_schools, early_ed_bonus),
     }
 
     return round(total_score, 2), schools_by_level, breakdown

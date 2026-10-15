@@ -19,7 +19,20 @@ export function applyExplorerScoreAdjustments(score: ScoreResponse, f: ScoreAffe
   // Recompute quality_education score based on school type preference.
   if (f.filterSchoolType !== 'any') {
     const edu = (out.livability_pillars as any)?.quality_education
-    if (edu?.by_level) {
+    // Preferred: the precomputed split (same formula as the total, from every rated school).
+    const side = edu?.breakdown?.split?.[f.filterSchoolType === 'public_only' ? 'public' : 'charter']
+    if (side) {
+      if (side.score == null) {
+        out = withPillar(out, 'quality_education', { ...edu, score: null, status: 'no_data' })
+      } else {
+        out = withPillar(out, 'quality_education', {
+          ...edu,
+          score: side.score,
+          breakdown: { ...edu.breakdown, split_view: f.filterSchoolType, split_n_rated: side.n_rated, split_confidence: side.confidence },
+        })
+      }
+    } else if (edu?.by_level) {
+      // Fallback for payloads without a split: top-3-per-level approximation.
       const allSchools: { rating: number; is_charter_school?: boolean | null }[] = Object.values(edu.by_level).flat() as any
       const filtered = allSchools.filter((s) =>
         f.filterSchoolType === 'public_only' ? s.is_charter_school === false : s.is_charter_school === true
