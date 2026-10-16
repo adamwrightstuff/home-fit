@@ -20,7 +20,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 sys.path.insert(0, REPO)
 from pillars.schools import score_from_ratings, split_scores  # noqa: E402
 
-METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago")
+METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia")
 
 
 def main() -> None:

@@ -23,7 +23,7 @@ from data_sources import school_snapshot  # noqa: E402
 from data_sources.schools_api import normalize_state  # noqa: E402
 from pillars.schools import get_school_data, summary_extras  # noqa: E402
 
-METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago")
+METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia")
 VERSION = "zoned_v1_snapshot"
 
 

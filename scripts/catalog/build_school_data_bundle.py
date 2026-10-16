@@ -27,7 +27,7 @@ from data_sources import school_zones as sz  # noqa: E402
 
 OUT = os.path.join(REPO, "data", "school_geo")
 SIMPLIFY = 0.0001   # degrees, about 10 m
-STATES = ("06", "09", "17", "18", "34", "36", "42", "48", "53")
+STATES = ("06", "09", "10", "17", "18", "24", "34", "36", "42", "48", "53")
 
 
 def _write(name: str, frame: "gpd.GeoDataFrame") -> int:

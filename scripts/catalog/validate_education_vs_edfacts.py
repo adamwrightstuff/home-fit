@@ -30,7 +30,7 @@ from pillars.schools import school_rating  # noqa: E402
 
 API = "https://educationdata.urban.org/api/v1/schools/edfacts/assessments/{year}/{grade}/"
 GRADE = {"elementary": "grade-4", "middle": "grade-8", "high": "grade-9"}
-METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago")
+METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia")
 BIG = {"Chicago": ("IL", "1709930"), "Austin": ("TX", "4808940"), "SFUSD": ("CA", "0634410"), "LAUSD": ("CA", "0622710")}
 
 
