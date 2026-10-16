@@ -40,6 +40,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     ap.add_argument("--metro", choices=METROS, action="append")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--no-osm", action="store_true",
+                    help="never query OpenStreetMap: places without a stored early-education bonus are scored without it\n"
+                         "and flagged early_ed_missing so a later run fills it in (use when Overpass is down)")
     args = ap.parse_args()
     for m in args.metro or METROS:
         path = os.path.join(REPO, "data", f"{m}_metro_place_catalog_scores_merged.composites_recomputed.jsonl")
@@ -57,11 +60,18 @@ def main() -> int:
                 skipped += 1
                 out.append(line.rstrip("\n"))
                 continue
-            early = (p.get("breakdown") or {}).get("early_ed_bonus")
+            old_bd = p.get("breakdown") or {}
+            early = old_bd.get("early_ed_bonus")
+            if old_bd.get("early_ed_missing") or not p.get("score"):
+                early = None                      # never really looked up (schools were off, or OSM was down): try again
+            kwargs = {}
+            if early is None and args.no_osm:
+                kwargs = {"early_ed_bonus_override": 0.0, "early_ed_unknown": True}
+            elif early is not None:
+                kwargs = {"early_ed_bonus_override": float(early)}
             score, by_level, bd = get_school_data(
                 (sc.get("location_info") or {}).get("zip"), st, (sc.get("location_info") or {}).get("city"),
-                lat, lon, _area_type(sc), cat.get("name"),
-                early_ed_bonus_override=float(early) if early is not None else None)
+                lat, lon, _area_type(sc), cat.get("name"), **kwargs)
             if bd.get("model") != "zoned_v1":
                 skipped += 1
                 out.append(line.rstrip("\n"))
@@ -75,6 +85,12 @@ def main() -> int:
                             "excellent_schools_count": bd.get("excellent_schools_count", 0),
                             "early_ed_bonus": round(bd.get("early_ed_bonus", 0), 2), **summary_extras(bd)}
             p["_rescore_version"] = VERSION
+            # a place first scored with schools off carries confidence 0 / failed status: it is a real score now
+            if not (p.get("confidence") or 0) >= 1 or p.get("status") != "success":
+                p["confidence"], p["status"], p["error"] = 85, "success", None
+                p["data_quality"] = {"fallback_used": False, "reason": "School data available", "error": None,
+                                     "quality_tier": "fair", "fallback_reason": None, "degraded": False,
+                                     "degraded_reasons": [], "data_warnings": []}
             changed += 1
             out.append(json.dumps(row, ensure_ascii=False))
         print(f"{m}: rescored {changed}, skipped {skipped}")

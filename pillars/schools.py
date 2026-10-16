@@ -58,10 +58,12 @@ def split_scores(rated_schools: List[Dict], early_ed_bonus: float = 0.0) -> Dict
     return out
 
 
-def _early_ed_bonus(lat: Optional[float], lon: Optional[float]) -> float:
-    """Early-education bonus (0-3): preschools/kindergartens within 2 km (OSM), x0.7 if the nearest is over 1 km."""
+def _early_ed_bonus(lat: Optional[float], lon: Optional[float]) -> Optional[float]:
+    """Early-education bonus (0-3): preschools/kindergartens within 2 km (OSM), x0.7 if the nearest is over 1 km.
+    None when OpenStreetMap could not be queried (a true 0 means it was queried and nothing was found)."""
     # Early education bonus: preschool/kindergarten proximity matters for families with young kids
     early_ed_bonus = 0.0
+    queried = False
 
     if lat is not None and lon is not None:
         try:
@@ -85,6 +87,7 @@ def _early_ed_bonus(lat: Optional[float], lon: Optional[float]) -> float:
 
             resp = _retry_overpass(_do_request, query_type="schools")
             if resp and resp.status_code == 200:
+                queried = True
                 elements = resp.json().get("elements", [])
                 early_ed_count = len([e for e in elements if e.get("type") in ("node", "way", "relation")])
                 if early_ed_count > 0:
@@ -104,6 +107,8 @@ def _early_ed_bonus(lat: Optional[float], lon: Optional[float]) -> float:
                     print(f"   🎓 Early education bonus: +{early_ed_bonus:.1f} ({early_ed_count} facilities)")
         except Exception as e:
             print(f"   ⚠️  Early education query failed: {e}")
+    if lat is not None and lon is not None and not queried:
+        return None
     return early_ed_bonus
 
 
@@ -341,7 +346,7 @@ def _get_school_data_legacy(
     print(
         f"\n✅ Lower-2/3 avg: {base_avg_rating:.2f} (base from {len(base_ratings)}/{len(all_ratings)} schools, access_bonus=+{access_bonus:.1f})")
     
-    early_ed_bonus = _early_ed_bonus(lat, lon)
+    early_ed_bonus = _early_ed_bonus(lat, lon) or 0.0
 
     # Apply bonuses (capped at 100)
     total_score = min(100.0, avg_rating + access_bonus + early_ed_bonus)
@@ -520,6 +525,8 @@ def summary_extras(breakdown: Dict) -> Dict[str, Optional[str]]:
         "level_sources": "; ".join(srcs),
         "zone_map_years": ", ".join(years) if years else "No zone map used",
         "levels_scored": f"{scored} of {len(levels)} levels{note}" + (" (thin)" if scored < min(2, counted) else ""),
+        **({"early_ed_note": "Early-education bonus not available yet (map data was unreachable)"}
+           if breakdown.get("early_ed_missing") else {}),
     }
 
 
@@ -532,6 +539,7 @@ def get_school_data(
     area_type: Optional[str] = None,
     place_name: Optional[str] = None,
     early_ed_bonus_override: Optional[float] = None,
+    early_ed_unknown: bool = False,
 ) -> Tuple[float, Dict[str, List[Dict]], Dict]:
     """
     Education score (0-100), schools by level, breakdown. `early_ed_bonus_override` reuses a stored early-education
@@ -547,7 +555,13 @@ def get_school_data(
     from data_sources.school_zones import zoned_schools
     zoned = zoned_schools(lat, lon)
     levels = build_levels(cands["pool"], zoned, cands["radius_miles"], cands.get("charters"))
-    early = early_ed_bonus_override if early_ed_bonus_override is not None else _early_ed_bonus(lat, lon)
+    early_missing = early_ed_unknown
+    if early_ed_bonus_override is not None:
+        early = early_ed_bonus_override
+    else:
+        early = _early_ed_bonus(lat, lon)
+        if early is None:           # OpenStreetMap unreachable: score without it and say so
+            early, early_missing = 0.0, True
     total = headline_from_levels(levels, early)
     if total is None:
         print("⚠️  No rated schools for any level")
@@ -581,6 +595,7 @@ def get_school_data(
         "base_avg_rating": round(base_avg, 2),
         "access_bonus": 0.0,
         "early_ed_bonus": round(early, 2),
+        "early_ed_missing": early_missing,
         "total_schools_rated": len(rated_schools),
         "elite_schools_count": sum(1 for e in rated_schools if (e["rating"] or 0) >= 85),
         "excellent_schools_count": sum(1 for e in rated_schools if (e["rating"] or 0) >= 85),
