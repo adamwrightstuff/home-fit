@@ -52,8 +52,8 @@ interface CatalogWeightPanelProps {
   onFilterNbTypesChange?: (v: string[]) => void
   filterAoTypes?: string[]
   onFilterAoTypesChange?: (v: string[]) => void
-  filterSchoolType?: 'any' | 'public_only' | 'charter'
-  onFilterSchoolTypeChange?: (v: 'any' | 'public_only' | 'charter') => void
+  filterSchoolType?: 'any' | 'public_only' | 'charter' | 'both'
+  onFilterSchoolTypeChange?: (v: 'any' | 'public_only' | 'charter' | 'both') => void
 }
 
 /** Pillars with a deal-breaker gate wired up. Independent axis from importance — see housing_value MVP. */
@@ -70,12 +70,25 @@ const AO_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'waterfront', label: 'Waterfront' },
 ]
 
-// "Public" is the score's own basis (assigned or nearest district schools); "Charter" scores the nearby charters.
-// The saved value 'public_only' (older sessions) behaves the same as 'any', so only two options are offered.
-const SCHOOL_TYPE_OPTIONS: { value: 'any' | 'public_only' | 'charter'; label: string }[] = [
-  { value: 'any', label: 'Public' },
+// Multi-select. "Public" is the score's own basis (assigned or nearest district schools); "Charter" scores the nearby
+// charters; both selected averages the two (only when 3+ charters are rated nearby). The stored value stays one string:
+// 'any' = public, 'charter' = charter, 'both' = both ('public_only' from older sessions behaves like 'any').
+const SCHOOL_TYPE_OPTIONS: { value: 'public' | 'charter'; label: string }[] = [
+  { value: 'public', label: 'Public' },
   { value: 'charter', label: 'Charter' },
 ]
+
+function schoolTypeSelected(v?: string): ('public' | 'charter')[] {
+  if (v === 'charter') return ['charter']
+  if (v === 'both') return ['public', 'charter']
+  return ['public']
+}
+
+function schoolTypeFromSelected(sel: ('public' | 'charter')[]): 'any' | 'charter' | 'both' {
+  const pub = sel.includes('public'), ch = sel.includes('charter')
+  if (pub && ch) return 'both'
+  return ch ? 'charter' : 'any'
+}
 
 function KindChips({ label, options, selected, onToggle }: {
   label: string
@@ -201,8 +214,12 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           onToggle={(v) => onFilterAoTypesChange?.(filterAoTypes.includes(v) ? filterAoTypes.filter((x) => x !== v) : [...filterAoTypes, v])} />
                       )}
                       {key === 'quality_education' && (
-                        <KindChips label="Which schools?" options={SCHOOL_TYPE_OPTIONS} selected={[filterSchoolType === 'charter' ? 'charter' : 'any']}
-                          onToggle={(v) => onFilterSchoolTypeChange?.(v as 'any' | 'public_only' | 'charter')} />
+                        <KindChips label="Which schools? (pick one or both)" options={SCHOOL_TYPE_OPTIONS} selected={schoolTypeSelected(filterSchoolType)}
+                          onToggle={(v) => {
+                            const cur = schoolTypeSelected(filterSchoolType)
+                            const next = cur.includes(v as 'public' | 'charter') ? cur.filter((x) => x !== v) : [...cur, v as 'public' | 'charter']
+                            onFilterSchoolTypeChange?.(schoolTypeFromSelected(next.length ? next : ['public']))
+                          }} />
                       )}
                     </div>
                   )

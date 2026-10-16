@@ -2,7 +2,7 @@ import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 /** Explorer filters that rewrite pillar scores (as opposed to filters that only hide places). */
 export interface ScoreAffectingFilters {
-  filterSchoolType: 'any' | 'public_only' | 'charter'
+  filterSchoolType: 'any' | 'public_only' | 'charter' | 'both'
 }
 
 function withPillar(score: ScoreResponse, key: string, pillar: unknown): ScoreResponse {
@@ -16,34 +16,48 @@ function withPillar(score: ScoreResponse, key: string, pillar: unknown): ScoreRe
 export function applyExplorerScoreAdjustments(score: ScoreResponse, f: ScoreAffectingFilters): ScoreResponse {
   let out = score
 
-  // Recompute quality_education score based on school type preference.
-  if (f.filterSchoolType !== 'any') {
+  // School type: Public (the default) is the score as stored; Charter scores the nearby charters; both averages the two
+  // when at least 3 charters are rated nearby (otherwise Public, with a note). Charters admit by lottery, so "both" is an
+  // optimistic view and is labelled as such.
+  if (f.filterSchoolType === 'public_only' || f.filterSchoolType === 'charter' || f.filterSchoolType === 'both') {
     const edu = (out.livability_pillars as any)?.quality_education
-    // Preferred: the precomputed split (same formula as the total, from every rated school).
-    const side = edu?.breakdown?.split?.[f.filterSchoolType === 'public_only' ? 'public' : 'charter']
-    if (side) {
-      if (side.score == null) {
-        out = withPillar(out, 'quality_education', { ...edu, score: null, status: 'no_data' })
-      } else {
-        out = withPillar(out, 'quality_education', {
-          ...edu,
-          score: side.score,
-          breakdown: { ...edu.breakdown, split_view: f.filterSchoolType, split_n_rated: side.n_rated, split_confidence: side.confidence },
+    const split = edu?.breakdown?.split
+    if (split) {
+      const pub = split.public, ch = split.charter
+      const noData = () => withPillar(out, 'quality_education', { ...edu, score: null, status: 'no_data' })
+      if (f.filterSchoolType === 'charter') {
+        out = ch?.score == null ? noData() : withPillar(out, 'quality_education', {
+          ...edu, score: ch.score,
+          breakdown: { ...edu.breakdown, split_view: 'charter', split_n_rated: ch.n_rated, split_confidence: ch.confidence,
+            split_note: `Nearby charter schools only (${ch.n_rated} rated${ch.confidence === 'thin' ? ', thin' : ''}); charters admit by lottery.` },
         })
+      } else if (f.filterSchoolType === 'both') {
+        if (ch?.score != null && ch.confidence === 'ok' && pub?.score != null) {
+          out = withPillar(out, 'quality_education', {
+            ...edu, score: Math.min(100, (pub.score + ch.score) / 2),
+            breakdown: { ...edu.breakdown, split_view: 'both', split_n_rated: ch.n_rated, split_confidence: ch.confidence,
+              split_note: `Average of assigned public schools and ${ch.n_rated} nearby charters; includes charter options that admit by lottery.` },
+          })
+        } else {
+          out = withPillar(out, 'quality_education', {
+            ...edu,
+            breakdown: { ...edu.breakdown, split_view: 'both_fallback',
+              split_note: 'Fewer than 3 rated charters nearby, so this shows public schools only.' },
+          })
+        }
       }
-    } else if (edu?.by_level) {
+      // 'public_only' (older saved filters) is the stored score: nothing to change
+    } else if (f.filterSchoolType !== 'public_only' && edu?.by_level) {
       // Fallback for payloads without a split: top-3-per-level approximation.
+      const wantCharter = f.filterSchoolType === 'charter'
       const allSchools: { rating: number; is_charter_school?: boolean | null }[] = Object.values(edu.by_level).flat() as any
-      const filtered = allSchools.filter((s) =>
-        f.filterSchoolType === 'public_only' ? s.is_charter_school === false : s.is_charter_school === true
-      )
+      const filtered = allSchools.filter((s) => (wantCharter ? s.is_charter_school === true : s.is_charter_school === false))
       if (filtered.length === 0) {
         out = withPillar(out, 'quality_education', { ...edu, score: null, status: 'no_data' })
       } else {
         const baseAvg = filtered.reduce((sum, s) => sum + (s.rating ?? 0), 0) / filtered.length
         const breakdown = edu.breakdown ?? {}
-        const newScore = Math.min(100, baseAvg + (breakdown.access_bonus ?? 0) + (breakdown.early_ed_bonus ?? 0))
-        out = withPillar(out, 'quality_education', { ...edu, score: newScore, breakdown: { ...breakdown, base_avg_rating: baseAvg } })
+        out = withPillar(out, 'quality_education', { ...edu, score: Math.min(100, baseAvg + (breakdown.access_bonus ?? 0) + (breakdown.early_ed_bonus ?? 0)), breakdown: { ...breakdown, base_avg_rating: baseAvg } })
       }
     }
   }

@@ -240,6 +240,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     topLine: 'Rated school quality and how many schools contribute.',
     metrics: [
       { label: 'Average school rating', path: 'summary.base_avg_rating', format: 'text' },
+      { label: 'School view', path: 'breakdown.split_note', format: 'text' },
       { label: 'Which schools count', path: 'summary.level_sources', format: 'text' },
       { label: 'Levels with a rated school', path: 'summary.levels_scored', format: 'text' },
       { label: 'Attendance-zone map year', path: 'summary.zone_map_years', format: 'text' },

@@ -152,7 +152,7 @@ export default function CatalogPageClient({
       return Array.isArray(f?.filterTenure) ? f.filterTenure : []
     } catch { return [] }
   })
-  const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
+  const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter' | 'both'>('any')
   const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High'>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
