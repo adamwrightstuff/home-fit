@@ -70,9 +70,10 @@ const AO_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'waterfront', label: 'Waterfront' },
 ]
 
+// "Public" is the score's own basis (assigned or nearest district schools); "Charter" scores the nearby charters.
+// The saved value 'public_only' (older sessions) behaves the same as 'any', so only two options are offered.
 const SCHOOL_TYPE_OPTIONS: { value: 'any' | 'public_only' | 'charter'; label: string }[] = [
-  { value: 'any', label: 'Any' },
-  { value: 'public_only', label: 'Public only' },
+  { value: 'any', label: 'Public' },
   { value: 'charter', label: 'Charter' },
 ]
 
@@ -200,7 +201,7 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           onToggle={(v) => onFilterAoTypesChange?.(filterAoTypes.includes(v) ? filterAoTypes.filter((x) => x !== v) : [...filterAoTypes, v])} />
                       )}
                       {key === 'quality_education' && (
-                        <KindChips label="Which schools?" options={SCHOOL_TYPE_OPTIONS} selected={[filterSchoolType]}
+                        <KindChips label="Which schools?" options={SCHOOL_TYPE_OPTIONS} selected={[filterSchoolType === 'charter' ? 'charter' : 'any']}
                           onToggle={(v) => onFilterSchoolTypeChange?.(v as 'any' | 'public_only' | 'charter')} />
                       )}
                     </div>
