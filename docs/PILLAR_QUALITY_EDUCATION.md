@@ -161,6 +161,27 @@ First run (2026-10-14): all six metros FAIL, which is the real remaining work: 3
 big districts (Humboldt Park, Windsor Park, Leimert Park...), 9 places with stored schools mostly
 in another district (5 are hamlet coordinates, see backlog), Seattle Ballard and Kirkland unscored.
 
+## Zone maps (attendance zones), built 2026-10-15, not yet wired into scoring
+`data_sources/school_zones.py`: `zoned_schools(lat, lon)` returns the zoned elementary / middle /
+high school for a point from district-published maps in `data_cache/zone_maps/` (not in git;
+override with `HOMEFIT_ZONE_MAPS_DIR`); `match_zoned_to_schools` finds the SchoolDigger school
+(rating, charter flag) for a zone by name tokens + level. Add a metro by adding a `ZoneLayer`.
+
+| Metro | Layers | Vintage | Notes |
+|---|---|---|---|
+| Chicago | elementary (K-8), high | 2025-26, 2024-25 | no middle layer; selective/magnet/charter have no zone |
+| Austin | elementary, middle, high | file names say 2021-22 / 2020-21 | AISD consolidated schools for 2026-27; likely stale |
+| SF | elementary | 2024-25 | middle/high are choice, no zones |
+| NYC | elementary, middle, high | 2024-25 | high school: only `catchment=1` zones (28 schools); some districts choice-based |
+| LA | downloaded, not enabled | 2018 / 2020 | layers carry numeric keys only; needs the LAUSD key table |
+
+Pilot (8 places, 1 SchoolDigger call each): 15 of 17 zoned schools matched to a rated school
+(Chicago, Austin, SF, NYC elementary all matched). Misses: NYC middle schools that SchoolDigger
+names without a number (e.g. "Albert Shanker School For Visual A..." vs dbn 30Q126); a dbn to
+name crosswalk is needed (NCES `ST_SCHID` ends with the school number and could serve).
+Zones give the zoned school only: charters and choice schools still come from the radius search,
+and each place should carry the map vintage. Combination rule (zoned + choice) is undecided.
+
 ## Backlog (as of 2026-10-14, after commit 0d4ce7c)
 Priority order, none blocking the current catalog.
 
