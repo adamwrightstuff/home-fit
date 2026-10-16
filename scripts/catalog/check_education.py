@@ -100,7 +100,7 @@ def load_exceptions() -> Dict[str, str]:
 def evaluate(rows: List[Dict[str, Any]], metro: str = "", exceptions: Optional[Dict[str, str]] = None,
              use_district_checks: bool = True) -> Dict[str, Any]:
     """Run the checks on catalog rows ({'catalog': {...}, 'score': {...}, 'success': bool})."""
-    from pillars.schools import score_from_ratings, split_scores
+    from pillars.schools import headline_from_levels, score_from_ratings, split_scores
 
     exceptions = load_exceptions() if exceptions is None else exceptions
     nces = _nces() if use_district_checks else None
@@ -144,15 +144,37 @@ def evaluate(rows: List[Dict[str, Any]], metro: str = "", exceptions: Optional[D
             add("weight_zero", place, "usable score but weight 0 (not in the total)", True)
 
         early = float(b.get("early_ed_bonus") or 0)
-        derived = score_from_ratings([float(s["rating"]) for s in rs], early)["score"]
-        if abs(derived - float(score)) > 0.05:
-            add("formula_mismatch", place, f"stored {score} vs {derived:.2f} from rated_schools", True)
+        zoned_model = b.get("model") == "zoned_v1"
+        if zoned_model:
+            derived = headline_from_levels(b.get("levels") or {}, early)
+        else:
+            derived = score_from_ratings([float(s["rating"]) for s in rs], early)["score"]
+        if derived is None or abs(derived - float(score)) > 0.05:
+            add("formula_mismatch", place, f"stored {score} vs {derived} from its schools", True)
 
         split = b.get("split")
         if not split:
             add("no_split", place, "breakdown.split missing", True)
-        elif split != split_scores(rs, early):
+        elif not zoned_model and split != split_scores(rs, early):
             add("formula_mismatch", place, "split does not match rated_schools", True)
+
+        if zoned_model:
+            levels = b.get("levels") or {}
+            missing = [lv for lv, v in levels.items() if v.get("score") is None]
+            nearest = [lv for lv, v in levels.items() if v.get("source") == "nearest"]
+            stale = [lv for lv, v in levels.items() if v.get("source") == "zone" and v.get("zone")]
+            if len(levels) and len(missing) == len(levels):
+                add("no_levels_scored", place, "no level has a rated school", True)
+            elif len(missing) >= 2:
+                add("thin_levels", place, f"only {len(levels) - len(missing)} of 3 levels have a rated school", True)
+            for lv in nearest:
+                if len(levels[lv]["schools"]) < 3:
+                    add("thin_level_set", place, f"{lv}: {len(levels[lv]['schools'])} rated schools within 3 mi", False)
+            for lv in stale:
+                z = levels[lv]["zone"]
+                if (z.get("vintage") or "")[:4] < "2024":
+                    add("old_zone_map", place, f"{lv} zone map {z.get('vintage')}", False)
+            continue
 
         n = len(rs)
         # district checks need Census polygons + the NCES directory

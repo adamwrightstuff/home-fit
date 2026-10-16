@@ -378,6 +378,71 @@ def _schools_from_boundary_districts(
     return combined
 
 
+def _is_rated_school(s: Dict) -> bool:
+    rh = s.get("rankHistory") or []
+    return bool(rh) and (rh[0].get("rankStars") is not None or rh[0].get("rankStatewidePercentage") is not None)
+
+
+@cached(ttl_seconds=CACHE_TTL['school_data'])
+def get_zone_candidates(
+    lat: Optional[float], lon: Optional[float], state: Optional[str], area_type: Optional[str] = None
+) -> Optional[Dict]:
+    """
+    Candidate schools for the zoned model: the nearest schools of the Census district(s) containing
+    the point (all levels, topped up per level), plus charters inside the area radius.
+    None when there is no Census district data for the point (caller falls back to the old lookup).
+    """
+    app_id = os.getenv("SCHOOLDIGGER_APPID")
+    app_key = os.getenv("SCHOOLDIGGER_APPKEY")
+    if not app_id or not app_key or lat is None or lon is None or not state:
+        return None
+    try:
+        from data_sources.school_districts import districts_for_point
+    except Exception:
+        return None
+    districts = districts_for_point(lat, lon, state)
+    if not districts:
+        return None
+
+    base_params = {"appID": app_id, "appKey": app_key, "st": state, "perPage": 50}
+    radius = get_radius_profile("quality_education", area_type, None).get("search_radius_miles", 2.0)
+
+    # NYC: Census has one citywide district; SchoolDigger files schools under 32 community districts.
+    if any("New York City Department" in d["name"] for d in districts):
+        csd = _nyc_csd_for_coords(lat, lon)
+        district_ids = [csd["districtID"]] if csd else []
+    else:
+        district_ids = [d["id"] for d in districts]
+    if not district_ids:
+        return None
+
+    pool: List[Dict] = []
+    seen = set()
+
+    def _add(lst: Optional[List[Dict]]) -> None:
+        for sc in lst or []:
+            key = sc.get("schoolid") or sc.get("schoolID") or (sc.get("schoolName"), sc.get("distance"))
+            if key not in seen:
+                seen.add(key)
+                pool.append(sc)
+
+    near = {"nearLatitude": lat, "nearLongitude": lon, "sortBy": "distance"}
+    for did in district_ids:
+        _add(_fetch_schools({**base_params, "districtID": did, **near}))
+    for lvl in ("Elementary", "Middle", "High"):
+        have = sum(1 for sc in pool if sc.get("schoolLevel") == lvl and _is_rated_school(sc)
+                   and sc.get("isCharterSchool") != "Yes")
+        if have < 3:
+            for did in district_ids:
+                _add(_fetch_schools({**base_params, "districtID": did, "level": lvl, **near}))
+
+    coord = _fetch_schools_by_coordinates(lat, lon, radius, base_params) or []
+    charters = [sc for sc in _filter_schools_by_distance(coord, lat, lon, radius)
+                if sc.get("isCharterSchool") == "Yes" and _is_rated_school(sc)]
+    return {"districts": [{"id": d["id"], "name": d["name"], "kind": d["kind"]} for d in districts],
+            "pool": pool, "charters": charters, "radius_miles": radius}
+
+
 def _district_named_for_place(
     place_name: str, state: str, lat: float, lon: float, base_params: Dict
 ) -> Optional[tuple]:

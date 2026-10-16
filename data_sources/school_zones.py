@@ -31,6 +31,7 @@ class ZoneLayer:
     state: str
     covers: tuple = ()          # extra levels this zone serves (Chicago K-8 elementary zones)
     only_where: Optional[tuple] = None   # (field, value): keep only features with field == value
+    resolver: Optional[str] = None       # 'nyc_dbn': turn a DOE school code into a school name via NCES
     caveat: str = ""
 
 
@@ -47,12 +48,12 @@ ZONE_LAYERS: List[ZoneLayer] = [
               caveat="Austin ISD consolidated schools for 2026-27; zones may be stale"),
     ZoneLayer("sf_elementary_2425", "elementary", ("sch_lng_na", "synergy_na", "e_aa_name"), "e_aa_schno",
               "2024-25", "CA", caveat="SFUSD elementary attendance areas only; middle and high are choice"),
-    ZoneLayer("nyc_elementary_2425", "elementary", ("dbn",), "dbn", "2024-25", "NY",
+    ZoneLayer("nyc_elementary_2425", "elementary", ("dbn",), "dbn", "2024-25", "NY", resolver="nyc_dbn",
               caveat="some NYC districts admit by choice or priority, not strictly by zone"),
-    ZoneLayer("nyc_middle_2425", "middle", ("dbn",), "dbn", "2024-25", "NY",
+    ZoneLayer("nyc_middle_2425", "middle", ("dbn",), "dbn", "2024-25", "NY", resolver="nyc_dbn",
               caveat="several NYC districts use choice-based middle school admissions"),
     ZoneLayer("nyc_high_2425", "high", ("sch_name", "dbn"), "dbn", "2024-25", "NY",
-              only_where=("catchment", "1"),
+              only_where=("catchment", "1"), resolver="nyc_dbn",
               caveat="only a few NYC high schools have a zone; most admit citywide by application"),
     # LA (LAUSD) layers are downloaded but carry only numeric keys; add them once the LAUSD key
     # table that maps those keys to school names is available.
@@ -93,6 +94,42 @@ def _load(layer: ZoneLayer):
         return frame
 
 
+_nyc_lock = threading.Lock()
+_nyc_names_cache: Dict[str, Any] = {}
+
+
+def _nces_csv() -> str:
+    return os.getenv("HOMEFIT_NCES_CCD_CSV", os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "data_cache", "nces_ccd_2324", "ccd_sch_029_2324_w_1a_073124.csv"))
+
+
+def _nyc_name_for_dbn(dbn: str) -> str:
+    """'30Q126' -> 'ALBERT SHANKER SCHOOL FOR VISUAL AND PERFORMING ARTS' (NCES: geographic district + last 4 digits of the state school ID)."""
+    import re
+
+    m = re.match(r"^(\d{2})[KMQXR](\d+)$", (dbn or "").strip().upper())
+    if not m:
+        return ""
+    with _nyc_lock:
+        if "map" not in _nyc_names_cache:
+            table: Dict[tuple, str] = {}
+            try:
+                import pandas as pd
+
+                df = pd.read_csv(_nces_csv(), dtype=str, low_memory=False,
+                                 usecols=["ST", "SCH_NAME", "ST_SCHID", "LEA_NAME"])
+                ny = df[(df.ST == "NY") & df.LEA_NAME.str.contains("GEOGRAPHIC DISTRICT", na=False)]
+                for lea, sid, name in zip(ny.LEA_NAME, ny.ST_SCHID, ny.SCH_NAME):
+                    d = re.search(r"#\s*(\d+)", str(lea))
+                    if d and str(sid)[-4:].isdigit():
+                        table[(int(d.group(1)), int(str(sid)[-4:]))] = str(name)
+            except Exception:
+                table = {}
+            _nyc_names_cache["map"] = table
+    return _nyc_names_cache["map"].get((int(m.group(1)), int(m.group(2))), "")
+
+
 def zoned_schools(lat: float, lon: float) -> List[Dict[str, Any]]:
     """Zoned schools for the point, one entry per layer it falls in ([] when no map covers it)."""
     if lat is None or lon is None:
@@ -109,6 +146,9 @@ def zoned_schools(lat: float, lon: float) -> List[Dict[str, Any]]:
             row = frame.iloc[int(idx)]
             names = [str(row[f]).strip() for f in layer.name_fields
                      if f in row and str(row[f]).strip() not in ("", "None", "nan")]
+            if layer.resolver == "nyc_dbn":
+                full = _nyc_name_for_dbn(str(row.get(layer.id_field, "")))
+                names = ([full] if full else []) + names
             # a blank name or a "citywide ... choice" polygon means the zone assigns no school
             if not names or any("citywide" in n.lower() for n in names):
                 continue

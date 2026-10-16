@@ -33,7 +33,9 @@ def main() -> None:
                 p = ((row.get("score") or {}).get("livability_pillars") or {}).get("quality_education") or {}
                 b = p.get("breakdown") or {}
                 rs = b.get("rated_schools")
-                if rs:
+                if b.get("model") == "zoned_v1":
+                    n_split += 1  # the zoned model writes its own split (public headline vs charter choice)
+                elif rs:
                     early = float(b.get("early_ed_bonus") or 0)
                     total = score_from_ratings([float(s["rating"]) for s in rs], early)["score"]
                     if p.get("score") is not None and abs(total - float(p["score"])) > 0.05:

@@ -4,7 +4,7 @@ Scores school quality and variety
 Includes K-12 core scoring with small bonuses for early education and nearby colleges
 """
 
-from typing import Dict, Tuple, Optional, List
+from typing import Any, Dict, Tuple, Optional, List
 from data_sources import schools_api
 
 
@@ -58,7 +58,56 @@ def split_scores(rated_schools: List[Dict], early_ed_bonus: float = 0.0) -> Dict
     return out
 
 
-def get_school_data(
+def _early_ed_bonus(lat: Optional[float], lon: Optional[float]) -> float:
+    """Early-education bonus (0-3): preschools/kindergartens within 2 km (OSM), x0.7 if the nearest is over 1 km."""
+    # Early education bonus: preschool/kindergarten proximity matters for families with young kids
+    early_ed_bonus = 0.0
+
+    if lat is not None and lon is not None:
+        try:
+            import math
+            from data_sources.osm_api import get_overpass_url, requests, _retry_overpass
+
+            early_ed_query = f"""
+            [out:json][timeout:20];
+            (
+              node["amenity"~"kindergarten|preschool|nursery"](around:2000,{lat},{lon});
+              way["amenity"~"kindergarten|preschool|nursery"](around:2000,{lat},{lon});
+              relation["amenity"~"kindergarten|preschool|nursery"](around:2000,{lat},{lon});
+            );
+            out body;
+            >;
+            out skel qt;
+            """
+
+            def _do_request():
+                return requests.post(get_overpass_url(), data={"data": early_ed_query}, timeout=25, headers={"User-Agent": "HomeFit/1.0"})
+
+            resp = _retry_overpass(_do_request, query_type="schools")
+            if resp and resp.status_code == 200:
+                elements = resp.json().get("elements", [])
+                early_ed_count = len([e for e in elements if e.get("type") in ("node", "way", "relation")])
+                if early_ed_count > 0:
+                    closest_distance = float('inf')
+                    for elem in elements:
+                        if elem.get("type") == "node" and elem.get("lat") and elem.get("lon"):
+                            dist = math.sqrt((elem["lat"] - lat)**2 + (elem["lon"] - lon)**2) * 111000
+                            closest_distance = min(closest_distance, dist)
+                    if early_ed_count >= 3:
+                        early_ed_bonus = 3.0
+                    elif early_ed_count >= 2:
+                        early_ed_bonus = 2.0
+                    elif early_ed_count >= 1:
+                        early_ed_bonus = 1.0
+                    if closest_distance > 1000:
+                        early_ed_bonus *= 0.7
+                    print(f"   🎓 Early education bonus: +{early_ed_bonus:.1f} ({early_ed_count} facilities)")
+        except Exception as e:
+            print(f"   ⚠️  Early education query failed: {e}")
+    return early_ed_bonus
+
+
+def _get_school_data_legacy(
     zip_code: Optional[str] = None,
     state: Optional[str] = None,
     city: Optional[str] = None,
@@ -292,50 +341,7 @@ def get_school_data(
     print(
         f"\n✅ Lower-2/3 avg: {base_avg_rating:.2f} (base from {len(base_ratings)}/{len(all_ratings)} schools, access_bonus=+{access_bonus:.1f})")
     
-    # Early education bonus: preschool/kindergarten proximity matters for families with young kids
-    early_ed_bonus = 0.0
-
-    if lat is not None and lon is not None:
-        try:
-            import math
-            from data_sources.osm_api import get_overpass_url, requests, _retry_overpass
-
-            early_ed_query = f"""
-            [out:json][timeout:20];
-            (
-              node["amenity"~"kindergarten|preschool|nursery"](around:2000,{lat},{lon});
-              way["amenity"~"kindergarten|preschool|nursery"](around:2000,{lat},{lon});
-              relation["amenity"~"kindergarten|preschool|nursery"](around:2000,{lat},{lon});
-            );
-            out body;
-            >;
-            out skel qt;
-            """
-
-            def _do_request():
-                return requests.post(get_overpass_url(), data={"data": early_ed_query}, timeout=25, headers={"User-Agent": "HomeFit/1.0"})
-
-            resp = _retry_overpass(_do_request, query_type="schools")
-            if resp and resp.status_code == 200:
-                elements = resp.json().get("elements", [])
-                early_ed_count = len([e for e in elements if e.get("type") in ("node", "way", "relation")])
-                if early_ed_count > 0:
-                    closest_distance = float('inf')
-                    for elem in elements:
-                        if elem.get("type") == "node" and elem.get("lat") and elem.get("lon"):
-                            dist = math.sqrt((elem["lat"] - lat)**2 + (elem["lon"] - lon)**2) * 111000
-                            closest_distance = min(closest_distance, dist)
-                    if early_ed_count >= 3:
-                        early_ed_bonus = 3.0
-                    elif early_ed_count >= 2:
-                        early_ed_bonus = 2.0
-                    elif early_ed_count >= 1:
-                        early_ed_bonus = 1.0
-                    if closest_distance > 1000:
-                        early_ed_bonus *= 0.7
-                    print(f"   🎓 Early education bonus: +{early_ed_bonus:.1f} ({early_ed_count} facilities)")
-        except Exception as e:
-            print(f"   ⚠️  Early education query failed: {e}")
+    early_ed_bonus = _early_ed_bonus(lat, lon)
 
     # Apply bonuses (capped at 100)
     total_score = min(100.0, avg_rating + access_bonus + early_ed_bonus)
@@ -355,3 +361,165 @@ def get_school_data(
     }
 
     return round(total_score, 2), schools_by_level, breakdown
+
+
+# ---------------------------------------------------------------------------------------------
+# Zoned model (zoned_v1)
+#   Headline = mean over levels (elementary, middle, high) of that level's score.
+#   A level's score = the zoned school's statewide percentile when a zone map assigns one and it is
+#   rated; otherwise the mean of the nearest 3 rated non-charter schools of that level in the home
+#   district, widening the radius to a 3 mile cap. Charters are choice options: listed and scored
+#   separately (split.charter), not in the headline. Early-education bonus still applies.
+# ---------------------------------------------------------------------------------------------
+LEVELS = ("elementary", "middle", "high")
+NEAREST_PER_LEVEL = 3
+WIDEN_CAP_MILES = 3.0
+CHOICE_LIST_MAX = 6
+MODEL = "zoned_v1"
+
+
+def school_rating(school: Dict) -> Optional[float]:
+    """Statewide percentile (0-100); stars x 20 only when a school has no percentile."""
+    rh = (school.get("rankHistory") or [{}])[0] if school.get("rankHistory") else {}
+    pct, stars = rh.get("rankStatewidePercentage"), rh.get("rankStars")
+    if pct is not None:
+        return round(float(pct), 2)
+    if stars is not None:
+        return float(stars) * 20.0
+    return None
+
+
+def _level_of(school: Dict) -> Optional[str]:
+    t = (school.get("schoolLevel") or "").lower()
+    if "elementary" in t or "primary" in t:
+        return "elementary"
+    if "middle" in t:
+        return "middle"
+    if "high" in t:
+        return "high"
+    return None
+
+
+def _entry(school: Dict, role: str) -> Dict:
+    rh = (school.get("rankHistory") or [{}])[0] if school.get("rankHistory") else {}
+    return {
+        "name": school.get("schoolName") or "Unknown School",
+        "level": _level_of(school),
+        "rating": school_rating(school),
+        "stars": rh.get("rankStars"),
+        "is_charter_school": school.get("isCharterSchool") == "Yes",
+        "distance_mi": round(float(school["distance"]), 2) if school.get("distance") is not None else None,
+        "role": role,
+    }
+
+
+def headline_from_levels(levels: Dict[str, Dict], early_ed_bonus: float = 0.0) -> Optional[float]:
+    scores = [v["score"] for v in levels.values() if v.get("score") is not None]
+    if not scores:
+        return None
+    return min(100.0, sum(scores) / len(scores) + early_ed_bonus)
+
+
+def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float) -> Dict[str, Dict]:
+    """Per-level result: zoned school when available and rated, else nearest 3 in the home district."""
+    from data_sources.school_zones import match_zoned_to_schools
+    from data_sources.schools_api import _is_rated_school
+
+    elem_factor = 2.1 / 3.2   # NHTS 2017 median trip: elementary 2.1 mi vs middle 3.2 mi
+    out: Dict[str, Dict] = {}
+    for level in LEVELS:
+        z = next((x for x in zoned if x["level"] == level), None) or \
+            next((x for x in zoned if level in x.get("also_serves", [])), None)
+        res: Dict[str, Any] = {"source": None, "score": None, "schools": [], "zone": None}
+        if z:
+            res["zone"] = {"name": z["name"], "vintage": z["vintage"], "caveat": z["caveat"], "matched": False}
+            m = match_zoned_to_schools(z, pool)
+            if m is not None and _is_rated_school(m) and school_rating(m) is not None:
+                res.update(source="zone", schools=[_entry(m, "zoned")])
+                res["zone"]["matched"] = True
+        if not res["schools"]:
+            cand = sorted(
+                (sc for sc in pool if _level_of(sc) == level and _is_rated_school(sc)
+                 and sc.get("isCharterSchool") != "Yes" and sc.get("distance") is not None),
+                key=lambda sc: float(sc["distance"]))
+            base = base_radius_miles * (elem_factor if level == "elementary" else 1.0)
+            picked: List[Dict] = []
+            for r in sorted({base, base * 1.5, base * 2.0, WIDEN_CAP_MILES}):
+                if r < base or r > max(WIDEN_CAP_MILES, base):
+                    continue
+                picked = [sc for sc in cand if float(sc["distance"]) <= r][:NEAREST_PER_LEVEL]
+                if len(picked) >= NEAREST_PER_LEVEL:
+                    break
+            if picked:
+                res.update(source="nearest", schools=[_entry(sc, "nearest") for sc in picked])
+        ratings = [e["rating"] for e in res["schools"] if e["rating"] is not None]
+        res["score"] = round(sum(ratings) / len(ratings), 2) if ratings else None
+        out[level] = res
+    return out
+
+
+def get_school_data(
+    zip_code: Optional[str] = None,
+    state: Optional[str] = None,
+    city: Optional[str] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    area_type: Optional[str] = None,
+    place_name: Optional[str] = None,
+) -> Tuple[float, Dict[str, List[Dict]], Dict]:
+    """
+    Education score (0-100), schools by level, breakdown. Uses the zoned model when the point has
+    Census district data; otherwise the legacy radius model (places outside the boundary files).
+    """
+    print("📚 Fetching school data (zoned model)...")
+    cands = schools_api.get_zone_candidates(lat, lon, state, area_type) if (lat is not None and state) else None
+    if not cands:
+        print("   no district boundary data for this point; using the legacy lookup")
+        return _get_school_data_legacy(zip_code, state, city, lat, lon, area_type, place_name)
+
+    from data_sources.school_zones import zoned_schools
+    zoned = zoned_schools(lat, lon)
+    levels = build_levels(cands["pool"], zoned, cands["radius_miles"])
+    early = _early_ed_bonus(lat, lon)
+    total = headline_from_levels(levels, early)
+    if total is None:
+        print("⚠️  No rated schools for any level")
+        return 0.0, {"elementary": [], "middle": [], "high": []}, {
+            "model": MODEL, "base_avg_rating": 0.0, "access_bonus": 0.0, "early_ed_bonus": 0.0,
+            "levels": levels, "districts": cands["districts"],
+        }
+
+    used = {lv: [e for e in v["schools"]] for lv, v in levels.items()}
+    used_names = {e["name"] for es in used.values() for e in es}
+    choice = []
+    for sc in sorted(cands["charters"], key=lambda x: float(x.get("distance") or 99)):
+        if _level_of(sc) and school_rating(sc) is not None:
+            e = _entry(sc, "choice")
+            if e["name"] not in used_names and len(choice) < CHOICE_LIST_MAX:
+                choice.append(e)
+    n_levels = sum(1 for v in levels.values() if v["score"] is not None)
+    charter_ratings = [e["rating"] for e in choice]
+    split = {
+        "public": {"score": round(total, 2), "n_rated": sum(len(v["schools"]) for v in levels.values()),
+                   "confidence": "ok" if n_levels >= 2 else "thin"},
+        "charter": ({"score": round(sum(charter_ratings) / len(charter_ratings), 2), "n_rated": len(choice),
+                     "confidence": "ok" if len(choice) >= MIN_RATED_FOR_SPLIT else "thin"}
+                    if choice else {"score": None, "n_rated": 0, "confidence": "none"}),
+    }
+    rated_schools = [e for es in used.values() for e in es] + choice
+    base_avg = sum(v["score"] for v in levels.values() if v["score"] is not None) / n_levels
+    breakdown = {
+        "model": MODEL,
+        "base_avg_rating": round(base_avg, 2),
+        "access_bonus": 0.0,
+        "early_ed_bonus": round(early, 2),
+        "total_schools_rated": len(rated_schools),
+        "elite_schools_count": sum(1 for e in rated_schools if (e["rating"] or 0) >= 85),
+        "levels": levels,
+        "choice": choice,
+        "rated_schools": rated_schools,
+        "split": split,
+        "districts": cands["districts"],
+    }
+    by_level = {lv: sorted(used[lv], key=lambda e: -(e["rating"] or 0)) for lv in LEVELS}
+    return round(total, 2), by_level, breakdown
