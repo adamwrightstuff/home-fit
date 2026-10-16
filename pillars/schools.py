@@ -374,6 +374,7 @@ def _get_school_data_legacy(
 LEVELS = ("elementary", "middle", "high")
 NEAREST_PER_LEVEL = 3
 WIDEN_CAP_MILES = 3.0
+DISTRICT_FAR_CAP_MILES = 15.0   # a level with no district school within the cap uses the district's nearest anyway
 CHOICE_LIST_MAX = 6
 MODEL = "zoned_v1"
 
@@ -420,7 +421,8 @@ def headline_from_levels(levels: Dict[str, Dict], early_ed_bonus: float = 0.0) -
     return min(100.0, sum(scores) / len(scores) + early_ed_bonus)
 
 
-def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float) -> Dict[str, Dict]:
+def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
+                 charters: Optional[List[Dict]] = None) -> Dict[str, Dict]:
     """Per-level result: zoned school when available and rated, else nearest 3 in the home district."""
     from data_sources.school_zones import match_zoned_to_schools
     from data_sources.schools_api import _is_rated_school
@@ -452,6 +454,19 @@ def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float) 
                     break
             if picked:
                 res.update(source="nearest", schools=[_entry(sc, "nearest") for sc in picked])
+            else:
+                # The home district's own school of this level, however far: it is the school that serves
+                # the place (small elementary-only or high-school-only districts are the usual case).
+                far = [sc for sc in cand if float(sc["distance"]) <= DISTRICT_FAR_CAP_MILES][:NEAREST_PER_LEVEL]
+                if far:
+                    res.update(source="district_far", schools=[_entry(sc, "nearest") for sc in far])
+            if not res["schools"]:
+                # No district-run school of this level within reach (e.g. Pacific Palisades' high school is a
+                # charter): the nearest rated charters of the level are what a family there actually has.
+                cc = sorted((sc for sc in (charters or []) if _level_of(sc) == level and sc.get("distance") is not None
+                             and float(sc["distance"]) <= WIDEN_CAP_MILES), key=lambda sc: float(sc["distance"]))
+                if cc:
+                    res.update(source="charter_only", schools=[_entry(sc, "nearest_charter") for sc in cc[:NEAREST_PER_LEVEL]])
         ratings = [e["rating"] for e in res["schools"] if e["rating"] is not None]
         res["score"] = round(sum(ratings) / len(ratings), 2) if ratings else None
         out[level] = res
@@ -479,7 +494,7 @@ def get_school_data(
 
     from data_sources.school_zones import zoned_schools
     zoned = zoned_schools(lat, lon)
-    levels = build_levels(cands["pool"], zoned, cands["radius_miles"])
+    levels = build_levels(cands["pool"], zoned, cands["radius_miles"], cands.get("charters"))
     early = _early_ed_bonus(lat, lon)
     total = headline_from_levels(levels, early)
     if total is None:

@@ -5,6 +5,31 @@ and how to score a new metro with it. Written 2026-10-14 after the SchoolDigger 
 all six catalog metros. Sections marked **(interim)** are heuristics we expect to replace with the
 Census district-boundary lookup (see "Planned: boundary lookup").
 
+## Current model: zoned_v1 (2026-10-15) - read this first
+The sections below the Backlog describe the older radius model (kept as the fallback for places with no
+Census district data). All six catalog metros are scored with `zoned_v1`:
+- **Rating** = SchoolDigger statewide percentile (0-100); stars x 20 only if a school has no percentile.
+- **Per level** (elementary, middle, high): the **zoned school** from the district's attendance map
+  (`data_sources/school_zones.py`) when the map assigns one and it is rated; otherwise the nearest 3 rated
+  non-charter schools of that level in the home district (Census polygon), widening 1x/1.5x/2x the area
+  radius up to 3 mi (elementary uses 2.1/3.2 of the radius); then the district's own nearest school up to
+  15 mi (small elementary-only / high-school-only districts); then the nearest rated charters.
+- **Headline** = mean of the level scores + early-ed bonus (no access bonus).
+- **Charters and choice** are listed in `breakdown.choice` and scored separately: `split.public` is the
+  headline, `split.charter` the mean of the nearby rated charters (thin below 3). The Explorer filter
+  (any / public_only / charter) switches between them.
+- **Stored**: `breakdown.levels` (source, score, schools, zone name + vintage), `choice`, `rated_schools`,
+  `districts`, `split`, `model`.
+- **Calls**: each district is pulled once (all pages) and cached 30 days (`district_school_list`), charters once
+  per state (`state_charter_list`), distances are computed locally. The full 577-place run cost 357 SchoolDigger
+  requests; a re-run inside the cache window costs 0.
+- **Known exceptions** (data gaps, in `data/education_check_exceptions.json`): Southport (Census "School District
+  Not Defined"), Babylon (no rated high school), Edgewater (K-8 district), Belvedere.
+- **Rerun recipe**: clear stale school lookups (`.disk_cache`), start a dedicated API, run
+  `daily_education_rescore.py --force-keys`, then `enable_education_weight.py`, `recompute_catalog_composites.py
+  --no-census`, `check_education.py`. The state passed by the API is a full name; `normalize_state` turns it into
+  the abbreviation (this bug once sent every place to the legacy lookup).
+
 ## What it measures
 School quality near a location: the rating of nearby public and charter schools, with small
 bonuses for elite options and early-education availability.
@@ -187,7 +212,7 @@ Priority order, none blocking the current catalog.
 
 1. ~~Public vs charter split~~ built 2026-10-14 (see section above). Left: show the `thin`
    confidence in the Explorer UI when a filtered side has fewer than 3 rated schools.
-2. **Hamlet coordinates.** Cold Spring Harbor, Mamaroneck, Woodmere, Valley Stream and Los Altos
+2. **Hamlet coordinates** (not fixed; the zoned model still uses the point's district). Cold Spring Harbor, Mamaroneck, Woodmere, Valley Stream and Los Altos
    Hills have catalog coordinates inside the neighboring district's polygon, so the Census lookup
    would pick the wrong district. Fix: use the Census place (village/CDP) outline and take the
    district covering most of it; keep the point for neighborhoods that have no outline.

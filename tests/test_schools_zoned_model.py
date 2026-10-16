@@ -48,3 +48,8 @@ def test_check_validates_zoned_model_formula():
     assert evaluate([row], "x", {}, False)["verdict"] == "PASS"
     row["score"]["livability_pillars"]["quality_education"]["score"] = 5.0
     assert "formula_mismatch" in {f["check"] for f in evaluate([row], "x", {}, False)["failures"]}
+
+
+def test_state_names_normalize_to_abbreviations():
+    from data_sources.schools_api import normalize_state
+    assert normalize_state("New York") == "NY" and normalize_state(" ny ") == "NY" and normalize_state("Illinois") == "IL"

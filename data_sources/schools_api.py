@@ -378,24 +378,75 @@ def _schools_from_boundary_districts(
     return combined
 
 
+def normalize_state(state: Optional[str]) -> str:
+    """'New York' / 'ny' / ' NY ' -> 'NY'."""
+    st = (state or "").strip()
+    return STATE_ABBREVIATIONS.get(st.lower(), st).upper()
+
+
 def _is_rated_school(s: Dict) -> bool:
     rh = s.get("rankHistory") or []
     return bool(rh) and (rh[0].get("rankStars") is not None or rh[0].get("rankStatewidePercentage") is not None)
 
 
+def _fetch_all_pages(params: Dict, max_pages: int = 60) -> List[Dict]:
+    """Every page of a SchoolDigger school query (50 per page)."""
+    per_page = int(params.get("perPage", 50))
+    out: List[Dict] = []
+    for page in range(1, max_pages + 1):
+        lst = _fetch_schools({**params, "page": page})
+        if not lst:
+            break
+        out.extend(lst)
+        if len(lst) < per_page:
+            break
+    return out
+
+
 @cached(ttl_seconds=CACHE_TTL['school_data'])
+def district_school_list(state: str, district_id: str) -> List[Dict]:
+    """All schools of one district (cached 30 days). One pull serves every place in the district."""
+    app_id, app_key = os.getenv("SCHOOLDIGGER_APPID"), os.getenv("SCHOOLDIGGER_APPKEY")
+    if not app_id or not app_key:
+        return []
+    return _fetch_all_pages({"appID": app_id, "appKey": app_key, "st": state, "perPage": 50,
+                             "districtID": district_id}) or []
+
+
+@cached(ttl_seconds=CACHE_TTL['school_data'])
+def state_charter_list(state: str) -> List[Dict]:
+    """All charter schools in a state (cached 30 days); independent charters sit in their own districts."""
+    app_id, app_key = os.getenv("SCHOOLDIGGER_APPID"), os.getenv("SCHOOLDIGGER_APPKEY")
+    if not app_id or not app_key:
+        return []
+    return _fetch_all_pages({"appID": app_id, "appKey": app_key, "st": state, "perPage": 50,
+                             "isCharter": "true"}) or []
+
+
+def _with_distance(schools: List[Dict], lat: float, lon: float) -> List[Dict]:
+    """Copies of the schools with 'distance' (miles) from the point, from their coordinates."""
+    out = []
+    for sc in schools:
+        ll = (sc.get("address") or {}).get("latLong") or {}
+        if ll.get("latitude") is None or ll.get("longitude") is None:
+            continue
+        d = haversine_distance(lat, lon, float(ll["latitude"]), float(ll["longitude"])) / 1609.34
+        out.append({**sc, "distance": d})
+    return out
+
+
 def get_zone_candidates(
     lat: Optional[float], lon: Optional[float], state: Optional[str], area_type: Optional[str] = None
 ) -> Optional[Dict]:
     """
-    Candidate schools for the zoned model: the nearest schools of the Census district(s) containing
-    the point (all levels, topped up per level), plus charters inside the area radius.
-    None when there is no Census district data for the point (caller falls back to the old lookup).
+    Candidate schools for the zoned model: all schools of the Census district(s) containing the point,
+    with distances computed locally, plus charters inside the area radius. District and charter lists
+    come from shared cached pulls (see district_school_list / state_charter_list), so the per-place
+    cost is zero once a district has been pulled. None when there is no Census district data.
     """
-    app_id = os.getenv("SCHOOLDIGGER_APPID")
-    app_key = os.getenv("SCHOOLDIGGER_APPKEY")
-    if not app_id or not app_key or lat is None or lon is None or not state:
+    if lat is None or lon is None or not state:
         return None
+    state = normalize_state(state)  # the API passes "New York"; the district files and SchoolDigger want "NY"
     try:
         from data_sources.school_districts import districts_for_point
     except Exception:
@@ -403,8 +454,6 @@ def get_zone_candidates(
     districts = districts_for_point(lat, lon, state)
     if not districts:
         return None
-
-    base_params = {"appID": app_id, "appKey": app_key, "st": state, "perPage": 50}
     radius = get_radius_profile("quality_education", area_type, None).get("search_radius_miles", 2.0)
 
     # NYC: Census has one citywide district; SchoolDigger files schools under 32 community districts.
@@ -418,27 +467,17 @@ def get_zone_candidates(
 
     pool: List[Dict] = []
     seen = set()
-
-    def _add(lst: Optional[List[Dict]]) -> None:
-        for sc in lst or []:
+    for did in district_ids:
+        for sc in _with_distance(district_school_list(state, did), lat, lon):
             key = sc.get("schoolid") or sc.get("schoolID") or (sc.get("schoolName"), sc.get("distance"))
             if key not in seen:
                 seen.add(key)
                 pool.append(sc)
-
-    near = {"nearLatitude": lat, "nearLongitude": lon, "sortBy": "distance"}
-    for did in district_ids:
-        _add(_fetch_schools({**base_params, "districtID": did, **near}))
-    for lvl in ("Elementary", "Middle", "High"):
-        have = sum(1 for sc in pool if sc.get("schoolLevel") == lvl and _is_rated_school(sc)
-                   and sc.get("isCharterSchool") != "Yes")
-        if have < 3:
-            for did in district_ids:
-                _add(_fetch_schools({**base_params, "districtID": did, "level": lvl, **near}))
-
-    coord = _fetch_schools_by_coordinates(lat, lon, radius, base_params) or []
-    charters = [sc for sc in _filter_schools_by_distance(coord, lat, lon, radius)
-                if sc.get("isCharterSchool") == "Yes" and _is_rated_school(sc)]
+    pool.sort(key=lambda sc: sc["distance"])
+    if not pool:
+        return None
+    charters = [sc for sc in _with_distance(state_charter_list(state), lat, lon)
+                if sc["distance"] <= radius and _is_rated_school(sc)]
     return {"districts": [{"id": d["id"], "name": d["name"], "kind": d["kind"]} for d in districts],
             "pool": pool, "charters": charters, "radius_miles": radius}
 
