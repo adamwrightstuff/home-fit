@@ -231,6 +231,18 @@ name crosswalk is needed (NCES `ST_SCHID` ends with the school number and could 
 Zones give the zoned school only: charters and choice schools still come from the radius search,
 and each place should carry the map vintage. Combination rule (zoned + choice) is undecided.
 
+## Validation against test proficiency (2026-10-16)
+`scripts/catalog/validate_education_vs_edfacts.py` compares SchoolDigger's statewide percentile (the rating we score)
+with federal EDFacts reading+math proficiency from the Urban Institute Education Data API (free, no SchoolDigger
+calls; SchoolDigger school IDs are NCES IDs). Newest school-level year available is 2017-18, so it tests the
+ranking, not this year's values. Spearman rank correlation, by district: Chicago elementary 0.75, middle 0.67, high
+0.83; Austin 0.75 / 0.91 / 0.92; SFUSD 0.86 / 0.85 / 0.92; LAUSD 0.73 / 0.86 / 0.80; NYC 0.76 / 0.73 / 0.66.
+Pooled across states the high school figure falls to 0.39 because high school tests differ by state, so compare
+within a district or state, never across states. The lowest-scoring places hold up: Bayview's Carver Elementary
+(0.7th percentile) was 10% proficient; Garfield Park, Englewood and Gary schools 5 to 22%. Austin's lowest schools
+(Allison, Pickle, Webb) were 20 to 37% proficient in 2018, low for Texas, so the percentile is plausible but the gap
+between 0.3th percentile and 37% shows that a percentile is relative to the state.
+
 ## Backlog (as of 2026-10-16)
 Done 2026-10-15/16: percentile scale, zone maps for 6 metros (LA via campus-in-zone), hamlet fix, Seattle zones,
 state snapshot, offline re-score, production bundle, Explorer labels, deal-breaker 50, public/charter split.
@@ -243,7 +255,7 @@ state snapshot, offline re-score, production bundle, Explorer labels, deal-break
 3. **SF middle/high** are choice (no zones), **NYC high school** is mostly choice, **Chicago high school** only neighborhood
    schools have zones: they use the nearest-3 rule. Revisit if a choice-system model is wanted.
 4. **Explorer**: the public/charter filter should show the "thin" flag; check the new detail rows on a real place page.
-5. **Validate low scores** (Humboldt Park, Gary, East Palo Alto, Bayview) against state test proficiency.
+5. ~~Validate low scores~~ done 2026-10-16 (section above). Left: a newer year when EDFacts publishes one.
 6. **Large-district neighborhoods without zones** rely on nearest-3 per level; attendance zones are the real fix.
 7. **Snapshot refresh** once a year (about 112 calls, under $1) and rebuild the bundle when zone maps change.
 8. **Choice-school handling** (magnet/lottery seats) is only the charter list; magnets are not modeled.
