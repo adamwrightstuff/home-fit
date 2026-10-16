@@ -120,12 +120,35 @@ def run_score(metro: str, csv_path: Path, out_path: Path, api_base: str) -> int:
     return subprocess.run(cmd, cwd=str(REPO), env=env).returncode
 
 
+def run_extras(metro: str, out_path: Path, api_base: str, log: Callable[[str], None] = print) -> None:
+    """Steps that need no Overpass: climate profiles (fast) and SchoolDigger education (stops cleanly at the daily quota).
+    Neither can fail the run; the health check reports anything still missing."""
+    env = {**os.environ, "PYTHONPATH": str(REPO), "HOMEFIT_API_BASE": api_base}
+    for label, cmd in (
+        ("climate profiles", [sys.executable, str(REPO / "scripts" / "catalog" / "batch_climate_profiles.py")]),
+        ("education (SchoolDigger, stops at the daily quota)",
+         [sys.executable, str(REPO / "scripts" / "catalog" / "daily_education_rescore.py"), "--base-url", api_base]),
+    ):
+        log(f"{label}…")
+        try:
+            rc = subprocess.run(cmd, cwd=str(REPO), env=env).returncode
+            log(f"  {label}: {'done' if rc == 0 else f'stopped (exit {rc}); run again later, it resumes'}")
+        except Exception as e:  # noqa: BLE001
+            log(f"  {label}: skipped ({type(e).__name__}: {str(e)[:80]})")
+    if (REPO / "scripts" / "catalog" / "check_education.py").exists():
+        subprocess.run([sys.executable, str(REPO / "scripts" / "catalog" / "check_education.py"), "--metro", metro],
+                       cwd=str(REPO), env=env)
+    # composites must include the new education scores
+    subprocess.run([sys.executable, str(REPO / "scripts" / "catalog" / "recompute_catalog_composites.py"), "--no-census",
+                    "--input", str(out_path), "--output", str(out_path)], cwd=str(REPO), env=env)
+
+
 def git_publish(metro: str, out_path: Path) -> None:
     try:
         rel = str(out_path.relative_to(REPO))
     except ValueError:
         rel = str(out_path)
-    subprocess.run(["git", "add", rel], cwd=str(REPO), check=True)
+    subprocess.run(["git", "add", rel, "data/catalog_climate_profiles.jsonl"], cwd=str(REPO), check=True)
     subprocess.run(["git", "commit", "-m", f"{metro.title()} metro scores (metro_agent run, gate passed)"],
                    cwd=str(REPO), check=True)
     subprocess.run(["git", "push", "origin", "main"], cwd=str(REPO), check=True)
@@ -150,6 +173,7 @@ def run_pipeline(
     failed_fn: Callable = _failed_places,
     validate_fn: Callable = vd.validate,
     explain_fn: Optional[Callable] = None,
+    extras_fn: Optional[Callable] = None,
 ) -> int:
     csv_path = csv_path or REPO / "data" / f"{metro}_metro_place_catalog.csv"
     out_path = out_path or REPO / "data" / f"{metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
@@ -184,6 +208,10 @@ def run_pipeline(
             if failed_fn(out_path) > 0:
                 log("\nSTOPPED: some places still fail to score at all. Check the API logs, then run again.")
                 return 3
+
+        if extras_fn is not None:
+            banner("2b. CLIMATE + EDUCATION (no Overpass needed)")
+            extras_fn(metro, out_path, api_base, log)
 
         banner("3. RESOLVE")
         summary = resolve_fn(out_path, api_base, max_rounds=rounds)

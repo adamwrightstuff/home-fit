@@ -53,6 +53,7 @@ def main() -> int:
     p4.add_argument("--out", type=Path)
     p4.add_argument("--rounds", type=int, default=3)
     p4.add_argument("--push", action="store_true", help="commit and push the catalog file if the gate passes")
+    p4.add_argument("--no-extras", action="store_true", help="skip the climate + education steps")
     p4.add_argument("--skip-score", action="store_true", help="only resolve and gate an existing file")
     p4.add_argument("--no-server", action="store_true", help="do not start a local API automatically")
 
@@ -170,7 +171,7 @@ def main() -> int:
         from . import run as runner
         pf._load_env()
         return runner.run_pipeline(a.metro, api_base=a.api_base.rstrip("/"), csv_path=a.csv, out_path=a.out,
-                                   rounds=a.rounds, push=a.push, skip_score=a.skip_score,
+                                   rounds=a.rounds, push=a.push, skip_score=a.skip_score, extras_fn=(None if a.no_extras else runner.run_extras),
                                    manage_server=not a.no_server)
     if a.cmd == "resolve":
         from . import resolve as rs

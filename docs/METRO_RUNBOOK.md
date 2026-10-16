@@ -30,7 +30,9 @@ If it prints **BLOCKED**, read the "WHY IT IS BLOCKED" section. Typical fixes:
 
 Running the same command again is always safe; scoring is resumable.
 
-## 1b. After the scoring run: steps `run` does not do
+## 1b. Climate and education (now part of `run`)
+
+`run` does these itself right after scoring (step 2b), before anything that needs Overpass, so they finish even when Overpass is down. Education stops at the SchoolDigger daily quota; run the same command again the next day and it resumes. To do them by hand:
 
 1. **Education.** SchoolDigger has a daily quota, so it is its own job. With the local API running and `SCHOOLDIGGER_APPID/APPKEY` set: `PYTHONPATH=. python3 scripts/catalog/daily_education_rescore.py` (repeat daily until done; it stops at the quota). Then refresh composites with `scripts/catalog/recompute_catalog_composites.py --no-census --input FILE --output FILE` and confirm with `python3 scripts/catalog/check_education.py --metro <metro>`. The health check flags the metro until this passes.
 2. **Climate.** `PYTHONPATH=. python3 scripts/catalog/batch_climate_profiles.py` (every metro is picked up automatically; resumable).
