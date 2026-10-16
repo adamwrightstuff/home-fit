@@ -258,9 +258,8 @@ current map exists. Effect on the catalog: about 230 places change, by 2.5 to 8.
 Done 2026-10-15/16: percentile scale, zone maps for 6 metros (LA via campus-in-zone), hamlet fix, Seattle zones,
 state snapshot, offline re-score, production bundle, Explorer labels, deal-breaker 50, public/charter split.
 
-1. **Austin zones are stale** (2021-22 / 2020-21; AISD consolidated schools for 2026-27). Request current maps from
-   AISD planning (the district publishes only the old files); drop them into `data_cache/zone_maps/austin_*`, rebuild the
-   bundle, re-score offline. 0 SchoolDigger calls.
+1. **Austin zones are stale** (2021-22 / 2020-21; AISD closed 10 schools for 2026-27). Decided 2026-10-16 not to ask AISD for
+   newer files: only 3 of 93 zoned Austin levels point to a closing school. Revisit if AISD publishes a new map.
 2. ~~Philadelphia zone maps~~ added 2026-10-16 (SDP 2024-25 catchments, PA districts and places in the bundle). Left: score the
    Philadelphia catalog and add it to the `METROS` lists in the education scripts (playbook Phase A3).
 3. **SF middle/high** are choice (no zones), **NYC high school** is mostly choice, **Chicago high school** only neighborhood
