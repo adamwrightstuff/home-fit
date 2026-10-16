@@ -33,6 +33,9 @@ class ZoneLayer:
     only_where: Optional[tuple] = None   # (field, value): keep only features with field == value
     resolver: Optional[str] = None       # 'nyc_dbn': turn a DOE school code into a school name via NCES
     spatial_only: bool = False           # layer has no school names: match the school by the zone it sits in
+    fallback: bool = False               # last resort: used only where no non-fallback layer covers the point
+    nces_ids: bool = False               # id_field holds NCES school IDs (= SchoolDigger schoolid): exact match
+    drop_where: Optional[tuple] = None   # (field, value): drop features with field == value (open-enrollment zones)
     caveat: str = ""
 
 
@@ -68,6 +71,15 @@ ZONE_LAYERS: List[ZoneLayer] = [
               caveat="School District of Philadelphia 2024-25 catchments"),
     ZoneLayer("philadelphia_high_2425", "high", ("HS_Name",), "HS_ID", "2024-25", "PA",
               caveat="only 22 neighborhood high schools have catchments; most Philadelphia high schools admit by application"),
+    ZoneLayer("sabs_primary_1516", "elementary", ("schnam",), "ncessch", "2015-16", "",
+              fallback=True, nces_ids=True, drop_where=("openEnroll", "Y"),
+              caveat="NCES 2015-16 survey, used only where the district publishes no current map; some zones have changed"),
+    ZoneLayer("sabs_middle_1516", "middle", ("schnam",), "ncessch", "2015-16", "",
+              fallback=True, nces_ids=True, drop_where=("openEnroll", "Y"),
+              caveat="NCES 2015-16 survey, used only where the district publishes no current map; some zones have changed"),
+    ZoneLayer("sabs_high_1516", "high", ("schnam",), "ncessch", "2015-16", "",
+              fallback=True, nces_ids=True, drop_where=("openEnroll", "Y"),
+              caveat="NCES 2015-16 survey, used only where the district publishes no current map; some zones have changed"),
     ZoneLayer("seattle_elementary_2324", "elementary", ("es_zone",), "es_sch", "2023-24", "WA",
               caveat="Seattle Public Schools 2023-24 map; Seattle has many option-school seats"),
     ZoneLayer("seattle_middle_2324", "middle", ("ms_zone",), "ms_sch", "2023-24", "WA",
@@ -99,6 +111,8 @@ def _load(layer: ZoneLayer):
                 if layer.only_where:
                     field, value = layer.only_where
                     frame = frame[frame[field].astype(str) == value]
+                if layer.drop_where and layer.drop_where[0] in frame.columns:
+                    frame = frame[frame[layer.drop_where[0]].astype(str) != layer.drop_where[1]]
                 frame.sindex  # build the spatial index once
         except Exception:
             frame = None
@@ -159,49 +173,64 @@ def _nyc_name_for_dbn(dbn: str) -> str:
 
 
 def zoned_schools(lat: float, lon: float) -> List[Dict[str, Any]]:
-    """Zoned schools for the point, one entry per layer it falls in ([] when no map covers it)."""
+    """
+    Zoned schools for the point, one entry per layer it falls in ([] when no map covers it). Current district maps
+    win; the old national survey layers (fallback=True) are consulted only when no current map covers the point.
+    """
     if lat is None or lon is None:
         return []
     from shapely.geometry import Point
 
     pt = Point(lon, lat)
-    out: List[Dict[str, Any]] = []
-    for layer in ZONE_LAYERS:
-        frame = _load(layer)
-        if frame is None or len(frame) == 0:
-            continue
-        for idx in frame.sindex.query(pt, predicate="intersects"):
-            row = frame.iloc[int(idx)]
-            names = [str(row[f]).strip() for f in layer.name_fields
-                     if f in row and str(row[f]).strip() not in ("", "None", "nan")]
-            alts: List[List[str]] = []
-            if layer.resolver == "nyc_dbn":
-                dbns = [d.strip() for d in str(row.get(layer.id_field, "")).split(",") if d.strip()]
-                for d in dbns:                       # a few zones list several schools: '10X363,10X447'
-                    full = _nyc_name_for_dbn(d)
-                    alts.append(([full] if full else []) + [d])
-                if len(dbns) <= 1:
-                    full = _nyc_name_for_dbn(dbns[0]) if dbns else ""
-                    names = ([full] if full else []) + names
-                else:
-                    names = [n for a in alts for n in a]
-            # a blank name or a "citywide ... choice" polygon means the zone assigns no school
-            if not layer.spatial_only and (not names or any("citywide" in n.lower() for n in names)):
+
+    def collect(layers: List[ZoneLayer]) -> List[Dict[str, Any]]:
+        out: List[Dict[str, Any]] = []
+        for layer in layers:
+            frame = _load(layer)
+            if frame is None or len(frame) == 0:
                 continue
-            out.append({
-                "level": layer.level,
-                "also_serves": list(layer.covers),
-                "name": names[0] if names else "",
-                "names": names,
-                "id": str(row.get(layer.id_field, "")),
-                "source": layer.folder,
-                "vintage": layer.vintage,
-                "state": layer.state,
-                "caveat": layer.caveat,
-                "alts": alts if len(alts) > 1 else [],
-                "_geom": row.geometry,
-            })
-    return out
+            hits = []
+            for idx in frame.sindex.query(pt, predicate="intersects"):
+                row = frame.iloc[int(idx)]
+                names = [str(row[f]).strip() for f in layer.name_fields
+                         if f in row and str(row[f]).strip() not in ("", "None", "nan")]
+                alts: List[List[str]] = []
+                if layer.resolver == "nyc_dbn":
+                    dbns = [d.strip() for d in str(row.get(layer.id_field, "")).split(",") if d.strip()]
+                    for d in dbns:                       # a few zones list several schools: '10X363,10X447'
+                        full = _nyc_name_for_dbn(d)
+                        alts.append(([full] if full else []) + [d])
+                    if len(dbns) <= 1:
+                        full = _nyc_name_for_dbn(dbns[0]) if dbns else ""
+                        names = ([full] if full else []) + names
+                    else:
+                        names = [n for a in alts for n in a]
+                # a blank name or a "citywide ... choice" polygon means the zone assigns no school
+                if not layer.spatial_only and (not names or any("citywide" in n.lower() for n in names)):
+                    continue
+                zid = str(row.get(layer.id_field, ""))
+                hits.append({
+                    "level": layer.level,
+                    "also_serves": list(layer.covers),
+                    "name": names[0] if names else "",
+                    "names": names,
+                    "id": zid,
+                    "nces_id": zid if layer.nces_ids else "",
+                    "source": layer.folder,
+                    "vintage": layer.vintage,
+                    "state": layer.state,
+                    "caveat": layer.caveat,
+                    "fallback": layer.fallback,
+                    "alts": alts if len(alts) > 1 else [],
+                    "_geom": row.geometry,
+                })
+            if layer.fallback and len(hits) > 1:      # overlapping zones: the most local (smallest) one
+                hits = [min(hits, key=lambda h: h["_geom"].area)]
+            out.extend(hits)
+        return out
+
+    out = collect([l for l in ZONE_LAYERS if not l.fallback])
+    return out or collect([l for l in ZONE_LAYERS if l.fallback])
 
 
 _STOP = {

@@ -222,6 +222,7 @@ override with `HOMEFIT_ZONE_MAPS_DIR`); `match_zoned_to_schools` finds the Schoo
 | SF | elementary | 2024-25 | middle/high are choice, no zones |
 | NYC | elementary, middle, high | 2024-25 | high school: only `catchment=1` zones (28 schools); some districts choice-based |
 | LA | elementary/high 2018, middle 2020 | 2018 / 2020 | no school names: the school is found by the campus inside the zone; shared campuses averaged |
+| Suburbs and other districts with no current map | NCES 2015-16 survey (fallback) | 2015-16 | used only where no current map covers the point; matched by exact NCES school ID; about 10% of zones may have changed (see below) |
 | Philadelphia | 2024-25 (added 2026-10-16) | 2024-25 | 160 elementary, 126 middle, 22 high school catchments; not in the catalog yet (add the metro to the script `METROS` lists) |
 
 Pilot (8 places, 1 SchoolDigger call each): 15 of 17 zoned schools matched to a rated school
@@ -242,6 +243,16 @@ within a district or state, never across states. The lowest-scoring places hold 
 (0.7th percentile) was 10% proficient; Garfield Park, Englewood and Gary schools 5 to 22%. Austin's lowest schools
 (Allison, Pickle, Webb) were 20 to 37% proficient in 2018, low for Texas, so the percentile is plausible but the gap
 between 0.3th percentile and 37% shows that a percentile is relative to the state.
+
+## 2015-16 national zone fallback (decided 2026-10-16)
+Where no current district map covers a point (most suburbs), the NCES School Attendance Boundary Survey 2015-16 supplies the
+zoned school (`sabs_*_1516` layers in the bundle, 9 states, 19 MB). Rules: a current district map always wins and the old
+layers are not even consulted; fallback zones never make a level "choice" (a level they miss uses nearest-3); open-enrollment
+zones are dropped; where zones overlap the smallest wins; the school is matched by its exact NCES ID (= SchoolDigger school ID)
+and the map year shows as 2015-16 in the details. Basis for adopting it: at places covered by both a current map and the
+2015-16 survey, the same school came out 90% of the time (128 of 143 checks; SF and Chicago 100%, NYC 83%), which beats
+nearest-3. Limits: coverage is partial (it has nothing for Austin ISD), and the 10% that changed will be wrong until a
+current map exists. Effect on the catalog: about 230 places change, by 2.5 to 8.4 points on average per metro.
 
 ## Backlog (as of 2026-10-16)
 Done 2026-10-15/16: percentile scale, zone maps for 6 metros (LA via campus-in-zone), hamlet fix, Seattle zones,

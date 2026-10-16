@@ -120,6 +120,7 @@ def load_state(state: Optional[str]) -> Optional[Dict[str, Any]]:
                     if did:
                         by.setdefault(str(did), []).append(s)
                 data["by_district"] = by
+                data["by_id"] = {str(s.get("schoolid")): s for s in data["schools"] if s.get("schoolid")}
                 data["charters"] = [s for s in data["schools"] if s.get("isCharterSchool") == "Yes"]
             except Exception:
                 data = None
@@ -137,3 +138,20 @@ def district_schools(state: str, district_id: str) -> Optional[List[Dict[str, An
 def state_charters(state: str) -> Optional[List[Dict[str, Any]]]:
     snap = load_state(state)
     return None if not snap else snap["charters"]
+
+
+_FIPS_TO_ST = {
+    "01": "AL", "02": "AK", "04": "AZ", "05": "AR", "06": "CA", "08": "CO", "09": "CT", "10": "DE", "11": "DC",
+    "12": "FL", "13": "GA", "15": "HI", "16": "ID", "17": "IL", "18": "IN", "19": "IA", "20": "KS", "21": "KY",
+    "22": "LA", "23": "ME", "24": "MD", "25": "MA", "26": "MI", "27": "MN", "28": "MS", "29": "MO", "30": "MT",
+    "31": "NE", "32": "NV", "33": "NH", "34": "NJ", "35": "NM", "36": "NY", "37": "NC", "38": "ND", "39": "OH",
+    "40": "OK", "41": "OR", "42": "PA", "44": "RI", "45": "SC", "46": "SD", "47": "TN", "48": "TX", "49": "UT",
+    "50": "VT", "51": "VA", "53": "WA", "54": "WV", "55": "WI", "56": "WY",
+}
+
+
+def school_by_id(ncessch: str) -> Optional[Dict[str, Any]]:
+    """A school from its 12-digit NCES ID (the first two digits are the state FIPS); None if not in a snapshot."""
+    st = _FIPS_TO_ST.get(str(ncessch)[:2])
+    snap = load_state(st) if st else None
+    return (snap or {}).get("by_id", {}).get(str(ncessch))

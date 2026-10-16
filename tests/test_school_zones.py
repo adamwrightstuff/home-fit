@@ -52,3 +52,14 @@ def test_match_by_location_inside_zone_and_prefers_regular_school():
             sc("Magnet Inside", 0.4, 0.4, isMagnetSchool="Yes")]
     assert match_zone_by_location(zone, pool)["schoolName"] == "Inside Elementary"
     assert match_zone_by_location({**zone, "_geom": box(9, 9, 10, 10)}, pool) is None
+
+
+@pytest.mark.skipif(not os.path.isfile(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                                    "data", "school_geo", "zone_sabs_primary_1516.geojson.gz")),
+                    reason="school_geo bundle not built")
+def test_old_national_zones_are_a_last_resort_only():
+    # Kirkland WA: no current district map covers it, so the 2015-16 survey is used and labelled as such
+    kirkland = zoned_schools(47.6815, -122.2087)
+    assert kirkland and all(z["fallback"] and z["vintage"] == "2015-16" and z["nces_id"] for z in kirkland)
+    # Chicago has a current map: the old layers must not appear next to it
+    assert all(not z["fallback"] for z in zoned_schools(41.9024, -87.7230))

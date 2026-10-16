@@ -31,6 +31,7 @@ _STATE_FIPS = {
     "TN": "47", "TX": "48", "UT": "49", "VT": "50", "VA": "51", "WA": "53", "WV": "54",
     "WI": "55", "WY": "56",
 }
+_ST_BY_FIPS = {v: k for k, v in _STATE_FIPS.items()}
 _KINDS = ("unsd", "elsd", "scsd")
 
 _lock = threading.Lock()

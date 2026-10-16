@@ -55,7 +55,18 @@ def main() -> int:
             g = gpd.read_file(paths[0], columns=["GEOID", "NAME"]).to_crs(4326)
             area_sq_mi = g.to_crs(5070).area / 2_589_988.11
             total += _write(f"place_{fips}", g[area_sq_mi <= sd.MAX_PLACE_SQ_MI])
+    sabs_dir = os.path.join(REPO, "data_cache", "nces_sabs_1516", "SABS_1516_SchoolLevels")
+    sabs_states = [sd._ST_BY_FIPS[f] for f in STATES]
     for layer in sz.ZONE_LAYERS:
+        if layer.fallback:      # NCES 2015-16 national survey, trimmed to our states
+            part = {"sabs_primary_1516": "Primary", "sabs_middle_1516": "Middle", "sabs_high_1516": "High"}[layer.folder]
+            shp = os.path.join(sabs_dir, f"SABS_1516_{part}.shp")
+            if not os.path.isfile(shp):
+                print("missing SABS layer", shp)
+                continue
+            g = gpd.read_file(shp, where="stAbbrev IN ('" + "','".join(sabs_states) + "')").to_crs(4326)
+            total += _write(f"zone_{layer.folder}", g[["schnam", "ncessch", "openEnroll", "geometry"]])
+            continue
         folder = os.path.join(sz._root(), layer.folder)
         files = glob.glob(os.path.join(folder, "*.geojson")) or glob.glob(os.path.join(folder, "*.shp"))
         if not files:

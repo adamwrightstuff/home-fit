@@ -459,7 +459,9 @@ def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
     from data_sources.school_zones import match_zoned_schools
     from data_sources.schools_api import _is_rated_school
 
-    mapped = bool(zoned)
+    # a place is in a zone-publishing district only if a current map covers it; the old national fallback zones do not
+    # prove the district assigns by address, so a level they miss is not 'choice'
+    mapped = any(not z.get("fallback") for z in zoned)
     out: Dict[str, Dict] = {}
     for level in LEVELS:
         z = next((x for x in zoned if x["level"] == level), None) or \
@@ -472,7 +474,13 @@ def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
             continue
         if z:
             res["zone"] = {"name": z["name"], "vintage": z["vintage"], "caveat": z["caveat"], "matched": False}
-            ms = [m for m in match_zoned_schools(z, pool) if _is_rated_school(m) and school_rating(m) is not None]
+            if z.get("nces_id"):
+                from data_sources.school_snapshot import school_by_id
+                one = school_by_id(z["nces_id"])
+                ms = [one] if one else []
+            else:
+                ms = match_zoned_schools(z, pool)
+            ms = [m for m in ms if _is_rated_school(m) and school_rating(m) is not None]
             if ms:
                 res.update(source="zone", schools=[_entry(m, "zoned") for m in ms])
                 res["zone"]["matched"] = True
