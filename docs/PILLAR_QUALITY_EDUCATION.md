@@ -221,7 +221,8 @@ override with `HOMEFIT_ZONE_MAPS_DIR`); `match_zoned_to_schools` finds the Schoo
 | Austin | elementary, middle, high | file names say 2021-22 / 2020-21 | AISD consolidated schools for 2026-27; likely stale |
 | SF | elementary | 2024-25 | middle/high are choice, no zones |
 | NYC | elementary, middle, high | 2024-25 | high school: only `catchment=1` zones (28 schools); some districts choice-based |
-| LA | downloaded, not enabled | 2018 / 2020 | layers carry numeric keys only; needs the LAUSD key table |
+| LA | elementary/high 2018, middle 2020 | 2018 / 2020 | no school names: the school is found by the campus inside the zone; shared campuses averaged |
+| Philadelphia | 2024-25 (added 2026-10-16) | 2024-25 | 160 elementary, 126 middle, 22 high school catchments; not in the catalog yet (add the metro to the script `METROS` lists) |
 
 Pilot (8 places, 1 SchoolDigger call each): 15 of 17 zoned schools matched to a rated school
 (Chicago, Austin, SF, NYC elementary all matched). Misses: NYC middle schools that SchoolDigger
@@ -237,8 +238,8 @@ state snapshot, offline re-score, production bundle, Explorer labels, deal-break
 1. **Austin zones are stale** (2021-22 / 2020-21; AISD consolidated schools for 2026-27). Request current maps from
    AISD planning (the district publishes only the old files); drop them into `data_cache/zone_maps/austin_*`, rebuild the
    bundle, re-score offline. 0 SchoolDigger calls.
-2. **Philadelphia**: PA is in the snapshot; needs Census PA district/place files in `data_cache` (bundle already has
-   PA geography) and the 2024-25 SDP catchment shapefiles (OpenDataPhilly) as `ZoneLayer`s.
+2. ~~Philadelphia zone maps~~ added 2026-10-16 (SDP 2024-25 catchments, PA districts and places in the bundle). Left: score the
+   Philadelphia catalog and add it to the `METROS` lists in the education scripts (playbook Phase A3).
 3. **SF middle/high** are choice (no zones), **NYC high school** is mostly choice, **Chicago high school** only neighborhood
    schools have zones: they use the nearest-3 rule. Revisit if a choice-system model is wanted.
 4. **Explorer**: the public/charter filter should show the "thin" flag; check the new detail rows on a real place page.

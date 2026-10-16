@@ -163,6 +163,21 @@ Check: `cd frontend && npx tsc --noEmit`.
 | **Airports, hospitals, transit centers** | `grep` the metro's main airport code in `pillars/air_travel_access.py`, major hospitals in `pillars/healthcare_access.py`, city in `MAJOR_METROS` in `pillars/public_transit_access.py` | Add to the static lists (these are data, not city exceptions). |
 | **Regional / street-tree / NPI city lists** | Check `data_sources/regional_baselines.py`, `street_tree_api.py`, `npi_specialty_client.py` for the city | Add an entry or confirm the generic fallback is acceptable. |
 | **NCES charter flag** | `data/nces_schools.csv` exists and covers the state | Phase 8 skips without it. |
+| **Schools (all of Phase A3)** | `ls data/school_snapshot/<ST>.json.gz` for every state in the CBSA; Census district and place files for the state in `data/school_geo/` | See Phase A3: fetch the state snapshot (3 to 28 SchoolDigger calls), add the zone maps if the district publishes them, rebuild the bundle. |
+
+---
+
+## Phase A3 — Schools (`quality_education`), per new metro
+
+Full model and rules: [PILLAR_QUALITY_EDUCATION.md](PILLAR_QUALITY_EDUCATION.md). SchoolDigger is **not** called per place any more: each state is pulled once into a local snapshot, and everything else is local.
+
+1. **State snapshot** (the only SchoolDigger spend; 500 schools per call, so 3 to 28 calls per state, billed as overage beyond 2,000 calls a month, about $0.008 each): `PYTHONPATH=. python3 scripts/catalog/fetch_school_snapshot.py --states PA,NJ,DE`. A state already in `data/school_snapshot/` is skipped, so a second metro in the same state costs nothing. Refresh yearly.
+2. **Census district and place outlines** for each new state: download TIGER/Line `UNSD`, `ELSD`, `SCSD` (district) and `PLACE` for the state FIPS into `data_cache/tiger_sd_2024/` and `data_cache/tiger_place_2024/` (same folder layout as the existing states), and add the FIPS to `STATES` in `scripts/catalog/build_school_data_bundle.py`.
+3. **Zone maps** (optional but better): look for the core district's current attendance-zone layers (district GIS page, city open-data portal). Download each level into `data_cache/zone_maps/<metro>_<level>_<year>/` and add a `ZoneLayer` per level in `data_sources/school_zones.py` (name field, id field, vintage, a caveat). A level the district does not zone (lottery or application) needs no layer: the scorer shows it as "choice, not scored" whenever the district has any zone layer.
+4. **Rebuild the bundle** (`PYTHONPATH=. python3 scripts/catalog/build_school_data_bundle.py`) and commit `data/school_geo/` (about 11 MB total). Production reads the bundle and the snapshot, not `data_cache/`.
+5. **Score**: the normal `score_metro.py` run scores education through the API (the live scorer uses the same code). To re-score an existing catalog offline in seconds with no API calls: `PYTHONPATH=. python3 scripts/catalog/rescore_education_offline.py`.
+6. **After any education re-score**, in this order: `python3 scripts/catalog/enable_education_weight.py` (a live `only=` rescore zeroes the weight), `recompute_catalog_composites.py --in-place --no-census` per metro, `check_education.py`. The education check must PASS before publishing; known data gaps go in `data/education_check_exceptions.json` with a reason.
+7. **Add the metro** to `scripts/catalog/rescore_education_offline.py` (`METROS`), `scripts/catalog/check_education.py` (`METROS`) and `scripts/catalog/enable_education_weight.py` (`CATALOGS`).
 
 ---
 
@@ -178,7 +193,7 @@ These work anywhere with no baseline updates:
 - `neighborhood_amenities` — Overpass + Google Places fallback
 - `public_transit_access` — Transitland API + Census commute
 - `diversity` — Census ACS
-- `quality_education` — SchoolDigger API (requires `ENABLE_SCHOOL_SCORING=true`)
+- `quality_education` — local SchoolDigger state snapshot + Census district/place outlines + district zone maps (Phase A3)
 - `natural_beauty` — GEE + Overpass
 
 ### Pillars that need metro-specific baselines
@@ -206,7 +221,7 @@ These work anywhere with no baseline updates:
 - Rebuild only if scoring reveals all economic scores are 50 flat: `scripts/baselines/build_economic_baselines_from_results.py`
 
 ### Pillars with env var requirements
-- `quality_education`: needs `ENABLE_SCHOOL_SCORING=true` + SchoolDigger API keys
+- `quality_education`: SchoolDigger API keys only for `fetch_school_snapshot.py` (Phase A3); scoring reads the committed snapshot and bundle
 - `public_transit_access` (catalog mode): needs `HOMEFIT_TRANSIT_STABLE_COMMUTE=true` for accurate scores (single-pin census lookup is tract-boundary-sensitive)
 - `economic_opportunity` (historical): needs BLS OEWS data (`data/oews_metro_wage_distribution.json`)
 
@@ -262,6 +277,7 @@ PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py --no-unversioned
 - [ ] Look up CBSA code(s) and county FIPS (Census delineation file); list every state the CBSA spans
 - [ ] Add CBSA to `CBSA_COUNTIES`, `CBSA_TO_KEY` in `build_metro_baselines_from_cbsa.py`
 - [ ] Phase A2: precinct file for each state, crime source for the core city, airport/hospital/transit lists, NCES file
+- [ ] Phase A3: school snapshot for each state, district/place outlines, zone maps, rebuilt `data/school_geo/`, education check PASS
 - [ ] Phase B: add the metro to `frontend/lib/catalogMetros.ts` and `next.config.js`; `npx tsc --noEmit`
 - [ ] Grep `scripts/` for hardcoded metro lists (`"nyc", "la", "sf"`, e.g. `recompute_ses_baseline_fix.py`, `daily_education_rescore.py`, `map_catalog_to_usaleep.py`) and add the new metro
 - [ ] Create place catalog CSV (`data/xx_metro_place_catalog.csv`) with columns: `name, county_borough, state_abbr, search_query, lat, lon`

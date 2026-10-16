@@ -70,6 +70,33 @@ PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py --no-unversioned
 
 ---
 
+## 2b. Education (`quality_education`): offline, no API
+
+Model and runbook: [PILLAR_QUALITY_EDUCATION.md](PILLAR_QUALITY_EDUCATION.md). These replace API rescores for this pillar.
+
+| Script | When to use |
+|--------|-------------|
+| `fetch_school_snapshot.py --states NY,NJ` | Pull whole states from SchoolDigger into `data/school_snapshot/` (3 to 28 calls per state, about $0.008 per call). New state, or yearly ratings refresh. |
+| `build_school_data_bundle.py` | Rebuild `data/school_geo/` (district, place and zone outlines) after a raw layer or zone map changed. Commit the result. |
+| `rescore_education_offline.py [--metro la] [--dry-run]` | Re-score `quality_education` for every catalog place from the snapshot in seconds, 0 API calls. Use after any change to the school scoring rules, zone maps or snapshot. |
+| `enable_education_weight.py` | Restore education's weight (7.7%) and re-total after any education rescore (the live `only=` call zeroes it). |
+| `check_education.py [--metro la]` | Pass/fail education check (formula, split, weight, level coverage, district membership). Also runs inside `check_catalog_health.py` and `metro_agent health`. |
+| `add_education_split.py` | Legacy places only: adds the public/charter split to a radius-model score. `zoned_v1` places carry their own split. |
+| `daily_education_rescore.py` | Old API-based runner (needs a running API; one place at a time). Only needed when the offline path cannot reach a change. |
+
+Typical sequence after a rule or map change:
+```bash
+PYTHONPATH=. python3 scripts/catalog/rescore_education_offline.py
+python3 scripts/catalog/enable_education_weight.py
+for m in nyc la sf seattle austin chicago; do
+  PYTHONPATH=. python3 scripts/catalog/recompute_catalog_composites.py \
+    --input data/${m}_metro_place_catalog_scores_merged.composites_recomputed.jsonl --in-place --no-census
+done
+PYTHONPATH=. python3 scripts/catalog/check_education.py
+```
+
+---
+
 ## 3. API Rescores (requires running API or Railway)
 
 Set `HOMEFIT_API_BASE` to target Railway; default is `http://127.0.0.1:8000`.
