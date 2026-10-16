@@ -20,15 +20,28 @@ Census district data). All six catalog metros are scored with `zoned_v1`:
   (any / public_only / charter) switches between them.
 - **Stored**: `breakdown.levels` (source, score, schools, zone name + vintage), `choice`, `rated_schools`,
   `districts`, `split`, `model`.
-- **Calls**: each district is pulled once (all pages) and cached 30 days (`district_school_list`), charters once
-  per state (`state_charter_list`), distances are computed locally. The full 577-place run cost 357 SchoolDigger
-  requests; a re-run inside the cache window costs 0.
-- **Known exceptions** (data gaps, in `data/education_check_exceptions.json`): Southport (Census "School District
-  Not Defined"), Babylon (no rated high school), Edgewater (K-8 district), Belvedere.
-- **Rerun recipe**: clear stale school lookups (`.disk_cache`), start a dedicated API, run
-  `daily_education_rescore.py --force-keys`, then `enable_education_weight.py`, `recompute_catalog_composites.py
-  --no-census`, `check_education.py`. The state passed by the API is a full name; `normalize_state` turns it into
-  the abbreviation (this bug once sent every place to the legacy lookup).
+- **Data** (2026-10-16): no per-place SchoolDigger calls. `data/school_snapshot/<ST>.json.gz` holds every school in
+  9 states (CA, CT, IL, IN, NJ, NY, PA, TX, WA; 54,000 schools, 2.8 MB, 112 calls, fetched 2026-10-16). SchoolDigger
+  returns 500 schools per request, so a state is 3 to 28 calls. Districts, charters and distances are computed locally.
+  Refresh once a year (ratings update yearly): `scripts/catalog/fetch_school_snapshot.py --states NY,NJ,...`; a new
+  metro in a covered state costs 0 calls, a new state costs about 3 to 28.
+- **Geography** (production reads the slim bundle `data/school_geo/`, 10.8 MB, built from the raw downloads by
+  `scripts/catalog/build_school_data_bundle.py`): Census school district polygons (which district), Census place outlines
+  (hamlet fix: when the point's district covers 25% or less of a small named place and another district covers 50% or
+  more, the place's district wins; Cold Spring Harbor, Mamaroneck, Southport), zone maps, NYC school-code names.
+  Raw downloads live in the git-ignored `data_cache/`.
+- **Zone maps** (`data_sources/school_zones.py`): Chicago (elementary 2025-26, high 2024-25), Austin (2021-22 / 2020-21,
+  likely stale), SF elementary (2024-25), NYC (2024-25; high school only the few catchment zones), LA (2018 / 2020,
+  no names: the school is found by the campus inside the zone), Seattle (2023-24). A zone's school is matched by name,
+  then by location (campus inside the polygon), so naming differences do not matter.
+- **Re-score offline** (5 seconds, 0 calls): `PYTHONPATH=. python3 scripts/catalog/rescore_education_offline.py`, then
+  `enable_education_weight.py`, `recompute_catalog_composites.py --no-census`, `check_education.py`. Only re-run the
+  API-based `daily_education_rescore.py` when the snapshot or the formula changed in a way the offline path cannot reach.
+- **Explorer**: the school deal-breaker is now 50 (the 3-star band is exactly the 50th to 70th percentile); the details
+  show which schools count, levels covered and zone map year.
+- **Known exceptions** (data gaps, `data/education_check_exceptions.json`): Babylon (no rated high school), Edgewater
+  (K-8 district), Belvedere.
+- **State names**: the API passes "New York"; `normalize_state` makes it "NY" (this once sent every place to the legacy lookup).
 
 ## What it measures
 School quality near a location: the rating of nearby public and charter schools, with small
@@ -127,7 +140,7 @@ and only used if nothing better is found.
 - Enterprise `boundaryAddress` exists on SchoolDigger v3.0 and would return the schools
   assigned to an address. Not available on Pro.
 
-## Planned: boundary lookup (replaces the interim heuristics)
+## Boundary lookup (built 2026-10-15; replaced the interim heuristics)
 The Census TIGER/Line school district polygons (unified, elementary, secondary) are free and
 give the exact district or district pair for any point. SchoolDigger `districtID` values look
 like NCES LEA IDs (state FIPS plus 5 digits), which would let the polygon IDs be used directly;
@@ -186,7 +199,7 @@ First run (2026-10-14): all six metros FAIL, which is the real remaining work: 3
 big districts (Humboldt Park, Windsor Park, Leimert Park...), 9 places with stored schools mostly
 in another district (5 are hamlet coordinates, see backlog), Seattle Ballard and Kirkland unscored.
 
-## Zone maps (attendance zones), built 2026-10-15, not yet wired into scoring
+## Zone maps (attendance zones), wired into scoring 2026-10-15
 `data_sources/school_zones.py`: `zoned_schools(lat, lon)` returns the zoned elementary / middle /
 high school for a point from district-published maps in `data_cache/zone_maps/` (not in git;
 override with `HOMEFIT_ZONE_MAPS_DIR`); `match_zoned_to_schools` finds the SchoolDigger school
@@ -207,38 +220,20 @@ name crosswalk is needed (NCES `ST_SCHID` ends with the school number and could 
 Zones give the zoned school only: charters and choice schools still come from the radius search,
 and each place should carry the map vintage. Combination rule (zoned + choice) is undecided.
 
-## Backlog (as of 2026-10-14, after commit 0d4ce7c)
-Priority order, none blocking the current catalog.
+## Backlog (as of 2026-10-16)
+Done 2026-10-15/16: percentile scale, zone maps for 6 metros (LA via campus-in-zone), hamlet fix, Seattle zones,
+state snapshot, offline re-score, production bundle, Explorer labels, deal-breaker 50, public/charter split.
 
-1. ~~Public vs charter split~~ built 2026-10-14 (see section above). Left: show the `thin`
-   confidence in the Explorer UI when a filtered side has fewer than 3 rated schools.
-2. **Hamlet coordinates** (not fixed; the zoned model still uses the point's district). Cold Spring Harbor, Mamaroneck, Woodmere, Valley Stream and Los Altos
-   Hills have catalog coordinates inside the neighboring district's polygon, so the Census lookup
-   would pick the wrong district. Fix: use the Census place (village/CDP) outline and take the
-   district covering most of it; keep the point for neighborhoods that have no outline.
-3. **Ship the Census boundary files to production** (80 MB raw in `data_cache/tiger_sd_2024`, not
-   in git; override with `HOMEFIT_TIGER_SD_DIR`). Until then production uses the SchoolDigger
-   fallback chain. Consider a slimmed file (GEOID, NAME, simplified geometry) and a
-   `.gitignore` entry for `data_cache/`.
-4. **Seattle:** Ballard and Kirkland rows failed (API was down) and need their failed pillars
-   re-run; the Seattle catalog has only 5 places.
-5. **Austin:** Dripping Springs has no ZIP (78620).
-6. **Belvedere CA:** no rated school within the radius (its schools are in Tiburon, just past 2 mi).
-   Candidate fix: with the boundary lookup, take the place's district regardless of radius when
-   the district is small.
-7. **Validate low scores** (Lawrence NY, Englewood Chicago, Gary, Hammond, East Palo Alto, Elgin TX)
-   against state test proficiency; SchoolDigger ratings are the only source so far.
-8. **Large-district neighborhoods** (Montclair/Oakland, LA, Chicago) rely on the radius, which
-   pulls in schools that are not the address's zoned schools. Real fix is attendance zones
-   (SchoolDigger Enterprise `boundaryAddress`). Ask for a quote.
-9. **Tests:** no unit tests cover the lookup chain, `school_districts.py`, or the home-district
-   filter. Add fixtures for Bronxville, Cedarhurst, Studio City, Cupertino, Oak Park.
-10. **Offline verification** (`offline_check`, NCES CCD 2023-24 school directory, 41 MB in
-    `data_cache/nces_ccd_2324`): 425 of 457 places fully inside their Census district. Turn the
-    check into a script in `scripts/catalog/` and run it after any education rescore. Known noise:
-    name collisions (Chicago), NYC boroughs (NCES splits them into 32 districts).
-11. **Housekeeping:** `.bak` / `.bakEdu` files in `data/`, `scripts/cron/daily_school_cache.sh`
-    (written for the old Developer quota; decide whether to retire), `metro_agent health --fix`
-    starts its own API on port 8000 and will kill a runner using that port.
-12. **Playbook:** fold the "Re-scoring a metro" runbook above into
-    `docs/METRO_EXPANSION_PLAYBOOK.md` and `docs/CATALOG_TOOLKIT.md`.
+1. **Austin zones are stale** (2021-22 / 2020-21; AISD consolidated schools for 2026-27). Request current maps from
+   AISD planning (the district publishes only the old files); drop them into `data_cache/zone_maps/austin_*`, rebuild the
+   bundle, re-score offline. 0 SchoolDigger calls.
+2. **Philadelphia**: PA is in the snapshot; needs Census PA district/place files in `data_cache` (bundle already has
+   PA geography) and the 2024-25 SDP catchment shapefiles (OpenDataPhilly) as `ZoneLayer`s.
+3. **SF middle/high** are choice (no zones), **NYC high school** is mostly choice, **Chicago high school** only neighborhood
+   schools have zones: they use the nearest-3 rule. Revisit if a choice-system model is wanted.
+4. **Explorer**: the public/charter filter should show the "thin" flag; check the new detail rows on a real place page.
+5. **Validate low scores** (Humboldt Park, Gary, East Palo Alto, Bayview) against state test proficiency.
+6. **Large-district neighborhoods without zones** rely on nearest-3 per level; attendance zones are the real fix.
+7. **Snapshot refresh** once a year (about 112 calls, under $1) and rebuild the bundle when zone maps change.
+8. **Choice-school handling** (magnet/lottery seats) is only the charter list; magnets are not modeled.
+9. Housekeeping: fold the re-score recipe into `docs/METRO_EXPANSION_PLAYBOOK.md` and `docs/CATALOG_TOOLKIT.md`.

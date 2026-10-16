@@ -473,6 +473,25 @@ def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
     return out
 
 
+_SOURCE_LABEL = {"zone": "zoned school", "nearest": "nearest in district", "district_far": "district's nearest",
+                 "charter_only": "nearby charter"}
+
+
+def summary_extras(breakdown: Dict) -> Dict[str, Optional[str]]:
+    """Plain-language fields for the Explorer's school details (zoned_v1 only)."""
+    levels = breakdown.get("levels") or {}
+    if breakdown.get("model") != MODEL or not levels:
+        return {}
+    srcs = [f"{lv.capitalize()}: {_SOURCE_LABEL.get(v.get('source'), 'no rated school')}" for lv, v in levels.items()]
+    years = sorted({v["zone"]["vintage"] for v in levels.values() if v.get("zone") and v["zone"].get("matched")})
+    scored = sum(1 for v in levels.values() if v.get("score") is not None)
+    return {
+        "level_sources": "; ".join(srcs),
+        "zone_map_years": ", ".join(years) if years else "No zone map used",
+        "levels_scored": f"{scored} of {len(levels)} levels" + (" (thin)" if scored < 2 else ""),
+    }
+
+
 def get_school_data(
     zip_code: Optional[str] = None,
     state: Optional[str] = None,
@@ -481,13 +500,15 @@ def get_school_data(
     lon: Optional[float] = None,
     area_type: Optional[str] = None,
     place_name: Optional[str] = None,
+    early_ed_bonus_override: Optional[float] = None,
 ) -> Tuple[float, Dict[str, List[Dict]], Dict]:
     """
-    Education score (0-100), schools by level, breakdown. Uses the zoned model when the point has
+    Education score (0-100), schools by level, breakdown. `early_ed_bonus_override` reuses a stored early-education
+    bonus (offline re-scores) instead of querying OpenStreetMap again. Uses the zoned model when the point has
     Census district data; otherwise the legacy radius model (places outside the boundary files).
     """
     print("📚 Fetching school data (zoned model)...")
-    cands = schools_api.get_zone_candidates(lat, lon, state, area_type) if (lat is not None and state) else None
+    cands = schools_api.get_zone_candidates(lat, lon, state, area_type, place_name) if (lat is not None and state) else None
     if not cands:
         print("   no district boundary data for this point; using the legacy lookup")
         return _get_school_data_legacy(zip_code, state, city, lat, lon, area_type, place_name)
@@ -495,7 +516,7 @@ def get_school_data(
     from data_sources.school_zones import zoned_schools
     zoned = zoned_schools(lat, lon)
     levels = build_levels(cands["pool"], zoned, cands["radius_miles"], cands.get("charters"))
-    early = _early_ed_bonus(lat, lon)
+    early = early_ed_bonus_override if early_ed_bonus_override is not None else _early_ed_bonus(lat, lon)
     total = headline_from_levels(levels, early)
     if total is None:
         print("⚠️  No rated schools for any level")
@@ -530,6 +551,7 @@ def get_school_data(
         "early_ed_bonus": round(early, 2),
         "total_schools_rated": len(rated_schools),
         "elite_schools_count": sum(1 for e in rated_schools if (e["rating"] or 0) >= 85),
+        "excellent_schools_count": sum(1 for e in rated_schools if (e["rating"] or 0) >= 85),
         "levels": levels,
         "choice": choice,
         "rated_schools": rated_schools,

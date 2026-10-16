@@ -32,6 +32,7 @@ class ZoneLayer:
     covers: tuple = ()          # extra levels this zone serves (Chicago K-8 elementary zones)
     only_where: Optional[tuple] = None   # (field, value): keep only features with field == value
     resolver: Optional[str] = None       # 'nyc_dbn': turn a DOE school code into a school name via NCES
+    spatial_only: bool = False           # layer has no school names: match the school by the zone it sits in
     caveat: str = ""
 
 
@@ -55,8 +56,18 @@ ZONE_LAYERS: List[ZoneLayer] = [
     ZoneLayer("nyc_high_2425", "high", ("sch_name", "dbn"), "dbn", "2024-25", "NY",
               only_where=("catchment", "1"), resolver="nyc_dbn",
               caveat="only a few NYC high schools have a zone; most admit citywide by application"),
-    # LA (LAUSD) layers are downloaded but carry only numeric keys; add them once the LAUSD key
-    # table that maps those keys to school names is available.
+    ZoneLayer("la_elementary_2018_2020", "elementary", (), "KEY_", "2018", "CA", spatial_only=True,
+              caveat="LAUSD elementary zones last updated 2018; school found by the campus inside the zone"),
+    ZoneLayer("la_middle_2018_2020", "middle", (), "KEY_", "2020", "CA", spatial_only=True,
+              caveat="LAUSD middle zones last updated 2020; school found by the campus inside the zone"),
+    ZoneLayer("la_high_2018_2020", "high", (), "KEY_", "2018", "CA", spatial_only=True,
+              caveat="LAUSD high zones last updated 2018; school found by the campus inside the zone"),
+    ZoneLayer("seattle_elementary_2324", "elementary", ("es_zone",), "es_sch", "2023-24", "WA",
+              caveat="Seattle Public Schools 2023-24 map; Seattle has many option-school seats"),
+    ZoneLayer("seattle_middle_2324", "middle", ("ms_zone",), "ms_sch", "2023-24", "WA",
+              caveat="Seattle Public Schools 2023-24 map"),
+    ZoneLayer("seattle_high_2324", "high", ("HS_ZONE",), "HS_SCH", "2023-24", "WA",
+              caveat="Seattle Public Schools 2023-24 map"),
 ]
 
 _lock = threading.Lock()
@@ -74,22 +85,17 @@ def _load(layer: ZoneLayer):
         if layer.folder in _frames:
             return _frames[layer.folder]
         frame = None
-        files = glob.glob(os.path.join(_root(), layer.folder, "*.geojson")) or \
-            glob.glob(os.path.join(_root(), layer.folder, "*.shp"))
-        if files:
-            try:
-                import geopandas as gpd
+        try:
+            from data_sources.geo_layers import read_layer
 
-                frame = gpd.read_file(files[0])
-                if frame.crs is None:
-                    frame = frame.set_crs(4326)
-                frame = frame.to_crs(4326)
+            frame = read_layer(f"zone_{layer.folder}", os.path.join(_root(), layer.folder))
+            if frame is not None:
                 if layer.only_where:
                     field, value = layer.only_where
                     frame = frame[frame[field].astype(str) == value]
                 frame.sindex  # build the spatial index once
-            except Exception:
-                frame = None
+        except Exception:
+            frame = None
         _frames[layer.folder] = frame
         return frame
 
@@ -115,6 +121,20 @@ def _nyc_name_for_dbn(dbn: str) -> str:
         if "map" not in _nyc_names_cache:
             table: Dict[tuple, str] = {}
             try:
+                import json as _json
+                from data_sources.geo_layers import bundle_dir
+
+                packed = os.path.join(bundle_dir(), "nyc_dbn_names.json")
+                if os.path.isfile(packed):
+                    with open(packed) as f:
+                        for k, v in _json.load(f).items():
+                            d, n = k.split(":")
+                            table[(int(d), int(n))] = v
+            except Exception:
+                table = {}
+            try:
+                if table:
+                    raise StopIteration  # bundle found, skip the raw NCES file
                 import pandas as pd
 
                 df = pd.read_csv(_nces_csv(), dtype=str, low_memory=False,
@@ -124,6 +144,8 @@ def _nyc_name_for_dbn(dbn: str) -> str:
                     d = re.search(r"#\s*(\d+)", str(lea))
                     if d and str(sid)[-4:].isdigit():
                         table[(int(d.group(1)), int(str(sid)[-4:]))] = str(name)
+            except StopIteration:
+                pass
             except Exception:
                 table = {}
             _nyc_names_cache["map"] = table
@@ -150,7 +172,7 @@ def zoned_schools(lat: float, lon: float) -> List[Dict[str, Any]]:
                 full = _nyc_name_for_dbn(str(row.get(layer.id_field, "")))
                 names = ([full] if full else []) + names
             # a blank name or a "citywide ... choice" polygon means the zone assigns no school
-            if not names or any("citywide" in n.lower() for n in names):
+            if not layer.spatial_only and (not names or any("citywide" in n.lower() for n in names)):
                 continue
             out.append({
                 "level": layer.level,
@@ -162,6 +184,7 @@ def zoned_schools(lat: float, lon: float) -> List[Dict[str, Any]]:
                 "vintage": layer.vintage,
                 "state": layer.state,
                 "caveat": layer.caveat,
+                "_geom": row.geometry,
             })
     return out
 
@@ -212,4 +235,51 @@ def match_zoned_to_schools(zoned: Dict[str, Any], schools: List[Dict[str, Any]])
                 if best_key is None or key > best_key:
                     best, best_key = s, key
                 break
+    if best is None:
+        return match_zone_by_location(zoned, schools)
     return best
+
+
+def _school_point(s: Dict[str, Any]):
+    from shapely.geometry import Point
+
+    ll = (s.get("address") or {}).get("latLong") or {}
+    if ll.get("latitude") is None or ll.get("longitude") is None:
+        return None
+    return Point(float(ll["longitude"]), float(ll["latitude"]))
+
+
+def match_zone_by_location(zoned: Dict[str, Any], schools: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """
+    The school a zone assigns, found by where the schools sit: the rated school of the right level whose campus
+    is inside the zone polygon. `schools` must already be the home district's schools, so a charter in the list is
+    a district-affiliated charter (a neighborhood school in LAUSD, for example). Used when names do not line up
+    (Seattle "Denny Int'l" vs "Denny International") or the map has no names (LA). Preference: regular school,
+    then affiliated charter, then magnet; None unless one school is left (ties go to the school sharing a word
+    with the zone's name).
+    """
+    geom = zoned.get("_geom")
+    if geom is None:
+        return None
+    levels = {zoned["level"], *zoned.get("also_serves", [])}
+    tiers: Dict[int, List[Dict[str, Any]]] = {0: [], 1: [], 2: []}
+    for s in schools:
+        lvl = (s.get("schoolLevel") or "").lower()
+        if s.get("isPrivate") or not (s.get("rankHistory") or []):
+            continue
+        if not any(l in lvl for l in levels) and not ("elementary" in levels and "primary" in lvl):
+            continue
+        pt = _school_point(s)
+        if pt is None or not geom.contains(pt):
+            continue
+        tier = 2 if s.get("isMagnetSchool") == "Yes" else (1 if s.get("isCharterSchool") == "Yes" else 0)
+        tiers[tier].append(s)
+    inside = next((tiers[t] for t in (0, 1, 2) if tiers[t]), [])
+    if len(inside) == 1:
+        return inside[0]
+    if len(inside) > 1:
+        want = set().union(*[_tokens(n) for n in zoned["names"]]) if zoned.get("names") else set()
+        scored = sorted(inside, key=lambda s: -len(want & _tokens(s.get("schoolName", ""))))
+        if want and len(want & _tokens(scored[0].get("schoolName", ""))) > 0:
+            return scored[0]
+    return None

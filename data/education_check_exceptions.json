@@ -1,6 +1,5 @@
 {
   "sf:Belvedere": "No rated school within the radius: its schools are in Tiburon, just past 2 mi. Education left out of the total.",
-  "nyc:Southport": "Census labels the area 'School District Not Defined' (served by Fairfield); stays on the legacy lookup.",
   "nyc:Babylon": "Babylon's junior-senior high has no SchoolDigger rating; only the elementary level can be scored.",
   "nyc:Edgewater": "Edgewater's district is K-8 with no middle or high school in SchoolDigger's list; only elementary is scored."
 }

@@ -37,3 +37,18 @@ def test_every_layer_has_levels_and_caveats():
 def test_chicago_point_lookup():
     got = {z["level"]: z["name"] for z in zoned_schools(41.9024, -87.7230)}
     assert got.get("elementary") == "CAMERON" and got.get("high") == "ORR HS"
+
+
+def test_match_by_location_inside_zone_and_prefers_regular_school():
+    from shapely.geometry import Point, box
+    from data_sources.school_zones import match_zone_by_location
+
+    def sc(name, lon, lat, **kw):
+        return {"schoolName": name, "schoolLevel": "Elementary", "isPrivate": False,
+                "rankHistory": [{"rankStars": 3}], "address": {"latLong": {"latitude": lat, "longitude": lon}}, **kw}
+
+    zone = {"level": "elementary", "also_serves": [], "names": [], "_geom": box(0, 0, 1, 1)}
+    pool = [sc("Inside Elementary", 0.5, 0.5), sc("Outside Elementary", 5, 5),
+            sc("Magnet Inside", 0.4, 0.4, isMagnetSchool="Yes")]
+    assert match_zone_by_location(zone, pool)["schoolName"] == "Inside Elementary"
+    assert match_zone_by_location({**zone, "_geom": box(9, 9, 10, 10)}, pool) is None

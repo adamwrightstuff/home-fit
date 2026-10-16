@@ -42,7 +42,7 @@ from data_sources.cache import (
 from data_sources.error_handling import check_api_credentials
 from data_sources.telemetry import record_request_metrics, record_error, get_telemetry_stats
 from pillars.strict_lookups import apply_strict_lookup_failures
-from pillars.schools import get_school_data
+from pillars.schools import get_school_data, summary_extras as school_summary_extras
 from pillars.active_outdoors import get_active_outdoors_score_v2
 from pillars import built_environment, natural_beauty
 from pillars.neighborhood_amenities import get_neighborhood_amenities_score
@@ -2515,6 +2515,7 @@ def _compute_single_score_internal(
                 "base_avg_rating": round(school_breakdown.get("base_avg_rating", 0), 2),
                 "total_schools_rated": school_breakdown.get("total_schools_rated", 0),
                 "excellent_schools_count": school_breakdown.get("excellent_schools_count", 0),
+                **school_summary_extras(school_breakdown),
                 "quality_boost": round(school_breakdown.get("quality_boost", 0), 2),
                 "early_ed_bonus": round(school_breakdown.get("early_ed_bonus", 0), 2),
                 "college_bonus": round(school_breakdown.get("college_bonus", 0), 2)
@@ -4239,6 +4240,7 @@ async def _stream_score_with_progress(
                     "base_avg_rating": round(school_breakdown.get("base_avg_rating", 0), 2),
                     "total_schools_rated": school_breakdown.get("total_schools_rated", 0),
                     "excellent_schools_count": school_breakdown.get("excellent_schools_count", 0),
+                **school_summary_extras(school_breakdown),
                     "quality_boost": round(school_breakdown.get("quality_boost", 0), 2),
                     "early_ed_bonus": round(school_breakdown.get("early_ed_bonus", 0), 2),
                     "college_bonus": round(school_breakdown.get("college_bonus", 0), 2)

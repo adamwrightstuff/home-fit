@@ -554,12 +554,12 @@ export function passesAirTravelDealbreaker(
 }
 
 /**
- * Deal-breaker gate for quality_education: pillar score must clear 60 — the "3-star
- * equivalent" tier in pillars/schools.py's rating formula (rankStars * 20, so 3/5 stars =
- * 60). The catalog stores the already-aggregated rating, not a separate percentile field,
- * so this anchors directly on score using that source system's own star-tier boundary.
+ * Deal-breaker gate for quality_education: pillar score must clear 50. Education scores are SchoolDigger
+ * statewide percentiles (zoned_v1), and a "3-star" school is exactly the 50th to 70th percentile band
+ * (stars are 0-10, 10-30, 30-50, 50-70, 70-90, 90-100), so 50 keeps the old "at least 3-star equivalent" meaning:
+ * the schools that count are at or above the state median.
  */
-export const QUALITY_EDUCATION_DEALBREAKER_SCORE = 60
+export const QUALITY_EDUCATION_DEALBREAKER_SCORE = 50
 
 export function passesQualityEducationDealbreaker(score: number | null | undefined): boolean {
   if (score === null || score === undefined) return true

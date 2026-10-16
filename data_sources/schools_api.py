@@ -423,6 +423,21 @@ def state_charter_list(state: str) -> List[Dict]:
                              "isCharter": "true"}) or []
 
 
+def _district_schools(state: str, district_id: str) -> List[Dict]:
+    """A district's schools: the local state snapshot when there is one, else a cached API pull."""
+    from data_sources import school_snapshot as ss
+
+    lst = ss.district_schools(state, district_id)
+    return lst if lst is not None else district_school_list(state, district_id)
+
+
+def _state_charters(state: str) -> List[Dict]:
+    from data_sources import school_snapshot as ss
+
+    lst = ss.state_charters(state)
+    return lst if lst is not None else state_charter_list(state)
+
+
 def _with_distance(schools: List[Dict], lat: float, lon: float) -> List[Dict]:
     """Copies of the schools with 'distance' (miles) from the point, from their coordinates."""
     out = []
@@ -436,7 +451,8 @@ def _with_distance(schools: List[Dict], lat: float, lon: float) -> List[Dict]:
 
 
 def get_zone_candidates(
-    lat: Optional[float], lon: Optional[float], state: Optional[str], area_type: Optional[str] = None
+    lat: Optional[float], lon: Optional[float], state: Optional[str], area_type: Optional[str] = None,
+    place_name: Optional[str] = None,
 ) -> Optional[Dict]:
     """
     Candidate schools for the zoned model: all schools of the Census district(s) containing the point,
@@ -448,10 +464,10 @@ def get_zone_candidates(
         return None
     state = normalize_state(state)  # the API passes "New York"; the district files and SchoolDigger want "NY"
     try:
-        from data_sources.school_districts import districts_for_point
+        from data_sources.school_districts import districts_for_place
     except Exception:
         return None
-    districts = districts_for_point(lat, lon, state)
+    districts = districts_for_place(lat, lon, state, place_name)  # point's district unless the place outline clearly disagrees
     if not districts:
         return None
     radius = get_radius_profile("quality_education", area_type, None).get("search_radius_miles", 2.0)
@@ -468,7 +484,7 @@ def get_zone_candidates(
     pool: List[Dict] = []
     seen = set()
     for did in district_ids:
-        for sc in _with_distance(district_school_list(state, did), lat, lon):
+        for sc in _with_distance(_district_schools(state, did), lat, lon):
             key = sc.get("schoolid") or sc.get("schoolID") or (sc.get("schoolName"), sc.get("distance"))
             if key not in seen:
                 seen.add(key)
@@ -476,7 +492,7 @@ def get_zone_candidates(
     pool.sort(key=lambda sc: sc["distance"])
     if not pool:
         return None
-    charters = [sc for sc in _with_distance(state_charter_list(state), lat, lon)
+    charters = [sc for sc in _with_distance(_state_charters(state), lat, lon)
                 if sc["distance"] <= radius and _is_rated_school(sc)]
     return {"districts": [{"id": d["id"], "name": d["name"], "kind": d["kind"]} for d in districts],
             "pool": pool, "charters": charters, "radius_miles": radius}

@@ -20,7 +20,7 @@ const MUST_HAVE_PILLARS: PillarKey[] = ['housing_value', 'quality_education', 'c
 /** What "fails" means per pillar; mirrors the thresholds in lib/reweight.ts. Keep in sync. */
 const MUST_HAVE_LABELS: Partial<Record<PillarKey, { short: string; full: string }>> = {
   housing_value: { short: 'Price over 3x income', full: 'Home price over 3x your household income' },
-  quality_education: { short: 'Schools under 3-star', full: 'School ratings below 3-star equivalent' },
+  quality_education: { short: 'Schools below state median', full: 'Schools that count here rank below the state median (under a 3-star equivalent)' },
   community_safety: { short: 'Highest-crime quarter', full: 'In the highest-crime quarter nationally' },
   healthcare_access: { short: '30+ min to hospital', full: 'More than 30 min drive from a hospital' },
   air_travel_access: { short: '60+ min to airport', full: 'More than 60 min drive from an airport' },

@@ -50,17 +50,14 @@ def _load(fips: str, kind: str):
         if key in _cache:
             return _cache[key]
         frame = None
-        paths = glob.glob(os.path.join(_root(), f"tl_2024_{fips}_{kind}", "*.shp"))
-        if paths:
-            try:
-                import geopandas as gpd
+        try:
+            from data_sources.geo_layers import read_layer
 
-                frame = gpd.read_file(paths[0], columns=["GEOID", "NAME"])
-                if frame.crs is not None and frame.crs.to_epsg() != 4326:
-                    frame = frame.to_crs(4326)
+            frame = read_layer(f"district_{fips}_{kind}", os.path.join(_root(), f"tl_2024_{fips}_{kind}"), ["GEOID", "NAME"])
+            if frame is not None:
                 frame.sindex  # build the spatial index once
-            except Exception:
-                frame = None
+        except Exception:
+            frame = None
         _cache[key] = frame
         return frame
 
@@ -106,3 +103,115 @@ def point_agreement(lat: float, lon: float, state_abbr: Optional[str], radius_m:
         here = {d["id"] for d in districts_for_point(lat + dlat, lon + dlon, state_abbr)}
         same += 1 if here == base else 0
     return same / 8.0
+
+
+# ---------------------------------------------------------------------------------------------
+# Place outlines: a hamlet's coordinate can sit just across a district line (Cold Spring Harbor's
+# catalog point is inside Huntington's district). When a Census place with the requested name exists
+# near the point, the district(s) covering most of that place's outline win over the single point.
+# ---------------------------------------------------------------------------------------------
+_place_cache: Dict[str, object] = {}
+MAX_PLACE_SQ_MI = 12.0     # city-sized places say nothing about one neighborhood
+MIN_OVERLAP_SHARE = 0.5
+
+
+def _place_root() -> str:
+    default = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           "data_cache", "tiger_place_2024")
+    return os.getenv("HOMEFIT_TIGER_PLACE_DIR", default)
+
+
+def _load_places(fips: str):
+    with _lock:
+        if fips in _place_cache:
+            return _place_cache[fips]
+        frame = None
+        try:
+            from data_sources.geo_layers import read_layer
+
+            frame = read_layer(f"place_{fips}", os.path.join(_place_root(), f"tl_2024_{fips}_place"), ["NAME", "GEOID"])
+            if frame is not None:
+                frame["_key"] = frame["NAME"].map(_norm_place)
+                frame.sindex
+        except Exception:
+            frame = None
+        _place_cache[fips] = frame
+        return frame
+
+
+def _norm_place(name: str) -> str:
+    import re
+
+    n = re.sub(r"\b(village|town|city|borough|township|hamlet|cdp|of)\b", " ", (name or "").lower())
+    return re.sub(r"[^a-z0-9]+", " ", n).strip()
+
+
+def districts_for_place(lat: float, lon: float, state_abbr: Optional[str],
+                        place_name: Optional[str]) -> List[Dict[str, str]]:
+    """
+    Districts for a place: the point's districts, replaced by the districts covering most of the Census
+    place outline when the point's districts cover less than half of it. Same shape as districts_for_point.
+    """
+    base = districts_for_point(lat, lon, state_abbr)
+    fips = _STATE_FIPS.get((state_abbr or "").upper())
+    if not (fips and place_name and base):
+        return base
+    places = _load_places(fips)
+    if places is None:
+        return base
+    from shapely.geometry import Point
+
+    key = _norm_place(place_name)
+    if not key:
+        return base
+    pt = Point(lon, lat)
+    # same-named places within ~3 km of the point (0.03 degrees)
+    cand = places[places["_key"] == key]
+    if len(cand) == 0:
+        return base
+    cand = cand[cand.geometry.distance(pt) < 0.03]
+    if len(cand) == 0:
+        return base
+    place = cand.iloc[0].geometry
+    import geopandas as gpd
+
+    area_sq_mi = gpd.GeoSeries([place], crs=4326).to_crs(5070).area.iloc[0] / 2_589_988.11
+    if area_sq_mi > MAX_PLACE_SQ_MI or area_sq_mi <= 0:
+        return base
+    place_area = gpd.GeoSeries([place], crs=4326).to_crs(5070).area.iloc[0]
+
+    # Per kind (unified / elementary / secondary): replace the point's district only on a clear disagreement,
+    # i.e. the replacement covers at least half of the place and the point's own district covers a quarter or less.
+    by_kind = {d["kind"]: d for d in base}
+    result: List[Dict[str, str]] = []
+    weak: set = set()
+    for kind in _KINDS:
+        frame = _load(fips, kind)
+        mine = by_kind.get(kind)
+        if frame is None:
+            if mine:
+                result.append(mine)
+            continue
+        hits = frame.iloc[list(frame.sindex.query(place, predicate="intersects"))]
+        shares = {}
+        for _, row in hits.iterrows():
+            shares[str(row["GEOID"])] = (gpd.GeoSeries([place.intersection(row.geometry)], crs=4326)
+                                         .to_crs(5070).area.iloc[0] / place_area, row)
+        pick = mine
+        weak_mine = False
+        if shares:
+            gid, (share, row) = max(shares.items(), key=lambda kv: kv[1][0])
+            mine_share = shares.get(mine["id"], (0.0, None))[0] if mine else 0.0
+            if share >= MIN_OVERLAP_SHARE and mine_share <= 0.25 and (mine is None or gid != mine["id"]):
+                pick = {"id": gid, "name": str(row["NAME"]), "kind": kind}
+            elif mine is not None and mine_share <= 0.25:
+                weak_mine = True   # the point's district barely touches the place
+        if pick:
+            result.append(pick)
+            if weak_mine and pick is mine:
+                weak.add(kind)
+    # a unified district that barely touches the place is dropped when elementary/secondary districts replaced it
+    changed_split = any(d["kind"] in ("elsd", "scsd") and d["id"] not in {b["id"] for b in base} for d in result)
+    if changed_split:
+        result = [d for d in result if d["kind"] not in weak]
+    return result or base
