@@ -168,9 +168,17 @@ def zoned_schools(lat: float, lon: float) -> List[Dict[str, Any]]:
             row = frame.iloc[int(idx)]
             names = [str(row[f]).strip() for f in layer.name_fields
                      if f in row and str(row[f]).strip() not in ("", "None", "nan")]
+            alts: List[List[str]] = []
             if layer.resolver == "nyc_dbn":
-                full = _nyc_name_for_dbn(str(row.get(layer.id_field, "")))
-                names = ([full] if full else []) + names
+                dbns = [d.strip() for d in str(row.get(layer.id_field, "")).split(",") if d.strip()]
+                for d in dbns:                       # a few zones list several schools: '10X363,10X447'
+                    full = _nyc_name_for_dbn(d)
+                    alts.append(([full] if full else []) + [d])
+                if len(dbns) <= 1:
+                    full = _nyc_name_for_dbn(dbns[0]) if dbns else ""
+                    names = ([full] if full else []) + names
+                else:
+                    names = [n for a in alts for n in a]
             # a blank name or a "citywide ... choice" polygon means the zone assigns no school
             if not layer.spatial_only and (not names or any("citywide" in n.lower() for n in names)):
                 continue
@@ -184,6 +192,7 @@ def zoned_schools(lat: float, lon: float) -> List[Dict[str, Any]]:
                 "vintage": layer.vintage,
                 "state": layer.state,
                 "caveat": layer.caveat,
+                "alts": alts if len(alts) > 1 else [],
                 "_geom": row.geometry,
             })
     return out
@@ -283,3 +292,44 @@ def match_zone_by_location(zoned: Dict[str, Any], schools: List[Dict[str, Any]])
         if want and len(want & _tokens(scored[0].get("schoolName", ""))) > 0:
             return scored[0]
     return None
+
+
+def match_zoned_schools(zoned: Dict[str, Any], schools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Every school a zone assigns, as a list: usually one. More than one when a zone lists several schools
+    (NYC '10X363,10X447'), or when a map with no names puts several schools of the level on the resident campus
+    (LA's large high schools are split into small schools sharing one building; a student zoned there attends
+    one of them, so callers average them). Empty when nothing is found.
+    """
+    if zoned.get("alts"):
+        found = []
+        for names in zoned["alts"]:
+            m = match_zoned_to_schools({**zoned, "names": names, "name": names[0], "alts": [], "_geom": None}, schools)
+            if m is not None and m not in found:
+                found.append(m)
+        return found
+    m = match_zoned_to_schools(zoned, schools)
+    if m is not None:
+        return [m]
+    if not zoned.get("names"):       # nameless map: the whole resident campus
+        return _campus_schools(zoned, schools)
+    return []
+
+
+def _campus_schools(zoned: Dict[str, Any], schools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    geom = zoned.get("_geom")
+    if geom is None:
+        return []
+    levels = {zoned["level"], *zoned.get("also_serves", [])}
+    tiers: Dict[int, List[Dict[str, Any]]] = {0: [], 1: [], 2: []}
+    for s in schools:
+        lvl = (s.get("schoolLevel") or "").lower()
+        if s.get("isPrivate") or not (s.get("rankHistory") or []):
+            continue
+        if not any(l in lvl for l in levels) and not ("elementary" in levels and "primary" in lvl):
+            continue
+        pt = _school_point(s)
+        if pt is None or not geom.contains(pt):
+            continue
+        tiers[2 if s.get("isMagnetSchool") == "Yes" else (1 if s.get("isCharterSchool") == "Yes" else 0)].append(s)
+    return next((tiers[t] for t in (0, 1, 2) if tiers[t]), [])[:8]

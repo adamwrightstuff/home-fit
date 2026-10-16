@@ -365,7 +365,8 @@ def _get_school_data_legacy(
 
 # ---------------------------------------------------------------------------------------------
 # Zoned model (zoned_v1)
-#   Headline = mean over levels (elementary, middle, high) of that level's score.
+#   Headline = mean over the levels that are assigned by address (elementary, middle, high). A level the district
+#   fills by application (no zone where the district publishes zones) is "choice": shown, not scored.
 #   A level's score = the zoned school's statewide percentile when a zone map assigns one and it is
 #   rated; otherwise the mean of the nearest 3 rated non-charter schools of that level in the home
 #   district, widening the radius to a 3 mile cap. Charters are choice options: listed and scored
@@ -421,46 +422,65 @@ def headline_from_levels(levels: Dict[str, Dict], early_ed_bonus: float = 0.0) -
     return min(100.0, sum(scores) / len(scores) + early_ed_bonus)
 
 
-def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
-                 charters: Optional[List[Dict]] = None) -> Dict[str, Dict]:
-    """Per-level result: zoned school when available and rated, else nearest 3 in the home district."""
-    from data_sources.school_zones import match_zoned_to_schools
+def _nearest_in_district(pool: List[Dict], level: str, base_radius_miles: float) -> Tuple[str, List[Dict]]:
+    """('nearest' | 'district_far', schools): nearest 3 rated non-charter schools of the level, widening to the cap,
+    then the district's own nearest up to 15 mi (small elementary-only / high-school-only districts)."""
     from data_sources.schools_api import _is_rated_school
 
     elem_factor = 2.1 / 3.2   # NHTS 2017 median trip: elementary 2.1 mi vs middle 3.2 mi
+    cand = sorted(
+        (sc for sc in pool if _level_of(sc) == level and _is_rated_school(sc)
+         and sc.get("isCharterSchool") != "Yes" and sc.get("distance") is not None),
+        key=lambda sc: float(sc["distance"]))
+    base = base_radius_miles * (elem_factor if level == "elementary" else 1.0)
+    picked: List[Dict] = []
+    for r in sorted({base, base * 1.5, base * 2.0, WIDEN_CAP_MILES}):
+        if r < base or r > max(WIDEN_CAP_MILES, base):
+            continue
+        picked = [sc for sc in cand if float(sc["distance"]) <= r][:NEAREST_PER_LEVEL]
+        if len(picked) >= NEAREST_PER_LEVEL:
+            break
+    if picked:
+        return "nearest", picked
+    return "district_far", [sc for sc in cand if float(sc["distance"]) <= DISTRICT_FAR_CAP_MILES][:NEAREST_PER_LEVEL]
+
+
+def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
+                 charters: Optional[List[Dict]] = None) -> Dict[str, Dict]:
+    """
+    Per-level result.
+    - The zoned school(s) when a zone map assigns one and it is rated; several schools on one resident campus
+      (LA's small high schools, NYC zones listing two schools) are averaged.
+    - Where the place's district publishes zone maps but this level has no zone at the point (NYC high schools and
+      choice-based middle schools, SF middle and high), the level is **choice**: students apply, so nearby schools say
+      little about where a child goes. It is not scored (score None); the nearest 3 are kept as a reference only.
+    - Where no map covers the place at all, the nearest 3 rated schools of the level in the home district.
+    """
+    from data_sources.school_zones import match_zoned_schools
+    from data_sources.schools_api import _is_rated_school
+
+    mapped = bool(zoned)
     out: Dict[str, Dict] = {}
     for level in LEVELS:
         z = next((x for x in zoned if x["level"] == level), None) or \
             next((x for x in zoned if level in x.get("also_serves", [])), None)
         res: Dict[str, Any] = {"source": None, "score": None, "schools": [], "zone": None}
+        if mapped and z is None:
+            _, ref = _nearest_in_district(pool, level, base_radius_miles)
+            res.update(source="choice", reference=[_entry(sc, "reference") for sc in ref])
+            out[level] = res
+            continue
         if z:
             res["zone"] = {"name": z["name"], "vintage": z["vintage"], "caveat": z["caveat"], "matched": False}
-            m = match_zoned_to_schools(z, pool)
-            if m is not None and _is_rated_school(m) and school_rating(m) is not None:
-                res.update(source="zone", schools=[_entry(m, "zoned")])
+            ms = [m for m in match_zoned_schools(z, pool) if _is_rated_school(m) and school_rating(m) is not None]
+            if ms:
+                res.update(source="zone", schools=[_entry(m, "zoned") for m in ms])
                 res["zone"]["matched"] = True
         if not res["schools"]:
-            cand = sorted(
-                (sc for sc in pool if _level_of(sc) == level and _is_rated_school(sc)
-                 and sc.get("isCharterSchool") != "Yes" and sc.get("distance") is not None),
-                key=lambda sc: float(sc["distance"]))
-            base = base_radius_miles * (elem_factor if level == "elementary" else 1.0)
-            picked: List[Dict] = []
-            for r in sorted({base, base * 1.5, base * 2.0, WIDEN_CAP_MILES}):
-                if r < base or r > max(WIDEN_CAP_MILES, base):
-                    continue
-                picked = [sc for sc in cand if float(sc["distance"]) <= r][:NEAREST_PER_LEVEL]
-                if len(picked) >= NEAREST_PER_LEVEL:
-                    break
+            kind, picked = _nearest_in_district(pool, level, base_radius_miles)
             if picked:
-                res.update(source="nearest", schools=[_entry(sc, "nearest") for sc in picked])
+                res.update(source=kind, schools=[_entry(sc, "nearest") for sc in picked])
             else:
-                # The home district's own school of this level, however far: it is the school that serves
-                # the place (small elementary-only or high-school-only districts are the usual case).
-                far = [sc for sc in cand if float(sc["distance"]) <= DISTRICT_FAR_CAP_MILES][:NEAREST_PER_LEVEL]
-                if far:
-                    res.update(source="district_far", schools=[_entry(sc, "nearest") for sc in far])
-            if not res["schools"]:
                 # No district-run school of this level within reach (e.g. Pacific Palisades' high school is a
                 # charter): the nearest rated charters of the level are what a family there actually has.
                 cc = sorted((sc for sc in (charters or []) if _level_of(sc) == level and sc.get("distance") is not None
@@ -474,7 +494,7 @@ def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
 
 
 _SOURCE_LABEL = {"zone": "zoned school", "nearest": "nearest in district", "district_far": "district's nearest",
-                 "charter_only": "nearby charter"}
+                 "charter_only": "nearby charter", "choice": "choice by application, not scored"}
 
 
 def summary_extras(breakdown: Dict) -> Dict[str, Optional[str]]:
@@ -485,10 +505,13 @@ def summary_extras(breakdown: Dict) -> Dict[str, Optional[str]]:
     srcs = [f"{lv.capitalize()}: {_SOURCE_LABEL.get(v.get('source'), 'no rated school')}" for lv, v in levels.items()]
     years = sorted({v["zone"]["vintage"] for v in levels.values() if v.get("zone") and v["zone"].get("matched")})
     scored = sum(1 for v in levels.values() if v.get("score") is not None)
+    choice = sum(1 for v in levels.values() if v.get("source") == "choice")
+    counted = len(levels) - choice
+    note = f" ({choice} by choice, not scored)" if choice else ""
     return {
         "level_sources": "; ".join(srcs),
         "zone_map_years": ", ".join(years) if years else "No zone map used",
-        "levels_scored": f"{scored} of {len(levels)} levels" + (" (thin)" if scored < 2 else ""),
+        "levels_scored": f"{scored} of {len(levels)} levels{note}" + (" (thin)" if scored < min(2, counted) else ""),
     }
 
 
@@ -534,10 +557,11 @@ def get_school_data(
             if e["name"] not in used_names and len(choice) < CHOICE_LIST_MAX:
                 choice.append(e)
     n_levels = sum(1 for v in levels.values() if v["score"] is not None)
+    n_counted = sum(1 for v in levels.values() if v.get("source") != "choice")
     charter_ratings = [e["rating"] for e in choice]
     split = {
         "public": {"score": round(total, 2), "n_rated": sum(len(v["schools"]) for v in levels.values()),
-                   "confidence": "ok" if n_levels >= 2 else "thin"},
+                   "confidence": "ok" if n_levels >= min(2, n_counted) else "thin"},
         "charter": ({"score": round(sum(charter_ratings) / len(charter_ratings), 2), "n_rated": len(choice),
                      "confidence": "ok" if len(choice) >= MIN_RATED_FOR_SPLIT else "thin"}
                     if choice else {"score": None, "n_rated": 0, "confidence": "none"}),

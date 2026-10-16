@@ -53,3 +53,32 @@ def test_check_validates_zoned_model_formula():
 def test_state_names_normalize_to_abbreviations():
     from data_sources.schools_api import normalize_state
     assert normalize_state("New York") == "NY" and normalize_state(" ny ") == "NY" and normalize_state("Illinois") == "IL"
+
+
+def test_choice_level_is_not_scored_where_the_district_publishes_zones():
+    zoned = [{"level": "elementary", "also_serves": [], "name": "CAMERON", "names": ["CAMERON"],
+              "vintage": "2025-26", "caveat": ""}]
+    lv = build_levels(POOL, zoned, 2.0)
+    assert lv["elementary"]["source"] == "zone"
+    assert lv["middle"]["source"] == "choice" and lv["middle"]["score"] is None and lv["middle"]["schools"] == []
+    assert lv["high"]["source"] == "choice" and lv["high"]["reference"]    # nearest kept only as a reference
+    assert headline_from_levels(lv, 0.0) == lv["elementary"]["score"]       # headline is the zoned level alone
+
+
+def test_resident_campus_with_several_schools_is_averaged():
+    from shapely.geometry import box
+    pool = [_s("Alpha High", "High", 80.0, 0.5), _s("Beta High", "High", 40.0, 0.5), _s("Far High", "High", 99.0, 5.0)]
+    for i, sc in enumerate(pool):
+        sc["address"] = {"latLong": {"latitude": 0.5 if i < 2 else 5.0, "longitude": 0.5 if i < 2 else 5.0}}
+    zoned = [{"level": "high", "also_serves": [], "name": "", "names": [], "vintage": "2018", "caveat": "",
+              "_geom": box(0, 0, 1, 1)}]
+    lv = build_levels(pool, zoned, 2.0)
+    assert lv["high"]["source"] == "zone" and lv["high"]["score"] == 60.0 and len(lv["high"]["schools"]) == 2
+
+
+def test_nyc_zone_listing_two_schools_returns_both():
+    from data_sources.school_zones import match_zoned_schools
+    pool = [_s("Ps 18 Alpha", "Elementary", 50.0, 0.4), _s("Ps 98 Beta", "Elementary", 70.0, 0.5)]
+    z = {"level": "elementary", "also_serves": [], "name": "06M018", "names": ["06M018", "06M098"],
+         "alts": [["06M018"], ["06M098"]], "_geom": None}
+    assert {s["schoolName"] for s in match_zoned_schools(z, pool)} == {"Ps 18 Alpha", "Ps 98 Beta"}

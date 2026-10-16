@@ -160,13 +160,14 @@ def evaluate(rows: List[Dict[str, Any]], metro: str = "", exceptions: Optional[D
 
         if zoned_model:
             levels = b.get("levels") or {}
-            missing = [lv for lv, v in levels.items() if v.get("score") is None]
+            counted = {lv: v for lv, v in levels.items() if v.get("source") != "choice"}  # choice levels are intentional
+            missing = [lv for lv, v in counted.items() if v.get("score") is None]
             nearest = [lv for lv, v in levels.items() if v.get("source") == "nearest"]
             stale = [lv for lv, v in levels.items() if v.get("source") == "zone" and v.get("zone")]
-            if len(levels) and len(missing) == len(levels):
-                add("no_levels_scored", place, "no level has a rated school", True)
+            if len(counted) and len(missing) == len(counted):
+                add("no_levels_scored", place, "no counted level has a rated school", True)
             elif len(missing) >= 2:
-                add("thin_levels", place, f"only {len(levels) - len(missing)} of 3 levels have a rated school", True)
+                add("thin_levels", place, f"only {len(counted) - len(missing)} of {len(counted)} counted levels have a rated school", True)
             for lv in nearest:
                 if len(levels[lv]["schools"]) < 3:
                     add("thin_level_set", place, f"{lv}: {len(levels[lv]['schools'])} rated schools within 3 mi", False)

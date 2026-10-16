@@ -431,6 +431,26 @@ def _district_schools(state: str, district_id: str) -> List[Dict]:
     return lst if lst is not None else district_school_list(state, district_id)
 
 
+_nyc_csd_cache: Dict[str, Dict[int, str]] = {}
+
+
+def _nyc_csd_ids_by_number(state: str) -> Dict[int, str]:
+    """{community school district number: SchoolDigger districtID}, read from the state snapshot."""
+    import re
+    from data_sources import school_snapshot as ss
+
+    if state in _nyc_csd_cache:
+        return _nyc_csd_cache[state]
+    out: Dict[int, str] = {}
+    snap = ss.load_state(state)
+    for did, schools in ((snap or {}).get("by_district") or {}).items():
+        m = re.search(r"geographic district\s*#\s*(\d+)", ((schools[0].get("district") or {}).get("districtName") or ""), re.I)
+        if m:
+            out[int(m.group(1))] = did
+    _nyc_csd_cache[state] = out
+    return out
+
+
 def _state_charters(state: str) -> List[Dict]:
     from data_sources import school_snapshot as ss
 
@@ -472,10 +492,22 @@ def get_zone_candidates(
         return None
     radius = get_radius_profile("quality_education", area_type, None).get("search_radius_miles", 2.0)
 
-    # NYC: Census has one citywide district; SchoolDigger files schools under 32 community districts.
+    # NYC: Census has one citywide district; SchoolDigger files schools under 32 community districts. A zone often
+    # assigns a school in the next community district over, so also load the district named in each zone's school code.
     if any("New York City Department" in d["name"] for d in districts):
         csd = _nyc_csd_for_coords(lat, lon)
         district_ids = [csd["districtID"]] if csd else []
+        try:
+            from data_sources.school_zones import zoned_schools
+            by_number = _nyc_csd_ids_by_number(state)
+            for z in zoned_schools(lat, lon):
+                for code in str(z.get("id", "")).split(","):
+                    num = code.strip()[:2]
+                    did = by_number.get(int(num)) if num.isdigit() else None
+                    if did and did not in district_ids:
+                        district_ids.append(did)
+        except Exception:
+            pass
     else:
         district_ids = [d["id"] for d in districts]
     if not district_ids:

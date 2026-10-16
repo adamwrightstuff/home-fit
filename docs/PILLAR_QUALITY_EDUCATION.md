@@ -14,7 +14,17 @@ Census district data). All six catalog metros are scored with `zoned_v1`:
   non-charter schools of that level in the home district (Census polygon), widening 1x/1.5x/2x the area
   radius up to 3 mi (elementary uses 2.1/3.2 of the radius); then the district's own nearest school up to
   15 mi (small elementary-only / high-school-only districts); then the nearest rated charters.
-- **Headline** = mean of the level scores + early-ed bonus (no access bonus).
+- **Choice levels** (added 2026-10-16): where a district publishes zone maps but there is no zone for a level at the
+  point (NYC high schools and choice-based middle schools, SF middle and high), students apply, so nearby schools say
+  little about where a child goes. The level is `source: choice`, not scored (score None), and the nearest 3 are kept as
+  `reference` only. The headline averages the levels that are assigned by address; `summary.levels_scored` says
+  e.g. "1 of 3 levels (2 by choice, not scored)". `check_education.py` treats choice levels as intentional.
+- **Resident campus** (LA): LAUSD guarantees a seat at the resident school; Zones of Choice, magnets and permits are by
+  application. Large LA high schools are several small schools in one building sharing one zone, so every school on the
+  resident campus is averaged. Zones listing two schools (NYC '10X363,10X447') average both.
+- **NYC**: the zone's own community school district is loaded too (`_nyc_csd_ids_by_number`), because a zone often
+  assigns a school in the neighboring district.
+- **Headline** = mean of the scored level scores + early-ed bonus (no access bonus).
 - **Charters and choice** are listed in `breakdown.choice` and scored separately: `split.public` is the
   headline, `split.charter` the mean of the nearby rated charters (thin below 3). The Explorer filter
   (any / public_only / charter) switches between them.
