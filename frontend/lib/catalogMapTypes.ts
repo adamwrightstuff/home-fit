@@ -64,6 +64,7 @@ export interface ClimateIndicators {
   jul_f: number       // mean July temp °F
   swing_f: number     // jul_f - jan_f (seasonal variation)
   months_below_freezing: number // months whose mean temp is under 32°F
+  coldest_month_f: number // mean temp of the coldest month °F (Köppen cold-winter test)
   annual_precip_in: number
   avg_solar: number   // kWh/m²/day (sunshine proxy)
 }

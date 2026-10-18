@@ -28,10 +28,10 @@ const MUST_HAVE_LABELS: Partial<Record<PillarKey, { short: string; full: string 
 }
 
 const CLIMATE_MUST_HAVES: { key: keyof ClimateMustHaves; short: string; full: string }[] = [
-  { key: 'no_cold_winters', short: '❄️ Cold winters', full: 'Cold winters: 2+ months below freezing' },
-  { key: 'no_hot_summers', short: '☀️ Hot summers', full: 'Hot summers: July average 78°F or higher' },
+  { key: 'no_cold_winters', short: '❄️ Cold winters', full: 'Cold winters: coldest month averages below 32°F' },
+  { key: 'no_hot_summers', short: '☀️ Hot summers', full: 'Hot summers: July average above 72°F' },
   { key: 'no_grey_days', short: '🌧️ Very grey & rainy', full: 'Very grey, rainy climate' },
-  { key: 'no_big_swings', short: '🌡️ Big seasonal swings', full: 'Big seasonal swings: over 45°F July to January' },
+  { key: 'no_big_swings', short: '🌡️ Big seasonal swings', full: 'Big seasonal swings: over 40°F July to January' },
 ]
 
 interface FilterSheetProps {
