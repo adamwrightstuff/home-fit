@@ -5,6 +5,37 @@ and how to score a new metro with it. Written 2026-10-14 after the SchoolDigger 
 all six catalog metros. Sections marked **(interim)** are heuristics we expect to replace with the
 Census district-boundary lookup (see "Planned: boundary lookup").
 
+## Access model: how each level is scored (2026-10-18) - read this first
+`zoned_v1` scores each level by how that level is actually admitted. All inputs are real ratings, enrollment and published
+admission rules; nothing is tuned to a target score.
+- **Assigned** (zone map or guaranteed resident school): the zoned school's rating.
+- **Choice / lottery** (`source: choice_avg`): the enrollment-weighted average rating of the rated district-run schools of that
+  level in the pool (at least 3 schools, else the level stays `choice` and is not scored). It describes the schools in the pool, not
+  where a given child is placed. The pool is:
+  - NYC middle: the home community district's programs from the DOE directory (`data/school_geo/nyc_middle_directory.json`,
+    built by `scripts/catalog/build_nyc_middle_directory.py` from the InfoHub "Directory Data" file; refresh every admissions cycle).
+    Includes 6-12 and K-8 schools that SchoolDigger files under another level. Schools whose programs are all screened (grades, test,
+    audition) are kept out of the average and listed under `selective`. Special-education-only programs are ignored. Home district
+    comes from the zoned elementary school's code (fallback: nearest district centroid).
+  - NYC high school: every rated NYC school (citywide application). Shown, but left out of the overall score because every
+    neighborhood gets the same number (`pool.scope == "citywide"`).
+  - Any other level where no zone applies at the point: the district's schools of that level.
+- **Lottery districts with attendance-area maps** (`data/school_geo/district_access.json`, read by
+  `data_sources/district_access.py`): levels the district fills by application even though it publishes zones. Today only San Francisco
+  (all levels; attendance area is a tiebreaker, not a guarantee; source and date are in the file). The level scores as the pool
+  average and `attendance_area` keeps the zoned school for display. Add a district only from its own published rules and re-check yearly.
+  Consequence: every SF place now gets the same education score; address matters only through the displayed attendance-area school.
+- **K-8 schools** also count at the middle level (middle-level copy, same rating) when district-run and not a magnet.
+  The zone-less resident-campus averaging (LA) ignores these copies.
+- **Panel text**: `summary.level_access` (how each level is admitted) and `summary.best_options` (the four best-rated schools of each
+  choice pool with distance, plus screened schools). The best options are a display list, not a score input.
+- **Known limits**: the pool treats every school in a district as reachable (District 15 spans Park Slope to Sunset Park); unrated
+  new schools are left out; no placement or lottery-odds data, so no claim is made about what a child gets. Metros not yet audited
+  against their district rules: Philadelphia high school (38 city places use the 2024-25 catchments, which is a guaranteed seat),
+  Seattle, Austin, Chicago, LA (zoned or resident-school logic, unchanged).
+- **Not inferred**: a level is `choice` only where the district publishes a current map and none covers the point; a missing or old
+  map is never read as a lottery.
+
 ## Current model: zoned_v1 (2026-10-15) - read this first
 The sections below the Backlog describe the older radius model (kept as the fallback for places with no
 Census district data). All six catalog metros are scored with `zoned_v1`:

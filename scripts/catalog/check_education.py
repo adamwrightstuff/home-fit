@@ -136,7 +136,8 @@ def evaluate(rows: List[Dict[str, Any]], metro: str = "", exceptions: Optional[D
             continue
         stats["scored"] += 1
         rs = b.get("rated_schools")
-        if not rs:
+        pooled = any(v.get("source") == "choice_avg" for v in (b.get("levels") or {}).values())
+        if not rs and not pooled:      # a place scored only from lottery pools has no per-school list by design
             add("no_school_list", place, "rated_schools missing", True)
             continue
 

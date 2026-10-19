@@ -1,0 +1,15 @@
+{
+ "districts": {
+  "0634410": {
+   "name": "San Francisco Unified School District",
+   "lottery_levels": [
+    "elementary",
+    "middle",
+    "high"
+   ],
+   "rule": "Families rank schools at every level; attendance area is a tiebreaker (after sibling and CTIP1 priorities), not a guarantee. The board adopted zones in 2020 but never implemented them.",
+   "source": "https://www.sfusd.edu/schools/enroll/student-assignment-policy/tiebreakers",
+   "as_of": "2026-10"
+  }
+ }
+}

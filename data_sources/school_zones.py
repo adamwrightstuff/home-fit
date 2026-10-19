@@ -359,8 +359,8 @@ def _campus_schools(zoned: Dict[str, Any], schools: List[Dict[str, Any]]) -> Lis
     tiers: Dict[int, List[Dict[str, Any]]] = {0: [], 1: [], 2: []}
     for s in schools:
         lvl = (s.get("schoolLevel") or "").lower()
-        if s.get("isPrivate") or not (s.get("rankHistory") or []):
-            continue
+        if s.get("isPrivate") or not (s.get("rankHistory") or []) or s.get("_k8_copy"):
+            continue     # a K-8's middle copy is not a separate resident school on the campus
         if not any(l in lvl for l in levels) and not ("elementary" in levels and "primary" in lvl):
             continue
         pt = _school_point(s)

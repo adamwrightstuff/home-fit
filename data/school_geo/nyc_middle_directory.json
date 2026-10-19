@@ -1,0 +1,5850 @@
+{
+"source": "NYC Public Schools InfoHub directory data, Fall 2026 middle schools",
+"schools": [
+{
+"dbn": "01M034",
+"district": 1,
+"name": "P.S. 034 Franklin D. Roosevelt",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360007602157",
+"match": "nces_name"
+},
+{
+"dbn": "01M140",
+"district": 1,
+"name": "P.S. 140 Nathan Straus",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360007602511",
+"match": "nces_name"
+},
+{
+"dbn": "01M184",
+"district": 1,
+"name": "P.S. 184m Shuang Wen",
+"class": "other",
+"methods": [
+"Language Criteria"
+],
+"span": "K to 8",
+"schoolid": "360007603508",
+"match": "nces_name"
+},
+{
+"dbn": "01M188",
+"district": 1,
+"name": "P.S. 188 The Island School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360007604869",
+"match": "nces_name"
+},
+{
+"dbn": "01M332",
+"district": 1,
+"name": "University Neighborhood Middle School",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007603680",
+"match": "nces_name"
+},
+{
+"dbn": "01M378",
+"district": 1,
+"name": "School for Global Leaders",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open"
+],
+"span": "6 to 9",
+"schoolid": "360007606021",
+"match": "nces_name"
+},
+{
+"dbn": "01M450",
+"district": 1,
+"name": "East Side Community School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360007600695",
+"match": "nces_name"
+},
+{
+"dbn": "01M539",
+"district": 1,
+"name": "New Explorations into Science, Technology & Math",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "K to 12",
+"schoolid": "360007604873",
+"match": "overlap"
+},
+{
+"dbn": "01M839",
+"district": 1,
+"name": "Tompkins Square Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007605620",
+"match": "nces_name"
+},
+{
+"dbn": "02M104",
+"district": 2,
+"name": "J.H.S. 104 Simon Baruch",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360007704447",
+"match": "dir_name"
+},
+{
+"dbn": "02M114",
+"district": 2,
+"name": "East Side Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007704405",
+"match": "nces_name"
+},
+{
+"dbn": "02M126",
+"district": 2,
+"name": "Manhattan Academy of Technology/Jacob Riis",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360007702468",
+"match": "nces_name"
+},
+{
+"dbn": "02M131",
+"district": 2,
+"name": "Sun Yat Sen Middle School",
+"class": "mixed",
+"methods": [
+"Language Criteria",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360007704402",
+"match": "nces_name"
+},
+{
+"dbn": "02M167",
+"district": 2,
+"name": "J.H.S. 167 Robert F. Wagner",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360007702597",
+"match": "dir_name"
+},
+{
+"dbn": "02M177",
+"district": 2,
+"name": "Yorkville East Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007706461",
+"match": "nces_name"
+},
+{
+"dbn": "02M217",
+"district": 2,
+"name": "P.S./I.S. 217 Roosevelt Island",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360007704406",
+"match": "nces_name"
+},
+{
+"dbn": "02M225",
+"district": 2,
+"name": "Ella Baker School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360007703348",
+"match": "nces_name"
+},
+{
+"dbn": "02M255",
+"district": 2,
+"name": "M.S. 255 Salk School of Science",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007704408",
+"match": "nces_name"
+},
+{
+"dbn": "02M260",
+"district": 2,
+"name": "The Clinton School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360007704410",
+"match": "nces_name"
+},
+{
+"dbn": "02M276",
+"district": 2,
+"name": "Battery Park City School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360007706158",
+"match": "nces_name"
+},
+{
+"dbn": "02M289",
+"district": 2,
+"name": "Hudson River Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007703331",
+"match": "nces_name"
+},
+{
+"dbn": "02M297",
+"district": 2,
+"name": "M.S. 297",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360007706602",
+"match": "nces_name"
+},
+{
+"dbn": "02M303",
+"district": 2,
+"name": "Facing History School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360007705769",
+"match": "nces_name"
+},
+{
+"dbn": "02M312",
+"district": 2,
+"name": "New York City Lab Middle School for Collaborative Studies",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007702857",
+"match": "nces_name"
+},
+{
+"dbn": "02M347",
+"district": 2,
+"name": "The 47 American Sign Language & English Lower School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360007705767",
+"match": "nces_name"
+},
+{
+"dbn": "02M397",
+"district": 2,
+"name": "Spruce Street School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360007706130",
+"match": "nces_name"
+},
+{
+"dbn": "02M407",
+"district": 2,
+"name": "Institute for Collaborative Education",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360007701720",
+"match": "nces_name"
+},
+{
+"dbn": "02M408",
+"district": 2,
+"name": "Professional Performing Arts School",
+"class": "selective",
+"methods": [
+"Audition"
+],
+"span": "6 to 12",
+"schoolid": "360007701723",
+"match": "nces_name"
+},
+{
+"dbn": "02M413",
+"district": 2,
+"name": "School of the Future Middle and High School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360007702862",
+"match": "nces_name"
+},
+{
+"dbn": "02M422",
+"district": 2,
+"name": "Quest to Learn",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360007706125",
+"match": "nces_name"
+},
+{
+"dbn": "02M442",
+"district": 2,
+"name": "Ballet Tech, NYC Public School for Dance",
+"class": "selective",
+"methods": [
+"Audition"
+],
+"span": "4 to 8",
+"schoolid": "360007705112",
+"match": "overlap"
+},
+{
+"dbn": "02M896",
+"district": 2,
+"name": "Lower Manhattan Community Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007705768",
+"match": "nces_name"
+},
+{
+"dbn": "03M054",
+"district": 3,
+"name": "J.H.S. 054 Booker T. Washington",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007802235",
+"match": "overlap"
+},
+{
+"dbn": "03M149",
+"district": 3,
+"name": "P.S. 149 Sojourner Truth",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360007802539",
+"match": "nces_name"
+},
+{
+"dbn": "03M191",
+"district": 3,
+"name": "The Riverside School for Makers and Artists",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360007802655",
+"match": "nces_name"
+},
+{
+"dbn": "03M245",
+"district": 3,
+"name": "M.S. 245 The Computer School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007803572",
+"match": "nces_name"
+},
+{
+"dbn": "03M247",
+"district": 3,
+"name": "M.S. M247 Dual Language Middle School",
+"class": "other",
+"methods": [
+"Language Criteria"
+],
+"span": "6 to 8",
+"schoolid": "360007803579",
+"match": "nces_name"
+},
+{
+"dbn": "03M256",
+"district": 3,
+"name": "Lafayette Academy",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007803607",
+"match": "nces_name"
+},
+{
+"dbn": "03M258",
+"district": 3,
+"name": "Community Action School - MS 258",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007803616",
+"match": "nces_name"
+},
+{
+"dbn": "03M291",
+"district": 3,
+"name": "West End Secondary School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360007806547",
+"match": "nces_name"
+},
+{
+"dbn": "03M333",
+"district": 3,
+"name": "P.S. 333 Manhattan School for Children",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360007803622",
+"match": "nces_name"
+},
+{
+"dbn": "03M334",
+"district": 3,
+"name": "The Anderson School",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "K to 8",
+"schoolid": "360007805773",
+"match": "nces_name"
+},
+{
+"dbn": "03M415",
+"district": 3,
+"name": "Wadleigh Secondary School for the Performing & Visual Arts",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360007800687",
+"match": "overlap"
+},
+{
+"dbn": "03M421",
+"district": 3,
+"name": "West Prep Academy",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007806135",
+"match": "nces_name"
+},
+{
+"dbn": "03M610",
+"district": 3,
+"name": "Young Women's Leadership School",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360007802919",
+"match": "nces_name"
+},
+{
+"dbn": "03M859",
+"district": 3,
+"name": "Special Music School",
+"class": "selective",
+"methods": [
+"Audition"
+],
+"span": "K to 12",
+"schoolid": "360007806115",
+"match": "nces_name"
+},
+{
+"dbn": "03M860",
+"district": 3,
+"name": "Frederick Douglass Academy II Secondary School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360007805627",
+"match": "nces_name"
+},
+{
+"dbn": "03M862",
+"district": 3,
+"name": "Mott Hall II",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 9",
+"schoolid": "360007805629",
+"match": "nces_name"
+},
+{
+"dbn": "04M007",
+"district": 4,
+"name": "P.S. 007 Samuel Stern",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360007902061",
+"match": "nces_name"
+},
+{
+"dbn": "04M012",
+"district": 4,
+"name": "Tag Young Scholars",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "K to 8",
+"schoolid": "360007905631",
+"match": "nces_name"
+},
+{
+"dbn": "04M057",
+"district": 4,
+"name": "James Weldon Johnson",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360007902246",
+"match": "nces_name"
+},
+{
+"dbn": "04M072",
+"district": 4,
+"name": "The Lexington Academy",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360007902294",
+"match": "nces_name"
+},
+{
+"dbn": "04M096",
+"district": 4,
+"name": "P.S. 096 Joseph Lanzetta",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360007902366",
+"match": "nces_name"
+},
+{
+"dbn": "04M108",
+"district": 4,
+"name": "P.S. 108 Assemblyman Angelo Del Toro Educational Complex",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360007902407",
+"match": "nces_name"
+},
+{
+"dbn": "04M171",
+"district": 4,
+"name": "P.S. 171 Patrick Henry",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360007902605",
+"match": "nces_name"
+},
+{
+"dbn": "04M206",
+"district": 4,
+"name": "P.S. 206 Jose Celso Barbosa",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "3 to 8",
+"schoolid": "360007902694",
+"match": "nces_name"
+},
+{
+"dbn": "04M224",
+"district": 4,
+"name": "M.S. 224 Manhattan East School for Arts & Academics",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007904412",
+"match": "nces_name"
+},
+{
+"dbn": "04M372",
+"district": 4,
+"name": "Esperanza Preparatory Academy",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360007906003",
+"match": "nces_name"
+},
+{
+"dbn": "04M377",
+"district": 4,
+"name": "Renaissance School of the Arts",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007906016",
+"match": "nces_name"
+},
+{
+"dbn": "04M825",
+"district": 4,
+"name": "Isaac Newton Middle School for Math & Science",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360007905634",
+"match": "nces_name"
+},
+{
+"dbn": "04M964",
+"district": 4,
+"name": "Central Park East II",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360007905635",
+"match": "nces_name"
+},
+{
+"dbn": "05M046",
+"district": 5,
+"name": "P.S. 046 Arthur Tappan",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008102207",
+"match": "nces_name"
+},
+{
+"dbn": "05M123",
+"district": 5,
+"name": "P.S. 123 Mahalia Jackson",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008102455",
+"match": "nces_name"
+},
+{
+"dbn": "05M148",
+"district": 5,
+"name": "Eagle Academy for Young Men of Harlem",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008106379",
+"match": "nces_name"
+},
+{
+"dbn": "05M161",
+"district": 5,
+"name": "P.S. 161 Pedro Albizu Campos",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008102577",
+"match": "nces_name"
+},
+{
+"dbn": "05M286",
+"district": 5,
+"name": "Urban Assembly Academy for Future Leaders",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008104436",
+"match": "nces_name"
+},
+{
+"dbn": "05M362",
+"district": 5,
+"name": "Columbia Secondary School",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360008105944",
+"match": "nces_name"
+},
+{
+"dbn": "05M371",
+"district": 5,
+"name": "M.S. 371",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008106713",
+"match": "nces_name"
+},
+{
+"dbn": "05M499",
+"district": 5,
+"name": "Frederick Douglass Academy",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360008100701",
+"match": "nces_name"
+},
+{
+"dbn": "05M514",
+"district": 5,
+"name": "New Design Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008106257",
+"match": "nces_name"
+},
+{
+"dbn": "05M517",
+"district": 5,
+"name": "Teachers College Community School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360008106256",
+"match": "nces_name"
+},
+{
+"dbn": "05M670",
+"district": 5,
+"name": "Thurgood Marshall Academy for Learning and Social Change",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360008105115",
+"match": "nces_name"
+},
+{
+"dbn": "06M018",
+"district": 6,
+"name": "P.S. 018 Park Terrace",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008300523",
+"match": "nces_name"
+},
+{
+"dbn": "06M052",
+"district": 6,
+"name": "Harold O. Levy School",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008304451",
+"match": "nces_name"
+},
+{
+"dbn": "06M143",
+"district": 6,
+"name": "J.H.S. 143 Eleanor Roosevelt",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008302519",
+"match": "dir_name"
+},
+{
+"dbn": "06M173",
+"district": 6,
+"name": "P.S. 173",
+"class": "other",
+"methods": [
+"Language Criteria"
+],
+"span": "K to 8",
+"schoolid": "360008302609",
+"match": "nces_name"
+},
+{
+"dbn": "06M187",
+"district": 6,
+"name": "P.S./I.S. 187 Hudson Cliffs",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008302643",
+"match": "nces_name"
+},
+{
+"dbn": "06M209",
+"district": 6,
+"name": "Hamilton Grange Middle School",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008306530",
+"match": "nces_name"
+},
+{
+"dbn": "06M210",
+"district": 6,
+"name": "P.S./I.S. 210 - Twenty-first Century Academy for Community Leadership",
+"class": "other",
+"methods": [
+"Language Criteria"
+],
+"span": "K to 8",
+"schoolid": "360008302872",
+"match": "nces_name"
+},
+{
+"dbn": "06M223",
+"district": 6,
+"name": "The Mott Hall School",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 8",
+"schoolid": "360008304517",
+"match": "nces_name"
+},
+{
+"dbn": "06M278",
+"district": 6,
+"name": "Paula Hedbavny School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008305642",
+"match": "nces_name"
+},
+{
+"dbn": "06M293",
+"district": 6,
+"name": "City College Academy of the Arts",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008305784",
+"match": "nces_name"
+},
+{
+"dbn": "06M311",
+"district": 6,
+"name": "Amistad Dual Language School",
+"class": "other",
+"methods": [
+"Language Criteria"
+],
+"span": "K to 8",
+"schoolid": "360008305643",
+"match": "nces_name"
+},
+{
+"dbn": "06M319",
+"district": 6,
+"name": "M.S. 319 - Maria Teresa",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008305645",
+"match": "nces_name"
+},
+{
+"dbn": "06M322",
+"district": 6,
+"name": "Middle School 322",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008305782",
+"match": "nces_name"
+},
+{
+"dbn": "06M324",
+"district": 6,
+"name": "M.S. 324 - Patria Mirabal",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008305647",
+"match": "nces_name"
+},
+{
+"dbn": "06M328",
+"district": 6,
+"name": "Community Math & Science Prep",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008305649",
+"match": "nces_name"
+},
+{
+"dbn": "06M346",
+"district": 6,
+"name": "Community Health Academy of the Heights",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008305878",
+"match": "nces_name"
+},
+{
+"dbn": "06M348",
+"district": 6,
+"name": "Washington Heights Expeditionary Learning School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 12",
+"schoolid": "360008305909",
+"match": "nces_name"
+},
+{
+"dbn": "06M366",
+"district": 6,
+"name": "Washington Heights Academy",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360008305990",
+"match": "nces_name"
+},
+{
+"dbn": "06M368",
+"district": 6,
+"name": "The William Lynch School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 7",
+"schoolid": "360008305989",
+"match": "nces_name"
+},
+{
+"dbn": "06M528",
+"district": 6,
+"name": "I.S. 528 Bea Fuller Rodgers School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008300551",
+"match": "nces_name"
+},
+{
+"dbn": "07X005",
+"district": 7,
+"name": "P.S. 5 Port Morris",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360008402056",
+"match": "nces_name"
+},
+{
+"dbn": "07X029",
+"district": 7,
+"name": "P.S./M.S. 029 Melrose School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360008402138",
+"match": "nces_name"
+},
+{
+"dbn": "07X031",
+"district": 7,
+"name": "P.S./M.S. 031 The William Lloyd Garrison",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360008402147",
+"match": "nces_name"
+},
+{
+"dbn": "07X221",
+"district": 7,
+"name": "South Bronx Preparatory: A College Board School",
+"class": "mixed",
+"methods": [
+"Open",
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360008405650",
+"match": "nces_name"
+},
+{
+"dbn": "07X223",
+"district": 7,
+"name": "The Laboratory School of Finance and Technology: X223",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008405521",
+"match": "nces_name"
+},
+{
+"dbn": "07X224",
+"district": 7,
+"name": "Science School for Exploration and Discovery",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008405520",
+"match": "nces_name"
+},
+{
+"dbn": "07X296",
+"district": 7,
+"name": "South Bronx Academy for Applied Media",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008405785",
+"match": "nces_name"
+},
+{
+"dbn": "07X298",
+"district": 7,
+"name": "Academy of Public Relations",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008405786",
+"match": "nces_name"
+},
+{
+"dbn": "07X343",
+"district": 7,
+"name": "Academy of Applied Mathematics and Technology",
+"class": "mixed",
+"methods": [
+"Open",
+"Screened"
+],
+"span": "6 to 8",
+"schoolid": "360008405920",
+"match": "nces_name"
+},
+{
+"dbn": "07X359",
+"district": 7,
+"name": "Concourse Village Elementary School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 7",
+"schoolid": null,
+"match": null
+},
+{
+"dbn": "07X500",
+"district": 7,
+"name": "Hostos-Lincoln Academy of Science",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008400757",
+"match": "nces_name"
+},
+{
+"dbn": "07X551",
+"district": 7,
+"name": "The Urban Assembly Bronx Academy of Letters",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008405504",
+"match": "nces_name"
+},
+{
+"dbn": "07X584",
+"district": 7,
+"name": "I.S. 584",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008406613",
+"match": "nces_name"
+},
+{
+"dbn": "07X642",
+"district": 7,
+"name": "The South Bronx Literacy Academy",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "2 to 6",
+"schoolid": "360008406771",
+"match": "nces_name"
+},
+{
+"dbn": "08X071",
+"district": 8,
+"name": "P.S. 071 Rose E. Scala",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008502293",
+"match": "nces_name"
+},
+{
+"dbn": "08X101",
+"district": 8,
+"name": "M.S. X101 Edward R. Byrne",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008503740",
+"match": "nces_name"
+},
+{
+"dbn": "08X123",
+"district": 8,
+"name": "J.H.S. 123 James M. Kieran",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008502456",
+"match": "overlap"
+},
+{
+"dbn": "08X131",
+"district": 8,
+"name": "J.H.S. 131 Albert Einstein",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008501979",
+"match": "dir_name"
+},
+{
+"dbn": "08X269",
+"district": 8,
+"name": "Bronx Studio School for Writers and Artists",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008505652",
+"match": "nces_name"
+},
+{
+"dbn": "08X301",
+"district": 8,
+"name": "M.S. 301 Paul L. Dunbar",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008505121",
+"match": "nces_name"
+},
+{
+"dbn": "08X302",
+"district": 8,
+"name": "M.S. 302 Luisa Dessus Cruz",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008505122",
+"match": "nces_name"
+},
+{
+"dbn": "08X337",
+"district": 8,
+"name": "The School for Inquiry and Social Justice",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008505657",
+"match": "nces_name"
+},
+{
+"dbn": "08X367",
+"district": 8,
+"name": "Archimedes Academy for Math, Science and Technology Applications",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": null,
+"match": null
+},
+{
+"dbn": "08X371",
+"district": 8,
+"name": "Urban Institute of Mathematics",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008505982",
+"match": "nces_name"
+},
+{
+"dbn": "08X375",
+"district": 8,
+"name": "The Bronx Mathematics Preparatory School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008505986",
+"match": "nces_name"
+},
+{
+"dbn": "08X376",
+"district": 8,
+"name": "Antonia Pantoja Preparatory Academy: A College Board School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008505984",
+"match": "nces_name"
+},
+{
+"dbn": "08X424",
+"district": 8,
+"name": "Bronx Academy for Multi-Media",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008506081",
+"match": "nces_name"
+},
+{
+"dbn": "08X448",
+"district": 8,
+"name": "Soundview Academy for Culture and Scholarship",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008506156",
+"match": "nces_name"
+},
+{
+"dbn": "08X467",
+"district": 8,
+"name": "Mott Hall Community School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008506162",
+"match": "nces_name"
+},
+{
+"dbn": "08X562",
+"district": 8,
+"name": "Pugsley Preparatory Academy",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008506302",
+"match": "nces_name"
+},
+{
+"dbn": "09X004",
+"district": 9,
+"name": "P.S./M.S. 004 Crotona Park West",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360008605191",
+"match": "nces_name"
+},
+{
+"dbn": "09X022",
+"district": 9,
+"name": "J.H.S. 022 Jordan L. Mott",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008604461",
+"match": "overlap"
+},
+{
+"dbn": "09X117",
+"district": 9,
+"name": "I.S. 117 Joseph H. Wade",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008605192",
+"match": "nces_name"
+},
+{
+"dbn": "09X128",
+"district": 9,
+"name": "Mott Hall III",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008605663",
+"match": "nces_name"
+},
+{
+"dbn": "09X215",
+"district": 9,
+"name": "Kappa",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008605790",
+"match": "nces_name"
+},
+{
+"dbn": "09X218",
+"district": 9,
+"name": "P.S./I.S. 218 Rafael Hernandez Dual Language Magnet School",
+"class": "other",
+"methods": [
+"Language Criteria"
+],
+"span": "K to 8",
+"schoolid": "360008603742",
+"match": "nces_name"
+},
+{
+"dbn": "09X219",
+"district": 9,
+"name": "I.S. 219 New Venture School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008603747",
+"match": "nces_name"
+},
+{
+"dbn": "09X229",
+"district": 9,
+"name": "I.S. 229 Roland Patterson",
+"class": "open",
+"methods": [
+"Open",
+"Zoned Only"
+],
+"span": "6 to 8",
+"schoolid": "360008602737",
+"match": "nces_name"
+},
+{
+"dbn": "09X231",
+"district": 9,
+"name": "Eagle Academy for Young Men",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008605670",
+"match": "nces_name"
+},
+{
+"dbn": "09X232",
+"district": 9,
+"name": "I.S. 232",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008604876",
+"match": "nces_name"
+},
+{
+"dbn": "09X241",
+"district": 9,
+"name": "The Urban Assembly School for Applied Math and Science",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008605673",
+"match": "nces_name"
+},
+{
+"dbn": "09X303",
+"district": 9,
+"name": "I.S. X303 Leadership & Community Service",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008603764",
+"match": "nces_name"
+},
+{
+"dbn": "09X313",
+"district": 9,
+"name": "I.S. 313 School of Leadership Development",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008603767",
+"match": "nces_name"
+},
+{
+"dbn": "09X323",
+"district": 9,
+"name": "Bronx Writing Academy",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008605664",
+"match": "nces_name"
+},
+{
+"dbn": "09X324",
+"district": 9,
+"name": "Bronx Early College Academy for Teaching & Learning",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008605865",
+"match": "nces_name"
+},
+{
+"dbn": "09X327",
+"district": 9,
+"name": "Comprehensive Model School Project M.S. 327",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008605666",
+"match": "nces_name"
+},
+{
+"dbn": "09X339",
+"district": 9,
+"name": "I.S. 339",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008603780",
+"match": "nces_name"
+},
+{
+"dbn": "09X361",
+"district": 9,
+"name": "The Highbridge Green School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008606394",
+"match": "nces_name"
+},
+{
+"dbn": "09X413",
+"district": 9,
+"name": "Bronx School for Medical Science",
+"class": "mixed",
+"methods": [
+"Open",
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360008605177",
+"match": "nces_name"
+},
+{
+"dbn": "09X454",
+"district": 9,
+"name": "Science and Technology Academy: A Mott Hall School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008606113",
+"match": "nces_name"
+},
+{
+"dbn": "09X505",
+"district": 9,
+"name": "Bronx School for Law, Government and Justice",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008602961",
+"match": "nces_name"
+},
+{
+"dbn": "09X568",
+"district": 9,
+"name": "Young Women's Leadership School of the Bronx",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360008606345",
+"match": "nces_name"
+},
+{
+"dbn": "09X593",
+"district": 9,
+"name": "South Bronx International Middle School",
+"class": "other",
+"methods": [
+"Language Criteria"
+],
+"span": "6 to 8",
+"schoolid": "360008606629",
+"match": "nces_name"
+},
+{
+"dbn": "09X594",
+"district": 9,
+"name": "New Pathways Academy",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008606642",
+"match": "nces_name"
+},
+{
+"dbn": "09X644",
+"district": 9,
+"name": "M.S. 644",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 7",
+"schoolid": null,
+"match": null
+},
+{
+"dbn": "10X003",
+"district": 10,
+"name": "P.S. 3 Raul Julia Micro Society",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360008705137",
+"match": "nces_name"
+},
+{
+"dbn": "10X015",
+"district": 10,
+"name": "P.S. X015 Institute for Environmental Learning",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360008701748",
+"match": "nces_name"
+},
+{
+"dbn": "10X020",
+"district": 10,
+"name": "PS/MS 20 P.O.George J. Werdann, III",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008702179",
+"match": "nces_name"
+},
+{
+"dbn": "10X037",
+"district": 10,
+"name": "P.S. X037 - Multiple Intelligence School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008701304",
+"match": "nces_name"
+},
+{
+"dbn": "10X045",
+"district": 10,
+"name": "Thomas C. Giordano Middle School 45",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008702202",
+"match": "nces_name"
+},
+{
+"dbn": "10X080",
+"district": 10,
+"name": "J.H.S. 080 The Mosholu Parkway",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008702316",
+"match": "overlap"
+},
+{
+"dbn": "10X095",
+"district": 10,
+"name": "P.S. 095 Sheila Mencher",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008702361",
+"match": "nces_name"
+},
+{
+"dbn": "10X118",
+"district": 10,
+"name": "J.H.S. 118 William W. Niles",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008702440",
+"match": "dir_name"
+},
+{
+"dbn": "10X141",
+"district": 10,
+"name": "Riverdale / Kingsbridge Academy",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 12",
+"schoolid": "360008702513",
+"match": "nces_name"
+},
+{
+"dbn": "10X206",
+"district": 10,
+"name": "I.S. 206 Ann Mersereau",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008704310",
+"match": "nces_name"
+},
+{
+"dbn": "10X225",
+"district": 10,
+"name": "Theatre Arts Production Company School",
+"class": "selective",
+"methods": [
+"Audition"
+],
+"span": "6 to 12",
+"schoolid": "360008705796",
+"match": "nces_name"
+},
+{
+"dbn": "10X228",
+"district": 10,
+"name": "Jonas Bronck Academy",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 11",
+"schoolid": "360008705797",
+"match": "nces_name"
+},
+{
+"dbn": "10X243",
+"district": 10,
+"name": "West Bronx Academy for the Future",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360008705674",
+"match": "nces_name"
+},
+{
+"dbn": "10X244",
+"district": 10,
+"name": "The New School for Leadership and Journalism",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008705798",
+"match": "nces_name"
+},
+{
+"dbn": "10X254",
+"district": 10,
+"name": "I.S. 254",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008703794",
+"match": "nces_name"
+},
+{
+"dbn": "10X279",
+"district": 10,
+"name": "P.S. 279 Captain Manuel Rivera, Jr.",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008700183",
+"match": "nces_name"
+},
+{
+"dbn": "10X280",
+"district": 10,
+"name": "P.S./M.S. 280 Mosholu Parkway",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008704695",
+"match": "nces_name"
+},
+{
+"dbn": "10X308",
+"district": 10,
+"name": "Bronx Dance Academy School",
+"class": "selective",
+"methods": [
+"Audition"
+],
+"span": "6 to 8",
+"schoolid": "360008705569",
+"match": "nces_name"
+},
+{
+"dbn": "10X315",
+"district": 10,
+"name": "P.S. 315 Lab School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360008702939",
+"match": "nces_name"
+},
+{
+"dbn": "10X331",
+"district": 10,
+"name": "The Bronx School of Young Leaders",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008705675",
+"match": "nces_name"
+},
+{
+"dbn": "10X342",
+"district": 10,
+"name": "International School for Liberal Arts",
+"class": "other",
+"methods": [
+"Language Criteria"
+],
+"span": "6 to 12",
+"schoolid": "360008705938",
+"match": "nces_name"
+},
+{
+"dbn": "10X363",
+"district": 10,
+"name": "Academy For Personal Leadership And Excellence",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008706297",
+"match": "nces_name"
+},
+{
+"dbn": "10X368",
+"district": 10,
+"name": "In-Tech Academy",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 12",
+"schoolid": "360008704473",
+"match": "overlap"
+},
+{
+"dbn": "10X390",
+"district": 10,
+"name": "M.S. 390",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008703811",
+"match": "nces_name"
+},
+{
+"dbn": "10X391",
+"district": 10,
+"name": "The Angelo Patri Middle School",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008703812",
+"match": "nces_name"
+},
+{
+"dbn": "10X447",
+"district": 10,
+"name": "Creston Academy",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008706141",
+"match": "nces_name"
+},
+{
+"dbn": "11X019",
+"district": 11,
+"name": "P.S. 019 Judith K. Weiss",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008802100",
+"match": "nces_name"
+},
+{
+"dbn": "11X083",
+"district": 11,
+"name": "P.S./M.S. 083 Donald Hertz",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008802323",
+"match": "nces_name"
+},
+{
+"dbn": "11X089",
+"district": 11,
+"name": "P.S. /M.S. 089 Bronx",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008802342",
+"match": "nces_name"
+},
+{
+"dbn": "11X105",
+"district": 11,
+"name": "P.S. 105 Sen Abraham Bernstein",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 6",
+"schoolid": "360008802394",
+"match": "nces_name"
+},
+{
+"dbn": "11X108",
+"district": 11,
+"name": "P.S. 108 Philip J. Abinati",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 7",
+"schoolid": "360008802404",
+"match": "nces_name"
+},
+{
+"dbn": "11X127",
+"district": 11,
+"name": "J.H.S. 127 The Castle Hill",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008802469",
+"match": "dir_name"
+},
+{
+"dbn": "11X144",
+"district": 11,
+"name": "J.H.S. 144 Michelangelo",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008802524",
+"match": "dir_name"
+},
+{
+"dbn": "11X175",
+"district": 11,
+"name": "P.S./M.S. 175 City Island",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008802613",
+"match": "nces_name"
+},
+{
+"dbn": "11X180",
+"district": 11,
+"name": "M.S. 180 Dr. Daniel Hale Williams",
+"class": "mixed",
+"methods": [
+"Audition",
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008802628",
+"match": "nces_name"
+},
+{
+"dbn": "11X181",
+"district": 11,
+"name": "I.S. 181 Pablo Casals",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008801989",
+"match": "nces_name"
+},
+{
+"dbn": "11X194",
+"district": 11,
+"name": "P.S./M.S. 194",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008805558",
+"match": "nces_name"
+},
+{
+"dbn": "11X326",
+"district": 11,
+"name": "Bronx Green Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008805953",
+"match": "nces_name"
+},
+{
+"dbn": "11X355",
+"district": 11,
+"name": "Bronx Alliance Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008806399",
+"match": "nces_name"
+},
+{
+"dbn": "11X370",
+"district": 11,
+"name": "Leaders of Tomorrow",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008805969",
+"match": "nces_name"
+},
+{
+"dbn": "11X462",
+"district": 11,
+"name": "Cornerstone Academy for Social Action Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360008806107",
+"match": "nces_name"
+},
+{
+"dbn": "11X468",
+"district": 11,
+"name": "Pelham Academy of Academics and Community Engagement",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008806129",
+"match": "nces_name"
+},
+{
+"dbn": "11X498",
+"district": 11,
+"name": "P.S./M.S. 11X498 - VAN NEST ACADEMY",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360008806217",
+"match": "nces_name"
+},
+{
+"dbn": "11X529",
+"district": 11,
+"name": "One World Middle School at Edenwald",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008806259",
+"match": "nces_name"
+},
+{
+"dbn": "11X532",
+"district": 11,
+"name": "Baychester Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008806249",
+"match": "nces_name"
+},
+{
+"dbn": "11X556",
+"district": 11,
+"name": "Bronx Park Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008806314",
+"match": "nces_name"
+},
+{
+"dbn": "11X566",
+"district": 11,
+"name": "Pelham Gardens Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360008806322",
+"match": "nces_name"
+},
+{
+"dbn": "12X129",
+"district": 12,
+"name": "M.S. 129 Academy for Independent Learning and Leadership",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009002477",
+"match": "nces_name"
+},
+{
+"dbn": "12X190",
+"district": 12,
+"name": "E.S.M.T- I.S. 190",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009005166",
+"match": "nces_name"
+},
+{
+"dbn": "12X214",
+"district": 12,
+"name": "P.S. 214",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360009000227",
+"match": "nces_name"
+},
+{
+"dbn": "12X217",
+"district": 12,
+"name": "School of Performing Arts",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009005169",
+"match": "nces_name"
+},
+{
+"dbn": "12X242",
+"district": 12,
+"name": "Mott Hall V",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360009005805",
+"match": "nces_name"
+},
+{
+"dbn": "12X267",
+"district": 12,
+"name": "Bronx Latin",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360009005689",
+"match": "nces_name"
+},
+{
+"dbn": "12X271",
+"district": 12,
+"name": "East Bronx Academy for the Future",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360009005679",
+"match": "nces_name"
+},
+{
+"dbn": "12X273",
+"district": 12,
+"name": "Frederick Douglass Academy V. Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009005690",
+"match": "nces_name"
+},
+{
+"dbn": "12X286",
+"district": 12,
+"name": "Fannie Lou Hamer Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009005806",
+"match": "nces_name"
+},
+{
+"dbn": "12X316",
+"district": 12,
+"name": "Kappa III",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009005691",
+"match": "nces_name"
+},
+{
+"dbn": "12X318",
+"district": 12,
+"name": "I.S. X318 Math, Science & Technology Through Arts",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009004878",
+"match": "nces_name"
+},
+{
+"dbn": "12X341",
+"district": 12,
+"name": "Accion Academy",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009005692",
+"match": "nces_name"
+},
+{
+"dbn": "12X383",
+"district": 12,
+"name": "Emolior Academy",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009006002",
+"match": "nces_name"
+},
+{
+"dbn": "13K113",
+"district": 13,
+"name": "M.S. 113 Ronald Edmonds Learning Center",
+"class": "mixed",
+"methods": [
+"Audition",
+"Language Criteria",
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009104523",
+"match": "nces_name"
+},
+{
+"dbn": "13K266",
+"district": 13,
+"name": "M.S. 266 - Park Place Community Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009104483",
+"match": "nces_name"
+},
+{
+"dbn": "13K301",
+"district": 13,
+"name": "Restoration Academy Magnet School of Global Exploration and Innovation",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009105695",
+"match": "nces_name"
+},
+{
+"dbn": "13K313",
+"district": 13,
+"name": "Dock Street School for STEAM Studies",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009105696",
+"match": "nces_name"
+},
+{
+"dbn": "13K351",
+"district": 13,
+"name": "The Urban Assembly Unison School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009106366",
+"match": "nces_name"
+},
+{
+"dbn": "13K492",
+"district": 13,
+"name": "Academy of Arts and Letters",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360009105901",
+"match": "nces_name"
+},
+{
+"dbn": "13K527",
+"district": 13,
+"name": "Urban Assembly Institute of Math and Science for Young Women",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360009105928",
+"match": "nces_name"
+},
+{
+"dbn": "13K691",
+"district": 13,
+"name": "Fort Greene Preparatory Academy",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009106205",
+"match": "nces_name"
+},
+{
+"dbn": "13K915",
+"district": 13,
+"name": "MS 915",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009106704",
+"match": "nces_name"
+},
+{
+"dbn": "14K050",
+"district": 14,
+"name": "J.H.S. 050 John D. Wells",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360011902221",
+"match": "overlap"
+},
+{
+"dbn": "14K071",
+"district": 14,
+"name": "Juan Morel Campos Secondary School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360011902291",
+"match": "nces_name"
+},
+{
+"dbn": "14K084",
+"district": 14,
+"name": "P.S. 084 Jose De Diego",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360011902326",
+"match": "nces_name"
+},
+{
+"dbn": "14K126",
+"district": 14,
+"name": "John Ericsson Middle School 126",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360011902467",
+"match": "nces_name"
+},
+{
+"dbn": "14K157",
+"district": 14,
+"name": "P.S./I.S. 157 The Benjamin Franklin Health & Science Academy",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360011902565",
+"match": "nces_name"
+},
+{
+"dbn": "14K318",
+"district": 14,
+"name": "I.S. 318 Eugenio Maria De Hostos",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360011902816",
+"match": "nces_name"
+},
+{
+"dbn": "14K577",
+"district": 14,
+"name": "Conselyea Preparatory School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360011905701",
+"match": "nces_name"
+},
+{
+"dbn": "14K582",
+"district": 14,
+"name": "M.S. 582",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360011905702",
+"match": "nces_name"
+},
+{
+"dbn": "14K586",
+"district": 14,
+"name": "Lyons Community School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360011905933",
+"match": "nces_name"
+},
+{
+"dbn": "14K614",
+"district": 14,
+"name": "Young Women's Leadership School of Brooklyn",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360011906033",
+"match": "nces_name"
+},
+{
+"dbn": "15K051",
+"district": 15,
+"name": "M.S. 51 William Alexander",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009202226",
+"match": "nces_name"
+},
+{
+"dbn": "15K088",
+"district": 15,
+"name": "J.H.S. 088 Peter Rouget",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009204474",
+"match": "overlap"
+},
+{
+"dbn": "15K136",
+"district": 15,
+"name": "I.S. 136 Charles O. Dewey",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009205513",
+"match": "nces_name"
+},
+{
+"dbn": "15K428",
+"district": 15,
+"name": "Global Innovators Academy",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 7",
+"schoolid": "360009206792",
+"match": "nces_name"
+},
+{
+"dbn": "15K442",
+"district": 15,
+"name": "M.S. 442 School for Innovation",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009205502",
+"match": "nces_name"
+},
+{
+"dbn": "15K443",
+"district": 15,
+"name": "New Voices School of Academic & Creative Arts",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009205501",
+"match": "nces_name"
+},
+{
+"dbn": "15K447",
+"district": 15,
+"name": "The Math & Science Exploratory School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009205498",
+"match": "override"
+},
+{
+"dbn": "15K448",
+"district": 15,
+"name": "Brooklyn Collaborative Studies",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360009205497",
+"match": "nces_name"
+},
+{
+"dbn": "15K464",
+"district": 15,
+"name": "Park Slope Collegiate",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360009205529",
+"match": "nces_name"
+},
+{
+"dbn": "15K497",
+"district": 15,
+"name": "The Boerum Hill School for International Studies",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360009204890",
+"match": "nces_name"
+},
+{
+"dbn": "15K676",
+"district": 15,
+"name": "Red Hook Neighborhood School: Harbor Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009206143",
+"match": "nces_name"
+},
+{
+"dbn": "15K821",
+"district": 15,
+"name": "Sunset Park Prep",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009205706",
+"match": "nces_name"
+},
+{
+"dbn": "15K839",
+"district": 15,
+"name": "M.S. 839",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009206567",
+"match": "nces_name"
+},
+{
+"dbn": "16K035",
+"district": 16,
+"name": "M.S. 035 Stephen Decatur",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009402163",
+"match": "nces_name"
+},
+{
+"dbn": "16K057",
+"district": 16,
+"name": "Whitelaw Reid Academy of Arts and Business",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009402499",
+"match": "nces_name"
+},
+{
+"dbn": "16K267",
+"district": 16,
+"name": "M.S. 267 Math, Science & Technology",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009404053",
+"match": "nces_name"
+},
+{
+"dbn": "16K308",
+"district": 16,
+"name": "P.S. 308 Clara Cardwell",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009402812",
+"match": "nces_name"
+},
+{
+"dbn": "16K681",
+"district": 16,
+"name": "Madiba Prep Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009406306",
+"match": "nces_name"
+},
+{
+"dbn": "16K898",
+"district": 16,
+"name": "The Brooklyn Green School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009406662",
+"match": "nces_name"
+},
+{
+"dbn": "17K002",
+"district": 17,
+"name": "Parkside Preparatory Academy",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009501344",
+"match": "nces_name"
+},
+{
+"dbn": "17K061",
+"district": 17,
+"name": "M.S. 61 Dr. Gladstone H. Atwell",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009502262",
+"match": "nces_name"
+},
+{
+"dbn": "17K138",
+"district": 17,
+"name": "P.S. 138 Brooklyn",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009502504",
+"match": "nces_name"
+},
+{
+"dbn": "17K181",
+"district": 17,
+"name": "P.S. 181 Brooklyn",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009502631",
+"match": "nces_name"
+},
+{
+"dbn": "17K189",
+"district": 17,
+"name": "P.S. 189 The Bilingual Center",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009502649",
+"match": "nces_name"
+},
+{
+"dbn": "17K246",
+"district": 17,
+"name": "M.S. 246 Walt Whitman",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009502760",
+"match": "nces_name"
+},
+{
+"dbn": "17K340",
+"district": 17,
+"name": "I.S. 340",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009504813",
+"match": "nces_name"
+},
+{
+"dbn": "17K352",
+"district": 17,
+"name": "Ebbets Field Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009505818",
+"match": "nces_name"
+},
+{
+"dbn": "17K353",
+"district": 17,
+"name": "The Academy for Collaborative Exploration",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009505819",
+"match": "nces_name"
+},
+{
+"dbn": "17K354",
+"district": 17,
+"name": "The School of Integrated Learning",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009505820",
+"match": "nces_name"
+},
+{
+"dbn": "17K382",
+"district": 17,
+"name": "Academy for College Preparation and Career Exploration: A College Board School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": null,
+"match": null
+},
+{
+"dbn": "17K484",
+"district": 17,
+"name": "Ronald Edmonds Learning Center II",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009505870",
+"match": "nces_name"
+},
+{
+"dbn": "17K543",
+"district": 17,
+"name": "Science, Technology and Research Early College High School at Erasmus",
+"class": "selective",
+"methods": [
+"Screened With Assessment"
+],
+"span": "6 to 12",
+"schoolid": "360009505516",
+"match": "overlap"
+},
+{
+"dbn": "17K590",
+"district": 17,
+"name": "Medgar Evers College Preparatory School",
+"class": "selective",
+"methods": [
+"Screened With Assessment"
+],
+"span": "6 to 12",
+"schoolid": "360009500882",
+"match": "nces_name"
+},
+{
+"dbn": "17K722",
+"district": 17,
+"name": "New Heights Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009506335",
+"match": "nces_name"
+},
+{
+"dbn": "18K066",
+"district": 18,
+"name": "P.S. 66",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360009605506",
+"match": "nces_name"
+},
+{
+"dbn": "18K068",
+"district": 18,
+"name": "I.S. 068 Isaac Bildersee",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009602283",
+"match": "nces_name"
+},
+{
+"dbn": "18K211",
+"district": 18,
+"name": "I.S. 211 John Wilson",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009602707",
+"match": "nces_name"
+},
+{
+"dbn": "18K285",
+"district": 18,
+"name": "I.S. 285 Meyer Levin",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009602795",
+"match": "nces_name"
+},
+{
+"dbn": "18K366",
+"district": 18,
+"name": "The Science And Medicine Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009606155",
+"match": "nces_name"
+},
+{
+"dbn": "18K581",
+"district": 18,
+"name": "The Middle School of Media, Law and Fine Arts",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009605960",
+"match": "nces_name"
+},
+{
+"dbn": "18K588",
+"district": 18,
+"name": "Middle School for Art and Philosophy",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009605958",
+"match": "nces_name"
+},
+{
+"dbn": "18K763",
+"district": 18,
+"name": "Brooklyn Science and Engineering Academy",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360009606455",
+"match": "nces_name"
+},
+{
+"dbn": "18K961",
+"district": 18,
+"name": "Lenox Academy",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 8",
+"schoolid": "360009606775",
+"match": "nces_name"
+},
+{
+"dbn": "19K089",
+"district": 19,
+"name": "P.S. 089 Cypress Hills",
+"class": "other",
+"methods": [
+"Language Criteria"
+],
+"span": "K to 8",
+"schoolid": "360012003000",
+"match": "nces_name"
+},
+{
+"dbn": "19K171",
+"district": 19,
+"name": "I.S. 171 Abraham Lincoln",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012002604",
+"match": "nces_name"
+},
+{
+"dbn": "19K218",
+"district": 19,
+"name": "J.H.S. 218 James P. Sinnott",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012002720",
+"match": "dir_name"
+},
+{
+"dbn": "19K292",
+"district": 19,
+"name": "J.H.S. 292 Margaret S. Douglas",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012002800",
+"match": "dir_name"
+},
+{
+"dbn": "19K404",
+"district": 19,
+"name": "Academy for Young Writers",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360012005884",
+"match": "nces_name"
+},
+{
+"dbn": "19K409",
+"district": 19,
+"name": "East New York Family Academy",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360012000813",
+"match": "nces_name"
+},
+{
+"dbn": "19K422",
+"district": 19,
+"name": "Spring Creek Community School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360012006339",
+"match": "nces_name"
+},
+{
+"dbn": "19K452",
+"district": 19,
+"name": "Frederick Douglass Academy VIII Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360012005895",
+"match": "nces_name"
+},
+{
+"dbn": "19K654",
+"district": 19,
+"name": "Van Siclen Community Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012006417",
+"match": "nces_name"
+},
+{
+"dbn": "19K661",
+"district": 19,
+"name": "Vista Academy",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012006418",
+"match": "nces_name"
+},
+{
+"dbn": "19K662",
+"district": 19,
+"name": "Liberty Avenue Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012006419",
+"match": "nces_name"
+},
+{
+"dbn": "19K663",
+"district": 19,
+"name": "School of the Future Brooklyn",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360012006420",
+"match": "nces_name"
+},
+{
+"dbn": "19K678",
+"district": 19,
+"name": "East New York Middle School of Excellence",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360012006153",
+"match": "nces_name"
+},
+{
+"dbn": "19K760",
+"district": 19,
+"name": "Highland Park Community School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012006483",
+"match": "nces_name"
+},
+{
+"dbn": "19K907",
+"district": 19,
+"name": "Legacy School of the Arts",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360012006666",
+"match": "nces_name"
+},
+{
+"dbn": "19K935",
+"district": 19,
+"name": "M.S. 935",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012006739",
+"match": "nces_name"
+},
+{
+"dbn": "20K030",
+"district": 20,
+"name": "P.S./I.S. 30 Mary White Ovington",
+"class": "mixed",
+"methods": [
+"Language Criteria",
+"Screened",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015103006",
+"match": "nces_name"
+},
+{
+"dbn": "20K062",
+"district": 20,
+"name": "J.H.S. 062 Ditmas",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015102266",
+"match": "overlap"
+},
+{
+"dbn": "20K104",
+"district": 20,
+"name": "P.S./I.S. 104 The Fort Hamilton School",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015102391",
+"match": "nces_name"
+},
+{
+"dbn": "20K163",
+"district": 20,
+"name": "P.S. 163 Bath Beach",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015102585",
+"match": "nces_name"
+},
+{
+"dbn": "20K180",
+"district": 20,
+"name": "The SEEALL Academy",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015102626",
+"match": "nces_name"
+},
+{
+"dbn": "20K187",
+"district": 20,
+"name": "The Christa McAuliffe School\\I.S. 187",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 8",
+"schoolid": "360015101348",
+"match": "nces_name"
+},
+{
+"dbn": "20K192",
+"district": 20,
+"name": "P.S. 192 - The Magnet School for Math and Science Inquiry",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015102657",
+"match": "nces_name"
+},
+{
+"dbn": "20K201",
+"district": 20,
+"name": "J.H.S. 201 The Madeleine Brennan School",
+"class": "mixed",
+"methods": [
+"Language Criteria",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015102682",
+"match": "nces_name"
+},
+{
+"dbn": "20K220",
+"district": 20,
+"name": "J.H.S. 220 John J. Pershing",
+"class": "mixed",
+"methods": [
+"Language Criteria",
+"Open",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015102724",
+"match": "dir_name"
+},
+{
+"dbn": "20K223",
+"district": 20,
+"name": "J.H.S. 223 The Montauk",
+"class": "mixed",
+"methods": [
+"Open",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015102729",
+"match": "dir_name"
+},
+{
+"dbn": "20K227",
+"district": 20,
+"name": "J.H.S. 227 Edward B. Shallow",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015102735",
+"match": "dir_name"
+},
+{
+"dbn": "20K229",
+"district": 20,
+"name": "P.S. 229 Dyker",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015102738",
+"match": "nces_name"
+},
+{
+"dbn": "20K259",
+"district": 20,
+"name": "J.H.S. 259 William Mckinley",
+"class": "mixed",
+"methods": [
+"Language Criteria",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015102775",
+"match": "dir_name"
+},
+{
+"dbn": "20K407",
+"district": 20,
+"name": "M.S. 407 School of Technology, Arts, and Research",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 7",
+"schoolid": "360015106798",
+"match": "overlap"
+},
+{
+"dbn": "20K609",
+"district": 20,
+"name": "Urban Assembly School for Leadership and Empowerment",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360015105955",
+"match": "nces_name"
+},
+{
+"dbn": "20K686",
+"district": 20,
+"name": "Brooklyn School of Inquiry",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "K to 8",
+"schoolid": "360015106138",
+"match": "nces_name"
+},
+{
+"dbn": "20K936",
+"district": 20,
+"name": "M.S. 936",
+"class": "selective",
+"methods": [
+"Audition"
+],
+"span": "6 to 8",
+"schoolid": "360015106725",
+"match": "nces_name"
+},
+{
+"dbn": "21K095",
+"district": 21,
+"name": "P.S. 095 The Gravesend",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015202363",
+"match": "nces_name"
+},
+{
+"dbn": "21K096",
+"district": 21,
+"name": "I.S. 096 Seth Low",
+"class": "mixed",
+"methods": [
+"Audition",
+"Talent Test",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015202367",
+"match": "nces_name"
+},
+{
+"dbn": "21K098",
+"district": 21,
+"name": "I.S. 98 Bay Academy",
+"class": "selective",
+"methods": [
+"Audition",
+"Talent Test"
+],
+"span": "6 to 8",
+"schoolid": "360015203011",
+"match": "nces_name"
+},
+{
+"dbn": "21K099",
+"district": 21,
+"name": "P.S. 099 Isaac Asimov",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015202377",
+"match": "nces_name"
+},
+{
+"dbn": "21K121",
+"district": 21,
+"name": "P.S. 121 Nelson A. Rockefeller",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015202447",
+"match": "nces_name"
+},
+{
+"dbn": "21K209",
+"district": 21,
+"name": "P.S. 209 Margaret Mead",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015202702",
+"match": "nces_name"
+},
+{
+"dbn": "21K225",
+"district": 21,
+"name": "P.S. K225 - The Eileen E. Zaglin",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015202731",
+"match": "nces_name"
+},
+{
+"dbn": "21K226",
+"district": 21,
+"name": "P.S. 226 Alfred De B. Mason",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015202734",
+"match": "nces_name"
+},
+{
+"dbn": "21K228",
+"district": 21,
+"name": "I.S. 228 David A. Boody",
+"class": "mixed",
+"methods": [
+"Audition",
+"Language Criteria",
+"Talent Test",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015202736",
+"match": "nces_name"
+},
+{
+"dbn": "21K238",
+"district": 21,
+"name": "P.S. 238 Anne Sullivan",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015202753",
+"match": "nces_name"
+},
+{
+"dbn": "21K239",
+"district": 21,
+"name": "Mark Twain I.S. 239 for the Gifted & Talented",
+"class": "mixed",
+"methods": [
+"Audition",
+"Open",
+"Talent Test"
+],
+"span": "6 to 8",
+"schoolid": "360015202754",
+"match": "nces_name"
+},
+{
+"dbn": "21K281",
+"district": 21,
+"name": "I.S. 281 Joseph B Cavallaro",
+"class": "mixed",
+"methods": [
+"Audition",
+"Language Criteria",
+"Talent Test",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015202792",
+"match": "nces_name"
+},
+{
+"dbn": "21K288",
+"district": 21,
+"name": "P.S. 288 The Shirley Tanyhill",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360015202797",
+"match": "nces_name"
+},
+{
+"dbn": "21K303",
+"district": 21,
+"name": "I.S. 303 Herbert S. Eisenberg",
+"class": "mixed",
+"methods": [
+"Audition",
+"Language Criteria",
+"Talent Test",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015202807",
+"match": "nces_name"
+},
+{
+"dbn": "21K468",
+"district": 21,
+"name": "Kingsborough Early College School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360015205926",
+"match": "nces_name"
+},
+{
+"dbn": "21K540",
+"district": 21,
+"name": "The Annex at John Dewey",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6, 9-12",
+"schoolid": null,
+"match": null
+},
+{
+"dbn": "21K690",
+"district": 21,
+"name": "Brooklyn Studio Secondary School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360015203107",
+"match": "nces_name"
+},
+{
+"dbn": "21K968",
+"district": 21,
+"name": "Middle School of Innovation",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6",
+"schoolid": "360015206813",
+"match": "nces_name"
+},
+{
+"dbn": "22K014",
+"district": 22,
+"name": "J.H.S. 014 Shell Bank",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015302003",
+"match": "overlap"
+},
+{
+"dbn": "22K078",
+"district": 22,
+"name": "J.H.S. 078 Roy H. Mann",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015302007",
+"match": "overlap"
+},
+{
+"dbn": "22K109",
+"district": 22,
+"name": "P.S. 109",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360015301788",
+"match": "nces_name"
+},
+{
+"dbn": "22K206",
+"district": 22,
+"name": "P.S. 206 Joseph F Lamb",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360015302695",
+"match": "nces_name"
+},
+{
+"dbn": "22K207",
+"district": 22,
+"name": "P.S. 207 Elizabeth G. Leary",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360015302697",
+"match": "nces_name"
+},
+{
+"dbn": "22K234",
+"district": 22,
+"name": "W.A. Cunningham I.S. 234",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015302748",
+"match": "dir_name"
+},
+{
+"dbn": "22K240",
+"district": 22,
+"name": "Andries Hudde",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015302755",
+"match": "nces_name"
+},
+{
+"dbn": "22K278",
+"district": 22,
+"name": "J.H.S. 278 Marine Park",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360015302012",
+"match": "dir_name"
+},
+{
+"dbn": "22K381",
+"district": 22,
+"name": "I. S. 381",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360015304070",
+"match": "nces_name"
+},
+{
+"dbn": "22K890",
+"district": 22,
+"name": "M.S. 890",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360015306619",
+"match": "nces_name"
+},
+{
+"dbn": "23K155",
+"district": 23,
+"name": "P.S./ I.S. 155 Nicholas Herkimer",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360012102559",
+"match": "nces_name"
+},
+{
+"dbn": "23K178",
+"district": 23,
+"name": "P.S. 178 Saint Clair Mckelway",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360012102623",
+"match": "nces_name"
+},
+{
+"dbn": "23K184",
+"district": 23,
+"name": "P.S. 184 Newport",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360012102636",
+"match": "nces_name"
+},
+{
+"dbn": "23K363",
+"district": 23,
+"name": "Brownsville Collaborative Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360012106351",
+"match": "nces_name"
+},
+{
+"dbn": "23K392",
+"district": 23,
+"name": "I.S. 392",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 8",
+"schoolid": "360012105237",
+"match": "nces_name"
+},
+{
+"dbn": "23K518",
+"district": 23,
+"name": "Kappa V",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360012105723",
+"match": "nces_name"
+},
+{
+"dbn": "23K522",
+"district": 23,
+"name": "Mott Hall IV",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360012105724",
+"match": "nces_name"
+},
+{
+"dbn": "23K644",
+"district": 23,
+"name": "Eagle Academy for Young Men II",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360012106078",
+"match": "nces_name"
+},
+{
+"dbn": "23K664",
+"district": 23,
+"name": "Brooklyn Environmental Exploration School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360012106427",
+"match": "nces_name"
+},
+{
+"dbn": "23K668",
+"district": 23,
+"name": "Riverdale Avenue Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360012106428",
+"match": "nces_name"
+},
+{
+"dbn": "23K671",
+"district": 23,
+"name": "Mott Hall Bridges Academy",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360012106175",
+"match": "nces_name"
+},
+{
+"dbn": "24Q005",
+"district": 24,
+"name": "I.S. 5 - The Walter Crowley Intermediate School",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009803117",
+"match": "nces_name"
+},
+{
+"dbn": "24Q049",
+"district": 24,
+"name": "P.S. 049 Dorothy Bonawit Kole",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009802215",
+"match": "nces_name"
+},
+{
+"dbn": "24Q061",
+"district": 24,
+"name": "I.S. 061 Leonardo Da Vinci",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009802263",
+"match": "nces_name"
+},
+{
+"dbn": "24Q073",
+"district": 24,
+"name": "I.S. 73 - The Frank Sansivieri Intermediate School",
+"class": "mixed",
+"methods": [
+"Language Criteria",
+"Open",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009802300",
+"match": "nces_name"
+},
+{
+"dbn": "24Q077",
+"district": 24,
+"name": "I.S. 077",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009804609",
+"match": "nces_name"
+},
+{
+"dbn": "24Q087",
+"district": 24,
+"name": "P.S./I.S. 087 Middle Village",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009802337",
+"match": "nces_name"
+},
+{
+"dbn": "24Q093",
+"district": 24,
+"name": "I.S. 093 Ridgewood",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009802355",
+"match": "nces_name"
+},
+{
+"dbn": "24Q102",
+"district": 24,
+"name": "P.S. 102 Bayview",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009802386",
+"match": "nces_name"
+},
+{
+"dbn": "24Q113",
+"district": 24,
+"name": "P.S./I.S. 113 Anthony J. Pranzo",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009802423",
+"match": "nces_name"
+},
+{
+"dbn": "24Q119",
+"district": 24,
+"name": "I.S. 119 The Glendale",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009802442",
+"match": "nces_name"
+},
+{
+"dbn": "24Q125",
+"district": 24,
+"name": "I.S. 125 Thom J. McCann Woodside",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009802464",
+"match": "nces_name"
+},
+{
+"dbn": "24Q128",
+"district": 24,
+"name": "P.S. 128 The Lorraine Tuzzo, Juniper Valley Elementary School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009802474",
+"match": "nces_name"
+},
+{
+"dbn": "24Q311",
+"district": 24,
+"name": "Corona Arts & Sciences Academy",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009806431",
+"match": "nces_name"
+},
+{
+"dbn": "24Q419",
+"district": 24,
+"name": "MS 419",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009806754",
+"match": "nces_name"
+},
+{
+"dbn": "24Q560",
+"district": 24,
+"name": "Robert F. Wagner, Jr. Secondary School for Arts and Technology",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360009801791",
+"match": "nces_name"
+},
+{
+"dbn": "24Q849",
+"district": 24,
+"name": "Queens International",
+"class": "other",
+"methods": [
+"Language Criteria"
+],
+"span": "6,9",
+"schoolid": "360009806814",
+"match": "nces_name"
+},
+{
+"dbn": "25Q025",
+"district": 25,
+"name": "I.S. 025 Adrien Block",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012201969",
+"match": "nces_name"
+},
+{
+"dbn": "25Q164",
+"district": 25,
+"name": "P.S. 164 Queens Valley",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012202589",
+"match": "nces_name"
+},
+{
+"dbn": "25Q185",
+"district": 25,
+"name": "J.H.S. 185 Edward Bleeker",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012202639",
+"match": "dir_name"
+},
+{
+"dbn": "25Q189",
+"district": 25,
+"name": "J.H.S. 189 Daniel Carter Beard",
+"class": "mixed",
+"methods": [
+"Language Criteria",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012202650",
+"match": "dir_name"
+},
+{
+"dbn": "25Q194",
+"district": 25,
+"name": "J.H.S. 194 William Carr",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012202664",
+"match": "dir_name"
+},
+{
+"dbn": "25Q200",
+"district": 25,
+"name": "P.S./M.S. 200 - The Magnet School of Global Studies and Leadership",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012202681",
+"match": "nces_name"
+},
+{
+"dbn": "25Q219",
+"district": 25,
+"name": "P.S. 219 Paul Klapper",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012202722",
+"match": "nces_name"
+},
+{
+"dbn": "25Q237",
+"district": 25,
+"name": "I.S. 237",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012201996",
+"match": "nces_name"
+},
+{
+"dbn": "25Q250",
+"district": 25,
+"name": "I.S. 250 The Robert F. Kennedy Community Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012200249",
+"match": "nces_name"
+},
+{
+"dbn": "25Q252",
+"district": 25,
+"name": "The Queens School of Inquiry",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 12",
+"schoolid": "360012205830",
+"match": "nces_name"
+},
+{
+"dbn": "25Q281",
+"district": 25,
+"name": "East-West School of International Studies",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360012205879",
+"match": "nces_name"
+},
+{
+"dbn": "25Q285",
+"district": 25,
+"name": "World Journalism Preparatory: A College Board School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360012205869",
+"match": "nces_name"
+},
+{
+"dbn": "25Q294",
+"district": 25,
+"name": "BELL Academy",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012205979",
+"match": "nces_name"
+},
+{
+"dbn": "25Q379",
+"district": 25,
+"name": "College Point Collaborative",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012206665",
+"match": "nces_name"
+},
+{
+"dbn": "25Q499",
+"district": 25,
+"name": "The Queens College School for Math, Science and Technology",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360012204175",
+"match": "nces_name"
+},
+{
+"dbn": "26Q067",
+"district": 26,
+"name": "J.H.S. 067 Louis Pasteur",
+"class": "mixed",
+"methods": [
+"Open",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009902281",
+"match": "overlap"
+},
+{
+"dbn": "26Q074",
+"district": 26,
+"name": "J.H.S. 074 Nathaniel Hawthorne",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009902301",
+"match": "overlap"
+},
+{
+"dbn": "26Q158",
+"district": 26,
+"name": "M.S. 158 Marie Curie",
+"class": "mixed",
+"methods": [
+"Open",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009902568",
+"match": "nces_name"
+},
+{
+"dbn": "26Q172",
+"district": 26,
+"name": "Irwin Altman Middle School 172",
+"class": "mixed",
+"methods": [
+"Open",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009902608",
+"match": "nces_name"
+},
+{
+"dbn": "26Q178",
+"district": 26,
+"name": "P.S./ IS 178 Holliswood",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009902622",
+"match": "nces_name"
+},
+{
+"dbn": "26Q216",
+"district": 26,
+"name": "J.H.S. 216 George J. Ryan",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009902716",
+"match": "dir_name"
+},
+{
+"dbn": "26Q266",
+"district": 26,
+"name": "P.S./I.S. 266",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360009905567",
+"match": "nces_name"
+},
+{
+"dbn": "27Q042",
+"district": 27,
+"name": "P.S./M.S 042 R. Vernam",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012302190",
+"match": "nces_name"
+},
+{
+"dbn": "27Q043",
+"district": 27,
+"name": "P.S. 043",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012302512",
+"match": "nces_name"
+},
+{
+"dbn": "27Q047",
+"district": 27,
+"name": "P.S. 047 Chris Galas",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012302208",
+"match": "nces_name"
+},
+{
+"dbn": "27Q053",
+"district": 27,
+"name": "M.S. 053 Brian Piccolo",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012301972",
+"match": "nces_name"
+},
+{
+"dbn": "27Q105",
+"district": 27,
+"name": "P.S. 105 The Bay School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012302395",
+"match": "nces_name"
+},
+{
+"dbn": "27Q114",
+"district": 27,
+"name": "P.S./M.S. 114 Belle Harbor",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012302426",
+"match": "nces_name"
+},
+{
+"dbn": "27Q124",
+"district": 27,
+"name": "P.S. 124 Osmond A Church",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012302460",
+"match": "nces_name"
+},
+{
+"dbn": "27Q137",
+"district": 27,
+"name": "M.S. 137 America's School of Heroes",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012305269",
+"match": "nces_name"
+},
+{
+"dbn": "27Q146",
+"district": 27,
+"name": "P.S. 146 Howard Beach",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012302531",
+"match": "nces_name"
+},
+{
+"dbn": "27Q183",
+"district": 27,
+"name": "P.S. 183 Dr. Richard R. Green",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012302634",
+"match": "nces_name"
+},
+{
+"dbn": "27Q202",
+"district": 27,
+"name": "J.H.S. 202 Robert H. Goddard",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012302685",
+"match": "dir_name"
+},
+{
+"dbn": "27Q207",
+"district": 27,
+"name": "P.S. 207 Rockwood Park",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012302699",
+"match": "nces_name"
+},
+{
+"dbn": "27Q210",
+"district": 27,
+"name": "J.H.S. 210 Elizabeth Blackwell",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012302704",
+"match": "dir_name"
+},
+{
+"dbn": "27Q226",
+"district": 27,
+"name": "J.H.S. 226 Virgil I. Grissom",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012301995",
+"match": "overlap"
+},
+{
+"dbn": "27Q232",
+"district": 27,
+"name": "P.S. 232 Lindenwood",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360012302743",
+"match": "nces_name"
+},
+{
+"dbn": "27Q262",
+"district": 27,
+"name": "Channel View School for Research",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360012305731",
+"match": "nces_name"
+},
+{
+"dbn": "27Q282",
+"district": 27,
+"name": "Knowledge and Power Preparatory Academy VI",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 8",
+"schoolid": "360012305890",
+"match": "nces_name"
+},
+{
+"dbn": "27Q297",
+"district": 27,
+"name": "Hawtree Creek Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012306436",
+"match": "nces_name"
+},
+{
+"dbn": "27Q309",
+"district": 27,
+"name": "Academy of Medical Technology: A College Board School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360012306079",
+"match": "nces_name"
+},
+{
+"dbn": "27Q318",
+"district": 27,
+"name": "Waterside School For Leadership",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012306127",
+"match": "nces_name"
+},
+{
+"dbn": "27Q319",
+"district": 27,
+"name": "Village Academy",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360012306104",
+"match": "nces_name"
+},
+{
+"dbn": "27Q323",
+"district": 27,
+"name": "Scholars' Academy",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360012305831",
+"match": "nces_name"
+},
+{
+"dbn": "27Q333",
+"district": 27,
+"name": "Goldie Maple Academy",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360012305883",
+"match": "nces_name"
+},
+{
+"dbn": "28Q008",
+"district": 28,
+"name": "J.H.S. 008 Richard S. Grossley",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010003176",
+"match": "overlap"
+},
+{
+"dbn": "28Q072",
+"district": 28,
+"name": "Catherine & Count Basie Middle School 72",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010002297",
+"match": "nces_name"
+},
+{
+"dbn": "28Q157",
+"district": 28,
+"name": "J.H.S. 157 Stephen A. Halsey",
+"class": "mixed",
+"methods": [
+"Audition",
+"Zone Priority"
+],
+"span": "6 to 9",
+"schoolid": "360010002567",
+"match": "dir_name"
+},
+{
+"dbn": "28Q167",
+"district": 28,
+"name": "Metropolitan Expeditionary Learning School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360010006188",
+"match": "nces_name"
+},
+{
+"dbn": "28Q190",
+"district": 28,
+"name": "J.H.S. 190 Russell Sage",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010002653",
+"match": "dir_name"
+},
+{
+"dbn": "28Q217",
+"district": 28,
+"name": "J.H.S. 217 Robert A. Van Wyck",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010002718",
+"match": "dir_name"
+},
+{
+"dbn": "28Q284",
+"district": 28,
+"name": "York Early College Academy",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360010005935",
+"match": "nces_name"
+},
+{
+"dbn": "28Q287",
+"district": 28,
+"name": "The Emerson School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010006438",
+"match": "nces_name"
+},
+{
+"dbn": "28Q310",
+"district": 28,
+"name": "Queens Collegiate: A College Board School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360010006005",
+"match": "nces_name"
+},
+{
+"dbn": "28Q332",
+"district": 28,
+"name": "Redwood Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010006533",
+"match": "nces_name"
+},
+{
+"dbn": "28Q358",
+"district": 28,
+"name": "M.S. 358",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010006548",
+"match": "nces_name"
+},
+{
+"dbn": "28Q680",
+"district": 28,
+"name": "Queens Gateway to Health Sciences Secondary School",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360010001414",
+"match": "nces_name"
+},
+{
+"dbn": "28Q896",
+"district": 28,
+"name": "Young Women's Leadership School, Queens",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360010005832",
+"match": "nces_name"
+},
+{
+"dbn": "29Q059",
+"district": 29,
+"name": "I.S. 059 Springfield Gardens",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010102254",
+"match": "nces_name"
+},
+{
+"dbn": "29Q109",
+"district": 29,
+"name": "Jean Nuzzi Intermediate School",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010102409",
+"match": "nces_name"
+},
+{
+"dbn": "29Q116",
+"district": 29,
+"name": "P.S./I.S. 116 William C. Hughley",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360010102432",
+"match": "nces_name"
+},
+{
+"dbn": "29Q138",
+"district": 29,
+"name": "P.S./M.S. 138 Sunrise",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360010102506",
+"match": "nces_name"
+},
+{
+"dbn": "29Q147",
+"district": 29,
+"name": "P.S./M.S. 147 Ronald McNair",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360010102532",
+"match": "nces_name"
+},
+{
+"dbn": "29Q192",
+"district": 29,
+"name": "I.S. 192 The Linden",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010102659",
+"match": "nces_name"
+},
+{
+"dbn": "29Q208",
+"district": 29,
+"name": "P.S./I.S. 208",
+"class": "mixed",
+"methods": [
+"Open",
+"Screened"
+],
+"span": "K to 8",
+"schoolid": "360010105544",
+"match": "nces_name"
+},
+{
+"dbn": "29Q238",
+"district": 29,
+"name": "I.S. 238 - Susan B. Anthony Academy",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010101997",
+"match": "nces_name"
+},
+{
+"dbn": "29Q259",
+"district": 29,
+"name": "Pathways College Preparatory School: A College Board School",
+"class": "mixed",
+"methods": [
+"Open",
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360010105834",
+"match": "nces_name"
+},
+{
+"dbn": "29Q268",
+"district": 29,
+"name": "P.S./I.S. 268",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 8",
+"schoolid": "360010105545",
+"match": "nces_name"
+},
+{
+"dbn": "29Q270",
+"district": 29,
+"name": "The Gordon Parks School",
+"class": "mixed",
+"methods": [
+"Open",
+"Screened"
+],
+"span": "K to 8",
+"schoolid": "360010105546",
+"match": "nces_name"
+},
+{
+"dbn": "29Q283",
+"district": 29,
+"name": "Preparatory Academy for Writers: A College Board School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360010105875",
+"match": "nces_name"
+},
+{
+"dbn": "29Q289",
+"district": 29,
+"name": "Queens United Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360010106439",
+"match": "nces_name"
+},
+{
+"dbn": "29Q295",
+"district": 29,
+"name": "P.S./I.S. 295",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360010105925",
+"match": "nces_name"
+},
+{
+"dbn": "29Q327",
+"district": 29,
+"name": "Eagle Academy for Young Men III",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360010106190",
+"match": "nces_name"
+},
+{
+"dbn": "29Q355",
+"district": 29,
+"name": "Collaborative Arts Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010106285",
+"match": "nces_name"
+},
+{
+"dbn": "29Q356",
+"district": 29,
+"name": "Community Voices Middle School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010106286",
+"match": "nces_name"
+},
+{
+"dbn": "30Q010",
+"district": 30,
+"name": "I.S. 010 Horace Greeley",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010202071",
+"match": "nces_name"
+},
+{
+"dbn": "30Q078",
+"district": 30,
+"name": "P.S./I.S. 78Q",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360010203123",
+"match": "nces_name"
+},
+{
+"dbn": "30Q111",
+"district": 30,
+"name": "P.S. 111 Jacob Blackwell",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360010202416",
+"match": "nces_name"
+},
+{
+"dbn": "30Q122",
+"district": 30,
+"name": "P.S. 122 Mamie Fay",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "K to 8",
+"schoolid": "360010202451",
+"match": "nces_name"
+},
+{
+"dbn": "30Q126",
+"district": 30,
+"name": "Albert Shanker School for Visual and Performing Arts",
+"class": "mixed",
+"methods": [
+"Open",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010202466",
+"match": "nces_name"
+},
+{
+"dbn": "30Q127",
+"district": 30,
+"name": "P.S. 127 Aerospace Science Magnet School",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360010202470",
+"match": "nces_name"
+},
+{
+"dbn": "30Q141",
+"district": 30,
+"name": "I.S. 141 The Steinway",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010202514",
+"match": "nces_name"
+},
+{
+"dbn": "30Q145",
+"district": 30,
+"name": "I.S. 145 Joseph Pulitzer",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010202527",
+"match": "nces_name"
+},
+{
+"dbn": "30Q204",
+"district": 30,
+"name": "I.S. 204 Oliver W. Holmes",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010202688",
+"match": "nces_name"
+},
+{
+"dbn": "30Q227",
+"district": 30,
+"name": "I.S. 227 Louis Armstrong",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "5 to 8",
+"schoolid": "360010203146",
+"match": "nces_name"
+},
+{
+"dbn": "30Q230",
+"district": 30,
+"name": "I.S. 230",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010204802",
+"match": "nces_name"
+},
+{
+"dbn": "30Q235",
+"district": 30,
+"name": "Academy for New Americans",
+"class": "other",
+"methods": [
+"Language Criteria"
+],
+"span": "6 to 8",
+"schoolid": "360010202535",
+"match": "nces_name"
+},
+{
+"dbn": "30Q286",
+"district": 30,
+"name": "Young Women's Leadership School, Astoria",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360010205948",
+"match": "overlap"
+},
+{
+"dbn": "30Q291",
+"district": 30,
+"name": "Hunters Point Community Middle School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360010206441",
+"match": "nces_name"
+},
+{
+"dbn": "30Q300",
+"district": 30,
+"name": "The 30th Avenue School",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "K to 8",
+"schoolid": "360010206477",
+"match": "nces_name"
+},
+{
+"dbn": "30Q384",
+"district": 30,
+"name": "HUNTERS POINT ELEMENTARY SCHOOL",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "PK-6",
+"schoolid": "360010206660",
+"match": "nces_name"
+},
+{
+"dbn": "30Q429",
+"district": 30,
+"name": "M.S. 429",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010206776",
+"match": "nces_name"
+},
+{
+"dbn": "30Q580",
+"district": 30,
+"name": "Baccalaureate School for Global Education",
+"class": "selective",
+"methods": [
+"Screened With Assessment"
+],
+"span": "7 to 12",
+"schoolid": "360010205735",
+"match": "nces_name"
+},
+{
+"dbn": "31R002",
+"district": 31,
+"name": "I.S. R002 George L. Egbert",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010302046",
+"match": "nces_name"
+},
+{
+"dbn": "31R007",
+"district": 31,
+"name": "I.S. 007 Elias Bernstein",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010301966",
+"match": "nces_name"
+},
+{
+"dbn": "31R024",
+"district": 31,
+"name": "I.S. 024 Myra S. Barnes",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010302120",
+"match": "nces_name"
+},
+{
+"dbn": "31R026",
+"district": 31,
+"name": "P.S. 26 The Carteret School",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 6",
+"schoolid": "360010302127",
+"match": "nces_name"
+},
+{
+"dbn": "31R027",
+"district": 31,
+"name": "I.S. 027 Anning S. Prall",
+"class": "mixed",
+"methods": [
+"Open",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010302130",
+"match": "nces_name"
+},
+{
+"dbn": "31R028",
+"district": 31,
+"name": "The Eagle Academy for Young Men of Staten Island",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 12",
+"schoolid": "360010306522",
+"match": "nces_name"
+},
+{
+"dbn": "31R034",
+"district": 31,
+"name": "I.S. 034 Tottenville",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010301970",
+"match": "nces_name"
+},
+{
+"dbn": "31R048",
+"district": 31,
+"name": "P.S. 048 William G. Wilcox",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360010302214",
+"match": "nces_name"
+},
+{
+"dbn": "31R049",
+"district": 31,
+"name": "I.S. 49 Berta A. Dreyfus",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010302216",
+"match": "nces_name"
+},
+{
+"dbn": "31R051",
+"district": 31,
+"name": "I.S. 051 Edwin Markham",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010302057",
+"match": "nces_name"
+},
+{
+"dbn": "31R061",
+"district": 31,
+"name": "I.S. 061 William A Morris",
+"class": "mixed",
+"methods": [
+"Language Criteria",
+"Open",
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010301973",
+"match": "nces_name"
+},
+{
+"dbn": "31R063",
+"district": 31,
+"name": "Marsh Avenue School for Expeditionary Learning",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 8",
+"schoolid": "360010306006",
+"match": "nces_name"
+},
+{
+"dbn": "31R072",
+"district": 31,
+"name": "I.S. 072 Rocco Laurie",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010301974",
+"match": "nces_name"
+},
+{
+"dbn": "31R075",
+"district": 31,
+"name": "I.S. 075 Frank D. Paulo",
+"class": "mixed",
+"methods": [
+"Screened",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360010304526",
+"match": "nces_name"
+},
+{
+"dbn": "31R080",
+"district": 31,
+"name": "The Michael J. Petrides School",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "K to 12",
+"schoolid": "360010301827",
+"match": "nces_name"
+},
+{
+"dbn": "31R085",
+"district": 31,
+"name": "The Young Women's Leadership Academy on Staten Island",
+"class": "open",
+"methods": [
+"Open"
+],
+"span": "6 to 9",
+"schoolid": "360010306758",
+"match": "overlap"
+},
+{
+"dbn": "31R861",
+"district": 31,
+"name": "Staten Island School of Civic Leadership",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360010306149",
+"match": "nces_name"
+},
+{
+"dbn": "32K045",
+"district": 32,
+"name": "P.S./I.S. 045 Horace E. Greene",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009702199",
+"match": "nces_name"
+},
+{
+"dbn": "32K162",
+"district": 32,
+"name": "J.H.S. 162 The Willoughby",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009702582",
+"match": "dir_name"
+},
+{
+"dbn": "32K291",
+"district": 32,
+"name": "J.H.S. 291 Roland Hayes",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009702799",
+"match": "dir_name"
+},
+{
+"dbn": "32K347",
+"district": 32,
+"name": "I.S. 347 School of Humanities",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009704887",
+"match": "nces_name"
+},
+{
+"dbn": "32K349",
+"district": 32,
+"name": "I.S. 349 Math, Science & Tech.",
+"class": "open",
+"methods": [
+"Open",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009704888",
+"match": "nces_name"
+},
+{
+"dbn": "32K383",
+"district": 32,
+"name": "J.H.S. 383 Philippa Schuyler",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 8",
+"schoolid": "360009702000",
+"match": "dir_name"
+},
+{
+"dbn": "32K384",
+"district": 32,
+"name": "P.S. /I.S. 384 Frances E. Carter",
+"class": "open",
+"methods": [
+"Zone Priority"
+],
+"span": "K to 8",
+"schoolid": "360009702830",
+"match": "nces_name"
+},
+{
+"dbn": "32K554",
+"district": 32,
+"name": "All City Leadership Secondary School",
+"class": "selective",
+"methods": [
+"Screened"
+],
+"span": "6 to 12",
+"schoolid": "360009705537",
+"match": "nces_name"
+},
+{
+"dbn": "32K562",
+"district": 32,
+"name": "Evergreen Middle School for Urban Exploration",
+"class": "open",
+"methods": [
+"Language Criteria",
+"Zone Priority"
+],
+"span": "6 to 8",
+"schoolid": "360009706331",
+"match": "nces_name"
+}
+]
+}

@@ -420,8 +420,14 @@ def _entry(school: Dict, role: str) -> Dict:
     }
 
 
+def _in_headline(v: Dict) -> bool:
+    """A citywide choice average (NYC high schools) is shown but is the same for every neighborhood, so it stays out
+    of the headline."""
+    return v.get("score") is not None and (v.get("pool") or {}).get("scope") != "citywide"
+
+
 def headline_from_levels(levels: Dict[str, Dict], early_ed_bonus: float = 0.0) -> Optional[float]:
-    scores = [v["score"] for v in levels.values() if v.get("score") is not None]
+    scores = [v["score"] for v in levels.values() if _in_headline(v)]
     if not scores:
         return None
     return min(100.0, sum(scores) / len(scores) + early_ed_bonus)
@@ -450,15 +456,40 @@ def _nearest_in_district(pool: List[Dict], level: str, base_radius_miles: float)
     return "district_far", [sc for sc in cand if float(sc["distance"]) <= DISTRICT_FAR_CAP_MILES][:NEAREST_PER_LEVEL]
 
 
+MIN_CHOICE_POOL = 3
+TOP_OPTIONS = 4
+
+
+def choice_pool_average(schools: List[Dict], level: str) -> Optional[Tuple[float, int]]:
+    """(enrollment-weighted mean rating, n schools) of the rated district-run schools of the level, or None when
+    fewer than MIN_CHOICE_POOL are rated. Magnets stay in: they are part of what a family can apply to. This
+    describes the schools in the pool; it is not a prediction of where a particular child is placed."""
+    from data_sources.schools_api import _is_rated_school
+
+    rated = [(school_rating(sc), (((sc.get("schoolYearlyDetails") or [{}])[0] or {}).get("numberOfStudents")) or 1)
+             for sc in schools
+             if _level_of(sc) == level and _is_rated_school(sc) and not sc.get("isPrivate")
+             and sc.get("_dir_class") != "selective"
+             and sc.get("isCharterSchool") != "Yes" and school_rating(sc) is not None]
+    if len(rated) < MIN_CHOICE_POOL:
+        return None
+    total = sum(n for _, n in rated)
+    return round(sum(r * n for r, n in rated) / total, 2), len(rated)
+
+
 def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
-                 charters: Optional[List[Dict]] = None) -> Dict[str, Dict]:
+                 charters: Optional[List[Dict]] = None,
+                 choice_pools: Optional[Dict[str, Tuple[str, List[Dict]]]] = None,
+                 lottery_levels: Optional[set] = None) -> Dict[str, Dict]:
     """
     Per-level result.
     - The zoned school(s) when a zone map assigns one and it is rated; several schools on one resident campus
       (LA's small high schools, NYC zones listing two schools) are averaged.
     - Where the place's district publishes zone maps but this level has no zone at the point (NYC high schools and
       choice-based middle schools, SF middle and high), the level is **choice**: students apply, so nearby schools say
-      little about where a child goes. It is not scored (score None); the nearest 3 are kept as a reference only.
+      little about where a child goes. With `choice_pools` ({level: (scope, schools)}) the level is scored as the
+      enrollment-weighted average of that pool (source "choice_avg": the home district, or the whole city for NYC high
+      schools); without one, or when the pool is thin, it is not scored and the nearest 3 are a reference only.
     - Where no map covers the place at all, the nearest 3 rated schools of the level in the home district.
     """
     from data_sources.school_zones import match_zoned_schools
@@ -472,9 +503,29 @@ def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
         z = next((x for x in zoned if x["level"] == level), None) or \
             next((x for x in zoned if level in x.get("also_serves", [])), None)
         res: Dict[str, Any] = {"source": None, "score": None, "schools": [], "zone": None}
-        if mapped and z is None:
+        lottery = bool(lottery_levels and level in lottery_levels)
+        if lottery and z is not None:
+            # the district fills this level by lottery: the zone is a tiebreaker, not an assignment. Keep the
+            # attendance-area school for display and score the level as the pool.
+            from data_sources.school_zones import match_zoned_schools
+            from data_sources.schools_api import _is_rated_school
+            ms = [m for m in match_zoned_schools(z, pool) if _is_rated_school(m) and school_rating(m) is not None]
+            res["attendance_area"] = {"name": z["name"], "vintage": z["vintage"],
+                                      "schools": [_entry(m, "attendance_area") for m in ms]}
+        if (mapped and z is None) or (lottery and z is not None):
             _, ref = _nearest_in_district(pool, level, base_radius_miles)
             res.update(source="choice", reference=[_entry(sc, "reference") for sc in ref])
+            scope, members = (choice_pools or {}).get(level, (None, None))
+            avg = choice_pool_average(members, level) if members else None
+            if avg:
+                res.update(source="choice_avg", score=avg[0], pool={"scope": scope, "n_schools": avg[1]})
+                sel = sorted((sc for sc in members if sc.get("_dir_class") == "selective" and school_rating(sc) is not None),
+                             key=lambda sc: -school_rating(sc))
+                best = sorted((sc for sc in members if sc.get("_dir_class") != "selective" and sc.get("isCharterSchool") != "Yes"
+                               and school_rating(sc) is not None), key=lambda sc: -school_rating(sc))
+                res["top_options"] = [_entry(sc, "option") for sc in best[:TOP_OPTIONS]]
+                if sel:   # screened schools (grades, test or audition): by merit, so listed apart from the typical pool
+                    res["selective"] = [_entry(sc, "selective") for sc in sel[:6]]
             out[level] = res
             continue
         if z:
@@ -507,7 +558,8 @@ def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
 
 
 _SOURCE_LABEL = {"zone": "zoned school", "nearest": "nearest in district", "district_far": "district's nearest",
-                 "charter_only": "nearby charter", "choice": "choice by application, not scored"}
+                 "charter_only": "nearby charter", "choice": "choice by application, not scored",
+                 "choice_avg": "choice by application, pool average"}
 
 
 def summary_extras(breakdown: Dict) -> Dict[str, Optional[str]]:
@@ -519,9 +571,38 @@ def summary_extras(breakdown: Dict) -> Dict[str, Optional[str]]:
     years = sorted({v["zone"]["vintage"] for v in levels.values() if v.get("zone") and v["zone"].get("matched")})
     scored = sum(1 for v in levels.values() if v.get("score") is not None)
     choice = sum(1 for v in levels.values() if v.get("source") == "choice")
+    pooled = sum(1 for v in levels.values() if v.get("source") == "choice_avg")
     counted = len(levels) - choice
-    note = f" ({choice} by choice, not scored)" if choice else ""
+    note = "".join([f" ({choice} by choice, not scored)" if choice else "",
+                    f" ({pooled} by choice, scored as the pool average)" if pooled else ""])
+    def _opt(e):
+        d = f", {e['distance_mi']:.1f} mi" if e.get("distance_mi") is not None else ""
+        return f"{e['name']} ({round(e['rating'])}{d})"
+
+    access = []
+    for lv, v in levels.items():
+        name = lv.capitalize()
+        if v.get("source") == "choice_avg":
+            pool = v.get("pool") or {}
+            where = "citywide" if pool.get("scope") == "citywide" else "district"
+            part = "" if pool.get("scope") != "citywide" else ", not in the overall score"
+            aa = (v.get("attendance_area") or {}).get("schools") or []
+            tie = (f"; attendance-area school {aa[0]['name']} ({round(aa[0]['rating'])}) gets priority, not a guaranteed seat"
+                   if aa else "")
+            access.append(f"{name}: by lottery, average of {pool.get('n_schools')} {where} schools = {round(v['score'])}{part}{tie}")
+        elif v.get("source") == "choice":
+            access.append(f"{name}: by choice, not scored")
+        elif v.get("source") == "zone":
+            access.append(f"{name}: assigned by address ({round(v['score'])})")
+        elif v.get("score") is not None:
+            access.append(f"{name}: nearest schools, no zone map ({round(v['score'])})")
+    tops = [f"{lv.capitalize()}: " + "; ".join(_opt(e) for e in v["top_options"])
+            for lv, v in levels.items() if v.get("top_options") and (v.get("pool") or {}).get("scope") != "citywide"]
+    sels = [f"{lv.capitalize()} screened by grades, test or audition: " + "; ".join(_opt(e) for e in v["selective"])
+            for lv, v in levels.items() if v.get("selective")]
     return {
+        "level_access": "; ".join(access),
+        **({"best_options": " | ".join(tops + sels)} if tops or sels else {}),
         "level_sources": "; ".join(srcs),
         "zone_map_years": ", ".join(years) if years else "No zone map used",
         "levels_scored": f"{scored} of {len(levels)} levels{note}" + (" (thin)" if scored < min(2, counted) else ""),
@@ -554,7 +635,15 @@ def get_school_data(
 
     from data_sources.school_zones import zoned_schools
     zoned = zoned_schools(lat, lon)
-    levels = build_levels(cands["pool"], zoned, cands["radius_miles"], cands.get("charters"))
+    # a choice level is scored from the schools a family can apply to: the home district's, except NYC high schools,
+    # which are a citywide application
+    city = cands.get("citywide_pool")
+    choice_pools = {"elementary": ("district", cands["pool"]),
+                    "middle": ("district", cands.get("middle_directory_pool") or cands["pool"]),
+                    "high": ("citywide", city) if city else ("district", cands["pool"])}
+    from data_sources.district_access import lottery_levels_for
+    levels = build_levels(cands["pool"], zoned, cands["radius_miles"], cands.get("charters"), choice_pools,
+                          lottery_levels_for([d["id"] for d in cands["districts"]]))
     early_missing = early_ed_unknown
     if early_ed_bonus_override is not None:
         early = early_ed_bonus_override
@@ -578,8 +667,8 @@ def get_school_data(
             e = _entry(sc, "choice")
             if e["name"] not in used_names and len(choice) < CHOICE_LIST_MAX:
                 choice.append(e)
-    n_levels = sum(1 for v in levels.values() if v["score"] is not None)
-    n_counted = sum(1 for v in levels.values() if v.get("source") != "choice")
+    n_levels = sum(1 for v in levels.values() if _in_headline(v))
+    n_counted = sum(1 for v in levels.values() if v.get("source") != "choice" and (v.get("pool") or {}).get("scope") != "citywide")
     charter_ratings = [e["rating"] for e in choice]
     split = {
         "public": {"score": round(total, 2), "n_rated": sum(len(v["schools"]) for v in levels.values()),
@@ -589,7 +678,7 @@ def get_school_data(
                     if choice else {"score": None, "n_rated": 0, "confidence": "none"}),
     }
     rated_schools = [e for es in used.values() for e in es] + choice
-    base_avg = sum(v["score"] for v in levels.values() if v["score"] is not None) / n_levels
+    base_avg = sum(v["score"] for v in levels.values() if _in_headline(v)) / n_levels
     breakdown = {
         "model": MODEL,
         "base_avg_rating": round(base_avg, 2),

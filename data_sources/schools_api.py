@@ -470,6 +470,26 @@ def _with_distance(schools: List[Dict], lat: float, lon: float) -> List[Dict]:
     return out
 
 
+def _k8_middle_copies(pool: List[Dict]) -> List[Dict]:
+    """A K-8 school is also where its students go for grades 6-8, but SchoolDigger lists it as elementary only.
+    Returns a middle-level copy of each district-run K-8 (same rating; the original keeps its elementary role).
+    Magnets are left out: they are by application, so a nearby one says little about where a neighbor's child goes."""
+    out = []
+    for sc in pool:
+        if sc.get("schoolLevel") != "Elementary" or sc.get("isPrivate") or sc.get("isCharterSchool") == "Yes":
+            continue
+        if sc.get("lowGrade") not in ("PK", "KG", "K", "1") or sc.get("highGrade") != "8":
+            continue
+        if sc.get("isMagnetSchool") == "Yes" or "magnet" in (sc.get("schoolName") or "").lower():
+            continue
+        cp = dict(sc)
+        cp["schoolLevel"] = "Middle"
+        cp["schoolid"] = f"{sc.get('schoolid')}-k8mid"
+        cp["_k8_copy"] = True
+        out.append(cp)
+    return out
+
+
 def get_zone_candidates(
     lat: Optional[float], lon: Optional[float], state: Optional[str], area_type: Optional[str] = None,
     place_name: Optional[str] = None,
@@ -521,13 +541,39 @@ def get_zone_candidates(
             if key not in seen:
                 seen.add(key)
                 pool.append(sc)
+    pool.extend(_k8_middle_copies(pool))
     pool.sort(key=lambda sc: sc["distance"])
     if not pool:
         return None
     charters = [sc for sc in _with_distance(_state_charters(state), lat, lon)
                 if sc["distance"] <= radius and _is_rated_school(sc)]
-    return {"districts": [{"id": d["id"], "name": d["name"], "kind": d["kind"]} for d in districts],
-            "pool": pool, "charters": charters, "radius_miles": radius}
+    out = {"districts": [{"id": d["id"], "name": d["name"], "kind": d["kind"]} for d in districts],
+           "pool": pool, "charters": charters, "radius_miles": radius}
+    if any("New York City Department" in d["name"] for d in districts):
+        # NYC middle schools: district priority, so the home district's directory programs are the pool
+        from data_sources import nyc_middle_directory
+        home = None
+        try:
+            from data_sources.school_zones import zoned_schools
+            for z in zoned_schools(lat, lon):
+                num = str(z.get("id", "")).split(",")[0].strip()[:2]
+                if z.get("level") == "elementary" and num.isdigit():
+                    home = int(num)
+                    break
+        except Exception:
+            pass
+        if home is None:
+            csd = _nyc_csd_for_coords(lat, lon)
+            home = csd.get("csd_number") if csd else None
+        mid = nyc_middle_directory.district_pool(home)
+        if mid:
+            out["middle_directory_pool"] = _with_distance(mid, lat, lon)
+        # NYC high schools are one citywide application: the pool is every community district's schools
+        city: List[Dict] = []
+        for did in _nyc_csd_ids_by_number(state).values():
+            city.extend(_district_schools(state, did))
+        out["citywide_pool"] = city
+    return out
 
 
 def _district_named_for_place(

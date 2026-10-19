@@ -78,6 +78,7 @@ Model and runbook: [PILLAR_QUALITY_EDUCATION.md](PILLAR_QUALITY_EDUCATION.md). T
 |--------|-------------|
 | `fetch_school_snapshot.py --states NY,NJ` | Pull whole states from SchoolDigger into `data/school_snapshot/` (3 to 28 calls per state, about $0.008 per call). New state, or yearly ratings refresh. |
 | `build_school_data_bundle.py` | Rebuild `data/school_geo/` (district, place and zone outlines) after a raw layer or zone map changed. Commit the result. |
+| `build_nyc_middle_directory.py <InfoHub ms xlsx> --write` | Rebuild `data/school_geo/nyc_middle_directory.json` (NYC middle school pools with admissions method) from the DOE directory file. Refresh each admissions cycle, then re-score NYC. |
 | `rescore_education_offline.py [--metro la] [--dry-run]` | Re-score `quality_education` for every catalog place from the snapshot in seconds, 0 API calls. Use after any change to the school scoring rules, zone maps or snapshot. |
 | `enable_education_weight.py` | Restore education's weight (7.7%) and re-total after any education rescore (the live `only=` call zeroes it). |
 | `check_education.py [--metro la]` | Pass/fail education check (formula, split, weight, level coverage, district membership). Also runs inside `check_catalog_health.py` and `metro_agent health`. |
