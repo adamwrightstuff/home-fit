@@ -126,6 +126,8 @@ def run_extras(metro: str, out_path: Path, api_base: str, log: Callable[[str], N
     env = {**os.environ, "PYTHONPATH": str(REPO), "HOMEFIT_API_BASE": api_base}
     for label, cmd in (
         ("climate profiles", [sys.executable, str(REPO / "scripts" / "catalog" / "batch_climate_profiles.py")]),
+        ("PRISM temperature/precipitation (800 m normals; replaces the coarse NASA grid values)",
+         [sys.executable, str(REPO / "scripts" / "catalog" / "build_prism_climate.py")]),
         ("education (SchoolDigger, stops at the daily quota)",
          [sys.executable, str(REPO / "scripts" / "catalog" / "daily_education_rescore.py"), "--base-url", api_base]),
     ):

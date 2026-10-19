@@ -98,6 +98,7 @@ data/cache/transit/
 # raw school geography downloads (the slim bundle in data/school_geo/ is what ships)
 /data_cache/tiger_sd_2024/
 /data_cache/tiger_place_2024/
+/data_cache/prism/
 /data_cache/zone_maps/
 /data_cache/nces_ccd_2324/
 /data_cache/nces_sabs_1516/
