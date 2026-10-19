@@ -440,7 +440,7 @@ def _nearest_in_district(pool: List[Dict], level: str, base_radius_miles: float)
 
     elem_factor = 2.1 / 3.2   # NHTS 2017 median trip: elementary 2.1 mi vs middle 3.2 mi
     cand = sorted(
-        (sc for sc in pool if _level_of(sc) == level and _is_rated_school(sc)
+        (sc for sc in pool if _level_of(sc) == level and _is_rated_school(sc) and not sc.get("_k8_magnet")
          and sc.get("isCharterSchool") != "Yes" and sc.get("distance") is not None),
         key=lambda sc: float(sc["distance"]))
     base = base_radius_miles * (elem_factor if level == "elementary" else 1.0)
@@ -469,7 +469,7 @@ def choice_pool_average(schools: List[Dict], level: str) -> Optional[Tuple[float
     rated = [(school_rating(sc), (((sc.get("schoolYearlyDetails") or [{}])[0] or {}).get("numberOfStudents")) or 1)
              for sc in schools
              if _level_of(sc) == level and _is_rated_school(sc) and not sc.get("isPrivate")
-             and sc.get("_dir_class") != "selective"
+             and sc.get("_dir_class") != "selective" and not sc.get("_k8_magnet")
              and sc.get("isCharterSchool") != "Yes" and school_rating(sc) is not None]
     if len(rated) < MIN_CHOICE_POOL:
         return None

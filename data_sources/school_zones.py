@@ -71,6 +71,18 @@ ZONE_LAYERS: List[ZoneLayer] = [
               caveat="School District of Philadelphia 2024-25 catchments"),
     ZoneLayer("philadelphia_high_2425", "high", ("HS_Name",), "HS_ID", "2024-25", "PA",
               caveat="only 22 neighborhood high schools have catchments; most Philadelphia high schools admit by application"),
+    ZoneLayer("hisd_elementary_2627", "elementary", ("SchChoiceN",), "Campus__Number", "2026-27", "TX",
+              caveat="Houston ISD 2026-27 zones; zoned seats are first come, first served, and magnets and open-enrollment campuses have no zone"),
+    ZoneLayer("hisd_middle_2627", "middle", ("Middle_Sch",), "Campus_Number", "2026-27", "TX",
+              caveat="Houston ISD 2026-27 zones; magnets and open-enrollment campuses have no zone"),
+    ZoneLayer("hisd_high_2627", "high", ("High_Schoo",), "Campus_Num", "2026-27", "TX",
+              caveat="Houston ISD 2026-27 zones; magnets and open-enrollment campuses have no zone"),
+    ZoneLayer("dallas_elementary_2627", "elementary", ("ELEM_DESC",), "SLN", "2026-27", "TX",
+              caveat="Dallas ISD 2026-27 attendance zones; choice schools and magnets have no zone"),
+    ZoneLayer("dallas_middle_2627", "middle", ("MIDDLE",), "MID_SLN", "2026-27", "TX",
+              caveat="Dallas ISD 2026-27 attendance zones; choice schools and magnets have no zone"),
+    ZoneLayer("dallas_high_2627", "high", ("HIGH",), "HIGH_SLN", "2026-27", "TX",
+              caveat="Dallas ISD 2026-27 attendance zones; choice schools and magnets have no zone"),
     ZoneLayer("sabs_primary_1516", "elementary", ("schnam",), "ncessch", "2015-16", "",
               fallback=True, nces_ids=True, drop_where=("openEnroll", "Y"),
               caveat="NCES 2015-16 survey, used only where the district publishes no current map; some zones have changed"),
@@ -90,6 +102,21 @@ ZONE_LAYERS: List[ZoneLayer] = [
 
 _lock = threading.Lock()
 _frames: Dict[str, Any] = {}
+_overrides: Dict[str, str] = {}
+
+
+def _name_overrides() -> Dict[str, str]:
+    """{zone name (lower case): SchoolDigger name} for schools the two sources spell differently
+    (data/school_geo/zone_name_overrides.json)."""
+    if not _overrides:
+        try:
+            import json
+            from data_sources.geo_layers import bundle_dir
+            with open(os.path.join(bundle_dir(), "zone_name_overrides.json")) as f:
+                _overrides.update(json.load(f).get("names") or {})
+        except Exception:
+            _overrides["_"] = ""
+    return _overrides
 
 
 def _root() -> str:
@@ -195,6 +222,8 @@ def zoned_schools(lat: float, lon: float) -> List[Dict[str, Any]]:
                 names = [str(row[f]).strip() for f in layer.name_fields
                          if f in row and str(row[f]).strip() not in ("", "None", "nan")]
                 alts: List[List[str]] = []
+                if names and names[0].lower() in _name_overrides():
+                    names = [_name_overrides()[names[0].lower()]] + names
                 if layer.resolver == "nyc_dbn":
                     dbns = [d.strip() for d in str(row.get(layer.id_field, "")).split(",") if d.strip()]
                     for d in dbns:                       # a few zones list several schools: '10X363,10X447'

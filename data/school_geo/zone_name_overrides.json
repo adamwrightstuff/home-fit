@@ -1,0 +1,14 @@
+{
+ "note": "Zone-map school names that differ from the SchoolDigger name, from reading both lists. Key: zone name, lower case. Add a row only when the two clearly name the same school.",
+ "names": {
+  "highland heights elementary": "Highland Hts Elementary",
+  "reagan k-8 ed center": "Reagan K-8 Educational Center",
+  "gregory-lincoln ed ctr": "Gregory-Lincoln Educational Center",
+  "hilliard el": "Hilliard Elementary",
+  "houston mstc": "Houston Math Science And Technology Center",
+  "washington bt high school": "Washington B T High School",
+  "allen charter school": "Gabe P Allen New Technical Academy",
+  "cuellar sr elementary school": "Gilbert Cuellar Senior Elementary",
+  "lowe sr elementary school": "Jack Lowe Senior Elementary"
+ }
+}

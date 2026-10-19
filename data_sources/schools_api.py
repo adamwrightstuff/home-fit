@@ -473,16 +473,18 @@ def _with_distance(schools: List[Dict], lat: float, lon: float) -> List[Dict]:
 def _k8_middle_copies(pool: List[Dict]) -> List[Dict]:
     """A K-8 school is also where its students go for grades 6-8, but SchoolDigger lists it as elementary only.
     Returns a middle-level copy of each district-run K-8 (same rating; the original keeps its elementary role).
-    Magnets are left out: they are by application, so a nearby one says little about where a neighbor's child goes."""
+    Magnet K-8s are copied too but tagged `_k8_magnet`: a zone map can name one as the zoned school (Houston's
+    Gregory-Lincoln), so a name match keeps it, while nearest-school fallbacks and pool averages skip it, because
+    a magnet is by application and says little about where a neighbor's child goes."""
     out = []
     for sc in pool:
         if sc.get("schoolLevel") != "Elementary" or sc.get("isPrivate") or sc.get("isCharterSchool") == "Yes":
             continue
         if sc.get("lowGrade") not in ("PK", "KG", "K", "1") or sc.get("highGrade") != "8":
             continue
-        if sc.get("isMagnetSchool") == "Yes" or "magnet" in (sc.get("schoolName") or "").lower():
-            continue
         cp = dict(sc)
+        if sc.get("isMagnetSchool") == "Yes" or "magnet" in (sc.get("schoolName") or "").lower():
+            cp["_k8_magnet"] = True
         cp["schoolLevel"] = "Middle"
         cp["schoolid"] = f"{sc.get('schoolid')}-k8mid"
         cp["_k8_copy"] = True
