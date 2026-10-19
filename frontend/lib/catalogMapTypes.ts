@@ -99,6 +99,7 @@ export function catalogRowKey(c: Pick<CatalogRow, 'name' | 'county_borough' | 's
 const SF_COUNTIES = new Set(['San Francisco', 'San Mateo', 'Santa Clara', 'Alameda', 'Contra Costa', 'Marin'])
 const PHILLY_NJ_COUNTIES = new Set(['Burlington', 'Camden', 'Gloucester', 'Salem'])
 const DALLAS_TX_COUNTIES = new Set(['Collin', 'Dallas', 'Denton', 'Ellis', 'Hunt', 'Johnson', 'Kaufman', 'Parker', 'Rockwall', 'Tarrant', 'Wise'])
+const HOUSTON_TX_COUNTIES = new Set(['Austin', 'Brazoria', 'Chambers', 'Fort Bend', 'Galveston', 'Harris', 'Liberty', 'Montgomery', 'Waller'])
 
 /**
  * Fallback when a place carries no `metro` tag (the API tags every place; this only runs on stale
@@ -109,7 +110,7 @@ export function inferCatalogMetro(p: CatalogMapPlace & { metro?: CatalogMetro })
   const state = p.catalog.state_abbr
   const county = p.catalog.county_borough
   if (state === 'WA') return 'seattle'
-  if (state === 'TX') return DALLAS_TX_COUNTIES.has(county) ? 'dallas' : 'austin'
+  if (state === 'TX') return DALLAS_TX_COUNTIES.has(county) ? 'dallas' : HOUSTON_TX_COUNTIES.has(county) ? 'houston' : 'austin'
   if (state === 'IL' || state === 'IN') return 'chicago'
   if (state === 'PA' || state === 'DE' || state === 'MD') return 'philadelphia'
   if (state === 'NJ' && PHILLY_NJ_COUNTIES.has(county)) return 'philadelphia'

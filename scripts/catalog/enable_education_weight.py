@@ -27,7 +27,7 @@ import shutil
 
 CATALOGS = [
     f"data/{m}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
-    for m in ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia", "dallas")
+    for m in ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia", "dallas", "houston")
 ]
 EDU = "quality_education"
 # The 13 default pillars. A null score on one of these is a data gap: it keeps its weight with

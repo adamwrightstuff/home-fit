@@ -74,6 +74,10 @@ CBSA_COUNTIES: Dict[str, Dict[str, List[str]]] = {
         "48": ["085", "113", "121", "139", "231", "251", "257", "367", "397", "439", "497"],
         # Collin, Dallas, Denton, Ellis, Hunt, Johnson, Kaufman, Parker, Rockwall, Tarrant, Wise
     },
+    "26420": {  # Houston-The Woodlands-Sugar Land, TX
+        "48": ["015", "039", "071", "157", "167", "201", "291", "339", "473"],
+        # Austin, Brazoria, Chambers, Fort Bend, Galveston, Harris, Liberty, Montgomery, Waller
+    },
 }
 
 CBSA_TO_KEY = {
@@ -86,6 +90,7 @@ CBSA_TO_KEY = {
     "16980": "chicago_metro",
     "37980": "philadelphia_metro",
     "19100": "dallas_metro",
+    "26420": "houston_metro",
 }
 
 # CBSAs that reuse another metro's baseline without contributing tracts to it.

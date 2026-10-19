@@ -5,5 +5,6 @@
   "Harrison|NY": "Town/village: pin vs Census internal point 5.3 km apart. Pre-existing pin in the live NYC catalog; reviewed by distance only.",
   "Fremont|CA": "Large city: pin vs Census internal point 7.3 km apart. Pre-existing pin in the live SF catalog; reviewed by distance only.",
   "Palo Alto|CA": "Pin vs Census internal point 5.6 km apart. Pre-existing pin in the live SF catalog; reviewed by distance only.",
-  "Hayward|CA": "Large city: pin vs Census internal point 5.1 km apart. Pre-existing pin in the live SF catalog; reviewed by distance only."
+  "Hayward|CA": "Large city: pin vs Census internal point 5.1 km apart. Pre-existing pin in the live SF catalog; reviewed by distance only.",
+  "Galveston|TX": "Island city about 30 miles long: the Census internal point is the sparse west end, 14 miles from downtown and the hospital district. Pin is downtown (The Strand), verified against OpenStreetMap (John Sealy Hospital, 11 health facilities within 3 miles)."
 }

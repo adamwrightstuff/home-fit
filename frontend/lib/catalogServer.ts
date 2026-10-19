@@ -41,6 +41,7 @@ const METRO_FILES: Record<CatalogMetro, string> = {
   chicago: 'chicago_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   philadelphia: 'philadelphia_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   dallas: 'dallas_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  houston: 'houston_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
 }
 
 function dataRoots(): string[] {

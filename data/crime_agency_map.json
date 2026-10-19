@@ -28,6 +28,58 @@
     "dallas": {
       "agency": "Dallas Police Department",
       "kind": "own"
+    },
+    "deer park": {
+      "agency": "Deer Park Police Department",
+      "kind": "own"
+    },
+    "hedwig village": {
+      "agency": "Hedwig Village Police Department",
+      "kind": "own"
+    },
+    "missouri city": {
+      "agency": "Missouri City Police Department",
+      "kind": "own"
+    },
+    "bunker hill village": {
+      "agency": "Memorial Villages Police Department",
+      "kind": "own"
+    },
+    "hunters creek village": {
+      "agency": "Memorial Villages Police Department",
+      "kind": "own"
+    },
+    "piney point village": {
+      "agency": "Memorial Villages Police Department",
+      "kind": "own"
+    },
+    "spring valley village": {
+      "agency": "Spring Valley Police Department",
+      "kind": "own"
+    },
+    "atascocita": {
+      "agency": "Harris County Sheriff's Office",
+      "kind": "county"
+    },
+    "spring": {
+      "agency": "Harris County Sheriff's Office",
+      "kind": "county"
+    },
+    "cinco ranch": {
+      "agency": "Fort Bend County Sheriff's Office",
+      "kind": "county"
+    },
+    "mission bend": {
+      "agency": "Fort Bend County Sheriff's Office",
+      "kind": "county"
+    },
+    "sienna": {
+      "agency": "Fort Bend County Sheriff's Office",
+      "kind": "county"
+    },
+    "the woodlands": {
+      "agency": "Montgomery County Sheriff's Office",
+      "kind": "county"
     }
   },
   "IL": {

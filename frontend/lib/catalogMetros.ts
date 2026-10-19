@@ -2,7 +2,7 @@
  * Single registry of catalog metros. Adding a metro = one entry here, plus its JSONL in
  * route.ts / next.config.js (see docs/METRO_EXPANSION_PLAYBOOK.md, Phase B).
  */
-export const CATALOG_METROS = ['nyc', 'la', 'sf', 'seattle', 'austin', 'chicago', 'philadelphia', 'dallas'] as const
+export const CATALOG_METROS = ['nyc', 'la', 'sf', 'seattle', 'austin', 'chicago', 'philadelphia', 'dallas', 'houston'] as const
 export type CatalogMetro = (typeof CATALOG_METROS)[number]
 
 export interface CatalogMetroMeta {
@@ -24,6 +24,7 @@ export const CATALOG_METRO_META: Record<CatalogMetro, CatalogMetroMeta> = {
   chicago: { label: 'CHI', longLabel: 'Chicago metro', color: '#C2417A', bounds: [[-88.4, 41.5], [-87.4, 42.3]] },
   philadelphia: { label: 'PHL', longLabel: 'Philadelphia metro', color: '#5B8C3A', bounds: [[-75.6, 39.7], [-74.8, 40.3]] },
   dallas: { label: 'DFW', longLabel: 'Dallas-Fort Worth metro', color: '#B5651D', bounds: [[-97.9, 32.5], [-96.3, 33.4]] },
+  houston: { label: 'HOU', longLabel: 'Houston metro', color: '#0E7C86', bounds: [[-95.9, 29.3], [-94.7, 30.3]] },
 }
 
 export function isCatalogMetro(v: unknown): v is CatalogMetro {

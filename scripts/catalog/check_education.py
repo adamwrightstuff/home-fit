@@ -39,7 +39,7 @@ REPO = Path(__file__).resolve().parents[2]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
-METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia", "dallas")
+METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia", "dallas", "houston")
 EXCEPTIONS_PATH = REPO / "data" / "education_check_exceptions.json"
 NCES_CSV = REPO / "data_cache" / "nces_ccd_2324" / "ccd_sch_029_2324_w_1a_073124.csv"
 MIN_RATED = 3

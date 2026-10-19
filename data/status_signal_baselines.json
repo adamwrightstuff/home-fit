@@ -232,6 +232,7 @@
     "14860": "nyc_metro",
     "16980": "chicago_metro",
     "19100": "dallas_metro",
+    "26420": "houston_metro",
     "31080": "la_metro",
     "35620": "nyc_metro",
     "37100": "la_metro",
@@ -532,6 +533,30 @@
       "wealth_gap_ratio": {
         "max": 0.3197434095312297,
         "min": 0.0
+      }
+    }
+  },
+  "houston_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 77.93,
+        "min": 4.885
+      },
+      "grad_pct": {
+        "max": 38.2,
+        "min": 0.5
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 634225.0,
+        "min": 100325.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 59.3672,
+        "min": 7.0815
       }
     }
   },
