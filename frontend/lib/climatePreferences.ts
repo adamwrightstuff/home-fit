@@ -22,8 +22,8 @@ function greyIndex(avg_solar: number, annual_precip_in: number): number {
   return 0.6 * (1 - solarNorm) + 0.4 * precipNorm
 }
 
-/** "Cold winters" must-have: Köppen's cold-winter test (US convention), coldest month's mean below 32°F (0°C). */
-export const COLD_MUST_HAVE_COLDEST_MONTH_F = 32
+/** "Cold winters" must-have: the coldest month's mean temperature is below this many °F. */
+export const COLD_MUST_HAVE_COLDEST_MONTH_F = 40
 /** "Hot summers" must-have: Köppen's hot-summer test, July mean above 71.6°F (22°C). */
 export const HEAT_MUST_HAVE_JULY_F = 71.6
 /** "Grey, rainy" must-have: grey-day index (sunshine and rainfall blend) above this. */
