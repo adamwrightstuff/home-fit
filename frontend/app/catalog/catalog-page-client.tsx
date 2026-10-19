@@ -40,7 +40,7 @@ import {
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar, estimatedDriveMinutes } from '@/lib/reweight'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { fetchProfile, type CommuteMode } from '@/lib/userProfile'
-import { applyExplorerScoreAdjustments, writeCompareContext } from '@/lib/explorerScoreAdjust'
+import { ALL_SCHOOL_LEVELS, applyExplorerScoreAdjustments, writeCompareContext, type SchoolLevel } from '@/lib/explorerScoreAdjust'
 import { climateMustHaveFails, hasClimateMustHaves, normalizeClimatePrefs, type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
@@ -153,6 +153,7 @@ export default function CatalogPageClient({
     } catch { return [] }
   })
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter' | 'both'>('any')
+  const [filterSchoolLevels, setFilterSchoolLevels] = useState<SchoolLevel[]>(ALL_SCHOOL_LEVELS)
   const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High'>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
@@ -320,6 +321,7 @@ export default function CatalogPageClient({
           filterHousingType,
           filterTenure,
           filterSchoolType,
+          filterSchoolLevels,
           filterLocalScene,
           filterAura,
           filterCommuteMax,
@@ -328,7 +330,7 @@ export default function CatalogPageClient({
         },
       }))
     } catch { /* ignore */ }
-  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
+  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
 
   useEffect(() => {
     const ac = new AbortController()
@@ -408,6 +410,10 @@ export default function CatalogPageClient({
           if (Array.isArray(f.filterHousingType)) setFilterHousingType(f.filterHousingType)
           if (Array.isArray(f.filterTenure)) setFilterTenure(f.filterTenure)
           if (typeof f.filterSchoolType === 'string') setFilterSchoolType(f.filterSchoolType)
+          if (Array.isArray(f.filterSchoolLevels)) {
+            const lv = f.filterSchoolLevels.filter((l: string) => (ALL_SCHOOL_LEVELS as string[]).includes(l)) as SchoolLevel[]
+            if (lv.length) setFilterSchoolLevels(lv)
+          }
           if (typeof f.filterLocalScene === 'string') setFilterLocalScene(f.filterLocalScene)
           if (typeof f.filterAura === 'boolean') setFilterAura(f.filterAura)
           if (typeof f.filterCommuteMax === 'string') setFilterCommuteMax(f.filterCommuteMax)
@@ -459,6 +465,7 @@ export default function CatalogPageClient({
             filterHousingType,
             filterTenure,
             filterSchoolType,
+            filterSchoolLevels,
             filterLocalScene,
             filterAura,
             filterCommuteMax,
@@ -468,7 +475,7 @@ export default function CatalogPageClient({
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
+  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -524,7 +531,7 @@ export default function CatalogPageClient({
         })
       : places
 
-    const f = { filterSchoolType }
+    const f = { filterSchoolType, filterSchoolLevels }
     const workZone = findWorkZone(workZoneId)
     const withCommute = withIncome.map((p) => {
       let adjusted = { ...p, score: applyExplorerScoreAdjustments(p.score, f) }
@@ -588,6 +595,7 @@ export default function CatalogPageClient({
     places,
     householdIncome,
     filterSchoolType,
+    filterSchoolLevels,
     currentHomeMonthlyCost,
     currentHomeMatch,
     workZoneId,
@@ -604,11 +612,11 @@ export default function CatalogPageClient({
   useEffect(() => {
     writeCompareContext({
       priorities,
-      filters: { filterSchoolType, filterNbTypes, filterAoTypes },
+      filters: { filterSchoolType, filterSchoolLevels, filterNbTypes, filterAoTypes },
       householdIncome,
       currentHome: currentHomeMatch ? { name: currentHomeMatch, monthlyCost: currentHomeMonthlyCost } : null,
     })
-  }, [priorities, filterSchoolType, filterNbTypes, filterAoTypes, householdIncome, currentHomeMatch, currentHomeMonthlyCost])
+  }, [priorities, filterSchoolType, filterSchoolLevels, filterNbTypes, filterAoTypes, householdIncome, currentHomeMatch, currentHomeMonthlyCost])
 
   const effectivePriorities = useMemo(
     () => priorities,
@@ -1919,6 +1927,8 @@ export default function CatalogPageClient({
         onFilterAoTypesChange={setFilterAoTypes}
         filterSchoolType={filterSchoolType}
         onFilterSchoolTypeChange={setFilterSchoolType}
+        filterSchoolLevels={filterSchoolLevels}
+        onFilterSchoolLevelsChange={(v) => setFilterSchoolLevels(v as SchoolLevel[])}
       />
 
       <PillarTwinDrawer

@@ -1,8 +1,13 @@
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 /** Explorer filters that rewrite pillar scores (as opposed to filters that only hide places). */
+export type SchoolLevel = 'elementary' | 'middle' | 'high'
+export const ALL_SCHOOL_LEVELS: SchoolLevel[] = ['elementary', 'middle', 'high']
+
 export interface ScoreAffectingFilters {
   filterSchoolType: 'any' | 'public_only' | 'charter' | 'both'
+  /** Grades to score (default all three = the stored score). Applies to the public-schools view only. */
+  filterSchoolLevels?: SchoolLevel[]
 }
 
 function withPillar(score: ScoreResponse, key: string, pillar: unknown): ScoreResponse {
@@ -62,6 +67,33 @@ export function applyExplorerScoreAdjustments(score: ScoreResponse, f: ScoreAffe
     }
   }
 
+  // Grades: with fewer than all three levels picked, rescore from the stored per-level scores (public view only; the
+  // charter split has no per-level scores). Picking all three leaves the stored score alone, which already leaves out
+  // a citywide-choice level that is the same for every neighborhood; picking that level on its own shows it. The
+  // early-education bonus is a preschool measure, so it counts only when elementary is picked.
+  const levelsPicked = (f.filterSchoolLevels ?? ALL_SCHOOL_LEVELS).filter((l) => ALL_SCHOOL_LEVELS.includes(l))
+  if (levelsPicked.length > 0 && levelsPicked.length < ALL_SCHOOL_LEVELS.length &&
+      (f.filterSchoolType === 'any' || f.filterSchoolType === 'public_only')) {
+    const edu = (out.livability_pillars as any)?.quality_education
+    const levels = edu?.breakdown?.levels
+    if (levels) {
+      const picked = levelsPicked.filter((l) => typeof levels[l]?.score === 'number')
+      if (picked.length === 0) {
+        out = withPillar(out, 'quality_education', { ...edu, score: null, status: 'no_data' })
+      } else {
+        const avg = picked.reduce((sum, l) => sum + levels[l].score, 0) / picked.length
+        const bonus = levelsPicked.includes('elementary') ? (edu.breakdown.early_ed_bonus ?? 0) : 0
+        const label = levelsPicked.join(' + ')
+        out = withPillar(out, 'quality_education', {
+          ...edu, score: Math.min(100, avg + bonus),
+          breakdown: { ...edu.breakdown, base_avg_rating: avg, levels_view: levelsPicked,
+            split_note: `Scored on ${label} only${picked.length < levelsPicked.length ? ' (a level with no rated school is left out)' : ''}.` },
+          summary: { ...(edu.summary ?? {}), base_avg_rating: Math.round(avg * 100) / 100 },
+        })
+      }
+    }
+  }
+
   // NB scenery and AO sub-component preferences aren't handled here -- they're applied
   // separately in the catalog page's adjustedPlaces pipeline via
   // applyScenerySubPreferencesToScore (lib/reweight.ts), which patches
@@ -108,6 +140,9 @@ export function readCompareContext(): CompareContext | null {
       priorities: { ...DEFAULT_PRIORITIES, ...pri } as PillarPriorities,
       filters: {
         filterSchoolType: f.filterSchoolType === 'public_only' || f.filterSchoolType === 'charter' ? f.filterSchoolType : 'any',
+        filterSchoolLevels: Array.isArray(f.filterSchoolLevels)
+          ? f.filterSchoolLevels.filter((l: string) => (ALL_SCHOOL_LEVELS as string[]).includes(l))
+          : ALL_SCHOOL_LEVELS,
         filterNbTypes: Array.isArray(f.filterNbTypes) ? f.filterNbTypes : [],
         filterAoTypes: Array.isArray(f.filterAoTypes) ? f.filterAoTypes : [],
       },

@@ -52,6 +52,8 @@ interface CatalogWeightPanelProps {
   onFilterNbTypesChange?: (v: string[]) => void
   filterAoTypes?: string[]
   onFilterAoTypesChange?: (v: string[]) => void
+  filterSchoolLevels?: string[]
+  onFilterSchoolLevelsChange?: (v: string[]) => void
   filterSchoolType?: 'any' | 'public_only' | 'charter' | 'both'
   onFilterSchoolTypeChange?: (v: 'any' | 'public_only' | 'charter' | 'both') => void
 }
@@ -73,6 +75,12 @@ const AO_TYPE_OPTIONS: { value: string; label: string }[] = [
 // Multi-select. "Public" is the score's own basis (assigned or nearest district schools); "Charter" scores the nearby
 // charters; both selected averages the two (only when 3+ charters are rated nearby). The stored value stays one string:
 // 'any' = public, 'charter' = charter, 'both' = both ('public_only' from older sessions behaves like 'any').
+const SCHOOL_LEVEL_OPTIONS: { value: string; label: string }[] = [
+  { value: 'elementary', label: 'Elementary' },
+  { value: 'middle', label: 'Middle' },
+  { value: 'high', label: 'High' },
+]
+
 const SCHOOL_TYPE_OPTIONS: { value: 'public' | 'charter'; label: string }[] = [
   { value: 'public', label: 'Public' },
   { value: 'charter', label: 'Charter' },
@@ -116,7 +124,7 @@ function KindChips({ label, options, selected, onToggle }: {
   )
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, filterNbTypes = [], onFilterNbTypesChange, filterAoTypes = [], onFilterAoTypesChange, filterSchoolType = 'any', onFilterSchoolTypeChange }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, filterNbTypes = [], onFilterNbTypesChange, filterAoTypes = [], onFilterAoTypesChange, filterSchoolType = 'any', onFilterSchoolTypeChange, filterSchoolLevels = ['elementary', 'middle', 'high'], onFilterSchoolLevelsChange }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
@@ -219,6 +227,13 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                             const cur = schoolTypeSelected(filterSchoolType)
                             const next = cur.includes(v as 'public' | 'charter') ? cur.filter((x) => x !== v) : [...cur, v as 'public' | 'charter']
                             onFilterSchoolTypeChange?.(schoolTypeFromSelected(next.length ? next : ['public']))
+                          }} />
+                      )}
+                      {key === 'quality_education' && (
+                        <KindChips label="Which grades? (pick any)" options={SCHOOL_LEVEL_OPTIONS} selected={filterSchoolLevels}
+                          onToggle={(v) => {
+                            const next = filterSchoolLevels.includes(v) ? filterSchoolLevels.filter((x) => x !== v) : [...filterSchoolLevels, v]
+                            if (next.length) onFilterSchoolLevelsChange?.(next)
                           }} />
                       )}
                     </div>
