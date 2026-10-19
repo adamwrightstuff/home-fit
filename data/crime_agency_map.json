@@ -47,5 +47,43 @@
       "agency": "Tinley Park Police Department",
       "kind": "own"
     }
+  },
+  "NJ": {
+    "cherry hill": {
+      "agency": "Cherry Hill Township Police Department",
+      "kind": "own"
+    },
+    "pennsauken": {
+      "agency": "Pennsauken Township Police Department",
+      "kind": "own"
+    },
+    "cherry hill township": {
+      "agency": "Cherry Hill Township Police Department",
+      "kind": "own"
+    },
+    "pennsauken township": {
+      "agency": "Pennsauken Township Police Department",
+      "kind": "own"
+    },
+    "camden": {
+      "agency": "Camden County Police Department",
+      "kind": "own"
+    }
+  },
+  "PA": {
+    "kennett square": {
+      "agency": "Kennett Square Police Department",
+      "kind": "own"
+    },
+    "west chester": {
+      "agency": "West Chester Police Department",
+      "kind": "own"
+    }
+  },
+  "MD": {
+    "elkton": {
+      "agency": "Elkton Police Department",
+      "kind": "own"
+    }
   }
 }
