@@ -16,6 +16,18 @@
     "manchaca": {
       "agency": "Travis County Sheriff's Office",
       "kind": "county"
+    },
+    "highland park": {
+      "agency": "Highland Park Police Department",
+      "kind": "own"
+    },
+    "university park": {
+      "agency": "University Park Police Department",
+      "kind": "own"
+    },
+    "dallas": {
+      "agency": "Dallas Police Department",
+      "kind": "own"
     }
   },
   "IL": {

@@ -231,6 +231,7 @@
     "14740": "seattle_metro",
     "14860": "nyc_metro",
     "16980": "chicago_metro",
+    "19100": "dallas_metro",
     "31080": "la_metro",
     "35620": "nyc_metro",
     "37100": "la_metro",
@@ -373,6 +374,30 @@
     },
     "occupation": {},
     "wealth": {}
+  },
+  "dallas_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 77.3,
+        "min": 6.595
+      },
+      "grad_pct": {
+        "max": 35.0,
+        "min": 1.0
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 674545.0,
+        "min": 121735.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 59.9412,
+        "min": 9.7199
+      }
+    }
   },
   "denver,_colorado": {
     "brand": {},

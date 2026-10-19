@@ -11,6 +11,7 @@ const CATALOG_DATA_FILES = [
   'data/austin_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   'data/chicago_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   'data/philadelphia_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  'data/dallas_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   'data/catalog_climate_profiles.jsonl',
 ]
 

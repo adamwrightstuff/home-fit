@@ -70,6 +70,10 @@ CBSA_COUNTIES: Dict[str, Dict[str, List[str]]] = {
         "10": ["003"],  # New Castle DE
         "24": ["015"],  # Cecil MD
     },
+    "19100": {  # Dallas-Fort Worth-Arlington, TX
+        "48": ["085", "113", "121", "139", "231", "251", "257", "367", "397", "439", "497"],
+        # Collin, Dallas, Denton, Ellis, Hunt, Johnson, Kaufman, Parker, Rockwall, Tarrant, Wise
+    },
 }
 
 CBSA_TO_KEY = {
@@ -81,6 +85,7 @@ CBSA_TO_KEY = {
     "12420": "austin_metro",
     "16980": "chicago_metro",
     "37980": "philadelphia_metro",
+    "19100": "dallas_metro",
 }
 
 # CBSAs that reuse another metro's baseline without contributing tracts to it.
