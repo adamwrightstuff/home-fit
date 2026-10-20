@@ -1,0 +1,50 @@
+{
+ "slug": "las_vegas",
+ "label": "LAS",
+ "long_label": "Las Vegas metro",
+ "color": "#E0A100",
+ "cbsa": "29820",
+ "states": [
+  "NV"
+ ],
+ "neighborhoods": {
+  "Las Vegas": [
+   "Downtown Las Vegas",
+   "Arts District",
+   "Summerlin",
+   "Centennial Hills",
+   "Southern Highlands",
+   "Rhodes Ranch",
+   "The Lakes",
+   "Silverado Ranch"
+  ],
+  "Henderson": [
+   "Green Valley",
+   "Anthem",
+   "Lake Las Vegas",
+   "Inspirada",
+   "Seven Hills",
+   "MacDonald Highlands"
+  ],
+  "North Las Vegas": [
+   "Aliante"
+  ]
+ },
+ "suburbs": [
+  "Henderson",
+  "North Las Vegas",
+  "Boulder City",
+  "Mesquite",
+  "Paradise",
+  "Spring Valley",
+  "Enterprise",
+  "Sunrise Manor",
+  "Whitney",
+  "Winchester",
+  "Summerlin South",
+  "Laughlin",
+  "Moapa Town",
+  "Indian Springs",
+  "Blue Diamond"
+ ]
+}

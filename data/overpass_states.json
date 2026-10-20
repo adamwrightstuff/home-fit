@@ -1,0 +1,23 @@
+{
+  "states": [
+    "NY",
+    "NJ",
+    "CT",
+    "CA",
+    "WA",
+    "TX",
+    "IL",
+    "IN",
+    "PA",
+    "DE",
+    "MD",
+    "AZ",
+    "NV",
+    "FL",
+    "NC",
+    "GA",
+    "MA",
+    "CO"
+  ],
+  "note": "States in the private Overpass server's extract (scripts/overpass_server). Update when states are added."
+}

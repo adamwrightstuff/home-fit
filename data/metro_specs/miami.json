@@ -1,0 +1,89 @@
+{
+ "slug": "miami",
+ "label": "MIA",
+ "long_label": "Miami metro",
+ "color": "#E4572E",
+ "cbsa": "33100",
+ "states": [
+  "FL"
+ ],
+ "neighborhoods": {
+  "Miami": [
+   "Downtown Miami",
+   "Brickell",
+   "Wynwood",
+   "Edgewater",
+   "Midtown Miami",
+   "Coconut Grove",
+   "Little Havana",
+   "Design District",
+   "Morningside",
+   "Upper East Side"
+  ],
+  "Miami Beach": [
+   "South Beach",
+   "Mid-Beach",
+   "North Beach"
+  ],
+  "Fort Lauderdale": [
+   "Las Olas",
+   "Victoria Park",
+   "Flagler Village",
+   "Rio Vista"
+  ],
+  "West Palm Beach": [
+   "Downtown West Palm Beach",
+   "Northwood"
+  ]
+ },
+ "suburbs": [
+  "Coral Gables",
+  "Key Biscayne",
+  "Aventura",
+  "Bal Harbour",
+  "Surfside",
+  "Pinecrest",
+  "Palmetto Bay",
+  "Cutler Bay",
+  "Homestead",
+  "Doral",
+  "Hialeah",
+  "Miami Gardens",
+  "North Miami",
+  "North Miami Beach",
+  "Miramar",
+  "Pembroke Pines",
+  "Hollywood",
+  "Weston",
+  "Davie",
+  "Plantation",
+  "Sunrise",
+  "Coral Springs",
+  "Parkland",
+  "Boca Raton",
+  "Delray Beach",
+  "Boynton Beach",
+  "Jupiter",
+  "Palm Beach Gardens",
+  "Wellington",
+  "Palm Beach",
+  "Deerfield Beach",
+  "Pompano Beach",
+  "Fort Lauderdale",
+  "Lauderhill",
+  "Tamarac",
+  "Cooper City",
+  "Southwest Ranches",
+  "Lake Worth Beach",
+  "Royal Palm Beach",
+  "Juno Beach",
+  "Tequesta",
+  "Sunny Isles Beach",
+  "Golden Beach",
+  "Medley",
+  "Sweetwater",
+  "Kendall",
+  "The Hammocks",
+  "Coconut Creek"
+ ]
+}

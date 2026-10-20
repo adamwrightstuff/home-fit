@@ -1,0 +1,59 @@
+{
+ "slug": "orlando",
+ "label": "ORL",
+ "long_label": "Orlando metro",
+ "color": "#8E44AD",
+ "cbsa": "36740",
+ "states": [
+  "FL"
+ ],
+ "neighborhoods": {
+  "Orlando": [
+   "Thornton Park",
+   "College Park",
+   "Baldwin Park",
+   "Lake Nona",
+   "Dr. Phillips",
+   "Audubon Park",
+   "Mills 50",
+   "Lake Eola Heights",
+   "Downtown Orlando",
+   "Avalon Park",
+   "Waterford Lakes",
+   "Conway"
+  ]
+ },
+ "suburbs": [
+  "Winter Park",
+  "Winter Garden",
+  "Windermere",
+  "Maitland",
+  "Altamonte Springs",
+  "Casselberry",
+  "Lake Mary",
+  "Sanford",
+  "Oviedo",
+  "Winter Springs",
+  "Longwood",
+  "Apopka",
+  "Ocoee",
+  "Clermont",
+  "Kissimmee",
+  "St. Cloud",
+  "Celebration",
+  "Mount Dora",
+  "Eustis",
+  "Tavares",
+  "Groveland",
+  "Minneola",
+  "Oakland",
+  "Belle Isle",
+  "Edgewood",
+  "Leesburg",
+  "Lady Lake",
+  "Fruitland Park",
+  "Montverde",
+  "Pine Hills",
+  "Union Park"
+ ]
+}

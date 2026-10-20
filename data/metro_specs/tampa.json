@@ -1,0 +1,70 @@
+{
+ "slug": "tampa",
+ "label": "TPA",
+ "long_label": "Tampa Bay metro",
+ "color": "#1B9AAA",
+ "cbsa": "45300",
+ "states": [
+  "FL"
+ ],
+ "neighborhoods": {
+  "Tampa": [
+   "Downtown Tampa",
+   "Hyde Park",
+   "South Tampa",
+   "Seminole Heights",
+   "Ybor City",
+   "Channelside",
+   "Davis Islands",
+   "Harbour Island",
+   "Westshore",
+   "Tampa Palms",
+   "Carrollwood",
+   "New Tampa",
+   "Palma Ceia",
+   "Sulphur Springs"
+  ],
+  "St. Petersburg": [
+   "Downtown St. Petersburg",
+   "Snell Isle",
+   "Old Northeast",
+   "Crescent Lake"
+  ],
+  "Clearwater": [
+   "Clearwater Beach"
+  ]
+ },
+ "suburbs": [
+  "St. Petersburg",
+  "Clearwater",
+  "Brandon",
+  "Riverview",
+  "Lutz",
+  "Land O' Lakes",
+  "Wesley Chapel",
+  "Odessa",
+  "Oldsmar",
+  "Safety Harbor",
+  "Largo",
+  "Pinellas Park",
+  "Dunedin",
+  "Tarpon Springs",
+  "Seminole",
+  "Gulfport",
+  "Plant City",
+  "Temple Terrace",
+  "Apollo Beach",
+  "Ruskin",
+  "Valrico",
+  "Zephyrhills",
+  "Dade City",
+  "Spring Hill",
+  "Brooksville",
+  "New Port Richey",
+  "Treasure Island",
+  "St. Pete Beach",
+  "Palm Harbor",
+  "Town 'n' Country",
+  "Citrus Park"
+ ]
+}

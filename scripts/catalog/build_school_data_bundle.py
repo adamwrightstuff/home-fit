@@ -27,7 +27,8 @@ from data_sources import school_zones as sz  # noqa: E402
 
 OUT = os.path.join(REPO, "data", "school_geo")
 SIMPLIFY = 0.0001   # degrees, about 10 m
-STATES = ("04", "06", "08", "09", "10", "12", "13", "17", "18", "24", "25", "32", "34", "36", "37", "42", "48", "53")
+# every state whose Census district files are in the cache (so a new state needs no code edit)
+STATES = tuple(sorted({os.path.basename(d).split("_")[2] for d in glob.glob(os.path.join(REPO, "data_cache", "tiger_sd_2024", "tl_2024_*_unsd"))}))
 
 
 def _write(name: str, frame: "gpd.GeoDataFrame") -> int:

@@ -1,0 +1,47 @@
+{
+ "slug": "raleigh",
+ "label": "RDU",
+ "long_label": "Raleigh metro",
+ "color": "#6D4C41",
+ "cbsa": "39580",
+ "states": [
+  "NC"
+ ],
+ "neighborhoods": {
+  "Raleigh": [
+   "Downtown Raleigh",
+   "Five Points",
+   "Oakwood",
+   "Glenwood South",
+   "North Hills",
+   "Cameron Village",
+   "Boylan Heights",
+   "Brier Creek",
+   "Midtown Raleigh",
+   "Hayes Barton",
+   "Wakefield"
+  ]
+ },
+ "suburbs": [
+  "Cary",
+  "Apex",
+  "Holly Springs",
+  "Fuquay-Varina",
+  "Wake Forest",
+  "Garner",
+  "Morrisville",
+  "Knightdale",
+  "Wendell",
+  "Zebulon",
+  "Rolesville",
+  "Clayton",
+  "Youngsville",
+  "Smithfield",
+  "Selma",
+  "Benson",
+  "Four Oaks",
+  "Franklinton",
+  "Louisburg",
+  "Archer Lodge"
+ ]
+}

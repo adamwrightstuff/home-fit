@@ -1,6 +1,6 @@
 # Metro Runbook
 
-The short version. Everything runs on your laptop from the repo root with the venv active:
+The short version. The launch flow is automated (init, run, finish, ship): see [METRO_AUTOMATION.md](METRO_AUTOMATION.md). Everything runs on your laptop from the repo root with the venv active:
 
 ```
 cd ~/Dev/home-fit && git pull origin main && source .venv/bin/activate

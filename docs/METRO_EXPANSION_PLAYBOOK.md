@@ -6,21 +6,17 @@ How to add a new city to HomeFit. Every step is mandatory. Missing any produces 
 
 ## The 30-second version
 
+The flow is automated: see [METRO_AUTOMATION.md](METRO_AUTOMATION.md). In short:
+
 ```bash
-# 1. Register CBSA in the baseline builder (one code change, see Phase A)
-# 2. Register files in the frontend (three files, see Phase B)
-# 3. Run everything:
-HOMEFIT_API_BASE=https://home-fit-production.up.railway.app \
-HOMEFIT_PROXY_SECRET=<secret> \
-HOMEFIT_TRANSIT_STABLE_COMMUTE=true \
-ANTHROPIC_API_KEY=<key> \
-PYTHONPATH=. python3 scripts/catalog/score_metro.py \
-  --csv  data/xx_metro_place_catalog.csv \
-  --out  data/xx_metro_place_catalog_scores_merged.composites_recomputed.jsonl \
-  --metro xx
+PYTHONPATH=. python -m scripts.metro_agent prereqs --state XX --fetch --yes   # per new state: election, Census outlines, school snapshot
+PYTHONPATH=. python -m scripts.metro_agent init   --metro xx                  # spec -> place list with checked pins, registry entry, baselines
+PYTHONPATH=. python -m scripts.metro_agent run    --metro xx                  # score (resumable)
+PYTHONPATH=. python -m scripts.metro_agent finish --metro xx                  # education, crime agencies, retries, rule-based gap acceptance
+PYTHONPATH=. python -m scripts.metro_agent ship   --metro xx                  # gate, go live, commit and push only this metro
 ```
 
-`score_metro.py` handles phases 0–10 in order. It's resumable — re-run if interrupted.
+The phases and per-pillar notes below explain what each step does and why; the steps themselves no longer need hand edits.
 
 ---
 
@@ -274,15 +270,16 @@ PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py --no-unversioned
 
 ## Adding a new metro (checklist summary)
 
-- [ ] Look up CBSA code(s) and county FIPS (Census delineation file); list every state the CBSA spans
-- [ ] Add CBSA to `CBSA_COUNTIES`, `CBSA_TO_KEY` in `build_metro_baselines_from_cbsa.py`
-- [ ] Phase A2: precinct file for each state, crime source for the core city, airport/hospital/transit lists, NCES file
-- [ ] Phase A3: school snapshot for each state, district/place outlines, zone maps, rebuilt `data/school_geo/`, education check PASS
-- [ ] Phase B: add the metro to `frontend/lib/catalogMetros.ts` and `next.config.js`; `npx tsc --noEmit`
-- [ ] Grep `scripts/` for hardcoded metro lists (`"nyc", "la", "sf"`, e.g. `recompute_ses_baseline_fix.py`, `daily_education_rescore.py`, `map_catalog_to_usaleep.py`) and add the new metro
-- [ ] Create place catalog CSV (`data/xx_metro_place_catalog.csv`) with columns: `name, county_borough, state_abbr, search_query, lat, lon`
-- [ ] Run `score_metro.py` with all env vars set
-- [ ] Verify coverage ≥95% for housing_stock, political_lean, local_scene_bucket, built_environment
-- [ ] Spot-check community_safety spread across the core city (not one flat value) and political_lean is non-empty in every state
-- [ ] Run `check_catalog_health.py --no-unversioned` against all metros
-- [ ] Work commute feature: follow `docs/WORK_COMMUTE_PLAYBOOK.md` (job hubs, precomputed commutes, station access)
+- [ ] Write `data/metro_specs/xx.json` (CBSA code, states, neighborhoods by parent city, suburbs); the CBSA and county list come from the Census delineation file
+- [ ] `prereqs --state XX` for every state the CBSA spans (election data, Census outlines, school snapshot) and make sure the private Overpass server covers it (`data/overpass_states.json`)
+- [ ] `init --metro xx`: place list (OSM place-center pins, neighborhoods inside their parent city, counties inside the CBSA), pin exceptions, registry entry, baselines
+- [ ] Core-city crime source (Phase A2) and airport, hospital, transit lists: check, add if missing
+- [ ] Zone maps for the core district (Phase A3, optional but better)
+- [ ] `run --metro xx` (or `scripts/catalog/run_metros_batch.sh` for several), one at a time
+- [ ] `finish --metro xx`, then read what it left open
+- [ ] Verify coverage of housing_stock, political_lean, local_scene_bucket; spot-check community_safety is not one flat value in the core city
+- [ ] `check_catalog_health.py --no-unversioned` against all metros
+- [ ] `ship --metro xx` (commits and pushes only this metro; status becomes `live`)
+- [ ] Work commute feature (optional): `docs/WORK_COMMUTE_PLAYBOOK.md`
+
+Superseded by the registry (no longer edited by hand): the CBSA dictionaries, `frontend/lib/catalogMetros.ts`, `next.config.js`, `catalogServer.ts`, the county rules in `catalogMapTypes.ts`, and the metro lists in the education scripts.

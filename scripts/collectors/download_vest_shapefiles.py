@@ -77,6 +77,14 @@ _CSV_2024: dict[str, tuple[int, str]] = {
 }
 
 
+# IDs found by `metro_agent prereqs` (Dataverse API lookup) are stored here so new states need no code edit.
+_AUTO_IDS = _REPO_ROOT / "data" / "election" / "dataverse_ids.json"
+if _AUTO_IDS.is_file():
+    for _st, _v in json.loads(_AUTO_IDS.read_text()).items():
+        _SHPZIP_2020.setdefault(_st, _v["shp2020"])
+        _CSV_2024.setdefault(_st, (_v["csv2024"][0], _v["csv2024"][1]))
+
+
 _UA = "Mozilla/5.0 (compatible; homefit-data-fetcher/1.0)"
 
 

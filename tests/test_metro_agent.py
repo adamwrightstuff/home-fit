@@ -98,8 +98,8 @@ def test_csv_checks():
 
 def test_registration_and_baseline_for_registered_and_unknown_metro():
     assert all(c.status == pf.PASS for c in pf.check_registration("austin"))
-    assert any(c.status == pf.FAIL for c in pf.check_registration("denver"))
-    assert pf.check_baseline("denver").status == pf.FAIL
+    assert any(c.status == pf.FAIL for c in pf.check_registration("not_a_metro"))      # not in data/metro_registry.json
+    assert pf.check_baseline("not_a_metro").status == pf.FAIL
 
 
 def test_overpass_probe_uses_fixed_reference_points_not_the_metro_pin():

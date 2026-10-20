@@ -1,0 +1,58 @@
+{
+ "slug": "charlotte",
+ "label": "CLT",
+ "long_label": "Charlotte metro",
+ "color": "#2E7D32",
+ "cbsa": "16740",
+ "states": [
+  "NC"
+ ],
+ "neighborhoods": {
+  "Charlotte": [
+   "Uptown Charlotte",
+   "South End",
+   "NoDa",
+   "Plaza Midwood",
+   "Dilworth",
+   "Myers Park",
+   "Elizabeth",
+   "Ballantyne",
+   "SouthPark",
+   "Eastover",
+   "Montford",
+   "Cotswold",
+   "Steele Creek",
+   "University City",
+   "Noda"
+  ]
+ },
+ "suburbs": [
+  "Huntersville",
+  "Cornelius",
+  "Davidson",
+  "Matthews",
+  "Mint Hill",
+  "Pineville",
+  "Concord",
+  "Kannapolis",
+  "Gastonia",
+  "Mooresville",
+  "Waxhaw",
+  "Weddington",
+  "Indian Trail",
+  "Monroe",
+  "Belmont",
+  "Mount Holly",
+  "Harrisburg",
+  "Stallings",
+  "Marvin",
+  "Wesley Chapel",
+  "Stanley",
+  "Statesville",
+  "Salisbury",
+  "Lincolnton",
+  "Denver",
+  "Mineral Springs",
+  "Midland"
+ ]
+}

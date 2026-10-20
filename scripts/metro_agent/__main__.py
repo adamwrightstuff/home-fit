@@ -99,7 +99,37 @@ def main() -> int:
     p14.add_argument("--no-push", action="store_true", help="commit but do not push")
     p14.add_argument("--message", help="commit message (default is generated)")
 
+    p15 = sub.add_parser("finish", help="after `run`: education, crime-agency rules, retries, rule-based gap acceptance, report")
+    p15.add_argument("--metro", required=True)
+    p15.add_argument("--dry-run", action="store_true", help="show the decisions; change nothing")
+    p15.add_argument("--api-base", default="http://127.0.0.1:8010", help="local API for the retries (own port, so a running batch is undisturbed)")
+
+    p16 = sub.add_parser("init", help="new metro from a spec: prerequisites, place list with checked pins, registry entry, baselines")
+    p16.add_argument("--metro", required=True)
+    p16.add_argument("--spec", type=Path, help="default data/metro_specs/<metro>.json")
+    p16.add_argument("--fetch", action="store_true", help="plan (or with --yes, fetch) missing state data and the CBSA definition")
+    p16.add_argument("--yes", action="store_true", help="actually download / spend; without it nothing is fetched")
+
+    p17 = sub.add_parser("prereqs", help="per-state data a metro needs: election, Census outlines, school snapshot, Overpass coverage")
+    p17.add_argument("--state", action="append", required=True)
+    p17.add_argument("--fetch", action="store_true")
+    p17.add_argument("--yes", action="store_true")
+
     a = ap.parse_args()
+    if a.cmd == "init":
+        from . import init_metro as im
+        return im.init(a.metro, spec_path=a.spec, fetch=a.fetch, yes=a.yes)
+    if a.cmd == "prereqs":
+        from . import prereqs as pq
+        states = [x.upper() for x in a.state]
+        print(pq.format_report([pq.report(x) for x in states]))
+        if a.fetch:
+            print()
+            return pq.fetch(states, yes=a.yes)
+        return 0
+    if a.cmd == "finish":
+        from . import finish as fin
+        return fin.finish(a.metro, dry_run=a.dry_run, api_base=a.api_base.rstrip("/"))
     if a.cmd == "ship":
         from . import ship as sh
         pf._load_env()

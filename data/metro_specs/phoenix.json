@@ -1,0 +1,116 @@
+{
+ "slug": "phoenix",
+ "label": "PHX",
+ "long_label": "Phoenix metro",
+ "color": "#D1495B",
+ "cbsa": "38060",
+ "states": [
+  "AZ"
+ ],
+ "neighborhoods": {
+  "Phoenix": [
+   {
+    "name": "Downtown Phoenix",
+    "query": "Downtown"
+   },
+   "Roosevelt Row",
+   {
+    "name": "Midtown Phoenix",
+    "query": "Midtown"
+   },
+   "Arcadia",
+   "Biltmore",
+   "Willo",
+   "Encanto",
+   "Coronado",
+   "Camelback East",
+   "Moon Valley",
+   "Desert Ridge",
+   "Ahwatukee",
+   "Laveen",
+   "Sunnyslope",
+   "North Mountain",
+   "Deer Valley",
+   {
+    "name": "Uptown Phoenix",
+    "query": "Uptown"
+   },
+   "Melrose District",
+   "Alhambra"
+  ],
+  "Scottsdale": [
+   {
+    "name": "Old Town Scottsdale",
+    "query": "Old Town"
+   },
+   "McCormick Ranch",
+   "DC Ranch",
+   "Gainey Ranch",
+   "Pima Crossing"
+  ],
+  "Mesa": [
+   {
+    "name": "Downtown Mesa",
+    "query": "Downtown"
+   },
+   "Eastmark"
+  ],
+  "Tempe": [
+   {
+    "name": "Downtown Tempe",
+    "query": "Downtown"
+   }
+  ],
+  "Chandler": [
+   {
+    "name": "Downtown Chandler",
+    "query": "Downtown"
+   }
+  ],
+  "Gilbert": [
+   {
+    "name": "Downtown Gilbert",
+    "query": "Heritage District"
+   }
+  ],
+  "Buckeye": [
+   "Verrado"
+  ]
+ },
+ "suburbs": [
+  "Scottsdale",
+  "Paradise Valley",
+  "Tempe",
+  "Mesa",
+  "Chandler",
+  "Gilbert",
+  "Glendale",
+  "Peoria",
+  "Surprise",
+  "Goodyear",
+  "Avondale",
+  "Buckeye",
+  "Queen Creek",
+  "Fountain Hills",
+  "Cave Creek",
+  "Carefree",
+  "Litchfield Park",
+  "Sun City",
+  "Sun City West",
+  "El Mirage",
+  "Tolleson",
+  "Youngtown",
+  "Anthem",
+  "Sun Lakes",
+  "Wickenburg",
+  "New River",
+  "Rio Verde",
+  "Apache Junction",
+  "Maricopa",
+  "Casa Grande",
+  "San Tan Valley",
+  "Gold Canyon",
+  "Florence",
+  "Coolidge"
+ ]
+}
