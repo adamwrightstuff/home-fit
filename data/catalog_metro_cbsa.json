@@ -1,0 +1,11 @@
+{
+  "_meta": {
+    "description": "Frontend catalog metro key -> Census/BEA CBSA code, used by comparison/catalog_bridge.py",
+    "source": "OMB 2023 CBSA delineations; names verified against data/relocation_rpp.json"
+  },
+  "nyc": "35620", "la": "31080", "sf": "41860", "seattle": "42660", "austin": "12420",
+  "chicago": "16980", "philadelphia": "37980", "dallas": "19100", "houston": "26420",
+  "phoenix": "38060", "las_vegas": "29820", "orlando": "36740", "tampa": "45300",
+  "miami": "33100", "charlotte": "16740", "raleigh": "39580", "atlanta": "12060",
+  "boston": "14460", "denver": "19740", "san_antonio": "41700", "sacramento": "40900"
+}

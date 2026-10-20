@@ -12,6 +12,7 @@ import { PILLAR_META, PILLAR_ORDER, isLongevityPillar, isHappinessPillar, type P
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import PillarInfoIcon from '@/components/PillarInfoIcon'
+import { RelocationForKey } from '@/components/RelocationEquivalent'
 import { applyExplorerScoreAdjustments, readCompareContext, type CompareContext } from '@/lib/explorerScoreAdjust'
 
 type ScoreMode = 'yours' | 'catalog'
@@ -599,6 +600,18 @@ function CompareContent() {
                 </div>
               </div>
             </section>
+            {catalogCompare && idA && idB && (
+              <section aria-label="Cost of living" style={{ marginTop: '0.75rem', display: 'grid', gap: '0.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--hf-homefit-green)', marginBottom: 4 }}>{placeNameA}</div>
+                  <RelocationForKey placeKey={idA} fallbackKey={idB} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--hf-longevity-purple)', marginBottom: 4 }}>{placeNameB}</div>
+                  <RelocationForKey placeKey={idB} fallbackKey={idA} />
+                </div>
+              </section>
+            )}
 
             <section style={{ marginTop: '1rem' }}>
               <div

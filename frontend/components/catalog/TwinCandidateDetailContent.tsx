@@ -11,6 +11,7 @@ import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { pillarDiffs } from '@/lib/twinSimilarity'
 import RadarChart from '@/components/catalog/RadarChart'
 import TwinDiffRows from '@/components/catalog/TwinDiffRows'
+import RelocationEquivalent from '@/components/RelocationEquivalent'
 interface TwinCandidateDetailContentProps {
   query: CatalogMapPlace
   twin: CatalogMapPlace
@@ -71,6 +72,8 @@ export default function TwinCandidateDetailContent({
         Twin Trovamo {typeof rwTwin.total_score === 'number' ? rwTwin.total_score.toFixed(1) : '—'} ·{' '}
         {query.catalog.name}: {qIdx.homefit != null ? qIdx.homefit.toFixed(1) : '—'}
       </div>
+
+      <RelocationEquivalent dest={twin} fallbackOrigin={query} className="mb-2" />
 
       <div className="flex justify-center py-2">
         <RadarChart

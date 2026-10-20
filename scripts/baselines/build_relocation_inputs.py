@@ -11,6 +11,10 @@ National sources only, no catalog places:
   price index can be weighted the way BEA weights it (BEA's own weights are not in the bulk
   files).
 
+- Zillow Home Value Index (ZHVI, metro, all homes, mid tier, latest month), free with
+  attribution to Zillow (https://www.zillow.com/research/data/), matched to metros by first
+  principal city and state.  Metros without a match fall back to the ACS median home value.
+
 Usage:  PYTHONPATH=. python3 scripts/baselines/build_relocation_inputs.py   (needs CENSUS_API_KEY)
 """
 
@@ -28,6 +32,8 @@ import numpy as np
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BEA = "https://apps.bea.gov/regional/zip/{}.zip"
 LINES = {"1": "all_items", "2": "goods", "3": "housing", "4": "utilities", "5": "other_services"}
+ZHVI_URL = ("https://files.zillowstatic.com/research/public_csvs/zhvi/"
+            "Metro_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv")
 ACS_URL = ("https://api.census.gov/data/2023/acs/acs5?get=NAME,B25064_001E,B25077_001E,B25003_003E,B25003_001E"
            "&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&key={}")
 
@@ -48,6 +54,20 @@ def _collect(rows, year, skip):
         if lc in LINES and v not in ("", "(NA)") and code not in skip:
             out.setdefault(code, {"name": r["GeoName"].strip()})[LINES[lc]] = float(v)
     return {k: v for k, v in out.items() if len(v) == 6}
+
+
+def _zillow_metro_values():
+    """{(first city, first state): (name, latest ZHVI, month)} for Zillow metros."""
+    text = urllib.request.urlopen(ZHVI_URL, timeout=120).read().decode("utf-8")
+    rows = list(csv.DictReader(io.StringIO(text)))
+    month = list(rows[0])[-1]
+    out = {}
+    for r in rows:
+        if r["RegionType"] != "msa" or not r[month]:
+            continue
+        city, st = r["RegionName"].rsplit(", ", 1)
+        out[(city.split("-")[0].strip().lower(), st.split("-")[0])] = (r["RegionName"], float(r[month]), month)
+    return out
 
 
 def main() -> None:
@@ -81,8 +101,19 @@ def main() -> None:
                 "renter_share": round(float(renters) / float(occ), 3) if occ and float(occ) > 0 else None,
             }
 
+    zillow = _zillow_metro_values()
+    matched = 0
+    for m in msa.values():
+        head, tail = m["acs_name"].split(",", 1)
+        k = (head.split("-")[0].strip().lower(), tail.strip().split(" ")[0].split("-")[0])
+        if k in zillow:
+            m["zhvi"], m["zhvi_month"], m["zillow_name"] = zillow[k][1], zillow[k][2], zillow[k][0]
+            matched += 1
+
     out = {
         "_meta": {
+            "zillow": "Zillow Home Value Index (ZHVI), metro, all homes mid tier, latest month; data from Zillow Research, attribution required",
+            "zillow_matched": matched,
             "source": "BEA Regional Price Parities (MARPP metro, SARPP state), US = 100; Census ACS 2023 5-year metro medians",
             "bea_year": int(year),
             "metros": len(msa),

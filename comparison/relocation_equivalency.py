@@ -14,14 +14,17 @@ scripts/baselines/build_relocation_inputs.py), so it covers every BEA metro (387
             what existing renters pay (long leases, rent stabilisation) and understates
             what a mover pays in NYC, LA and Miami;
     owner:  the user's current all-in payment (mortgage, property tax, whatever they pay)
-            scaled by the ratio of the two metros' median home values.
+            scaled by the ratio of the two metros' Zillow Home Value Index (current market
+            values, free with attribution to Zillow); metros Zillow does not cover fall back to
+            the Census median home value for BOTH sides so the ratio stays like for like.
   No mortgage rate, down payment or separate property tax is assumed.  Owner scaling holds
   at any common rate and assumes the same loan terms and that tax moves with price (true in
   Texas, Illinois, California; weaker in the Northeast).  It answers "same relative home".
 - State income tax (married filing jointly, Tax Foundation 2026) for the state the user will
   live in.  A metro can span states (New York-Newark-Jersey City is NY and NJ); the tax state
-  defaults to the metro's first-listed state and can be overridden.  City income taxes (NYC,
-  Philadelphia) are not applied: they depend on the exact city inside the metro.
+  defaults to the metro's first-listed state and can be overridden.  City income tax (NYC,
+  Philadelphia, Yonkers: the only ones with citable rates) is applied only when the caller says
+  the household lives in that city (origin_city / dest_city), not for its suburbs.
 - Everyday spending: a national average non-housing basket scaled by BEA's metro price levels
   for goods and other services.
 
@@ -42,7 +45,7 @@ import json
 import os
 from typing import Any, Dict, List, Optional
 
-from pillars.cost_of_living import state_income_tax
+from pillars.cost_of_living import local_income_tax, state_income_tax
 
 _DATA = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "relocation_rpp.json")
 with open(_DATA, "r", encoding="utf-8") as _f:
@@ -68,9 +71,10 @@ _ABBR = {
 
 
 ESTIMATE_NOTE = (
-    "Estimate for comparing metros, not a quote. Uses state income tax only (no city, property or "
-    "sales tax), a national average everyday basket, and metro median housing costs; "
-    "owner results assume the same relative home."
+    "Estimate for comparing metros, not a quote. Uses state income tax (plus city income tax for "
+    "New York, Philadelphia and Yonkers when the household is in the city; no property or sales "
+    "tax), a national average everyday basket, and metro housing costs; owner results assume the "
+    "same relative home."
 )
 
 
@@ -98,21 +102,29 @@ def tax_state(code: str, override: Optional[str] = None) -> str:
     return _ABBR.get(st, st)
 
 
-def _housing_scale(origin: str, dest: str, tenure: str) -> float:
-    key = "housing" if tenure == "rent" else "median_home_value"
-    return metro(dest)[key] / metro(origin)[key]
+def _housing_scale(origin: str, dest: str, tenure: str) -> Dict[str, Any]:
+    if tenure == "rent":
+        return {"scale": metro(dest)["housing"] / metro(origin)["housing"], "source": "BEA housing (rent) price level"}
+    o, d = metro(origin), metro(dest)
+    if "zhvi" in o and "zhvi" in d:
+        return {"scale": d["zhvi"] / o["zhvi"], "source": "Zillow Home Value Index"}
+    return {"scale": d["median_home_value"] / o["median_home_value"], "source": "Census median home value"}
 
 
-def costs_in(code: str, income: float, housing: float, *, state: Optional[str] = None) -> Dict[str, float]:
-    tax = state_income_tax(tax_state(code, state), income)
+def costs_in(code: str, income: float, housing: float, *, state: Optional[str] = None,
+             city: Optional[str] = None) -> Dict[str, float]:
+    st = tax_state(code, state)
+    s_tax = state_income_tax(st, income)
+    c_tax, _ = local_income_tax(city, st, income, s_tax)
     everyday = BASKET_BASE * basket_index(code) / 100.0
-    return {"tax": tax, "housing": housing, "everyday": everyday,
-            "left_over": income - tax - housing - everyday}
+    return {"tax": s_tax + c_tax, "housing": housing, "everyday": everyday,
+            "left_over": income - s_tax - c_tax - housing - everyday}
 
 
 def equivalent_income(origin: str, dest: str, income: float, *, tenure: str = "rent",
                       housing_year: Optional[float] = None,
-                      origin_state: Optional[str] = None, dest_state: Optional[str] = None) -> Dict[str, Any]:
+                      origin_state: Optional[str] = None, dest_state: Optional[str] = None,
+                      origin_city: Optional[str] = None, dest_city: Optional[str] = None) -> Dict[str, Any]:
     """Income needed in `dest` to keep the money left over that `income` leaves in `origin`.
 
     tenure: "rent" or "own".  housing_year: the user's current yearly housing cost (rent, or
@@ -123,19 +135,20 @@ def equivalent_income(origin: str, dest: str, income: float, *, tenure: str = "r
     if tenure == "own" and not housing_year:
         raise ValueError("owner mode needs the user's current yearly housing cost")
     h_origin = housing_year or metro(origin)["median_gross_rent"] * 12.0
-    h_dest = h_origin * _housing_scale(origin, dest, tenure)
+    hs = _housing_scale(origin, dest, tenure)
+    h_dest = h_origin * hs["scale"]
 
-    a = costs_in(origin, income, h_origin, state=origin_state)
+    a = costs_in(origin, income, h_origin, state=origin_state, city=origin_city)
     target = a["left_over"]
     lo, hi = 1000.0, max(income * 5, 500000.0)
     for _ in range(80):  # bisection; left-over rises with income
         mid = (lo + hi) / 2
-        if costs_in(dest, mid, h_dest, state=dest_state)["left_over"] < target:
+        if costs_in(dest, mid, h_dest, state=dest_state, city=dest_city)["left_over"] < target:
             lo = mid
         else:
             hi = mid
     need = (lo + hi) / 2
-    b = costs_in(dest, need, h_dest, state=dest_state)
+    b = costs_in(dest, need, h_dest, state=dest_state, city=dest_city)
     rnd = lambda d: {k: round(v) for k, v in d.items()}
     return {
         "estimate_note": ESTIMATE_NOTE,
@@ -148,6 +161,9 @@ def equivalent_income(origin: str, dest: str, income: float, *, tenure: str = "r
         "origin_costs": rnd(a),
         "dest_costs_at_equivalent_income": rnd(b),
         "housing_scale": round(h_dest / h_origin, 3),
+        "housing_scale_source": hs["source"],
+        "city_tax": {"origin": origin_city if a["tax"] > state_income_tax(tax_state(origin, origin_state), income) else None,
+                     "dest": dest_city if b["tax"] > state_income_tax(tax_state(dest, dest_state), need) else None},
     }
 
 

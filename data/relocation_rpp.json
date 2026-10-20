@@ -1,5 +1,7 @@
 {
  "_meta": {
+  "zillow": "Zillow Home Value Index (ZHVI), metro, all homes mid tier, latest month; data from Zillow Research, attribution required",
+  "zillow_matched": 377,
   "source": "BEA Regional Price Parities (MARPP metro, SARPP state), US = 100; Census ACS 2023 5-year metro medians",
   "bea_year": 2024,
   "metros": 387,
@@ -28,7 +30,10 @@
    ],
    "median_gross_rent": 1095.0,
    "median_home_value": 172800.0,
-   "renter_share": 0.365
+   "renter_share": 0.365,
+   "zhvi": 221507.88721793576,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Abilene, TX"
   },
   "10420": {
    "name": "Akron, OH (Metropolitan Statistical Area)",
@@ -43,7 +48,10 @@
    ],
    "median_gross_rent": 1005.0,
    "median_home_value": 199000.0,
-   "renter_share": 0.321
+   "renter_share": 0.321,
+   "zhvi": 240089.04141647174,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Akron, OH"
   },
   "10500": {
    "name": "Albany, GA (Metropolitan Statistical Area)",
@@ -58,7 +66,10 @@
    ],
    "median_gross_rent": 922.0,
    "median_home_value": 148800.0,
-   "renter_share": 0.437
+   "renter_share": 0.437,
+   "zhvi": 167543.85077021012,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Albany, GA"
   },
   "10540": {
    "name": "Albany, OR (Metropolitan Statistical Area)",
@@ -73,7 +84,10 @@
    ],
    "median_gross_rent": 1273.0,
    "median_home_value": 344600.0,
-   "renter_share": 0.33
+   "renter_share": 0.33,
+   "zhvi": 408251.67127499,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Albany, OR"
   },
   "10580": {
    "name": "Albany-Schenectady-Troy, NY (Metropolitan Statistical Area)",
@@ -88,7 +102,10 @@
    ],
    "median_gross_rent": 1230.0,
    "median_home_value": 268400.0,
-   "renter_share": 0.36
+   "renter_share": 0.36,
+   "zhvi": 373056.7005249522,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Albany, NY"
   },
   "10740": {
    "name": "Albuquerque, NM (Metropolitan Statistical Area)",
@@ -103,7 +120,10 @@
    ],
    "median_gross_rent": 1102.0,
    "median_home_value": 263500.0,
-   "renter_share": 0.313
+   "renter_share": 0.313,
+   "zhvi": 348673.857704312,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Albuquerque, NM"
   },
   "10780": {
    "name": "Alexandria, LA (Metropolitan Statistical Area)",
@@ -118,7 +138,10 @@
    ],
    "median_gross_rent": 935.0,
    "median_home_value": 173600.0,
-   "renter_share": 0.325
+   "renter_share": 0.325,
+   "zhvi": 171698.7625641754,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Alexandria, LA"
   },
   "10900": {
    "name": "Allentown-Bethlehem-Easton, PA-NJ (Metropolitan Statistical Area)",
@@ -134,7 +157,10 @@
    ],
    "median_gross_rent": 1309.0,
    "median_home_value": 277800.0,
-   "renter_share": 0.305
+   "renter_share": 0.305,
+   "zhvi": 363366.42020038754,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Allentown, PA"
   },
   "11020": {
    "name": "Altoona, PA (Metropolitan Statistical Area)",
@@ -149,7 +175,10 @@
    ],
    "median_gross_rent": 854.0,
    "median_home_value": 156700.0,
-   "renter_share": 0.276
+   "renter_share": 0.276,
+   "zhvi": 175413.96488741538,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Altoona, PA"
   },
   "11100": {
    "name": "Amarillo, TX (Metropolitan Statistical Area)",
@@ -164,7 +193,10 @@
    ],
    "median_gross_rent": 1044.0,
    "median_home_value": 196500.0,
-   "renter_share": 0.361
+   "renter_share": 0.361,
+   "zhvi": 219579.02147203148,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Amarillo, TX"
   },
   "11180": {
    "name": "Ames, IA (Metropolitan Statistical Area)",
@@ -179,7 +211,10 @@
    ],
    "median_gross_rent": 1002.0,
    "median_home_value": 231600.0,
-   "renter_share": 0.385
+   "renter_share": 0.385,
+   "zhvi": 277302.1574318343,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Ames, IA"
   },
   "11200": {
    "name": "Amherst Town-Northampton, MA (Metropolitan Statistical Area)",
@@ -209,7 +244,10 @@
    ],
    "median_gross_rent": 1422.0,
    "median_home_value": 358900.0,
-   "renter_share": 0.328
+   "renter_share": 0.328,
+   "zhvi": 424607.31393872824,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Anchorage, AK"
   },
   "11460": {
    "name": "Ann Arbor, MI (Metropolitan Statistical Area)",
@@ -224,7 +262,10 @@
    ],
    "median_gross_rent": 1400.0,
    "median_home_value": 353000.0,
-   "renter_share": 0.384
+   "renter_share": 0.384,
+   "zhvi": 411984.69816775544,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Ann Arbor, MI"
   },
   "11500": {
    "name": "Anniston-Oxford, AL (Metropolitan Statistical Area)",
@@ -239,7 +280,10 @@
    ],
    "median_gross_rent": 804.0,
    "median_home_value": 149500.0,
-   "renter_share": 0.296
+   "renter_share": 0.296,
+   "zhvi": 170423.49704170224,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Anniston, AL"
   },
   "11540": {
    "name": "Appleton, WI (Metropolitan Statistical Area)",
@@ -254,7 +298,10 @@
    ],
    "median_gross_rent": 999.0,
    "median_home_value": 246000.0,
-   "renter_share": 0.264
+   "renter_share": 0.264,
+   "zhvi": 348640.1879688163,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Appleton, WI"
   },
   "11700": {
    "name": "Asheville, NC (Metropolitan Statistical Area)",
@@ -269,7 +316,10 @@
    ],
    "median_gross_rent": 1223.0,
    "median_home_value": 338400.0,
-   "renter_share": 0.318
+   "renter_share": 0.318,
+   "zhvi": 416031.1699296364,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Asheville, NC"
   },
   "12020": {
    "name": "Athens-Clarke County, GA (Metropolitan Statistical Area)",
@@ -284,7 +334,10 @@
    ],
    "median_gross_rent": 1144.0,
    "median_home_value": 280900.0,
-   "renter_share": 0.449
+   "renter_share": 0.449,
+   "zhvi": 367437.7643534999,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Athens, GA"
   },
   "12060": {
    "name": "Atlanta-Sandy Springs-Roswell, GA (Metropolitan Statistical Area)",
@@ -299,7 +352,10 @@
    ],
    "median_gross_rent": 1563.0,
    "median_home_value": 335100.0,
-   "renter_share": 0.342
+   "renter_share": 0.342,
+   "zhvi": 375897.59051514574,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Atlanta, GA"
   },
   "12100": {
    "name": "Atlantic City-Hammonton, NJ (Metropolitan Statistical Area)",
@@ -314,7 +370,10 @@
    ],
    "median_gross_rent": 1328.0,
    "median_home_value": 302600.0,
-   "renter_share": 0.288
+   "renter_share": 0.288,
+   "zhvi": 383090.53129907366,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Atlantic City, NJ"
   },
   "12220": {
    "name": "Auburn-Opelika, AL (Metropolitan Statistical Area)",
@@ -329,7 +388,10 @@
    ],
    "median_gross_rent": 974.0,
    "median_home_value": 224600.0,
-   "renter_share": 0.344
+   "renter_share": 0.344,
+   "zhvi": 350990.30041131965,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Auburn, AL"
   },
   "12260": {
    "name": "Augusta-Richmond County, GA-SC (Metropolitan Statistical Area)",
@@ -345,7 +407,10 @@
    ],
    "median_gross_rent": 1075.0,
    "median_home_value": 207300.0,
-   "renter_share": 0.317
+   "renter_share": 0.317,
+   "zhvi": 250497.1765744853,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Augusta, GA"
   },
   "12420": {
    "name": "Austin-Round Rock-San Marcos, TX (Metropolitan Statistical Area)",
@@ -360,7 +425,10 @@
    ],
    "median_gross_rent": 1646.0,
    "median_home_value": 434800.0,
-   "renter_share": 0.411
+   "renter_share": 0.411,
+   "zhvi": 414273.4429638724,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Austin, TX"
   },
   "12540": {
    "name": "Bakersfield-Delano, CA (Metropolitan Statistical Area)",
@@ -375,7 +443,10 @@
    ],
    "median_gross_rent": 1220.0,
    "median_home_value": 310600.0,
-   "renter_share": 0.402
+   "renter_share": 0.402,
+   "zhvi": 360209.6107408823,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Bakersfield, CA"
   },
   "12580": {
    "name": "Baltimore-Columbia-Towson, MD (Metropolitan Statistical Area)",
@@ -390,7 +461,10 @@
    ],
    "median_gross_rent": 1562.0,
    "median_home_value": 373300.0,
-   "renter_share": 0.331
+   "renter_share": 0.331,
+   "zhvi": 396959.3912298127,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Baltimore, MD"
   },
   "12620": {
    "name": "Bangor, ME (Metropolitan Statistical Area)",
@@ -405,7 +479,10 @@
    ],
    "median_gross_rent": 997.0,
    "median_home_value": 193800.0,
-   "renter_share": 0.297
+   "renter_share": 0.297,
+   "zhvi": 277444.999865481,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Bangor, ME"
   },
   "12700": {
    "name": "Barnstable Town, MA (Metropolitan Statistical Area)",
@@ -420,7 +497,10 @@
    ],
    "median_gross_rent": 1596.0,
    "median_home_value": 575900.0,
-   "renter_share": 0.194
+   "renter_share": 0.194,
+   "zhvi": 757453.068176113,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Barnstable Town, MA"
   },
   "12940": {
    "name": "Baton Rouge, LA (Metropolitan Statistical Area)",
@@ -435,7 +515,10 @@
    ],
    "median_gross_rent": 1108.0,
    "median_home_value": 232300.0,
-   "renter_share": 0.309
+   "renter_share": 0.309,
+   "zhvi": 246247.21720707975,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Baton Rouge, LA"
   },
   "12980": {
    "name": "Battle Creek, MI (Metropolitan Statistical Area)",
@@ -450,7 +533,10 @@
    ],
    "median_gross_rent": 937.0,
    "median_home_value": 151500.0,
-   "renter_share": 0.276
+   "renter_share": 0.276,
+   "zhvi": 190005.12671021707,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Battle Creek, MI"
   },
   "13020": {
    "name": "Bay City, MI (Metropolitan Statistical Area)",
@@ -465,7 +551,10 @@
    ],
    "median_gross_rent": 809.0,
    "median_home_value": 135100.0,
-   "renter_share": 0.236
+   "renter_share": 0.236,
+   "zhvi": 186132.0903334449,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Bay City, MI"
   },
   "13140": {
    "name": "Beaumont-Port Arthur, TX (Metropolitan Statistical Area)",
@@ -480,7 +569,10 @@
    ],
    "median_gross_rent": 1063.0,
    "median_home_value": 164300.0,
-   "renter_share": 0.323
+   "renter_share": 0.323,
+   "zhvi": 186304.56897428966,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Beaumont, TX"
   },
   "13220": {
    "name": "Beckley, WV (Metropolitan Statistical Area)",
@@ -495,7 +587,10 @@
    ],
    "median_gross_rent": 820.0,
    "median_home_value": 123400.0,
-   "renter_share": 0.25
+   "renter_share": 0.25,
+   "zhvi": 150150.73273185207,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Beckley, WV"
   },
   "13380": {
    "name": "Bellingham, WA (Metropolitan Statistical Area)",
@@ -510,7 +605,10 @@
    ],
    "median_gross_rent": 1465.0,
    "median_home_value": 536100.0,
-   "renter_share": 0.365
+   "renter_share": 0.365,
+   "zhvi": 607630.1185259846,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Bellingham, WA"
   },
   "13460": {
    "name": "Bend, OR (Metropolitan Statistical Area)",
@@ -525,7 +623,10 @@
    ],
    "median_gross_rent": 1583.0,
    "median_home_value": 550400.0,
-   "renter_share": 0.287
+   "renter_share": 0.287,
+   "zhvi": 658499.8336573568,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Bend, OR"
   },
   "13740": {
    "name": "Billings, MT (Metropolitan Statistical Area)",
@@ -540,7 +641,10 @@
    ],
    "median_gross_rent": 1072.0,
    "median_home_value": 322700.0,
-   "renter_share": 0.298
+   "renter_share": 0.298,
+   "zhvi": 409623.0206756823,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Billings, MT"
   },
   "13780": {
    "name": "Binghamton, NY (Metropolitan Statistical Area)",
@@ -555,7 +659,10 @@
    ],
    "median_gross_rent": 914.0,
    "median_home_value": 146700.0,
-   "renter_share": 0.327
+   "renter_share": 0.327,
+   "zhvi": 203309.80644023386,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Binghamton, NY"
   },
   "13820": {
    "name": "Birmingham, AL (Metropolitan Statistical Area)",
@@ -570,7 +677,10 @@
    ],
    "median_gross_rent": 1114.0,
    "median_home_value": 226200.0,
-   "renter_share": 0.294
+   "renter_share": 0.294,
+   "zhvi": 260709.8397689334,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Birmingham, AL"
   },
   "13900": {
    "name": "Bismarck, ND (Metropolitan Statistical Area)",
@@ -585,7 +695,10 @@
    ],
    "median_gross_rent": 1008.0,
    "median_home_value": 295500.0,
-   "renter_share": 0.273
+   "renter_share": 0.273,
+   "zhvi": 356127.01117395796,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Bismarck, ND"
   },
   "13980": {
    "name": "Blacksburg-Christiansburg-Radford, VA (Metropolitan Statistical Area)",
@@ -600,7 +713,10 @@
    ],
    "median_gross_rent": 1075.0,
    "median_home_value": 228400.0,
-   "renter_share": 0.375
+   "renter_share": 0.375,
+   "zhvi": 286933.56584321096,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Blacksburg, VA"
   },
   "14010": {
    "name": "Bloomington, IL (Metropolitan Statistical Area)",
@@ -615,7 +731,10 @@
    ],
    "median_gross_rent": 992.0,
    "median_home_value": 198300.0,
-   "renter_share": 0.348
+   "renter_share": 0.348,
+   "zhvi": 260593.25134313913,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Bloomington, IL"
   },
   "14020": {
    "name": "Bloomington, IN (Metropolitan Statistical Area)",
@@ -630,7 +749,10 @@
    ],
    "median_gross_rent": 1137.0,
    "median_home_value": 242800.0,
-   "renter_share": 0.418
+   "renter_share": 0.418,
+   "zhvi": 297190.6898956876,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Bloomington, IN"
   },
   "14260": {
    "name": "Boise City, ID (Metropolitan Statistical Area)",
@@ -645,7 +767,10 @@
    ],
    "median_gross_rent": 1383.0,
    "median_home_value": 434400.0,
-   "renter_share": 0.273
+   "renter_share": 0.273,
+   "zhvi": 491850.76083694544,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Boise City, ID"
   },
   "14460": {
    "name": "Boston-Cambridge-Newton, MA-NH (Metropolitan Statistical Area)",
@@ -661,7 +786,10 @@
    ],
    "median_gross_rent": 1940.0,
    "median_home_value": 610900.0,
-   "renter_share": 0.382
+   "renter_share": 0.382,
+   "zhvi": 725638.7496259762,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Boston, MA"
   },
   "14500": {
    "name": "Boulder, CO (Metropolitan Statistical Area)",
@@ -676,7 +804,10 @@
    ],
    "median_gross_rent": 1893.0,
    "median_home_value": 713900.0,
-   "renter_share": 0.375
+   "renter_share": 0.375,
+   "zhvi": 706763.4007648514,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Boulder, CO"
   },
   "14540": {
    "name": "Bowling Green, KY (Metropolitan Statistical Area)",
@@ -691,7 +822,10 @@
    ],
    "median_gross_rent": 936.0,
    "median_home_value": 219400.0,
-   "renter_share": 0.382
+   "renter_share": 0.382,
+   "zhvi": 257588.70175645148,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Bowling Green, KY"
   },
   "14580": {
    "name": "Bozeman, MT (Metropolitan Statistical Area)",
@@ -706,7 +840,10 @@
    ],
    "median_gross_rent": 1574.0,
    "median_home_value": 604900.0,
-   "renter_share": 0.385
+   "renter_share": 0.385,
+   "zhvi": 697748.573330874,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Bozeman, MT"
   },
   "14740": {
    "name": "Bremerton-Silverdale-Port Orchard, WA (Metropolitan Statistical Area)",
@@ -721,7 +858,10 @@
    ],
    "median_gross_rent": 1741.0,
    "median_home_value": 505700.0,
-   "renter_share": 0.299
+   "renter_share": 0.299,
+   "zhvi": 579111.1450029038,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Bremerton, WA"
   },
   "14860": {
    "name": "Bridgeport-Stamford-Danbury, CT Metropolitan Statistical Area",
@@ -736,7 +876,10 @@
    ],
    "median_gross_rent": 1827.0,
    "median_home_value": 530800.0,
-   "renter_share": 0.341
+   "renter_share": 0.341,
+   "zhvi": 687644.3003535279,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Bridgeport, CT"
   },
   "15180": {
    "name": "Brownsville-Harlingen, TX (Metropolitan Statistical Area)",
@@ -751,7 +894,10 @@
    ],
    "median_gross_rent": 899.0,
    "median_home_value": 120000.0,
-   "renter_share": 0.348
+   "renter_share": 0.348,
+   "zhvi": 204552.1220659387,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Brownsville, TX"
   },
   "15260": {
    "name": "Brunswick-St. Simons, GA (Metropolitan Statistical Area)",
@@ -766,7 +912,10 @@
    ],
    "median_gross_rent": 1003.0,
    "median_home_value": 221400.0,
-   "renter_share": 0.301
+   "renter_share": 0.301,
+   "zhvi": 319695.5685593325,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Brunswick, GA"
   },
   "15380": {
    "name": "Buffalo-Cheektowaga, NY (Metropolitan Statistical Area)",
@@ -781,7 +930,10 @@
    ],
    "median_gross_rent": 1005.0,
    "median_home_value": 209600.0,
-   "renter_share": 0.335
+   "renter_share": 0.335,
+   "zhvi": 287358.68002278934,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Buffalo, NY"
   },
   "15500": {
    "name": "Burlington, NC (Metropolitan Statistical Area)",
@@ -796,7 +948,10 @@
    ],
    "median_gross_rent": 1007.0,
    "median_home_value": 221200.0,
-   "renter_share": 0.344
+   "renter_share": 0.344,
+   "zhvi": 290915.4521448912,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Burlington, NC"
   },
   "15540": {
    "name": "Burlington-South Burlington, VT (Metropolitan Statistical Area)",
@@ -811,7 +966,10 @@
    ],
    "median_gross_rent": 1531.0,
    "median_home_value": 370400.0,
-   "renter_share": 0.325
+   "renter_share": 0.325,
+   "zhvi": 462002.59327372955,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Burlington, VT"
   },
   "15940": {
    "name": "Canton-Massillon, OH (Metropolitan Statistical Area)",
@@ -826,7 +984,10 @@
    ],
    "median_gross_rent": 873.0,
    "median_home_value": 177400.0,
-   "renter_share": 0.308
+   "renter_share": 0.308,
+   "zhvi": 217651.66584773877,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Canton, OH"
   },
   "15980": {
    "name": "Cape Coral-Fort Myers, FL (Metropolitan Statistical Area)",
@@ -841,7 +1002,10 @@
    ],
    "median_gross_rent": 1597.0,
    "median_home_value": 326300.0,
-   "renter_share": 0.26
+   "renter_share": 0.26,
+   "zhvi": 334479.3812217507,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Cape Coral, FL"
   },
   "16020": {
    "name": "Cape Girardeau, MO-IL (Metropolitan Statistical Area)",
@@ -857,7 +1021,10 @@
    ],
    "median_gross_rent": 864.0,
    "median_home_value": 195200.0,
-   "renter_share": 0.321
+   "renter_share": 0.321,
+   "zhvi": 225699.90214133527,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Cape Girardeau, MO"
   },
   "16180": {
    "name": "Carson City, NV (Metropolitan Statistical Area)",
@@ -872,7 +1039,10 @@
    ],
    "median_gross_rent": 1172.0,
    "median_home_value": 426700.0,
-   "renter_share": 0.368
+   "renter_share": 0.368,
+   "zhvi": 494228.3043355713,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Carson City, NV"
   },
   "16220": {
    "name": "Casper, WY (Metropolitan Statistical Area)",
@@ -887,7 +1057,10 @@
    ],
    "median_gross_rent": 973.0,
    "median_home_value": 260400.0,
-   "renter_share": 0.264
+   "renter_share": 0.264,
+   "zhvi": 312424.8469245052,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Casper, WY"
   },
   "16300": {
    "name": "Cedar Rapids, IA (Metropolitan Statistical Area)",
@@ -902,7 +1075,10 @@
    ],
    "median_gross_rent": 899.0,
    "median_home_value": 202100.0,
-   "renter_share": 0.252
+   "renter_share": 0.252,
+   "zhvi": 246602.0402274823,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Cedar Rapids, IA"
   },
   "16540": {
    "name": "Chambersburg, PA (Metropolitan Statistical Area)",
@@ -917,7 +1093,10 @@
    ],
    "median_gross_rent": 1071.0,
    "median_home_value": 236300.0,
-   "renter_share": 0.268
+   "renter_share": 0.268,
+   "zhvi": 289565.150727389,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Chambersburg, PA"
   },
   "16580": {
    "name": "Champaign-Urbana, IL (Metropolitan Statistical Area)",
@@ -932,7 +1111,10 @@
    ],
    "median_gross_rent": 1008.0,
    "median_home_value": 194400.0,
-   "renter_share": 0.431
+   "renter_share": 0.431,
+   "zhvi": 239230.2493492998,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Champaign, IL"
   },
   "16620": {
    "name": "Charleston, WV (Metropolitan Statistical Area)",
@@ -947,7 +1129,10 @@
    ],
    "median_gross_rent": 872.0,
    "median_home_value": 128900.0,
-   "renter_share": 0.287
+   "renter_share": 0.287,
+   "zhvi": 147374.94857900418,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Charleston, WV"
   },
   "16700": {
    "name": "Charleston-North Charleston, SC (Metropolitan Statistical Area)",
@@ -962,7 +1147,10 @@
    ],
    "median_gross_rent": 1488.0,
    "median_home_value": 345400.0,
-   "renter_share": 0.313
+   "renter_share": 0.313,
+   "zhvi": 437474.18720382295,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Charleston, SC"
   },
   "16740": {
    "name": "Charlotte-Concord-Gastonia, NC-SC (Metropolitan Statistical Area)",
@@ -978,7 +1166,10 @@
    ],
    "median_gross_rent": 1377.0,
    "median_home_value": 319400.0,
-   "renter_share": 0.342
+   "renter_share": 0.342,
+   "zhvi": 381391.99469458096,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Charlotte, NC"
   },
   "16820": {
    "name": "Charlottesville, VA (Metropolitan Statistical Area)",
@@ -993,7 +1184,10 @@
    ],
    "median_gross_rent": 1528.0,
    "median_home_value": 397600.0,
-   "renter_share": 0.342
+   "renter_share": 0.342,
+   "zhvi": 464131.76515296707,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Charlottesville, VA"
   },
   "16860": {
    "name": "Chattanooga, TN-GA (Metropolitan Statistical Area)",
@@ -1009,7 +1203,10 @@
    ],
    "median_gross_rent": 1084.0,
    "median_home_value": 246000.0,
-   "renter_share": 0.317
+   "renter_share": 0.317,
+   "zhvi": 318922.19334602595,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Chattanooga, TN"
   },
   "16940": {
    "name": "Cheyenne, WY (Metropolitan Statistical Area)",
@@ -1024,7 +1221,10 @@
    ],
    "median_gross_rent": 1080.0,
    "median_home_value": 324900.0,
-   "renter_share": 0.292
+   "renter_share": 0.292,
+   "zhvi": 390069.58835284325,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Cheyenne, WY"
   },
   "16980": {
    "name": "Chicago-Naperville-Elgin, IL-IN (Metropolitan Statistical Area)",
@@ -1040,7 +1240,10 @@
    ],
    "median_gross_rent": 1378.0,
    "median_home_value": 301900.0,
-   "renter_share": 0.347
+   "renter_share": 0.347,
+   "zhvi": 355649.7749751497,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Chicago, IL"
   },
   "17020": {
    "name": "Chico, CA (Metropolitan Statistical Area)",
@@ -1055,7 +1258,10 @@
    ],
    "median_gross_rent": 1369.0,
    "median_home_value": 408700.0,
-   "renter_share": 0.417
+   "renter_share": 0.417,
+   "zhvi": 394069.36155410623,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Chico, CA"
   },
   "17140": {
    "name": "Cincinnati, OH-KY-IN (Metropolitan Statistical Area)",
@@ -1072,7 +1278,10 @@
    ],
    "median_gross_rent": 1047.0,
    "median_home_value": 240200.0,
-   "renter_share": 0.319
+   "renter_share": 0.319,
+   "zhvi": 305939.942583739,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Cincinnati, OH"
   },
   "17300": {
    "name": "Clarksville, TN-KY (Metropolitan Statistical Area)",
@@ -1088,7 +1297,10 @@
    ],
    "median_gross_rent": 1141.0,
    "median_home_value": 229400.0,
-   "renter_share": 0.379
+   "renter_share": 0.379,
+   "zhvi": 289380.05065705936,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Clarksville, TN"
   },
   "17410": {
    "name": "Cleveland, OH (Metropolitan Statistical Area)",
@@ -1103,7 +1315,10 @@
    ],
    "median_gross_rent": 996.0,
    "median_home_value": 201000.0,
-   "renter_share": 0.339
+   "renter_share": 0.339,
+   "zhvi": 250000.98991304054,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Cleveland, OH"
   },
   "17420": {
    "name": "Cleveland, TN (Metropolitan Statistical Area)",
@@ -1118,7 +1333,10 @@
    ],
    "median_gross_rent": 939.0,
    "median_home_value": 218500.0,
-   "renter_share": 0.301
+   "renter_share": 0.301,
+   "zhvi": 306047.6045372464,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Cleveland, TN"
   },
   "17660": {
    "name": "Coeur d'Alene, ID (Metropolitan Statistical Area)",
@@ -1133,7 +1351,10 @@
    ],
    "median_gross_rent": 1330.0,
    "median_home_value": 467400.0,
-   "renter_share": 0.278
+   "renter_share": 0.278,
+   "zhvi": 606180.3154254225,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Coeur d'Alene, ID"
   },
   "17780": {
    "name": "College Station-Bryan, TX (Metropolitan Statistical Area)",
@@ -1148,7 +1369,10 @@
    ],
    "median_gross_rent": 1146.0,
    "median_home_value": 261900.0,
-   "renter_share": 0.49
+   "renter_share": 0.49,
+   "zhvi": 304971.80087942793,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "College Station, TX"
   },
   "17820": {
    "name": "Colorado Springs, CO (Metropolitan Statistical Area)",
@@ -1163,7 +1387,10 @@
    ],
    "median_gross_rent": 1611.0,
    "median_home_value": 431600.0,
-   "renter_share": 0.33
+   "renter_share": 0.33,
+   "zhvi": 446710.9791170855,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Colorado Springs, CO"
   },
   "17860": {
    "name": "Columbia, MO (Metropolitan Statistical Area)",
@@ -1178,7 +1405,10 @@
    ],
    "median_gross_rent": 1041.0,
    "median_home_value": 242500.0,
-   "renter_share": 0.395
+   "renter_share": 0.395,
+   "zhvi": 318695.29644979106,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Columbia, MO"
   },
   "17900": {
    "name": "Columbia, SC (Metropolitan Statistical Area)",
@@ -1193,7 +1423,10 @@
    ],
    "median_gross_rent": 1145.0,
    "median_home_value": 213400.0,
-   "renter_share": 0.308
+   "renter_share": 0.308,
+   "zhvi": 252978.95281921848,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Columbia, SC"
   },
   "17980": {
    "name": "Columbus, GA-AL (Metropolitan Statistical Area)",
@@ -1209,7 +1442,10 @@
    ],
    "median_gross_rent": 1030.0,
    "median_home_value": 184900.0,
-   "renter_share": 0.428
+   "renter_share": 0.428,
+   "zhvi": 209756.31325954778,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Columbus, GA"
   },
   "18020": {
    "name": "Columbus, IN (Metropolitan Statistical Area)",
@@ -1224,7 +1460,10 @@
    ],
    "median_gross_rent": 1110.0,
    "median_home_value": 221100.0,
-   "renter_share": 0.301
+   "renter_share": 0.301,
+   "zhvi": 274090.52586974466,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Columbus, IN"
   },
   "18140": {
    "name": "Columbus, OH (Metropolitan Statistical Area)",
@@ -1239,7 +1478,10 @@
    ],
    "median_gross_rent": 1208.0,
    "median_home_value": 274300.0,
-   "renter_share": 0.387
+   "renter_share": 0.387,
+   "zhvi": 326909.8853126878,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Columbus, OH"
   },
   "18580": {
    "name": "Corpus Christi, TX (Metropolitan Statistical Area)",
@@ -1254,7 +1496,10 @@
    ],
    "median_gross_rent": 1224.0,
    "median_home_value": 195400.0,
-   "renter_share": 0.379
+   "renter_share": 0.379,
+   "zhvi": 221538.31878539492,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Corpus Christi, TX"
   },
   "18700": {
    "name": "Corvallis, OR (Metropolitan Statistical Area)",
@@ -1269,7 +1514,10 @@
    ],
    "median_gross_rent": 1359.0,
    "median_home_value": 481700.0,
-   "renter_share": 0.44
+   "renter_share": 0.44,
+   "zhvi": 553196.2132275883,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Corvallis, OR"
   },
   "18880": {
    "name": "Crestview-Fort Walton Beach-Destin, FL (Metropolitan Statistical Area)",
@@ -1284,7 +1532,10 @@
    ],
    "median_gross_rent": 1506.0,
    "median_home_value": 333800.0,
-   "renter_share": 0.296
+   "renter_share": 0.296,
+   "zhvi": 439732.8257051496,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Crestview, FL"
   },
   "19100": {
    "name": "Dallas-Fort Worth-Arlington, TX (Metropolitan Statistical Area)",
@@ -1299,7 +1550,10 @@
    ],
    "median_gross_rent": 1509.0,
    "median_home_value": 330300.0,
-   "renter_share": 0.4
+   "renter_share": 0.4,
+   "zhvi": 358242.3541299444,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Dallas, TX"
   },
   "19140": {
    "name": "Dalton, GA (Metropolitan Statistical Area)",
@@ -1314,7 +1568,10 @@
    ],
    "median_gross_rent": 878.0,
    "median_home_value": 190800.0,
-   "renter_share": 0.304
+   "renter_share": 0.304,
+   "zhvi": 244988.81473245006,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Dalton, GA"
   },
   "19300": {
    "name": "Daphne-Fairhope-Foley, AL (Metropolitan Statistical Area)",
@@ -1329,7 +1586,10 @@
    ],
    "median_gross_rent": 1211.0,
    "median_home_value": 287000.0,
-   "renter_share": 0.225
+   "renter_share": 0.225,
+   "zhvi": 371460.00400547247,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Daphne, AL"
   },
   "19340": {
    "name": "Davenport-Moline-Rock Island, IA-IL (Metropolitan Statistical Area)",
@@ -1345,7 +1605,10 @@
    ],
    "median_gross_rent": 899.0,
    "median_home_value": 170000.0,
-   "renter_share": 0.289
+   "renter_share": 0.289,
+   "zhvi": 194777.69190587115,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Davenport, IA"
   },
   "19430": {
    "name": "Dayton-Kettering-Beavercreek, OH (Metropolitan Statistical Area)",
@@ -1375,7 +1638,10 @@
    ],
    "median_gross_rent": 816.0,
    "median_home_value": 185000.0,
-   "renter_share": 0.256
+   "renter_share": 0.256,
+   "zhvi": 226560.07226688377,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Decatur, AL"
   },
   "19500": {
    "name": "Decatur, IL (Metropolitan Statistical Area)",
@@ -1390,7 +1656,10 @@
    ],
    "median_gross_rent": 797.0,
    "median_home_value": 121800.0,
-   "renter_share": 0.302
+   "renter_share": 0.302,
+   "zhvi": 124659.8510976784,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Decatur, IL"
   },
   "19660": {
    "name": "Deltona-Daytona Beach-Ormond Beach, FL (Metropolitan Statistical Area)",
@@ -1405,7 +1674,10 @@
    ],
    "median_gross_rent": 1407.0,
    "median_home_value": 287200.0,
-   "renter_share": 0.257
+   "renter_share": 0.257,
+   "zhvi": 330886.17560460366,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Deltona, FL"
   },
   "19740": {
    "name": "Denver-Aurora-Centennial, CO (Metropolitan Statistical Area)",
@@ -1420,7 +1692,10 @@
    ],
    "median_gross_rent": 1805.0,
    "median_home_value": 570300.0,
-   "renter_share": 0.357
+   "renter_share": 0.357,
+   "zhvi": 555487.225480902,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Denver, CO"
   },
   "19780": {
    "name": "Des Moines-West Des Moines, IA (Metropolitan Statistical Area)",
@@ -1435,7 +1710,10 @@
    ],
    "median_gross_rent": 1113.0,
    "median_home_value": 252400.0,
-   "renter_share": 0.305
+   "renter_share": 0.305,
+   "zhvi": 292512.6217366149,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Des Moines, IA"
   },
   "19820": {
    "name": "Detroit-Warren-Dearborn, MI (Metropolitan Statistical Area)",
@@ -1450,7 +1728,10 @@
    ],
    "median_gross_rent": 1162.0,
    "median_home_value": 237100.0,
-   "renter_share": 0.291
+   "renter_share": 0.291,
+   "zhvi": 264316.4659704175,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Detroit, MI"
   },
   "20020": {
    "name": "Dothan, AL (Metropolitan Statistical Area)",
@@ -1465,7 +1746,10 @@
    ],
    "median_gross_rent": 878.0,
    "median_home_value": 163700.0,
-   "renter_share": 0.317
+   "renter_share": 0.317,
+   "zhvi": 193191.72746888315,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Dothan, AL"
   },
   "20100": {
    "name": "Dover, DE (Metropolitan Statistical Area)",
@@ -1480,7 +1764,10 @@
    ],
    "median_gross_rent": 1285.0,
    "median_home_value": 290600.0,
-   "renter_share": 0.29
+   "renter_share": 0.29,
+   "zhvi": 371872.46182309976,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Dover, DE"
   },
   "20220": {
    "name": "Dubuque, IA (Metropolitan Statistical Area)",
@@ -1495,7 +1782,10 @@
    ],
    "median_gross_rent": 944.0,
    "median_home_value": 226100.0,
-   "renter_share": 0.268
+   "renter_share": 0.268,
+   "zhvi": 277233.5890441036,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Dubuque, IA"
   },
   "20260": {
    "name": "Duluth, MN-WI (Metropolitan Statistical Area)",
@@ -1511,7 +1801,10 @@
    ],
    "median_gross_rent": 959.0,
    "median_home_value": 208900.0,
-   "renter_share": 0.271
+   "renter_share": 0.271,
+   "zhvi": 263835.09823280893,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Duluth, MN"
   },
   "20500": {
    "name": "Durham-Chapel Hill, NC (Metropolitan Statistical Area)",
@@ -1526,7 +1819,10 @@
    ],
    "median_gross_rent": 1374.0,
    "median_home_value": 359400.0,
-   "renter_share": 0.381
+   "renter_share": 0.381,
+   "zhvi": 401581.0256643383,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Durham, NC"
   },
   "20580": {
    "name": "Eagle Pass, TX (Metropolitan Statistical Area)",
@@ -1541,7 +1837,10 @@
    ],
    "median_gross_rent": 789.0,
    "median_home_value": 151500.0,
-   "renter_share": 0.313
+   "renter_share": 0.313,
+   "zhvi": 215360.17022131945,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Eagle Pass, TX"
   },
   "20740": {
    "name": "Eau Claire, WI (Metropolitan Statistical Area)",
@@ -1556,7 +1855,10 @@
    ],
    "median_gross_rent": 974.0,
    "median_home_value": 240700.0,
-   "renter_share": 0.327
+   "renter_share": 0.327,
+   "zhvi": 321856.501540276,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Eau Claire, WI"
   },
   "20940": {
    "name": "El Centro, CA (Metropolitan Statistical Area)",
@@ -1571,7 +1873,10 @@
    ],
    "median_gross_rent": 1012.0,
    "median_home_value": 279500.0,
-   "renter_share": 0.432
+   "renter_share": 0.432,
+   "zhvi": 382009.00013557455,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "El Centro, CA"
   },
   "21060": {
    "name": "Elizabethtown, KY (Metropolitan Statistical Area)",
@@ -1586,7 +1891,10 @@
    ],
    "median_gross_rent": 935.0,
    "median_home_value": 201100.0,
-   "renter_share": 0.361
+   "renter_share": 0.361,
+   "zhvi": 245471.10949060915,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Elizabethtown, KY"
   },
   "21140": {
    "name": "Elkhart-Goshen, IN (Metropolitan Statistical Area)",
@@ -1601,7 +1909,10 @@
    ],
    "median_gross_rent": 1023.0,
    "median_home_value": 194400.0,
-   "renter_share": 0.288
+   "renter_share": 0.288,
+   "zhvi": 266456.36089171184,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Elkhart, IN"
   },
   "21300": {
    "name": "Elmira, NY (Metropolitan Statistical Area)",
@@ -1616,7 +1927,10 @@
    ],
    "median_gross_rent": 1020.0,
    "median_home_value": 132100.0,
-   "renter_share": 0.302
+   "renter_share": 0.302,
+   "zhvi": 166607.34162421696,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Elmira, NY"
   },
   "21340": {
    "name": "El Paso, TX (Metropolitan Statistical Area)",
@@ -1631,7 +1945,10 @@
    ],
    "median_gross_rent": 1045.0,
    "median_home_value": 167000.0,
-   "renter_share": 0.363
+   "renter_share": 0.363,
+   "zhvi": 233011.13732331435,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "El Paso, TX"
   },
   "21420": {
    "name": "Enid, OK (Metropolitan Statistical Area) *",
@@ -1646,7 +1963,10 @@
    ],
    "median_gross_rent": 915.0,
    "median_home_value": 149800.0,
-   "renter_share": 0.354
+   "renter_share": 0.354,
+   "zhvi": 140582.2718170732,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Enid, OK"
   },
   "21500": {
    "name": "Erie, PA (Metropolitan Statistical Area)",
@@ -1661,7 +1981,10 @@
    ],
    "median_gross_rent": 876.0,
    "median_home_value": 169500.0,
-   "renter_share": 0.317
+   "renter_share": 0.317,
+   "zhvi": 222048.0148703861,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Erie, PA"
   },
   "21660": {
    "name": "Eugene-Springfield, OR (Metropolitan Statistical Area)",
@@ -1676,7 +1999,10 @@
    ],
    "median_gross_rent": 1287.0,
    "median_home_value": 395800.0,
-   "renter_share": 0.406
+   "renter_share": 0.406,
+   "zhvi": 452796.95882459247,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Eugene, OR"
   },
   "21780": {
    "name": "Evansville, IN (Metropolitan Statistical Area)",
@@ -1691,7 +2017,10 @@
    ],
    "median_gross_rent": 963.0,
    "median_home_value": 190800.0,
-   "renter_share": 0.299
+   "renter_share": 0.299,
+   "zhvi": 225369.62375501858,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Evansville, IN"
   },
   "21820": {
    "name": "Fairbanks-College, AK (Metropolitan Statistical Area)",
@@ -1706,7 +2035,10 @@
    ],
    "median_gross_rent": 1424.0,
    "median_home_value": 282500.0,
-   "renter_share": 0.383
+   "renter_share": 0.383,
+   "zhvi": 314300.1704641185,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Fairbanks, AK"
   },
   "22020": {
    "name": "Fargo, ND-MN (Metropolitan Statistical Area)",
@@ -1722,7 +2054,10 @@
    ],
    "median_gross_rent": 940.0,
    "median_home_value": 276600.0,
-   "renter_share": 0.445
+   "renter_share": 0.445,
+   "zhvi": 328303.91020207125,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Fargo, ND"
   },
   "22140": {
    "name": "Farmington, NM (Metropolitan Statistical Area)",
@@ -1737,7 +2072,10 @@
    ],
    "median_gross_rent": 917.0,
    "median_home_value": 185100.0,
-   "renter_share": 0.298
+   "renter_share": 0.298,
+   "zhvi": 273561.04616926453,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Farmington, NM"
   },
   "22180": {
    "name": "Fayetteville, NC (Metropolitan Statistical Area)",
@@ -1752,7 +2090,10 @@
    ],
    "median_gross_rent": 1150.0,
    "median_home_value": 185900.0,
-   "renter_share": 0.44
+   "renter_share": 0.44,
+   "zhvi": 253782.15199785816,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Fayetteville, NC"
   },
   "22220": {
    "name": "Fayetteville-Springdale-Rogers, AR (Metropolitan Statistical Area)",
@@ -1767,7 +2108,10 @@
    ],
    "median_gross_rent": 1094.0,
    "median_home_value": 273400.0,
-   "renter_share": 0.377
+   "renter_share": 0.377,
+   "zhvi": 364497.19228103774,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Fayetteville, AR"
   },
   "22380": {
    "name": "Flagstaff, AZ (Metropolitan Statistical Area)",
@@ -1782,7 +2126,10 @@
    ],
    "median_gross_rent": 1406.0,
    "median_home_value": 413200.0,
-   "renter_share": 0.412
+   "renter_share": 0.412,
+   "zhvi": 618861.8785771715,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Flagstaff, AZ"
   },
   "22420": {
    "name": "Flint, MI (Metropolitan Statistical Area)",
@@ -1797,7 +2144,10 @@
    ],
    "median_gross_rent": 936.0,
    "median_home_value": 172900.0,
-   "renter_share": 0.292
+   "renter_share": 0.292,
+   "zhvi": 195732.11906173368,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Flint, MI"
   },
   "22500": {
    "name": "Florence, SC (Metropolitan Statistical Area)",
@@ -1812,7 +2162,10 @@
    ],
    "median_gross_rent": 898.0,
    "median_home_value": 158800.0,
-   "renter_share": 0.335
+   "renter_share": 0.335,
+   "zhvi": 193283.8025911293,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Florence, SC"
   },
   "22520": {
    "name": "Florence-Muscle Shoals, AL (Metropolitan Statistical Area)",
@@ -1827,7 +2180,10 @@
    ],
    "median_gross_rent": 813.0,
    "median_home_value": 175800.0,
-   "renter_share": 0.31
+   "renter_share": 0.31,
+   "zhvi": 215246.13867280123,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Florence, AL"
   },
   "22540": {
    "name": "Fond du Lac, WI (Metropolitan Statistical Area)",
@@ -1842,7 +2198,10 @@
    ],
    "median_gross_rent": 926.0,
    "median_home_value": 209800.0,
-   "renter_share": 0.297
+   "renter_share": 0.297,
+   "zhvi": 291659.75509814156,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Fond du Lac, WI"
   },
   "22660": {
    "name": "Fort Collins-Loveland, CO (Metropolitan Statistical Area)",
@@ -1857,7 +2216,10 @@
    ],
    "median_gross_rent": 1677.0,
    "median_home_value": 532200.0,
-   "renter_share": 0.357
+   "renter_share": 0.357,
+   "zhvi": 545601.2998584001,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Fort Collins, CO"
   },
   "22900": {
    "name": "Fort Smith, AR-OK (Metropolitan Statistical Area)",
@@ -1873,7 +2235,10 @@
    ],
    "median_gross_rent": 841.0,
    "median_home_value": 160100.0,
-   "renter_share": 0.338
+   "renter_share": 0.338,
+   "zhvi": 202648.8493803894,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Fort Smith, AR"
   },
   "23060": {
    "name": "Fort Wayne, IN (Metropolitan Statistical Area)",
@@ -1888,7 +2253,10 @@
    ],
    "median_gross_rent": 963.0,
    "median_home_value": 194000.0,
-   "renter_share": 0.296
+   "renter_share": 0.296,
+   "zhvi": 257074.17476783655,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Fort Wayne, IN"
   },
   "23420": {
    "name": "Fresno, CA (Metropolitan Statistical Area)",
@@ -1903,7 +2271,10 @@
    ],
    "median_gross_rent": 1301.0,
    "median_home_value": 363300.0,
-   "renter_share": 0.434
+   "renter_share": 0.434,
+   "zhvi": 404051.51707412413,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Fresno, CA"
   },
   "23460": {
    "name": "Gadsden, AL (Metropolitan Statistical Area)",
@@ -1918,7 +2289,10 @@
    ],
    "median_gross_rent": 807.0,
    "median_home_value": 160600.0,
-   "renter_share": 0.262
+   "renter_share": 0.262,
+   "zhvi": 185225.37759720508,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Gadsden, AL"
   },
   "23540": {
    "name": "Gainesville, FL (Metropolitan Statistical Area)",
@@ -1933,7 +2307,10 @@
    ],
    "median_gross_rent": 1219.0,
    "median_home_value": 245800.0,
-   "renter_share": 0.411
+   "renter_share": 0.411,
+   "zhvi": 297876.3561495839,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Gainesville, FL"
   },
   "23580": {
    "name": "Gainesville, GA (Metropolitan Statistical Area)",
@@ -1948,7 +2325,10 @@
    ],
    "median_gross_rent": 1247.0,
    "median_home_value": 313600.0,
-   "renter_share": 0.311
+   "renter_share": 0.311,
+   "zhvi": 385575.5730127005,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Gainesville, GA"
   },
   "23900": {
    "name": "Gettysburg, PA (Metropolitan Statistical Area)",
@@ -1963,7 +2343,10 @@
    ],
    "median_gross_rent": 1084.0,
    "median_home_value": 256100.0,
-   "renter_share": 0.209
+   "renter_share": 0.209,
+   "zhvi": 331647.6754466058,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Gettysburg, PA"
   },
   "24020": {
    "name": "Glens Falls, NY (Metropolitan Statistical Area)",
@@ -1978,7 +2361,10 @@
    ],
    "median_gross_rent": 1053.0,
    "median_home_value": 218600.0,
-   "renter_share": 0.263
+   "renter_share": 0.263,
+   "zhvi": 315354.583609573,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Glens Falls, NY"
   },
   "24140": {
    "name": "Goldsboro, NC (Metropolitan Statistical Area)",
@@ -1993,7 +2379,10 @@
    ],
    "median_gross_rent": 932.0,
    "median_home_value": 162700.0,
-   "renter_share": 0.385
+   "renter_share": 0.385,
+   "zhvi": 179061.6831269487,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Goldsboro, NC"
   },
   "24220": {
    "name": "Grand Forks, ND-MN (Metropolitan Statistical Area)",
@@ -2009,7 +2398,10 @@
    ],
    "median_gross_rent": 947.0,
    "median_home_value": 232900.0,
-   "renter_share": 0.422
+   "renter_share": 0.422,
+   "zhvi": 283094.4400190695,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Grand Forks, ND"
   },
   "24260": {
    "name": "Grand Island, NE (Metropolitan Statistical Area)",
@@ -2024,7 +2416,10 @@
    ],
    "median_gross_rent": 896.0,
    "median_home_value": 201600.0,
-   "renter_share": 0.34
+   "renter_share": 0.34,
+   "zhvi": 255024.9624672637,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Grand Island, NE"
   },
   "24300": {
    "name": "Grand Junction, CO (Metropolitan Statistical Area)",
@@ -2039,7 +2434,10 @@
    ],
    "median_gross_rent": 1154.0,
    "median_home_value": 349400.0,
-   "renter_share": 0.281
+   "renter_share": 0.281,
+   "zhvi": 428679.533419213,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Grand Junction, CO"
   },
   "24340": {
    "name": "Grand Rapids-Wyoming-Kentwood, MI (Metropolitan Statistical Area)",
@@ -2054,7 +2452,10 @@
    ],
    "median_gross_rent": 1138.0,
    "median_home_value": 261600.0,
-   "renter_share": 0.257
+   "renter_share": 0.257,
+   "zhvi": 355635.9295934884,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Grand Rapids, MI"
   },
   "24420": {
    "name": "Grants Pass, OR (Metropolitan Statistical Area)",
@@ -2069,7 +2470,10 @@
    ],
    "median_gross_rent": 1157.0,
    "median_home_value": 383100.0,
-   "renter_share": 0.283
+   "renter_share": 0.283,
+   "zhvi": 388434.79317007057,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Grants Pass, OR"
   },
   "24500": {
    "name": "Great Falls, MT (Metropolitan Statistical Area)",
@@ -2084,7 +2488,10 @@
    ],
    "median_gross_rent": 902.0,
    "median_home_value": 243300.0,
-   "renter_share": 0.298
+   "renter_share": 0.298,
+   "zhvi": 339962.61750174966,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Great Falls, MT"
   },
   "24540": {
    "name": "Greeley, CO (Metropolitan Statistical Area)",
@@ -2099,7 +2506,10 @@
    ],
    "median_gross_rent": 1469.0,
    "median_home_value": 444500.0,
-   "renter_share": 0.245
+   "renter_share": 0.245,
+   "zhvi": 488298.18111861293,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Greeley, CO"
   },
   "24580": {
    "name": "Green Bay, WI (Metropolitan Statistical Area)",
@@ -2114,7 +2524,10 @@
    ],
    "median_gross_rent": 959.0,
    "median_home_value": 238700.0,
-   "renter_share": 0.317
+   "renter_share": 0.317,
+   "zhvi": 346366.2054223569,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Green Bay, WI"
   },
   "24660": {
    "name": "Greensboro-High Point, NC (Metropolitan Statistical Area)",
@@ -2129,7 +2542,10 @@
    ],
    "median_gross_rent": 1045.0,
    "median_home_value": 207600.0,
-   "renter_share": 0.362
+   "renter_share": 0.362,
+   "zhvi": 260555.8512391741,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Greensboro, NC"
   },
   "24780": {
    "name": "Greenville, NC (Metropolitan Statistical Area)",
@@ -2144,7 +2560,10 @@
    ],
    "median_gross_rent": 971.0,
    "median_home_value": 194300.0,
-   "renter_share": 0.491
+   "renter_share": 0.491,
+   "zhvi": 243594.92189863094,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Greenville, NC"
   },
   "24860": {
    "name": "Greenville-Anderson-Greer, SC (Metropolitan Statistical Area)",
@@ -2159,7 +2578,10 @@
    ],
    "median_gross_rent": 1100.0,
    "median_home_value": 242700.0,
-   "renter_share": 0.294
+   "renter_share": 0.294,
+   "zhvi": 312031.8908168107,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Greenville, SC"
   },
   "25060": {
    "name": "Gulfport-Biloxi, MS (Metropolitan Statistical Area)",
@@ -2174,7 +2596,10 @@
    ],
    "median_gross_rent": 1067.0,
    "median_home_value": 192000.0,
-   "renter_share": 0.325
+   "renter_share": 0.325,
+   "zhvi": 224164.7835124336,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Gulfport, MS"
   },
   "25180": {
    "name": "Hagerstown-Martinsburg, MD-WV (Metropolitan Statistical Area)",
@@ -2190,7 +2615,10 @@
    ],
    "median_gross_rent": 1130.0,
    "median_home_value": 258300.0,
-   "renter_share": 0.29
+   "renter_share": 0.29,
+   "zhvi": 322655.1673116177,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Hagerstown, MD"
   },
   "25220": {
    "name": "Hammond, LA (Metropolitan Statistical Area)",
@@ -2205,7 +2633,10 @@
    ],
    "median_gross_rent": 974.0,
    "median_home_value": 204600.0,
-   "renter_share": 0.285
+   "renter_share": 0.285,
+   "zhvi": 221758.8270066351,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Hammond, LA"
   },
   "25260": {
    "name": "Hanford-Corcoran, CA (Metropolitan Statistical Area)",
@@ -2220,7 +2651,10 @@
    ],
    "median_gross_rent": 1228.0,
    "median_home_value": 305700.0,
-   "renter_share": 0.452
+   "renter_share": 0.452,
+   "zhvi": 363952.38553659717,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Hanford, CA"
   },
   "25420": {
    "name": "Harrisburg-Carlisle, PA (Metropolitan Statistical Area)",
@@ -2235,7 +2669,10 @@
    ],
    "median_gross_rent": 1151.0,
    "median_home_value": 239100.0,
-   "renter_share": 0.319
+   "renter_share": 0.319,
+   "zhvi": 306577.50827128405,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Harrisburg, PA"
   },
   "25500": {
    "name": "Harrisonburg, VA (Metropolitan Statistical Area)",
@@ -2250,7 +2687,10 @@
    ],
    "median_gross_rent": 1122.0,
    "median_home_value": 284800.0,
-   "renter_share": 0.372
+   "renter_share": 0.372,
+   "zhvi": 350367.8540078046,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Harrisonburg, VA"
   },
   "25540": {
    "name": "Hartford-West Hartford-East Hartford, CT (Metropolitan Statistical Area)",
@@ -2265,7 +2705,10 @@
    ],
    "median_gross_rent": 1357.0,
    "median_home_value": 309300.0,
-   "renter_share": 0.33
+   "renter_share": 0.33,
+   "zhvi": 398703.3963700556,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Hartford, CT"
   },
   "25620": {
    "name": "Hattiesburg, MS (Metropolitan Statistical Area)",
@@ -2280,7 +2723,10 @@
    ],
    "median_gross_rent": 987.0,
    "median_home_value": 182400.0,
-   "renter_share": 0.365
+   "renter_share": 0.365,
+   "zhvi": 213737.43075400623,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Hattiesburg, MS"
   },
   "25740": {
    "name": "Helena, MT (Metropolitan Statistical Area)",
@@ -2295,7 +2741,10 @@
    ],
    "median_gross_rent": 1049.0,
    "median_home_value": 363400.0,
-   "renter_share": 0.277
+   "renter_share": 0.277,
+   "zhvi": 473367.6456373227,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Helena, MT"
   },
   "25860": {
    "name": "Hickory-Lenoir-Morganton, NC (Metropolitan Statistical Area)",
@@ -2310,7 +2759,10 @@
    ],
    "median_gross_rent": 823.0,
    "median_home_value": 193400.0,
-   "renter_share": 0.257
+   "renter_share": 0.257,
+   "zhvi": 266721.8373128494,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Hickory, NC"
   },
   "25940": {
    "name": "Hilton Head Island-Bluffton-Port Royal, SC (Metropolitan Statistical Area)",
@@ -2325,7 +2777,10 @@
    ],
    "median_gross_rent": 1448.0,
    "median_home_value": 393100.0,
-   "renter_share": 0.242
+   "renter_share": 0.242,
+   "zhvi": 521588.334158063,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Hilton Head Island, SC"
   },
   "25980": {
    "name": "Hinesville, GA (Metropolitan Statistical Area)",
@@ -2340,7 +2795,10 @@
    ],
    "median_gross_rent": 1174.0,
    "median_home_value": 183500.0,
-   "renter_share": 0.474
+   "renter_share": 0.474,
+   "zhvi": 257752.39409085838,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Hinesville, GA"
   },
   "26140": {
    "name": "Homosassa Springs, FL (Metropolitan Statistical Area)",
@@ -2355,7 +2813,10 @@
    ],
    "median_gross_rent": 1069.0,
    "median_home_value": 223200.0,
-   "renter_share": 0.152
+   "renter_share": 0.152,
+   "zhvi": 268691.99345454463,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Homosassa Springs, FL"
   },
   "26300": {
    "name": "Hot Springs, AR (Metropolitan Statistical Area)",
@@ -2370,7 +2831,10 @@
    ],
    "median_gross_rent": 942.0,
    "median_home_value": 176400.0,
-   "renter_share": 0.308
+   "renter_share": 0.308,
+   "zhvi": 243714.59366058046,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Hot Springs, AR"
   },
   "26380": {
    "name": "Houma-Bayou Cane-Thibodaux, LA (Metropolitan Statistical Area)",
@@ -2385,7 +2849,10 @@
    ],
    "median_gross_rent": 983.0,
    "median_home_value": 189900.0,
-   "renter_share": 0.242
+   "renter_share": 0.242,
+   "zhvi": 180979.88094188448,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Houma, LA"
   },
   "26420": {
    "name": "Houston-Pasadena-The Woodlands, TX (Metropolitan Statistical Area)",
@@ -2400,7 +2867,10 @@
    ],
    "median_gross_rent": 1378.0,
    "median_home_value": 275200.0,
-   "renter_share": 0.388
+   "renter_share": 0.388,
+   "zhvi": 302831.5981168806,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Houston, TX"
   },
   "26580": {
    "name": "Huntington-Ashland, WV-KY-OH (Metropolitan Statistical Area)",
@@ -2417,7 +2887,10 @@
    ],
    "median_gross_rent": 856.0,
    "median_home_value": 149000.0,
-   "renter_share": 0.27
+   "renter_share": 0.27,
+   "zhvi": 166210.77056022314,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Huntington, WV"
   },
   "26620": {
    "name": "Huntsville, AL (Metropolitan Statistical Area)",
@@ -2432,7 +2905,10 @@
    ],
    "median_gross_rent": 1091.0,
    "median_home_value": 265000.0,
-   "renter_share": 0.295
+   "renter_share": 0.295,
+   "zhvi": 313528.32743208297,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Huntsville, AL"
   },
   "26820": {
    "name": "Idaho Falls, ID (Metropolitan Statistical Area)",
@@ -2447,7 +2923,10 @@
    ],
    "median_gross_rent": 1052.0,
    "median_home_value": 325000.0,
-   "renter_share": 0.263
+   "renter_share": 0.263,
+   "zhvi": 408435.8510170053,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Idaho Falls, ID"
   },
   "26900": {
    "name": "Indianapolis-Carmel-Greenwood, IN (Metropolitan Statistical Area)",
@@ -2462,7 +2941,10 @@
    ],
    "median_gross_rent": 1142.0,
    "median_home_value": 244000.0,
-   "renter_share": 0.334
+   "renter_share": 0.334,
+   "zhvi": 291634.3249407701,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Indianapolis, IN"
   },
   "26980": {
    "name": "Iowa City, IA (Metropolitan Statistical Area)",
@@ -2477,7 +2959,10 @@
    ],
    "median_gross_rent": 1077.0,
    "median_home_value": 280400.0,
-   "renter_share": 0.395
+   "renter_share": 0.395,
+   "zhvi": 300040.15216774517,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Iowa City, IA"
   },
   "27060": {
    "name": "Ithaca, NY (Metropolitan Statistical Area)",
@@ -2492,7 +2977,10 @@
    ],
    "median_gross_rent": 1374.0,
    "median_home_value": 271500.0,
-   "renter_share": 0.462
+   "renter_share": 0.462,
+   "zhvi": 350377.8866101404,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Ithaca, NY"
   },
   "27100": {
    "name": "Jackson, MI (Metropolitan Statistical Area)",
@@ -2507,7 +2995,10 @@
    ],
    "median_gross_rent": 958.0,
    "median_home_value": 182900.0,
-   "renter_share": 0.25
+   "renter_share": 0.25,
+   "zhvi": 224560.3113756583,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Jackson, MI"
   },
   "27140": {
    "name": "Jackson, MS (Metropolitan Statistical Area)",
@@ -2522,7 +3013,10 @@
    ],
    "median_gross_rent": 1034.0,
    "median_home_value": 188500.0,
-   "renter_share": 0.325
+   "renter_share": 0.325,
+   "zhvi": 212335.18197997997,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Jackson, MS"
   },
   "27180": {
    "name": "Jackson, TN (Metropolitan Statistical Area)",
@@ -2537,7 +3031,10 @@
    ],
    "median_gross_rent": 956.0,
    "median_home_value": 168600.0,
-   "renter_share": 0.346
+   "renter_share": 0.346,
+   "zhvi": 201741.14865908722,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Jackson, TN"
   },
   "27260": {
    "name": "Jacksonville, FL (Metropolitan Statistical Area)",
@@ -2552,7 +3049,10 @@
    ],
    "median_gross_rent": 1416.0,
    "median_home_value": 308900.0,
-   "renter_share": 0.337
+   "renter_share": 0.337,
+   "zhvi": 350573.96592131094,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Jacksonville, FL"
   },
   "27340": {
    "name": "Jacksonville, NC (Metropolitan Statistical Area)",
@@ -2567,7 +3067,10 @@
    ],
    "median_gross_rent": 1198.0,
    "median_home_value": 219500.0,
-   "renter_share": 0.39
+   "renter_share": 0.39,
+   "zhvi": 290604.58300972084,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Jacksonville, NC"
   },
   "27500": {
    "name": "Janesville-Beloit, WI (Metropolitan Statistical Area)",
@@ -2582,7 +3085,10 @@
    ],
    "median_gross_rent": 1019.0,
    "median_home_value": 215900.0,
-   "renter_share": 0.294
+   "renter_share": 0.294,
+   "zhvi": 296849.6054474336,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Janesville, WI"
   },
   "27620": {
    "name": "Jefferson City, MO (Metropolitan Statistical Area)",
@@ -2597,7 +3103,10 @@
    ],
    "median_gross_rent": 804.0,
    "median_home_value": 203900.0,
-   "renter_share": 0.278
+   "renter_share": 0.278,
+   "zhvi": 275402.0634173388,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Jefferson City, MO"
   },
   "27740": {
    "name": "Johnson City, TN (Metropolitan Statistical Area)",
@@ -2612,7 +3121,10 @@
    ],
    "median_gross_rent": 888.0,
    "median_home_value": 199100.0,
-   "renter_share": 0.322
+   "renter_share": 0.322,
+   "zhvi": 279664.6187926719,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Johnson City, TN"
   },
   "27780": {
    "name": "Johnstown, PA (Metropolitan Statistical Area)",
@@ -2627,7 +3139,10 @@
    ],
    "median_gross_rent": 733.0,
    "median_home_value": 115900.0,
-   "renter_share": 0.242
+   "renter_share": 0.242,
+   "zhvi": 124302.83378461168,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Johnstown, PA"
   },
   "27860": {
    "name": "Jonesboro, AR (Metropolitan Statistical Area)",
@@ -2642,7 +3157,10 @@
    ],
    "median_gross_rent": 907.0,
    "median_home_value": 181200.0,
-   "renter_share": 0.4
+   "renter_share": 0.4,
+   "zhvi": 203787.44505497187,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Jonesboro, AR"
   },
   "27900": {
    "name": "Joplin, MO-KS (Metropolitan Statistical Area)",
@@ -2658,7 +3176,10 @@
    ],
    "median_gross_rent": 872.0,
    "median_home_value": 157000.0,
-   "renter_share": 0.32
+   "renter_share": 0.32,
+   "zhvi": 226654.42166176523,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Joplin, MO"
   },
   "27980": {
    "name": "Kahului-Wailuku, HI (Metropolitan Statistical Area)",
@@ -2673,7 +3194,10 @@
    ],
    "median_gross_rent": 1863.0,
    "median_home_value": 858600.0,
-   "renter_share": 0.35
+   "renter_share": 0.35,
+   "zhvi": 982110.1383782892,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Kahului, HI"
   },
   "28020": {
    "name": "Kalamazoo-Portage, MI (Metropolitan Statistical Area)",
@@ -2688,7 +3212,10 @@
    ],
    "median_gross_rent": 1049.0,
    "median_home_value": 227500.0,
-   "renter_share": 0.36
+   "renter_share": 0.36,
+   "zhvi": 274078.46263942175,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Kalamazoo, MI"
   },
   "28100": {
    "name": "Kankakee, IL (Metropolitan Statistical Area)",
@@ -2703,7 +3230,10 @@
    ],
    "median_gross_rent": 1075.0,
    "median_home_value": 185700.0,
-   "renter_share": 0.312
+   "renter_share": 0.312,
+   "zhvi": 227165.4107600736,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Kankakee, IL"
   },
   "28140": {
    "name": "Kansas City, MO-KS (Metropolitan Statistical Area)",
@@ -2719,7 +3249,10 @@
    ],
    "median_gross_rent": 1201.0,
    "median_home_value": 265400.0,
-   "renter_share": 0.344
+   "renter_share": 0.344,
+   "zhvi": 324886.56496101397,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Kansas City, MO"
   },
   "28420": {
    "name": "Kennewick-Richland, WA (Metropolitan Statistical Area)",
@@ -2734,7 +3267,10 @@
    ],
    "median_gross_rent": 1238.0,
    "median_home_value": 362200.0,
-   "renter_share": 0.311
+   "renter_share": 0.311,
+   "zhvi": 436660.43071147497,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Kennewick, WA"
   },
   "28450": {
    "name": "Kenosha, WI (Metropolitan Statistical Area)",
@@ -2764,7 +3300,10 @@
    ],
    "median_gross_rent": 1160.0,
    "median_home_value": 215000.0,
-   "renter_share": 0.422
+   "renter_share": 0.422,
+   "zhvi": 248023.7609573868,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Killeen, TX"
   },
   "28700": {
    "name": "Kingsport-Bristol, TN-VA (Metropolitan Statistical Area)",
@@ -2780,7 +3319,10 @@
    ],
    "median_gross_rent": 820.0,
    "median_home_value": 182500.0,
-   "renter_share": 0.256
+   "renter_share": 0.256,
+   "zhvi": 242853.26883876362,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Kingsport, TN"
   },
   "28740": {
    "name": "Kingston, NY (Metropolitan Statistical Area)",
@@ -2795,7 +3337,10 @@
    ],
    "median_gross_rent": 1335.0,
    "median_home_value": 315100.0,
-   "renter_share": 0.3
+   "renter_share": 0.3,
+   "zhvi": 451631.5060241472,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Kingston, NY"
   },
   "28880": {
    "name": "Kiryas Joel-Poughkeepsie-Newburgh, NY (Metropolitan Statistical Area)",
@@ -2825,7 +3370,10 @@
    ],
    "median_gross_rent": 1080.0,
    "median_home_value": 255300.0,
-   "renter_share": 0.298
+   "renter_share": 0.298,
+   "zhvi": 363017.63688334706,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Knoxville, TN"
   },
   "29020": {
    "name": "Kokomo, IN (Metropolitan Statistical Area)",
@@ -2840,7 +3388,10 @@
    ],
    "median_gross_rent": 915.0,
    "median_home_value": 151500.0,
-   "renter_share": 0.281
+   "renter_share": 0.281,
+   "zhvi": 190878.12415237818,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Kokomo, IN"
   },
   "29100": {
    "name": "La Crosse-Onalaska, WI-MN (Metropolitan Statistical Area)",
@@ -2856,7 +3407,10 @@
    ],
    "median_gross_rent": 998.0,
    "median_home_value": 235300.0,
-   "renter_share": 0.318
+   "renter_share": 0.318,
+   "zhvi": 330730.10583400767,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "La Crosse, WI"
   },
   "29180": {
    "name": "Lafayette, LA (Metropolitan Statistical Area)",
@@ -2871,7 +3425,10 @@
    ],
    "median_gross_rent": 954.0,
    "median_home_value": 206900.0,
-   "renter_share": 0.31
+   "renter_share": 0.31,
+   "zhvi": 200357.62560457244,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lafayette, LA"
   },
   "29200": {
    "name": "Lafayette-West Lafayette, IN (Metropolitan Statistical Area)",
@@ -2886,7 +3443,10 @@
    ],
    "median_gross_rent": 1071.0,
    "median_home_value": 204300.0,
-   "renter_share": 0.416
+   "renter_share": 0.416,
+   "zhvi": 283136.43185827497,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lafayette, IN"
   },
   "29340": {
    "name": "Lake Charles, LA (Metropolitan Statistical Area)",
@@ -2901,7 +3461,10 @@
    ],
    "median_gross_rent": 1070.0,
    "median_home_value": 198900.0,
-   "renter_share": 0.267
+   "renter_share": 0.267,
+   "zhvi": 201631.3147718966,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lake Charles, LA"
   },
   "29420": {
    "name": "Lake Havasu City-Kingman, AZ (Metropolitan Statistical Area)",
@@ -2916,7 +3479,10 @@
    ],
    "median_gross_rent": 1047.0,
    "median_home_value": 253200.0,
-   "renter_share": 0.264
+   "renter_share": 0.264,
+   "zhvi": 349800.3451332044,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lake Havasu City, AZ"
   },
   "29460": {
    "name": "Lakeland-Winter Haven, FL (Metropolitan Statistical Area)",
@@ -2931,7 +3497,10 @@
    ],
    "median_gross_rent": 1272.0,
    "median_home_value": 240000.0,
-   "renter_share": 0.3
+   "renter_share": 0.3,
+   "zhvi": 295502.4102536582,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lakeland, FL"
   },
   "29540": {
    "name": "Lancaster, PA (Metropolitan Statistical Area)",
@@ -2946,7 +3515,10 @@
    ],
    "median_gross_rent": 1289.0,
    "median_home_value": 279400.0,
-   "renter_share": 0.301
+   "renter_share": 0.301,
+   "zhvi": 386393.3044903287,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lancaster, PA"
   },
   "29620": {
    "name": "Lansing-East Lansing, MI (Metropolitan Statistical Area)",
@@ -2961,7 +3533,10 @@
    ],
    "median_gross_rent": 1054.0,
    "median_home_value": 205400.0,
-   "renter_share": 0.332
+   "renter_share": 0.332,
+   "zhvi": 246267.00461436107,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lansing, MI"
   },
   "29700": {
    "name": "Laredo, TX (Metropolitan Statistical Area)",
@@ -2976,7 +3551,10 @@
    ],
    "median_gross_rent": 997.0,
    "median_home_value": 178900.0,
-   "renter_share": 0.361
+   "renter_share": 0.361,
+   "zhvi": 215254.8611142262,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Laredo, TX"
   },
   "29740": {
    "name": "Las Cruces, NM (Metropolitan Statistical Area)",
@@ -2991,7 +3569,10 @@
    ],
    "median_gross_rent": 903.0,
    "median_home_value": 205400.0,
-   "renter_share": 0.347
+   "renter_share": 0.347,
+   "zhvi": 285348.2676033106,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Las Cruces, NM"
   },
   "29820": {
    "name": "Las Vegas-Henderson-North Las Vegas, NV (Metropolitan Statistical Area)",
@@ -3006,7 +3587,10 @@
    ],
    "median_gross_rent": 1518.0,
    "median_home_value": 400800.0,
-   "renter_share": 0.43
+   "renter_share": 0.43,
+   "zhvi": 422653.7767970049,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Las Vegas, NV"
   },
   "29940": {
    "name": "Lawrence, KS (Metropolitan Statistical Area)",
@@ -3021,7 +3605,10 @@
    ],
    "median_gross_rent": 1066.0,
    "median_home_value": 281600.0,
-   "renter_share": 0.505
+   "renter_share": 0.505,
+   "zhvi": 335608.5152262742,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lawrence, KS"
   },
   "30020": {
    "name": "Lawton, OK (Metropolitan Statistical Area)",
@@ -3036,7 +3623,10 @@
    ],
    "median_gross_rent": 933.0,
    "median_home_value": 151500.0,
-   "renter_share": 0.44
+   "renter_share": 0.44,
+   "zhvi": 156701.715695388,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lawton, OK"
   },
   "30140": {
    "name": "Lebanon, PA (Metropolitan Statistical Area)",
@@ -3051,7 +3641,10 @@
    ],
    "median_gross_rent": 1087.0,
    "median_home_value": 227300.0,
-   "renter_share": 0.287
+   "renter_share": 0.287,
+   "zhvi": 319853.09202854376,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lebanon, PA"
   },
   "30300": {
    "name": "Lewiston, ID-WA (Metropolitan Statistical Area)",
@@ -3067,7 +3660,10 @@
    ],
    "median_gross_rent": 956.0,
    "median_home_value": 289400.0,
-   "renter_share": 0.273
+   "renter_share": 0.273,
+   "zhvi": 373980.27347418276,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lewiston, ID"
   },
   "30340": {
    "name": "Lewiston-Auburn, ME (Metropolitan Statistical Area)",
@@ -3082,7 +3678,10 @@
    ],
    "median_gross_rent": 966.0,
    "median_home_value": 232000.0,
-   "renter_share": 0.326
+   "renter_share": 0.326,
+   "zhvi": 328534.0321723004,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lewiston, ME"
   },
   "30460": {
    "name": "Lexington-Fayette, KY (Metropolitan Statistical Area)",
@@ -3097,7 +3696,10 @@
    ],
    "median_gross_rent": 1070.0,
    "median_home_value": 258900.0,
-   "renter_share": 0.404
+   "renter_share": 0.404,
+   "zhvi": 324999.2088801229,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lexington, KY"
   },
   "30500": {
    "name": "Lexington Park, MD (Metropolitan Statistical Area)",
@@ -3127,7 +3729,10 @@
    ],
    "median_gross_rent": 898.0,
    "median_home_value": 158400.0,
-   "renter_share": 0.317
+   "renter_share": 0.317,
+   "zhvi": 190694.37821876383,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lima, OH"
   },
   "30700": {
    "name": "Lincoln, NE (Metropolitan Statistical Area)",
@@ -3142,7 +3747,10 @@
    ],
    "median_gross_rent": 1043.0,
    "median_home_value": 257500.0,
-   "renter_share": 0.405
+   "renter_share": 0.405,
+   "zhvi": 300524.43734878034,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lincoln, NE"
   },
   "30780": {
    "name": "Little Rock-North Little Rock-Conway, AR (Metropolitan Statistical Area)",
@@ -3157,7 +3765,10 @@
    ],
    "median_gross_rent": 1007.0,
    "median_home_value": 199300.0,
-   "renter_share": 0.364
+   "renter_share": 0.364,
+   "zhvi": 230108.1332549256,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Little Rock, AR"
   },
   "30860": {
    "name": "Logan, UT-ID (Metropolitan Statistical Area)",
@@ -3173,7 +3784,10 @@
    ],
    "median_gross_rent": 1120.0,
    "median_home_value": 386700.0,
-   "renter_share": 0.352
+   "renter_share": 0.352,
+   "zhvi": 466766.0747612736,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Logan, UT"
   },
   "30980": {
    "name": "Longview, TX (Metropolitan Statistical Area)",
@@ -3188,7 +3802,10 @@
    ],
    "median_gross_rent": 1039.0,
    "median_home_value": 178200.0,
-   "renter_share": 0.305
+   "renter_share": 0.305,
+   "zhvi": 218198.41414194615,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Longview, TX"
   },
   "31020": {
    "name": "Longview-Kelso, WA (Metropolitan Statistical Area)",
@@ -3203,7 +3820,10 @@
    ],
    "median_gross_rent": 1169.0,
    "median_home_value": 367400.0,
-   "renter_share": 0.338
+   "renter_share": 0.338,
+   "zhvi": 417833.30654027156,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Longview, WA"
   },
   "31080": {
    "name": "Los Angeles-Long Beach-Anaheim, CA (Metropolitan Statistical Area)",
@@ -3218,7 +3838,10 @@
    ],
    "median_gross_rent": 1987.0,
    "median_home_value": 825300.0,
-   "renter_share": 0.514
+   "renter_share": 0.514,
+   "zhvi": 950020.0441035099,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Los Angeles, CA"
   },
   "31140": {
    "name": "Louisville/Jefferson County, KY-IN (Metropolitan Statistical Area)",
@@ -3249,7 +3872,10 @@
    ],
    "median_gross_rent": 1116.0,
    "median_home_value": 188700.0,
-   "renter_share": 0.429
+   "renter_share": 0.429,
+   "zhvi": 212331.4997070617,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lubbock, TX"
   },
   "31340": {
    "name": "Lynchburg, VA (Metropolitan Statistical Area)",
@@ -3264,7 +3890,10 @@
    ],
    "median_gross_rent": 967.0,
    "median_home_value": 224600.0,
-   "renter_share": 0.286
+   "renter_share": 0.286,
+   "zhvi": 288387.93632491026,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Lynchburg, VA"
   },
   "31420": {
    "name": "Macon-Bibb County, GA (Metropolitan Statistical Area)",
@@ -3279,7 +3908,10 @@
    ],
    "median_gross_rent": 1003.0,
    "median_home_value": 172300.0,
-   "renter_share": 0.377
+   "renter_share": 0.377,
+   "zhvi": 196903.12221564204,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Macon, GA"
   },
   "31540": {
    "name": "Madison, WI (Metropolitan Statistical Area)",
@@ -3294,7 +3926,10 @@
    ],
    "median_gross_rent": 1300.0,
    "median_home_value": 344600.0,
-   "renter_share": 0.392
+   "renter_share": 0.392,
+   "zhvi": 445747.46675890166,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Madison, WI"
   },
   "31700": {
    "name": "Manchester-Nashua, NH (Metropolitan Statistical Area)",
@@ -3309,7 +3944,10 @@
    ],
    "median_gross_rent": 1532.0,
    "median_home_value": 385500.0,
-   "renter_share": 0.325
+   "renter_share": 0.325,
+   "zhvi": 517399.27687931777,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Manchester, NH"
   },
   "31740": {
    "name": "Manhattan, KS (Metropolitan Statistical Area)",
@@ -3324,7 +3962,10 @@
    ],
    "median_gross_rent": 1083.0,
    "median_home_value": 212600.0,
-   "renter_share": 0.489
+   "renter_share": 0.489,
+   "zhvi": 268007.5099911962,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Manhattan, KS"
   },
   "31860": {
    "name": "Mankato, MN (Metropolitan Statistical Area)",
@@ -3339,7 +3980,10 @@
    ],
    "median_gross_rent": 1023.0,
    "median_home_value": 255000.0,
-   "renter_share": 0.349
+   "renter_share": 0.349,
+   "zhvi": 305707.4262418728,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Mankato, MN"
   },
   "31900": {
    "name": "Mansfield, OH (Metropolitan Statistical Area)",
@@ -3354,7 +3998,10 @@
    ],
    "median_gross_rent": 791.0,
    "median_home_value": 154000.0,
-   "renter_share": 0.315
+   "renter_share": 0.315,
+   "zhvi": 198721.8662457432,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Mansfield, OH"
   },
   "32580": {
    "name": "McAllen-Edinburg-Mission, TX (Metropolitan Statistical Area)",
@@ -3369,7 +4016,10 @@
    ],
    "median_gross_rent": 925.0,
    "median_home_value": 124000.0,
-   "renter_share": 0.324
+   "renter_share": 0.324,
+   "zhvi": 188971.1498231675,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "McAllen, TX"
   },
   "32780": {
    "name": "Medford, OR (Metropolitan Statistical Area)",
@@ -3384,7 +4034,10 @@
    ],
    "median_gross_rent": 1310.0,
    "median_home_value": 400200.0,
-   "renter_share": 0.35
+   "renter_share": 0.35,
+   "zhvi": 431210.403663797,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Medford, OR"
   },
   "32820": {
    "name": "Memphis, TN-MS-AR (Metropolitan Statistical Area)",
@@ -3401,7 +4054,10 @@
    ],
    "median_gross_rent": 1153.0,
    "median_home_value": 228100.0,
-   "renter_share": 0.394
+   "renter_share": 0.394,
+   "zhvi": 242101.79135314084,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Memphis, TN"
   },
   "32900": {
    "name": "Merced, CA (Metropolitan Statistical Area)",
@@ -3416,7 +4072,10 @@
    ],
    "median_gross_rent": 1284.0,
    "median_home_value": 368400.0,
-   "renter_share": 0.467
+   "renter_share": 0.467,
+   "zhvi": 413645.2287933829,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Merced, CA"
   },
   "33100": {
    "name": "Miami-Fort Lauderdale-West Palm Beach, FL (Metropolitan Statistical Area)",
@@ -3431,7 +4090,10 @@
    ],
    "median_gross_rent": 1770.0,
    "median_home_value": 405600.0,
-   "renter_share": 0.397
+   "renter_share": 0.397,
+   "zhvi": 476815.45045678737,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Miami, FL"
   },
   "33140": {
    "name": "Michigan City-La Porte, IN (Metropolitan Statistical Area)",
@@ -3446,7 +4108,10 @@
    ],
    "median_gross_rent": 926.0,
    "median_home_value": 180700.0,
-   "renter_share": 0.254
+   "renter_share": 0.254,
+   "zhvi": 258619.36688762353,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Michigan City, IN"
   },
   "33220": {
    "name": "Midland, MI (Metropolitan Statistical Area)",
@@ -3461,7 +4126,10 @@
    ],
    "median_gross_rent": 974.0,
    "median_home_value": 184300.0,
-   "renter_share": 0.218
+   "renter_share": 0.218,
+   "zhvi": 245090.75884547186,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Midland, MI"
   },
   "33260": {
    "name": "Midland, TX (Metropolitan Statistical Area)",
@@ -3476,7 +4144,10 @@
    ],
    "median_gross_rent": 1377.0,
    "median_home_value": 290300.0,
-   "renter_share": 0.318
+   "renter_share": 0.318,
+   "zhvi": 327932.9488395054,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Midland, TX"
   },
   "33340": {
    "name": "Milwaukee-Waukesha, WI (Metropolitan Statistical Area)",
@@ -3491,7 +4162,10 @@
    ],
    "median_gross_rent": 1105.0,
    "median_home_value": 283800.0,
-   "renter_share": 0.396
+   "renter_share": 0.396,
+   "zhvi": 384496.47780250415,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Milwaukee, WI"
   },
   "33460": {
    "name": "Minneapolis-St. Paul-Bloomington, MN-WI (Metropolitan Statistical Area)",
@@ -3507,7 +4181,10 @@
    ],
    "median_gross_rent": 1396.0,
    "median_home_value": 354400.0,
-   "renter_share": 0.291
+   "renter_share": 0.291,
+   "zhvi": 387806.688962519,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Minneapolis, MN"
   },
   "33500": {
    "name": "Minot, ND (Metropolitan Statistical Area)",
@@ -3522,7 +4199,10 @@
    ],
    "median_gross_rent": 993.0,
    "median_home_value": 247900.0,
-   "renter_share": 0.362
+   "renter_share": 0.362,
+   "zhvi": 268966.2051276364,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Minot, ND"
   },
   "33540": {
    "name": "Missoula, MT (Metropolitan Statistical Area)",
@@ -3537,7 +4217,10 @@
    ],
    "median_gross_rent": 1118.0,
    "median_home_value": 417300.0,
-   "renter_share": 0.395
+   "renter_share": 0.395,
+   "zhvi": 569814.1132498191,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Missoula, MT"
   },
   "33660": {
    "name": "Mobile, AL (Metropolitan Statistical Area)",
@@ -3552,7 +4235,10 @@
    ],
    "median_gross_rent": 1021.0,
    "median_home_value": 176600.0,
-   "renter_share": 0.351
+   "renter_share": 0.351,
+   "zhvi": 194638.35072073658,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Mobile, AL"
   },
   "33700": {
    "name": "Modesto, CA (Metropolitan Statistical Area)",
@@ -3567,7 +4253,10 @@
    ],
    "median_gross_rent": 1528.0,
    "median_home_value": 426600.0,
-   "renter_share": 0.39
+   "renter_share": 0.39,
+   "zhvi": 461113.933819386,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Modesto, CA"
   },
   "33740": {
    "name": "Monroe, LA (Metropolitan Statistical Area)",
@@ -3582,7 +4271,10 @@
    ],
    "median_gross_rent": 897.0,
    "median_home_value": 163000.0,
-   "renter_share": 0.375
+   "renter_share": 0.375,
+   "zhvi": 166928.07704053272,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Monroe, LA"
   },
   "33780": {
    "name": "Monroe, MI (Metropolitan Statistical Area)",
@@ -3597,7 +4289,10 @@
    ],
    "median_gross_rent": 1017.0,
    "median_home_value": 215700.0,
-   "renter_share": 0.188
+   "renter_share": 0.188,
+   "zhvi": 270413.49595667975,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Monroe, MI"
   },
   "33860": {
    "name": "Montgomery, AL (Metropolitan Statistical Area)",
@@ -3612,7 +4307,10 @@
    ],
    "median_gross_rent": 1063.0,
    "median_home_value": 181400.0,
-   "renter_share": 0.35
+   "renter_share": 0.35,
+   "zhvi": 212437.32642612362,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Montgomery, AL"
   },
   "34060": {
    "name": "Morgantown, WV (Metropolitan Statistical Area)",
@@ -3627,7 +4325,10 @@
    ],
    "median_gross_rent": 926.0,
    "median_home_value": 226800.0,
-   "renter_share": 0.373
+   "renter_share": 0.373,
+   "zhvi": 224689.6620706146,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Morgantown, WV"
   },
   "34100": {
    "name": "Morristown, TN (Metropolitan Statistical Area)",
@@ -3642,7 +4343,10 @@
    ],
    "median_gross_rent": 853.0,
    "median_home_value": 198000.0,
-   "renter_share": 0.291
+   "renter_share": 0.291,
+   "zhvi": 297011.1778353042,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Morristown, TN"
   },
   "34580": {
    "name": "Mount Vernon-Anacortes, WA (Metropolitan Statistical Area)",
@@ -3657,7 +4361,10 @@
    ],
    "median_gross_rent": 1439.0,
    "median_home_value": 486200.0,
-   "renter_share": 0.294
+   "renter_share": 0.294,
+   "zhvi": 576334.1067517161,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Mount Vernon, WA"
   },
   "34620": {
    "name": "Muncie, IN (Metropolitan Statistical Area)",
@@ -3672,7 +4379,10 @@
    ],
    "median_gross_rent": 874.0,
    "median_home_value": 127600.0,
-   "renter_share": 0.335
+   "renter_share": 0.335,
+   "zhvi": 168797.6241781594,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Muncie, IN"
   },
   "34740": {
    "name": "Muskegon-Norton Shores, MI (Metropolitan Statistical Area)",
@@ -3687,7 +4397,10 @@
    ],
    "median_gross_rent": 960.0,
    "median_home_value": 180900.0,
-   "renter_share": 0.217
+   "renter_share": 0.217,
+   "zhvi": 255238.45367409452,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Muskegon, MI"
   },
   "34820": {
    "name": "Myrtle Beach-Conway-North Myrtle Beach, SC (Metropolitan Statistical Area)",
@@ -3702,7 +4415,10 @@
    ],
    "median_gross_rent": 1181.0,
    "median_home_value": 260500.0,
-   "renter_share": 0.242
+   "renter_share": 0.242,
+   "zhvi": 339737.7489444444,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Myrtle Beach, SC"
   },
   "34900": {
    "name": "Napa, CA (Metropolitan Statistical Area)",
@@ -3717,7 +4433,10 @@
    ],
    "median_gross_rent": 2141.0,
    "median_home_value": 838800.0,
-   "renter_share": 0.356
+   "renter_share": 0.356,
+   "zhvi": 869372.8660544496,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Napa, CA"
   },
   "34940": {
    "name": "Naples-Marco Island, FL (Metropolitan Statistical Area)",
@@ -3732,7 +4451,10 @@
    ],
    "median_gross_rent": 1752.0,
    "median_home_value": 486800.0,
-   "renter_share": 0.24
+   "renter_share": 0.24,
+   "zhvi": 552087.0375861583,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Naples, FL"
   },
   "34980": {
    "name": "Nashville-Davidson--Murfreesboro--Franklin, TN (Metropolitan Statistical Area)",
@@ -3747,7 +4469,10 @@
    ],
    "median_gross_rent": 1434.0,
    "median_home_value": 376800.0,
-   "renter_share": 0.344
+   "renter_share": 0.344,
+   "zhvi": 448896.19566186424,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Nashville, TN"
   },
   "35300": {
    "name": "New Haven, CT (Metropolitan Statistical Area)",
@@ -3762,7 +4487,10 @@
    ],
    "median_gross_rent": 1463.0,
    "median_home_value": 328300.0,
-   "renter_share": 0.394
+   "renter_share": 0.394,
+   "zhvi": 406204.02734251367,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "New Haven, CT"
   },
   "35380": {
    "name": "New Orleans-Metairie, LA (Metropolitan Statistical Area)",
@@ -3777,7 +4505,10 @@
    ],
    "median_gross_rent": 1182.0,
    "median_home_value": 248000.0,
-   "renter_share": 0.397
+   "renter_share": 0.397,
+   "zhvi": 257067.35551365127,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "New Orleans, LA"
   },
   "35620": {
    "name": "New York-Newark-Jersey City, NY-NJ (Metropolitan Statistical Area)",
@@ -3793,7 +4524,10 @@
    ],
    "median_gross_rent": 1780.0,
    "median_home_value": 587400.0,
-   "renter_share": 0.485
+   "renter_share": 0.485,
+   "zhvi": 730948.9763600989,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "New York, NY"
   },
   "35660": {
    "name": "Niles, MI (Metropolitan Statistical Area)",
@@ -3808,7 +4542,10 @@
    ],
    "median_gross_rent": 923.0,
    "median_home_value": 211400.0,
-   "renter_share": 0.272
+   "renter_share": 0.272,
+   "zhvi": 281190.96938456176,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Niles, MI"
   },
   "35840": {
    "name": "North Port-Bradenton-Sarasota, FL (Metropolitan Statistical Area)",
@@ -3823,7 +4560,10 @@
    ],
    "median_gross_rent": 1637.0,
    "median_home_value": 367700.0,
-   "renter_share": 0.244
+   "renter_share": 0.244,
+   "zhvi": 403539.86561728566,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "North Port, FL"
   },
   "35980": {
    "name": "Norwich-New London-Willimantic, CT (Metropolitan Statistical Area)",
@@ -3838,7 +4578,10 @@
    ],
    "median_gross_rent": 1316.0,
    "median_home_value": 293900.0,
-   "renter_share": 0.346
+   "renter_share": 0.346,
+   "zhvi": 430914.4555528797,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Norwich, CT"
   },
   "36100": {
    "name": "Ocala, FL (Metropolitan Statistical Area)",
@@ -3853,7 +4596,10 @@
    ],
    "median_gross_rent": 1174.0,
    "median_home_value": 220800.0,
-   "renter_share": 0.233
+   "renter_share": 0.233,
+   "zhvi": 267908.2604793597,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Ocala, FL"
   },
   "36220": {
    "name": "Odessa, TX (Metropolitan Statistical Area)",
@@ -3868,7 +4614,10 @@
    ],
    "median_gross_rent": 1284.0,
    "median_home_value": 190500.0,
-   "renter_share": 0.356
+   "renter_share": 0.356,
+   "zhvi": 252406.4129642687,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Odessa, TX"
   },
   "36260": {
    "name": "Ogden, UT (Metropolitan Statistical Area)",
@@ -3883,7 +4632,10 @@
    ],
    "median_gross_rent": 1393.0,
    "median_home_value": 437700.0,
-   "renter_share": 0.236
+   "renter_share": 0.236,
+   "zhvi": 508920.01734493277,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Ogden, UT"
   },
   "36420": {
    "name": "Oklahoma City, OK (Metropolitan Statistical Area)",
@@ -3898,7 +4650,10 @@
    ],
    "median_gross_rent": 1081.0,
    "median_home_value": 214700.0,
-   "renter_share": 0.361
+   "renter_share": 0.361,
+   "zhvi": 243069.4321850742,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Oklahoma City, OK"
   },
   "36500": {
    "name": "Olympia-Lacey-Tumwater, WA (Metropolitan Statistical Area)",
@@ -3913,7 +4668,10 @@
    ],
    "median_gross_rent": 1634.0,
    "median_home_value": 451500.0,
-   "renter_share": 0.322
+   "renter_share": 0.322,
+   "zhvi": 521365.421698262,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Olympia, WA"
   },
   "36540": {
    "name": "Omaha, NE-IA (Metropolitan Statistical Area)",
@@ -3929,7 +4687,10 @@
    ],
    "median_gross_rent": 1152.0,
    "median_home_value": 248100.0,
-   "renter_share": 0.337
+   "renter_share": 0.337,
+   "zhvi": 306318.419419376,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Omaha, NE"
   },
   "36740": {
    "name": "Orlando-Kissimmee-Sanford, FL (Metropolitan Statistical Area)",
@@ -3944,7 +4705,10 @@
    ],
    "median_gross_rent": 1659.0,
    "median_home_value": 338500.0,
-   "renter_share": 0.368
+   "renter_share": 0.368,
+   "zhvi": 383301.59894113336,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Orlando, FL"
   },
   "36780": {
    "name": "Oshkosh-Neenah, WI (Metropolitan Statistical Area)",
@@ -3959,7 +4723,10 @@
    ],
    "median_gross_rent": 924.0,
    "median_home_value": 208600.0,
-   "renter_share": 0.342
+   "renter_share": 0.342,
+   "zhvi": 304490.485920972,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Oshkosh, WI"
   },
   "36980": {
    "name": "Owensboro, KY (Metropolitan Statistical Area)",
@@ -3974,7 +4741,10 @@
    ],
    "median_gross_rent": 894.0,
    "median_home_value": 182100.0,
-   "renter_share": 0.321
+   "renter_share": 0.321,
+   "zhvi": 213968.35684924174,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Owensboro, KY"
   },
   "37100": {
    "name": "Oxnard-Thousand Oaks-Ventura, CA (Metropolitan Statistical Area)",
@@ -3989,7 +4759,10 @@
    ],
    "median_gross_rent": 2248.0,
    "median_home_value": 768400.0,
-   "renter_share": 0.358
+   "renter_share": 0.358,
+   "zhvi": 869803.4887014101,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Oxnard, CA"
   },
   "37140": {
    "name": "Paducah, KY-IL (Metropolitan Statistical Area)",
@@ -4005,7 +4778,10 @@
    ],
    "median_gross_rent": 854.0,
    "median_home_value": 160500.0,
-   "renter_share": 0.283
+   "renter_share": 0.283,
+   "zhvi": 172916.11110303714,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Paducah, KY"
   },
   "37340": {
    "name": "Palm Bay-Melbourne-Titusville, FL (Metropolitan Statistical Area)",
@@ -4020,7 +4796,10 @@
    ],
    "median_gross_rent": 1456.0,
    "median_home_value": 304400.0,
-   "renter_share": 0.231
+   "renter_share": 0.231,
+   "zhvi": 342338.50830025016,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Palm Bay, FL"
   },
   "37460": {
    "name": "Panama City-Panama City Beach, FL (Metropolitan Statistical Area)",
@@ -4035,7 +4814,10 @@
    ],
    "median_gross_rent": 1390.0,
    "median_home_value": 263500.0,
-   "renter_share": 0.305
+   "renter_share": 0.305,
+   "zhvi": 342979.5998214905,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Panama City, FL"
   },
   "37620": {
    "name": "Parkersburg-Vienna, WV (Metropolitan Statistical Area)",
@@ -4050,7 +4832,10 @@
    ],
    "median_gross_rent": 786.0,
    "median_home_value": 151600.0,
-   "renter_share": 0.249
+   "renter_share": 0.249,
+   "zhvi": 168562.64152834602,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Parkersburg, WV"
   },
   "37860": {
    "name": "Pensacola-Ferry Pass-Brent, FL (Metropolitan Statistical Area)",
@@ -4065,7 +4850,10 @@
    ],
    "median_gross_rent": 1267.0,
    "median_home_value": 260500.0,
-   "renter_share": 0.303
+   "renter_share": 0.303,
+   "zhvi": 308972.4875190451,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Pensacola, FL"
   },
   "37900": {
    "name": "Peoria, IL (Metropolitan Statistical Area)",
@@ -4080,7 +4868,10 @@
    ],
    "median_gross_rent": 923.0,
    "median_home_value": 160500.0,
-   "renter_share": 0.271
+   "renter_share": 0.271,
+   "zhvi": 174844.72138945665,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Peoria, IL"
   },
   "37980": {
    "name": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD (Metropolitan Statistical Area)",
@@ -4098,7 +4889,10 @@
    ],
    "median_gross_rent": 1413.0,
    "median_home_value": 326700.0,
-   "renter_share": 0.33
+   "renter_share": 0.33,
+   "zhvi": 386048.0267503148,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Philadelphia, PA"
   },
   "38060": {
    "name": "Phoenix-Mesa-Chandler, AZ (Metropolitan Statistical Area)",
@@ -4113,7 +4907,10 @@
    ],
    "median_gross_rent": 1581.0,
    "median_home_value": 401400.0,
-   "renter_share": 0.337
+   "renter_share": 0.337,
+   "zhvi": 441097.1462944464,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Phoenix, AZ"
   },
   "38240": {
    "name": "Pinehurst-Southern Pines, NC (Metropolitan Statistical Area)",
@@ -4128,7 +4925,10 @@
    ],
    "median_gross_rent": 1181.0,
    "median_home_value": 315300.0,
-   "renter_share": 0.237
+   "renter_share": 0.237,
+   "zhvi": 410131.7124483674,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Pinehurst, NC"
   },
   "38300": {
    "name": "Pittsburgh, PA (Metropolitan Statistical Area)",
@@ -4143,7 +4943,10 @@
    ],
    "median_gross_rent": 1011.0,
    "median_home_value": 204500.0,
-   "renter_share": 0.295
+   "renter_share": 0.295,
+   "zhvi": 228200.72829945167,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Pittsburgh, PA"
   },
   "38340": {
    "name": "Pittsfield, MA (Metropolitan Statistical Area)",
@@ -4158,7 +4961,10 @@
    ],
    "median_gross_rent": 1042.0,
    "median_home_value": 283800.0,
-   "renter_share": 0.3
+   "renter_share": 0.3,
+   "zhvi": 389980.2230202111,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Pittsfield, MA"
   },
   "38540": {
    "name": "Pocatello, ID (Metropolitan Statistical Area)",
@@ -4173,7 +4979,10 @@
    ],
    "median_gross_rent": 879.0,
    "median_home_value": 267200.0,
-   "renter_share": 0.314
+   "renter_share": 0.314,
+   "zhvi": 348642.33629547333,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Pocatello, ID"
   },
   "38860": {
    "name": "Portland-South Portland, ME (Metropolitan Statistical Area)",
@@ -4188,7 +4997,10 @@
    ],
    "median_gross_rent": 1384.0,
    "median_home_value": 379500.0,
-   "renter_share": 0.269
+   "renter_share": 0.269,
+   "zhvi": 536605.0033291663,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Portland, ME"
   },
   "38900": {
    "name": "Portland-Vancouver-Hillsboro, OR-WA (Metropolitan Statistical Area)",
@@ -4204,7 +5016,10 @@
    ],
    "median_gross_rent": 1654.0,
    "median_home_value": 526500.0,
-   "renter_share": 0.38
+   "renter_share": 0.38,
+   "zhvi": 539402.8016149617,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Portland, OR"
   },
   "38940": {
    "name": "Port St. Lucie, FL (Metropolitan Statistical Area)",
@@ -4219,7 +5034,10 @@
    ],
    "median_gross_rent": 1491.0,
    "median_home_value": 325300.0,
-   "renter_share": 0.215
+   "renter_share": 0.215,
+   "zhvi": 381493.3017092743,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Port St. Lucie, FL"
   },
   "39150": {
    "name": "Prescott Valley-Prescott, AZ (Metropolitan Statistical Area)",
@@ -4250,7 +5068,10 @@
    ],
    "median_gross_rent": 1236.0,
    "median_home_value": 385900.0,
-   "renter_share": 0.371
+   "renter_share": 0.371,
+   "zhvi": 522248.29577068525,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Providence, RI"
   },
   "39340": {
    "name": "Provo-Orem-Lehi, UT (Metropolitan Statistical Area)",
@@ -4265,7 +5086,10 @@
    ],
    "median_gross_rent": 1434.0,
    "median_home_value": 487200.0,
-   "renter_share": 0.316
+   "renter_share": 0.316,
+   "zhvi": 538775.0119869217,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Provo, UT"
   },
   "39380": {
    "name": "Pueblo, CO (Metropolitan Statistical Area)",
@@ -4280,7 +5104,10 @@
    ],
    "median_gross_rent": 1059.0,
    "median_home_value": 271800.0,
-   "renter_share": 0.317
+   "renter_share": 0.317,
+   "zhvi": 282306.4936301994,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Pueblo, CO"
   },
   "39460": {
    "name": "Punta Gorda, FL (Metropolitan Statistical Area)",
@@ -4295,7 +5122,10 @@
    ],
    "median_gross_rent": 1289.0,
    "median_home_value": 291000.0,
-   "renter_share": 0.168
+   "renter_share": 0.168,
+   "zhvi": 298911.643165834,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Punta Gorda, FL"
   },
   "39540": {
    "name": "Racine-Mount Pleasant, WI (Metropolitan Statistical Area)",
@@ -4310,7 +5140,10 @@
    ],
    "median_gross_rent": 1017.0,
    "median_home_value": 239400.0,
-   "renter_share": 0.289
+   "renter_share": 0.289,
+   "zhvi": 315025.8107079447,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Racine, WI"
   },
   "39580": {
    "name": "Raleigh-Cary, NC (Metropolitan Statistical Area)",
@@ -4325,7 +5158,10 @@
    ],
    "median_gross_rent": 1459.0,
    "median_home_value": 381000.0,
-   "renter_share": 0.33
+   "renter_share": 0.33,
+   "zhvi": 428266.5587541708,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Raleigh, NC"
   },
   "39660": {
    "name": "Rapid City, SD (Metropolitan Statistical Area)",
@@ -4340,7 +5176,10 @@
    ],
    "median_gross_rent": 1083.0,
    "median_home_value": 274200.0,
-   "renter_share": 0.291
+   "renter_share": 0.291,
+   "zhvi": 370124.5114625855,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Rapid City, SD"
   },
   "39740": {
    "name": "Reading, PA (Metropolitan Statistical Area)",
@@ -4355,7 +5194,10 @@
    ],
    "median_gross_rent": 1143.0,
    "median_home_value": 239700.0,
-   "renter_share": 0.29
+   "renter_share": 0.29,
+   "zhvi": 310919.9553108565,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Reading, PA"
   },
   "39820": {
    "name": "Redding, CA (Metropolitan Statistical Area)",
@@ -4370,7 +5212,10 @@
    ],
    "median_gross_rent": 1267.0,
    "median_home_value": 347200.0,
-   "renter_share": 0.346
+   "renter_share": 0.346,
+   "zhvi": 367693.6805275648,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Redding, CA"
   },
   "39900": {
    "name": "Reno, NV (Metropolitan Statistical Area)",
@@ -4385,7 +5230,10 @@
    ],
    "median_gross_rent": 1491.0,
    "median_home_value": 474000.0,
-   "renter_share": 0.384
+   "renter_share": 0.384,
+   "zhvi": 569661.619870373,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Reno, NV"
   },
   "40060": {
    "name": "Richmond, VA (Metropolitan Statistical Area)",
@@ -4400,7 +5248,10 @@
    ],
    "median_gross_rent": 1388.0,
    "median_home_value": 325800.0,
-   "renter_share": 0.329
+   "renter_share": 0.329,
+   "zhvi": 392106.37297613994,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Richmond, VA"
   },
   "40140": {
    "name": "Riverside-San Bernardino-Ontario, CA (Metropolitan Statistical Area)",
@@ -4415,7 +5266,10 @@
    ],
    "median_gross_rent": 1756.0,
    "median_home_value": 493600.0,
-   "renter_share": 0.346
+   "renter_share": 0.346,
+   "zhvi": 580321.086113742,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Riverside, CA"
   },
   "40220": {
    "name": "Roanoke, VA (Metropolitan Statistical Area)",
@@ -4430,7 +5284,10 @@
    ],
    "median_gross_rent": 986.0,
    "median_home_value": 236300.0,
-   "renter_share": 0.313
+   "renter_share": 0.313,
+   "zhvi": 297867.9894740023,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Roanoke, VA"
   },
   "40340": {
    "name": "Rochester, MN (Metropolitan Statistical Area)",
@@ -4445,7 +5302,10 @@
    ],
    "median_gross_rent": 1195.0,
    "median_home_value": 284600.0,
-   "renter_share": 0.257
+   "renter_share": 0.257,
+   "zhvi": 338327.33929764846,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Rochester, MN"
   },
   "40380": {
    "name": "Rochester, NY (Metropolitan Statistical Area)",
@@ -4460,7 +5320,10 @@
    ],
    "median_gross_rent": 1102.0,
    "median_home_value": 190100.0,
-   "renter_share": 0.328
+   "renter_share": 0.328,
+   "zhvi": 281279.3410493362,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Rochester, NY"
   },
   "40420": {
    "name": "Rockford, IL (Metropolitan Statistical Area)",
@@ -4475,7 +5338,10 @@
    ],
    "median_gross_rent": 988.0,
    "median_home_value": 162600.0,
-   "renter_share": 0.322
+   "renter_share": 0.322,
+   "zhvi": 222177.63160284792,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Rockford, IL"
   },
   "40580": {
    "name": "Rocky Mount, NC (Metropolitan Statistical Area)",
@@ -4490,7 +5356,10 @@
    ],
    "median_gross_rent": 889.0,
    "median_home_value": 153000.0,
-   "renter_share": 0.378
+   "renter_share": 0.378,
+   "zhvi": 197692.263375806,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Rocky Mount, NC"
   },
   "40660": {
    "name": "Rome, GA (Metropolitan Statistical Area)",
@@ -4505,7 +5374,10 @@
    ],
    "median_gross_rent": 971.0,
    "median_home_value": 194100.0,
-   "renter_share": 0.379
+   "renter_share": 0.379,
+   "zhvi": 232905.8036780106,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Rome, GA"
   },
   "40900": {
    "name": "Sacramento-Roseville-Folsom, CA (Metropolitan Statistical Area)",
@@ -4520,7 +5392,10 @@
    ],
    "median_gross_rent": 1729.0,
    "median_home_value": 559000.0,
-   "renter_share": 0.375
+   "renter_share": 0.375,
+   "zhvi": 572812.6725026321,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Sacramento, CA"
   },
   "40980": {
    "name": "Saginaw, MI (Metropolitan Statistical Area)",
@@ -4535,7 +5410,10 @@
    ],
    "median_gross_rent": 921.0,
    "median_home_value": 139400.0,
-   "renter_share": 0.265
+   "renter_share": 0.265,
+   "zhvi": 175095.12185491694,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Saginaw, MI"
   },
   "41060": {
    "name": "St. Cloud, MN (Metropolitan Statistical Area)",
@@ -4550,7 +5428,10 @@
    ],
    "median_gross_rent": 1021.0,
    "median_home_value": 254200.0,
-   "renter_share": 0.322
+   "renter_share": 0.322,
+   "zhvi": 310762.7817421027,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "St. Cloud, MN"
   },
   "41100": {
    "name": "St. George, UT (Metropolitan Statistical Area)",
@@ -4565,7 +5446,10 @@
    ],
    "median_gross_rent": 1464.0,
    "median_home_value": 465600.0,
-   "renter_share": 0.274
+   "renter_share": 0.274,
+   "zhvi": 524952.8538581883,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "St. George, UT"
   },
   "41140": {
    "name": "St. Joseph, MO-KS (Metropolitan Statistical Area)",
@@ -4581,7 +5465,10 @@
    ],
    "median_gross_rent": 885.0,
    "median_home_value": 162100.0,
-   "renter_share": 0.318
+   "renter_share": 0.318,
+   "zhvi": 211905.6166588381,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "St. Joseph, MO"
   },
   "41180": {
    "name": "St. Louis, MO-IL (Metropolitan Statistical Area)",
@@ -4597,7 +5484,10 @@
    ],
    "median_gross_rent": 1073.0,
    "median_home_value": 232100.0,
-   "renter_share": 0.299
+   "renter_share": 0.299,
+   "zhvi": 273164.2967979731,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "St. Louis, MO"
   },
   "41420": {
    "name": "Salem, OR (Metropolitan Statistical Area)",
@@ -4612,7 +5502,10 @@
    ],
    "median_gross_rent": 1324.0,
    "median_home_value": 389800.0,
-   "renter_share": 0.373
+   "renter_share": 0.373,
+   "zhvi": 447087.18513836904,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Salem, OR"
   },
   "41500": {
    "name": "Salinas, CA (Metropolitan Statistical Area)",
@@ -4627,7 +5520,10 @@
    ],
    "median_gross_rent": 1995.0,
    "median_home_value": 723100.0,
-   "renter_share": 0.477
+   "renter_share": 0.477,
+   "zhvi": 841133.0317668918,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Salinas, CA"
   },
   "41540": {
    "name": "Salisbury, MD (Metropolitan Statistical Area)",
@@ -4642,7 +5538,10 @@
    ],
    "median_gross_rent": 1200.0,
    "median_home_value": 228300.0,
-   "renter_share": 0.379
+   "renter_share": 0.379,
+   "zhvi": 423968.16862099967,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Salisbury, MD"
   },
   "41620": {
    "name": "Salt Lake City-Murray, UT (Metropolitan Statistical Area)",
@@ -4657,7 +5556,10 @@
    ],
    "median_gross_rent": 1486.0,
    "median_home_value": 478200.0,
-   "renter_share": 0.322
+   "renter_share": 0.322,
+   "zhvi": 558849.50597343,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Salt Lake City, UT"
   },
   "41660": {
    "name": "San Angelo, TX (Metropolitan Statistical Area)",
@@ -4672,7 +5574,10 @@
    ],
    "median_gross_rent": 1125.0,
    "median_home_value": 186300.0,
-   "renter_share": 0.329
+   "renter_share": 0.329,
+   "zhvi": 227071.80883696603,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "San Angelo, TX"
   },
   "41700": {
    "name": "San Antonio-New Braunfels, TX (Metropolitan Statistical Area)",
@@ -4687,7 +5592,10 @@
    ],
    "median_gross_rent": 1299.0,
    "median_home_value": 258700.0,
-   "renter_share": 0.365
+   "renter_share": 0.365,
+   "zhvi": 273806.2680725069,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "San Antonio, TX"
   },
   "41740": {
    "name": "San Diego-Chula Vista-Carlsbad, CA (Metropolitan Statistical Area)",
@@ -4702,7 +5610,10 @@
    ],
    "median_gross_rent": 2154.0,
    "median_home_value": 791600.0,
-   "renter_share": 0.455
+   "renter_share": 0.455,
+   "zhvi": 926960.726244947,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "San Diego, CA"
   },
   "41780": {
    "name": "Sandusky, OH (Metropolitan Statistical Area)",
@@ -4717,7 +5628,10 @@
    ],
    "median_gross_rent": 889.0,
    "median_home_value": 189400.0,
-   "renter_share": 0.244
+   "renter_share": 0.244,
+   "zhvi": 240420.9875613059,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Sandusky, OH"
   },
   "41860": {
    "name": "San Francisco-Oakland-Fremont, CA (Metropolitan Statistical Area)",
@@ -4732,7 +5646,10 @@
    ],
    "median_gross_rent": 2426.0,
    "median_home_value": 1113800.0,
-   "renter_share": 0.446
+   "renter_share": 0.446,
+   "zhvi": 1120378.785815907,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "San Francisco, CA"
   },
   "41940": {
    "name": "San Jose-Sunnyvale-Santa Clara, CA (Metropolitan Statistical Area)",
@@ -4747,7 +5664,10 @@
    ],
    "median_gross_rent": 2794.0,
    "median_home_value": 1342700.0,
-   "renter_share": 0.443
+   "renter_share": 0.443,
+   "zhvi": 1523615.4376157587,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "San Jose, CA"
   },
   "42020": {
    "name": "San Luis Obispo-Paso Robles, CA (Metropolitan Statistical Area)",
@@ -4762,7 +5682,10 @@
    ],
    "median_gross_rent": 1899.0,
    "median_home_value": 777200.0,
-   "renter_share": 0.381
+   "renter_share": 0.381,
+   "zhvi": 897656.9554189077,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "San Luis Obispo, CA"
   },
   "42100": {
    "name": "Santa Cruz-Watsonville, CA (Metropolitan Statistical Area)",
@@ -4777,7 +5700,10 @@
    ],
    "median_gross_rent": 2172.0,
    "median_home_value": 1015200.0,
-   "renter_share": 0.4
+   "renter_share": 0.4,
+   "zhvi": 1136154.021880075,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Santa Cruz, CA"
   },
   "42140": {
    "name": "Santa Fe, NM (Metropolitan Statistical Area)",
@@ -4792,7 +5718,10 @@
    ],
    "median_gross_rent": 1318.0,
    "median_home_value": 416900.0,
-   "renter_share": 0.294
+   "renter_share": 0.294,
+   "zhvi": 548757.3605932085,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Santa Fe, NM"
   },
   "42200": {
    "name": "Santa Maria-Santa Barbara, CA (Metropolitan Statistical Area)",
@@ -4807,7 +5736,10 @@
    ],
    "median_gross_rent": 2050.0,
    "median_home_value": 735700.0,
-   "renter_share": 0.471
+   "renter_share": 0.471,
+   "zhvi": 988947.6781296857,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Santa Maria, CA"
   },
   "42220": {
    "name": "Santa Rosa-Petaluma, CA (Metropolitan Statistical Area)",
@@ -4822,7 +5754,10 @@
    ],
    "median_gross_rent": 2093.0,
    "median_home_value": 779000.0,
-   "renter_share": 0.378
+   "renter_share": 0.378,
+   "zhvi": 782966.0916099915,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Santa Rosa, CA"
   },
   "42340": {
    "name": "Savannah, GA (Metropolitan Statistical Area)",
@@ -4837,7 +5772,10 @@
    ],
    "median_gross_rent": 1370.0,
    "median_home_value": 271100.0,
-   "renter_share": 0.385
+   "renter_share": 0.385,
+   "zhvi": 340185.52425989485,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Savannah, GA"
   },
   "42540": {
    "name": "Scranton--Wilkes-Barre, PA (Metropolitan Statistical Area)",
@@ -4852,7 +5790,10 @@
    ],
    "median_gross_rent": 963.0,
    "median_home_value": 176500.0,
-   "renter_share": 0.327
+   "renter_share": 0.327,
+   "zhvi": 233947.52693764187,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Scranton, PA"
   },
   "42660": {
    "name": "Seattle-Tacoma-Bellevue, WA (Metropolitan Statistical Area)",
@@ -4867,7 +5808,10 @@
    ],
    "median_gross_rent": 1932.0,
    "median_home_value": 673500.0,
-   "renter_share": 0.396
+   "renter_share": 0.396,
+   "zhvi": 720147.2421903722,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Seattle, WA"
   },
   "42680": {
    "name": "Sebastian-Vero Beach-West Vero Corridor, FL (Metropolitan Statistical Area)",
@@ -4882,7 +5826,10 @@
    ],
    "median_gross_rent": 1284.0,
    "median_home_value": 314700.0,
-   "renter_share": 0.207
+   "renter_share": 0.207,
+   "zhvi": 363706.28782916133,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Sebastian, FL"
   },
   "42700": {
    "name": "Sebring, FL (Metropolitan Statistical Area)",
@@ -4897,7 +5844,10 @@
    ],
    "median_gross_rent": 980.0,
    "median_home_value": 177900.0,
-   "renter_share": 0.211
+   "renter_share": 0.211,
+   "zhvi": 231287.9992811459,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Sebring, FL"
   },
   "43100": {
    "name": "Sheboygan, WI (Metropolitan Statistical Area)",
@@ -4912,7 +5862,10 @@
    ],
    "median_gross_rent": 889.0,
    "median_home_value": 218400.0,
-   "renter_share": 0.287
+   "renter_share": 0.287,
+   "zhvi": 324229.6890517178,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Sheboygan, WI"
   },
   "43300": {
    "name": "Sherman-Denison, TX (Metropolitan Statistical Area)",
@@ -4927,7 +5880,10 @@
    ],
    "median_gross_rent": 1178.0,
    "median_home_value": 228300.0,
-   "renter_share": 0.327
+   "renter_share": 0.327,
+   "zhvi": 280298.56465788727,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Sherman, TX"
   },
   "43340": {
    "name": "Shreveport-Bossier City, LA (Metropolitan Statistical Area)",
@@ -4942,7 +5898,10 @@
    ],
    "median_gross_rent": 1003.0,
    "median_home_value": 187300.0,
-   "renter_share": 0.366
+   "renter_share": 0.366,
+   "zhvi": 183474.91563724485,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Shreveport, LA"
   },
   "43420": {
    "name": "Sierra Vista-Douglas, AZ (Metropolitan Statistical Area)",
@@ -4957,7 +5916,10 @@
    ],
    "median_gross_rent": 939.0,
    "median_home_value": 207400.0,
-   "renter_share": 0.295
+   "renter_share": 0.295,
+   "zhvi": 260537.0931769559,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Sierra Vista, AZ"
   },
   "43580": {
    "name": "Sioux City, IA-NE-SD (Metropolitan Statistical Area)",
@@ -4974,7 +5936,10 @@
    ],
    "median_gross_rent": 968.0,
    "median_home_value": 179100.0,
-   "renter_share": 0.317
+   "renter_share": 0.317,
+   "zhvi": 224094.27031420742,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Sioux City, IA"
   },
   "43620": {
    "name": "Sioux Falls, SD-MN (Metropolitan Statistical Area)",
@@ -4990,7 +5955,10 @@
    ],
    "median_gross_rent": 987.0,
    "median_home_value": 274800.0,
-   "renter_share": 0.334
+   "renter_share": 0.334,
+   "zhvi": 338663.3840289509,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Sioux Falls, SD"
   },
   "43640": {
    "name": "Slidell-Mandeville-Covington, LA (Metropolitan Statistical Area)",
@@ -5021,7 +5989,10 @@
    ],
    "median_gross_rent": 1013.0,
    "median_home_value": 183800.0,
-   "renter_share": 0.292
+   "renter_share": 0.292,
+   "zhvi": 237621.65138673075,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "South Bend, IN"
   },
   "43900": {
    "name": "Spartanburg, SC (Metropolitan Statistical Area)",
@@ -5036,7 +6007,10 @@
    ],
    "median_gross_rent": 991.0,
    "median_home_value": 207900.0,
-   "renter_share": 0.274
+   "renter_share": 0.274,
+   "zhvi": 274801.9279247666,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Spartanburg, SC"
   },
   "44060": {
    "name": "Spokane-Spokane Valley, WA (Metropolitan Statistical Area)",
@@ -5051,7 +6025,10 @@
    ],
    "median_gross_rent": 1187.0,
    "median_home_value": 365700.0,
-   "renter_share": 0.349
+   "renter_share": 0.349,
+   "zhvi": 415045.4463303257,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Spokane, WA"
   },
   "44100": {
    "name": "Springfield, IL (Metropolitan Statistical Area)",
@@ -5066,7 +6043,10 @@
    ],
    "median_gross_rent": 949.0,
    "median_home_value": 171100.0,
-   "renter_share": 0.289
+   "renter_share": 0.289,
+   "zhvi": 200780.79490685277,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Springfield, IL"
   },
   "44140": {
    "name": "Springfield, MA (Metropolitan Statistical Area)",
@@ -5081,7 +6061,10 @@
    ],
    "median_gross_rent": 1105.0,
    "median_home_value": 276300.0,
-   "renter_share": 0.378
+   "renter_share": 0.378,
+   "zhvi": 372393.8922925626,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Springfield, MA"
   },
   "44180": {
    "name": "Springfield, MO (Metropolitan Statistical Area)",
@@ -5096,7 +6079,10 @@
    ],
    "median_gross_rent": 927.0,
    "median_home_value": 213400.0,
-   "renter_share": 0.37
+   "renter_share": 0.37,
+   "zhvi": 270545.5514095019,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Springfield, MO"
   },
   "44220": {
    "name": "Springfield, OH (Metropolitan Statistical Area)",
@@ -5111,7 +6097,10 @@
    ],
    "median_gross_rent": 840.0,
    "median_home_value": 155900.0,
-   "renter_share": 0.308
+   "renter_share": 0.308,
+   "zhvi": 199688.30374192446,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Springfield, OH"
   },
   "44300": {
    "name": "State College, PA (Metropolitan Statistical Area)",
@@ -5126,7 +6115,10 @@
    ],
    "median_gross_rent": 1181.0,
    "median_home_value": 308100.0,
-   "renter_share": 0.382
+   "renter_share": 0.382,
+   "zhvi": 351714.5578377107,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "State College, PA"
   },
   "44420": {
    "name": "Staunton-Stuarts Draft, VA (Metropolitan Statistical Area)",
@@ -5141,7 +6133,10 @@
    ],
    "median_gross_rent": 1013.0,
    "median_home_value": 264400.0,
-   "renter_share": 0.289
+   "renter_share": 0.289,
+   "zhvi": 334738.93873481307,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Staunton, VA"
   },
   "44700": {
    "name": "Stockton-Lodi, CA (Metropolitan Statistical Area)",
@@ -5156,7 +6151,10 @@
    ],
    "median_gross_rent": 1633.0,
    "median_home_value": 494500.0,
-   "renter_share": 0.385
+   "renter_share": 0.385,
+   "zhvi": 519774.6984376711,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Stockton, CA"
   },
   "44940": {
    "name": "Sumter, SC (Metropolitan Statistical Area)",
@@ -5171,7 +6169,10 @@
    ],
    "median_gross_rent": 1006.0,
    "median_home_value": 159500.0,
-   "renter_share": 0.332
+   "renter_share": 0.332,
+   "zhvi": 200155.25881731245,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Sumter, SC"
   },
   "45060": {
    "name": "Syracuse, NY (Metropolitan Statistical Area)",
@@ -5186,7 +6187,10 @@
    ],
    "median_gross_rent": 1036.0,
    "median_home_value": 175300.0,
-   "renter_share": 0.317
+   "renter_share": 0.317,
+   "zhvi": 268948.72206723597,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Syracuse, NY"
   },
   "45220": {
    "name": "Tallahassee, FL (Metropolitan Statistical Area)",
@@ -5201,7 +6205,10 @@
    ],
    "median_gross_rent": 1197.0,
    "median_home_value": 249900.0,
-   "renter_share": 0.425
+   "renter_share": 0.425,
+   "zhvi": 281169.3364989898,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Tallahassee, FL"
   },
   "45300": {
    "name": "Tampa-St. Petersburg-Clearwater, FL (Metropolitan Statistical Area)",
@@ -5216,7 +6223,10 @@
    ],
    "median_gross_rent": 1497.0,
    "median_home_value": 306100.0,
-   "renter_share": 0.324
+   "renter_share": 0.324,
+   "zhvi": 356842.80753931083,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Tampa, FL"
   },
   "45460": {
    "name": "Terre Haute, IN (Metropolitan Statistical Area)",
@@ -5231,7 +6241,10 @@
    ],
    "median_gross_rent": 857.0,
    "median_home_value": 132000.0,
-   "renter_share": 0.32
+   "renter_share": 0.32,
+   "zhvi": 165631.7597595993,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Terre Haute, IN"
   },
   "45500": {
    "name": "Texarkana, TX-AR (Metropolitan Statistical Area)",
@@ -5247,7 +6260,10 @@
    ],
    "median_gross_rent": 933.0,
    "median_home_value": 150800.0,
-   "renter_share": 0.351
+   "renter_share": 0.351,
+   "zhvi": 183434.77930820023,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Texarkana, TX"
   },
   "45780": {
    "name": "Toledo, OH (Metropolitan Statistical Area)",
@@ -5262,7 +6278,10 @@
    ],
    "median_gross_rent": 917.0,
    "median_home_value": 168500.0,
-   "renter_share": 0.364
+   "renter_share": 0.364,
+   "zhvi": 202056.21054561748,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Toledo, OH"
   },
   "45820": {
    "name": "Topeka, KS (Metropolitan Statistical Area)",
@@ -5277,7 +6296,10 @@
    ],
    "median_gross_rent": 947.0,
    "median_home_value": 172200.0,
-   "renter_share": 0.298
+   "renter_share": 0.298,
+   "zhvi": 216882.54844803558,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Topeka, KS"
   },
   "45900": {
    "name": "Traverse City, MI (Metropolitan Statistical Area)",
@@ -5292,7 +6314,10 @@
    ],
    "median_gross_rent": 1154.0,
    "median_home_value": 286500.0,
-   "renter_share": 0.188
+   "renter_share": 0.188,
+   "zhvi": 419456.976372892,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Traverse City, MI"
   },
   "45940": {
    "name": "Trenton-Princeton, NJ (Metropolitan Statistical Area)",
@@ -5307,7 +6332,10 @@
    ],
    "median_gross_rent": 1515.0,
    "median_home_value": 351000.0,
-   "renter_share": 0.381
+   "renter_share": 0.381,
+   "zhvi": 439977.2328796801,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Trenton, NJ"
   },
   "46060": {
    "name": "Tucson, AZ (Metropolitan Statistical Area)",
@@ -5322,7 +6350,10 @@
    ],
    "median_gross_rent": 1154.0,
    "median_home_value": 286900.0,
-   "renter_share": 0.352
+   "renter_share": 0.352,
+   "zhvi": 335746.67675231624,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Tucson, AZ"
   },
   "46140": {
    "name": "Tulsa, OK (Metropolitan Statistical Area)",
@@ -5337,7 +6368,10 @@
    ],
    "median_gross_rent": 1034.0,
    "median_home_value": 204400.0,
-   "renter_share": 0.346
+   "renter_share": 0.346,
+   "zhvi": 251771.0051004107,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Tulsa, OK"
   },
   "46220": {
    "name": "Tuscaloosa, AL (Metropolitan Statistical Area)",
@@ -5352,7 +6386,10 @@
    ],
    "median_gross_rent": 966.0,
    "median_home_value": 217100.0,
-   "renter_share": 0.359
+   "renter_share": 0.359,
+   "zhvi": 238644.37977430757,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Tuscaloosa, AL"
   },
   "46300": {
    "name": "Twin Falls, ID (Metropolitan Statistical Area) *",
@@ -5367,7 +6404,10 @@
    ],
    "median_gross_rent": 981.0,
    "median_home_value": 284200.0,
-   "renter_share": 0.293
+   "renter_share": 0.293,
+   "zhvi": 383134.02300559083,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Twin Falls, ID"
   },
   "46340": {
    "name": "Tyler, TX (Metropolitan Statistical Area)",
@@ -5382,7 +6422,10 @@
    ],
    "median_gross_rent": 1197.0,
    "median_home_value": 220800.0,
-   "renter_share": 0.307
+   "renter_share": 0.307,
+   "zhvi": 267832.7888743975,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Tyler, TX"
   },
   "46520": {
    "name": "Urban Honolulu, HI (Metropolitan Statistical Area)",
@@ -5397,7 +6440,10 @@
    ],
    "median_gross_rent": 2054.0,
    "median_home_value": 873000.0,
-   "renter_share": 0.405
+   "renter_share": 0.405,
+   "zhvi": 855972.666097966,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Urban Honolulu, HI"
   },
   "46540": {
    "name": "Utica-Rome, NY (Metropolitan Statistical Area)",
@@ -5412,7 +6458,10 @@
    ],
    "median_gross_rent": 896.0,
    "median_home_value": 163400.0,
-   "renter_share": 0.305
+   "renter_share": 0.305,
+   "zhvi": 231322.17847554068,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Utica, NY"
   },
   "46660": {
    "name": "Valdosta, GA (Metropolitan Statistical Area)",
@@ -5427,7 +6476,10 @@
    ],
    "median_gross_rent": 976.0,
    "median_home_value": 182300.0,
-   "renter_share": 0.409
+   "renter_share": 0.409,
+   "zhvi": 223808.8851838192,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Valdosta, GA"
   },
   "46700": {
    "name": "Vallejo, CA (Metropolitan Statistical Area)",
@@ -5442,7 +6494,10 @@
    ],
    "median_gross_rent": 2088.0,
    "median_home_value": 589600.0,
-   "renter_share": 0.368
+   "renter_share": 0.368,
+   "zhvi": 571154.1566529513,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Vallejo, CA"
   },
   "47020": {
    "name": "Victoria, TX (Metropolitan Statistical Area)",
@@ -5457,7 +6512,10 @@
    ],
    "median_gross_rent": 1143.0,
    "median_home_value": 196500.0,
-   "renter_share": 0.313
+   "renter_share": 0.313,
+   "zhvi": 220044.92245064606,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Victoria, TX"
   },
   "47220": {
    "name": "Vineland, NJ (Metropolitan Statistical Area)",
@@ -5472,7 +6530,10 @@
    ],
    "median_gross_rent": 1254.0,
    "median_home_value": 205600.0,
-   "renter_share": 0.344
+   "renter_share": 0.344,
+   "zhvi": 273042.62308754824,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Vineland, NJ"
   },
   "47260": {
    "name": "Virginia Beach-Chesapeake-Norfolk, VA-NC (Metropolitan Statistical Area)",
@@ -5488,7 +6549,10 @@
    ],
    "median_gross_rent": 1416.0,
    "median_home_value": 318000.0,
-   "renter_share": 0.369
+   "renter_share": 0.369,
+   "zhvi": 371181.32904734253,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Virginia Beach, VA"
   },
   "47300": {
    "name": "Visalia, CA (Metropolitan Statistical Area)",
@@ -5503,7 +6567,10 @@
    ],
    "median_gross_rent": 1206.0,
    "median_home_value": 303000.0,
-   "renter_share": 0.414
+   "renter_share": 0.414,
+   "zhvi": 360864.87393845967,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Visalia, CA"
   },
   "47380": {
    "name": "Waco, TX (Metropolitan Statistical Area)",
@@ -5518,7 +6585,10 @@
    ],
    "median_gross_rent": 1094.0,
    "median_home_value": 209600.0,
-   "renter_share": 0.369
+   "renter_share": 0.369,
+   "zhvi": 250105.01664103792,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Waco, TX"
   },
   "47460": {
    "name": "Walla Walla, WA (Metropolitan Statistical Area)",
@@ -5533,7 +6603,10 @@
    ],
    "median_gross_rent": 1113.0,
    "median_home_value": 375600.0,
-   "renter_share": 0.341
+   "renter_share": 0.341,
+   "zhvi": 413652.5124091461,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Walla Walla, WA"
   },
   "47580": {
    "name": "Warner Robins, GA (Metropolitan Statistical Area)",
@@ -5548,7 +6621,10 @@
    ],
    "median_gross_rent": 1112.0,
    "median_home_value": 202800.0,
-   "renter_share": 0.324
+   "renter_share": 0.324,
+   "zhvi": 254073.52139763572,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Warner Robins, GA"
   },
   "47900": {
    "name": "Washington-Arlington-Alexandria, DC-VA-MD-WV (Metropolitan Statistical Area)",
@@ -5566,7 +6642,10 @@
    ],
    "median_gross_rent": 1975.0,
    "median_home_value": 553000.0,
-   "renter_share": 0.365
+   "renter_share": 0.365,
+   "zhvi": 569856.7815725579,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Washington, DC"
   },
   "47930": {
    "name": "Waterbury-Shelton, CT (Metropolitan Statistical Area)",
@@ -5596,7 +6675,10 @@
    ],
    "median_gross_rent": 947.0,
    "median_home_value": 186100.0,
-   "renter_share": 0.311
+   "renter_share": 0.311,
+   "zhvi": 197585.00228408768,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Waterloo, IA"
   },
   "48060": {
    "name": "Watertown-Fort Drum, NY (Metropolitan Statistical Area)",
@@ -5611,7 +6693,10 @@
    ],
    "median_gross_rent": 1214.0,
    "median_home_value": 181000.0,
-   "renter_share": 0.459
+   "renter_share": 0.459,
+   "zhvi": 234095.77484434788,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Watertown, NY"
   },
   "48140": {
    "name": "Wausau, WI (Metropolitan Statistical Area)",
@@ -5626,7 +6711,10 @@
    ],
    "median_gross_rent": 950.0,
    "median_home_value": 205500.0,
-   "renter_share": 0.266
+   "renter_share": 0.266,
+   "zhvi": 270941.92657221394,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Wausau, WI"
   },
   "48260": {
    "name": "Weirton-Steubenville, WV-OH (Metropolitan Statistical Area)",
@@ -5642,7 +6730,10 @@
    ],
    "median_gross_rent": 758.0,
    "median_home_value": 121400.0,
-   "renter_share": 0.272
+   "renter_share": 0.272,
+   "zhvi": 131692.4789889363,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Weirton, WV"
   },
   "48300": {
    "name": "Wenatchee-East Wenatchee, WA (Metropolitan Statistical Area)",
@@ -5657,7 +6748,10 @@
    ],
    "median_gross_rent": 1198.0,
    "median_home_value": 434900.0,
-   "renter_share": 0.35
+   "renter_share": 0.35,
+   "zhvi": 517597.50931687996,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Wenatchee, WA"
   },
   "48540": {
    "name": "Wheeling, WV-OH (Metropolitan Statistical Area)",
@@ -5673,7 +6767,10 @@
    ],
    "median_gross_rent": 801.0,
    "median_home_value": 149300.0,
-   "renter_share": 0.27
+   "renter_share": 0.27,
+   "zhvi": 141159.27939418095,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Wheeling, WV"
   },
   "48620": {
    "name": "Wichita, KS (Metropolitan Statistical Area)",
@@ -5688,7 +6785,10 @@
    ],
    "median_gross_rent": 969.0,
    "median_home_value": 188200.0,
-   "renter_share": 0.353
+   "renter_share": 0.353,
+   "zhvi": 222219.1045730364,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Wichita, KS"
   },
   "48660": {
    "name": "Wichita Falls, TX (Metropolitan Statistical Area)",
@@ -5703,7 +6803,10 @@
    ],
    "median_gross_rent": 963.0,
    "median_home_value": 144700.0,
-   "renter_share": 0.357
+   "renter_share": 0.357,
+   "zhvi": 175703.15098732323,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Wichita Falls, TX"
   },
   "48680": {
    "name": "Wildwood-The Villages, FL (Metropolitan Statistical Area)",
@@ -5733,7 +6836,10 @@
    ],
    "median_gross_rent": 887.0,
    "median_home_value": 195600.0,
-   "renter_share": 0.308
+   "renter_share": 0.308,
+   "zhvi": 235744.1421464093,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Williamsport, PA"
   },
   "48900": {
    "name": "Wilmington, NC (Metropolitan Statistical Area)",
@@ -5748,7 +6854,10 @@
    ],
    "median_gross_rent": 1313.0,
    "median_home_value": 328000.0,
-   "renter_share": 0.288
+   "renter_share": 0.288,
+   "zhvi": 443117.8709262626,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Wilmington, NC"
   },
   "49020": {
    "name": "Winchester, VA-WV (Metropolitan Statistical Area)",
@@ -5764,7 +6873,10 @@
    ],
    "median_gross_rent": 1309.0,
    "median_home_value": 322600.0,
-   "renter_share": 0.289
+   "renter_share": 0.289,
+   "zhvi": 384628.7105334822,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Winchester, VA"
   },
   "49180": {
    "name": "Winston-Salem, NC (Metropolitan Statistical Area)",
@@ -5779,7 +6891,10 @@
    ],
    "median_gross_rent": 973.0,
    "median_home_value": 213300.0,
-   "renter_share": 0.315
+   "renter_share": 0.315,
+   "zhvi": 277511.5962970701,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Winston, NC"
   },
   "49340": {
    "name": "Worcester, MA (Metropolitan Statistical Area)",
@@ -5794,7 +6909,10 @@
    ],
    "median_gross_rent": 1347.0,
    "median_home_value": 390700.0,
-   "renter_share": 0.343
+   "renter_share": 0.343,
+   "zhvi": 476550.53019473347,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Worcester, MA"
   },
   "49420": {
    "name": "Yakima, WA (Metropolitan Statistical Area)",
@@ -5809,7 +6927,10 @@
    ],
    "median_gross_rent": 1068.0,
    "median_home_value": 281100.0,
-   "renter_share": 0.376
+   "renter_share": 0.376,
+   "zhvi": 348084.3517238681,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Yakima, WA"
   },
   "49620": {
    "name": "York-Hanover, PA (Metropolitan Statistical Area)",
@@ -5824,7 +6945,10 @@
    ],
    "median_gross_rent": 1150.0,
    "median_home_value": 235000.0,
-   "renter_share": 0.242
+   "renter_share": 0.242,
+   "zhvi": 309136.43444294453,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "York, PA"
   },
   "49660": {
    "name": "Youngstown-Warren, OH (Metropolitan Statistical Area)",
@@ -5839,7 +6963,10 @@
    ],
    "median_gross_rent": 779.0,
    "median_home_value": 134600.0,
-   "renter_share": 0.291
+   "renter_share": 0.291,
+   "zhvi": 175229.5928793638,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Youngstown, OH"
   },
   "49700": {
    "name": "Yuba City, CA (Metropolitan Statistical Area)",
@@ -5854,7 +6981,10 @@
    ],
    "median_gross_rent": 1306.0,
    "median_home_value": 390800.0,
-   "renter_share": 0.389
+   "renter_share": 0.389,
+   "zhvi": 425171.9982384091,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Yuba City, CA"
   },
   "49740": {
    "name": "Yuma, AZ (Metropolitan Statistical Area)",
@@ -5869,7 +6999,10 @@
    ],
    "median_gross_rent": 983.0,
    "median_home_value": 195700.0,
-   "renter_share": 0.3
+   "renter_share": 0.3,
+   "zhvi": 276761.2928481847,
+   "zhvi_month": "2026-09-30",
+   "zillow_name": "Yuma, AZ"
   }
  },
  "state": {

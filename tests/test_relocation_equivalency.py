@@ -56,7 +56,8 @@ def test_renter_housing_scales_with_the_bea_housing_price_level_ratio():
 
 def test_owner_housing_scales_with_median_home_value_ratio_and_needs_an_input():
     r = R.equivalent_income(DALLAS, NYC, 150000, tenure="own", housing_year=30000)
-    assert r["housing_scale"] == pytest.approx(R.metro(NYC)["median_home_value"] / R.metro(DALLAS)["median_home_value"], abs=0.001)
+    assert r["housing_scale_source"] == "Zillow Home Value Index"
+    assert r["housing_scale"] == pytest.approx(R.metro(NYC)["zhvi"] / R.metro(DALLAS)["zhvi"], abs=0.001)
     assert r["dest_costs_at_equivalent_income"]["housing"] == pytest.approx(30000 * r["housing_scale"], abs=40)
     with pytest.raises(ValueError):
         R.equivalent_income(DALLAS, NYC, 150000, tenure="own")
@@ -93,3 +94,41 @@ def test_ranking_orders_every_metro_by_income_needed():
 
 def test_output_is_labelled_as_an_estimate():
     assert "Estimate" in R.equivalent_income(DALLAS, NYC, 100000)["estimate_note"]
+
+
+def test_owner_scaling_falls_back_to_census_value_when_zillow_is_missing():
+    dayton = R.find_metro("Dayton-Kettering")[0]  # no Zillow match
+    r = R.equivalent_income(DALLAS, dayton, 100000, tenure="own", housing_year=24000)
+    assert r["housing_scale_source"] == "Census median home value"
+    assert r["housing_scale"] == pytest.approx(R.metro(dayton)["median_home_value"] / R.metro(DALLAS)["median_home_value"], abs=0.001)
+
+
+def test_city_income_tax_applies_only_when_the_household_is_in_the_city():
+    suburb = R.equivalent_income(DALLAS, NYC, 100000)
+    city = R.equivalent_income(DALLAS, NYC, 100000, dest_city="New York")
+    assert city["city_tax"]["dest"] == "New York" and suburb["city_tax"]["dest"] is None
+    assert city["equivalent_income_in_dest"] > suburb["equivalent_income_in_dest"]
+    philly = R.find_metro("Philadelphia-Camden")[0]
+    assert R.equivalent_income(DALLAS, philly, 100000, dest_city="Philadelphia")["city_tax"]["dest"] == "Philadelphia"
+
+
+def test_catalog_bridge_returns_both_views_when_a_housing_cost_is_given():
+    from comparison.catalog_bridge import catalog_equivalency
+    r = catalog_equivalency("dallas", "nyc", 120000, monthly_cost=2200, dest_state="NJ", dest_city="Hoboken")
+    assert r["rent"]["equivalent_income_in_dest"] > 0 and r["own"]["equivalent_income_in_dest"] > 0
+    assert r["rent"]["tax_states"]["dest"] == "New Jersey"
+    assert r["rent"]["city_tax"]["dest"] is None  # Hoboken has no cited city tax
+
+
+def test_catalog_bridge_renter_only_without_cost_and_skips_same_metro():
+    from comparison.catalog_bridge import catalog_equivalency
+    r = catalog_equivalency("dallas", "nyc", 120000, dest_city="New York")
+    assert r["own"] is None and r["rent"]["city_tax"]["dest"] == "New York"
+    same = catalog_equivalency("nyc", "nyc", 120000, monthly_cost=3000)
+    assert same["same_metro"] and same["rent"] is None
+
+
+def test_every_catalog_metro_key_maps_to_a_priced_metro():
+    from comparison import catalog_bridge as B
+    for key, code in B._CBSA.items():
+        assert code in R._msa, key

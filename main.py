@@ -5521,6 +5521,38 @@ def geocode_location(location: str):
     }
 
 
+@app.get("/relocation/equivalent", dependencies=[Depends(require_proxy_auth)])
+def relocation_equivalent(
+    origin_metro: str,
+    dest_metro: str,
+    income: float,
+    monthly_cost: Optional[float] = None,
+    origin_state: Optional[str] = None,
+    dest_state: Optional[str] = None,
+    origin_city: Optional[str] = None,
+    dest_city: Optional[str] = None,
+):
+    """
+    Income needed in dest_metro to keep the same money left over as `income` leaves in
+    origin_metro (estimate; metro-level BEA prices, Census/Zillow housing, state and some city
+    income tax). Metros are catalog metro keys such as "nyc". Profile income and current
+    monthly housing cost come from the user's profile; nothing else is asked of the user.
+    """
+    from comparison.catalog_bridge import catalog_equivalency, known_metro
+    if income <= 0:
+        raise HTTPException(status_code=400, detail="income must be positive")
+    if not (known_metro(origin_metro) and known_metro(dest_metro)):
+        raise HTTPException(status_code=404, detail="Unknown metro")
+    try:
+        return catalog_equivalency(
+            origin_metro, dest_metro, income, monthly_cost=monthly_cost,
+            origin_state=origin_state, dest_state=dest_state,
+            origin_city=origin_city, dest_city=dest_city,
+        )
+    except KeyError as e:
+        raise HTTPException(status_code=422, detail=f"Cannot price that state: {e}")
+
+
 @app.get("/climate_profile", dependencies=[Depends(require_proxy_auth)])
 def climate_profile_endpoint(lat: float, lon: float):
     """Return NOAA climate profile for a lat/lon."""
