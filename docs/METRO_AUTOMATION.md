@@ -55,6 +55,7 @@ Each decision is written to the output with the evidence that triggered it. A pl
 | C1 own agency | A police agency named for the place, within 15 miles of the pin, returns agency-level data | Map the place to it (`data/crime_agency_map.json`) |
 | C2 neighborhood | The place is a neighborhood of city X and "X Police Department" returns data | Map city X to it |
 | C3 unincorporated | A Census-designated place (CDP) with no agency of its own and a county sheriff with data | Map to the sheriff as a county proxy (lower confidence; the scorer labels it) |
+| C5 mismatch | A scored suburb whose matched agency is not named for it, while a police agency named for it (within 15 miles) returns data | Map it to that agency (the automatic match picked a lookalike or a neighbor: Highland Village matched to the Houston PD, Citrus Heights to "Fontana") |
 | C4 otherwise | None of the above | Record the gap with the nearby agencies that were not borrowed. Never use a neighboring town's numbers |
 | T transit | Transitland found no routes and a retry agrees | Accept; the reason states the OpenStreetMap bus stops within 1.9 miles |
 | H healthcare | No clinics, pharmacies or hospitals found and OpenStreetMap shows none within 3 miles | Accept; the reason states the 7.5-mile count |

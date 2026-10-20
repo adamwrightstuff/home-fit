@@ -18,6 +18,8 @@ Rules (DESIGN_PRINCIPLES.md: objective, reproducible, same for every place)
   C3 unincorporated a Census-designated place (CDP) with no agency of its own and a county sheriff with data
                     -> map to the sheriff as a county proxy (lower confidence, labelled by the scorer)
   C4 otherwise      record the gap with the probe's evidence; never borrow a neighbouring town's numbers
+  C5 mismatch       a scored suburb whose matched agency is not named for it, while a police agency named for it (within 15
+                    miles) returns data -> map it to that agency (the automatic match picked a lookalike or a neighbour)
   T  transit        Transitland found no routes AND a retry agrees -> accept; reason states the OpenStreetMap bus stops
                     within 1.9 miles (so a reader can see whether service exists beyond the search radius)
   H  healthcare     no clinics/pharmacies/hospitals found AND OpenStreetMap shows none within 3 miles -> accept
@@ -147,6 +149,43 @@ def crime_decisions(results: List[Dict[str, Any]], metro: str, lsad: Dict[Tuple[
     return out
 
 
+def mismatch_decisions(rows: List[Dict[str, Any]], metro: str, agencies_for: Callable[[str], List[Dict[str, Any]]],
+                       rate_fn: Callable, last_year: int) -> List[Dict[str, Any]]:
+    """Rule C5. Pure given its inputs: for scored suburbs, compare the matched agency with agencies named for the place."""
+    from . import fbi_probe as fp
+
+    cat = _catalog_rows(metro)
+    out = []
+    for r in rows:
+        c = r["catalog"]
+        if not r.get("success") or c.get("type") != "suburb" or cat.get(c["name"], {}).get("type") != "suburb":
+            continue
+        cs = r["score"]["livability_pillars"].get("community_safety", {})
+        matched = ((cs.get("breakdown") or {}).get("agency_name") or "")
+        base = c["name"].lower()
+        if not matched or base in matched.lower():
+            continue
+        best = None
+        for ag in agencies_for(c["state_abbr"]):
+            name = fp._name(ag)
+            if base not in name.lower() or not re.search(r"police", name, re.I) or SPECIAL_AGENCY.search(name):
+                continue
+            try:
+                d = fp._km((float(c["lat"]), float(c["lon"])), (float(fp._get(ag, "latitude", "lat")), float(fp._get(ag, "longitude", "lng", "lon"))))
+            except (TypeError, ValueError):
+                continue
+            if d > OWN_MAX_KM:
+                continue
+            data = fp.agency_data(fp._ori(ag), name, rate_fn, last_year)
+            if data and (best is None or d < best[0]):
+                best = (d, name, data)
+        if best:
+            out.append({"place": c["name"], "state": c["state_abbr"], "action": "map", "kind": "own", "agency": best[1], "keys": _keys(c["name"]),
+                        "reason": f"C5: scored with '{matched}', but {best[1]} is named for the place, {best[0] / 1.609:.0f} miles away, "
+                                  f"and returns {best[2]['year']} agency data"})
+    return out
+
+
 def _keys(name: str) -> List[str]:
     base = name.lower()
     return [base, f"{base} township"]
@@ -206,6 +245,20 @@ def finish(metro: str, *, dry_run: bool = False, api_base: str = "http://127.0.0
             path.with_suffix(".crime_decisions.json").write_text(json.dumps(decisions, indent=2))
         for d in decisions:
             log(f"   {d['place']:26} {d['action']:4} {d.get('agency', '-')[:40]:40} | {d['reason'][:90]}")
+        import datetime
+
+        from data_sources import crime_api
+        cache: Dict[str, List[Dict[str, Any]]] = {}
+
+        def agencies_for(st: str) -> List[Dict[str, Any]]:
+            if st not in cache:
+                cache[st] = crime_api._fetch_fbi_agencies(st) or []
+            return cache[st]
+
+        extra = mismatch_decisions(rows, metro, agencies_for, crime_api._fetch_fbi_agency_rate, datetime.date.today().year - 1)
+        for d in extra:
+            log(f"   {d['place']:26} map  {d['agency'][:40]:40} | {d['reason'][:100]}")
+        decisions += extra
     else:
         log("   no FBI API key in the environment; skipped")
 

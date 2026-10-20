@@ -178,3 +178,34 @@ def test_apply_map_writes_keys_for_each_decision(tmp_path, monkeypatch):
                        {"action": "gap", "state": "TX"}])
     m = json.loads((p / "crime_agency_map.json").read_text())
     assert n == 1 and m["TX"]["a"] == {"agency": "A PD", "kind": "own"} and "a township" in m["TX"]
+
+
+# ---------------------------------------------------------------------------------------------- finish: rule C5 (mismatch)
+def scored(name, matched, lat=30.0, lon=-98.0, typ="suburb"):
+    return {"success": True, "catalog": {"name": name, "type": typ, "state_abbr": "TX", "lat": str(lat), "lon": str(lon)},
+            "score": {"livability_pillars": {"community_safety": {"breakdown": {"agency_name": matched}}}}}
+
+
+def test_c5_remaps_a_place_scored_with_a_lookalike_agency(monkeypatch):
+    monkeypatch.setattr(fin, "_catalog_rows", lambda metro: {"Highland Village": {"type": "suburb"}})
+    agencies = [{"agency_name": "Highland Village Police Department", "ori": "X1", "latitude": 30.01, "longitude": -98.0},
+                {"agency_name": "Houston Police Department", "ori": "X2", "latitude": 29.7, "longitude": -95.4}]
+    rate = lambda ori, kind, yr, name: (5.0, "agency", 1000)  # noqa: E731
+    out = fin.mismatch_decisions([scored("Highland Village", "Houston Police Department")], "m", lambda st: agencies, rate, 2024)
+    assert len(out) == 1 and out[0]["agency"] == "Highland Village Police Department" and out[0]["reason"].startswith("C5")
+
+
+def test_c5_leaves_correct_matches_and_far_agencies_alone(monkeypatch):
+    monkeypatch.setattr(fin, "_catalog_rows", lambda metro: {"Plano": {"type": "suburb"}, "Comfort": {"type": "suburb"}})
+    rate = lambda ori, kind, yr, name: (5.0, "agency", 1000)  # noqa: E731
+    ok = fin.mismatch_decisions([scored("Plano", "Plano Police Department")], "m", lambda st: [], rate, 2024)
+    far = fin.mismatch_decisions([scored("Comfort", "Kendall County Sheriff's Office")], "m",
+                                 lambda st: [{"agency_name": "Point Comfort Police Department", "ori": "Y", "latitude": 28.6, "longitude": -96.5}],
+                                 rate, 2024)
+    assert ok == [] and far == []
+
+
+def test_c5_skips_neighborhoods_and_unscored_rows(monkeypatch):
+    monkeypatch.setattr(fin, "_catalog_rows", lambda metro: {"Uptown": {"type": "neighborhood"}})
+    rows = [scored("Uptown", "Dallas Police Department", typ="neighborhood"), {"success": False, "catalog": {"name": "X", "type": "suburb"}}]
+    assert fin.mismatch_decisions(rows, "m", lambda st: [], lambda *a: None, 2024) == []
