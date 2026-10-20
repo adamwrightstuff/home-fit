@@ -243,5 +243,191 @@
       "agency": "Pinal County Sheriff's Office",
       "kind": "county"
     }
+  },
+  "CA": {
+    "antelope": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "antelope township": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "cameron park": {
+      "agency": "El Dorado County Sheriff's Office",
+      "kind": "county"
+    },
+    "cameron park township": {
+      "agency": "El Dorado County Sheriff's Office",
+      "kind": "county"
+    },
+    "carmichael": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "carmichael township": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "clarksburg": {
+      "agency": "Yolo County Sheriff's Office",
+      "kind": "county"
+    },
+    "clarksburg township": {
+      "agency": "Yolo County Sheriff's Office",
+      "kind": "county"
+    },
+    "el dorado hills": {
+      "agency": "El Dorado County Sheriff's Office",
+      "kind": "county"
+    },
+    "el dorado hills township": {
+      "agency": "El Dorado County Sheriff's Office",
+      "kind": "county"
+    },
+    "esparto": {
+      "agency": "Yolo County Sheriff's Office",
+      "kind": "county"
+    },
+    "esparto township": {
+      "agency": "Yolo County Sheriff's Office",
+      "kind": "county"
+    },
+    "fair oaks": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "fair oaks township": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "florin": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "florin township": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "foothill farms": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "foothill farms township": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "georgetown": {
+      "agency": "El Dorado County Sheriff's Office",
+      "kind": "county"
+    },
+    "georgetown township": {
+      "agency": "El Dorado County Sheriff's Office",
+      "kind": "county"
+    },
+    "gold river": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "gold river township": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "knights landing": {
+      "agency": "Yolo County Sheriff's Office",
+      "kind": "county"
+    },
+    "knights landing township": {
+      "agency": "Yolo County Sheriff's Office",
+      "kind": "county"
+    },
+    "la riviera": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "la riviera township": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "meadow vista": {
+      "agency": "Placer County Sheriff's Office",
+      "kind": "county"
+    },
+    "meadow vista township": {
+      "agency": "Placer County Sheriff's Office",
+      "kind": "county"
+    },
+    "newcastle": {
+      "agency": "Placer County Sheriff's Office",
+      "kind": "county"
+    },
+    "newcastle township": {
+      "agency": "Placer County Sheriff's Office",
+      "kind": "county"
+    },
+    "north highlands": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "north highlands township": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "orangevale": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "orangevale township": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "penryn": {
+      "agency": "Placer County Sheriff's Office",
+      "kind": "county"
+    },
+    "penryn township": {
+      "agency": "Placer County Sheriff's Office",
+      "kind": "county"
+    },
+    "pollock pines": {
+      "agency": "El Dorado County Sheriff's Office",
+      "kind": "county"
+    },
+    "pollock pines township": {
+      "agency": "El Dorado County Sheriff's Office",
+      "kind": "county"
+    },
+    "rancho murieta": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "rancho murieta township": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "rio linda": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "rio linda township": {
+      "agency": "Sacramento County Sheriff's Office",
+      "kind": "county"
+    },
+    "shingle springs": {
+      "agency": "El Dorado County Sheriff's Office",
+      "kind": "county"
+    },
+    "shingle springs township": {
+      "agency": "El Dorado County Sheriff's Office",
+      "kind": "county"
+    },
+    "citrus heights": {
+      "agency": "Citrus Heights Police Department",
+      "kind": "own"
+    },
+    "citrus heights township": {
+      "agency": "Citrus Heights Police Department",
+      "kind": "own"
+    }
   }
 }

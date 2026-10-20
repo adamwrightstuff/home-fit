@@ -108,6 +108,7 @@ function inferFromRegistry(state: string, county: string): CatalogMetro | null {
   if (state === 'TX' && ['Collin', 'Dallas', 'Denton', 'Ellis', 'Hunt', 'Johnson', 'Kaufman', 'Parker', 'Rockwall', 'Tarrant', 'Wise'].includes(county)) return 'dallas'
   if (state === 'TX' && ['Austin', 'Brazoria', 'Chambers', 'Fort Bend', 'Galveston', 'Harris', 'Liberty', 'Montgomery', 'Waller'].includes(county)) return 'houston'
   if (state === 'TX' && ['Atascosa', 'Bandera', 'Bexar', 'Comal', 'Guadalupe', 'Kendall', 'Medina', 'Wilson'].includes(county)) return 'san_antonio'
+  if (state === 'CA' && ['El Dorado', 'Placer', 'Sacramento', 'Yolo'].includes(county)) return 'sacramento'
   if (state === 'AZ') return 'phoenix'
   return null
 }

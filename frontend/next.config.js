@@ -16,6 +16,7 @@ const CATALOG_DATA_FILES = [
   'data/houston_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   'data/phoenix_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   'data/san_antonio_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  'data/sacramento_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   // END GENERATED files
   'data/catalog_climate_profiles.jsonl',
 ]
