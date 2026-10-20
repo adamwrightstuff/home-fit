@@ -23,7 +23,12 @@ from data_sources import school_snapshot  # noqa: E402
 from data_sources.schools_api import normalize_state  # noqa: E402
 from pillars.schools import get_school_data, summary_extras  # noqa: E402
 
-METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia", "dallas", "houston")
+try:  # the registry (data/metro_registry.json) is the single list of metros
+    from scripts.metro_agent import registry as _registry
+
+    METROS = tuple(_registry.slugs())
+except Exception:  # noqa: BLE001
+    METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia", "dallas", "houston")
 VERSION = "zoned_v1_snapshot"
 
 

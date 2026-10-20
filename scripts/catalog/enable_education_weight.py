@@ -25,10 +25,19 @@ import json
 import os
 import shutil
 
-CATALOGS = [
-    f"data/{m}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
-    for m in ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia", "dallas", "houston")
-]
+try:  # the registry (data/metro_registry.json) is the single list of metros
+    from scripts.metro_agent import registry as _registry
+
+    _METROS = tuple(_registry.slugs())
+except Exception:  # noqa: BLE001
+    _METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia", "dallas", "houston")
+
+
+def catalog_path(metro: str) -> str:
+    return f"data/{metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
+
+
+CATALOGS = [catalog_path(m) for m in _METROS]
 EDU = "quality_education"
 # The 13 default pillars. A null score on one of these is a data gap: it keeps its weight with
 # contribution 0 and the total is scaled by 100/(100 - gap weight), so the place is not penalised
@@ -83,25 +92,39 @@ def reweight(sc: dict) -> tuple[float, float] | None:
     return old_total, sc["total_score"]
 
 
-def main():
-    for fn in CATALOGS:
+def reweight_file(fn: str, backup: bool = True) -> int:
+    """Apply the education weight to one catalog file in place. Returns the number of places reweighted."""
+    if backup:
+        shutil.copyfile(fn, fn + ".bakEdu")
+    tmp = fn + ".new"
+    n = 0
+    with open(fn) as src, open(tmp, "w") as out:
+        for line in src:
+            try:
+                row = json.loads(line)
+            except Exception:
+                out.write(line)
+                continue
+            if reweight(row.get("score", {})):
+                n += 1
+            out.write(json.dumps(row) + "\n")
+    os.replace(tmp, fn)
+    return n
+
+
+def main(argv=None):
+    """No arguments: every metro (rewrites each file, so totals may move by rounding). --metro X: only that metro."""
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--metro", action="append", help="limit to this metro (repeatable); default all")
+    ap.add_argument("--no-backup", action="store_true")
+    args = ap.parse_args(argv)
+    for fn in [catalog_path(m) for m in args.metro] if args.metro else CATALOGS:
         if not os.path.isfile(fn):
             continue
-        shutil.copyfile(fn, fn + ".bakEdu")
-        tmp = fn + ".new"
-        n = 0
-        with open(fn) as src, open(tmp, "w") as out:
-            for line in src:
-                try:
-                    row = json.loads(line)
-                except Exception:
-                    out.write(line)
-                    continue
-                if reweight(row.get("score", {})):
-                    n += 1
-                out.write(json.dumps(row) + "\n")
-        os.replace(tmp, fn)
-        print(f"{fn}: reweighted {n} places (backup: {fn}.bakEdu)", flush=True)
+        n = reweight_file(fn, backup=not args.no_backup)
+        print(f"{fn}: reweighted {n} places" + ("" if args.no_backup else f" (backup: {fn}.bakEdu)"), flush=True)
 
 
 if __name__ == "__main__":

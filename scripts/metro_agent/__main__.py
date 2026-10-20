@@ -88,7 +88,38 @@ def main() -> int:
     p12.add_argument("--ref", default="HEAD")
     p12.add_argument("--threshold", type=float, default=3.0, help="report composite moves of at least this many points")
 
+    p13 = sub.add_parser("registry", help="list the metro registry, set a metro's status, or regenerate the frontend blocks")
+    p13.add_argument("action", choices=["list", "generate", "set-status"])
+    p13.add_argument("--metro")
+    p13.add_argument("--status", choices=["building", "live"])
+
+    p14 = sub.add_parser("ship", help="gate, set the metro live, regenerate the frontend, stage only its files, commit and push")
+    p14.add_argument("--metro", required=True)
+    p14.add_argument("--dry-run", action="store_true", help="show what would be staged; change nothing")
+    p14.add_argument("--no-push", action="store_true", help="commit but do not push")
+    p14.add_argument("--message", help="commit message (default is generated)")
+
     a = ap.parse_args()
+    if a.cmd == "ship":
+        from . import ship as sh
+        pf._load_env()
+        return sh.ship(a.metro, dry_run=a.dry_run, push=not a.no_push, message=a.message)
+    if a.cmd == "registry":
+        from . import registry as rg
+        metros = rg.load()
+        if a.action == "set-status":
+            if a.metro not in metros or not a.status:
+                print("give --metro <slug in the registry> and --status building|live")
+                return 2
+            metros[a.metro]["status"] = a.status
+            rg.save(metros)
+        if a.action in ("generate", "set-status"):
+            changed = rg.generate(metros)
+            print("generated frontend blocks; changed: " + (", ".join(changed) if changed else "nothing"))
+        else:
+            for slug, m in metros.items():
+                print(f"{slug:14} {m['status']:9} {m['label']:4} {m['long_label']}")
+        return 0
     if a.cmd == "diff":
         from . import changes as ch
         from . import health as hl

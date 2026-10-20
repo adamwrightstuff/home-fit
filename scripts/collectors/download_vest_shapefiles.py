@@ -46,6 +46,13 @@ _SHPZIP_2020: dict[str, int] = {
     "MD": 12070366,
     "PA": 14304796,
     "TX": 12070365,
+    "AZ": 4864722,
+    "NV": 11595850,
+    "FL": 12070362,
+    "NC": 11595848,
+    "GA": 11070054,
+    "MA": 5007849,
+    "CO": 4863166,
 }
 
 # 2024 per-state CSV/tab: doi:10.7910/DVN/NYTPDU
@@ -60,6 +67,13 @@ _CSV_2024: dict[str, tuple[int, str]] = {
     "MD": (13731175, "2024-md-precinct-general.tab"),
     "PA": (13731153, "2024-pa-precinct-general.tab"),
     "TX": (13731167, "2024-tx-precinct-general.tab"),
+    "AZ": (13731136, "2024-az-precinct-general.csv"),
+    "NV": (13731154, "2024-nv-precinct-general.tab"),
+    "FL": (13731132, "2024-fl-precinct-general.tab"),
+    "NC": (13731149, "2024-nc-precinct-general.csv"),
+    "GA": (13731164, "2024-ga-precinct-general.tab"),
+    "MA": (13731133, "2024-ma-precinct-general.tab"),
+    "CO": (13731171, "2024-co-precinct-general.tab"),
 }
 
 

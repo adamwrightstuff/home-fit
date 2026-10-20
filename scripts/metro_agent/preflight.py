@@ -318,16 +318,31 @@ def check_crime_source(metro: str) -> Check:
 
 
 def check_registration(metro: str, csv_path: Optional[Path] = None) -> List[Check]:
+    """The metro must be in data/metro_registry.json (single source of truth). Its frontend entries are generated
+    from the registry, and only for live metros, so a metro being built is not expected in the frontend files."""
+    from . import registry
+
     out = []
-    meta = (REPO / "frontend" / "lib" / "catalogMetros.ts").read_text()
-    out.append(Check("frontend:registry", PASS if f"'{metro}'" in meta else FAIL,
-                     "in catalogMetros.ts" if f"'{metro}'" in meta else "missing from catalogMetros.ts",
-                     "" if f"'{metro}'" in meta else "add to CATALOG_METROS and CATALOG_METRO_META"))
-    fname = f"{metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
-    cfg = (REPO / "frontend" / "next.config.js").read_text()
-    out.append(Check("frontend:bundle", PASS if fname in cfg else FAIL,
-                     "in next.config.js" if fname in cfg else "missing from next.config.js",
-                     "" if fname in cfg else "add to outputFileTracingIncludes"))
+    try:
+        entry = registry.load().get(metro)
+    except Exception as e:  # noqa: BLE001
+        return [Check("registry", FAIL, f"could not read data/metro_registry.json: {type(e).__name__}")]
+    if entry is None:
+        return [Check("registry", FAIL, f"{metro} is not in data/metro_registry.json",
+                      "add it (label, long_label, color, bounds, status 'building', cbsa, states, inference) or run "
+                      "`metro_agent init --metro %s`" % metro)]
+    missing = [k for k in ("label", "long_label", "color", "bounds", "status") if k not in entry]
+    if missing:
+        return [Check("registry", FAIL, f"{metro} registry entry lacks {', '.join(missing)}")]
+    out.append(Check("registry", PASS, f"{metro} is in the registry (status {entry['status']})"))
+    if entry["status"] == "live":
+        fname = f"{metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
+        in_front = all(fname in (REPO / "frontend" / rel).read_text()
+                       for rel in ("next.config.js", "lib/catalogServer.ts")) and \
+            f"'{metro}'" in (REPO / "frontend" / "lib" / "catalogMetros.ts").read_text()
+        out.append(Check("frontend:generated", PASS if in_front else FAIL,
+                         "generated frontend blocks include it" if in_front else "generated frontend blocks are stale",
+                         "" if in_front else "PYTHONPATH=. python -m scripts.metro_agent registry generate"))
     return out
 
 

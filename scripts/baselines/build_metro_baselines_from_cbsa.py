@@ -70,14 +70,6 @@ CBSA_COUNTIES: Dict[str, Dict[str, List[str]]] = {
         "10": ["003"],  # New Castle DE
         "24": ["015"],  # Cecil MD
     },
-    "19100": {  # Dallas-Fort Worth-Arlington, TX
-        "48": ["085", "113", "121", "139", "231", "251", "257", "367", "397", "439", "497"],
-        # Collin, Dallas, Denton, Ellis, Hunt, Johnson, Kaufman, Parker, Rockwall, Tarrant, Wise
-    },
-    "26420": {  # Houston-The Woodlands-Sugar Land, TX
-        "48": ["015", "039", "071", "157", "167", "201", "291", "339", "473"],
-        # Austin, Brazoria, Chambers, Fort Bend, Galveston, Harris, Liberty, Montgomery, Waller
-    },
     "38060": {  # Phoenix-Mesa-Chandler, AZ
         "04": ["013", "021"],  # Maricopa, Pinal
     },
@@ -127,8 +119,6 @@ CBSA_TO_KEY = {
     "12420": "austin_metro",
     "16980": "chicago_metro",
     "37980": "philadelphia_metro",
-    "19100": "dallas_metro",
-    "26420": "houston_metro",
     "38060": "phoenix_metro",
     "12060": "atlanta_metro",
     "14460": "boston_metro",
@@ -142,6 +132,16 @@ CBSA_TO_KEY = {
     "41700": "san_antonio_metro",
     "45300": "tampa_metro",
 }
+
+# Metros added since the first seven live in data/metro_registry.json (single source of truth); merge them in.
+try:
+    from scripts.metro_agent import registry as _registry
+
+    _c, _k = _registry.cbsa_entries()
+    CBSA_COUNTIES.update(_c)
+    CBSA_TO_KEY.update(_k)
+except Exception:  # noqa: BLE001 - the builder still works for the first seven without the registry
+    pass
 
 # CBSAs that reuse another metro's baseline without contributing tracts to it.
 # 14860 = Bridgeport-Stamford-Norwalk (Fairfield County CT), the NYC commuter belt.

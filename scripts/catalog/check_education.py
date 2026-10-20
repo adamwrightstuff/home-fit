@@ -39,7 +39,12 @@ REPO = Path(__file__).resolve().parents[2]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
-METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia", "dallas", "houston")
+try:  # the registry (data/metro_registry.json) is the single list of metros
+    from scripts.metro_agent import registry as _registry
+
+    METROS = tuple(_registry.slugs())
+except Exception:  # noqa: BLE001
+    METROS = ("nyc", "la", "sf", "seattle", "austin", "chicago", "philadelphia", "dallas", "houston")
 EXCEPTIONS_PATH = REPO / "data" / "education_check_exceptions.json"
 NCES_CSV = REPO / "data_cache" / "nces_ccd_2324" / "ccd_sch_029_2324_w_1a_073124.csv"
 MIN_RATED = 3
@@ -47,7 +52,8 @@ BIG_DISTRICT_SCHOOLS = 6
 STATE_ABBR = {
     "New York": "NY", "New Jersey": "NJ", "Connecticut": "CT", "California": "CA",
     "Washington": "WA", "Texas": "TX", "Illinois": "IL", "Indiana": "IN",
-    "Pennsylvania": "PA", "Delaware": "DE", "Maryland": "MD",
+    "Pennsylvania": "PA", "Delaware": "DE", "Maryland": "MD", "Arizona": "AZ", "Colorado": "CO", "Florida": "FL",
+    "Georgia": "GA", "Massachusetts": "MA", "Nevada": "NV", "North Carolina": "NC",
 }
 
 _nces_cache: Dict[str, Any] = {}

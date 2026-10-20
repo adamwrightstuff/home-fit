@@ -27,13 +27,23 @@ from data_sources import school_zones as sz  # noqa: E402
 
 OUT = os.path.join(REPO, "data", "school_geo")
 SIMPLIFY = 0.0001   # degrees, about 10 m
-STATES = ("06", "09", "10", "17", "18", "24", "34", "36", "42", "48", "53")
+STATES = ("04", "06", "08", "09", "10", "12", "13", "17", "18", "24", "25", "32", "34", "36", "37", "42", "48", "53")
 
 
 def _write(name: str, frame: "gpd.GeoDataFrame") -> int:
     frame = frame.copy()
     frame["geometry"] = frame.geometry.simplify(SIMPLIFY, preserve_topology=True)
-    frame["geometry"] = shapely.set_precision(frame.geometry.values, 1e-5)
+    try:
+        frame["geometry"] = shapely.set_precision(frame.geometry.values, 1e-5)
+    except shapely.errors.GEOSException:
+        # a few 2015-16 zone polygons are self-intersecting: repair only the ones that fail
+        fixed = []
+        for g in frame.geometry.values:
+            try:
+                fixed.append(shapely.set_precision(g, 1e-5))
+            except shapely.errors.GEOSException:
+                fixed.append(shapely.set_precision(shapely.make_valid(g), 1e-5))
+        frame["geometry"] = fixed
     frame = frame[~frame.geometry.is_empty]
     path = os.path.join(OUT, f"{name}.geojson.gz")
     with gzip.open(path, "wt", encoding="utf-8") as f:
