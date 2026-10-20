@@ -89,7 +89,7 @@ export default function RelocationEquivalent({ dest, fallbackOrigin, className }
         To keep the same money left over as at {state.originName} ({usd(state.income)}), you would need about {parts.join(' or ')}
       </div>
       <div className="mt-0.5 opacity-80">
-        Estimate: state and some city income tax, metro prices, median housing costs.
+        Estimate: federal, payroll, state and some city income tax, metro prices, median housing costs.
         {res.own?.housing_scale_source === 'Zillow Home Value Index' && (
           <>
             {' '}Owner values: <a href="https://www.zillow.com/research/data/" target="_blank" rel="noopener noreferrer" className="underline">Zillow Research</a> (ZHVI).

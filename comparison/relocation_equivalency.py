@@ -2,7 +2,7 @@
 Metro-to-metro relocation equivalency: what income do you need in metro B to keep the same
 amount of money left over as you have in metro A?
 
-    left_over = income - state income tax - housing - everyday spending
+    left_over = income - federal income tax - payroll tax - state/city income tax - housing - everyday
 
 Built only from national sources (data/relocation_rpp.json, rebuilt by
 scripts/baselines/build_relocation_inputs.py), so it covers every BEA metro (387):
@@ -20,6 +20,11 @@ scripts/baselines/build_relocation_inputs.py), so it covers every BEA metro (387
   No mortgage rate, down payment or separate property tax is assumed.  Owner scaling holds
   at any common rate and assumes the same loan terms and that tax moves with price (true in
   Texas, Illinois, California; weaker in the Northeast).  It answers "same relative home".
+- Federal income tax (2026 married-filing-jointly brackets, $32,200 standard deduction, IRS Rev. Proc.
+  2025-32) and payroll tax (6.2% Social Security up to the $184,500 wage base per earner, 1.45%
+  Medicare), assuming two equal earners.  These schedules are the same everywhere, but they matter
+  because the income needed in a pricier metro is itself taxed.  No credits or deductions beyond
+  the standard deduction.
 - State income tax (married filing jointly, Tax Foundation 2026) for the state the user will
   live in.  A metro can span states (New York-Newark-Jersey City is NY and NJ); the tax state
   defaults to the metro's first-listed state and can be overridden.  City income tax (NYC,
@@ -34,7 +39,7 @@ contributions, not prices) = $42,472.  Utilities sit inside gross rent and housi
 utilities line is not applied to the basket.  BEA's published line weights are not in its bulk
 files; goods versus other services are weighted by a least-squares fit of the all-items index.
 
-Not modelled: homeowners insurance, payroll tax (equal everywhere), childcare, transportation,
+Not modelled: homeowners insurance, the 0.9% additional Medicare tax, tax credits, childcare, transportation,
 car and health insurance, sales tax, and anything that differs between towns inside a metro.
 This is a metro-to-metro tool.
 """
@@ -71,7 +76,7 @@ _ABBR = {
 
 
 ESTIMATE_NOTE = (
-    "Estimate for comparing metros, not a quote. Uses state income tax (plus city income tax for "
+    "Estimate for comparing metros, not a quote. Uses federal, payroll and state income tax (plus city income tax for "
     "New York, Philadelphia and Yonkers when the household is in the city; no property or sales "
     "tax), a national average everyday basket, and metro housing costs; owner results assume the "
     "same relative home."
@@ -102,6 +107,11 @@ def tax_state(code: str, override: Optional[str] = None) -> str:
     return _ABBR.get(st, st)
 
 
+def _city_tax_applied(code: str, state: Optional[str], city: Optional[str], income: float) -> bool:
+    st = tax_state(code, state)
+    return local_income_tax(city, st, income, state_income_tax(st, income))[0] > 0
+
+
 def _housing_scale(origin: str, dest: str, tenure: str) -> Dict[str, Any]:
     if tenure == "rent":
         return {"scale": metro(dest)["housing"] / metro(origin)["housing"], "source": "BEA housing (rent) price level"}
@@ -111,14 +121,37 @@ def _housing_scale(origin: str, dest: str, tenure: str) -> Dict[str, Any]:
     return {"scale": d["median_home_value"] / o["median_home_value"], "source": "Census median home value"}
 
 
+# Federal 2026, married filing jointly: [lower bound of bracket, rate].
+_FED_STD_DEDUCTION = 32200.0
+_FED_BRACKETS = [(0, .10), (24800, .12), (100800, .22), (211400, .24), (403550, .32), (512450, .35), (768700, .37)]
+_SS_RATE, _SS_WAGE_BASE, _MEDICARE_RATE = 0.062, 184500.0, 0.0145
+
+
+def federal_income_tax(income: float) -> float:
+    taxable = max(0.0, income - _FED_STD_DEDUCTION)
+    tax = 0.0
+    for i, (lo, rate) in enumerate(_FED_BRACKETS):
+        hi = _FED_BRACKETS[i + 1][0] if i + 1 < len(_FED_BRACKETS) else float("inf")
+        if taxable > lo:
+            tax += (min(taxable, hi) - lo) * rate
+    return tax
+
+
+def payroll_tax(income: float) -> float:
+    """Social Security (capped per earner) and Medicare, two equal earners."""
+    per_earner = income / 2.0
+    return 2.0 * (min(per_earner, _SS_WAGE_BASE) * _SS_RATE + per_earner * _MEDICARE_RATE)
+
+
 def costs_in(code: str, income: float, housing: float, *, state: Optional[str] = None,
              city: Optional[str] = None) -> Dict[str, float]:
     st = tax_state(code, state)
     s_tax = state_income_tax(st, income)
     c_tax, _ = local_income_tax(city, st, income, s_tax)
+    fed = federal_income_tax(income) + payroll_tax(income)
     everyday = BASKET_BASE * basket_index(code) / 100.0
-    return {"tax": s_tax + c_tax, "housing": housing, "everyday": everyday,
-            "left_over": income - s_tax - c_tax - housing - everyday}
+    return {"tax": s_tax + c_tax + fed, "federal_and_payroll_tax": fed, "housing": housing,
+            "everyday": everyday, "left_over": income - s_tax - c_tax - fed - housing - everyday}
 
 
 def equivalent_income(origin: str, dest: str, income: float, *, tenure: str = "rent",
@@ -162,8 +195,8 @@ def equivalent_income(origin: str, dest: str, income: float, *, tenure: str = "r
         "dest_costs_at_equivalent_income": rnd(b),
         "housing_scale": round(h_dest / h_origin, 3),
         "housing_scale_source": hs["source"],
-        "city_tax": {"origin": origin_city if a["tax"] > state_income_tax(tax_state(origin, origin_state), income) else None,
-                     "dest": dest_city if b["tax"] > state_income_tax(tax_state(dest, dest_state), need) else None},
+        "city_tax": {"origin": origin_city if _city_tax_applied(origin, origin_state, origin_city, income) else None,
+                     "dest": dest_city if _city_tax_applied(dest, dest_state, dest_city, need) else None},
     }
 
 

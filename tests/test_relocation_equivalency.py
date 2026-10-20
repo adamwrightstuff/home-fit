@@ -71,9 +71,13 @@ def test_a_users_own_rent_is_scaled_not_replaced_by_the_median():
 
 def test_costs_match_hand_calculation():
     c = R.costs_in(DALLAS, 100000, 20000)
-    assert c["tax"] == 0.0  # Texas has no wage income tax
+    # Texas has no wage income tax, so tax is federal income tax plus payroll tax only.
+    fed_hand = (100000 - 32200 - 24800) * 0.12 + 24800 * 0.10  # taxable 67,800: 10% to 24,800, then 12%
+    assert R.federal_income_tax(100000) == pytest.approx(fed_hand)
+    assert R.payroll_tax(100000) == pytest.approx(100000 * (0.062 + 0.0145))
+    assert c["tax"] == pytest.approx(fed_hand + 100000 * 0.0765)
     assert c["everyday"] == pytest.approx(R.BASKET_BASE * R.basket_index(DALLAS) / 100)
-    assert c["left_over"] == pytest.approx(100000 - 20000 - c["everyday"])
+    assert c["left_over"] == pytest.approx(100000 - 20000 - c["everyday"] - c["tax"])
 
 
 def test_tax_state_defaults_to_first_listed_and_can_be_overridden():
@@ -141,3 +145,17 @@ def test_bridge_accepts_cbsa_codes_for_places_outside_the_catalog():
     via_code = catalog_equivalency("19100", "35620", 100000)["rent"]["equivalent_income_in_dest"]
     via_key = catalog_equivalency("dallas", "nyc", 100000)["rent"]["equivalent_income_in_dest"]
     assert via_code == via_key
+
+
+def test_social_security_tax_stops_at_the_wage_base_per_earner():
+    low = R.payroll_tax(2 * R._SS_WAGE_BASE)
+    high = R.payroll_tax(4 * R._SS_WAGE_BASE)
+    assert high - low == pytest.approx(2 * R._SS_WAGE_BASE * R._MEDICARE_RATE)  # only Medicare grows past the cap
+
+
+def test_federal_tax_makes_the_required_income_gap_larger_than_the_cost_gap():
+    r = R.equivalent_income(DALLAS, NYC, 100000, housing_year=18000)
+    cost_gap = (r["dest_costs_at_equivalent_income"]["housing"] + r["dest_costs_at_equivalent_income"]["everyday"]
+                - r["origin_costs"]["housing"] - r["origin_costs"]["everyday"])
+    income_gap = r["equivalent_income_in_dest"] - 100000
+    assert income_gap > cost_gap  # extra income is taxed, so more is needed than the extra cost
