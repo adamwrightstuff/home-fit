@@ -125,7 +125,7 @@ _Filter only — no weight changes._
 
 | Answer | Filter output |
 |---|---|
-| Established and stable | `filterTrajectory = 'Arrived'` |
+| Established and stable | `filterTrajectory = 'Stable'` (direction only; no longer implies an affluent place, pair with an archetype filter if needed) |
 | Either works | `filterTrajectory = 'all'` |
 | Up-and-coming with potential | `filterTrajectory = 'Up-and-Coming'` |
 

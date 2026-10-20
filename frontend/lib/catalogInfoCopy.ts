@@ -33,20 +33,10 @@ export const ARCHETYPE_COPY: Record<string, InfoCopy> = {
 }
 
 export const TRAJECTORY_COPY: Record<string, InfoCopy> = {
-  Arrived: {
-    title: 'Real Estate · Arrived',
-    body: 'Established at the top of its market, this neighborhood is already highly desirable. Appreciation has slowed, but demand remains strong and the neighborhood\'s appeal is well established.',
-    detail: 'Based on historical and recent home-value trends, demand, investment, and indicators of established neighborhood desirability.',
-  },
   'Up-and-Coming': {
     title: 'Real Estate · Up-and-Coming',
     body: 'This neighborhood is gaining real estate momentum, with rising values and growing demand. The market is still moving toward it rather than having already peaked.',
     detail: 'Based on recent home-value growth, demand, investment, development activity, and other indicators of increasing market momentum.',
-  },
-  Cooling: {
-    title: 'Real Estate · Cooling',
-    body: 'This neighborhood has come off a recent peak in the real estate market and is no longer moving upward as quickly. It remains desirable, but demand and appreciation are beginning to ease.',
-    detail: 'Based on recent changes in home values and demand compared with longer-term trends, along with investment and development activity.',
   },
   Declining: {
     title: 'Real Estate · Declining',

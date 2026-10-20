@@ -7,7 +7,8 @@ Apply the income-and-housing status_signal class (pillars.status_signal._classif
 2. Classifies each place from the stored housing summary and the metro class cutoffs, then updates the class
    fields (archetype, archetype_rule, status_label, status_insight, top_drivers) and re-blends the composite
    status_signal and it_score from the STORED wealth / home_cost / education / occupation, using the new class's
-   weights. Nothing else on the row changes; no recompute of the inputs, so no drift from live lookups.
+   weights. Also re-derives the direction-only trajectory (Up-and-Coming | Stable | Declining) from the stored
+   price-momentum inputs. Nothing else on the row changes; no recompute of the inputs, so no drift from live lookups.
 
   PYTHONPATH=. python3 scripts/catalog/recompute_status_class.py --metro dallas            # dry run
   PYTHONPATH=. python3 scripts/catalog/recompute_status_class.py --metro dallas --write
@@ -74,9 +75,9 @@ def main() -> int:
     ap.add_argument("--write", action="store_true")
     args = ap.parse_args()
 
-    from pillars.composite_indices import compute_hotness_score
+    from pillars.composite_indices import _area_type_from_payload, compute_hotness_score
     from pillars.status_signal import (
-        _build_top_drivers, _classify_class, _composite_score_from_weights, _get_archetype_weights,
+        _build_top_drivers, _classify_class, _classify_trajectory, _composite_score_from_weights, _get_archetype_weights,
         _get_status_insight, _get_status_label, _signal_strength_band,
     )
 
@@ -110,6 +111,7 @@ def main() -> int:
 
     # 2. classify from stored inputs and re-blend the composite
     old_c, new_c, moved = collections.Counter(), collections.Counter(), []
+    traj_c = collections.Counter()
     for r in rows:
         s = r.get("score") if r.get("success") else None
         if not isinstance(s, dict):
@@ -131,6 +133,12 @@ def main() -> int:
         bd["status_label"] = _get_status_label(arch)
         bd["status_insight"] = _get_status_insight(arch)
         bd["top_drivers"] = _build_top_drivers(w, h, e, o, arch)
+        ci = bd.get("classifier_inputs") or {}
+        bd["trajectory"], bd["trajectory_rule"] = _classify_trajectory(
+            archetype=arch, wealth=w, home_cost=h, stability=ci.get("stability"),
+            appreciation_3yr=ci.get("appreciation_3yr"), velocity_6mo=ci.get("velocity_6mo"),
+            renter_pct=sm.get("renter_pct"), area_type=_area_type_from_payload(s))
+        traj_c[bd["trajectory"]] += 1
         raw = _composite_score_from_weights(*_get_archetype_weights(arch), w, h, e, o)
         if raw is not None:
             final = round(max(0.0, min(100.0, raw)), 1)
@@ -142,6 +150,7 @@ def main() -> int:
                 s.get("happiness_index"), s.get("total_score"))
         s["status_signal_breakdown"] = bd
 
+    print("  trajectory", dict(traj_c))
     print("  before", [old_c[k] for k in ORDER], " after", [new_c[k] for k in ORDER], f" ({len(moved)} labels changed)")
     if args.write:
         path.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")

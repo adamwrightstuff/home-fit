@@ -956,6 +956,7 @@ def _classify_archetype(
 
 def _classify_trajectory(
     *,
+    archetype: Optional[str] = None,
     wealth: Optional[float],
     home_cost: Optional[float],
     stability: Optional[float] = None,
@@ -965,37 +966,26 @@ def _classify_trajectory(
     area_type: Optional[str] = None,
 ) -> Tuple[str, str]:
     """
-    Lifecycle trajectory badge: Arrived | Up-and-Coming | Stable | Cooling | Declining.
+    Direction-of-change badge: Up-and-Coming | Stable | Declining. Independent of how affluent a place is
+    (that is the class); the class only gates who can be Up-and-Coming.
 
-    Declining   — negative price momentum + low stability (<50): losing residents AND value.
-    Cooling     — negative price momentum + stable community (≥50): market softening from top.
-    Up-and-Coming — velocity-confirmed gentrification: wealth 48–78, urban, renter-heavy.
-    Arrived     — Elite/Affluent with no negative signal: locked in, established.
-    Stable      — Middle Class with no momentum signal.
-    (No badge)  — Working Class / Struggling without Up-and-Coming signal; trajectory adds
-                  no information beyond the archetype. Returned as "Stable" internally but
-                  filtered out by the frontend for those bands.
+    Declining     — 3-year home price decline of more than 3% (filters noise from minor fluctuations).
+    Up-and-Coming — velocity-confirmed gentrification: Working or Middle Class, urban, renter-heavy, with
+                    price momentum (or the stability fallback when no price history exists).
+    Stable        — everything else.
     """
     wealth_val = float(wealth) if wealth is not None else 0.0
     stab_val   = float(stability) if stability is not None else None
     renter_val = float(renter_pct) if renter_pct is not None else None
 
-    # ── Declining / Cooling (negative velocity) ───────────────────────────────
-    # Require >3% 3-year decline to filter noise from minor fluctuations.
-    # Cooling = Elite/Affluent (≥63) softening from a high base — market correction.
-    # Declining = Middle Class and below losing ground — already stretched, getting worse.
     if appreciation_3yr is not None and appreciation_3yr < -0.03:
-        if wealth_val >= 63:
-            return "Cooling", "cooling_affluent_correction"
-        return "Declining", "declining_lower_band"
+        return "Declining", "declining_price_momentum"
 
-    # ── Up-and-Coming ─────────────────────────────────────────────────────────
-    # Structural gate: wealth 48–78, urban neighbourhood, renter-heavy.
-    _uac_band   = 48 <= wealth_val <= 78
+    _uac_class  = archetype in ("Working Class", "Middle Class")
     _uac_renter = renter_val is None or renter_val > 0.30
     _uac_urban  = area_type is None or area_type in ('urban_core', 'urban_residential')
 
-    if _uac_band and _uac_renter and _uac_urban:
+    if _uac_class and _uac_renter and _uac_urban:
         if appreciation_3yr is not None or velocity_6mo is not None:
             _strong_momentum = appreciation_3yr is not None and appreciation_3yr >= 0.10
             _normal_momentum = (
@@ -1009,10 +999,6 @@ def _classify_trajectory(
             if (home_cost is not None and home_cost >= 65 and home_cost >= wealth_val + 15
                     and stab_val is not None and stab_val < 45):
                 return "Up-and-Coming", "uac_stability_fallback"
-
-    # ── Arrived ───────────────────────────────────────────────────────────────
-    if wealth_val >= 63:
-        return "Arrived", "arrived_elite" if wealth_val >= 88 else "arrived_affluent"
 
     return "Stable", "stable_default"
 
@@ -1237,6 +1223,7 @@ def compute_status_signal_with_breakdown(
         archetype, archetype_rule = _class
 
     trajectory, trajectory_rule = _classify_trajectory(
+        archetype=archetype,
         wealth=wealth,
         home_cost=home_cost,
         stability=stability,

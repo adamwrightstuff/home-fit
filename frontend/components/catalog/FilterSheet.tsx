@@ -44,8 +44,8 @@ interface FilterSheetProps {
   filterArchetypes: string[]
   onFilterArchetypesChange: (v: string[]) => void
   archetypes: string[]
-  filterTrajectory: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
-  onFilterTrajectoryChange: (v: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining') => void
+  filterTrajectory: 'all' | 'Up-and-Coming' | 'Stable' | 'Declining'
+  onFilterTrajectoryChange: (v: 'all' | 'Up-and-Coming' | 'Stable' | 'Declining') => void
   filterPoliticalLean: string[]
   onFilterPoliticalLeanChange: (v: string[]) => void
   filterHousingType: string[]
@@ -124,7 +124,7 @@ export default function FilterSheet({
   onClimatePrefsChange,
   resultCount,
 }: FilterSheetProps) {
-  type TrajectoryOption = 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
+  type TrajectoryOption = 'all' | 'Up-and-Coming' | 'Stable' | 'Declining'
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
@@ -319,7 +319,7 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Trajectory</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {(['all', 'Arrived', 'Up-and-Coming', 'Stable', 'Cooling', 'Declining'] as TrajectoryOption[]).map((t) =>
+              {(['all', 'Up-and-Coming', 'Stable', 'Declining'] as TrajectoryOption[]).map((t) =>
                 chip(filterTrajectory === t, t === 'all' ? 'All' : t === 'Up-and-Coming' ? 'Up & Coming' : t, () => onFilterTrajectoryChange(t))
               )}
             </div>

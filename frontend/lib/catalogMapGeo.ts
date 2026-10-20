@@ -11,7 +11,7 @@ import {
   scoreBandFill,
   scoreBandFillStatusArchetype,
 } from '@/lib/indexColorSystem'
-import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
+import { getStatusBadgeModel, normalizeTrajectory } from '@/lib/statusSignalArchetype'
 
 /** 0–100 score → bubble fill from active index ramp; Archetype map mode uses coral index ramp + archetype hue. */
 export function numericScoreColorForMode(
@@ -151,7 +151,7 @@ export function getAllCatalogIndexDisplay(
   const s = place.score
   const br = s.status_signal_breakdown
   const archetype = br?.archetype ?? null
-  const trajectory = br?.trajectory ?? null
+  const trajectory = normalizeTrajectory(br?.trajectory)
   const archetypeBadge = getStatusBadgeModel(
     br ?? null,
     typeof s.status_signal === 'number' ? s.status_signal : null

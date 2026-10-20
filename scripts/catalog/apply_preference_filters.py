@@ -19,7 +19,7 @@ Usage:
       --catalog data/nyc_metro_place_catalog_scores_merged.jsonl \\
       --weight community_safety=High --weight diversity=Medium \\
       --archetype Elite --archetype Affluent \\
-      --trajectory Arrived \\
+      --trajectory Stable \\
       --local-scene High \\
       --political-lean lean_d --political-lean moderate \\
       --nb-pref ocean --nb-pref canopy \\
@@ -469,7 +469,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--archetype", action="append", default=[], metavar="NAME",
                    help="Allow archetype (Elite, Affluent, …). Repeatable. Empty = all.")
     p.add_argument("--trajectory", action="append", default=[], metavar="NAME",
-                   help="Allow trajectory (Arrived, Stable, …). Repeatable. Empty = all.")
+                   help="Allow trajectory (Up-and-Coming, Stable, Declining). Repeatable. Empty = all.")
     p.add_argument("--local-scene", default=None, choices=["all", "Some", "High"],
                    help="Local scene minimum (all/Some/High)")
     p.add_argument("--built-form", action="append", default=[], metavar="LABEL",

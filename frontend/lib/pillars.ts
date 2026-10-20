@@ -228,23 +228,17 @@ export const TRAJECTORY_COPY = {
   tooltip:
     'How a neighborhood\'s market has moved over the past three years — based on home values and price momentum.',
   states: {
-    Arrived:
-      "This neighborhood's premium is established and holding. Wealth signals are high and the market isn't in active flux — you're buying stability and a known identity. These places rarely transform quickly, which is the point. Expect to pay full price for what you see.",
     'Up-and-Coming':
       "Strong appreciation signal over the past three years. The neighborhood is being discovered — wealth and status indicators are climbing and prices are following. You're buying in front of the premium, not after it. Identity may still be in flux, which carries both upside and uncertainty.",
     Stable:
       "No significant appreciation or depreciation signal. The neighborhood has a consistent character without active transformation. This isn't a negative — many desirable places are simply stable. What you see is what you'll get.",
-    Cooling:
-      'Prices have softened after a prior peak. The neighborhood may be over-supplied, losing a demand driver, or seeing early demographic shift. Not a crisis, but worth tracking recent comps closely before committing. The identity is intact; the market is less certain.',
     Declining:
-      'Consistent price decline over three or more years with no recovery signal. Underlying wealth or stability indicators are also weakening. This doesn\'t disqualify the neighborhood — but the market is telling a clear story. Approach with eyes open and a longer investment horizon.',
+      'Home prices have fallen by more than 3% over the past three years. This doesn\'t disqualify the neighborhood, but the market is telling a clear story. Worth tracking recent comps closely and approaching with a longer investment horizon.',
   } as Record<string, string>,
   tableRows: [
-    { label: 'Arrived', desc: 'Premium locked in, stable' },
     { label: 'Up-and-coming', desc: 'Prices rising, identity in flux' },
     { label: 'Stable', desc: 'No strong momentum either way' },
-    { label: 'Cooling', desc: 'Premium softening' },
-    { label: 'Declining', desc: 'Sustained downward pressure' },
+    { label: 'Declining', desc: 'Prices down over three years' },
   ] as { label: string; desc: string }[],
   source: 'Based on 3-year home value trend data.',
 }

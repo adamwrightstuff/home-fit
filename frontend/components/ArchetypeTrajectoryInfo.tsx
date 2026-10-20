@@ -4,13 +4,15 @@ import { useRef, useState } from 'react'
 import type { StatusSignalBreakdown } from '@/types/api'
 import InfoSheet from '@/components/catalog/InfoSheet'
 import { ARCHETYPE_COPY, TRAJECTORY_COPY } from '@/lib/catalogInfoCopy'
+import { normalizeTrajectory } from '@/lib/statusSignalArchetype'
 
 interface ArchetypeTrajectoryInfoProps {
   breakdown?: StatusSignalBreakdown | null
   trajectory?: string | null
 }
 
-export default function ArchetypeTrajectoryInfo({ breakdown, trajectory }: ArchetypeTrajectoryInfoProps) {
+export default function ArchetypeTrajectoryInfo({ breakdown, trajectory: rawTrajectory }: ArchetypeTrajectoryInfoProps) {
+  const trajectory = normalizeTrajectory(rawTrajectory)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLButtonElement>(null)
 

@@ -44,7 +44,7 @@ import { ALL_SCHOOL_LEVELS, applyExplorerScoreAdjustments, writeCompareContext, 
 import { climateMustHaveFails, hasClimateMustHaves, normalizeClimatePrefs, type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
-import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
+import { displayArchetypeLabel, normalizeTrajectory } from '@/lib/statusSignalArchetype'
 import QuizModal, { type QuizPayload } from '@/components/QuizModal'
 
 const INDEXES: { id: 'homefit' | 'longevity' | 'happiness' | 'status'; label: string; tooltip: string }[] = [
@@ -233,11 +233,11 @@ export default function CatalogPageClient({
   const [filterMetro, setFilterMetro] = useState<'all' | CatalogMetro>(initialMetroFilter)
   const [filterAreaTypes, setFilterAreaTypes] = useState<string[]>([])
   const [filterArchetypes, setFilterArchetypes] = useState<string[]>([])
-  const [filterTrajectory, setFilterTrajectory] = useState<'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'>(() => {
+  const [filterTrajectory, setFilterTrajectory] = useState<'all' | 'Up-and-Coming' | 'Stable' | 'Declining'>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       const v = f?.filterTrajectory
-      return v === 'Arrived' || v === 'Up-and-Coming' || v === 'Stable' || v === 'Cooling' || v === 'Declining' ? v : 'all'
+      return normalizeTrajectory(v) ?? 'all'
     } catch { return 'all' }
   })
   /** When true, list sorts by name; map coloring still follows `indexMode`. */
@@ -403,7 +403,7 @@ export default function CatalogPageClient({
         if (f && typeof f === 'object') {
           if (Array.isArray(f.filterAreaTypes)) setFilterAreaTypes(f.filterAreaTypes)
           if (Array.isArray(f.filterArchetypes)) setFilterArchetypes(f.filterArchetypes)
-          if (typeof f.filterTrajectory === 'string') setFilterTrajectory(f.filterTrajectory)
+          if (typeof f.filterTrajectory === 'string') setFilterTrajectory(normalizeTrajectory(f.filterTrajectory) ?? 'all')
           if (Array.isArray(f.filterPoliticalLean)) setFilterPoliticalLean(f.filterPoliticalLean)
           if (Array.isArray(f.filterNbTypes)) setFilterNbTypes(f.filterNbTypes)
           if (Array.isArray(f.filterAoTypes)) setFilterAoTypes(f.filterAoTypes)
@@ -636,7 +636,7 @@ export default function CatalogPageClient({
         if (ar && !filterArchetypes.includes(ar)) return false
       }
       if (filterTrajectory !== 'all') {
-        const tr = p.score.status_signal_breakdown?.trajectory
+        const tr = normalizeTrajectory(p.score.status_signal_breakdown?.trajectory)
         if (tr && tr !== filterTrajectory) return false
       }
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
@@ -817,7 +817,7 @@ export default function CatalogPageClient({
         if (ar && !filterArchetypes.includes(ar)) r.push('Archetype')
       }
       if (filterTrajectory !== 'all') {
-        const tr = p.score.status_signal_breakdown?.trajectory
+        const tr = normalizeTrajectory(p.score.status_signal_breakdown?.trajectory)
         if (tr && tr !== filterTrajectory) r.push('Trajectory')
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
@@ -921,7 +921,7 @@ export default function CatalogPageClient({
         if (ar && !filterArchetypes.includes(ar)) r.push('Archetype')
       }
       if (filterTrajectory !== 'all') {
-        const tr = p.score.status_signal_breakdown?.trajectory
+        const tr = normalizeTrajectory(p.score.status_signal_breakdown?.trajectory)
         if (tr && tr !== filterTrajectory) r.push('Trajectory')
       }
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
@@ -1170,7 +1170,7 @@ export default function CatalogPageClient({
           setFilterTenure(payload.filterTenure)
           setFilterLocalScene(payload.filterLocalScene ?? 'all')
           setFilterPoliticalLean(payload.filterPoliticalLean)
-          setFilterTrajectory((payload.filterTrajectory || 'all') as typeof filterTrajectory)
+          setFilterTrajectory(normalizeTrajectory(payload.filterTrajectory) ?? 'all')
           setFilterCommuteMax((payload.filterCommuteMax || 'all') as typeof filterCommuteMax)
           setClimatePrefs(normalizeClimatePrefs(payload.climatePrefs))
           // Profile-owned commute inputs are only set when the quiz actually has an answer

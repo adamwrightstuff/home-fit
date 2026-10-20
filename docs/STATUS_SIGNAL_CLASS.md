@@ -30,3 +30,13 @@ housing cost above income; ACS caps median income at $250,001 and median home va
 Offline application to a catalog: `scripts/catalog/recompute_status_class.py --metro <metro> [--write]`.
 Live scoring applies the same rule through `compute_status_signal_with_breakdown` (needs `median_monthly_housing_cost`
 from `get_housing_data`).
+
+## Trajectory
+
+Trajectory is separate from class and describes direction of change only: Up-and-Coming, Stable, Declining.
+- Declining: 3-year home price decline of more than 3%.
+- Up-and-Coming: Working or Middle Class, urban, renter-heavy, with price momentum (or the stability fallback when no price history exists).
+- Stable: everything else.
+
+The former Arrived and Cooling badges were class restated (Affluent/Elite with no negative signal, or falling prices at Affluent/Elite) and were removed.
+The frontend maps Arrived to Stable and Cooling to Declining (`normalizeTrajectory`) so older saved payloads and quizzes still resolve.

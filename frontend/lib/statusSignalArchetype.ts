@@ -5,8 +5,16 @@ import { signalStrengthFromCompositeScore } from '@/lib/statusSignalStrength'
 // Elite ≥88 · Affluent ≥63 · Middle Class ≥55 · Working Class ≥41 · Struggling <41
 export type SESBand = 'Elite' | 'Affluent' | 'Middle Class' | 'Working Class' | 'Struggling'
 
-// Trajectory badges — lifecycle dimension, separate from class band
-export type TrajectoryBadge = 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
+// Trajectory badges — direction of change, independent of class band
+export type TrajectoryBadge = 'Up-and-Coming' | 'Stable' | 'Declining'
+
+/** Older saved payloads and catalogs carried Arrived (now Stable) and Cooling (now Declining). */
+export function normalizeTrajectory(t: string | null | undefined): TrajectoryBadge | null {
+  const v = (t ?? '').trim()
+  if (v === 'Arrived') return 'Stable'
+  if (v === 'Cooling') return 'Declining'
+  return v === 'Up-and-Coming' || v === 'Stable' || v === 'Declining' ? v : null
+}
 
 // Legacy — kept for backwards compat with old catalog entries
 export type CharacterOverlay = 'Up-and-Coming'
@@ -85,11 +93,9 @@ const ARCHETYPE_ONE_LINERS: Record<SESBand, string> = {
 
 /** Trajectory badge one-liners — lifecycle dimension separate from class band. */
 const TRAJECTORY_ONE_LINERS: Record<TrajectoryBadge, string> = {
-  'Arrived':        'Established neighborhood — premium locked in, not actively transforming.',
   'Up-and-Coming':  'Housing market running ahead of resident wealth — a neighborhood in active transition.',
   'Stable':         'Not in active transition — steady character with no strong momentum signal.',
-  'Cooling':        'Prices softening from a recent peak — market correcting, community still intact.',
-  'Declining':      'Losing ground — prices falling in a neighborhood that was already below median wealth.',
+  'Declining':      'Home prices have fallen over the past three years — the market is moving away from this neighborhood.',
 }
 
 export interface TrajectoryExplainer {
@@ -100,11 +106,6 @@ export interface TrajectoryExplainer {
 
 /** Full per-badge explainer shown in the Trajectory modal. */
 export const TRAJECTORY_EXPLAINERS: Record<TrajectoryBadge, TrajectoryExplainer> = {
-  Arrived: {
-    headline: 'Arrived',
-    body: "This neighborhood's premium is established and holding. Wealth signals are high and the market isn't in active flux — you're buying stability and a known identity. These places rarely transform quickly, which is the point. Expect to pay full price for what you see.",
-    signals: 'Premium locked in, stable',
-  },
   'Up-and-Coming': {
     headline: 'Up-and-coming',
     body: "Strong appreciation signal over the past three years. The neighborhood is being discovered — wealth and status indicators are climbing and prices are following. You're buying in front of the premium, not after it. Identity may still be in flux, which carries both upside and uncertainty.",
@@ -115,15 +116,10 @@ export const TRAJECTORY_EXPLAINERS: Record<TrajectoryBadge, TrajectoryExplainer>
     body: "No significant appreciation or depreciation signal. The neighborhood has a consistent character without active transformation. This isn't a negative — many desirable places are simply stable. What you see is what you'll get.",
     signals: 'No strong momentum either way',
   },
-  Cooling: {
-    headline: 'Cooling',
-    body: 'Prices have softened after a prior peak. The neighborhood may be over-supplied, losing a demand driver, or seeing early demographic shift. Not a crisis, but worth tracking recent comps closely before committing. The identity is intact; the market is less certain.',
-    signals: 'Premium softening',
-  },
   Declining: {
     headline: 'Declining',
-    body: "Consistent price decline over three or more years with no recovery signal. Underlying wealth or stability indicators are also weakening. This doesn't disqualify the neighborhood — but the market is telling a clear story. Approach with eyes open and a longer investment horizon.",
-    signals: 'Sustained downward pressure',
+    body: "Home prices have fallen by more than 3% over the past three years. This doesn't disqualify the neighborhood, but the market is telling a clear story. Worth tracking recent comps closely and approaching with a longer investment horizon.",
+    signals: 'Prices down over three years',
   },
 }
 
@@ -133,13 +129,13 @@ const OVERLAY_ONE_LINERS: Record<CharacterOverlay, string> = {
 }
 
 export function trajectoryOneLiner(trajectory: string | null | undefined): string {
-  const t = (trajectory ?? '').trim() as TrajectoryBadge
-  return TRAJECTORY_ONE_LINERS[t] ?? 'Trajectory data unavailable for this area.'
+  const t = normalizeTrajectory(trajectory)
+  return (t && TRAJECTORY_ONE_LINERS[t]) ?? 'Trajectory data unavailable for this area.'
 }
 
 export function trajectoryExplainer(trajectory: string | null | undefined): TrajectoryExplainer | null {
-  const t = (trajectory ?? '').trim() as TrajectoryBadge
-  return TRAJECTORY_EXPLAINERS[t] ?? null
+  const t = normalizeTrajectory(trajectory)
+  return t ? TRAJECTORY_EXPLAINERS[t] ?? null : null
 }
 
 /** Legacy / fallback one-liners for any remaining old API archetype strings. */

@@ -4,12 +4,11 @@ import { useRef, useState } from 'react'
 import { TrajectoryIcon } from '@/components/catalog/TrajectoryChip'
 import InfoSheet from '@/components/catalog/InfoSheet'
 import { TRAJECTORY_COPY } from '@/lib/catalogInfoCopy'
+import { normalizeTrajectory } from '@/lib/statusSignalArchetype'
 
 const TRAJECTORY_DOT: Record<string, string> = {
-  Arrived:          '#4338ca',
   'Up-and-Coming':  '#0f766e',
   Stable:           '#64748b',
-  Cooling:          '#0369a1',
   Declining:        '#be123c',
 }
 
@@ -17,7 +16,8 @@ interface TrajectoryInfoProps {
   trajectory?: string | null
 }
 
-export default function TrajectoryInfo({ trajectory }: TrajectoryInfoProps) {
+export default function TrajectoryInfo({ trajectory: rawTrajectory }: TrajectoryInfoProps) {
+  const trajectory = normalizeTrajectory(rawTrajectory)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLButtonElement>(null)
 
