@@ -6,7 +6,7 @@ They still feed the legacy 0-100 composite that sits beside the label.
 
 Implementation: `_classify_class` in `pillars/status_signal.py`. Cutoffs: `class_cuts` and `class_national` in
 `data/status_signal_baselines.json`, built by `scripts/baselines/build_class_cuts.py` (ACS 2022 5-year, tract level).
-Metros without `class_cuts` fall back to the older wealth-band classifier.
+Places outside a built metro use the US-wide cutoffs stored under `class_cuts.all` (`build_class_cuts.py --national`), so every place with income data gets this class. The older wealth-band classifier only remains for places with no income at all.
 
 | Class | Rule |
 |---|---|

@@ -883,8 +883,8 @@ def _classify_class(
     baselines: Dict[str, Any],
 ) -> Optional[Tuple[str, str]]:
     """
-    Class from income and housing (see docs/STATUS_SIGNAL_CLASS.md). Returns None when the metro has no
-    class cutoffs or income is missing, so the caller keeps the wealth-band class.
+    Class from income and housing (see docs/STATUS_SIGNAL_CLASS.md). Returns None only when income is missing
+    (cutoffs come from the metro key first, then the US-wide "all" key), so the caller keeps the wealth-band class.
 
       Struggling  poverty-level income, or housing takes >50% of income (income below the national median)
       Working     income under two-thirds of the national median, or housing takes >30% (income below median)

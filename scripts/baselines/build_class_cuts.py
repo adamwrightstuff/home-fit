@@ -11,6 +11,7 @@ HHS poverty guideline for a household of three.
 Usage (project root):
   PYTHONPATH=. python3 scripts/baselines/build_class_cuts.py                      # all registered metros
   PYTHONPATH=. python3 scripts/baselines/build_class_cuts.py --only dallas_metro
+  PYTHONPATH=. python3 scripts/baselines/build_class_cuts.py --national          # fallback for all other places
 """
 from __future__ import annotations
 
@@ -76,15 +77,50 @@ def build_metro(key: str) -> Dict:
     }
 
 
+def build_national() -> Dict:
+    """US-wide cutoffs (all states + DC), used under the "all" key for places outside a built metro."""
+    states = [f"{i:02d}" for i in list(range(1, 57)) if i not in (3, 7, 14, 43, 52)]
+    inc: List[Tuple[float, float]] = []
+    hv: List[Tuple[float, float]] = []
+    for st in states:
+        for var_a, var_b, dest in (("B19013_001E", "B11001_001E", inc), ("B25077_001E", "B25003_002E", hv)):
+            r = requests.get(ACS, params={"get": f"{var_a},{var_b}", "for": "tract:*", "in": f"state:{st}",
+                                          "key": CENSUS_API_KEY}, timeout=60)
+            if r.status_code != 200:
+                continue
+            for row in r.json()[1:]:
+                try:
+                    v, w = float(row[0]), float(row[1])
+                except (TypeError, ValueError):
+                    continue
+                if v > 0 and w > 0:
+                    dest.append((v, w))
+        time.sleep(0.1)
+    return {
+        "income_p80": _weighted_pct(inc, 80),
+        "income_p90": _weighted_pct(inc, 90),
+        "home_value_p90": _weighted_pct(hv, 90),
+        "tracts_income": len(inc),
+        "tracts_home_value": len(hv),
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only")
+    ap.add_argument("--national", action="store_true", help="build the US-wide fallback under key 'all'")
     args = ap.parse_args()
     b = json.loads(BASELINES.read_text())
     r = requests.get(ACS, params={"get": "B19013_001E", "for": "us:1", "key": CENSUS_API_KEY}, timeout=30).json()
     b["class_national"] = {"median_household_income": float(r[1][0]),
                            "poverty_guideline_3p": POVERTY_GUIDELINE_3P_2022, "acs_year": 2022}
     cuts = b.setdefault("class_cuts", {})
+    if args.national:
+        print("=== all (national)")
+        cuts["all"] = build_national()
+        print("   ", cuts["all"])
+        BASELINES.write_text(json.dumps(b, indent=2, sort_keys=True))
+        return
     for key in sorted(set(CBSA_TO_KEY.values())):
         if args.only and key != args.only:
             continue

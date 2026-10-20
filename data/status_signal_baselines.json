@@ -416,12 +416,40 @@
     "wealth": {}
   },
   "class_cuts": {
+    "all": {
+      "home_value_p90": 659200.0,
+      "income_p80": 109440.0,
+      "income_p90": 134643.0,
+      "tracts_home_value": 81284,
+      "tracts_income": 82898
+    },
+    "atlanta_metro": {
+      "home_value_p90": 545600.0,
+      "income_p80": 119393.0,
+      "income_p90": 144313.0,
+      "tracts_home_value": 1461,
+      "tracts_income": 1492
+    },
     "austin_metro": {
       "home_value_p90": 675600.0,
       "income_p80": 127989.0,
       "income_p90": 154560.0,
       "tracts_home_value": 476,
       "tracts_income": 498
+    },
+    "boston_metro": {
+      "home_value_p90": 962500.0,
+      "income_p80": 149234.0,
+      "income_p90": 175612.0,
+      "tracts_home_value": 1089,
+      "tracts_income": 1108
+    },
+    "charlotte_metro": {
+      "home_value_p90": 531900.0,
+      "income_p80": 110368.0,
+      "income_p90": 131489.0,
+      "tracts_home_value": 663,
+      "tracts_income": 668
     },
     "chicago_metro": {
       "home_value_p90": 541500.0,
@@ -437,6 +465,13 @@
       "tracts_home_value": 1590,
       "tracts_income": 1698
     },
+    "denver_metro": {
+      "home_value_p90": 778100.0,
+      "income_p80": 139393.0,
+      "income_p90": 156154.0,
+      "tracts_home_value": 684,
+      "tracts_income": 697
+    },
     "houston_metro": {
       "home_value_p90": 467100.0,
       "income_p80": 120909.0,
@@ -451,6 +486,20 @@
       "tracts_home_value": 2944,
       "tracts_income": 3060
     },
+    "las_vegas_metro": {
+      "home_value_p90": 533000.0,
+      "income_p80": 98418.0,
+      "income_p90": 112163.0,
+      "tracts_home_value": 521,
+      "tracts_income": 533
+    },
+    "miami_metro": {
+      "home_value_p90": 648400.0,
+      "income_p80": 101563.0,
+      "income_p90": 124286.0,
+      "tracts_home_value": 1437,
+      "tracts_income": 1465
+    },
     "nyc_metro": {
       "home_value_p90": 998400.0,
       "income_p80": 142604.0,
@@ -458,12 +507,47 @@
       "tracts_home_value": 4629,
       "tracts_income": 4904
     },
+    "orlando_metro": {
+      "home_value_p90": 482000.0,
+      "income_p80": 100147.0,
+      "income_p90": 114178.0,
+      "tracts_home_value": 477,
+      "tracts_income": 487
+    },
     "philadelphia_metro": {
       "home_value_p90": 551700.0,
       "income_p80": 126003.0,
       "income_p90": 149233.0,
       "tracts_home_value": 1499,
       "tracts_income": 1516
+    },
+    "phoenix_metro": {
+      "home_value_p90": 611600.0,
+      "income_p80": 112328.0,
+      "income_p90": 131863.0,
+      "tracts_home_value": 1061,
+      "tracts_income": 1079
+    },
+    "raleigh_metro": {
+      "home_value_p90": 571400.0,
+      "income_p80": 128672.0,
+      "income_p90": 152944.0,
+      "tracts_home_value": 292,
+      "tracts_income": 295
+    },
+    "sacramento_metro": {
+      "home_value_p90": 772300.0,
+      "income_p80": 125568.0,
+      "income_p90": 145417.0,
+      "tracts_home_value": 556,
+      "tracts_income": 556
+    },
+    "san_antonio_metro": {
+      "home_value_p90": 444700.0,
+      "income_p80": 103520.0,
+      "income_p90": 118618.0,
+      "tracts_home_value": 490,
+      "tracts_income": 497
     },
     "seattle_metro": {
       "home_value_p90": 1077600.0,
@@ -478,6 +562,13 @@
       "income_p90": 226875.0,
       "tracts_home_value": 1461,
       "tracts_income": 1501
+    },
+    "tampa_metro": {
+      "home_value_p90": 469300.0,
+      "income_p80": 95833.0,
+      "income_p90": 111053.0,
+      "tracts_home_value": 754,
+      "tracts_income": 775
     }
   },
   "class_national": {
