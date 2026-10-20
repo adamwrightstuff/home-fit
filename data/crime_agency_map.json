@@ -80,6 +80,62 @@
     "the woodlands": {
       "agency": "Montgomery County Sheriff's Office",
       "kind": "county"
+    },
+    "canyon lake": {
+      "agency": "Comal County Sheriff's Office",
+      "kind": "county"
+    },
+    "canyon lake township": {
+      "agency": "Comal County Sheriff's Office",
+      "kind": "county"
+    },
+    "comfort": {
+      "agency": "Kendall County Sheriff's Office",
+      "kind": "county"
+    },
+    "comfort township": {
+      "agency": "Kendall County Sheriff's Office",
+      "kind": "county"
+    },
+    "cross mountain": {
+      "agency": "Bexar County Sheriff's Office",
+      "kind": "county"
+    },
+    "cross mountain township": {
+      "agency": "Bexar County Sheriff's Office",
+      "kind": "county"
+    },
+    "hollywood park": {
+      "agency": "Hollywood Park Police Department",
+      "kind": "own"
+    },
+    "hollywood park township": {
+      "agency": "Hollywood Park Police Department",
+      "kind": "own"
+    },
+    "olmos park": {
+      "agency": "Olmos Park Police Department",
+      "kind": "own"
+    },
+    "olmos park township": {
+      "agency": "Olmos Park Police Department",
+      "kind": "own"
+    },
+    "shavano park": {
+      "agency": "Shavano Park Police Department",
+      "kind": "own"
+    },
+    "shavano park township": {
+      "agency": "Shavano Park Police Department",
+      "kind": "own"
+    },
+    "timberwood park": {
+      "agency": "Bexar County Sheriff's Office",
+      "kind": "county"
+    },
+    "timberwood park township": {
+      "agency": "Bexar County Sheriff's Office",
+      "kind": "county"
     }
   },
   "IL": {
