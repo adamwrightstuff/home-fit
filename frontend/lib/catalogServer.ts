@@ -7,6 +7,7 @@
  * generateStaticParams over 416 places reads each file once.
  */
 
+import type { WorkCommute } from '@/lib/workZones'
 import fs from 'fs'
 import path from 'path'
 import { CATALOG_METROS, type CatalogMetro } from './catalogMetros'
@@ -30,6 +31,8 @@ export interface NeighborhoodEntry {
   catalog: NeighborhoodCatalogInfo
   /** Full pre-scored payload (ScoreResponse shape). */
   score: ScoreResponse
+  /** Precomputed minutes to each work hub, when this metro has them. */
+  work_commute: WorkCommute | null
 }
 
 const METRO_FILES: Record<CatalogMetro, string> = {
@@ -83,6 +86,7 @@ export function loadAllNeighborhoods(): NeighborhoodEntry[] {
         const row = JSON.parse(trimmed) as {
           catalog?: NeighborhoodCatalogInfo
           score?: ScoreResponse
+          work_commute?: WorkCommute | null
         }
         if (!row.catalog?.name || !row.score) continue
         entries.push({
@@ -90,6 +94,7 @@ export function loadAllNeighborhoods(): NeighborhoodEntry[] {
           slug: placeSlug(row.catalog),
           catalog: row.catalog,
           score: row.score,
+          work_commute: row.work_commute ?? null,
         })
       } catch {
         /* skip malformed lines */

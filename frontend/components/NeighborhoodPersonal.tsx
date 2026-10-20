@@ -8,6 +8,7 @@ import { useProfile } from '@/hooks/useProfile'
 import { applyProfileToScore } from '@/lib/personalOverlay'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { getScoreBand } from '@/lib/pillars'
+import type { WorkCommute } from '@/lib/workZones'
 import { resolveNeighborhoodPriorities } from '@/lib/neighborhoodPriorities'
 
 /**
@@ -15,7 +16,7 @@ import { resolveNeighborhoodPriorities } from '@/lib/neighborhoodPriorities'
  * proximity to the people they added. Renders nothing when the viewer has neither, so the
  * static page stays identical for everyone else.
  */
-export default function NeighborhoodPersonal({ score }: { score: ScoreResponse }) {
+export default function NeighborhoodPersonal({ score, workCommute }: { score: ScoreResponse; workCommute?: WorkCommute | null }) {
   const profile = useProfile()
   const [priorities, setPriorities] = useState<PillarPriorities>(DEFAULT_PRIORITIES)
   useEffect(() => {
@@ -23,7 +24,7 @@ export default function NeighborhoodPersonal({ score }: { score: ScoreResponse }
   }, [])
 
   const personal = useMemo(() => {
-    const overlaid = applyProfileToScore(score, profile)
+    const overlaid = applyProfileToScore(score, profile, { workCommute })
     return reweightScoreResponseFromPriorities(overlaid, priorities)
   }, [score, profile, priorities])
 
@@ -39,6 +40,14 @@ export default function NeighborhoodPersonal({ score }: { score: ScoreResponse }
 
   const points: Array<{ tier: 'close' | 'acquaintance'; minutes: number | null; label: string | null }> =
     Array.isArray(social?.breakdown?.points) ? social.breakdown.points : []
+
+  const formatTravel = (m: number | null) => {
+    if (typeof m !== 'number' || !Number.isFinite(m)) return 'n/a'
+    if (m < 60) return `${Math.round(m)} min`
+    if (m < 240) return `${Math.floor(m / 60)} hr ${Math.round(m % 60)} min`
+    return 'Over 4 hr'
+  }
+  const sortedPoints = [...points].sort((a, b) => (a.minutes ?? Infinity) - (b.minutes ?? Infinity))
 
   const row = (title: string, note: string, value: number | null) => {
     const band = value != null ? getScoreBand(value) : null
@@ -93,11 +102,11 @@ export default function NeighborhoodPersonal({ score }: { score: ScoreResponse }
               typeof social.score === 'number' ? social.score : null
             )}
             {points.length > 0 && (
-              <div className="flex flex-col gap-1 px-4 pb-3">
-                {points.map((p, i) => (
-                  <div key={i} className="flex justify-between text-xs text-[var(--hf-text-secondary)]">
-                    <span>{p.label ?? (p.tier === 'close' ? 'Close connection' : 'Acquaintance')}</span>
-                    <span>{typeof p.minutes === 'number' ? `${Math.round(p.minutes)} min` : 'n/a'}</span>
+              <div className="mx-4 mb-3 divide-y divide-[var(--hf-border)] border-t border-[var(--hf-border)]">
+                {sortedPoints.map((p, i) => (
+                  <div key={i} className="flex items-baseline justify-between gap-3 py-1.5 text-sm text-[var(--hf-text-secondary)]">
+                    <span className="min-w-0 truncate">{p.label ?? (p.tier === 'close' ? 'Close connection' : 'Acquaintance')}</span>
+                    <span className="shrink-0 tabular-nums text-[var(--hf-text-tertiary)]">{formatTravel(p.minutes)}</span>
                   </div>
                 ))}
               </div>

@@ -5,7 +5,7 @@ import {
   withCommuteTimePillar,
   withSocialConnectionPillar,
 } from '@/lib/reweight'
-import { findWorkZone, haversineMiles } from '@/lib/workZones'
+import { commuteToZone, findWorkZone, haversineMiles, minutesForMode, type WorkCommute } from '@/lib/workZones'
 import type { UserProfile } from '@/lib/userProfile'
 
 /**
@@ -45,7 +45,7 @@ export function estimateHubCommuteMinutes(
 export function applyProfileToScore(
   score: ScoreResponse,
   profile: Partial<UserProfile> | null | undefined,
-  opts: { incomeOverride?: number | null } = {}
+  opts: { incomeOverride?: number | null; workCommute?: WorkCommute | null } = {}
 ): ScoreResponse {
   if (!profile) return score
   let out = score
@@ -61,7 +61,13 @@ export function applyProfileToScore(
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return out
   const areaType = (out as any).data_quality_summary?.area_classification?.area_type ?? null
 
-  const commuteMinutes = estimateHubCommuteMinutes(lat, lon, areaType, profile.work_zone_id, profile.commute_mode)
+  // Precomputed routed minutes (catalog places) win over the straight-line drive estimate, and are
+  // the only source for transit-only hubs.
+  const zone = findWorkZone(profile.work_zone_id ?? null)
+  const routed = zone && opts.workCommute ? commuteToZone(opts.workCommute, zone) : null
+  const commuteMinutes = routed
+    ? minutesForMode(routed, zone!, profile.commute_mode)
+    : estimateHubCommuteMinutes(lat, lon, areaType, profile.work_zone_id, profile.commute_mode)
   if (commuteMinutes !== null && profile.office_days !== 0) {
     out = withCommuteTimePillar(out, commuteMinutes, profile.office_days)
   }

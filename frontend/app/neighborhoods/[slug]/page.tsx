@@ -119,7 +119,7 @@ export default async function NeighborhoodPage({
   const entry = findNeighborhoodBySlug(slug)
   if (!entry) notFound()
 
-  const { catalog, score, metro } = entry
+  const { catalog, score, metro, work_commute } = entry
   const metroLabel = CATALOG_METRO_META[metro]?.label ?? metro.toUpperCase()
   const scores = pillarScores(entry)
   const twinKey = encodeURIComponent(
@@ -252,7 +252,7 @@ export default async function NeighborhoodPage({
         </p>
       </section>
 
-      <NeighborhoodPersonal score={score} />
+      <NeighborhoodPersonal score={score} workCommute={work_commute} />
 
       {/* CTAs */}
       <section className="flex flex-col gap-2 sm:flex-row" aria-label="Next steps">
