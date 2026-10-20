@@ -124,6 +124,30 @@
     "occupation": {},
     "wealth": {}
   },
+  "atlanta_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 80.6,
+        "min": 12.3
+      },
+      "grad_pct": {
+        "max": 38.1,
+        "min": 3.0
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 651000.0,
+        "min": 142900.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 60.7182,
+        "min": 13.3385
+      }
+    }
+  },
   "austin,_texas": {
     "brand": {},
     "education": {},
@@ -205,6 +229,30 @@
     "occupation": {},
     "wealth": {}
   },
+  "boston_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 86.1,
+        "min": 16.3
+      },
+      "grad_pct": {
+        "max": 53.96,
+        "min": 4.0
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 1183920.0,
+        "min": 339280.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 61.0488,
+        "min": 17.2375
+      }
+    }
+  },
   "burlington,_vermont": {
     "brand": {},
     "education": {},
@@ -227,19 +275,31 @@
     }
   },
   "cbsa_to_baseline": {
+    "12060": "atlanta_metro",
     "12420": "austin_metro",
+    "14460": "boston_metro",
     "14740": "seattle_metro",
     "14860": "nyc_metro",
+    "16740": "charlotte_metro",
     "16980": "chicago_metro",
     "19100": "dallas_metro",
+    "19740": "denver_metro",
     "26420": "houston_metro",
+    "29820": "las_vegas_metro",
     "31080": "la_metro",
+    "33100": "miami_metro",
     "35620": "nyc_metro",
+    "36740": "orlando_metro",
     "37100": "la_metro",
     "37980": "philadelphia_metro",
+    "38060": "phoenix_metro",
+    "39580": "raleigh_metro",
+    "40900": "sacramento_metro",
+    "41700": "san_antonio_metro",
     "41860": "sf_metro",
     "41940": "sf_metro",
-    "42660": "seattle_metro"
+    "42660": "seattle_metro",
+    "45300": "tampa_metro"
   },
   "charlotte,_north_carolina": {
     "brand": {},
@@ -259,6 +319,30 @@
       "wealth_gap_ratio": {
         "max": 0.5876676130159423,
         "min": 0.0
+      }
+    }
+  },
+  "charlotte_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 75.6,
+        "min": 10.83
+      },
+      "grad_pct": {
+        "max": 30.97,
+        "min": 2.2
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 631590.0,
+        "min": 125040.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 57.5874,
+        "min": 13.6726
       }
     }
   },
@@ -330,6 +414,76 @@
     },
     "occupation": {},
     "wealth": {}
+  },
+  "class_cuts": {
+    "austin_metro": {
+      "home_value_p90": 675600.0,
+      "income_p80": 127989.0,
+      "income_p90": 154560.0,
+      "tracts_home_value": 476,
+      "tracts_income": 498
+    },
+    "chicago_metro": {
+      "home_value_p90": 541500.0,
+      "income_p80": 122292.0,
+      "income_p90": 148889.0,
+      "tracts_home_value": 2252,
+      "tracts_income": 2266
+    },
+    "dallas_metro": {
+      "home_value_p90": 557300.0,
+      "income_p80": 121143.0,
+      "income_p90": 152659.0,
+      "tracts_home_value": 1590,
+      "tracts_income": 1698
+    },
+    "houston_metro": {
+      "home_value_p90": 467100.0,
+      "income_p80": 120909.0,
+      "income_p90": 149013.0,
+      "tracts_home_value": 1486,
+      "tracts_income": 1587
+    },
+    "la_metro": {
+      "home_value_p90": 1476900.0,
+      "income_p80": 126847.0,
+      "income_p90": 152222.0,
+      "tracts_home_value": 2944,
+      "tracts_income": 3060
+    },
+    "nyc_metro": {
+      "home_value_p90": 998400.0,
+      "income_p80": 142604.0,
+      "income_p90": 170769.0,
+      "tracts_home_value": 4629,
+      "tracts_income": 4904
+    },
+    "philadelphia_metro": {
+      "home_value_p90": 551700.0,
+      "income_p80": 126003.0,
+      "income_p90": 149233.0,
+      "tracts_home_value": 1499,
+      "tracts_income": 1516
+    },
+    "seattle_metro": {
+      "home_value_p90": 1077600.0,
+      "income_p80": 144667.0,
+      "income_p90": 165125.0,
+      "tracts_home_value": 900,
+      "tracts_income": 917
+    },
+    "sf_metro": {
+      "home_value_p90": 2000001.0,
+      "income_p80": 193873.0,
+      "income_p90": 226875.0,
+      "tracts_home_value": 1461,
+      "tracts_income": 1501
+    }
+  },
+  "class_national": {
+    "acs_year": 2022,
+    "median_household_income": 75149.0,
+    "poverty_guideline_3p": 23030
   },
   "cleveland,_ohio": {
     "brand": {},
@@ -411,6 +565,30 @@
     },
     "occupation": {},
     "wealth": {}
+  },
+  "denver_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 80.13,
+        "min": 13.685
+      },
+      "grad_pct": {
+        "max": 36.715,
+        "min": 3.2
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 870940.0,
+        "min": 308470.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 58.3046,
+        "min": 16.2423
+      }
+    }
   },
   "detroit,_michigan": {
     "brand": {},
@@ -602,6 +780,30 @@
       }
     }
   },
+  "las_vegas_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 50.03,
+        "min": 5.6
+      },
+      "grad_pct": {
+        "max": 20.32,
+        "min": 0.9
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 590600.0,
+        "min": 170600.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 43.192,
+        "min": 7.0319
+      }
+    }
+  },
   "los_angeles,_california": {
     "brand": {},
     "education": {},
@@ -615,11 +817,28 @@
     "wealth": {}
   },
   "miami_metro": {
-    "brand": {},
-    "education": {},
-    "home_cost": {},
-    "occupation": {},
-    "wealth": {}
+    "education": {
+      "bach_pct": {
+        "max": 68.615,
+        "min": 10.085
+      },
+      "grad_pct": {
+        "max": 33.745,
+        "min": 2.1
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 792660.0,
+        "min": 156380.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 53.4668,
+        "min": 9.5339
+      }
+    }
   },
   "middle_atlantic": {
     "brand": {
@@ -861,6 +1080,30 @@
       }
     }
   },
+  "orlando_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 65.56,
+        "min": 11.58
+      },
+      "grad_pct": {
+        "max": 26.04,
+        "min": 2.34
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 547960.0,
+        "min": 141500.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 49.8035,
+        "min": 11.6191
+      }
+    }
+  },
   "pacific": {
     "brand": {
       "brand_raw_score": {
@@ -954,6 +1197,30 @@
       }
     }
   },
+  "phoenix_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 65.69,
+        "min": 5.92
+      },
+      "grad_pct": {
+        "max": 28.69,
+        "min": 1.3
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 706600.0,
+        "min": 143200.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 52.8158,
+        "min": 10.8411
+      }
+    }
+  },
   "pittsburgh,_pennsylvania": {
     "brand": {},
     "education": {},
@@ -987,6 +1254,54 @@
     "occupation": {},
     "wealth": {}
   },
+  "raleigh_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 78.415,
+        "min": 13.27
+      },
+      "grad_pct": {
+        "max": 36.615,
+        "min": 2.6
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 627870.0,
+        "min": 153520.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 61.7947,
+        "min": 19.9049
+      }
+    }
+  },
+  "sacramento_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 69.1,
+        "min": 11.1
+      },
+      "grad_pct": {
+        "max": 33.9,
+        "min": 2.1
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 871325.0,
+        "min": 275900.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 52.6911,
+        "min": 14.3434
+      }
+    }
+  },
   "salt_lake_city,_utah": {
     "brand": {},
     "education": {},
@@ -998,6 +1313,30 @@
     },
     "occupation": {},
     "wealth": {}
+  },
+  "san_antonio_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 61.565,
+        "min": 4.8
+      },
+      "grad_pct": {
+        "max": 28.115,
+        "min": 0.785
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 480305.0,
+        "min": 92145.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 49.8331,
+        "min": 11.5557
+      }
+    }
   },
   "san_diego,_california": {
     "brand": {},
@@ -1167,6 +1506,30 @@
       "wealth_gap_ratio": {
         "max": 0.23373665913671587,
         "min": 0.0
+      }
+    }
+  },
+  "tampa_metro": {
+    "education": {
+      "bach_pct": {
+        "max": 61.5,
+        "min": 9.9
+      },
+      "grad_pct": {
+        "max": 28.1,
+        "min": 2.3
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 574535.0,
+        "min": 101330.0
+      }
+    },
+    "occupation": {
+      "white_collar_pct": {
+        "max": 50.973,
+        "min": 13.4509
       }
     }
   },

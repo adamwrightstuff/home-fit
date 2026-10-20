@@ -289,6 +289,9 @@ def check_baseline(metro: str) -> Check:
     if key not in data:
         return Check("baseline:cbsa", FAIL, f"{key} registered but not built",
                      f"PYTHONPATH=. python scripts/baselines/build_metro_baselines_from_cbsa.py --only {key}")
+    if key not in (data.get("class_cuts") or {}):
+        return Check("baseline:cbsa", FAIL, f"{key} has no class cutoffs (status_signal class would fall back to the wealth band)",
+                     f"PYTHONPATH=. python scripts/baselines/build_class_cuts.py --only {key}")
     return Check("baseline:cbsa", PASS, f"{key} registered and built")
 
 

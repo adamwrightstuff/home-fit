@@ -165,11 +165,11 @@ def _signal_strength_band(score: float) -> Tuple[str, str]:
 def _get_status_insight(archetype: str) -> str:
     """One-sentence tooltip 'why' for the UI."""
     return {
-        "Elite":         "Top-tier income, education, and home values — a genuinely premium address by every measure.",
-        "Affluent":      "Credential and career driven — professional workforce, strong education, above-average incomes.",
-        "Middle Class":  "Solid footing on income and housing — comfortable without a single dominant status story.",
-        "Working Class": "Broadly stable community without dominant elite or credential-class signatures.",
-        "Struggling":    "Low income, limited education attainment, and constrained economic opportunity.",
+        "Elite":         "Top-tier income and home values for this metro: extreme wealth and assets.",
+        "Affluent":      "Household incomes in the top fifth of this metro.",
+        "Middle Class":  "Above the working-class line without reaching the top fifth of this metro by income.",
+        "Working Class": "Getting by: incomes below the national middle band, or housing taking over 30% of income.",
+        "Struggling":    "Low income and housing costs that outrun it: hard to afford this metro.",
         # Legacy
         "Established":       "Legacy capital and long-rooted residents — wealth and community stability aligned.",
         "Upper Middle Class": "Credential and career driven — high education and white-collar occupation.",
@@ -868,6 +868,51 @@ def _composite_score_from_weights(
     return score / total_w
 
 
+def _class_cuts_for(keys_to_try: List[str], baselines: Dict[str, Any]) -> Optional[Dict[str, float]]:
+    """Metro class cutoffs (income_p80/p90, home_value_p90) for the first matching baseline key."""
+    cuts = (baselines or {}).get("class_cuts") or {}
+    for key in (keys_to_try or []):
+        if cuts.get(key):
+            return cuts[key]
+    return None
+
+
+def _classify_class(
+    summary: Dict[str, Any],
+    keys_to_try: List[str],
+    baselines: Dict[str, Any],
+) -> Optional[Tuple[str, str]]:
+    """
+    Class from income and housing (see docs/STATUS_SIGNAL_CLASS.md). Returns None when the metro has no
+    class cutoffs or income is missing, so the caller keeps the wealth-band class.
+
+      Struggling  poverty-level income, or housing takes >50% of income (income below the national median)
+      Working     income under two-thirds of the national median, or housing takes >30% (income below median)
+      Elite       top 20% of metro households by income, plus income and home value both in the metro top 10%
+      Affluent    income in the top 20% of the metro's households
+      Middle      everyone else
+    """
+    cuts = _class_cuts_for(keys_to_try, baselines)
+    nat = (baselines or {}).get("class_national") or {}
+    income = summary.get("median_household_income")
+    if not cuts or not nat or not isinstance(income, (int, float)) or income <= 0:
+        return None
+    median = float(nat["median_household_income"])
+    monthly = summary.get("median_monthly_housing_cost")
+    burden = 12.0 * float(monthly) / float(income) if isinstance(monthly, (int, float)) and monthly > 0 else None
+    below_median = income < median
+    if income < nat["poverty_guideline_3p"] or (below_median and burden is not None and burden > 0.5):
+        return "Struggling", "class_struggling"
+    if income < median * 2.0 / 3.0 or (below_median and burden is not None and burden > 0.3):
+        return "Working Class", "class_working"
+    if income >= cuts["income_p80"]:
+        home = summary.get("median_home_value")
+        if income >= cuts["income_p90"] and isinstance(home, (int, float)) and home >= cuts["home_value_p90"]:
+            return "Elite", "class_elite"
+        return "Affluent", "class_affluent"
+    return "Middle Class", "class_middle"
+
+
 def _classify_archetype(
     *,
     education: Optional[float],
@@ -1186,6 +1231,10 @@ def compute_status_signal_with_breakdown(
         renter_pct=_renter_pct,
         area_type=area_type,
     )
+
+    _class = _classify_class(summary, keys_to_try, baselines)
+    if _class is not None:
+        archetype, archetype_rule = _class
 
     trajectory, trajectory_rule = _classify_trajectory(
         wealth=wealth,

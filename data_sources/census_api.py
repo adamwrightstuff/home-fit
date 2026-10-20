@@ -429,7 +429,7 @@ def _fetch_housing_acs(for_clause: str, in_clause: str) -> Optional[Dict]:
     try:
         url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
         params = {
-            "get": "B25077_001E,B19013_001E,B25018_001E,B19025_001E,B19001_001E,B25064_001E,B25003_001E,B25003_003E,NAME",
+            "get": "B25077_001E,B19013_001E,B25018_001E,B19025_001E,B19001_001E,B25064_001E,B25003_001E,B25003_003E,B25105_001E,NAME",
             "for": for_clause,
             "in": in_clause,
             "key": CENSUS_API_KEY,
@@ -463,6 +463,7 @@ def _fetch_housing_acs(for_clause: str, in_clause: str) -> Optional[Dict]:
         median_gross_rent = parse_census_value(data[1][5])
         total_occupied = parse_census_value(data[1][6])
         renter_occupied = parse_census_value(data[1][7])
+        median_monthly_housing_cost = parse_census_value(data[1][8])
 
         if not median_income:
             return None
@@ -497,6 +498,8 @@ def _fetch_housing_acs(for_clause: str, in_clause: str) -> Optional[Dict]:
         }
         if median_gross_rent is not None:
             result["median_gross_rent"] = median_gross_rent
+        if median_monthly_housing_cost:
+            result["median_monthly_housing_cost"] = median_monthly_housing_cost
         if mean_household_income is not None:
             result["mean_household_income"] = mean_household_income
         if renter_pct is not None:

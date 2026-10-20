@@ -78,6 +78,44 @@ CBSA_COUNTIES: Dict[str, Dict[str, List[str]]] = {
         "48": ["015", "039", "071", "157", "167", "201", "291", "339", "473"],
         # Austin, Brazoria, Chambers, Fort Bend, Galveston, Harris, Liberty, Montgomery, Waller
     },
+    "38060": {  # Phoenix-Mesa-Chandler, AZ
+        "04": ["013", "021"],  # Maricopa, Pinal
+    },
+    "12060": {  # Atlanta-Sandy Springs-Roswell, GA
+        "13": ["013", "015", "035", "045", "057", "063", "067", "077", "085", "089", "097", "113", "117", "121", "135", "143", "149", "151", "159", "187", "199", "211", "217", "223", "227", "231", "247", "255", "297"],
+    },
+    "14460": {  # Boston-Cambridge-Newton, MA-NH
+        "25": ["009", "017", "021", "023", "025"],
+        "33": ["015", "017"],
+    },
+    "16740": {  # Charlotte-Concord-Gastonia, NC-SC
+        "37": ["007", "025", "071", "097", "109", "119", "159", "179"],
+        "45": ["023", "057", "091"],
+    },
+    "19740": {  # Denver-Aurora-Centennial, CO
+        "08": ["001", "005", "014", "019", "031", "035", "039", "047", "059", "093"],
+    },
+    "29820": {  # Las Vegas-Henderson-North Las Vegas, NV
+        "32": ["003"],
+    },
+    "33100": {  # Miami-Fort Lauderdale-West Palm Beach, FL
+        "12": ["011", "086", "099"],
+    },
+    "36740": {  # Orlando-Kissimmee-Sanford, FL
+        "12": ["069", "095", "097", "117"],
+    },
+    "39580": {  # Raleigh-Cary, NC
+        "37": ["069", "101", "183"],
+    },
+    "40900": {  # Sacramento-Roseville-Folsom, CA
+        "06": ["017", "061", "067", "113"],
+    },
+    "41700": {  # San Antonio-New Braunfels, TX
+        "48": ["013", "019", "029", "091", "187", "259", "325", "493"],
+    },
+    "45300": {  # Tampa-St. Petersburg-Clearwater, FL
+        "12": ["053", "057", "101", "103"],
+    },
 }
 
 CBSA_TO_KEY = {
@@ -91,6 +129,18 @@ CBSA_TO_KEY = {
     "37980": "philadelphia_metro",
     "19100": "dallas_metro",
     "26420": "houston_metro",
+    "38060": "phoenix_metro",
+    "12060": "atlanta_metro",
+    "14460": "boston_metro",
+    "16740": "charlotte_metro",
+    "19740": "denver_metro",
+    "29820": "las_vegas_metro",
+    "33100": "miami_metro",
+    "36740": "orlando_metro",
+    "39580": "raleigh_metro",
+    "40900": "sacramento_metro",
+    "41700": "san_antonio_metro",
+    "45300": "tampa_metro",
 }
 
 # CBSAs that reuse another metro's baseline without contributing tracts to it.
