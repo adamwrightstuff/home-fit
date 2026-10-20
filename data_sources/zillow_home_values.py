@@ -18,6 +18,10 @@ import json
 import os
 from typing import Optional
 
+import requests
+
+from .cache import cached, CACHE_TTL
+
 _CACHE: Optional[dict] = None
 CENSUS_CAP = 2_000_001
 
@@ -72,3 +76,36 @@ def get_home_value(census_value: Optional[int], zip_code: Optional[str]) -> tupl
         if zhvi and zhvi > CENSUS_CAP:
             return zhvi, True
     return census_value, False
+
+
+@cached(ttl_seconds=CACHE_TTL["census_data"])
+def get_zcta_at(lat: float, lon: float) -> Optional[str]:
+    """ZIP code tabulation area containing a point (Census geocoder), or None."""
+    try:
+        r = requests.get(
+            "https://geocoding.geo.census.gov/geocoder/geographies/coordinates",
+            params={"x": lon, "y": lat, "benchmark": "Public_AR_Current", "vintage": "Current_Current",
+                    "layers": "2020 Census ZIP Code Tabulation Areas", "format": "json"},
+            timeout=20,
+        )
+        feats = (r.json().get("result", {}).get("geographies", {}).get("2020 Census ZIP Code Tabulation Areas") or [])
+        return (feats[0].get("ZCTA5") or feats[0].get("GEOID")) if feats else None
+    except Exception:
+        return None
+
+
+def get_zhvi_velocity_for_location(zip_code: Optional[str], lat: Optional[float] = None, lon: Optional[float] = None) -> dict:
+    """
+    Price velocity for a place. Uses the place's ZIP; when Zillow has no series for it (PO box, campus and other
+    unique ZIPs such as 90851 or 10115 sit on neighborhood pins), falls back to the ZIP area containing the pin.
+    Adds `zip_used` so the source of the signal is visible.
+    """
+    v = get_zhvi_velocity(zip_code or "")
+    if v.get("appreciation_3yr") is not None or v.get("velocity_6mo") is not None or lat is None or lon is None:
+        return {**v, "zip_used": zip_code}
+    z2 = get_zcta_at(float(lat), float(lon))
+    if z2 and z2 != zip_code:
+        v2 = get_zhvi_velocity(z2)
+        if v2.get("appreciation_3yr") is not None or v2.get("velocity_6mo") is not None:
+            return {**v2, "zip_used": z2}
+    return {**v, "zip_used": zip_code}

@@ -1193,10 +1193,12 @@ def compute_status_signal_with_breakdown(
 
     # Zillow velocity signals — used for Up-and-Coming overlay
     _velocity: Dict[str, Any] = {}
-    if zip_code:
+    if zip_code or (lat is not None and lon is not None):
         try:
-            from data_sources.zillow_home_values import get_zhvi_velocity
-            _velocity = get_zhvi_velocity(zip_code)
+            from data_sources.zillow_home_values import get_zhvi_velocity_for_location
+            _velocity = get_zhvi_velocity_for_location(zip_code, lat, lon)
+            if _velocity.get("zip_used") and _velocity.get("zip_used") != zip_code:
+                breakdown["zhvi_zip"] = _velocity["zip_used"]
         except Exception:
             pass
 

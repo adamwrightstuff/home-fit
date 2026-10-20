@@ -80,6 +80,7 @@ def main() -> int:
         _build_top_drivers, _classify_class, _classify_trajectory, _composite_score_from_weights, _get_archetype_weights,
         _get_status_insight, _get_status_label, _signal_strength_band,
     )
+    from data_sources.zillow_home_values import get_zhvi_velocity_for_location
 
     baselines = json.load(open(REPO / "data" / "status_signal_baselines.json"))
     key = f"{args.metro}_metro"
@@ -112,6 +113,7 @@ def main() -> int:
     # 2. classify from stored inputs and re-blend the composite
     old_c, new_c, moved = collections.Counter(), collections.Counter(), []
     traj_c = collections.Counter()
+    filled = []
     for r in rows:
         s = r.get("score") if r.get("success") else None
         if not isinstance(s, dict):
@@ -133,7 +135,14 @@ def main() -> int:
         bd["status_label"] = _get_status_label(arch)
         bd["status_insight"] = _get_status_insight(arch)
         bd["top_drivers"] = _build_top_drivers(w, h, e, o, arch)
-        ci = bd.get("classifier_inputs") or {}
+        ci = bd.setdefault("classifier_inputs", {})
+        if ci.get("appreciation_3yr") is None and ci.get("velocity_6mo") is None:
+            vel = get_zhvi_velocity_for_location((s.get("location_info") or {}).get("zip"), co.get("lat"), co.get("lon"))
+            if vel.get("appreciation_3yr") is not None or vel.get("velocity_6mo") is not None:
+                ci["appreciation_3yr"], ci["velocity_6mo"] = vel.get("appreciation_3yr"), vel.get("velocity_6mo")
+                filled.append(r["catalog"]["name"])
+                if vel.get("zip_used") != (s.get("location_info") or {}).get("zip"):
+                    bd["zhvi_zip"] = vel["zip_used"]
         bd["trajectory"], bd["trajectory_rule"] = _classify_trajectory(
             archetype=arch, wealth=w, home_cost=h, stability=ci.get("stability"),
             appreciation_3yr=ci.get("appreciation_3yr"), velocity_6mo=ci.get("velocity_6mo"),
@@ -150,7 +159,7 @@ def main() -> int:
                 s.get("happiness_index"), s.get("total_score"))
         s["status_signal_breakdown"] = bd
 
-    print("  trajectory", dict(traj_c))
+    print("  trajectory", dict(traj_c), f" | price history filled for {len(filled)} places")
     print("  before", [old_c[k] for k in ORDER], " after", [new_c[k] for k in ORDER], f" ({len(moved)} labels changed)")
     if args.write:
         path.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
