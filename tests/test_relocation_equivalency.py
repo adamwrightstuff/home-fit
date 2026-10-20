@@ -47,11 +47,28 @@ def test_pricier_metro_needs_more_and_cheaper_needs_less():
     assert R.equivalent_income(NYC, HOUSTON, 100000)["equivalent_income_in_dest"] < 100000
 
 
-def test_renter_housing_scales_with_the_bea_housing_price_level_ratio():
+def test_renter_housing_scales_with_the_hud_fair_market_rent_ratio():
     r = R.equivalent_income(DALLAS, NYC, 100000)
-    assert r["housing_scale"] == pytest.approx(R.metro(NYC)["housing"] / R.metro(DALLAS)["housing"], abs=0.001)
+    assert r["housing_scale_source"] == "HUD Fair Market Rent (2-bedroom)"
+    assert r["housing_scale"] == pytest.approx(R.metro(NYC)["hud_fmr_2br"] / R.metro(DALLAS)["hud_fmr_2br"], abs=0.001)
     # With no rent given, origin housing is the origin median rent x 12.
     assert r["origin_costs"]["housing"] == round(R.metro(DALLAS)["median_gross_rent"] * 12)
+
+
+def test_renter_scaling_falls_back_to_bea_when_a_metro_has_no_hud_rent(monkeypatch):
+    monkeypatch.delitem(R._msa[NYC], "hud_fmr_2br")
+    r = R.equivalent_income(DALLAS, NYC, 100000)
+    assert r["housing_scale_source"] == "BEA housing (rent) price level"
+    assert r["housing_scale"] == pytest.approx(R.metro(NYC)["housing"] / R.metro(DALLAS)["housing"], abs=0.001)
+
+
+def test_hud_rent_ratios_match_mit_living_wage_housing_costs():
+    # MIT Living Wage (Feb 2026), 2 adults both working, 0 children, housing per year, hand-copied
+    # by the user for an internal check: Dallas 19,129; Phoenix 19,094; Philadelphia 18,334; NYC metro 28,618.
+    mit = {"Phoenix": 19094 / 19129, "Philadelphia": 18334 / 19129, "New York-Newark": 28618 / 19129}
+    for name, ratio in mit.items():
+        code = R.find_metro(name)[0]
+        assert R.metro(code)["hud_fmr_2br"] / R.metro(DALLAS)["hud_fmr_2br"] == pytest.approx(ratio, abs=0.03), name
 
 
 def test_owner_housing_scales_with_median_home_value_ratio_and_needs_an_input():

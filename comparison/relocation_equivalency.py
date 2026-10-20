@@ -9,10 +9,13 @@ scripts/baselines/build_relocation_inputs.py), so it covers every BEA metro (387
 
 - Housing is ONE cost, scaled between metros:
     renter: the user's current rent (or A's median gross rent if not given) scaled by the
-            ratio of the two metros' BEA housing (rent) price levels, which are quality
-            adjusted; the Census median rent is not used for scaling because it reflects
-            what existing renters pay (long leases, rent stabilisation) and understates
-            what a mover pays in NYC, LA and Miami;
+            ratio of the two metros' HUD two-bedroom Fair Market Rents (the 40th percentile of
+            rents paid by recent movers, aggregated to the metro by renter households); BEA's
+            housing price level is the fallback.  The Census median rent is not used for
+            scaling: it reflects what existing renters pay (long leases, rent stabilisation)
+            and understates what a mover pays in NYC, LA and Miami.  Checked against MIT
+            Living Wage metro housing costs: HUD ratios to Dallas track MIT's within 0.02
+            (NYC 1.48 vs 1.50, Phoenix 0.99 vs 1.00), BEA's did not (NYC 1.26);
     owner:  the user's current all-in payment (mortgage, property tax, whatever they pay)
             scaled by the ratio of the two metros' Zillow Home Value Index (current market
             values, free with attribution to Zillow); metros Zillow does not cover fall back to
@@ -56,6 +59,13 @@ _DATA = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "reloca
 with open(_DATA, "r", encoding="utf-8") as _f:
     _d = json.load(_f)
 _msa: Dict[str, Dict[str, Any]] = _d["msa"]
+try:  # HUD Fair Market Rents by metro (scripts/baselines/build_hud_fmr_by_metro.py)
+    with open(os.path.join(os.path.dirname(_DATA), "hud_fmr_metro.json"), "r", encoding="utf-8") as _h:
+        for _code, _v in json.load(_h)["metros"].items():
+            if _code in _msa:
+                _msa[_code]["hud_fmr_2br"] = _v["fmr_2br"]
+except FileNotFoundError:
+    pass
 _w = _d["_meta"]["all_items_weights_by_line"]
 
 BASKET_BASE = 78535.0 - 26266.0 - 9797.0  # BLS CE 2024, see module docstring
@@ -114,7 +124,10 @@ def _city_tax_applied(code: str, state: Optional[str], city: Optional[str], inco
 
 def _housing_scale(origin: str, dest: str, tenure: str) -> Dict[str, Any]:
     if tenure == "rent":
-        return {"scale": metro(dest)["housing"] / metro(origin)["housing"], "source": "BEA housing (rent) price level"}
+        o, d = metro(origin), metro(dest)
+        if "hud_fmr_2br" in o and "hud_fmr_2br" in d:
+            return {"scale": d["hud_fmr_2br"] / o["hud_fmr_2br"], "source": "HUD Fair Market Rent (2-bedroom)"}
+        return {"scale": d["housing"] / o["housing"], "source": "BEA housing (rent) price level"}
     o, d = metro(origin), metro(dest)
     if "zhvi" in o and "zhvi" in d:
         return {"scale": d["zhvi"] / o["zhvi"], "source": "Zillow Home Value Index"}
