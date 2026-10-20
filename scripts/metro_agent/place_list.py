@@ -213,7 +213,7 @@ def build(spec: Dict[str, Any], overpass_url: str, log: Callable[[str], None] = 
                      "lat": round(la, 4), "lon": round(lo, 4), "search_query": f"{n}, {st}"})
         seen.add(n)
 
-    # counties, validated against the CBSA
+    # counties, validated against the CBSA (the county is needed for the query check below)
     with ThreadPoolExecutor(4) as ex:
         counties = list(ex.map(lambda r: county_of(r["lat"], r["lon"]), rows))
     allowed = cbsa_county_names(spec["cbsa"])
@@ -226,10 +226,47 @@ def build(spec: Dict[str, Any], overpass_url: str, log: Callable[[str], None] = 
             notes.append(f"{r['name']}: {c} County is outside CBSA {spec['cbsa']}; dropped")
             continue
         keep.append(r)
+    problems += check_queries(keep, log=log)
     if allowed is None:
         problems.append(f"CBSA {spec['cbsa']} county list unavailable (data_cache/cbsa_delineation_2023.json): counties not validated. "
                         "Run `metro_agent init --fetch` to download the Census delineation file.")
     return keep, notes, problems
+
+
+def query_distance(query: str, lat: float, lon: float) -> Optional[Tuple[float, str]]:
+    """Miles between the pin and where the SCORER's geocoder puts `query`, and the city it names; None when it finds nothing.
+    The scorer geocodes `search_query` for the city, state and ZIP (crime and school lookups key on them), so a query that
+    lands in another town ("Citrus Heights, CA" -> a neighborhood in Fontana) scores the place with the wrong town's data."""
+    from data_sources.geocoding import geocode_with_full_result
+
+    try:
+        r = geocode_with_full_result(query)
+    except Exception:  # noqa: BLE001
+        return None
+    time.sleep(1.0)    # stay inside Nominatim's usage policy
+    if not r or r[0] is None:
+        return None
+    return miles(lat, lon, float(r[0]), float(r[1])), str(r[4] or "")
+
+
+def check_queries(rows: List[Dict[str, Any]], max_miles: float = 15.0, log: Callable[[str], None] = print) -> List[str]:
+    """For each suburb, make sure the search query geocodes near its pin. A failing query is retried with the county
+    ("Citrus Heights, Sacramento County, CA"); the row is updated when that works, otherwise a problem is returned."""
+    problems = []
+    for r in rows:
+        if r["type"] != "suburb":
+            continue
+        res = query_distance(r["search_query"], r["lat"], r["lon"])
+        if res is not None and res[0] <= max_miles:
+            continue
+        alt = f"{r['name']}, {r['county_borough']} County, {r['state_abbr']}"
+        res2 = query_distance(alt, r["lat"], r["lon"])
+        if res2 is not None and res2[0] <= max_miles:
+            log(f"  query for {r['name']}: '{r['search_query']}' geocodes {'nowhere' if res is None else f'{res[0]:.0f} miles away ({res[1]})'}; using '{alt}'")
+            r["search_query"] = alt
+        else:
+            problems.append(f"{r['name']}: query '{r['search_query']}' does not geocode within {max_miles:.0f} miles of the pin and the county form did not help")
+    return problems
 
 
 def write_csv(rows: List[Dict[str, Any]], path: Path) -> None:
