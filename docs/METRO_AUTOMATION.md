@@ -44,6 +44,8 @@ A suburb is pinned at the OpenStreetMap place node (city, town, village, suburb)
 
 A neighborhood is pinned by a Nominatim lookup of `<name>, <parent city>, <ST>`, rejected unless the result names the parent city. Its pin must fall inside the parent city's Census boundary, otherwise `init` stops: an enclave city listed as a neighborhood (Alamo Heights inside San Antonio) would be scored with the parent city's police department. List it under `suburbs`.
 
+The scorer geocodes each place's `search_query` for its city, state and ZIP, so `init` checks that every suburb's query geocodes within 15 miles of its pin, and adds the county when it does not ("Citrus Heights, CA" geocodes to a neighborhood in Fontana; "Citrus Heights, Sacramento County, CA" is correct). Without this, California crime for Citrus Heights was Fontana's.
+
 Every place must be in a county of the metro's Census CBSA; others are dropped with a note. Re-pinning a place changes almost every pillar (Galveston, moved 14 miles: 10 of 14 pillars changed), so a moved place is re-scored in full. `run` does that automatically.
 
 ## Rules applied by `finish`

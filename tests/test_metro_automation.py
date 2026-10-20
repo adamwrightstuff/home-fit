@@ -209,3 +209,23 @@ def test_c5_skips_neighborhoods_and_unscored_rows(monkeypatch):
     monkeypatch.setattr(fin, "_catalog_rows", lambda metro: {"Uptown": {"type": "neighborhood"}})
     rows = [scored("Uptown", "Dallas Police Department", typ="neighborhood"), {"success": False, "catalog": {"name": "X", "type": "suburb"}}]
     assert fin.mismatch_decisions(rows, "m", lambda st: [], lambda *a: None, 2024) == []
+
+
+# ---------------------------------------------------------------------------------------------- place list: search-query check
+def test_check_queries_adds_the_county_when_a_query_geocodes_to_another_town(monkeypatch):
+    answers = {"Citrus Heights, CA": (379.0, "Fontana"), "Citrus Heights, Sacramento County, CA": (0.5, "Citrus Heights"),
+               "Folsom, CA": (0.8, "Folsom")}
+    monkeypatch.setattr(pl, "query_distance", lambda q, la, lo: answers.get(q))
+    rows = [{"name": "Citrus Heights", "type": "suburb", "county_borough": "Sacramento", "state_abbr": "CA", "search_query": "Citrus Heights, CA", "lat": 38.69, "lon": -121.29},
+            {"name": "Folsom", "type": "suburb", "county_borough": "Sacramento", "state_abbr": "CA", "search_query": "Folsom, CA", "lat": 38.67, "lon": -121.17},
+            {"name": "Uptown", "type": "neighborhood", "county_borough": "", "state_abbr": "CA", "search_query": "Uptown, X, CA", "lat": 1.0, "lon": 1.0}]
+    problems = pl.check_queries(rows, log=lambda s: None)
+    assert problems == [] and rows[0]["search_query"] == "Citrus Heights, Sacramento County, CA" and rows[1]["search_query"] == "Folsom, CA"
+    assert rows[2]["search_query"] == "Uptown, X, CA"            # neighborhoods are not checked here
+
+
+def test_check_queries_reports_a_place_the_county_form_cannot_fix(monkeypatch):
+    monkeypatch.setattr(pl, "query_distance", lambda q, la, lo: (200.0, "Elsewhere"))
+    rows = [{"name": "Nowhere", "type": "suburb", "county_borough": "Y", "state_abbr": "TX", "search_query": "Nowhere, TX", "lat": 30.0, "lon": -98.0}]
+    problems = pl.check_queries(rows, log=lambda s: None)
+    assert len(problems) == 1 and "Nowhere" in problems[0]
