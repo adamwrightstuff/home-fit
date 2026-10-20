@@ -1,0 +1,339 @@
+{
+ "_meta": {
+  "description": "US places grouped by (state, city-tax jurisdiction) with population weights and state goods RPP.  The pillar prices a household of any income in each group and scores against the population-weighted 5th/95th percentile burden.",
+  "places_used": 236279185,
+  "groups": 54,
+  "places_skipped_no_rpp": 109,
+  "min_population": 2500,
+  "reference_income": 78538.0,
+  "acs_year": 2023,
+  "grocery_spend_national": 6224.0,
+  "goods_price_basis": "state goods RPP"
+ },
+ "groups": [
+  {
+   "state": "Alabama",
+   "local": null,
+   "goods": 96.399,
+   "pop": 3069595.0
+  },
+  {
+   "state": "Alaska",
+   "local": null,
+   "goods": 106.319,
+   "pop": 600002.0
+  },
+  {
+   "state": "Arizona",
+   "local": null,
+   "goods": 95.361,
+   "pop": 6596981.0
+  },
+  {
+   "state": "Arkansas",
+   "local": null,
+   "goods": 93.597,
+   "pop": 1864220.0
+  },
+  {
+   "state": "California",
+   "local": null,
+   "goods": 106.098,
+   "pop": 36919985.0
+  },
+  {
+   "state": "Colorado",
+   "local": null,
+   "goods": 98.727,
+   "pop": 4868367.0
+  },
+  {
+   "state": "Connecticut",
+   "local": null,
+   "goods": 97.33,
+   "pop": 2117966.0
+  },
+  {
+   "state": "Delaware",
+   "local": null,
+   "goods": 96.155,
+   "pop": 394527.0
+  },
+  {
+   "state": "District of Columbia",
+   "local": null,
+   "goods": 106.502,
+   "pop": 672079.0
+  },
+  {
+   "state": "Florida",
+   "local": null,
+   "goods": 98.059,
+   "pop": 16622920.0
+  },
+  {
+   "state": "Georgia",
+   "local": null,
+   "goods": 98.929,
+   "pop": 5054611.0
+  },
+  {
+   "state": "Hawaii",
+   "local": null,
+   "goods": 111.562,
+   "pop": 1329739.0
+  },
+  {
+   "state": "Idaho",
+   "local": null,
+   "goods": 96.311,
+   "pop": 1268102.0
+  },
+  {
+   "state": "Illinois",
+   "local": null,
+   "goods": 103.832,
+   "pop": 10577318.0
+  },
+  {
+   "state": "Indiana",
+   "local": null,
+   "goods": 95.509,
+   "pop": 4380736.0
+  },
+  {
+   "state": "Iowa",
+   "local": null,
+   "goods": 93.73,
+   "pop": 2149246.0
+  },
+  {
+   "state": "Kansas",
+   "local": null,
+   "goods": 94.027,
+   "pop": 2190326.0
+  },
+  {
+   "state": "Kentucky",
+   "local": null,
+   "goods": 95.967,
+   "pop": 2402100.0
+  },
+  {
+   "state": "Louisiana",
+   "local": null,
+   "goods": 93.7,
+   "pop": 2725070.0
+  },
+  {
+   "state": "Maine",
+   "local": null,
+   "goods": 97.171,
+   "pop": 561163.0
+  },
+  {
+   "state": "Maryland",
+   "local": null,
+   "goods": 102.524,
+   "pop": 5007134.0
+  },
+  {
+   "state": "Massachusetts",
+   "local": null,
+   "goods": 98.82,
+   "pop": 4886704.0
+  },
+  {
+   "state": "Michigan",
+   "local": null,
+   "goods": 95.993,
+   "pop": 5164314.0
+  },
+  {
+   "state": "Minnesota",
+   "local": null,
+   "goods": 100.519,
+   "pop": 4391720.0
+  },
+  {
+   "state": "Mississippi",
+   "local": null,
+   "goods": 96.219,
+   "pop": 1412156.0
+  },
+  {
+   "state": "Missouri",
+   "local": null,
+   "goods": 96.299,
+   "pop": 3968593.0
+  },
+  {
+   "state": "Montana",
+   "local": null,
+   "goods": 96.006,
+   "pop": 605184.0
+  },
+  {
+   "state": "Nebraska",
+   "local": null,
+   "goods": 94.101,
+   "pop": 1356400.0
+  },
+  {
+   "state": "Nevada",
+   "local": null,
+   "goods": 96.271,
+   "pop": 2954713.0
+  },
+  {
+   "state": "New Hampshire",
+   "local": null,
+   "goods": 98.578,
+   "pop": 603685.0
+  },
+  {
+   "state": "New Jersey",
+   "local": null,
+   "goods": 107.066,
+   "pop": 5781792.0
+  },
+  {
+   "state": "New Mexico",
+   "local": null,
+   "goods": 96.144,
+   "pop": 1566986.0
+  },
+  {
+   "state": "New York",
+   "local": null,
+   "goods": 107.254,
+   "pop": 6880693.0
+  },
+  {
+   "state": "New York",
+   "local": "New York city, New York",
+   "goods": 107.254,
+   "pop": 8516202.0
+  },
+  {
+   "state": "New York",
+   "local": "Yonkers city, New York",
+   "goods": 107.254,
+   "pop": 209529.0
+  },
+  {
+   "state": "North Carolina",
+   "local": null,
+   "goods": 96.621,
+   "pop": 6197665.0
+  },
+  {
+   "state": "North Dakota",
+   "local": null,
+   "goods": 95.701,
+   "pop": 501114.0
+  },
+  {
+   "state": "Ohio",
+   "local": null,
+   "goods": 93.67,
+   "pop": 7723744.0
+  },
+  {
+   "state": "Oklahoma",
+   "local": null,
+   "goods": 93.778,
+   "pop": 2854341.0
+  },
+  {
+   "state": "Oregon",
+   "local": null,
+   "goods": 105.261,
+   "pop": 3255845.0
+  },
+  {
+   "state": "Pennsylvania",
+   "local": null,
+   "goods": 99.357,
+   "pop": 4641977.0
+  },
+  {
+   "state": "Pennsylvania",
+   "local": "Philadelphia city, Pennsylvania",
+   "goods": 99.357,
+   "pop": 1582432.0
+  },
+  {
+   "state": "Rhode Island",
+   "local": null,
+   "goods": 97.165,
+   "pop": 660012.0
+  },
+  {
+   "state": "South Carolina",
+   "local": null,
+   "goods": 96.339,
+   "pop": 2357822.0
+  },
+  {
+   "state": "South Dakota",
+   "local": null,
+   "goods": 95.473,
+   "pop": 546461.0
+  },
+  {
+   "state": "Tennessee",
+   "local": null,
+   "goods": 96.247,
+   "pop": 4211894.0
+  },
+  {
+   "state": "Texas",
+   "local": null,
+   "goods": 98.083,
+   "pop": 21998235.0
+  },
+  {
+   "state": "Utah",
+   "local": null,
+   "goods": 96.446,
+   "pop": 3053973.0
+  },
+  {
+   "state": "Vermont",
+   "local": null,
+   "goods": 97.274,
+   "pop": 194811.0
+  },
+  {
+   "state": "Virginia",
+   "local": null,
+   "goods": 100.368,
+   "pop": 5687367.0
+  },
+  {
+   "state": "Washington",
+   "local": null,
+   "goods": 104.359,
+   "pop": 6191509.0
+  },
+  {
+   "state": "West Virginia",
+   "local": null,
+   "goods": 96.539,
+   "pop": 558278.0
+  },
+  {
+   "state": "Wisconsin",
+   "local": null,
+   "goods": 94.31,
+   "pop": 4014627.0
+  },
+  {
+   "state": "Wyoming",
+   "local": null,
+   "goods": 95.368,
+   "pop": 376220.0
+  }
+ ]
+}

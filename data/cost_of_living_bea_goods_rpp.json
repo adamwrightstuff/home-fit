@@ -1,0 +1,1721 @@
+{
+ "msa": {
+  "00000": {
+   "name": "United States",
+   "goods": 99.567
+  },
+  "00999": {
+   "name": "United States (Nonmetropolitan Portion) *",
+   "goods": 96.063
+  },
+  "10180": {
+   "name": "Abilene, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "10420": {
+   "name": "Akron, OH (Metropolitan Statistical Area)",
+   "goods": 93.628
+  },
+  "10500": {
+   "name": "Albany, GA (Metropolitan Statistical Area)",
+   "goods": 96.269
+  },
+  "10540": {
+   "name": "Albany, OR (Metropolitan Statistical Area)",
+   "goods": 105.261
+  },
+  "10580": {
+   "name": "Albany-Schenectady-Troy, NY (Metropolitan Statistical Area)",
+   "goods": 99.693
+  },
+  "10740": {
+   "name": "Albuquerque, NM (Metropolitan Statistical Area)",
+   "goods": 96.144
+  },
+  "10780": {
+   "name": "Alexandria, LA (Metropolitan Statistical Area)",
+   "goods": 93.691
+  },
+  "10900": {
+   "name": "Allentown-Bethlehem-Easton, PA-NJ (Metropolitan Statistical Area)",
+   "goods": 100.569
+  },
+  "11020": {
+   "name": "Altoona, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "11100": {
+   "name": "Amarillo, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "11180": {
+   "name": "Ames, IA (Metropolitan Statistical Area)",
+   "goods": 93.73
+  },
+  "11200": {
+   "name": "Amherst Town-Northampton, MA (Metropolitan Statistical Area)",
+   "goods": 97.015
+  },
+  "11260": {
+   "name": "Anchorage, AK (Metropolitan Statistical Area)",
+   "goods": 107.34
+  },
+  "11460": {
+   "name": "Ann Arbor, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "11500": {
+   "name": "Anniston-Oxford, AL (Metropolitan Statistical Area)",
+   "goods": 96.397
+  },
+  "11540": {
+   "name": "Appleton, WI (Metropolitan Statistical Area)",
+   "goods": 93.787
+  },
+  "11700": {
+   "name": "Asheville, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "12020": {
+   "name": "Athens-Clarke County, GA (Metropolitan Statistical Area)",
+   "goods": 96.269
+  },
+  "12060": {
+   "name": "Atlanta-Sandy Springs-Roswell, GA (Metropolitan Statistical Area)",
+   "goods": 100.416
+  },
+  "12100": {
+   "name": "Atlantic City-Hammonton, NJ (Metropolitan Statistical Area)",
+   "goods": 99.79
+  },
+  "12220": {
+   "name": "Auburn-Opelika, AL (Metropolitan Statistical Area)",
+   "goods": 96.397
+  },
+  "12260": {
+   "name": "Augusta-Richmond County, GA-SC (Metropolitan Statistical Area)",
+   "goods": 96.293
+  },
+  "12420": {
+   "name": "Austin-Round Rock-San Marcos, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "12540": {
+   "name": "Bakersfield-Delano, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "12580": {
+   "name": "Baltimore-Columbia-Towson, MD (Metropolitan Statistical Area)",
+   "goods": 102.353
+  },
+  "12620": {
+   "name": "Bangor, ME (Metropolitan Statistical Area)",
+   "goods": 97.171
+  },
+  "12700": {
+   "name": "Barnstable Town, MA (Metropolitan Statistical Area)",
+   "goods": 97.015
+  },
+  "12940": {
+   "name": "Baton Rouge, LA (Metropolitan Statistical Area)",
+   "goods": 93.691
+  },
+  "12980": {
+   "name": "Battle Creek, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "13020": {
+   "name": "Bay City, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "13140": {
+   "name": "Beaumont-Port Arthur, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "13220": {
+   "name": "Beckley, WV (Metropolitan Statistical Area)",
+   "goods": 96.27
+  },
+  "13380": {
+   "name": "Bellingham, WA (Metropolitan Statistical Area)",
+   "goods": 105.028
+  },
+  "13460": {
+   "name": "Bend, OR (Metropolitan Statistical Area)",
+   "goods": 105.261
+  },
+  "13740": {
+   "name": "Billings, MT (Metropolitan Statistical Area)",
+   "goods": 96.006
+  },
+  "13780": {
+   "name": "Binghamton, NY (Metropolitan Statistical Area)",
+   "goods": 99.693
+  },
+  "13820": {
+   "name": "Birmingham, AL (Metropolitan Statistical Area)",
+   "goods": 96.397
+  },
+  "13900": {
+   "name": "Bismarck, ND (Metropolitan Statistical Area)",
+   "goods": 95.701
+  },
+  "13980": {
+   "name": "Blacksburg-Christiansburg-Radford, VA (Metropolitan Statistical Area)",
+   "goods": 96.773
+  },
+  "14010": {
+   "name": "Bloomington, IL (Metropolitan Statistical Area)",
+   "goods": 93.643
+  },
+  "14020": {
+   "name": "Bloomington, IN (Metropolitan Statistical Area)",
+   "goods": 94.318
+  },
+  "14260": {
+   "name": "Boise City, ID (Metropolitan Statistical Area)",
+   "goods": 96.179
+  },
+  "14460": {
+   "name": "Boston-Cambridge-Newton, MA-NH (Metropolitan Statistical Area)",
+   "goods": 99.651
+  },
+  "14500": {
+   "name": "Boulder, CO (Metropolitan Statistical Area)",
+   "goods": 96.052
+  },
+  "14540": {
+   "name": "Bowling Green, KY (Metropolitan Statistical Area)",
+   "goods": 96.246
+  },
+  "14580": {
+   "name": "Bozeman, MT (Metropolitan Statistical Area)",
+   "goods": 96.006
+  },
+  "14740": {
+   "name": "Bremerton-Silverdale-Port Orchard, WA (Metropolitan Statistical Area)",
+   "goods": 105.028
+  },
+  "14860": {
+   "name": "Bridgeport-Stamford-Danbury, CT Metropolitan Statistical Area",
+   "goods": 97.33
+  },
+  "15180": {
+   "name": "Brownsville-Harlingen, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "15260": {
+   "name": "Brunswick-St. Simons, GA (Metropolitan Statistical Area)",
+   "goods": 96.269
+  },
+  "15380": {
+   "name": "Buffalo-Cheektowaga, NY (Metropolitan Statistical Area)",
+   "goods": 99.693
+  },
+  "15500": {
+   "name": "Burlington, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "15540": {
+   "name": "Burlington-South Burlington, VT (Metropolitan Statistical Area)",
+   "goods": 97.274
+  },
+  "15940": {
+   "name": "Canton-Massillon, OH (Metropolitan Statistical Area)",
+   "goods": 93.628
+  },
+  "15980": {
+   "name": "Cape Coral-Fort Myers, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "16020": {
+   "name": "Cape Girardeau, MO-IL (Metropolitan Statistical Area)",
+   "goods": 94.222
+  },
+  "16180": {
+   "name": "Carson City, NV (Metropolitan Statistical Area)",
+   "goods": 96.271
+  },
+  "16220": {
+   "name": "Casper, WY (Metropolitan Statistical Area)",
+   "goods": 95.368
+  },
+  "16300": {
+   "name": "Cedar Rapids, IA (Metropolitan Statistical Area)",
+   "goods": 93.73
+  },
+  "16540": {
+   "name": "Chambersburg, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "16580": {
+   "name": "Champaign-Urbana, IL (Metropolitan Statistical Area)",
+   "goods": 93.643
+  },
+  "16620": {
+   "name": "Charleston, WV (Metropolitan Statistical Area)",
+   "goods": 96.27
+  },
+  "16700": {
+   "name": "Charleston-North Charleston, SC (Metropolitan Statistical Area)",
+   "goods": 96.339
+  },
+  "16740": {
+   "name": "Charlotte-Concord-Gastonia, NC-SC (Metropolitan Statistical Area)",
+   "goods": 96.58
+  },
+  "16820": {
+   "name": "Charlottesville, VA (Metropolitan Statistical Area)",
+   "goods": 96.773
+  },
+  "16860": {
+   "name": "Chattanooga, TN-GA (Metropolitan Statistical Area)",
+   "goods": 95.994
+  },
+  "16940": {
+   "name": "Cheyenne, WY (Metropolitan Statistical Area)",
+   "goods": 95.368
+  },
+  "16980": {
+   "name": "Chicago-Naperville-Elgin, IL-IN (Metropolitan Statistical Area)",
+   "goods": 107.258
+  },
+  "17020": {
+   "name": "Chico, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "17140": {
+   "name": "Cincinnati, OH-KY-IN (Metropolitan Statistical Area)",
+   "goods": 93.751
+  },
+  "17300": {
+   "name": "Clarksville, TN-KY (Metropolitan Statistical Area)",
+   "goods": 96.247
+  },
+  "17410": {
+   "name": "Cleveland, OH (Metropolitan Statistical Area)",
+   "goods": 93.628
+  },
+  "17420": {
+   "name": "Cleveland, TN (Metropolitan Statistical Area)",
+   "goods": 96.247
+  },
+  "17660": {
+   "name": "Coeur d'Alene, ID (Metropolitan Statistical Area)",
+   "goods": 96.179
+  },
+  "17780": {
+   "name": "College Station-Bryan, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "17820": {
+   "name": "Colorado Springs, CO (Metropolitan Statistical Area)",
+   "goods": 96.052
+  },
+  "17860": {
+   "name": "Columbia, MO (Metropolitan Statistical Area)",
+   "goods": 94.193
+  },
+  "17900": {
+   "name": "Columbia, SC (Metropolitan Statistical Area)",
+   "goods": 96.339
+  },
+  "17980": {
+   "name": "Columbus, GA-AL (Metropolitan Statistical Area)",
+   "goods": 96.332
+  },
+  "18020": {
+   "name": "Columbus, IN (Metropolitan Statistical Area)",
+   "goods": 94.318
+  },
+  "18140": {
+   "name": "Columbus, OH (Metropolitan Statistical Area)",
+   "goods": 93.628
+  },
+  "18580": {
+   "name": "Corpus Christi, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "18700": {
+   "name": "Corvallis, OR (Metropolitan Statistical Area)",
+   "goods": 105.261
+  },
+  "18880": {
+   "name": "Crestview-Fort Walton Beach-Destin, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "19100": {
+   "name": "Dallas-Fort Worth-Arlington, TX (Metropolitan Statistical Area)",
+   "goods": 102.838
+  },
+  "19140": {
+   "name": "Dalton, GA (Metropolitan Statistical Area)",
+   "goods": 96.269
+  },
+  "19300": {
+   "name": "Daphne-Fairhope-Foley, AL (Metropolitan Statistical Area)",
+   "goods": 96.397
+  },
+  "19340": {
+   "name": "Davenport-Moline-Rock Island, IA-IL (Metropolitan Statistical Area)",
+   "goods": 94.2
+  },
+  "19430": {
+   "name": "Dayton-Kettering-Beavercreek, OH (Metropolitan Statistical Area)",
+   "goods": 93.628
+  },
+  "19460": {
+   "name": "Decatur, AL (Metropolitan Statistical Area)",
+   "goods": 96.397
+  },
+  "19500": {
+   "name": "Decatur, IL (Metropolitan Statistical Area)",
+   "goods": 93.643
+  },
+  "19660": {
+   "name": "Deltona-Daytona Beach-Ormond Beach, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "19740": {
+   "name": "Denver-Aurora-Centennial, CO (Metropolitan Statistical Area)",
+   "goods": 100.957
+  },
+  "19780": {
+   "name": "Des Moines-West Des Moines, IA (Metropolitan Statistical Area)",
+   "goods": 93.73
+  },
+  "19820": {
+   "name": "Detroit-Warren-Dearborn, MI (Metropolitan Statistical Area)",
+   "goods": 98.817
+  },
+  "20020": {
+   "name": "Dothan, AL (Metropolitan Statistical Area)",
+   "goods": 96.397
+  },
+  "20100": {
+   "name": "Dover, DE (Metropolitan Statistical Area)",
+   "goods": 96.372
+  },
+  "20220": {
+   "name": "Dubuque, IA (Metropolitan Statistical Area)",
+   "goods": 93.73
+  },
+  "20260": {
+   "name": "Duluth, MN-WI (Metropolitan Statistical Area)",
+   "goods": 95.3
+  },
+  "20500": {
+   "name": "Durham-Chapel Hill, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "20580": {
+   "name": "Eagle Pass, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "20740": {
+   "name": "Eau Claire, WI (Metropolitan Statistical Area)",
+   "goods": 93.787
+  },
+  "20940": {
+   "name": "El Centro, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "21060": {
+   "name": "Elizabethtown, KY (Metropolitan Statistical Area)",
+   "goods": 96.246
+  },
+  "21140": {
+   "name": "Elkhart-Goshen, IN (Metropolitan Statistical Area)",
+   "goods": 94.318
+  },
+  "21300": {
+   "name": "Elmira, NY (Metropolitan Statistical Area)",
+   "goods": 99.693
+  },
+  "21340": {
+   "name": "El Paso, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "21420": {
+   "name": "Enid, OK (Metropolitan Statistical Area) *",
+   "goods": 93.778
+  },
+  "21500": {
+   "name": "Erie, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "21660": {
+   "name": "Eugene-Springfield, OR (Metropolitan Statistical Area)",
+   "goods": 105.261
+  },
+  "21780": {
+   "name": "Evansville, IN (Metropolitan Statistical Area)",
+   "goods": 94.318
+  },
+  "21820": {
+   "name": "Fairbanks-College, AK (Metropolitan Statistical Area)",
+   "goods": 107.34
+  },
+  "22020": {
+   "name": "Fargo, ND-MN (Metropolitan Statistical Area)",
+   "goods": 95.654
+  },
+  "22140": {
+   "name": "Farmington, NM (Metropolitan Statistical Area)",
+   "goods": 96.144
+  },
+  "22180": {
+   "name": "Fayetteville, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "22220": {
+   "name": "Fayetteville-Springdale-Rogers, AR (Metropolitan Statistical Area)",
+   "goods": 93.577
+  },
+  "22380": {
+   "name": "Flagstaff, AZ (Metropolitan Statistical Area)",
+   "goods": 96.237
+  },
+  "22420": {
+   "name": "Flint, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "22500": {
+   "name": "Florence, SC (Metropolitan Statistical Area)",
+   "goods": 96.339
+  },
+  "22520": {
+   "name": "Florence-Muscle Shoals, AL (Metropolitan Statistical Area)",
+   "goods": 96.397
+  },
+  "22540": {
+   "name": "Fond du Lac, WI (Metropolitan Statistical Area)",
+   "goods": 93.787
+  },
+  "22660": {
+   "name": "Fort Collins-Loveland, CO (Metropolitan Statistical Area)",
+   "goods": 96.052
+  },
+  "22900": {
+   "name": "Fort Smith, AR-OK (Metropolitan Statistical Area)",
+   "goods": 93.606
+  },
+  "23060": {
+   "name": "Fort Wayne, IN (Metropolitan Statistical Area)",
+   "goods": 94.318
+  },
+  "23420": {
+   "name": "Fresno, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "23460": {
+   "name": "Gadsden, AL (Metropolitan Statistical Area)",
+   "goods": 96.397
+  },
+  "23540": {
+   "name": "Gainesville, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "23580": {
+   "name": "Gainesville, GA (Metropolitan Statistical Area)",
+   "goods": 96.269
+  },
+  "23900": {
+   "name": "Gettysburg, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "24020": {
+   "name": "Glens Falls, NY (Metropolitan Statistical Area)",
+   "goods": 99.693
+  },
+  "24140": {
+   "name": "Goldsboro, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "24220": {
+   "name": "Grand Forks, ND-MN (Metropolitan Statistical Area)",
+   "goods": 95.632
+  },
+  "24260": {
+   "name": "Grand Island, NE (Metropolitan Statistical Area)",
+   "goods": 94.101
+  },
+  "24300": {
+   "name": "Grand Junction, CO (Metropolitan Statistical Area)",
+   "goods": 96.052
+  },
+  "24340": {
+   "name": "Grand Rapids-Wyoming-Kentwood, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "24420": {
+   "name": "Grants Pass, OR (Metropolitan Statistical Area)",
+   "goods": 105.261
+  },
+  "24500": {
+   "name": "Great Falls, MT (Metropolitan Statistical Area)",
+   "goods": 96.006
+  },
+  "24540": {
+   "name": "Greeley, CO (Metropolitan Statistical Area)",
+   "goods": 96.052
+  },
+  "24580": {
+   "name": "Green Bay, WI (Metropolitan Statistical Area)",
+   "goods": 93.787
+  },
+  "24660": {
+   "name": "Greensboro-High Point, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "24780": {
+   "name": "Greenville, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "24860": {
+   "name": "Greenville-Anderson-Greer, SC (Metropolitan Statistical Area)",
+   "goods": 96.339
+  },
+  "25060": {
+   "name": "Gulfport-Biloxi, MS (Metropolitan Statistical Area)",
+   "goods": 96.219
+  },
+  "25180": {
+   "name": "Hagerstown-Martinsburg, MD-WV (Metropolitan Statistical Area)",
+   "goods": 96.399
+  },
+  "25220": {
+   "name": "Hammond, LA (Metropolitan Statistical Area)",
+   "goods": 93.691
+  },
+  "25260": {
+   "name": "Hanford-Corcoran, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "25420": {
+   "name": "Harrisburg-Carlisle, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "25500": {
+   "name": "Harrisonburg, VA (Metropolitan Statistical Area)",
+   "goods": 96.773
+  },
+  "25540": {
+   "name": "Hartford-West Hartford-East Hartford, CT (Metropolitan Statistical Area)",
+   "goods": 97.33
+  },
+  "25620": {
+   "name": "Hattiesburg, MS (Metropolitan Statistical Area)",
+   "goods": 96.219
+  },
+  "25740": {
+   "name": "Helena, MT (Metropolitan Statistical Area)",
+   "goods": 96.006
+  },
+  "25860": {
+   "name": "Hickory-Lenoir-Morganton, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "25940": {
+   "name": "Hilton Head Island-Bluffton-Port Royal, SC (Metropolitan Statistical Area)",
+   "goods": 96.339
+  },
+  "25980": {
+   "name": "Hinesville, GA (Metropolitan Statistical Area)",
+   "goods": 96.269
+  },
+  "26140": {
+   "name": "Homosassa Springs, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "26300": {
+   "name": "Hot Springs, AR (Metropolitan Statistical Area)",
+   "goods": 93.577
+  },
+  "26380": {
+   "name": "Houma-Bayou Cane-Thibodaux, LA (Metropolitan Statistical Area)",
+   "goods": 93.691
+  },
+  "26420": {
+   "name": "Houston-Pasadena-The Woodlands, TX (Metropolitan Statistical Area)",
+   "goods": 100.639
+  },
+  "26580": {
+   "name": "Huntington-Ashland, WV-KY-OH (Metropolitan Statistical Area)",
+   "goods": 96.316
+  },
+  "26620": {
+   "name": "Huntsville, AL (Metropolitan Statistical Area)",
+   "goods": 96.397
+  },
+  "26820": {
+   "name": "Idaho Falls, ID (Metropolitan Statistical Area)",
+   "goods": 96.179
+  },
+  "26900": {
+   "name": "Indianapolis-Carmel-Greenwood, IN (Metropolitan Statistical Area)",
+   "goods": 94.318
+  },
+  "26980": {
+   "name": "Iowa City, IA (Metropolitan Statistical Area)",
+   "goods": 93.73
+  },
+  "27060": {
+   "name": "Ithaca, NY (Metropolitan Statistical Area)",
+   "goods": 99.693
+  },
+  "27100": {
+   "name": "Jackson, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "27140": {
+   "name": "Jackson, MS (Metropolitan Statistical Area)",
+   "goods": 96.219
+  },
+  "27180": {
+   "name": "Jackson, TN (Metropolitan Statistical Area)",
+   "goods": 96.247
+  },
+  "27260": {
+   "name": "Jacksonville, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "27340": {
+   "name": "Jacksonville, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "27500": {
+   "name": "Janesville-Beloit, WI (Metropolitan Statistical Area)",
+   "goods": 93.787
+  },
+  "27620": {
+   "name": "Jefferson City, MO (Metropolitan Statistical Area)",
+   "goods": 94.193
+  },
+  "27740": {
+   "name": "Johnson City, TN (Metropolitan Statistical Area)",
+   "goods": 96.247
+  },
+  "27780": {
+   "name": "Johnstown, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "27860": {
+   "name": "Jonesboro, AR (Metropolitan Statistical Area)",
+   "goods": 93.577
+  },
+  "27900": {
+   "name": "Joplin, MO-KS (Metropolitan Statistical Area)",
+   "goods": 94.179
+  },
+  "27980": {
+   "name": "Kahului-Wailuku, HI (Metropolitan Statistical Area)",
+   "goods": 111.562
+  },
+  "28020": {
+   "name": "Kalamazoo-Portage, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "28100": {
+   "name": "Kankakee, IL (Metropolitan Statistical Area)",
+   "goods": 93.643
+  },
+  "28140": {
+   "name": "Kansas City, MO-KS (Metropolitan Statistical Area)",
+   "goods": 94.12
+  },
+  "28420": {
+   "name": "Kennewick-Richland, WA (Metropolitan Statistical Area)",
+   "goods": 105.028
+  },
+  "28450": {
+   "name": "Kenosha, WI (Metropolitan Statistical Area)",
+   "goods": 106.187
+  },
+  "28660": {
+   "name": "Killeen-Temple, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "28700": {
+   "name": "Kingsport-Bristol, TN-VA (Metropolitan Statistical Area)",
+   "goods": 96.235
+  },
+  "28740": {
+   "name": "Kingston, NY (Metropolitan Statistical Area)",
+   "goods": 99.693
+  },
+  "28880": {
+   "name": "Kiryas Joel-Poughkeepsie-Newburgh, NY (Metropolitan Statistical Area)",
+   "goods": 110.254
+  },
+  "28940": {
+   "name": "Knoxville, TN (Metropolitan Statistical Area)",
+   "goods": 96.247
+  },
+  "29020": {
+   "name": "Kokomo, IN (Metropolitan Statistical Area)",
+   "goods": 94.318
+  },
+  "29100": {
+   "name": "La Crosse-Onalaska, WI-MN (Metropolitan Statistical Area)",
+   "goods": 93.8
+  },
+  "29180": {
+   "name": "Lafayette, LA (Metropolitan Statistical Area)",
+   "goods": 93.691
+  },
+  "29200": {
+   "name": "Lafayette-West Lafayette, IN (Metropolitan Statistical Area)",
+   "goods": 94.318
+  },
+  "29340": {
+   "name": "Lake Charles, LA (Metropolitan Statistical Area)",
+   "goods": 93.691
+  },
+  "29420": {
+   "name": "Lake Havasu City-Kingman, AZ (Metropolitan Statistical Area)",
+   "goods": 96.237
+  },
+  "29460": {
+   "name": "Lakeland-Winter Haven, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "29540": {
+   "name": "Lancaster, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "29620": {
+   "name": "Lansing-East Lansing, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "29700": {
+   "name": "Laredo, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "29740": {
+   "name": "Las Cruces, NM (Metropolitan Statistical Area)",
+   "goods": 96.144
+  },
+  "29820": {
+   "name": "Las Vegas-Henderson-North Las Vegas, NV (Metropolitan Statistical Area)",
+   "goods": 96.271
+  },
+  "29940": {
+   "name": "Lawrence, KS (Metropolitan Statistical Area)",
+   "goods": 94.027
+  },
+  "30020": {
+   "name": "Lawton, OK (Metropolitan Statistical Area)",
+   "goods": 93.778
+  },
+  "30140": {
+   "name": "Lebanon, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "30300": {
+   "name": "Lewiston, ID-WA (Metropolitan Statistical Area)",
+   "goods": 96.217
+  },
+  "30340": {
+   "name": "Lewiston-Auburn, ME (Metropolitan Statistical Area)",
+   "goods": 97.171
+  },
+  "30460": {
+   "name": "Lexington-Fayette, KY (Metropolitan Statistical Area)",
+   "goods": 96.246
+  },
+  "30500": {
+   "name": "Lexington Park, MD (Metropolitan Statistical Area)",
+   "goods": 99.663
+  },
+  "30620": {
+   "name": "Lima, OH (Metropolitan Statistical Area)",
+   "goods": 93.628
+  },
+  "30700": {
+   "name": "Lincoln, NE (Metropolitan Statistical Area)",
+   "goods": 94.101
+  },
+  "30780": {
+   "name": "Little Rock-North Little Rock-Conway, AR (Metropolitan Statistical Area)",
+   "goods": 93.577
+  },
+  "30860": {
+   "name": "Logan, UT-ID (Metropolitan Statistical Area)",
+   "goods": 96.43
+  },
+  "30980": {
+   "name": "Longview, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "31020": {
+   "name": "Longview-Kelso, WA (Metropolitan Statistical Area)",
+   "goods": 105.028
+  },
+  "31080": {
+   "name": "Los Angeles-Long Beach-Anaheim, CA (Metropolitan Statistical Area)",
+   "goods": 106.623
+  },
+  "31140": {
+   "name": "Louisville/Jefferson County, KY-IN (Metropolitan Statistical Area)",
+   "goods": 96.23
+  },
+  "31180": {
+   "name": "Lubbock, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "31340": {
+   "name": "Lynchburg, VA (Metropolitan Statistical Area)",
+   "goods": 96.773
+  },
+  "31420": {
+   "name": "Macon-Bibb County, GA (Metropolitan Statistical Area)",
+   "goods": 96.269
+  },
+  "31540": {
+   "name": "Madison, WI (Metropolitan Statistical Area)",
+   "goods": 93.787
+  },
+  "31700": {
+   "name": "Manchester-Nashua, NH (Metropolitan Statistical Area)",
+   "goods": 97.687
+  },
+  "31740": {
+   "name": "Manhattan, KS (Metropolitan Statistical Area)",
+   "goods": 94.027
+  },
+  "31860": {
+   "name": "Mankato, MN (Metropolitan Statistical Area)",
+   "goods": 95.433
+  },
+  "31900": {
+   "name": "Mansfield, OH (Metropolitan Statistical Area)",
+   "goods": 93.628
+  },
+  "32580": {
+   "name": "McAllen-Edinburg-Mission, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "32780": {
+   "name": "Medford, OR (Metropolitan Statistical Area)",
+   "goods": 105.261
+  },
+  "32820": {
+   "name": "Memphis, TN-MS-AR (Metropolitan Statistical Area)",
+   "goods": 96.221
+  },
+  "32900": {
+   "name": "Merced, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "33100": {
+   "name": "Miami-Fort Lauderdale-West Palm Beach, FL (Metropolitan Statistical Area)",
+   "goods": 103.556
+  },
+  "33140": {
+   "name": "Michigan City-La Porte, IN (Metropolitan Statistical Area)",
+   "goods": 94.318
+  },
+  "33220": {
+   "name": "Midland, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "33260": {
+   "name": "Midland, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "33340": {
+   "name": "Milwaukee-Waukesha, WI (Metropolitan Statistical Area)",
+   "goods": 93.787
+  },
+  "33460": {
+   "name": "Minneapolis-St. Paul-Bloomington, MN-WI (Metropolitan Statistical Area)",
+   "goods": 103.065
+  },
+  "33500": {
+   "name": "Minot, ND (Metropolitan Statistical Area)",
+   "goods": 95.701
+  },
+  "33540": {
+   "name": "Missoula, MT (Metropolitan Statistical Area)",
+   "goods": 96.006
+  },
+  "33660": {
+   "name": "Mobile, AL (Metropolitan Statistical Area)",
+   "goods": 96.397
+  },
+  "33700": {
+   "name": "Modesto, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "33740": {
+   "name": "Monroe, LA (Metropolitan Statistical Area)",
+   "goods": 93.691
+  },
+  "33780": {
+   "name": "Monroe, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "33860": {
+   "name": "Montgomery, AL (Metropolitan Statistical Area)",
+   "goods": 96.397
+  },
+  "34060": {
+   "name": "Morgantown, WV (Metropolitan Statistical Area)",
+   "goods": 96.27
+  },
+  "34100": {
+   "name": "Morristown, TN (Metropolitan Statistical Area)",
+   "goods": 96.247
+  },
+  "34580": {
+   "name": "Mount Vernon-Anacortes, WA (Metropolitan Statistical Area)",
+   "goods": 105.028
+  },
+  "34620": {
+   "name": "Muncie, IN (Metropolitan Statistical Area)",
+   "goods": 94.318
+  },
+  "34740": {
+   "name": "Muskegon-Norton Shores, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "34820": {
+   "name": "Myrtle Beach-Conway-North Myrtle Beach, SC (Metropolitan Statistical Area)",
+   "goods": 96.339
+  },
+  "34900": {
+   "name": "Napa, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "34940": {
+   "name": "Naples-Marco Island, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "34980": {
+   "name": "Nashville-Davidson--Murfreesboro--Franklin, TN (Metropolitan Statistical Area)",
+   "goods": 96.247
+  },
+  "35300": {
+   "name": "New Haven, CT (Metropolitan Statistical Area)",
+   "goods": 97.33
+  },
+  "35380": {
+   "name": "New Orleans-Metairie, LA (Metropolitan Statistical Area)",
+   "goods": 93.691
+  },
+  "35620": {
+   "name": "New York-Newark-Jersey City, NY-NJ (Metropolitan Statistical Area)",
+   "goods": 110.261
+  },
+  "35660": {
+   "name": "Niles, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "35840": {
+   "name": "North Port-Bradenton-Sarasota, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "35980": {
+   "name": "Norwich-New London-Willimantic, CT (Metropolitan Statistical Area)",
+   "goods": 97.33
+  },
+  "36100": {
+   "name": "Ocala, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "36220": {
+   "name": "Odessa, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "36260": {
+   "name": "Ogden, UT (Metropolitan Statistical Area)",
+   "goods": 96.446
+  },
+  "36420": {
+   "name": "Oklahoma City, OK (Metropolitan Statistical Area)",
+   "goods": 93.778
+  },
+  "36500": {
+   "name": "Olympia-Lacey-Tumwater, WA (Metropolitan Statistical Area)",
+   "goods": 105.028
+  },
+  "36540": {
+   "name": "Omaha, NE-IA (Metropolitan Statistical Area)",
+   "goods": 94.063
+  },
+  "36740": {
+   "name": "Orlando-Kissimmee-Sanford, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "36780": {
+   "name": "Oshkosh-Neenah, WI (Metropolitan Statistical Area)",
+   "goods": 93.787
+  },
+  "36980": {
+   "name": "Owensboro, KY (Metropolitan Statistical Area)",
+   "goods": 96.246
+  },
+  "37100": {
+   "name": "Oxnard-Thousand Oaks-Ventura, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "37140": {
+   "name": "Paducah, KY-IL (Metropolitan Statistical Area)",
+   "goods": 96.025
+  },
+  "37340": {
+   "name": "Palm Bay-Melbourne-Titusville, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "37460": {
+   "name": "Panama City-Panama City Beach, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "37620": {
+   "name": "Parkersburg-Vienna, WV (Metropolitan Statistical Area)",
+   "goods": 96.27
+  },
+  "37860": {
+   "name": "Pensacola-Ferry Pass-Brent, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "37900": {
+   "name": "Peoria, IL (Metropolitan Statistical Area)",
+   "goods": 93.643
+  },
+  "37980": {
+   "name": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD (Metropolitan Statistical Area)",
+   "goods": 96.833
+  },
+  "38060": {
+   "name": "Phoenix-Mesa-Chandler, AZ (Metropolitan Statistical Area)",
+   "goods": 95.024
+  },
+  "38240": {
+   "name": "Pinehurst-Southern Pines, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "38300": {
+   "name": "Pittsburgh, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "38340": {
+   "name": "Pittsfield, MA (Metropolitan Statistical Area)",
+   "goods": 97.015
+  },
+  "38540": {
+   "name": "Pocatello, ID (Metropolitan Statistical Area)",
+   "goods": 96.179
+  },
+  "38860": {
+   "name": "Portland-South Portland, ME (Metropolitan Statistical Area)",
+   "goods": 97.171
+  },
+  "38900": {
+   "name": "Portland-Vancouver-Hillsboro, OR-WA (Metropolitan Statistical Area)",
+   "goods": 105.222
+  },
+  "38940": {
+   "name": "Port St. Lucie, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "39150": {
+   "name": "Prescott Valley-Prescott, AZ (Metropolitan Statistical Area)",
+   "goods": 96.237
+  },
+  "39300": {
+   "name": "Providence-Warwick, RI-MA (Metropolitan Statistical Area)",
+   "goods": 97.116
+  },
+  "39340": {
+   "name": "Provo-Orem-Lehi, UT (Metropolitan Statistical Area)",
+   "goods": 96.446
+  },
+  "39380": {
+   "name": "Pueblo, CO (Metropolitan Statistical Area)",
+   "goods": 96.052
+  },
+  "39460": {
+   "name": "Punta Gorda, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "39540": {
+   "name": "Racine-Mount Pleasant, WI (Metropolitan Statistical Area)",
+   "goods": 93.787
+  },
+  "39580": {
+   "name": "Raleigh-Cary, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "39660": {
+   "name": "Rapid City, SD (Metropolitan Statistical Area)",
+   "goods": 95.473
+  },
+  "39740": {
+   "name": "Reading, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "39820": {
+   "name": "Redding, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "39900": {
+   "name": "Reno, NV (Metropolitan Statistical Area)",
+   "goods": 96.271
+  },
+  "40060": {
+   "name": "Richmond, VA (Metropolitan Statistical Area)",
+   "goods": 96.773
+  },
+  "40140": {
+   "name": "Riverside-San Bernardino-Ontario, CA (Metropolitan Statistical Area)",
+   "goods": 101.431
+  },
+  "40220": {
+   "name": "Roanoke, VA (Metropolitan Statistical Area)",
+   "goods": 96.773
+  },
+  "40340": {
+   "name": "Rochester, MN (Metropolitan Statistical Area)",
+   "goods": 95.433
+  },
+  "40380": {
+   "name": "Rochester, NY (Metropolitan Statistical Area)",
+   "goods": 99.693
+  },
+  "40420": {
+   "name": "Rockford, IL (Metropolitan Statistical Area)",
+   "goods": 93.643
+  },
+  "40580": {
+   "name": "Rocky Mount, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "40660": {
+   "name": "Rome, GA (Metropolitan Statistical Area)",
+   "goods": 96.269
+  },
+  "40900": {
+   "name": "Sacramento-Roseville-Folsom, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "40980": {
+   "name": "Saginaw, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "41060": {
+   "name": "St. Cloud, MN (Metropolitan Statistical Area)",
+   "goods": 95.433
+  },
+  "41100": {
+   "name": "St. George, UT (Metropolitan Statistical Area)",
+   "goods": 96.446
+  },
+  "41140": {
+   "name": "St. Joseph, MO-KS (Metropolitan Statistical Area)",
+   "goods": 94.18
+  },
+  "41180": {
+   "name": "St. Louis, MO-IL (Metropolitan Statistical Area)",
+   "goods": 99.996
+  },
+  "41420": {
+   "name": "Salem, OR (Metropolitan Statistical Area)",
+   "goods": 105.261
+  },
+  "41500": {
+   "name": "Salinas, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "41540": {
+   "name": "Salisbury, MD (Metropolitan Statistical Area)",
+   "goods": 96.592
+  },
+  "41620": {
+   "name": "Salt Lake City-Murray, UT (Metropolitan Statistical Area)",
+   "goods": 96.446
+  },
+  "41660": {
+   "name": "San Angelo, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "41700": {
+   "name": "San Antonio-New Braunfels, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "41740": {
+   "name": "San Diego-Chula Vista-Carlsbad, CA (Metropolitan Statistical Area)",
+   "goods": 107.963
+  },
+  "41780": {
+   "name": "Sandusky, OH (Metropolitan Statistical Area)",
+   "goods": 93.628
+  },
+  "41860": {
+   "name": "San Francisco-Oakland-Fremont, CA (Metropolitan Statistical Area)",
+   "goods": 108.465
+  },
+  "41940": {
+   "name": "San Jose-Sunnyvale-Santa Clara, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "42020": {
+   "name": "San Luis Obispo-Paso Robles, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "42100": {
+   "name": "Santa Cruz-Watsonville, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "42140": {
+   "name": "Santa Fe, NM (Metropolitan Statistical Area)",
+   "goods": 96.144
+  },
+  "42200": {
+   "name": "Santa Maria-Santa Barbara, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "42220": {
+   "name": "Santa Rosa-Petaluma, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "42340": {
+   "name": "Savannah, GA (Metropolitan Statistical Area)",
+   "goods": 96.269
+  },
+  "42540": {
+   "name": "Scranton--Wilkes-Barre, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "42660": {
+   "name": "Seattle-Tacoma-Bellevue, WA (Metropolitan Statistical Area)",
+   "goods": 103.972
+  },
+  "42680": {
+   "name": "Sebastian-Vero Beach-West Vero Corridor, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "42700": {
+   "name": "Sebring, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "43100": {
+   "name": "Sheboygan, WI (Metropolitan Statistical Area)",
+   "goods": 93.787
+  },
+  "43300": {
+   "name": "Sherman-Denison, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "43340": {
+   "name": "Shreveport-Bossier City, LA (Metropolitan Statistical Area)",
+   "goods": 93.691
+  },
+  "43420": {
+   "name": "Sierra Vista-Douglas, AZ (Metropolitan Statistical Area)",
+   "goods": 96.237
+  },
+  "43580": {
+   "name": "Sioux City, IA-NE-SD (Metropolitan Statistical Area)",
+   "goods": 94.013
+  },
+  "43620": {
+   "name": "Sioux Falls, SD-MN (Metropolitan Statistical Area)",
+   "goods": 95.472
+  },
+  "43640": {
+   "name": "Slidell-Mandeville-Covington, LA (Metropolitan Statistical Area)",
+   "goods": 93.691
+  },
+  "43780": {
+   "name": "South Bend-Mishawaka, IN-MI (Metropolitan Statistical Area)",
+   "goods": 94.221
+  },
+  "43900": {
+   "name": "Spartanburg, SC (Metropolitan Statistical Area)",
+   "goods": 96.339
+  },
+  "44060": {
+   "name": "Spokane-Spokane Valley, WA (Metropolitan Statistical Area)",
+   "goods": 105.028
+  },
+  "44100": {
+   "name": "Springfield, IL (Metropolitan Statistical Area)",
+   "goods": 93.643
+  },
+  "44140": {
+   "name": "Springfield, MA (Metropolitan Statistical Area)",
+   "goods": 97.015
+  },
+  "44180": {
+   "name": "Springfield, MO (Metropolitan Statistical Area)",
+   "goods": 94.193
+  },
+  "44220": {
+   "name": "Springfield, OH (Metropolitan Statistical Area)",
+   "goods": 93.628
+  },
+  "44300": {
+   "name": "State College, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "44420": {
+   "name": "Staunton-Stuarts Draft, VA (Metropolitan Statistical Area)",
+   "goods": 96.773
+  },
+  "44700": {
+   "name": "Stockton-Lodi, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "44940": {
+   "name": "Sumter, SC (Metropolitan Statistical Area)",
+   "goods": 96.339
+  },
+  "45060": {
+   "name": "Syracuse, NY (Metropolitan Statistical Area)",
+   "goods": 99.693
+  },
+  "45220": {
+   "name": "Tallahassee, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "45300": {
+   "name": "Tampa-St. Petersburg-Clearwater, FL (Metropolitan Statistical Area)",
+   "goods": 95.47
+  },
+  "45460": {
+   "name": "Terre Haute, IN (Metropolitan Statistical Area)",
+   "goods": 94.318
+  },
+  "45500": {
+   "name": "Texarkana, TX-AR (Metropolitan Statistical Area)",
+   "goods": 93.693
+  },
+  "45780": {
+   "name": "Toledo, OH (Metropolitan Statistical Area)",
+   "goods": 93.628
+  },
+  "45820": {
+   "name": "Topeka, KS (Metropolitan Statistical Area)",
+   "goods": 94.027
+  },
+  "45900": {
+   "name": "Traverse City, MI (Metropolitan Statistical Area)",
+   "goods": 93.711
+  },
+  "45940": {
+   "name": "Trenton-Princeton, NJ (Metropolitan Statistical Area)",
+   "goods": 99.79
+  },
+  "46060": {
+   "name": "Tucson, AZ (Metropolitan Statistical Area)",
+   "goods": 96.237
+  },
+  "46140": {
+   "name": "Tulsa, OK (Metropolitan Statistical Area)",
+   "goods": 93.778
+  },
+  "46220": {
+   "name": "Tuscaloosa, AL (Metropolitan Statistical Area)",
+   "goods": 96.397
+  },
+  "46300": {
+   "name": "Twin Falls, ID (Metropolitan Statistical Area) *",
+   "goods": 96.179
+  },
+  "46340": {
+   "name": "Tyler, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "46520": {
+   "name": "Urban Honolulu, HI (Metropolitan Statistical Area)",
+   "goods": 111.562
+  },
+  "46540": {
+   "name": "Utica-Rome, NY (Metropolitan Statistical Area)",
+   "goods": 99.693
+  },
+  "46660": {
+   "name": "Valdosta, GA (Metropolitan Statistical Area)",
+   "goods": 96.269
+  },
+  "46700": {
+   "name": "Vallejo, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "47020": {
+   "name": "Victoria, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "47220": {
+   "name": "Vineland, NJ (Metropolitan Statistical Area)",
+   "goods": 99.79
+  },
+  "47260": {
+   "name": "Virginia Beach-Chesapeake-Norfolk, VA-NC (Metropolitan Statistical Area)",
+   "goods": 96.767
+  },
+  "47300": {
+   "name": "Visalia, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "47380": {
+   "name": "Waco, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "47460": {
+   "name": "Walla Walla, WA (Metropolitan Statistical Area)",
+   "goods": 105.028
+  },
+  "47580": {
+   "name": "Warner Robins, GA (Metropolitan Statistical Area)",
+   "goods": 96.269
+  },
+  "47900": {
+   "name": "Washington-Arlington-Alexandria, DC-VA-MD-WV (Metropolitan Statistical Area)",
+   "goods": 104.847
+  },
+  "47930": {
+   "name": "Waterbury-Shelton, CT (Metropolitan Statistical Area)",
+   "goods": 97.33
+  },
+  "47940": {
+   "name": "Waterloo-Cedar Falls, IA (Metropolitan Statistical Area)",
+   "goods": 93.73
+  },
+  "48060": {
+   "name": "Watertown-Fort Drum, NY (Metropolitan Statistical Area)",
+   "goods": 99.693
+  },
+  "48140": {
+   "name": "Wausau, WI (Metropolitan Statistical Area)",
+   "goods": 93.787
+  },
+  "48260": {
+   "name": "Weirton-Steubenville, WV-OH (Metropolitan Statistical Area)",
+   "goods": 96.446
+  },
+  "48300": {
+   "name": "Wenatchee-East Wenatchee, WA (Metropolitan Statistical Area)",
+   "goods": 105.028
+  },
+  "48540": {
+   "name": "Wheeling, WV-OH (Metropolitan Statistical Area)",
+   "goods": 96.42
+  },
+  "48620": {
+   "name": "Wichita, KS (Metropolitan Statistical Area)",
+   "goods": 94.027
+  },
+  "48660": {
+   "name": "Wichita Falls, TX (Metropolitan Statistical Area)",
+   "goods": 93.757
+  },
+  "48680": {
+   "name": "Wildwood-The Villages, FL (Metropolitan Statistical Area)",
+   "goods": 96.24
+  },
+  "48700": {
+   "name": "Williamsport, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "48900": {
+   "name": "Wilmington, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "49020": {
+   "name": "Winchester, VA-WV (Metropolitan Statistical Area)",
+   "goods": 96.699
+  },
+  "49180": {
+   "name": "Winston-Salem, NC (Metropolitan Statistical Area)",
+   "goods": 96.621
+  },
+  "49340": {
+   "name": "Worcester, MA (Metropolitan Statistical Area)",
+   "goods": 97.015
+  },
+  "49420": {
+   "name": "Yakima, WA (Metropolitan Statistical Area)",
+   "goods": 105.028
+  },
+  "49620": {
+   "name": "York-Hanover, PA (Metropolitan Statistical Area)",
+   "goods": 100.684
+  },
+  "49660": {
+   "name": "Youngstown-Warren, OH (Metropolitan Statistical Area)",
+   "goods": 93.628
+  },
+  "49700": {
+   "name": "Yuba City, CA (Metropolitan Statistical Area)",
+   "goods": 105.168
+  },
+  "49740": {
+   "name": "Yuma, AZ (Metropolitan Statistical Area)",
+   "goods": 96.237
+  }
+ },
+ "state": {
+  "Alabama": {
+   "goods": 96.399
+  },
+  "Alaska": {
+   "goods": 106.319
+  },
+  "Arizona": {
+   "goods": 95.361
+  },
+  "Arkansas": {
+   "goods": 93.597
+  },
+  "California": {
+   "goods": 106.098
+  },
+  "Colorado": {
+   "goods": 98.727
+  },
+  "Connecticut": {
+   "goods": 97.33
+  },
+  "Delaware": {
+   "goods": 96.155
+  },
+  "District of Columbia": {
+   "goods": 106.502
+  },
+  "Florida": {
+   "goods": 98.059
+  },
+  "Georgia": {
+   "goods": 98.929
+  },
+  "Hawaii": {
+   "goods": 111.562
+  },
+  "Idaho": {
+   "goods": 96.311
+  },
+  "Illinois": {
+   "goods": 103.832
+  },
+  "Indiana": {
+   "goods": 95.509
+  },
+  "Iowa": {
+   "goods": 93.73
+  },
+  "Kansas": {
+   "goods": 94.027
+  },
+  "Kentucky": {
+   "goods": 95.967
+  },
+  "Louisiana": {
+   "goods": 93.7
+  },
+  "Maine": {
+   "goods": 97.171
+  },
+  "Maryland": {
+   "goods": 102.524
+  },
+  "Massachusetts": {
+   "goods": 98.82
+  },
+  "Michigan": {
+   "goods": 95.993
+  },
+  "Minnesota": {
+   "goods": 100.519
+  },
+  "Mississippi": {
+   "goods": 96.219
+  },
+  "Missouri": {
+   "goods": 96.299
+  },
+  "Montana": {
+   "goods": 96.006
+  },
+  "Nebraska": {
+   "goods": 94.101
+  },
+  "Nevada": {
+   "goods": 96.271
+  },
+  "New Hampshire": {
+   "goods": 98.578
+  },
+  "New Jersey": {
+   "goods": 107.066
+  },
+  "New Mexico": {
+   "goods": 96.144
+  },
+  "New York": {
+   "goods": 107.254
+  },
+  "North Carolina": {
+   "goods": 96.621
+  },
+  "North Dakota": {
+   "goods": 95.701
+  },
+  "Ohio": {
+   "goods": 93.67
+  },
+  "Oklahoma": {
+   "goods": 93.778
+  },
+  "Oregon": {
+   "goods": 105.261
+  },
+  "Pennsylvania": {
+   "goods": 99.357
+  },
+  "Rhode Island": {
+   "goods": 97.165
+  },
+  "South Carolina": {
+   "goods": 96.339
+  },
+  "South Dakota": {
+   "goods": 95.473
+  },
+  "Tennessee": {
+   "goods": 96.247
+  },
+  "Texas": {
+   "goods": 98.083
+  },
+  "Utah": {
+   "goods": 96.446
+  },
+  "Vermont": {
+   "goods": 97.274
+  },
+  "Virginia": {
+   "goods": 100.368
+  },
+  "Washington": {
+   "goods": 104.359
+  },
+  "West Virginia": {
+   "goods": 96.539
+  },
+  "Wisconsin": {
+   "goods": 94.31
+  },
+  "Wyoming": {
+   "goods": 95.368
+  }
+ },
+ "_meta": {
+  "source": "BEA Regional Price Parities (MARPP metro, SARPP state), line 2: goods; US = 100",
+  "year": 2024,
+  "msas": 389,
+  "states": 51
+ }
+}

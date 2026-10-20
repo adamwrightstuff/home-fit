@@ -1,0 +1,6234 @@
+{
+ "_meta": {
+  "source": "BEA Regional Price Parities (MARPP metro, SARPP state), US = 100; Census ACS 2023 5-year metro medians",
+  "bea_year": 2024,
+  "metros": 387,
+  "metros_in_bea": 387,
+  "all_items_weights_by_line": {
+   "goods": 0.2948,
+   "housing": 0.1684,
+   "utilities": 0.012,
+   "other_services": 0.5152
+  },
+  "all_items_fit_r2": 0.9665,
+  "all_items_fit_max_abs_error": 9.79,
+  "note": "weights are least-squares estimates of how BEA combines the lines, not BEA's published weights"
+ },
+ "msa": {
+  "10180": {
+   "name": "Abilene, TX (Metropolitan Statistical Area)",
+   "all_items": 90.364,
+   "goods": 93.757,
+   "housing": 73.791,
+   "utilities": 81.162,
+   "other_services": 96.24,
+   "acs_name": "Abilene, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1095.0,
+   "median_home_value": 172800.0,
+   "renter_share": 0.365
+  },
+  "10420": {
+   "name": "Akron, OH (Metropolitan Statistical Area)",
+   "all_items": 93.37,
+   "goods": 93.628,
+   "housing": 76.785,
+   "utilities": 96.448,
+   "other_services": 98.939,
+   "acs_name": "Akron, OH Metro Area",
+   "states": [
+    "OH"
+   ],
+   "median_gross_rent": 1005.0,
+   "median_home_value": 199000.0,
+   "renter_share": 0.321
+  },
+  "10500": {
+   "name": "Albany, GA (Metropolitan Statistical Area)",
+   "all_items": 87.669,
+   "goods": 96.269,
+   "housing": 54.626,
+   "utilities": 88.272,
+   "other_services": 98.667,
+   "acs_name": "Albany, GA Metro Area",
+   "states": [
+    "GA"
+   ],
+   "median_gross_rent": 922.0,
+   "median_home_value": 148800.0,
+   "renter_share": 0.437
+  },
+  "10540": {
+   "name": "Albany, OR (Metropolitan Statistical Area)",
+   "all_items": 102.1,
+   "goods": 105.261,
+   "housing": 101.059,
+   "utilities": 104.816,
+   "other_services": 100.298,
+   "acs_name": "Albany, OR Metro Area",
+   "states": [
+    "OR"
+   ],
+   "median_gross_rent": 1273.0,
+   "median_home_value": 344600.0,
+   "renter_share": 0.33
+  },
+  "10580": {
+   "name": "Albany-Schenectady-Troy, NY (Metropolitan Statistical Area)",
+   "all_items": 99.566,
+   "goods": 99.693,
+   "housing": 102.582,
+   "utilities": 134.048,
+   "other_services": 97.754,
+   "acs_name": "Albany-Schenectady-Troy, NY Metro Area",
+   "states": [
+    "NY"
+   ],
+   "median_gross_rent": 1230.0,
+   "median_home_value": 268400.0,
+   "renter_share": 0.36
+  },
+  "10740": {
+   "name": "Albuquerque, NM (Metropolitan Statistical Area)",
+   "all_items": 95.546,
+   "goods": 96.144,
+   "housing": 89.153,
+   "utilities": 77.852,
+   "other_services": 98.54,
+   "acs_name": "Albuquerque, NM Metro Area",
+   "states": [
+    "NM"
+   ],
+   "median_gross_rent": 1102.0,
+   "median_home_value": 263500.0,
+   "renter_share": 0.313
+  },
+  "10780": {
+   "name": "Alexandria, LA (Metropolitan Statistical Area)",
+   "all_items": 85.686,
+   "goods": 93.691,
+   "housing": 53.684,
+   "utilities": 71.076,
+   "other_services": 95.705,
+   "acs_name": "Alexandria, LA Metro Area",
+   "states": [
+    "LA"
+   ],
+   "median_gross_rent": 935.0,
+   "median_home_value": 173600.0,
+   "renter_share": 0.325
+  },
+  "10900": {
+   "name": "Allentown-Bethlehem-Easton, PA-NJ (Metropolitan Statistical Area)",
+   "all_items": 99.968,
+   "goods": 100.569,
+   "housing": 105.52,
+   "utilities": 107.591,
+   "other_services": 97.752,
+   "acs_name": "Allentown-Bethlehem-Easton, PA-NJ Metro Area",
+   "states": [
+    "PA",
+    "NJ"
+   ],
+   "median_gross_rent": 1309.0,
+   "median_home_value": 277800.0,
+   "renter_share": 0.305
+  },
+  "11020": {
+   "name": "Altoona, PA (Metropolitan Statistical Area)",
+   "all_items": 89.507,
+   "goods": 100.684,
+   "housing": 54.978,
+   "utilities": 107.673,
+   "other_services": 97.726,
+   "acs_name": "Altoona, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 854.0,
+   "median_home_value": 156700.0,
+   "renter_share": 0.276
+  },
+  "11100": {
+   "name": "Amarillo, TX (Metropolitan Statistical Area)",
+   "all_items": 91.82,
+   "goods": 93.757,
+   "housing": 78.38,
+   "utilities": 83.474,
+   "other_services": 96.24,
+   "acs_name": "Amarillo, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1044.0,
+   "median_home_value": 196500.0,
+   "renter_share": 0.361
+  },
+  "11180": {
+   "name": "Ames, IA (Metropolitan Statistical Area)",
+   "all_items": 88.83,
+   "goods": 93.73,
+   "housing": 69.163,
+   "utilities": 83.004,
+   "other_services": 92.927,
+   "acs_name": "Ames, IA Metro Area",
+   "states": [
+    "IA"
+   ],
+   "median_gross_rent": 1002.0,
+   "median_home_value": 231600.0,
+   "renter_share": 0.385
+  },
+  "11200": {
+   "name": "Amherst Town-Northampton, MA (Metropolitan Statistical Area)",
+   "all_items": 100.243,
+   "goods": 97.015,
+   "housing": 97.537,
+   "utilities": 155.733,
+   "other_services": 101.197,
+   "acs_name": "Amherst Town-Northampton, MA Metro Area",
+   "states": [
+    "MA"
+   ],
+   "median_gross_rent": 1332.0,
+   "median_home_value": 363400.0,
+   "renter_share": 0.312
+  },
+  "11260": {
+   "name": "Anchorage, AK (Metropolitan Statistical Area)",
+   "all_items": 105.42,
+   "goods": 107.34,
+   "housing": 109.905,
+   "utilities": 111.772,
+   "other_services": 103.342,
+   "acs_name": "Anchorage, AK Metro Area",
+   "states": [
+    "AK"
+   ],
+   "median_gross_rent": 1422.0,
+   "median_home_value": 358900.0,
+   "renter_share": 0.328
+  },
+  "11460": {
+   "name": "Ann Arbor, MI (Metropolitan Statistical Area)",
+   "all_items": 100.88,
+   "goods": 93.711,
+   "housing": 125.3,
+   "utilities": 98.184,
+   "other_services": 99.561,
+   "acs_name": "Ann Arbor, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 1400.0,
+   "median_home_value": 353000.0,
+   "renter_share": 0.384
+  },
+  "11500": {
+   "name": "Anniston-Oxford, AL (Metropolitan Statistical Area)",
+   "all_items": 85.949,
+   "goods": 96.397,
+   "housing": 54.705,
+   "utilities": 87.127,
+   "other_services": 96.693,
+   "acs_name": "Anniston-Oxford, AL Metro Area",
+   "states": [
+    "AL"
+   ],
+   "median_gross_rent": 804.0,
+   "median_home_value": 149500.0,
+   "renter_share": 0.296
+  },
+  "11540": {
+   "name": "Appleton, WI (Metropolitan Statistical Area)",
+   "all_items": 92.419,
+   "goods": 93.787,
+   "housing": 70.785,
+   "utilities": 90.588,
+   "other_services": 99.411,
+   "acs_name": "Appleton, WI Metro Area",
+   "states": [
+    "WI"
+   ],
+   "median_gross_rent": 999.0,
+   "median_home_value": 246000.0,
+   "renter_share": 0.264
+  },
+  "11700": {
+   "name": "Asheville, NC (Metropolitan Statistical Area)",
+   "all_items": 96.506,
+   "goods": 96.621,
+   "housing": 93.371,
+   "utilities": 88.63,
+   "other_services": 98.186,
+   "acs_name": "Asheville, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 1223.0,
+   "median_home_value": 338400.0,
+   "renter_share": 0.318
+  },
+  "12020": {
+   "name": "Athens-Clarke County, GA (Metropolitan Statistical Area)",
+   "all_items": 93.343,
+   "goods": 96.269,
+   "housing": 76.759,
+   "utilities": 89.257,
+   "other_services": 98.667,
+   "acs_name": "Athens-Clarke County, GA Metro Area",
+   "states": [
+    "GA"
+   ],
+   "median_gross_rent": 1144.0,
+   "median_home_value": 280900.0,
+   "renter_share": 0.449
+  },
+  "12060": {
+   "name": "Atlanta-Sandy Springs-Roswell, GA (Metropolitan Statistical Area)",
+   "all_items": 100.058,
+   "goods": 100.416,
+   "housing": 111.022,
+   "utilities": 96.239,
+   "other_services": 96.701,
+   "acs_name": "Atlanta-Sandy Springs-Roswell, GA Metro Area",
+   "states": [
+    "GA"
+   ],
+   "median_gross_rent": 1563.0,
+   "median_home_value": 335100.0,
+   "renter_share": 0.342
+  },
+  "12100": {
+   "name": "Atlantic City-Hammonton, NJ (Metropolitan Statistical Area)",
+   "all_items": 98.857,
+   "goods": 99.79,
+   "housing": 98.673,
+   "utilities": 109.204,
+   "other_services": 97.925,
+   "acs_name": "Atlantic City-Hammonton, NJ Metro Area",
+   "states": [
+    "NJ"
+   ],
+   "median_gross_rent": 1328.0,
+   "median_home_value": 302600.0,
+   "renter_share": 0.288
+  },
+  "12220": {
+   "name": "Auburn-Opelika, AL (Metropolitan Statistical Area)",
+   "all_items": 87.933,
+   "goods": 96.397,
+   "housing": 62.078,
+   "utilities": 83.889,
+   "other_services": 96.693,
+   "acs_name": "Auburn-Opelika, AL Metro Area",
+   "states": [
+    "AL"
+   ],
+   "median_gross_rent": 974.0,
+   "median_home_value": 224600.0,
+   "renter_share": 0.344
+  },
+  "12260": {
+   "name": "Augusta-Richmond County, GA-SC (Metropolitan Statistical Area)",
+   "all_items": 91.903,
+   "goods": 96.293,
+   "housing": 70.603,
+   "utilities": 89.473,
+   "other_services": 98.54,
+   "acs_name": "Augusta-Richmond County, GA-SC Metro Area",
+   "states": [
+    "GA",
+    "SC"
+   ],
+   "median_gross_rent": 1075.0,
+   "median_home_value": 207300.0,
+   "renter_share": 0.317
+  },
+  "12420": {
+   "name": "Austin-Round Rock-San Marcos, TX (Metropolitan Statistical Area)",
+   "all_items": 98.066,
+   "goods": 93.757,
+   "housing": 120.361,
+   "utilities": 82.044,
+   "other_services": 96.24,
+   "acs_name": "Austin-Round Rock-San Marcos, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1646.0,
+   "median_home_value": 434800.0,
+   "renter_share": 0.411
+  },
+  "12540": {
+   "name": "Bakersfield-Delano, CA (Metropolitan Statistical Area)",
+   "all_items": 100.886,
+   "goods": 105.168,
+   "housing": 90.291,
+   "utilities": 158.257,
+   "other_services": 100.267,
+   "acs_name": "Bakersfield-Delano, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1220.0,
+   "median_home_value": 310600.0,
+   "renter_share": 0.402
+  },
+  "12580": {
+   "name": "Baltimore-Columbia-Towson, MD (Metropolitan Statistical Area)",
+   "all_items": 104.487,
+   "goods": 102.353,
+   "housing": 118.194,
+   "utilities": 110.215,
+   "other_services": 101.496,
+   "acs_name": "Baltimore-Columbia-Towson, MD Metro Area",
+   "states": [
+    "MD"
+   ],
+   "median_gross_rent": 1562.0,
+   "median_home_value": 373300.0,
+   "renter_share": 0.331
+  },
+  "12620": {
+   "name": "Bangor, ME (Metropolitan Statistical Area)",
+   "all_items": 96.508,
+   "goods": 97.171,
+   "housing": 77.688,
+   "utilities": 134.759,
+   "other_services": 103.191,
+   "acs_name": "Bangor, ME Metro Area",
+   "states": [
+    "ME"
+   ],
+   "median_gross_rent": 997.0,
+   "median_home_value": 193800.0,
+   "renter_share": 0.297
+  },
+  "12700": {
+   "name": "Barnstable Town, MA (Metropolitan Statistical Area)",
+   "all_items": 98.351,
+   "goods": 97.015,
+   "housing": 90.012,
+   "utilities": 158.45,
+   "other_services": 101.197,
+   "acs_name": "Barnstable Town, MA Metro Area",
+   "states": [
+    "MA"
+   ],
+   "median_gross_rent": 1596.0,
+   "median_home_value": 575900.0,
+   "renter_share": 0.194
+  },
+  "12940": {
+   "name": "Baton Rouge, LA (Metropolitan Statistical Area)",
+   "all_items": 90.78,
+   "goods": 93.691,
+   "housing": 74.183,
+   "utilities": 71.185,
+   "other_services": 95.705,
+   "acs_name": "Baton Rouge, LA Metro Area",
+   "states": [
+    "LA"
+   ],
+   "median_gross_rent": 1108.0,
+   "median_home_value": 232300.0,
+   "renter_share": 0.309
+  },
+  "12980": {
+   "name": "Battle Creek, MI (Metropolitan Statistical Area)",
+   "all_items": 90.541,
+   "goods": 93.711,
+   "housing": 61.045,
+   "utilities": 95.003,
+   "other_services": 99.561,
+   "acs_name": "Battle Creek, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 937.0,
+   "median_home_value": 151500.0,
+   "renter_share": 0.276
+  },
+  "13020": {
+   "name": "Bay City, MI (Metropolitan Statistical Area)",
+   "all_items": 91.921,
+   "goods": 93.711,
+   "housing": 66.684,
+   "utilities": 95.219,
+   "other_services": 99.561,
+   "acs_name": "Bay City, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 809.0,
+   "median_home_value": 135100.0,
+   "renter_share": 0.236
+  },
+  "13140": {
+   "name": "Beaumont-Port Arthur, TX (Metropolitan Statistical Area)",
+   "all_items": 90.046,
+   "goods": 93.757,
+   "housing": 70.939,
+   "utilities": 83.098,
+   "other_services": 96.24,
+   "acs_name": "Beaumont-Port Arthur, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1063.0,
+   "median_home_value": 164300.0,
+   "renter_share": 0.323
+  },
+  "13220": {
+   "name": "Beckley, WV (Metropolitan Statistical Area)",
+   "all_items": 88.369,
+   "goods": 96.27,
+   "housing": 52.246,
+   "utilities": 91.774,
+   "other_services": 99.806,
+   "acs_name": "Beckley, WV Metro Area",
+   "states": [
+    "WV"
+   ],
+   "median_gross_rent": 820.0,
+   "median_home_value": 123400.0,
+   "renter_share": 0.25
+  },
+  "13380": {
+   "name": "Bellingham, WA (Metropolitan Statistical Area)",
+   "all_items": 103.334,
+   "goods": 105.028,
+   "housing": 112.946,
+   "utilities": 99.878,
+   "other_services": 99.472,
+   "acs_name": "Bellingham, WA Metro Area",
+   "states": [
+    "WA"
+   ],
+   "median_gross_rent": 1465.0,
+   "median_home_value": 536100.0,
+   "renter_share": 0.365
+  },
+  "13460": {
+   "name": "Bend, OR (Metropolitan Statistical Area)",
+   "all_items": 103.607,
+   "goods": 105.261,
+   "housing": 109.958,
+   "utilities": 104.992,
+   "other_services": 100.298,
+   "acs_name": "Bend, OR Metro Area",
+   "states": [
+    "OR"
+   ],
+   "median_gross_rent": 1583.0,
+   "median_home_value": 550400.0,
+   "renter_share": 0.287
+  },
+  "13740": {
+   "name": "Billings, MT (Metropolitan Statistical Area)",
+   "all_items": 93.526,
+   "goods": 96.006,
+   "housing": 77.364,
+   "utilities": 72.437,
+   "other_services": 98.715,
+   "acs_name": "Billings, MT Metro Area",
+   "states": [
+    "MT"
+   ],
+   "median_gross_rent": 1072.0,
+   "median_home_value": 322700.0,
+   "renter_share": 0.298
+  },
+  "13780": {
+   "name": "Binghamton, NY (Metropolitan Statistical Area)",
+   "all_items": 92.863,
+   "goods": 99.693,
+   "housing": 69.694,
+   "utilities": 131.567,
+   "other_services": 97.754,
+   "acs_name": "Binghamton, NY Metro Area",
+   "states": [
+    "NY"
+   ],
+   "median_gross_rent": 914.0,
+   "median_home_value": 146700.0,
+   "renter_share": 0.327
+  },
+  "13820": {
+   "name": "Birmingham, AL (Metropolitan Statistical Area)",
+   "all_items": 91.644,
+   "goods": 96.397,
+   "housing": 71.851,
+   "utilities": 83.803,
+   "other_services": 96.693,
+   "acs_name": "Birmingham, AL Metro Area",
+   "states": [
+    "AL"
+   ],
+   "median_gross_rent": 1114.0,
+   "median_home_value": 226200.0,
+   "renter_share": 0.294
+  },
+  "13900": {
+   "name": "Bismarck, ND (Metropolitan Statistical Area)",
+   "all_items": 91.024,
+   "goods": 95.701,
+   "housing": 84.013,
+   "utilities": 74.999,
+   "other_services": 91.158,
+   "acs_name": "Bismarck, ND Metro Area",
+   "states": [
+    "ND"
+   ],
+   "median_gross_rent": 1008.0,
+   "median_home_value": 295500.0,
+   "renter_share": 0.273
+  },
+  "13980": {
+   "name": "Blacksburg-Christiansburg-Radford, VA (Metropolitan Statistical Area)",
+   "all_items": 92.71,
+   "goods": 96.773,
+   "housing": 74.371,
+   "utilities": 88.097,
+   "other_services": 98.612,
+   "acs_name": "Blacksburg-Christiansburg-Radford, VA Metro Area",
+   "states": [
+    "VA"
+   ],
+   "median_gross_rent": 1075.0,
+   "median_home_value": 228400.0,
+   "renter_share": 0.375
+  },
+  "14010": {
+   "name": "Bloomington, IL (Metropolitan Statistical Area)",
+   "all_items": 93.537,
+   "goods": 93.643,
+   "housing": 74.715,
+   "utilities": 89.591,
+   "other_services": 99.59,
+   "acs_name": "Bloomington, IL Metro Area",
+   "states": [
+    "IL"
+   ],
+   "median_gross_rent": 992.0,
+   "median_home_value": 198300.0,
+   "renter_share": 0.348
+  },
+  "14020": {
+   "name": "Bloomington, IN (Metropolitan Statistical Area)",
+   "all_items": 95.084,
+   "goods": 94.318,
+   "housing": 85.59,
+   "utilities": 86.518,
+   "other_services": 99.141,
+   "acs_name": "Bloomington, IN Metro Area",
+   "states": [
+    "IN"
+   ],
+   "median_gross_rent": 1137.0,
+   "median_home_value": 242800.0,
+   "renter_share": 0.418
+  },
+  "14260": {
+   "name": "Boise City, ID (Metropolitan Statistical Area)",
+   "all_items": 98.391,
+   "goods": 96.179,
+   "housing": 105.58,
+   "utilities": 70.695,
+   "other_services": 98.974,
+   "acs_name": "Boise City, ID Metro Area",
+   "states": [
+    "ID"
+   ],
+   "median_gross_rent": 1383.0,
+   "median_home_value": 434400.0,
+   "renter_share": 0.273
+  },
+  "14460": {
+   "name": "Boston-Cambridge-Newton, MA-NH (Metropolitan Statistical Area)",
+   "all_items": 108.266,
+   "goods": 99.651,
+   "housing": 148.424,
+   "utilities": 148.768,
+   "other_services": 103.603,
+   "acs_name": "Boston-Cambridge-Newton, MA-NH Metro Area",
+   "states": [
+    "MA",
+    "NH"
+   ],
+   "median_gross_rent": 1940.0,
+   "median_home_value": 610900.0,
+   "renter_share": 0.382
+  },
+  "14500": {
+   "name": "Boulder, CO (Metropolitan Statistical Area)",
+   "all_items": 105.202,
+   "goods": 96.052,
+   "housing": 157.02,
+   "utilities": 82.741,
+   "other_services": 99.822,
+   "acs_name": "Boulder, CO Metro Area",
+   "states": [
+    "CO"
+   ],
+   "median_gross_rent": 1893.0,
+   "median_home_value": 713900.0,
+   "renter_share": 0.375
+  },
+  "14540": {
+   "name": "Bowling Green, KY (Metropolitan Statistical Area)",
+   "all_items": 90.179,
+   "goods": 96.246,
+   "housing": 63.395,
+   "utilities": 75.2,
+   "other_services": 96.892,
+   "acs_name": "Bowling Green, KY Metro Area",
+   "states": [
+    "KY"
+   ],
+   "median_gross_rent": 936.0,
+   "median_home_value": 219400.0,
+   "renter_share": 0.382
+  },
+  "14580": {
+   "name": "Bozeman, MT (Metropolitan Statistical Area)",
+   "all_items": 102.51,
+   "goods": 96.006,
+   "housing": 139.188,
+   "utilities": 73.637,
+   "other_services": 98.715,
+   "acs_name": "Bozeman, MT Metro Area",
+   "states": [
+    "MT"
+   ],
+   "median_gross_rent": 1574.0,
+   "median_home_value": 604900.0,
+   "renter_share": 0.385
+  },
+  "14740": {
+   "name": "Bremerton-Silverdale-Port Orchard, WA (Metropolitan Statistical Area)",
+   "all_items": 105.607,
+   "goods": 105.028,
+   "housing": 129.641,
+   "utilities": 92.038,
+   "other_services": 99.472,
+   "acs_name": "Bremerton-Silverdale-Port Orchard, WA Metro Area",
+   "states": [
+    "WA"
+   ],
+   "median_gross_rent": 1741.0,
+   "median_home_value": 505700.0,
+   "renter_share": 0.299
+  },
+  "14860": {
+   "name": "Bridgeport-Stamford-Danbury, CT Metropolitan Statistical Area",
+   "all_items": 106.864,
+   "goods": 97.33,
+   "housing": 150.453,
+   "utilities": 147.074,
+   "other_services": 102.658,
+   "acs_name": "Bridgeport-Stamford-Danbury, CT Metro Area",
+   "states": [
+    "CT"
+   ],
+   "median_gross_rent": 1827.0,
+   "median_home_value": 530800.0,
+   "renter_share": 0.341
+  },
+  "15180": {
+   "name": "Brownsville-Harlingen, TX (Metropolitan Statistical Area)",
+   "all_items": 85.975,
+   "goods": 93.757,
+   "housing": 57.72,
+   "utilities": 81.15,
+   "other_services": 96.24,
+   "acs_name": "Brownsville-Harlingen, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 899.0,
+   "median_home_value": 120000.0,
+   "renter_share": 0.348
+  },
+  "15260": {
+   "name": "Brunswick-St. Simons, GA (Metropolitan Statistical Area)",
+   "all_items": 87.708,
+   "goods": 96.269,
+   "housing": 56.34,
+   "utilities": 87.264,
+   "other_services": 98.667,
+   "acs_name": "Brunswick-St. Simons, GA Metro Area",
+   "states": [
+    "GA"
+   ],
+   "median_gross_rent": 1003.0,
+   "median_home_value": 221400.0,
+   "renter_share": 0.301
+  },
+  "15380": {
+   "name": "Buffalo-Cheektowaga, NY (Metropolitan Statistical Area)",
+   "all_items": 95.844,
+   "goods": 99.693,
+   "housing": 80.989,
+   "utilities": 129.489,
+   "other_services": 97.754,
+   "acs_name": "Buffalo-Cheektowaga, NY Metro Area",
+   "states": [
+    "NY"
+   ],
+   "median_gross_rent": 1005.0,
+   "median_home_value": 209600.0,
+   "renter_share": 0.335
+  },
+  "15500": {
+   "name": "Burlington, NC (Metropolitan Statistical Area)",
+   "all_items": 93.196,
+   "goods": 96.621,
+   "housing": 77.88,
+   "utilities": 89.234,
+   "other_services": 98.186,
+   "acs_name": "Burlington, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 1007.0,
+   "median_home_value": 221200.0,
+   "renter_share": 0.344
+  },
+  "15540": {
+   "name": "Burlington-South Burlington, VT (Metropolitan Statistical Area)",
+   "all_items": 100.949,
+   "goods": 97.274,
+   "housing": 103.842,
+   "utilities": 125.55,
+   "other_services": 101.586,
+   "acs_name": "Burlington-South Burlington, VT Metro Area",
+   "states": [
+    "VT"
+   ],
+   "median_gross_rent": 1531.0,
+   "median_home_value": 370400.0,
+   "renter_share": 0.325
+  },
+  "15940": {
+   "name": "Canton-Massillon, OH (Metropolitan Statistical Area)",
+   "all_items": 89.406,
+   "goods": 93.628,
+   "housing": 58.143,
+   "utilities": 96.945,
+   "other_services": 98.939,
+   "acs_name": "Canton-Massillon, OH Metro Area",
+   "states": [
+    "OH"
+   ],
+   "median_gross_rent": 873.0,
+   "median_home_value": 177400.0,
+   "renter_share": 0.308
+  },
+  "15980": {
+   "name": "Cape Coral-Fort Myers, FL (Metropolitan Statistical Area)",
+   "all_items": 102.349,
+   "goods": 96.24,
+   "housing": 125.113,
+   "utilities": 86.901,
+   "other_services": 98.864,
+   "acs_name": "Cape Coral-Fort Myers, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1597.0,
+   "median_home_value": 326300.0,
+   "renter_share": 0.26
+  },
+  "16020": {
+   "name": "Cape Girardeau, MO-IL (Metropolitan Statistical Area)",
+   "all_items": 86.078,
+   "goods": 94.222,
+   "housing": 56.422,
+   "utilities": 85.609,
+   "other_services": 93.088,
+   "acs_name": "Cape Girardeau, MO-IL Metro Area",
+   "states": [
+    "MO",
+    "IL"
+   ],
+   "median_gross_rent": 864.0,
+   "median_home_value": 195200.0,
+   "renter_share": 0.321
+  },
+  "16180": {
+   "name": "Carson City, NV (Metropolitan Statistical Area)",
+   "all_items": 98.13,
+   "goods": 96.271,
+   "housing": 101.176,
+   "utilities": 92.674,
+   "other_services": 98.744,
+   "acs_name": "Carson City, NV Metro Area",
+   "states": [
+    "NV"
+   ],
+   "median_gross_rent": 1172.0,
+   "median_home_value": 426700.0,
+   "renter_share": 0.368
+  },
+  "16220": {
+   "name": "Casper, WY (Metropolitan Statistical Area)",
+   "all_items": 93.829,
+   "goods": 95.368,
+   "housing": 74.189,
+   "utilities": 78.876,
+   "other_services": 100.428,
+   "acs_name": "Casper, WY Metro Area",
+   "states": [
+    "WY"
+   ],
+   "median_gross_rent": 973.0,
+   "median_home_value": 260400.0,
+   "renter_share": 0.264
+  },
+  "16300": {
+   "name": "Cedar Rapids, IA (Metropolitan Statistical Area)",
+   "all_items": 88.963,
+   "goods": 93.73,
+   "housing": 71.447,
+   "utilities": 83.981,
+   "other_services": 92.927,
+   "acs_name": "Cedar Rapids, IA Metro Area",
+   "states": [
+    "IA"
+   ],
+   "median_gross_rent": 899.0,
+   "median_home_value": 202100.0,
+   "renter_share": 0.252
+  },
+  "16540": {
+   "name": "Chambersburg, PA (Metropolitan Statistical Area)",
+   "all_items": 94.642,
+   "goods": 100.684,
+   "housing": 71.914,
+   "utilities": 108.348,
+   "other_services": 97.726,
+   "acs_name": "Chambersburg, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 1071.0,
+   "median_home_value": 236300.0,
+   "renter_share": 0.268
+  },
+  "16580": {
+   "name": "Champaign-Urbana, IL (Metropolitan Statistical Area)",
+   "all_items": 92.704,
+   "goods": 93.643,
+   "housing": 71.604,
+   "utilities": 90.467,
+   "other_services": 99.59,
+   "acs_name": "Champaign-Urbana, IL Metro Area",
+   "states": [
+    "IL"
+   ],
+   "median_gross_rent": 1008.0,
+   "median_home_value": 194400.0,
+   "renter_share": 0.431
+  },
+  "16620": {
+   "name": "Charleston, WV (Metropolitan Statistical Area)",
+   "all_items": 88.717,
+   "goods": 96.27,
+   "housing": 51.394,
+   "utilities": 91.712,
+   "other_services": 99.806,
+   "acs_name": "Charleston, WV Metro Area",
+   "states": [
+    "WV"
+   ],
+   "median_gross_rent": 872.0,
+   "median_home_value": 128900.0,
+   "renter_share": 0.287
+  },
+  "16700": {
+   "name": "Charleston-North Charleston, SC (Metropolitan Statistical Area)",
+   "all_items": 100.962,
+   "goods": 96.339,
+   "housing": 119.77,
+   "utilities": 88.212,
+   "other_services": 98.284,
+   "acs_name": "Charleston-North Charleston, SC Metro Area",
+   "states": [
+    "SC"
+   ],
+   "median_gross_rent": 1488.0,
+   "median_home_value": 345400.0,
+   "renter_share": 0.313
+  },
+  "16740": {
+   "name": "Charlotte-Concord-Gastonia, NC-SC (Metropolitan Statistical Area)",
+   "all_items": 97.348,
+   "goods": 96.58,
+   "housing": 97.635,
+   "utilities": 89.164,
+   "other_services": 98.2,
+   "acs_name": "Charlotte-Concord-Gastonia, NC-SC Metro Area",
+   "states": [
+    "NC",
+    "SC"
+   ],
+   "median_gross_rent": 1377.0,
+   "median_home_value": 319400.0,
+   "renter_share": 0.342
+  },
+  "16820": {
+   "name": "Charlottesville, VA (Metropolitan Statistical Area)",
+   "all_items": 99.146,
+   "goods": 96.773,
+   "housing": 107.041,
+   "utilities": 88.973,
+   "other_services": 98.612,
+   "acs_name": "Charlottesville, VA Metro Area",
+   "states": [
+    "VA"
+   ],
+   "median_gross_rent": 1528.0,
+   "median_home_value": 397600.0,
+   "renter_share": 0.342
+  },
+  "16860": {
+   "name": "Chattanooga, TN-GA (Metropolitan Statistical Area)",
+   "all_items": 91.464,
+   "goods": 95.994,
+   "housing": 76.55,
+   "utilities": 74.209,
+   "other_services": 95.311,
+   "acs_name": "Chattanooga, TN-GA Metro Area",
+   "states": [
+    "TN",
+    "GA"
+   ],
+   "median_gross_rent": 1084.0,
+   "median_home_value": 246000.0,
+   "renter_share": 0.317
+  },
+  "16940": {
+   "name": "Cheyenne, WY (Metropolitan Statistical Area)",
+   "all_items": 96.491,
+   "goods": 95.368,
+   "housing": 89.828,
+   "utilities": 77.961,
+   "other_services": 100.428,
+   "acs_name": "Cheyenne, WY Metro Area",
+   "states": [
+    "WY"
+   ],
+   "median_gross_rent": 1080.0,
+   "median_home_value": 324900.0,
+   "renter_share": 0.292
+  },
+  "16980": {
+   "name": "Chicago-Naperville-Elgin, IL-IN (Metropolitan Statistical Area)",
+   "all_items": 103.595,
+   "goods": 107.258,
+   "housing": 112.01,
+   "utilities": 83.581,
+   "other_services": 100.492,
+   "acs_name": "Chicago-Naperville-Elgin, IL-IN Metro Area",
+   "states": [
+    "IL",
+    "IN"
+   ],
+   "median_gross_rent": 1378.0,
+   "median_home_value": 301900.0,
+   "renter_share": 0.347
+  },
+  "17020": {
+   "name": "Chico, CA (Metropolitan Statistical Area)",
+   "all_items": 101.197,
+   "goods": 105.168,
+   "housing": 91.946,
+   "utilities": 158.837,
+   "other_services": 100.267,
+   "acs_name": "Chico, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1369.0,
+   "median_home_value": 408700.0,
+   "renter_share": 0.417
+  },
+  "17140": {
+   "name": "Cincinnati, OH-KY-IN (Metropolitan Statistical Area)",
+   "all_items": 95.37,
+   "goods": 93.751,
+   "housing": 87.608,
+   "utilities": 90.954,
+   "other_services": 99.04,
+   "acs_name": "Cincinnati, OH-KY-IN Metro Area",
+   "states": [
+    "OH",
+    "KY",
+    "IN"
+   ],
+   "median_gross_rent": 1047.0,
+   "median_home_value": 240200.0,
+   "renter_share": 0.319
+  },
+  "17300": {
+   "name": "Clarksville, TN-KY (Metropolitan Statistical Area)",
+   "all_items": 90.947,
+   "goods": 96.247,
+   "housing": 73.801,
+   "utilities": 72.546,
+   "other_services": 95.52,
+   "acs_name": "Clarksville, TN-KY Metro Area",
+   "states": [
+    "TN",
+    "KY"
+   ],
+   "median_gross_rent": 1141.0,
+   "median_home_value": 229400.0,
+   "renter_share": 0.379
+  },
+  "17410": {
+   "name": "Cleveland, OH (Metropolitan Statistical Area)",
+   "all_items": 93.923,
+   "goods": 93.628,
+   "housing": 79.434,
+   "utilities": 95.967,
+   "other_services": 98.939,
+   "acs_name": "Cleveland, OH Metro Area",
+   "states": [
+    "OH"
+   ],
+   "median_gross_rent": 996.0,
+   "median_home_value": 201000.0,
+   "renter_share": 0.339
+  },
+  "17420": {
+   "name": "Cleveland, TN (Metropolitan Statistical Area)",
+   "all_items": 88.08,
+   "goods": 96.247,
+   "housing": 60.327,
+   "utilities": 72.32,
+   "other_services": 95.142,
+   "acs_name": "Cleveland, TN Metro Area",
+   "states": [
+    "TN"
+   ],
+   "median_gross_rent": 939.0,
+   "median_home_value": 218500.0,
+   "renter_share": 0.301
+  },
+  "17660": {
+   "name": "Coeur d'Alene, ID (Metropolitan Statistical Area)",
+   "all_items": 98.293,
+   "goods": 96.179,
+   "housing": 105.597,
+   "utilities": 70.763,
+   "other_services": 98.974,
+   "acs_name": "Coeur d'Alene, ID Metro Area",
+   "states": [
+    "ID"
+   ],
+   "median_gross_rent": 1330.0,
+   "median_home_value": 467400.0,
+   "renter_share": 0.278
+  },
+  "17780": {
+   "name": "College Station-Bryan, TX (Metropolitan Statistical Area)",
+   "all_items": 90.951,
+   "goods": 93.757,
+   "housing": 75.088,
+   "utilities": 84.39,
+   "other_services": 96.24,
+   "acs_name": "College Station-Bryan, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1146.0,
+   "median_home_value": 261900.0,
+   "renter_share": 0.49
+  },
+  "17820": {
+   "name": "Colorado Springs, CO (Metropolitan Statistical Area)",
+   "all_items": 100.707,
+   "goods": 96.052,
+   "housing": 116.207,
+   "utilities": 83.195,
+   "other_services": 99.822,
+   "acs_name": "Colorado Springs, CO Metro Area",
+   "states": [
+    "CO"
+   ],
+   "median_gross_rent": 1611.0,
+   "median_home_value": 431600.0,
+   "renter_share": 0.33
+  },
+  "17860": {
+   "name": "Columbia, MO (Metropolitan Statistical Area)",
+   "all_items": 89.438,
+   "goods": 94.193,
+   "housing": 69.248,
+   "utilities": 85.966,
+   "other_services": 93.026,
+   "acs_name": "Columbia, MO Metro Area",
+   "states": [
+    "MO"
+   ],
+   "median_gross_rent": 1041.0,
+   "median_home_value": 242500.0,
+   "renter_share": 0.395
+  },
+  "17900": {
+   "name": "Columbia, SC (Metropolitan Statistical Area)",
+   "all_items": 93.662,
+   "goods": 96.339,
+   "housing": 79.455,
+   "utilities": 88.306,
+   "other_services": 98.284,
+   "acs_name": "Columbia, SC Metro Area",
+   "states": [
+    "SC"
+   ],
+   "median_gross_rent": 1145.0,
+   "median_home_value": 213400.0,
+   "renter_share": 0.308
+  },
+  "17980": {
+   "name": "Columbus, GA-AL (Metropolitan Statistical Area)",
+   "all_items": 89.296,
+   "goods": 96.332,
+   "housing": 61.185,
+   "utilities": 89.666,
+   "other_services": 98.578,
+   "acs_name": "Columbus, GA-AL Metro Area",
+   "states": [
+    "GA",
+    "AL"
+   ],
+   "median_gross_rent": 1030.0,
+   "median_home_value": 184900.0,
+   "renter_share": 0.428
+  },
+  "18020": {
+   "name": "Columbus, IN (Metropolitan Statistical Area)",
+   "all_items": 93.003,
+   "goods": 94.318,
+   "housing": 75.468,
+   "utilities": 86.577,
+   "other_services": 99.141,
+   "acs_name": "Columbus, IN Metro Area",
+   "states": [
+    "IN"
+   ],
+   "median_gross_rent": 1110.0,
+   "median_home_value": 221100.0,
+   "renter_share": 0.301
+  },
+  "18140": {
+   "name": "Columbus, OH (Metropolitan Statistical Area)",
+   "all_items": 95.469,
+   "goods": 93.628,
+   "housing": 87.945,
+   "utilities": 95.523,
+   "other_services": 98.939,
+   "acs_name": "Columbus, OH Metro Area",
+   "states": [
+    "OH"
+   ],
+   "median_gross_rent": 1208.0,
+   "median_home_value": 274300.0,
+   "renter_share": 0.387
+  },
+  "18580": {
+   "name": "Corpus Christi, TX (Metropolitan Statistical Area)",
+   "all_items": 92.671,
+   "goods": 93.757,
+   "housing": 84.905,
+   "utilities": 80.991,
+   "other_services": 96.24,
+   "acs_name": "Corpus Christi, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1224.0,
+   "median_home_value": 195400.0,
+   "renter_share": 0.379
+  },
+  "18700": {
+   "name": "Corvallis, OR (Metropolitan Statistical Area)",
+   "all_items": 104.017,
+   "goods": 105.261,
+   "housing": 114.437,
+   "utilities": 108.649,
+   "other_services": 100.298,
+   "acs_name": "Corvallis, OR Metro Area",
+   "states": [
+    "OR"
+   ],
+   "median_gross_rent": 1359.0,
+   "median_home_value": 481700.0,
+   "renter_share": 0.44
+  },
+  "18880": {
+   "name": "Crestview-Fort Walton Beach-Destin, FL (Metropolitan Statistical Area)",
+   "all_items": 97.031,
+   "goods": 96.24,
+   "housing": 94.934,
+   "utilities": 89.046,
+   "other_services": 98.864,
+   "acs_name": "Crestview-Fort Walton Beach-Destin, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1506.0,
+   "median_home_value": 333800.0,
+   "renter_share": 0.296
+  },
+  "19100": {
+   "name": "Dallas-Fort Worth-Arlington, TX (Metropolitan Statistical Area)",
+   "all_items": 103.09,
+   "goods": 102.838,
+   "housing": 117.874,
+   "utilities": 90.711,
+   "other_services": 99.673,
+   "acs_name": "Dallas-Fort Worth-Arlington, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1509.0,
+   "median_home_value": 330300.0,
+   "renter_share": 0.4
+  },
+  "19140": {
+   "name": "Dalton, GA (Metropolitan Statistical Area)",
+   "all_items": 89.844,
+   "goods": 96.269,
+   "housing": 63.342,
+   "utilities": 88.76,
+   "other_services": 98.667,
+   "acs_name": "Dalton, GA Metro Area",
+   "states": [
+    "GA"
+   ],
+   "median_gross_rent": 878.0,
+   "median_home_value": 190800.0,
+   "renter_share": 0.304
+  },
+  "19300": {
+   "name": "Daphne-Fairhope-Foley, AL (Metropolitan Statistical Area)",
+   "all_items": 94.69,
+   "goods": 96.397,
+   "housing": 89.15,
+   "utilities": 83.286,
+   "other_services": 96.693,
+   "acs_name": "Daphne-Fairhope-Foley, AL Metro Area",
+   "states": [
+    "AL"
+   ],
+   "median_gross_rent": 1211.0,
+   "median_home_value": 287000.0,
+   "renter_share": 0.225
+  },
+  "19340": {
+   "name": "Davenport-Moline-Rock Island, IA-IL (Metropolitan Statistical Area)",
+   "all_items": 89.079,
+   "goods": 94.2,
+   "housing": 68.346,
+   "utilities": 89.945,
+   "other_services": 93.53,
+   "acs_name": "Davenport-Moline-Rock Island, IA-IL Metro Area",
+   "states": [
+    "IA",
+    "IL"
+   ],
+   "median_gross_rent": 899.0,
+   "median_home_value": 170000.0,
+   "renter_share": 0.289
+  },
+  "19430": {
+   "name": "Dayton-Kettering-Beavercreek, OH (Metropolitan Statistical Area)",
+   "all_items": 92.694,
+   "goods": 93.628,
+   "housing": 72.712,
+   "utilities": 95.388,
+   "other_services": 98.939,
+   "acs_name": "Dayton-Kettering-Beavercreek, OH Metro Area",
+   "states": [
+    "OH"
+   ],
+   "median_gross_rent": 984.0,
+   "median_home_value": 186200.0,
+   "renter_share": 0.352
+  },
+  "19460": {
+   "name": "Decatur, AL (Metropolitan Statistical Area)",
+   "all_items": 87.212,
+   "goods": 96.397,
+   "housing": 58.067,
+   "utilities": 84.745,
+   "other_services": 96.693,
+   "acs_name": "Decatur, AL Metro Area",
+   "states": [
+    "AL"
+   ],
+   "median_gross_rent": 816.0,
+   "median_home_value": 185000.0,
+   "renter_share": 0.256
+  },
+  "19500": {
+   "name": "Decatur, IL (Metropolitan Statistical Area)",
+   "all_items": 88.422,
+   "goods": 93.643,
+   "housing": 56.186,
+   "utilities": 91.095,
+   "other_services": 99.59,
+   "acs_name": "Decatur, IL Metro Area",
+   "states": [
+    "IL"
+   ],
+   "median_gross_rent": 797.0,
+   "median_home_value": 121800.0,
+   "renter_share": 0.302
+  },
+  "19660": {
+   "name": "Deltona-Daytona Beach-Ormond Beach, FL (Metropolitan Statistical Area)",
+   "all_items": 99.367,
+   "goods": 96.24,
+   "housing": 108.375,
+   "utilities": 87.566,
+   "other_services": 98.864,
+   "acs_name": "Deltona-Daytona Beach-Ormond Beach, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1407.0,
+   "median_home_value": 287200.0,
+   "renter_share": 0.257
+  },
+  "19740": {
+   "name": "Denver-Aurora-Centennial, CO (Metropolitan Statistical Area)",
+   "all_items": 105.782,
+   "goods": 100.957,
+   "housing": 146.919,
+   "utilities": 87.856,
+   "other_services": 99.448,
+   "acs_name": "Denver-Aurora-Centennial, CO Metro Area",
+   "states": [
+    "CO"
+   ],
+   "median_gross_rent": 1805.0,
+   "median_home_value": 570300.0,
+   "renter_share": 0.357
+  },
+  "19780": {
+   "name": "Des Moines-West Des Moines, IA (Metropolitan Statistical Area)",
+   "all_items": 91.701,
+   "goods": 93.73,
+   "housing": 84.741,
+   "utilities": 84.585,
+   "other_services": 92.927,
+   "acs_name": "Des Moines-West Des Moines, IA Metro Area",
+   "states": [
+    "IA"
+   ],
+   "median_gross_rent": 1113.0,
+   "median_home_value": 252400.0,
+   "renter_share": 0.305
+  },
+  "19820": {
+   "name": "Detroit-Warren-Dearborn, MI (Metropolitan Statistical Area)",
+   "all_items": 100.298,
+   "goods": 98.817,
+   "housing": 94.69,
+   "utilities": 106.988,
+   "other_services": 102.591,
+   "acs_name": "Detroit-Warren-Dearborn, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 1162.0,
+   "median_home_value": 237100.0,
+   "renter_share": 0.291
+  },
+  "20020": {
+   "name": "Dothan, AL (Metropolitan Statistical Area)",
+   "all_items": 83.833,
+   "goods": 96.397,
+   "housing": 46.872,
+   "utilities": 84.319,
+   "other_services": 96.693,
+   "acs_name": "Dothan, AL Metro Area",
+   "states": [
+    "AL"
+   ],
+   "median_gross_rent": 878.0,
+   "median_home_value": 163700.0,
+   "renter_share": 0.317
+  },
+  "20100": {
+   "name": "Dover, DE (Metropolitan Statistical Area)",
+   "all_items": 97.507,
+   "goods": 96.372,
+   "housing": 95.899,
+   "utilities": 97.183,
+   "other_services": 98.774,
+   "acs_name": "Dover, DE Metro Area",
+   "states": [
+    "DE"
+   ],
+   "median_gross_rent": 1285.0,
+   "median_home_value": 290600.0,
+   "renter_share": 0.29
+  },
+  "20220": {
+   "name": "Dubuque, IA (Metropolitan Statistical Area)",
+   "all_items": 87.328,
+   "goods": 93.73,
+   "housing": 64.046,
+   "utilities": 81.196,
+   "other_services": 92.927,
+   "acs_name": "Dubuque, IA Metro Area",
+   "states": [
+    "IA"
+   ],
+   "median_gross_rent": 944.0,
+   "median_home_value": 226100.0,
+   "renter_share": 0.268
+  },
+  "20260": {
+   "name": "Duluth, MN-WI (Metropolitan Statistical Area)",
+   "all_items": 88.768,
+   "goods": 95.3,
+   "housing": 71.147,
+   "utilities": 87.25,
+   "other_services": 92.187,
+   "acs_name": "Duluth, MN-WI Metro Area",
+   "states": [
+    "MN",
+    "WI"
+   ],
+   "median_gross_rent": 959.0,
+   "median_home_value": 208900.0,
+   "renter_share": 0.271
+  },
+  "20500": {
+   "name": "Durham-Chapel Hill, NC (Metropolitan Statistical Area)",
+   "all_items": 97.572,
+   "goods": 96.621,
+   "housing": 98.934,
+   "utilities": 89.317,
+   "other_services": 98.186,
+   "acs_name": "Durham-Chapel Hill, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 1374.0,
+   "median_home_value": 359400.0,
+   "renter_share": 0.381
+  },
+  "20580": {
+   "name": "Eagle Pass, TX (Metropolitan Statistical Area)",
+   "all_items": 83.805,
+   "goods": 93.757,
+   "housing": 53.681,
+   "utilities": 81.86,
+   "other_services": 96.24,
+   "acs_name": "Eagle Pass, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 789.0,
+   "median_home_value": 151500.0,
+   "renter_share": 0.313
+  },
+  "20740": {
+   "name": "Eau Claire, WI (Metropolitan Statistical Area)",
+   "all_items": 92.796,
+   "goods": 93.787,
+   "housing": 72.85,
+   "utilities": 90.935,
+   "other_services": 99.411,
+   "acs_name": "Eau Claire, WI Metro Area",
+   "states": [
+    "WI"
+   ],
+   "median_gross_rent": 974.0,
+   "median_home_value": 240700.0,
+   "renter_share": 0.327
+  },
+  "20940": {
+   "name": "El Centro, CA (Metropolitan Statistical Area)",
+   "all_items": 95.174,
+   "goods": 105.168,
+   "housing": 66.274,
+   "utilities": 157.195,
+   "other_services": 100.267,
+   "acs_name": "El Centro, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1012.0,
+   "median_home_value": 279500.0,
+   "renter_share": 0.432
+  },
+  "21060": {
+   "name": "Elizabethtown, KY (Metropolitan Statistical Area)",
+   "all_items": 90.572,
+   "goods": 96.246,
+   "housing": 66.669,
+   "utilities": 74.599,
+   "other_services": 96.892,
+   "acs_name": "Elizabethtown, KY Metro Area",
+   "states": [
+    "KY"
+   ],
+   "median_gross_rent": 935.0,
+   "median_home_value": 201100.0,
+   "renter_share": 0.361
+  },
+  "21140": {
+   "name": "Elkhart-Goshen, IN (Metropolitan Statistical Area)",
+   "all_items": 90.325,
+   "goods": 94.318,
+   "housing": 64.327,
+   "utilities": 86.359,
+   "other_services": 99.141,
+   "acs_name": "Elkhart-Goshen, IN Metro Area",
+   "states": [
+    "IN"
+   ],
+   "median_gross_rent": 1023.0,
+   "median_home_value": 194400.0,
+   "renter_share": 0.288
+  },
+  "21300": {
+   "name": "Elmira, NY (Metropolitan Statistical Area)",
+   "all_items": 94.398,
+   "goods": 99.693,
+   "housing": 76.357,
+   "utilities": 131.583,
+   "other_services": 97.754,
+   "acs_name": "Elmira, NY Metro Area",
+   "states": [
+    "NY"
+   ],
+   "median_gross_rent": 1020.0,
+   "median_home_value": 132100.0,
+   "renter_share": 0.302
+  },
+  "21340": {
+   "name": "El Paso, TX (Metropolitan Statistical Area)",
+   "all_items": 89.912,
+   "goods": 93.757,
+   "housing": 71.248,
+   "utilities": 82.585,
+   "other_services": 96.24,
+   "acs_name": "El Paso, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1045.0,
+   "median_home_value": 167000.0,
+   "renter_share": 0.363
+  },
+  "21420": {
+   "name": "Enid, OK (Metropolitan Statistical Area) *",
+   "all_items": 84.269,
+   "goods": 93.778,
+   "housing": 51.389,
+   "utilities": 74.37,
+   "other_services": 95.458,
+   "acs_name": "Enid, OK Metro Area",
+   "states": [
+    "OK"
+   ],
+   "median_gross_rent": 915.0,
+   "median_home_value": 149800.0,
+   "renter_share": 0.354
+  },
+  "21500": {
+   "name": "Erie, PA (Metropolitan Statistical Area)",
+   "all_items": 90.95,
+   "goods": 100.684,
+   "housing": 56.83,
+   "utilities": 106.806,
+   "other_services": 97.726,
+   "acs_name": "Erie, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 876.0,
+   "median_home_value": 169500.0,
+   "renter_share": 0.317
+  },
+  "21660": {
+   "name": "Eugene-Springfield, OR (Metropolitan Statistical Area)",
+   "all_items": 101.568,
+   "goods": 105.261,
+   "housing": 98.35,
+   "utilities": 102.531,
+   "other_services": 100.298,
+   "acs_name": "Eugene-Springfield, OR Metro Area",
+   "states": [
+    "OR"
+   ],
+   "median_gross_rent": 1287.0,
+   "median_home_value": 395800.0,
+   "renter_share": 0.406
+  },
+  "21780": {
+   "name": "Evansville, IN (Metropolitan Statistical Area)",
+   "all_items": 91.528,
+   "goods": 94.318,
+   "housing": 66.735,
+   "utilities": 86.717,
+   "other_services": 99.141,
+   "acs_name": "Evansville, IN Metro Area",
+   "states": [
+    "IN"
+   ],
+   "median_gross_rent": 963.0,
+   "median_home_value": 190800.0,
+   "renter_share": 0.299
+  },
+  "21820": {
+   "name": "Fairbanks-College, AK (Metropolitan Statistical Area)",
+   "all_items": 103.208,
+   "goods": 107.34,
+   "housing": 92.562,
+   "utilities": 119.776,
+   "other_services": 103.342,
+   "acs_name": "Fairbanks-College, AK Metro Area",
+   "states": [
+    "AK"
+   ],
+   "median_gross_rent": 1424.0,
+   "median_home_value": 282500.0,
+   "renter_share": 0.383
+  },
+  "22020": {
+   "name": "Fargo, ND-MN (Metropolitan Statistical Area)",
+   "all_items": 90.871,
+   "goods": 95.654,
+   "housing": 81.142,
+   "utilities": 77.324,
+   "other_services": 91.334,
+   "acs_name": "Fargo, ND-MN Metro Area",
+   "states": [
+    "ND",
+    "MN"
+   ],
+   "median_gross_rent": 940.0,
+   "median_home_value": 276600.0,
+   "renter_share": 0.445
+  },
+  "22140": {
+   "name": "Farmington, NM (Metropolitan Statistical Area)",
+   "all_items": 87.707,
+   "goods": 96.144,
+   "housing": 56.552,
+   "utilities": 77.865,
+   "other_services": 98.54,
+   "acs_name": "Farmington, NM Metro Area",
+   "states": [
+    "NM"
+   ],
+   "median_gross_rent": 917.0,
+   "median_home_value": 185100.0,
+   "renter_share": 0.298
+  },
+  "22180": {
+   "name": "Fayetteville, NC (Metropolitan Statistical Area)",
+   "all_items": 91.978,
+   "goods": 96.621,
+   "housing": 73.081,
+   "utilities": 87.779,
+   "other_services": 98.186,
+   "acs_name": "Fayetteville, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 1150.0,
+   "median_home_value": 185900.0,
+   "renter_share": 0.44
+  },
+  "22220": {
+   "name": "Fayetteville-Springdale-Rogers, AR (Metropolitan Statistical Area)",
+   "all_items": 91.353,
+   "goods": 93.577,
+   "housing": 76.886,
+   "utilities": 75.109,
+   "other_services": 95.295,
+   "acs_name": "Fayetteville-Springdale-Rogers, AR Metro Area",
+   "states": [
+    "AR"
+   ],
+   "median_gross_rent": 1094.0,
+   "median_home_value": 273400.0,
+   "renter_share": 0.377
+  },
+  "22380": {
+   "name": "Flagstaff, AZ (Metropolitan Statistical Area)",
+   "all_items": 100.325,
+   "goods": 96.237,
+   "housing": 108.961,
+   "utilities": 93.825,
+   "other_services": 99.838,
+   "acs_name": "Flagstaff, AZ Metro Area",
+   "states": [
+    "AZ"
+   ],
+   "median_gross_rent": 1406.0,
+   "median_home_value": 413200.0,
+   "renter_share": 0.412
+  },
+  "22420": {
+   "name": "Flint, MI (Metropolitan Statistical Area)",
+   "all_items": 93.034,
+   "goods": 93.711,
+   "housing": 74.039,
+   "utilities": 97.067,
+   "other_services": 99.561,
+   "acs_name": "Flint, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 936.0,
+   "median_home_value": 172900.0,
+   "renter_share": 0.292
+  },
+  "22500": {
+   "name": "Florence, SC (Metropolitan Statistical Area)",
+   "all_items": 86.774,
+   "goods": 96.339,
+   "housing": 52.425,
+   "utilities": 87.731,
+   "other_services": 98.284,
+   "acs_name": "Florence, SC Metro Area",
+   "states": [
+    "SC"
+   ],
+   "median_gross_rent": 898.0,
+   "median_home_value": 158800.0,
+   "renter_share": 0.335
+  },
+  "22520": {
+   "name": "Florence-Muscle Shoals, AL (Metropolitan Statistical Area)",
+   "all_items": 84.817,
+   "goods": 96.397,
+   "housing": 47.677,
+   "utilities": 85.771,
+   "other_services": 96.693,
+   "acs_name": "Florence-Muscle Shoals, AL Metro Area",
+   "states": [
+    "AL"
+   ],
+   "median_gross_rent": 813.0,
+   "median_home_value": 175800.0,
+   "renter_share": 0.31
+  },
+  "22540": {
+   "name": "Fond du Lac, WI (Metropolitan Statistical Area)",
+   "all_items": 91.643,
+   "goods": 93.787,
+   "housing": 67.317,
+   "utilities": 91.108,
+   "other_services": 99.411,
+   "acs_name": "Fond du Lac, WI Metro Area",
+   "states": [
+    "WI"
+   ],
+   "median_gross_rent": 926.0,
+   "median_home_value": 209800.0,
+   "renter_share": 0.297
+  },
+  "22660": {
+   "name": "Fort Collins-Loveland, CO (Metropolitan Statistical Area)",
+   "all_items": 101.128,
+   "goods": 96.052,
+   "housing": 120.592,
+   "utilities": 82.156,
+   "other_services": 99.822,
+   "acs_name": "Fort Collins-Loveland, CO Metro Area",
+   "states": [
+    "CO"
+   ],
+   "median_gross_rent": 1677.0,
+   "median_home_value": 532200.0,
+   "renter_share": 0.357
+  },
+  "22900": {
+   "name": "Fort Smith, AR-OK (Metropolitan Statistical Area)",
+   "all_items": 85.888,
+   "goods": 93.606,
+   "housing": 53.443,
+   "utilities": 73.797,
+   "other_services": 95.319,
+   "acs_name": "Fort Smith, AR-OK Metro Area",
+   "states": [
+    "AR",
+    "OK"
+   ],
+   "median_gross_rent": 841.0,
+   "median_home_value": 160100.0,
+   "renter_share": 0.338
+  },
+  "23060": {
+   "name": "Fort Wayne, IN (Metropolitan Statistical Area)",
+   "all_items": 92.572,
+   "goods": 94.318,
+   "housing": 72.277,
+   "utilities": 86.247,
+   "other_services": 99.141,
+   "acs_name": "Fort Wayne, IN Metro Area",
+   "states": [
+    "IN"
+   ],
+   "median_gross_rent": 963.0,
+   "median_home_value": 194000.0,
+   "renter_share": 0.296
+  },
+  "23420": {
+   "name": "Fresno, CA (Metropolitan Statistical Area)",
+   "all_items": 102.158,
+   "goods": 105.168,
+   "housing": 95.725,
+   "utilities": 161.01,
+   "other_services": 100.267,
+   "acs_name": "Fresno, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1301.0,
+   "median_home_value": 363300.0,
+   "renter_share": 0.434
+  },
+  "23460": {
+   "name": "Gadsden, AL (Metropolitan Statistical Area)",
+   "all_items": 85.653,
+   "goods": 96.397,
+   "housing": 53.696,
+   "utilities": 86.712,
+   "other_services": 96.693,
+   "acs_name": "Gadsden, AL Metro Area",
+   "states": [
+    "AL"
+   ],
+   "median_gross_rent": 807.0,
+   "median_home_value": 160600.0,
+   "renter_share": 0.262
+  },
+  "23540": {
+   "name": "Gainesville, FL (Metropolitan Statistical Area)",
+   "all_items": 96.733,
+   "goods": 96.24,
+   "housing": 92.982,
+   "utilities": 88.155,
+   "other_services": 98.864,
+   "acs_name": "Gainesville, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1219.0,
+   "median_home_value": 245800.0,
+   "renter_share": 0.411
+  },
+  "23580": {
+   "name": "Gainesville, GA (Metropolitan Statistical Area)",
+   "all_items": 96.766,
+   "goods": 96.269,
+   "housing": 93.488,
+   "utilities": 89.587,
+   "other_services": 98.667,
+   "acs_name": "Gainesville, GA Metro Area",
+   "states": [
+    "GA"
+   ],
+   "median_gross_rent": 1247.0,
+   "median_home_value": 313600.0,
+   "renter_share": 0.311
+  },
+  "23900": {
+   "name": "Gettysburg, PA (Metropolitan Statistical Area)",
+   "all_items": 95.379,
+   "goods": 100.684,
+   "housing": 73.865,
+   "utilities": 107.003,
+   "other_services": 97.726,
+   "acs_name": "Gettysburg, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 1084.0,
+   "median_home_value": 256100.0,
+   "renter_share": 0.209
+  },
+  "24020": {
+   "name": "Glens Falls, NY (Metropolitan Statistical Area)",
+   "all_items": 94.866,
+   "goods": 99.693,
+   "housing": 76.231,
+   "utilities": 133.827,
+   "other_services": 97.754,
+   "acs_name": "Glens Falls, NY Metro Area",
+   "states": [
+    "NY"
+   ],
+   "median_gross_rent": 1053.0,
+   "median_home_value": 218600.0,
+   "renter_share": 0.263
+  },
+  "24140": {
+   "name": "Goldsboro, NC (Metropolitan Statistical Area)",
+   "all_items": 88.462,
+   "goods": 96.621,
+   "housing": 57.684,
+   "utilities": 87.888,
+   "other_services": 98.186,
+   "acs_name": "Goldsboro, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 932.0,
+   "median_home_value": 162700.0,
+   "renter_share": 0.385
+  },
+  "24220": {
+   "name": "Grand Forks, ND-MN (Metropolitan Statistical Area)",
+   "all_items": 86.663,
+   "goods": 95.632,
+   "housing": 59.664,
+   "utilities": 77.088,
+   "other_services": 91.417,
+   "acs_name": "Grand Forks, ND-MN Metro Area",
+   "states": [
+    "ND",
+    "MN"
+   ],
+   "median_gross_rent": 947.0,
+   "median_home_value": 232900.0,
+   "renter_share": 0.422
+  },
+  "24260": {
+   "name": "Grand Island, NE (Metropolitan Statistical Area)",
+   "all_items": 86.657,
+   "goods": 94.101,
+   "housing": 61.748,
+   "utilities": 74.241,
+   "other_services": 92.98,
+   "acs_name": "Grand Island, NE Metro Area",
+   "states": [
+    "NE"
+   ],
+   "median_gross_rent": 896.0,
+   "median_home_value": 201600.0,
+   "renter_share": 0.34
+  },
+  "24300": {
+   "name": "Grand Junction, CO (Metropolitan Statistical Area)",
+   "all_items": 95.476,
+   "goods": 96.052,
+   "housing": 86.367,
+   "utilities": 83.286,
+   "other_services": 99.822,
+   "acs_name": "Grand Junction, CO Metro Area",
+   "states": [
+    "CO"
+   ],
+   "median_gross_rent": 1154.0,
+   "median_home_value": 349400.0,
+   "renter_share": 0.281
+  },
+  "24340": {
+   "name": "Grand Rapids-Wyoming-Kentwood, MI (Metropolitan Statistical Area)",
+   "all_items": 95.546,
+   "goods": 93.711,
+   "housing": 86.596,
+   "utilities": 93.775,
+   "other_services": 99.561,
+   "acs_name": "Grand Rapids-Wyoming-Kentwood, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 1138.0,
+   "median_home_value": 261600.0,
+   "renter_share": 0.257
+  },
+  "24420": {
+   "name": "Grants Pass, OR (Metropolitan Statistical Area)",
+   "all_items": 97.76,
+   "goods": 105.261,
+   "housing": 79.911,
+   "utilities": 103.562,
+   "other_services": 100.298,
+   "acs_name": "Grants Pass, OR Metro Area",
+   "states": [
+    "OR"
+   ],
+   "median_gross_rent": 1157.0,
+   "median_home_value": 383100.0,
+   "renter_share": 0.283
+  },
+  "24500": {
+   "name": "Great Falls, MT (Metropolitan Statistical Area)",
+   "all_items": 96.845,
+   "goods": 96.006,
+   "housing": 97.115,
+   "utilities": 73.048,
+   "other_services": 98.715,
+   "acs_name": "Great Falls, MT Metro Area",
+   "states": [
+    "MT"
+   ],
+   "median_gross_rent": 902.0,
+   "median_home_value": 243300.0,
+   "renter_share": 0.298
+  },
+  "24540": {
+   "name": "Greeley, CO (Metropolitan Statistical Area)",
+   "all_items": 100.176,
+   "goods": 96.052,
+   "housing": 112.599,
+   "utilities": 81.997,
+   "other_services": 99.822,
+   "acs_name": "Greeley, CO Metro Area",
+   "states": [
+    "CO"
+   ],
+   "median_gross_rent": 1469.0,
+   "median_home_value": 444500.0,
+   "renter_share": 0.245
+  },
+  "24580": {
+   "name": "Green Bay, WI (Metropolitan Statistical Area)",
+   "all_items": 93.086,
+   "goods": 93.787,
+   "housing": 74.696,
+   "utilities": 90.041,
+   "other_services": 99.411,
+   "acs_name": "Green Bay, WI Metro Area",
+   "states": [
+    "WI"
+   ],
+   "median_gross_rent": 959.0,
+   "median_home_value": 238700.0,
+   "renter_share": 0.317
+  },
+  "24660": {
+   "name": "Greensboro-High Point, NC (Metropolitan Statistical Area)",
+   "all_items": 92.865,
+   "goods": 96.621,
+   "housing": 74.519,
+   "utilities": 89.065,
+   "other_services": 98.186,
+   "acs_name": "Greensboro-High Point, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 1045.0,
+   "median_home_value": 207600.0,
+   "renter_share": 0.362
+  },
+  "24780": {
+   "name": "Greenville, NC (Metropolitan Statistical Area)",
+   "all_items": 88.402,
+   "goods": 96.621,
+   "housing": 57.326,
+   "utilities": 87.286,
+   "other_services": 98.186,
+   "acs_name": "Greenville, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 971.0,
+   "median_home_value": 194300.0,
+   "renter_share": 0.491
+  },
+  "24860": {
+   "name": "Greenville-Anderson-Greer, SC (Metropolitan Statistical Area)",
+   "all_items": 93.26,
+   "goods": 96.339,
+   "housing": 76.836,
+   "utilities": 88.762,
+   "other_services": 98.284,
+   "acs_name": "Greenville-Anderson-Greer, SC Metro Area",
+   "states": [
+    "SC"
+   ],
+   "median_gross_rent": 1100.0,
+   "median_home_value": 242700.0,
+   "renter_share": 0.294
+  },
+  "25060": {
+   "name": "Gulfport-Biloxi, MS (Metropolitan Statistical Area)",
+   "all_items": 90.006,
+   "goods": 96.219,
+   "housing": 67.906,
+   "utilities": 76.34,
+   "other_services": 96.09,
+   "acs_name": "Gulfport-Biloxi, MS Metro Area",
+   "states": [
+    "MS"
+   ],
+   "median_gross_rent": 1067.0,
+   "median_home_value": 192000.0,
+   "renter_share": 0.325
+  },
+  "25180": {
+   "name": "Hagerstown-Martinsburg, MD-WV (Metropolitan Statistical Area)",
+   "all_items": 94.171,
+   "goods": 96.399,
+   "housing": 75.737,
+   "utilities": 95.694,
+   "other_services": 99.48,
+   "acs_name": "Hagerstown-Martinsburg, MD-WV Metro Area",
+   "states": [
+    "MD",
+    "WV"
+   ],
+   "median_gross_rent": 1130.0,
+   "median_home_value": 258300.0,
+   "renter_share": 0.29
+  },
+  "25220": {
+   "name": "Hammond, LA (Metropolitan Statistical Area)",
+   "all_items": 84.46,
+   "goods": 93.691,
+   "housing": 48.16,
+   "utilities": 71.002,
+   "other_services": 95.705,
+   "acs_name": "Hammond, LA Metro Area",
+   "states": [
+    "LA"
+   ],
+   "median_gross_rent": 974.0,
+   "median_home_value": 204600.0,
+   "renter_share": 0.285
+  },
+  "25260": {
+   "name": "Hanford-Corcoran, CA (Metropolitan Statistical Area)",
+   "all_items": 101.612,
+   "goods": 105.168,
+   "housing": 93.497,
+   "utilities": 157.378,
+   "other_services": 100.267,
+   "acs_name": "Hanford-Corcoran, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1228.0,
+   "median_home_value": 305700.0,
+   "renter_share": 0.452
+  },
+  "25420": {
+   "name": "Harrisburg-Carlisle, PA (Metropolitan Statistical Area)",
+   "all_items": 98.65,
+   "goods": 100.684,
+   "housing": 96.28,
+   "utilities": 108.078,
+   "other_services": 97.726,
+   "acs_name": "Harrisburg-Carlisle, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 1151.0,
+   "median_home_value": 239100.0,
+   "renter_share": 0.319
+  },
+  "25500": {
+   "name": "Harrisonburg, VA (Metropolitan Statistical Area)",
+   "all_items": 94.892,
+   "goods": 96.773,
+   "housing": 82.272,
+   "utilities": 88.549,
+   "other_services": 98.612,
+   "acs_name": "Harrisonburg, VA Metro Area",
+   "states": [
+    "VA"
+   ],
+   "median_gross_rent": 1122.0,
+   "median_home_value": 284800.0,
+   "renter_share": 0.372
+  },
+  "25540": {
+   "name": "Hartford-West Hartford-East Hartford, CT (Metropolitan Statistical Area)",
+   "all_items": 102.746,
+   "goods": 97.33,
+   "housing": 110.234,
+   "utilities": 144.854,
+   "other_services": 102.658,
+   "acs_name": "Hartford-West Hartford-East Hartford, CT Metro Area",
+   "states": [
+    "CT"
+   ],
+   "median_gross_rent": 1357.0,
+   "median_home_value": 309300.0,
+   "renter_share": 0.33
+  },
+  "25620": {
+   "name": "Hattiesburg, MS (Metropolitan Statistical Area)",
+   "all_items": 87.633,
+   "goods": 96.219,
+   "housing": 60.059,
+   "utilities": 76.88,
+   "other_services": 96.09,
+   "acs_name": "Hattiesburg, MS Metro Area",
+   "states": [
+    "MS"
+   ],
+   "median_gross_rent": 987.0,
+   "median_home_value": 182400.0,
+   "renter_share": 0.365
+  },
+  "25740": {
+   "name": "Helena, MT (Metropolitan Statistical Area)",
+   "all_items": 95.675,
+   "goods": 96.006,
+   "housing": 90.141,
+   "utilities": 72.646,
+   "other_services": 98.715,
+   "acs_name": "Helena, MT Metro Area",
+   "states": [
+    "MT"
+   ],
+   "median_gross_rent": 1049.0,
+   "median_home_value": 363400.0,
+   "renter_share": 0.277
+  },
+  "25860": {
+   "name": "Hickory-Lenoir-Morganton, NC (Metropolitan Statistical Area)",
+   "all_items": 88.486,
+   "goods": 96.621,
+   "housing": 59.578,
+   "utilities": 87.81,
+   "other_services": 98.186,
+   "acs_name": "Hickory-Lenoir-Morganton, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 823.0,
+   "median_home_value": 193400.0,
+   "renter_share": 0.257
+  },
+  "25940": {
+   "name": "Hilton Head Island-Bluffton-Port Royal, SC (Metropolitan Statistical Area)",
+   "all_items": 98.017,
+   "goods": 96.339,
+   "housing": 101.235,
+   "utilities": 88.087,
+   "other_services": 98.284,
+   "acs_name": "Hilton Head Island-Bluffton-Port Royal, SC Metro Area",
+   "states": [
+    "SC"
+   ],
+   "median_gross_rent": 1448.0,
+   "median_home_value": 393100.0,
+   "renter_share": 0.242
+  },
+  "25980": {
+   "name": "Hinesville, GA (Metropolitan Statistical Area)",
+   "all_items": 93.933,
+   "goods": 96.269,
+   "housing": 79.46,
+   "utilities": 86.837,
+   "other_services": 98.667,
+   "acs_name": "Hinesville, GA Metro Area",
+   "states": [
+    "GA"
+   ],
+   "median_gross_rent": 1174.0,
+   "median_home_value": 183500.0,
+   "renter_share": 0.474
+  },
+  "26140": {
+   "name": "Homosassa Springs, FL (Metropolitan Statistical Area)",
+   "all_items": 93.467,
+   "goods": 96.24,
+   "housing": 78.427,
+   "utilities": 87.328,
+   "other_services": 98.864,
+   "acs_name": "Homosassa Springs, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1069.0,
+   "median_home_value": 223200.0,
+   "renter_share": 0.152
+  },
+  "26300": {
+   "name": "Hot Springs, AR (Metropolitan Statistical Area)",
+   "all_items": 85.73,
+   "goods": 93.577,
+   "housing": 57.281,
+   "utilities": 74.255,
+   "other_services": 95.295,
+   "acs_name": "Hot Springs, AR Metro Area",
+   "states": [
+    "AR"
+   ],
+   "median_gross_rent": 942.0,
+   "median_home_value": 176400.0,
+   "renter_share": 0.308
+  },
+  "26380": {
+   "name": "Houma-Bayou Cane-Thibodaux, LA (Metropolitan Statistical Area)",
+   "all_items": 85.103,
+   "goods": 93.691,
+   "housing": 51.311,
+   "utilities": 71.298,
+   "other_services": 95.705,
+   "acs_name": "Houma-Bayou Cane-Thibodaux, LA Metro Area",
+   "states": [
+    "LA"
+   ],
+   "median_gross_rent": 983.0,
+   "median_home_value": 189900.0,
+   "renter_share": 0.242
+  },
+  "26420": {
+   "name": "Houston-Pasadena-The Woodlands, TX (Metropolitan Statistical Area)",
+   "all_items": 98.629,
+   "goods": 100.639,
+   "housing": 104.51,
+   "utilities": 95.288,
+   "other_services": 95.595,
+   "acs_name": "Houston-Pasadena-The Woodlands, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1378.0,
+   "median_home_value": 275200.0,
+   "renter_share": 0.388
+  },
+  "26580": {
+   "name": "Huntington-Ashland, WV-KY-OH (Metropolitan Statistical Area)",
+   "all_items": 88.422,
+   "goods": 96.316,
+   "housing": 51.257,
+   "utilities": 87.852,
+   "other_services": 99.409,
+   "acs_name": "Huntington-Ashland, WV-KY-OH Metro Area",
+   "states": [
+    "WV",
+    "KY",
+    "OH"
+   ],
+   "median_gross_rent": 856.0,
+   "median_home_value": 149000.0,
+   "renter_share": 0.27
+  },
+  "26620": {
+   "name": "Huntsville, AL (Metropolitan Statistical Area)",
+   "all_items": 93.072,
+   "goods": 96.397,
+   "housing": 77.946,
+   "utilities": 83.931,
+   "other_services": 96.693,
+   "acs_name": "Huntsville, AL Metro Area",
+   "states": [
+    "AL"
+   ],
+   "median_gross_rent": 1091.0,
+   "median_home_value": 265000.0,
+   "renter_share": 0.295
+  },
+  "26820": {
+   "name": "Idaho Falls, ID (Metropolitan Statistical Area)",
+   "all_items": 94.412,
+   "goods": 96.179,
+   "housing": 83.985,
+   "utilities": 69.651,
+   "other_services": 98.974,
+   "acs_name": "Idaho Falls, ID Metro Area",
+   "states": [
+    "ID"
+   ],
+   "median_gross_rent": 1052.0,
+   "median_home_value": 325000.0,
+   "renter_share": 0.263
+  },
+  "26900": {
+   "name": "Indianapolis-Carmel-Greenwood, IN (Metropolitan Statistical Area)",
+   "all_items": 95.696,
+   "goods": 94.318,
+   "housing": 88.917,
+   "utilities": 86.358,
+   "other_services": 99.141,
+   "acs_name": "Indianapolis-Carmel-Greenwood, IN Metro Area",
+   "states": [
+    "IN"
+   ],
+   "median_gross_rent": 1142.0,
+   "median_home_value": 244000.0,
+   "renter_share": 0.334
+  },
+  "26980": {
+   "name": "Iowa City, IA (Metropolitan Statistical Area)",
+   "all_items": 91.509,
+   "goods": 93.73,
+   "housing": 83.99,
+   "utilities": 83.667,
+   "other_services": 92.927,
+   "acs_name": "Iowa City, IA Metro Area",
+   "states": [
+    "IA"
+   ],
+   "median_gross_rent": 1077.0,
+   "median_home_value": 280400.0,
+   "renter_share": 0.395
+  },
+  "27060": {
+   "name": "Ithaca, NY (Metropolitan Statistical Area)",
+   "all_items": 103.317,
+   "goods": 99.693,
+   "housing": 128.377,
+   "utilities": 131.638,
+   "other_services": 97.754,
+   "acs_name": "Ithaca, NY Metro Area",
+   "states": [
+    "NY"
+   ],
+   "median_gross_rent": 1374.0,
+   "median_home_value": 271500.0,
+   "renter_share": 0.462
+  },
+  "27100": {
+   "name": "Jackson, MI (Metropolitan Statistical Area)",
+   "all_items": 91.779,
+   "goods": 93.711,
+   "housing": 67.092,
+   "utilities": 97.845,
+   "other_services": 99.561,
+   "acs_name": "Jackson, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 958.0,
+   "median_home_value": 182900.0,
+   "renter_share": 0.25
+  },
+  "27140": {
+   "name": "Jackson, MS (Metropolitan Statistical Area)",
+   "all_items": 89.048,
+   "goods": 96.219,
+   "housing": 64.768,
+   "utilities": 78.137,
+   "other_services": 96.09,
+   "acs_name": "Jackson, MS Metro Area",
+   "states": [
+    "MS"
+   ],
+   "median_gross_rent": 1034.0,
+   "median_home_value": 188500.0,
+   "renter_share": 0.325
+  },
+  "27180": {
+   "name": "Jackson, TN (Metropolitan Statistical Area)",
+   "all_items": 85.522,
+   "goods": 96.247,
+   "housing": 56.567,
+   "utilities": 72.619,
+   "other_services": 95.142,
+   "acs_name": "Jackson, TN Metro Area",
+   "states": [
+    "TN"
+   ],
+   "median_gross_rent": 956.0,
+   "median_home_value": 168600.0,
+   "renter_share": 0.346
+  },
+  "27260": {
+   "name": "Jacksonville, FL (Metropolitan Statistical Area)",
+   "all_items": 99.484,
+   "goods": 96.24,
+   "housing": 109.777,
+   "utilities": 87.514,
+   "other_services": 98.864,
+   "acs_name": "Jacksonville, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1416.0,
+   "median_home_value": 308900.0,
+   "renter_share": 0.337
+  },
+  "27340": {
+   "name": "Jacksonville, NC (Metropolitan Statistical Area)",
+   "all_items": 92.085,
+   "goods": 96.621,
+   "housing": 72.118,
+   "utilities": 87.243,
+   "other_services": 98.186,
+   "acs_name": "Jacksonville, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 1198.0,
+   "median_home_value": 219500.0,
+   "renter_share": 0.39
+  },
+  "27500": {
+   "name": "Janesville-Beloit, WI (Metropolitan Statistical Area)",
+   "all_items": 93.703,
+   "goods": 93.787,
+   "housing": 79.552,
+   "utilities": 90.357,
+   "other_services": 99.411,
+   "acs_name": "Janesville-Beloit, WI Metro Area",
+   "states": [
+    "WI"
+   ],
+   "median_gross_rent": 1019.0,
+   "median_home_value": 215900.0,
+   "renter_share": 0.294
+  },
+  "27620": {
+   "name": "Jefferson City, MO (Metropolitan Statistical Area)",
+   "all_items": 87.975,
+   "goods": 94.193,
+   "housing": 62.123,
+   "utilities": 85.497,
+   "other_services": 93.026,
+   "acs_name": "Jefferson City, MO Metro Area",
+   "states": [
+    "MO"
+   ],
+   "median_gross_rent": 804.0,
+   "median_home_value": 203900.0,
+   "renter_share": 0.278
+  },
+  "27740": {
+   "name": "Johnson City, TN (Metropolitan Statistical Area)",
+   "all_items": 87.928,
+   "goods": 96.247,
+   "housing": 63.176,
+   "utilities": 71.934,
+   "other_services": 95.142,
+   "acs_name": "Johnson City, TN Metro Area",
+   "states": [
+    "TN"
+   ],
+   "median_gross_rent": 888.0,
+   "median_home_value": 199100.0,
+   "renter_share": 0.322
+  },
+  "27780": {
+   "name": "Johnstown, PA (Metropolitan Statistical Area)",
+   "all_items": 85.929,
+   "goods": 100.684,
+   "housing": 42.333,
+   "utilities": 108.869,
+   "other_services": 97.726,
+   "acs_name": "Johnstown, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 733.0,
+   "median_home_value": 115900.0,
+   "renter_share": 0.242
+  },
+  "27860": {
+   "name": "Jonesboro, AR (Metropolitan Statistical Area)",
+   "all_items": 85.876,
+   "goods": 93.577,
+   "housing": 53.848,
+   "utilities": 74.971,
+   "other_services": 95.295,
+   "acs_name": "Jonesboro, AR Metro Area",
+   "states": [
+    "AR"
+   ],
+   "median_gross_rent": 907.0,
+   "median_home_value": 181200.0,
+   "renter_share": 0.4
+  },
+  "27900": {
+   "name": "Joplin, MO-KS (Metropolitan Statistical Area)",
+   "all_items": 85.718,
+   "goods": 94.179,
+   "housing": 53.976,
+   "utilities": 85.872,
+   "other_services": 93.091,
+   "acs_name": "Joplin, MO-KS Metro Area",
+   "states": [
+    "MO",
+    "KS"
+   ],
+   "median_gross_rent": 872.0,
+   "median_home_value": 157000.0,
+   "renter_share": 0.32
+  },
+  "27980": {
+   "name": "Kahului-Wailuku, HI (Metropolitan Statistical Area)",
+   "all_items": 109.393,
+   "goods": 111.562,
+   "housing": 119.179,
+   "utilities": 190.585,
+   "other_services": 102.898,
+   "acs_name": "Kahului-Wailuku, HI Metro Area",
+   "states": [
+    "HI"
+   ],
+   "median_gross_rent": 1863.0,
+   "median_home_value": 858600.0,
+   "renter_share": 0.35
+  },
+  "28020": {
+   "name": "Kalamazoo-Portage, MI (Metropolitan Statistical Area)",
+   "all_items": 94.84,
+   "goods": 93.711,
+   "housing": 81.59,
+   "utilities": 99.271,
+   "other_services": 99.561,
+   "acs_name": "Kalamazoo-Portage, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 1049.0,
+   "median_home_value": 227500.0,
+   "renter_share": 0.36
+  },
+  "28100": {
+   "name": "Kankakee, IL (Metropolitan Statistical Area)",
+   "all_items": 96.394,
+   "goods": 93.643,
+   "housing": 92.856,
+   "utilities": 89.419,
+   "other_services": 99.59,
+   "acs_name": "Kankakee, IL Metro Area",
+   "states": [
+    "IL"
+   ],
+   "median_gross_rent": 1075.0,
+   "median_home_value": 185700.0,
+   "renter_share": 0.312
+  },
+  "28140": {
+   "name": "Kansas City, MO-KS (Metropolitan Statistical Area)",
+   "all_items": 92.543,
+   "goods": 94.12,
+   "housing": 86.642,
+   "utilities": 89.034,
+   "other_services": 93.373,
+   "acs_name": "Kansas City, MO-KS Metro Area",
+   "states": [
+    "MO",
+    "KS"
+   ],
+   "median_gross_rent": 1201.0,
+   "median_home_value": 265400.0,
+   "renter_share": 0.344
+  },
+  "28420": {
+   "name": "Kennewick-Richland, WA (Metropolitan Statistical Area)",
+   "all_items": 100.079,
+   "goods": 105.028,
+   "housing": 94.824,
+   "utilities": 93.555,
+   "other_services": 99.472,
+   "acs_name": "Kennewick-Richland, WA Metro Area",
+   "states": [
+    "WA"
+   ],
+   "median_gross_rent": 1238.0,
+   "median_home_value": 362200.0,
+   "renter_share": 0.311
+  },
+  "28450": {
+   "name": "Kenosha, WI (Metropolitan Statistical Area)",
+   "all_items": 101.118,
+   "goods": 106.187,
+   "housing": 95.814,
+   "utilities": 85.858,
+   "other_services": 100.334,
+   "acs_name": "Kenosha, WI Metro Area",
+   "states": [
+    "WI"
+   ],
+   "median_gross_rent": 1175.0,
+   "median_home_value": 247800.0,
+   "renter_share": 0.324
+  },
+  "28660": {
+   "name": "Killeen-Temple, TX (Metropolitan Statistical Area)",
+   "all_items": 91.132,
+   "goods": 93.757,
+   "housing": 77.884,
+   "utilities": 81.242,
+   "other_services": 96.24,
+   "acs_name": "Killeen-Temple, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1160.0,
+   "median_home_value": 215000.0,
+   "renter_share": 0.422
+  },
+  "28700": {
+   "name": "Kingsport-Bristol, TN-VA (Metropolitan Statistical Area)",
+   "all_items": 86.447,
+   "goods": 96.235,
+   "housing": 56.496,
+   "utilities": 75.908,
+   "other_services": 95.809,
+   "acs_name": "Kingsport-Bristol, TN-VA Metro Area",
+   "states": [
+    "TN",
+    "VA"
+   ],
+   "median_gross_rent": 820.0,
+   "median_home_value": 182500.0,
+   "renter_share": 0.256
+  },
+  "28740": {
+   "name": "Kingston, NY (Metropolitan Statistical Area)",
+   "all_items": 100.709,
+   "goods": 99.693,
+   "housing": 110.173,
+   "utilities": 133.595,
+   "other_services": 97.754,
+   "acs_name": "Kingston, NY Metro Area",
+   "states": [
+    "NY"
+   ],
+   "median_gross_rent": 1335.0,
+   "median_home_value": 315100.0,
+   "renter_share": 0.3
+  },
+  "28880": {
+   "name": "Kiryas Joel-Poughkeepsie-Newburgh, NY (Metropolitan Statistical Area)",
+   "all_items": 109.422,
+   "goods": 110.254,
+   "housing": 115.763,
+   "utilities": 136.764,
+   "other_services": 106.536,
+   "acs_name": "Kiryas Joel-Poughkeepsie-Newburgh, NY Metro Area",
+   "states": [
+    "NY"
+   ],
+   "median_gross_rent": 1568.0,
+   "median_home_value": 364400.0,
+   "renter_share": 0.314
+  },
+  "28940": {
+   "name": "Knoxville, TN (Metropolitan Statistical Area)",
+   "all_items": 92.569,
+   "goods": 96.247,
+   "housing": 82.783,
+   "utilities": 71.869,
+   "other_services": 95.142,
+   "acs_name": "Knoxville, TN Metro Area",
+   "states": [
+    "TN"
+   ],
+   "median_gross_rent": 1080.0,
+   "median_home_value": 255300.0,
+   "renter_share": 0.298
+  },
+  "29020": {
+   "name": "Kokomo, IN (Metropolitan Statistical Area)",
+   "all_items": 89.648,
+   "goods": 94.318,
+   "housing": 59.252,
+   "utilities": 86.257,
+   "other_services": 99.141,
+   "acs_name": "Kokomo, IN Metro Area",
+   "states": [
+    "IN"
+   ],
+   "median_gross_rent": 915.0,
+   "median_home_value": 151500.0,
+   "renter_share": 0.281
+  },
+  "29100": {
+   "name": "La Crosse-Onalaska, WI-MN (Metropolitan Statistical Area)",
+   "all_items": 91.769,
+   "goods": 93.8,
+   "housing": 69.386,
+   "utilities": 89.528,
+   "other_services": 99.446,
+   "acs_name": "La Crosse-Onalaska, WI-MN Metro Area",
+   "states": [
+    "WI",
+    "MN"
+   ],
+   "median_gross_rent": 998.0,
+   "median_home_value": 235300.0,
+   "renter_share": 0.318
+  },
+  "29180": {
+   "name": "Lafayette, LA (Metropolitan Statistical Area)",
+   "all_items": 87.209,
+   "goods": 93.691,
+   "housing": 58.845,
+   "utilities": 71.215,
+   "other_services": 95.705,
+   "acs_name": "Lafayette, LA Metro Area",
+   "states": [
+    "LA"
+   ],
+   "median_gross_rent": 954.0,
+   "median_home_value": 206900.0,
+   "renter_share": 0.31
+  },
+  "29200": {
+   "name": "Lafayette-West Lafayette, IN (Metropolitan Statistical Area)",
+   "all_items": 93.43,
+   "goods": 94.318,
+   "housing": 76.442,
+   "utilities": 86.38,
+   "other_services": 99.141,
+   "acs_name": "Lafayette-West Lafayette, IN Metro Area",
+   "states": [
+    "IN"
+   ],
+   "median_gross_rent": 1071.0,
+   "median_home_value": 204300.0,
+   "renter_share": 0.416
+  },
+  "29340": {
+   "name": "Lake Charles, LA (Metropolitan Statistical Area)",
+   "all_items": 85.852,
+   "goods": 93.691,
+   "housing": 51.752,
+   "utilities": 71.742,
+   "other_services": 95.705,
+   "acs_name": "Lake Charles, LA Metro Area",
+   "states": [
+    "LA"
+   ],
+   "median_gross_rent": 1070.0,
+   "median_home_value": 198900.0,
+   "renter_share": 0.267
+  },
+  "29420": {
+   "name": "Lake Havasu City-Kingman, AZ (Metropolitan Statistical Area)",
+   "all_items": 94.098,
+   "goods": 96.237,
+   "housing": 79.773,
+   "utilities": 88.723,
+   "other_services": 99.838,
+   "acs_name": "Lake Havasu City-Kingman, AZ Metro Area",
+   "states": [
+    "AZ"
+   ],
+   "median_gross_rent": 1047.0,
+   "median_home_value": 253200.0,
+   "renter_share": 0.264
+  },
+  "29460": {
+   "name": "Lakeland-Winter Haven, FL (Metropolitan Statistical Area)",
+   "all_items": 97.141,
+   "goods": 96.24,
+   "housing": 95.942,
+   "utilities": 86.883,
+   "other_services": 98.864,
+   "acs_name": "Lakeland-Winter Haven, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1272.0,
+   "median_home_value": 240000.0,
+   "renter_share": 0.3
+  },
+  "29540": {
+   "name": "Lancaster, PA (Metropolitan Statistical Area)",
+   "all_items": 98.257,
+   "goods": 100.684,
+   "housing": 93.815,
+   "utilities": 107.265,
+   "other_services": 97.726,
+   "acs_name": "Lancaster, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 1289.0,
+   "median_home_value": 279400.0,
+   "renter_share": 0.301
+  },
+  "29620": {
+   "name": "Lansing-East Lansing, MI (Metropolitan Statistical Area)",
+   "all_items": 94.991,
+   "goods": 93.711,
+   "housing": 83.472,
+   "utilities": 95.519,
+   "other_services": 99.561,
+   "acs_name": "Lansing-East Lansing, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 1054.0,
+   "median_home_value": 205400.0,
+   "renter_share": 0.332
+  },
+  "29700": {
+   "name": "Laredo, TX (Metropolitan Statistical Area)",
+   "all_items": 86.956,
+   "goods": 93.757,
+   "housing": 59.746,
+   "utilities": 80.614,
+   "other_services": 96.24,
+   "acs_name": "Laredo, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 997.0,
+   "median_home_value": 178900.0,
+   "renter_share": 0.361
+  },
+  "29740": {
+   "name": "Las Cruces, NM (Metropolitan Statistical Area)",
+   "all_items": 90.212,
+   "goods": 96.144,
+   "housing": 62.982,
+   "utilities": 77.918,
+   "other_services": 98.54,
+   "acs_name": "Las Cruces, NM Metro Area",
+   "states": [
+    "NM"
+   ],
+   "median_gross_rent": 903.0,
+   "median_home_value": 205400.0,
+   "renter_share": 0.347
+  },
+  "29820": {
+   "name": "Las Vegas-Henderson-North Las Vegas, NV (Metropolitan Statistical Area)",
+   "all_items": 100.215,
+   "goods": 96.271,
+   "housing": 115.538,
+   "utilities": 90.646,
+   "other_services": 98.744,
+   "acs_name": "Las Vegas-Henderson-North Las Vegas, NV Metro Area",
+   "states": [
+    "NV"
+   ],
+   "median_gross_rent": 1518.0,
+   "median_home_value": 400800.0,
+   "renter_share": 0.43
+  },
+  "29940": {
+   "name": "Lawrence, KS (Metropolitan Statistical Area)",
+   "all_items": 90.243,
+   "goods": 94.027,
+   "housing": 71.636,
+   "utilities": 89.291,
+   "other_services": 93.816,
+   "acs_name": "Lawrence, KS Metro Area",
+   "states": [
+    "KS"
+   ],
+   "median_gross_rent": 1066.0,
+   "median_home_value": 281600.0,
+   "renter_share": 0.505
+  },
+  "30020": {
+   "name": "Lawton, OK (Metropolitan Statistical Area)",
+   "all_items": 85.941,
+   "goods": 93.778,
+   "housing": 57.389,
+   "utilities": 72.982,
+   "other_services": 95.458,
+   "acs_name": "Lawton, OK Metro Area",
+   "states": [
+    "OK"
+   ],
+   "median_gross_rent": 933.0,
+   "median_home_value": 151500.0,
+   "renter_share": 0.44
+  },
+  "30140": {
+   "name": "Lebanon, PA (Metropolitan Statistical Area)",
+   "all_items": 93.214,
+   "goods": 100.684,
+   "housing": 66.039,
+   "utilities": 108.444,
+   "other_services": 97.726,
+   "acs_name": "Lebanon, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 1087.0,
+   "median_home_value": 227300.0,
+   "renter_share": 0.287
+  },
+  "30300": {
+   "name": "Lewiston, ID-WA (Metropolitan Statistical Area)",
+   "all_items": 91.16,
+   "goods": 96.217,
+   "housing": 71.925,
+   "utilities": 72.591,
+   "other_services": 99.363,
+   "acs_name": "Lewiston, ID-WA Metro Area",
+   "states": [
+    "ID",
+    "WA"
+   ],
+   "median_gross_rent": 956.0,
+   "median_home_value": 289400.0,
+   "renter_share": 0.273
+  },
+  "30340": {
+   "name": "Lewiston-Auburn, ME (Metropolitan Statistical Area)",
+   "all_items": 94.736,
+   "goods": 97.171,
+   "housing": 69.003,
+   "utilities": 134.381,
+   "other_services": 103.191,
+   "acs_name": "Lewiston-Auburn, ME Metro Area",
+   "states": [
+    "ME"
+   ],
+   "median_gross_rent": 966.0,
+   "median_home_value": 232000.0,
+   "renter_share": 0.326
+  },
+  "30460": {
+   "name": "Lexington-Fayette, KY (Metropolitan Statistical Area)",
+   "all_items": 92.889,
+   "goods": 96.246,
+   "housing": 77.093,
+   "utilities": 74.587,
+   "other_services": 96.892,
+   "acs_name": "Lexington-Fayette, KY Metro Area",
+   "states": [
+    "KY"
+   ],
+   "median_gross_rent": 1070.0,
+   "median_home_value": 258900.0,
+   "renter_share": 0.404
+  },
+  "30500": {
+   "name": "Lexington Park, MD (Metropolitan Statistical Area)",
+   "all_items": 100.76,
+   "goods": 99.663,
+   "housing": 103.809,
+   "utilities": 106.4,
+   "other_services": 100.322,
+   "acs_name": "Lexington Park, MD Metro Area",
+   "states": [
+    "MD"
+   ],
+   "median_gross_rent": 1694.0,
+   "median_home_value": 414100.0,
+   "renter_share": 0.209
+  },
+  "30620": {
+   "name": "Lima, OH (Metropolitan Statistical Area)",
+   "all_items": 89.669,
+   "goods": 93.628,
+   "housing": 57.275,
+   "utilities": 95.814,
+   "other_services": 98.939,
+   "acs_name": "Lima, OH Metro Area",
+   "states": [
+    "OH"
+   ],
+   "median_gross_rent": 898.0,
+   "median_home_value": 158400.0,
+   "renter_share": 0.317
+  },
+  "30700": {
+   "name": "Lincoln, NE (Metropolitan Statistical Area)",
+   "all_items": 91.581,
+   "goods": 94.101,
+   "housing": 84.208,
+   "utilities": 76.817,
+   "other_services": 92.98,
+   "acs_name": "Lincoln, NE Metro Area",
+   "states": [
+    "NE"
+   ],
+   "median_gross_rent": 1043.0,
+   "median_home_value": 257500.0,
+   "renter_share": 0.405
+  },
+  "30780": {
+   "name": "Little Rock-North Little Rock-Conway, AR (Metropolitan Statistical Area)",
+   "all_items": 89.364,
+   "goods": 93.577,
+   "housing": 68.295,
+   "utilities": 74.635,
+   "other_services": 95.295,
+   "acs_name": "Little Rock-North Little Rock-Conway, AR Metro Area",
+   "states": [
+    "AR"
+   ],
+   "median_gross_rent": 1007.0,
+   "median_home_value": 199300.0,
+   "renter_share": 0.364
+  },
+  "30860": {
+   "name": "Logan, UT-ID (Metropolitan Statistical Area)",
+   "all_items": 95.927,
+   "goods": 96.43,
+   "housing": 90.959,
+   "utilities": 77.857,
+   "other_services": 98.96,
+   "acs_name": "Logan, UT-ID Metro Area",
+   "states": [
+    "UT",
+    "ID"
+   ],
+   "median_gross_rent": 1120.0,
+   "median_home_value": 386700.0,
+   "renter_share": 0.352
+  },
+  "30980": {
+   "name": "Longview, TX (Metropolitan Statistical Area)",
+   "all_items": 89.485,
+   "goods": 93.757,
+   "housing": 66.749,
+   "utilities": 83.464,
+   "other_services": 96.24,
+   "acs_name": "Longview, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1039.0,
+   "median_home_value": 178200.0,
+   "renter_share": 0.305
+  },
+  "31020": {
+   "name": "Longview-Kelso, WA (Metropolitan Statistical Area)",
+   "all_items": 97.545,
+   "goods": 105.028,
+   "housing": 82.536,
+   "utilities": 98.455,
+   "other_services": 99.472,
+   "acs_name": "Longview-Kelso, WA Metro Area",
+   "states": [
+    "WA"
+   ],
+   "median_gross_rent": 1169.0,
+   "median_home_value": 367400.0,
+   "renter_share": 0.338
+  },
+  "31080": {
+   "name": "Los Angeles-Long Beach-Anaheim, CA (Metropolitan Statistical Area)",
+   "all_items": 113.566,
+   "goods": 106.623,
+   "housing": 170.433,
+   "utilities": 158.589,
+   "other_services": 104.362,
+   "acs_name": "Los Angeles-Long Beach-Anaheim, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1987.0,
+   "median_home_value": 825300.0,
+   "renter_share": 0.514
+  },
+  "31140": {
+   "name": "Louisville/Jefferson County, KY-IN (Metropolitan Statistical Area)",
+   "all_items": 93.074,
+   "goods": 96.23,
+   "housing": 78.558,
+   "utilities": 74.957,
+   "other_services": 96.796,
+   "acs_name": "Louisville/Jefferson County, KY-IN Metro Area",
+   "states": [
+    "KY",
+    "IN"
+   ],
+   "median_gross_rent": 1064.0,
+   "median_home_value": 236400.0,
+   "renter_share": 0.314
+  },
+  "31180": {
+   "name": "Lubbock, TX (Metropolitan Statistical Area)",
+   "all_items": 91.317,
+   "goods": 93.757,
+   "housing": 76.357,
+   "utilities": 82.768,
+   "other_services": 96.24,
+   "acs_name": "Lubbock, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1116.0,
+   "median_home_value": 188700.0,
+   "renter_share": 0.429
+  },
+  "31340": {
+   "name": "Lynchburg, VA (Metropolitan Statistical Area)",
+   "all_items": 89.363,
+   "goods": 96.773,
+   "housing": 63.912,
+   "utilities": 87.774,
+   "other_services": 98.612,
+   "acs_name": "Lynchburg, VA Metro Area",
+   "states": [
+    "VA"
+   ],
+   "median_gross_rent": 967.0,
+   "median_home_value": 224600.0,
+   "renter_share": 0.286
+  },
+  "31420": {
+   "name": "Macon-Bibb County, GA (Metropolitan Statistical Area)",
+   "all_items": 88.528,
+   "goods": 96.269,
+   "housing": 58.916,
+   "utilities": 89.482,
+   "other_services": 98.667,
+   "acs_name": "Macon-Bibb County, GA Metro Area",
+   "states": [
+    "GA"
+   ],
+   "median_gross_rent": 1003.0,
+   "median_home_value": 172300.0,
+   "renter_share": 0.377
+  },
+  "31540": {
+   "name": "Madison, WI (Metropolitan Statistical Area)",
+   "all_items": 97.287,
+   "goods": 93.787,
+   "housing": 99.748,
+   "utilities": 89.825,
+   "other_services": 99.411,
+   "acs_name": "Madison, WI Metro Area",
+   "states": [
+    "WI"
+   ],
+   "median_gross_rent": 1300.0,
+   "median_home_value": 344600.0,
+   "renter_share": 0.392
+  },
+  "31700": {
+   "name": "Manchester-Nashua, NH (Metropolitan Statistical Area)",
+   "all_items": 105.657,
+   "goods": 97.687,
+   "housing": 134.22,
+   "utilities": 133.535,
+   "other_services": 103.687,
+   "acs_name": "Manchester-Nashua, NH Metro Area",
+   "states": [
+    "NH"
+   ],
+   "median_gross_rent": 1532.0,
+   "median_home_value": 385500.0,
+   "renter_share": 0.325
+  },
+  "31740": {
+   "name": "Manhattan, KS (Metropolitan Statistical Area)",
+   "all_items": 90.162,
+   "goods": 94.027,
+   "housing": 71.971,
+   "utilities": 88.365,
+   "other_services": 93.816,
+   "acs_name": "Manhattan, KS Metro Area",
+   "states": [
+    "KS"
+   ],
+   "median_gross_rent": 1083.0,
+   "median_home_value": 212600.0,
+   "renter_share": 0.489
+  },
+  "31860": {
+   "name": "Mankato, MN (Metropolitan Statistical Area)",
+   "all_items": 90.955,
+   "goods": 95.433,
+   "housing": 79.884,
+   "utilities": 87.05,
+   "other_services": 92.193,
+   "acs_name": "Mankato, MN Metro Area",
+   "states": [
+    "MN"
+   ],
+   "median_gross_rent": 1023.0,
+   "median_home_value": 255000.0,
+   "renter_share": 0.349
+  },
+  "31900": {
+   "name": "Mansfield, OH (Metropolitan Statistical Area)",
+   "all_items": 88.872,
+   "goods": 93.628,
+   "housing": 54.919,
+   "utilities": 96.245,
+   "other_services": 98.939,
+   "acs_name": "Mansfield, OH Metro Area",
+   "states": [
+    "OH"
+   ],
+   "median_gross_rent": 791.0,
+   "median_home_value": 154000.0,
+   "renter_share": 0.315
+  },
+  "32580": {
+   "name": "McAllen-Edinburg-Mission, TX (Metropolitan Statistical Area)",
+   "all_items": 85.895,
+   "goods": 93.757,
+   "housing": 55.892,
+   "utilities": 81.186,
+   "other_services": 96.24,
+   "acs_name": "McAllen-Edinburg-Mission, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 925.0,
+   "median_home_value": 124000.0,
+   "renter_share": 0.324
+  },
+  "32780": {
+   "name": "Medford, OR (Metropolitan Statistical Area)",
+   "all_items": 101.433,
+   "goods": 105.261,
+   "housing": 97.658,
+   "utilities": 102.266,
+   "other_services": 100.298,
+   "acs_name": "Medford, OR Metro Area",
+   "states": [
+    "OR"
+   ],
+   "median_gross_rent": 1310.0,
+   "median_home_value": 400200.0,
+   "renter_share": 0.35
+  },
+  "32820": {
+   "name": "Memphis, TN-MS-AR (Metropolitan Statistical Area)",
+   "all_items": 92.179,
+   "goods": 96.221,
+   "housing": 79.807,
+   "utilities": 74.097,
+   "other_services": 95.372,
+   "acs_name": "Memphis, TN-MS-AR Metro Area",
+   "states": [
+    "TN",
+    "MS",
+    "AR"
+   ],
+   "median_gross_rent": 1153.0,
+   "median_home_value": 228100.0,
+   "renter_share": 0.394
+  },
+  "32900": {
+   "name": "Merced, CA (Metropolitan Statistical Area)",
+   "all_items": 98.275,
+   "goods": 105.168,
+   "housing": 78.63,
+   "utilities": 158.338,
+   "other_services": 100.267,
+   "acs_name": "Merced, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1284.0,
+   "median_home_value": 368400.0,
+   "renter_share": 0.467
+  },
+  "33100": {
+   "name": "Miami-Fort Lauderdale-West Palm Beach, FL (Metropolitan Statistical Area)",
+   "all_items": 114.155,
+   "goods": 103.556,
+   "housing": 155.551,
+   "utilities": 97.235,
+   "other_services": 109.113,
+   "acs_name": "Miami-Fort Lauderdale-West Palm Beach, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1770.0,
+   "median_home_value": 405600.0,
+   "renter_share": 0.397
+  },
+  "33140": {
+   "name": "Michigan City-La Porte, IN (Metropolitan Statistical Area)",
+   "all_items": 91.682,
+   "goods": 94.318,
+   "housing": 68.451,
+   "utilities": 86.422,
+   "other_services": 99.141,
+   "acs_name": "Michigan City-La Porte, IN Metro Area",
+   "states": [
+    "IN"
+   ],
+   "median_gross_rent": 926.0,
+   "median_home_value": 180700.0,
+   "renter_share": 0.254
+  },
+  "33220": {
+   "name": "Midland, MI (Metropolitan Statistical Area)",
+   "all_items": 91.921,
+   "goods": 93.711,
+   "housing": 66.684,
+   "utilities": 95.219,
+   "other_services": 99.561,
+   "acs_name": "Midland, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 974.0,
+   "median_home_value": 184300.0,
+   "renter_share": 0.218
+  },
+  "33260": {
+   "name": "Midland, TX (Metropolitan Statistical Area)",
+   "all_items": 95.783,
+   "goods": 93.757,
+   "housing": 101.497,
+   "utilities": 83.24,
+   "other_services": 96.24,
+   "acs_name": "Midland, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1377.0,
+   "median_home_value": 290300.0,
+   "renter_share": 0.318
+  },
+  "33340": {
+   "name": "Milwaukee-Waukesha, WI (Metropolitan Statistical Area)",
+   "all_items": 96.937,
+   "goods": 93.787,
+   "housing": 97.111,
+   "utilities": 91.59,
+   "other_services": 99.411,
+   "acs_name": "Milwaukee-Waukesha, WI Metro Area",
+   "states": [
+    "WI"
+   ],
+   "median_gross_rent": 1105.0,
+   "median_home_value": 283800.0,
+   "renter_share": 0.396
+  },
+  "33460": {
+   "name": "Minneapolis-St. Paul-Bloomington, MN-WI (Metropolitan Statistical Area)",
+   "all_items": 104.822,
+   "goods": 103.065,
+   "housing": 111.838,
+   "utilities": 93.493,
+   "other_services": 104.419,
+   "acs_name": "Minneapolis-St. Paul-Bloomington, MN-WI Metro Area",
+   "states": [
+    "MN",
+    "WI"
+   ],
+   "median_gross_rent": 1396.0,
+   "median_home_value": 354400.0,
+   "renter_share": 0.291
+  },
+  "33500": {
+   "name": "Minot, ND (Metropolitan Statistical Area)",
+   "all_items": 87.028,
+   "goods": 95.701,
+   "housing": 63.234,
+   "utilities": 72.897,
+   "other_services": 91.158,
+   "acs_name": "Minot, ND Metro Area",
+   "states": [
+    "ND"
+   ],
+   "median_gross_rent": 993.0,
+   "median_home_value": 247900.0,
+   "renter_share": 0.362
+  },
+  "33540": {
+   "name": "Missoula, MT (Metropolitan Statistical Area)",
+   "all_items": 96.445,
+   "goods": 96.006,
+   "housing": 94.945,
+   "utilities": 72.081,
+   "other_services": 98.715,
+   "acs_name": "Missoula, MT Metro Area",
+   "states": [
+    "MT"
+   ],
+   "median_gross_rent": 1118.0,
+   "median_home_value": 417300.0,
+   "renter_share": 0.395
+  },
+  "33660": {
+   "name": "Mobile, AL (Metropolitan Statistical Area)",
+   "all_items": 88.098,
+   "goods": 96.397,
+   "housing": 60.116,
+   "utilities": 84.185,
+   "other_services": 96.693,
+   "acs_name": "Mobile, AL Metro Area",
+   "states": [
+    "AL"
+   ],
+   "median_gross_rent": 1021.0,
+   "median_home_value": 176600.0,
+   "renter_share": 0.351
+  },
+  "33700": {
+   "name": "Modesto, CA (Metropolitan Statistical Area)",
+   "all_items": 104.108,
+   "goods": 105.168,
+   "housing": 108.476,
+   "utilities": 152.259,
+   "other_services": 100.267,
+   "acs_name": "Modesto, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1528.0,
+   "median_home_value": 426600.0,
+   "renter_share": 0.39
+  },
+  "33740": {
+   "name": "Monroe, LA (Metropolitan Statistical Area)",
+   "all_items": 83.597,
+   "goods": 93.691,
+   "housing": 42.815,
+   "utilities": 72.215,
+   "other_services": 95.705,
+   "acs_name": "Monroe, LA Metro Area",
+   "states": [
+    "LA"
+   ],
+   "median_gross_rent": 897.0,
+   "median_home_value": 163000.0,
+   "renter_share": 0.375
+  },
+  "33780": {
+   "name": "Monroe, MI (Metropolitan Statistical Area)",
+   "all_items": 93.492,
+   "goods": 93.711,
+   "housing": 74.641,
+   "utilities": 93.681,
+   "other_services": 99.561,
+   "acs_name": "Monroe, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 1017.0,
+   "median_home_value": 215700.0,
+   "renter_share": 0.188
+  },
+  "33860": {
+   "name": "Montgomery, AL (Metropolitan Statistical Area)",
+   "all_items": 89.682,
+   "goods": 96.397,
+   "housing": 64.347,
+   "utilities": 84.907,
+   "other_services": 96.693,
+   "acs_name": "Montgomery, AL Metro Area",
+   "states": [
+    "AL"
+   ],
+   "median_gross_rent": 1063.0,
+   "median_home_value": 181400.0,
+   "renter_share": 0.35
+  },
+  "34060": {
+   "name": "Morgantown, WV (Metropolitan Statistical Area)",
+   "all_items": 93.323,
+   "goods": 96.27,
+   "housing": 69.126,
+   "utilities": 92.528,
+   "other_services": 99.806,
+   "acs_name": "Morgantown, WV Metro Area",
+   "states": [
+    "WV"
+   ],
+   "median_gross_rent": 926.0,
+   "median_home_value": 226800.0,
+   "renter_share": 0.373
+  },
+  "34100": {
+   "name": "Morristown, TN (Metropolitan Statistical Area)",
+   "all_items": 86.364,
+   "goods": 96.247,
+   "housing": 59.024,
+   "utilities": 72.433,
+   "other_services": 95.142,
+   "acs_name": "Morristown, TN Metro Area",
+   "states": [
+    "TN"
+   ],
+   "median_gross_rent": 853.0,
+   "median_home_value": 198000.0,
+   "renter_share": 0.291
+  },
+  "34580": {
+   "name": "Mount Vernon-Anacortes, WA (Metropolitan Statistical Area)",
+   "all_items": 102.443,
+   "goods": 105.028,
+   "housing": 108.165,
+   "utilities": 96.008,
+   "other_services": 99.472,
+   "acs_name": "Mount Vernon-Anacortes, WA Metro Area",
+   "states": [
+    "WA"
+   ],
+   "median_gross_rent": 1439.0,
+   "median_home_value": 486200.0,
+   "renter_share": 0.294
+  },
+  "34620": {
+   "name": "Muncie, IN (Metropolitan Statistical Area)",
+   "all_items": 88.148,
+   "goods": 94.318,
+   "housing": 57.474,
+   "utilities": 86.435,
+   "other_services": 99.141,
+   "acs_name": "Muncie, IN Metro Area",
+   "states": [
+    "IN"
+   ],
+   "median_gross_rent": 874.0,
+   "median_home_value": 127600.0,
+   "renter_share": 0.335
+  },
+  "34740": {
+   "name": "Muskegon-Norton Shores, MI (Metropolitan Statistical Area)",
+   "all_items": 92.519,
+   "goods": 93.711,
+   "housing": 74.228,
+   "utilities": 92.808,
+   "other_services": 99.561,
+   "acs_name": "Muskegon-Norton Shores, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 960.0,
+   "median_home_value": 180900.0,
+   "renter_share": 0.217
+  },
+  "34820": {
+   "name": "Myrtle Beach-Conway-North Myrtle Beach, SC (Metropolitan Statistical Area)",
+   "all_items": 93.642,
+   "goods": 96.339,
+   "housing": 83.129,
+   "utilities": 87.986,
+   "other_services": 98.284,
+   "acs_name": "Myrtle Beach-Conway-North Myrtle Beach, SC Metro Area",
+   "states": [
+    "SC"
+   ],
+   "median_gross_rent": 1181.0,
+   "median_home_value": 260500.0,
+   "renter_share": 0.242
+  },
+  "34900": {
+   "name": "Napa, CA (Metropolitan Statistical Area)",
+   "all_items": 112.554,
+   "goods": 105.168,
+   "housing": 197.44,
+   "utilities": 156.536,
+   "other_services": 100.267,
+   "acs_name": "Napa, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 2141.0,
+   "median_home_value": 838800.0,
+   "renter_share": 0.356
+  },
+  "34940": {
+   "name": "Naples-Marco Island, FL (Metropolitan Statistical Area)",
+   "all_items": 103.2,
+   "goods": 96.24,
+   "housing": 129.441,
+   "utilities": 87.761,
+   "other_services": 98.864,
+   "acs_name": "Naples-Marco Island, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1752.0,
+   "median_home_value": 486800.0,
+   "renter_share": 0.24
+  },
+  "34980": {
+   "name": "Nashville-Davidson--Murfreesboro--Franklin, TN (Metropolitan Statistical Area)",
+   "all_items": 96.338,
+   "goods": 96.247,
+   "housing": 104.626,
+   "utilities": 71.95,
+   "other_services": 95.142,
+   "acs_name": "Nashville-Davidson--Murfreesboro--Franklin, TN Metro Area",
+   "states": [
+    "TN"
+   ],
+   "median_gross_rent": 1434.0,
+   "median_home_value": 376800.0,
+   "renter_share": 0.344
+  },
+  "35300": {
+   "name": "New Haven, CT (Metropolitan Statistical Area)",
+   "all_items": 104.559,
+   "goods": 97.33,
+   "housing": 124.293,
+   "utilities": 144.848,
+   "other_services": 102.658,
+   "acs_name": "New Haven, CT Metro Area",
+   "states": [
+    "CT"
+   ],
+   "median_gross_rent": 1463.0,
+   "median_home_value": 328300.0,
+   "renter_share": 0.394
+  },
+  "35380": {
+   "name": "New Orleans-Metairie, LA (Metropolitan Statistical Area)",
+   "all_items": 92.597,
+   "goods": 93.691,
+   "housing": 86.009,
+   "utilities": 71.231,
+   "other_services": 95.705,
+   "acs_name": "New Orleans-Metairie, LA Metro Area",
+   "states": [
+    "LA"
+   ],
+   "median_gross_rent": 1182.0,
+   "median_home_value": 248000.0,
+   "renter_share": 0.397
+  },
+  "35620": {
+   "name": "New York-Newark-Jersey City, NY-NJ (Metropolitan Statistical Area)",
+   "all_items": 112.563,
+   "goods": 110.261,
+   "housing": 148.616,
+   "utilities": 127.018,
+   "other_services": 105.836,
+   "acs_name": "New York-Newark-Jersey City, NY-NJ Metro Area",
+   "states": [
+    "NY",
+    "NJ"
+   ],
+   "median_gross_rent": 1780.0,
+   "median_home_value": 587400.0,
+   "renter_share": 0.485
+  },
+  "35660": {
+   "name": "Niles, MI (Metropolitan Statistical Area)",
+   "all_items": 92.37,
+   "goods": 93.711,
+   "housing": 71.599,
+   "utilities": 95.957,
+   "other_services": 99.561,
+   "acs_name": "Niles, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 923.0,
+   "median_home_value": 211400.0,
+   "renter_share": 0.272
+  },
+  "35840": {
+   "name": "North Port-Bradenton-Sarasota, FL (Metropolitan Statistical Area)",
+   "all_items": 102.417,
+   "goods": 96.24,
+   "housing": 127.95,
+   "utilities": 88.171,
+   "other_services": 98.864,
+   "acs_name": "North Port-Bradenton-Sarasota, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1637.0,
+   "median_home_value": 367700.0,
+   "renter_share": 0.244
+  },
+  "35980": {
+   "name": "Norwich-New London-Willimantic, CT (Metropolitan Statistical Area)",
+   "all_items": 100.445,
+   "goods": 97.33,
+   "housing": 93.662,
+   "utilities": 148.557,
+   "other_services": 102.658,
+   "acs_name": "Norwich-New London-Willimantic, CT Metro Area",
+   "states": [
+    "CT"
+   ],
+   "median_gross_rent": 1316.0,
+   "median_home_value": 293900.0,
+   "renter_share": 0.346
+  },
+  "36100": {
+   "name": "Ocala, FL (Metropolitan Statistical Area)",
+   "all_items": 95.234,
+   "goods": 96.24,
+   "housing": 86.23,
+   "utilities": 87.109,
+   "other_services": 98.864,
+   "acs_name": "Ocala, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1174.0,
+   "median_home_value": 220800.0,
+   "renter_share": 0.233
+  },
+  "36220": {
+   "name": "Odessa, TX (Metropolitan Statistical Area)",
+   "all_items": 93.896,
+   "goods": 93.757,
+   "housing": 89.709,
+   "utilities": 82.86,
+   "other_services": 96.24,
+   "acs_name": "Odessa, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1284.0,
+   "median_home_value": 190500.0,
+   "renter_share": 0.356
+  },
+  "36260": {
+   "name": "Ogden, UT (Metropolitan Statistical Area)",
+   "all_items": 100.349,
+   "goods": 96.446,
+   "housing": 117.903,
+   "utilities": 78.778,
+   "other_services": 98.959,
+   "acs_name": "Ogden, UT Metro Area",
+   "states": [
+    "UT"
+   ],
+   "median_gross_rent": 1393.0,
+   "median_home_value": 437700.0,
+   "renter_share": 0.236
+  },
+  "36420": {
+   "name": "Oklahoma City, OK (Metropolitan Statistical Area)",
+   "all_items": 90.408,
+   "goods": 93.778,
+   "housing": 73.885,
+   "utilities": 74.067,
+   "other_services": 95.458,
+   "acs_name": "Oklahoma City, OK Metro Area",
+   "states": [
+    "OK"
+   ],
+   "median_gross_rent": 1081.0,
+   "median_home_value": 214700.0,
+   "renter_share": 0.361
+  },
+  "36500": {
+   "name": "Olympia-Lacey-Tumwater, WA (Metropolitan Statistical Area)",
+   "all_items": 103.67,
+   "goods": 105.028,
+   "housing": 116.675,
+   "utilities": 91.705,
+   "other_services": 99.472,
+   "acs_name": "Olympia-Lacey-Tumwater, WA Metro Area",
+   "states": [
+    "WA"
+   ],
+   "median_gross_rent": 1634.0,
+   "median_home_value": 451500.0,
+   "renter_share": 0.322
+  },
+  "36540": {
+   "name": "Omaha, NE-IA (Metropolitan Statistical Area)",
+   "all_items": 91.911,
+   "goods": 94.063,
+   "housing": 86.404,
+   "utilities": 76.378,
+   "other_services": 92.975,
+   "acs_name": "Omaha, NE-IA Metro Area",
+   "states": [
+    "NE",
+    "IA"
+   ],
+   "median_gross_rent": 1152.0,
+   "median_home_value": 248100.0,
+   "renter_share": 0.337
+  },
+  "36740": {
+   "name": "Orlando-Kissimmee-Sanford, FL (Metropolitan Statistical Area)",
+   "all_items": 101.418,
+   "goods": 96.24,
+   "housing": 123.374,
+   "utilities": 87.196,
+   "other_services": 98.864,
+   "acs_name": "Orlando-Kissimmee-Sanford, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1659.0,
+   "median_home_value": 338500.0,
+   "renter_share": 0.368
+  },
+  "36780": {
+   "name": "Oshkosh-Neenah, WI (Metropolitan Statistical Area)",
+   "all_items": 92.929,
+   "goods": 93.787,
+   "housing": 74.442,
+   "utilities": 90.614,
+   "other_services": 99.411,
+   "acs_name": "Oshkosh-Neenah, WI Metro Area",
+   "states": [
+    "WI"
+   ],
+   "median_gross_rent": 924.0,
+   "median_home_value": 208600.0,
+   "renter_share": 0.342
+  },
+  "36980": {
+   "name": "Owensboro, KY (Metropolitan Statistical Area)",
+   "all_items": 88.61,
+   "goods": 96.246,
+   "housing": 55.698,
+   "utilities": 75.172,
+   "other_services": 96.892,
+   "acs_name": "Owensboro, KY Metro Area",
+   "states": [
+    "KY"
+   ],
+   "median_gross_rent": 894.0,
+   "median_home_value": 182100.0,
+   "renter_share": 0.321
+  },
+  "37100": {
+   "name": "Oxnard-Thousand Oaks-Ventura, CA (Metropolitan Statistical Area)",
+   "all_items": 110.534,
+   "goods": 105.168,
+   "housing": 171.096,
+   "utilities": 152.925,
+   "other_services": 100.267,
+   "acs_name": "Oxnard-Thousand Oaks-Ventura, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 2248.0,
+   "median_home_value": 768400.0,
+   "renter_share": 0.358
+  },
+  "37140": {
+   "name": "Paducah, KY-IL (Metropolitan Statistical Area)",
+   "all_items": 86.084,
+   "goods": 96.025,
+   "housing": 48.794,
+   "utilities": 76.873,
+   "other_services": 96.897,
+   "acs_name": "Paducah, KY-IL Metro Area",
+   "states": [
+    "KY",
+    "IL"
+   ],
+   "median_gross_rent": 854.0,
+   "median_home_value": 160500.0,
+   "renter_share": 0.283
+  },
+  "37340": {
+   "name": "Palm Bay-Melbourne-Titusville, FL (Metropolitan Statistical Area)",
+   "all_items": 100.005,
+   "goods": 96.24,
+   "housing": 111.731,
+   "utilities": 88.064,
+   "other_services": 98.864,
+   "acs_name": "Palm Bay-Melbourne-Titusville, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1456.0,
+   "median_home_value": 304400.0,
+   "renter_share": 0.231
+  },
+  "37460": {
+   "name": "Panama City-Panama City Beach, FL (Metropolitan Statistical Area)",
+   "all_items": 97.296,
+   "goods": 96.24,
+   "housing": 96.424,
+   "utilities": 88.088,
+   "other_services": 98.864,
+   "acs_name": "Panama City-Panama City Beach, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1390.0,
+   "median_home_value": 263500.0,
+   "renter_share": 0.305
+  },
+  "37620": {
+   "name": "Parkersburg-Vienna, WV (Metropolitan Statistical Area)",
+   "all_items": 87.066,
+   "goods": 96.27,
+   "housing": 45.884,
+   "utilities": 92.898,
+   "other_services": 99.806,
+   "acs_name": "Parkersburg-Vienna, WV Metro Area",
+   "states": [
+    "WV"
+   ],
+   "median_gross_rent": 786.0,
+   "median_home_value": 151600.0,
+   "renter_share": 0.249
+  },
+  "37860": {
+   "name": "Pensacola-Ferry Pass-Brent, FL (Metropolitan Statistical Area)",
+   "all_items": 97.717,
+   "goods": 96.24,
+   "housing": 98.77,
+   "utilities": 88.477,
+   "other_services": 98.864,
+   "acs_name": "Pensacola-Ferry Pass-Brent, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1267.0,
+   "median_home_value": 260500.0,
+   "renter_share": 0.303
+  },
+  "37900": {
+   "name": "Peoria, IL (Metropolitan Statistical Area)",
+   "all_items": 91.231,
+   "goods": 93.643,
+   "housing": 63.763,
+   "utilities": 90.504,
+   "other_services": 99.59,
+   "acs_name": "Peoria, IL Metro Area",
+   "states": [
+    "IL"
+   ],
+   "median_gross_rent": 923.0,
+   "median_home_value": 160500.0,
+   "renter_share": 0.271
+  },
+  "37980": {
+   "name": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD (Metropolitan Statistical Area)",
+   "all_items": 102.554,
+   "goods": 96.833,
+   "housing": 113.141,
+   "utilities": 114.389,
+   "other_services": 103.052,
+   "acs_name": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD Metro Area",
+   "states": [
+    "PA",
+    "NJ",
+    "DE",
+    "MD"
+   ],
+   "median_gross_rent": 1413.0,
+   "median_home_value": 326700.0,
+   "renter_share": 0.33
+  },
+  "38060": {
+   "name": "Phoenix-Mesa-Chandler, AZ (Metropolitan Statistical Area)",
+   "all_items": 103.316,
+   "goods": 95.024,
+   "housing": 121.236,
+   "utilities": 93.332,
+   "other_services": 104.016,
+   "acs_name": "Phoenix-Mesa-Chandler, AZ Metro Area",
+   "states": [
+    "AZ"
+   ],
+   "median_gross_rent": 1581.0,
+   "median_home_value": 401400.0,
+   "renter_share": 0.337
+  },
+  "38240": {
+   "name": "Pinehurst-Southern Pines, NC (Metropolitan Statistical Area)",
+   "all_items": 88.336,
+   "goods": 96.621,
+   "housing": 59.318,
+   "utilities": 88.176,
+   "other_services": 98.186,
+   "acs_name": "Pinehurst-Southern Pines, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 1181.0,
+   "median_home_value": 315300.0,
+   "renter_share": 0.237
+  },
+  "38300": {
+   "name": "Pittsburgh, PA (Metropolitan Statistical Area)",
+   "all_items": 94.671,
+   "goods": 100.684,
+   "housing": 71.986,
+   "utilities": 107.711,
+   "other_services": 97.726,
+   "acs_name": "Pittsburgh, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 1011.0,
+   "median_home_value": 204500.0,
+   "renter_share": 0.295
+  },
+  "38340": {
+   "name": "Pittsfield, MA (Metropolitan Statistical Area)",
+   "all_items": 95.106,
+   "goods": 97.015,
+   "housing": 73.452,
+   "utilities": 153.711,
+   "other_services": 101.197,
+   "acs_name": "Pittsfield, MA Metro Area",
+   "states": [
+    "MA"
+   ],
+   "median_gross_rent": 1042.0,
+   "median_home_value": 283800.0,
+   "renter_share": 0.3
+  },
+  "38540": {
+   "name": "Pocatello, ID (Metropolitan Statistical Area)",
+   "all_items": 88.906,
+   "goods": 96.179,
+   "housing": 66.396,
+   "utilities": 69.773,
+   "other_services": 98.974,
+   "acs_name": "Pocatello, ID Metro Area",
+   "states": [
+    "ID"
+   ],
+   "median_gross_rent": 879.0,
+   "median_home_value": 267200.0,
+   "renter_share": 0.314
+  },
+  "38860": {
+   "name": "Portland-South Portland, ME (Metropolitan Statistical Area)",
+   "all_items": 101.858,
+   "goods": 97.171,
+   "housing": 105.164,
+   "utilities": 134.591,
+   "other_services": 103.191,
+   "acs_name": "Portland-South Portland, ME Metro Area",
+   "states": [
+    "ME"
+   ],
+   "median_gross_rent": 1384.0,
+   "median_home_value": 379500.0,
+   "renter_share": 0.269
+  },
+  "38900": {
+   "name": "Portland-Vancouver-Hillsboro, OR-WA (Metropolitan Statistical Area)",
+   "all_items": 105.421,
+   "goods": 105.222,
+   "housing": 125.114,
+   "utilities": 106.974,
+   "other_services": 100.136,
+   "acs_name": "Portland-Vancouver-Hillsboro, OR-WA Metro Area",
+   "states": [
+    "OR",
+    "WA"
+   ],
+   "median_gross_rent": 1654.0,
+   "median_home_value": 526500.0,
+   "renter_share": 0.38
+  },
+  "38940": {
+   "name": "Port St. Lucie, FL (Metropolitan Statistical Area)",
+   "all_items": 100.228,
+   "goods": 96.24,
+   "housing": 113.642,
+   "utilities": 87.031,
+   "other_services": 98.864,
+   "acs_name": "Port St. Lucie, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1491.0,
+   "median_home_value": 325300.0,
+   "renter_share": 0.215
+  },
+  "39150": {
+   "name": "Prescott Valley-Prescott, AZ (Metropolitan Statistical Area)",
+   "all_items": 98.255,
+   "goods": 96.237,
+   "housing": 98.781,
+   "utilities": 91.457,
+   "other_services": 99.838,
+   "acs_name": "Prescott Valley-Prescott, AZ Metro Area",
+   "states": [
+    "AZ"
+   ],
+   "median_gross_rent": 1258.0,
+   "median_home_value": 392900.0,
+   "renter_share": 0.265
+  },
+  "39300": {
+   "name": "Providence-Warwick, RI-MA (Metropolitan Statistical Area)",
+   "all_items": 101.773,
+   "goods": 97.116,
+   "housing": 103.851,
+   "utilities": 148.809,
+   "other_services": 102.275,
+   "acs_name": "Providence-Warwick, RI-MA Metro Area",
+   "states": [
+    "RI",
+    "MA"
+   ],
+   "median_gross_rent": 1236.0,
+   "median_home_value": 385900.0,
+   "renter_share": 0.371
+  },
+  "39340": {
+   "name": "Provo-Orem-Lehi, UT (Metropolitan Statistical Area)",
+   "all_items": 98.232,
+   "goods": 96.446,
+   "housing": 104.081,
+   "utilities": 78.63,
+   "other_services": 98.959,
+   "acs_name": "Provo-Orem-Lehi, UT Metro Area",
+   "states": [
+    "UT"
+   ],
+   "median_gross_rent": 1434.0,
+   "median_home_value": 487200.0,
+   "renter_share": 0.316
+  },
+  "39380": {
+   "name": "Pueblo, CO (Metropolitan Statistical Area)",
+   "all_items": 91.762,
+   "goods": 96.052,
+   "housing": 71.285,
+   "utilities": 81.933,
+   "other_services": 99.822,
+   "acs_name": "Pueblo, CO Metro Area",
+   "states": [
+    "CO"
+   ],
+   "median_gross_rent": 1059.0,
+   "median_home_value": 271800.0,
+   "renter_share": 0.317
+  },
+  "39460": {
+   "name": "Punta Gorda, FL (Metropolitan Statistical Area)",
+   "all_items": 100.525,
+   "goods": 96.24,
+   "housing": 113.277,
+   "utilities": 87.35,
+   "other_services": 98.864,
+   "acs_name": "Punta Gorda, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1289.0,
+   "median_home_value": 291000.0,
+   "renter_share": 0.168
+  },
+  "39540": {
+   "name": "Racine-Mount Pleasant, WI (Metropolitan Statistical Area)",
+   "all_items": 95.961,
+   "goods": 93.787,
+   "housing": 92.029,
+   "utilities": 90.021,
+   "other_services": 99.411,
+   "acs_name": "Racine-Mount Pleasant, WI Metro Area",
+   "states": [
+    "WI"
+   ],
+   "median_gross_rent": 1017.0,
+   "median_home_value": 239400.0,
+   "renter_share": 0.289
+  },
+  "39580": {
+   "name": "Raleigh-Cary, NC (Metropolitan Statistical Area)",
+   "all_items": 98.157,
+   "goods": 96.621,
+   "housing": 103.476,
+   "utilities": 88.96,
+   "other_services": 98.186,
+   "acs_name": "Raleigh-Cary, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 1459.0,
+   "median_home_value": 381000.0,
+   "renter_share": 0.33
+  },
+  "39660": {
+   "name": "Rapid City, SD (Metropolitan Statistical Area)",
+   "all_items": 89.16,
+   "goods": 95.473,
+   "housing": 72.552,
+   "utilities": 79.087,
+   "other_services": 91.899,
+   "acs_name": "Rapid City, SD Metro Area",
+   "states": [
+    "SD"
+   ],
+   "median_gross_rent": 1083.0,
+   "median_home_value": 274200.0,
+   "renter_share": 0.291
+  },
+  "39740": {
+   "name": "Reading, PA (Metropolitan Statistical Area)",
+   "all_items": 97.06,
+   "goods": 100.684,
+   "housing": 85.419,
+   "utilities": 108.217,
+   "other_services": 97.726,
+   "acs_name": "Reading, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 1143.0,
+   "median_home_value": 239700.0,
+   "renter_share": 0.29
+  },
+  "39820": {
+   "name": "Redding, CA (Metropolitan Statistical Area)",
+   "all_items": 100.684,
+   "goods": 105.168,
+   "housing": 89.366,
+   "utilities": 157.712,
+   "other_services": 100.267,
+   "acs_name": "Redding, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1267.0,
+   "median_home_value": 347200.0,
+   "renter_share": 0.346
+  },
+  "39900": {
+   "name": "Reno, NV (Metropolitan Statistical Area)",
+   "all_items": 101.014,
+   "goods": 96.271,
+   "housing": 123.478,
+   "utilities": 89.274,
+   "other_services": 98.744,
+   "acs_name": "Reno, NV Metro Area",
+   "states": [
+    "NV"
+   ],
+   "median_gross_rent": 1491.0,
+   "median_home_value": 474000.0,
+   "renter_share": 0.384
+  },
+  "40060": {
+   "name": "Richmond, VA (Metropolitan Statistical Area)",
+   "all_items": 97.858,
+   "goods": 96.773,
+   "housing": 99.136,
+   "utilities": 89.221,
+   "other_services": 98.612,
+   "acs_name": "Richmond, VA Metro Area",
+   "states": [
+    "VA"
+   ],
+   "median_gross_rent": 1388.0,
+   "median_home_value": 325800.0,
+   "renter_share": 0.329
+  },
+  "40140": {
+   "name": "Riverside-San Bernardino-Ontario, CA (Metropolitan Statistical Area)",
+   "all_items": 106.442,
+   "goods": 101.431,
+   "housing": 129.312,
+   "utilities": 148.641,
+   "other_services": 101.281,
+   "acs_name": "Riverside-San Bernardino-Ontario, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1756.0,
+   "median_home_value": 493600.0,
+   "renter_share": 0.346
+  },
+  "40220": {
+   "name": "Roanoke, VA (Metropolitan Statistical Area)",
+   "all_items": 93.618,
+   "goods": 96.773,
+   "housing": 78.531,
+   "utilities": 88.913,
+   "other_services": 98.612,
+   "acs_name": "Roanoke, VA Metro Area",
+   "states": [
+    "VA"
+   ],
+   "median_gross_rent": 986.0,
+   "median_home_value": 236300.0,
+   "renter_share": 0.313
+  },
+  "40340": {
+   "name": "Rochester, MN (Metropolitan Statistical Area)",
+   "all_items": 90.821,
+   "goods": 95.433,
+   "housing": 78.628,
+   "utilities": 87.389,
+   "other_services": 92.193,
+   "acs_name": "Rochester, MN Metro Area",
+   "states": [
+    "MN"
+   ],
+   "median_gross_rent": 1195.0,
+   "median_home_value": 284600.0,
+   "renter_share": 0.257
+  },
+  "40380": {
+   "name": "Rochester, NY (Metropolitan Statistical Area)",
+   "all_items": 97.035,
+   "goods": 99.693,
+   "housing": 87.481,
+   "utilities": 133.213,
+   "other_services": 97.754,
+   "acs_name": "Rochester, NY Metro Area",
+   "states": [
+    "NY"
+   ],
+   "median_gross_rent": 1102.0,
+   "median_home_value": 190100.0,
+   "renter_share": 0.328
+  },
+  "40420": {
+   "name": "Rockford, IL (Metropolitan Statistical Area)",
+   "all_items": 92.154,
+   "goods": 93.643,
+   "housing": 70.076,
+   "utilities": 89.378,
+   "other_services": 99.59,
+   "acs_name": "Rockford, IL Metro Area",
+   "states": [
+    "IL"
+   ],
+   "median_gross_rent": 988.0,
+   "median_home_value": 162600.0,
+   "renter_share": 0.322
+  },
+  "40580": {
+   "name": "Rocky Mount, NC (Metropolitan Statistical Area)",
+   "all_items": 88.012,
+   "goods": 96.621,
+   "housing": 56.103,
+   "utilities": 88.378,
+   "other_services": 98.186,
+   "acs_name": "Rocky Mount, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 889.0,
+   "median_home_value": 153000.0,
+   "renter_share": 0.378
+  },
+  "40660": {
+   "name": "Rome, GA (Metropolitan Statistical Area)",
+   "all_items": 90.161,
+   "goods": 96.269,
+   "housing": 60.276,
+   "utilities": 90.721,
+   "other_services": 98.667,
+   "acs_name": "Rome, GA Metro Area",
+   "states": [
+    "GA"
+   ],
+   "median_gross_rent": 971.0,
+   "median_home_value": 194100.0,
+   "renter_share": 0.379
+  },
+  "40900": {
+   "name": "Sacramento-Roseville-Folsom, CA (Metropolitan Statistical Area)",
+   "all_items": 106.67,
+   "goods": 105.168,
+   "housing": 130.23,
+   "utilities": 151.29,
+   "other_services": 100.267,
+   "acs_name": "Sacramento-Roseville-Folsom, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1729.0,
+   "median_home_value": 559000.0,
+   "renter_share": 0.375
+  },
+  "40980": {
+   "name": "Saginaw, MI (Metropolitan Statistical Area)",
+   "all_items": 90.891,
+   "goods": 93.711,
+   "housing": 63.647,
+   "utilities": 95.849,
+   "other_services": 99.561,
+   "acs_name": "Saginaw, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 921.0,
+   "median_home_value": 139400.0,
+   "renter_share": 0.265
+  },
+  "41060": {
+   "name": "St. Cloud, MN (Metropolitan Statistical Area)",
+   "all_items": 87.632,
+   "goods": 95.433,
+   "housing": 65.057,
+   "utilities": 88.672,
+   "other_services": 92.193,
+   "acs_name": "St. Cloud, MN Metro Area",
+   "states": [
+    "MN"
+   ],
+   "median_gross_rent": 1021.0,
+   "median_home_value": 254200.0,
+   "renter_share": 0.322
+  },
+  "41100": {
+   "name": "St. George, UT (Metropolitan Statistical Area)",
+   "all_items": 97.321,
+   "goods": 96.446,
+   "housing": 98.148,
+   "utilities": 77.69,
+   "other_services": 98.959,
+   "acs_name": "St. George, UT Metro Area",
+   "states": [
+    "UT"
+   ],
+   "median_gross_rent": 1464.0,
+   "median_home_value": 465600.0,
+   "renter_share": 0.274
+  },
+  "41140": {
+   "name": "St. Joseph, MO-KS (Metropolitan Statistical Area)",
+   "all_items": 86.382,
+   "goods": 94.18,
+   "housing": 55.359,
+   "utilities": 88.283,
+   "other_services": 93.088,
+   "acs_name": "St. Joseph, MO-KS Metro Area",
+   "states": [
+    "MO",
+    "KS"
+   ],
+   "median_gross_rent": 885.0,
+   "median_home_value": 162100.0,
+   "renter_share": 0.318
+  },
+  "41180": {
+   "name": "St. Louis, MO-IL (Metropolitan Statistical Area)",
+   "all_items": 95.088,
+   "goods": 99.996,
+   "housing": 79.024,
+   "utilities": 69.921,
+   "other_services": 98.642,
+   "acs_name": "St. Louis, MO-IL Metro Area",
+   "states": [
+    "MO",
+    "IL"
+   ],
+   "median_gross_rent": 1073.0,
+   "median_home_value": 232100.0,
+   "renter_share": 0.299
+  },
+  "41420": {
+   "name": "Salem, OR (Metropolitan Statistical Area)",
+   "all_items": 103.649,
+   "goods": 105.261,
+   "housing": 110.333,
+   "utilities": 104.689,
+   "other_services": 100.298,
+   "acs_name": "Salem, OR Metro Area",
+   "states": [
+    "OR"
+   ],
+   "median_gross_rent": 1324.0,
+   "median_home_value": 389800.0,
+   "renter_share": 0.373
+  },
+  "41500": {
+   "name": "Salinas, CA (Metropolitan Statistical Area)",
+   "all_items": 109.042,
+   "goods": 105.168,
+   "housing": 145.669,
+   "utilities": 154.157,
+   "other_services": 100.267,
+   "acs_name": "Salinas, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1995.0,
+   "median_home_value": 723100.0,
+   "renter_share": 0.477
+  },
+  "41540": {
+   "name": "Salisbury, MD (Metropolitan Statistical Area)",
+   "all_items": 95.617,
+   "goods": 96.592,
+   "housing": 87.212,
+   "utilities": 102.801,
+   "other_services": 98.995,
+   "acs_name": "Salisbury, MD Metro Area",
+   "states": [
+    "MD"
+   ],
+   "median_gross_rent": 1200.0,
+   "median_home_value": 228300.0,
+   "renter_share": 0.379
+  },
+  "41620": {
+   "name": "Salt Lake City-Murray, UT (Metropolitan Statistical Area)",
+   "all_items": 100.868,
+   "goods": 96.446,
+   "housing": 123.311,
+   "utilities": 79.0,
+   "other_services": 98.959,
+   "acs_name": "Salt Lake City-Murray, UT Metro Area",
+   "states": [
+    "UT"
+   ],
+   "median_gross_rent": 1486.0,
+   "median_home_value": 478200.0,
+   "renter_share": 0.322
+  },
+  "41660": {
+   "name": "San Angelo, TX (Metropolitan Statistical Area)",
+   "all_items": 92.453,
+   "goods": 93.757,
+   "housing": 81.442,
+   "utilities": 81.575,
+   "other_services": 96.24,
+   "acs_name": "San Angelo, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1125.0,
+   "median_home_value": 186300.0,
+   "renter_share": 0.329
+  },
+  "41700": {
+   "name": "San Antonio-New Braunfels, TX (Metropolitan Statistical Area)",
+   "all_items": 94.716,
+   "goods": 93.757,
+   "housing": 94.575,
+   "utilities": 82.169,
+   "other_services": 96.24,
+   "acs_name": "San Antonio-New Braunfels, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1299.0,
+   "median_home_value": 258700.0,
+   "renter_share": 0.365
+  },
+  "41740": {
+   "name": "San Diego-Chula Vista-Carlsbad, CA (Metropolitan Statistical Area)",
+   "all_items": 111.887,
+   "goods": 107.963,
+   "housing": 179.267,
+   "utilities": 174.247,
+   "other_services": 99.597,
+   "acs_name": "San Diego-Chula Vista-Carlsbad, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 2154.0,
+   "median_home_value": 791600.0,
+   "renter_share": 0.455
+  },
+  "41780": {
+   "name": "Sandusky, OH (Metropolitan Statistical Area)",
+   "all_items": 89.281,
+   "goods": 93.628,
+   "housing": 59.462,
+   "utilities": 96.703,
+   "other_services": 98.939,
+   "acs_name": "Sandusky, OH Metro Area",
+   "states": [
+    "OH"
+   ],
+   "median_gross_rent": 889.0,
+   "median_home_value": 189400.0,
+   "renter_share": 0.244
+  },
+  "41860": {
+   "name": "San Francisco-Oakland-Fremont, CA (Metropolitan Statistical Area)",
+   "all_items": 115.613,
+   "goods": 108.465,
+   "housing": 194.718,
+   "utilities": 172.585,
+   "other_services": 106.207,
+   "acs_name": "San Francisco-Oakland-Fremont, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 2426.0,
+   "median_home_value": 1113800.0,
+   "renter_share": 0.446
+  },
+  "41940": {
+   "name": "San Jose-Sunnyvale-Santa Clara, CA (Metropolitan Statistical Area)",
+   "all_items": 110.423,
+   "goods": 105.168,
+   "housing": 211.901,
+   "utilities": 156.659,
+   "other_services": 100.267,
+   "acs_name": "San Jose-Sunnyvale-Santa Clara, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 2794.0,
+   "median_home_value": 1342700.0,
+   "renter_share": 0.443
+  },
+  "42020": {
+   "name": "San Luis Obispo-Paso Robles, CA (Metropolitan Statistical Area)",
+   "all_items": 108.596,
+   "goods": 105.168,
+   "housing": 144.362,
+   "utilities": 147.823,
+   "other_services": 100.267,
+   "acs_name": "San Luis Obispo-Paso Robles, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1899.0,
+   "median_home_value": 777200.0,
+   "renter_share": 0.381
+  },
+  "42100": {
+   "name": "Santa Cruz-Watsonville, CA (Metropolitan Statistical Area)",
+   "all_items": 109.896,
+   "goods": 105.168,
+   "housing": 164.328,
+   "utilities": 152.716,
+   "other_services": 100.267,
+   "acs_name": "Santa Cruz-Watsonville, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 2172.0,
+   "median_home_value": 1015200.0,
+   "renter_share": 0.4
+  },
+  "42140": {
+   "name": "Santa Fe, NM (Metropolitan Statistical Area)",
+   "all_items": 98.767,
+   "goods": 96.144,
+   "housing": 107.978,
+   "utilities": 76.705,
+   "other_services": 98.54,
+   "acs_name": "Santa Fe, NM Metro Area",
+   "states": [
+    "NM"
+   ],
+   "median_gross_rent": 1318.0,
+   "median_home_value": 416900.0,
+   "renter_share": 0.294
+  },
+  "42200": {
+   "name": "Santa Maria-Santa Barbara, CA (Metropolitan Statistical Area)",
+   "all_items": 108.798,
+   "goods": 105.168,
+   "housing": 151.394,
+   "utilities": 149.807,
+   "other_services": 100.267,
+   "acs_name": "Santa Maria-Santa Barbara, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 2050.0,
+   "median_home_value": 735700.0,
+   "renter_share": 0.471
+  },
+  "42220": {
+   "name": "Santa Rosa-Petaluma, CA (Metropolitan Statistical Area)",
+   "all_items": 107.784,
+   "goods": 105.168,
+   "housing": 139.569,
+   "utilities": 154.777,
+   "other_services": 100.267,
+   "acs_name": "Santa Rosa-Petaluma, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 2093.0,
+   "median_home_value": 779000.0,
+   "renter_share": 0.378
+  },
+  "42340": {
+   "name": "Savannah, GA (Metropolitan Statistical Area)",
+   "all_items": 95.206,
+   "goods": 96.269,
+   "housing": 86.012,
+   "utilities": 88.603,
+   "other_services": 98.667,
+   "acs_name": "Savannah, GA Metro Area",
+   "states": [
+    "GA"
+   ],
+   "median_gross_rent": 1370.0,
+   "median_home_value": 271100.0,
+   "renter_share": 0.385
+  },
+  "42540": {
+   "name": "Scranton--Wilkes-Barre, PA (Metropolitan Statistical Area)",
+   "all_items": 93.556,
+   "goods": 100.684,
+   "housing": 66.987,
+   "utilities": 106.533,
+   "other_services": 97.726,
+   "acs_name": "Scranton--Wilkes-Barre, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 963.0,
+   "median_home_value": 176500.0,
+   "renter_share": 0.327
+  },
+  "42660": {
+   "name": "Seattle-Tacoma-Bellevue, WA (Metropolitan Statistical Area)",
+   "all_items": 111.133,
+   "goods": 103.972,
+   "housing": 151.314,
+   "utilities": 92.814,
+   "other_services": 106.835,
+   "acs_name": "Seattle-Tacoma-Bellevue, WA Metro Area",
+   "states": [
+    "WA"
+   ],
+   "median_gross_rent": 1932.0,
+   "median_home_value": 673500.0,
+   "renter_share": 0.396
+  },
+  "42680": {
+   "name": "Sebastian-Vero Beach-West Vero Corridor, FL (Metropolitan Statistical Area)",
+   "all_items": 98.308,
+   "goods": 96.24,
+   "housing": 101.635,
+   "utilities": 87.265,
+   "other_services": 98.864,
+   "acs_name": "Sebastian-Vero Beach-West Vero Corridor, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1284.0,
+   "median_home_value": 314700.0,
+   "renter_share": 0.207
+  },
+  "42700": {
+   "name": "Sebring, FL (Metropolitan Statistical Area)",
+   "all_items": 92.47,
+   "goods": 96.24,
+   "housing": 73.455,
+   "utilities": 86.755,
+   "other_services": 98.864,
+   "acs_name": "Sebring, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 980.0,
+   "median_home_value": 177900.0,
+   "renter_share": 0.211
+  },
+  "43100": {
+   "name": "Sheboygan, WI (Metropolitan Statistical Area)",
+   "all_items": 94.014,
+   "goods": 93.787,
+   "housing": 80.54,
+   "utilities": 87.566,
+   "other_services": 99.411,
+   "acs_name": "Sheboygan, WI Metro Area",
+   "states": [
+    "WI"
+   ],
+   "median_gross_rent": 889.0,
+   "median_home_value": 218400.0,
+   "renter_share": 0.287
+  },
+  "43300": {
+   "name": "Sherman-Denison, TX (Metropolitan Statistical Area)",
+   "all_items": 93.771,
+   "goods": 93.757,
+   "housing": 89.466,
+   "utilities": 83.323,
+   "other_services": 96.24,
+   "acs_name": "Sherman-Denison, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1178.0,
+   "median_home_value": 228300.0,
+   "renter_share": 0.327
+  },
+  "43340": {
+   "name": "Shreveport-Bossier City, LA (Metropolitan Statistical Area)",
+   "all_items": 84.766,
+   "goods": 93.691,
+   "housing": 52.286,
+   "utilities": 72.558,
+   "other_services": 95.705,
+   "acs_name": "Shreveport-Bossier City, LA Metro Area",
+   "states": [
+    "LA"
+   ],
+   "median_gross_rent": 1003.0,
+   "median_home_value": 187300.0,
+   "renter_share": 0.366
+  },
+  "43420": {
+   "name": "Sierra Vista-Douglas, AZ (Metropolitan Statistical Area)",
+   "all_items": 89.243,
+   "goods": 96.237,
+   "housing": 61.918,
+   "utilities": 91.945,
+   "other_services": 99.838,
+   "acs_name": "Sierra Vista-Douglas, AZ Metro Area",
+   "states": [
+    "AZ"
+   ],
+   "median_gross_rent": 939.0,
+   "median_home_value": 207400.0,
+   "renter_share": 0.295
+  },
+  "43580": {
+   "name": "Sioux City, IA-NE-SD (Metropolitan Statistical Area)",
+   "all_items": 86.454,
+   "goods": 94.013,
+   "housing": 57.849,
+   "utilities": 82.706,
+   "other_services": 92.749,
+   "acs_name": "Sioux City, IA-NE-SD Metro Area",
+   "states": [
+    "IA",
+    "NE",
+    "SD"
+   ],
+   "median_gross_rent": 968.0,
+   "median_home_value": 179100.0,
+   "renter_share": 0.317
+  },
+  "43620": {
+   "name": "Sioux Falls, SD-MN (Metropolitan Statistical Area)",
+   "all_items": 90.631,
+   "goods": 95.472,
+   "housing": 77.605,
+   "utilities": 80.7,
+   "other_services": 91.906,
+   "acs_name": "Sioux Falls, SD-MN Metro Area",
+   "states": [
+    "SD",
+    "MN"
+   ],
+   "median_gross_rent": 987.0,
+   "median_home_value": 274800.0,
+   "renter_share": 0.334
+  },
+  "43640": {
+   "name": "Slidell-Mandeville-Covington, LA (Metropolitan Statistical Area)",
+   "all_items": 92.726,
+   "goods": 93.691,
+   "housing": 85.449,
+   "utilities": 71.65,
+   "other_services": 95.705,
+   "acs_name": "Slidell-Mandeville-Covington, LA Metro Area",
+   "states": [
+    "LA"
+   ],
+   "median_gross_rent": 1305.0,
+   "median_home_value": 272200.0,
+   "renter_share": 0.212
+  },
+  "43780": {
+   "name": "South Bend-Mishawaka, IN-MI (Metropolitan Statistical Area)",
+   "all_items": 92.858,
+   "goods": 94.221,
+   "housing": 74.586,
+   "utilities": 87.733,
+   "other_services": 99.213,
+   "acs_name": "South Bend-Mishawaka, IN-MI Metro Area",
+   "states": [
+    "IN",
+    "MI"
+   ],
+   "median_gross_rent": 1013.0,
+   "median_home_value": 183800.0,
+   "renter_share": 0.292
+  },
+  "43900": {
+   "name": "Spartanburg, SC (Metropolitan Statistical Area)",
+   "all_items": 91.051,
+   "goods": 96.339,
+   "housing": 68.007,
+   "utilities": 88.331,
+   "other_services": 98.284,
+   "acs_name": "Spartanburg, SC Metro Area",
+   "states": [
+    "SC"
+   ],
+   "median_gross_rent": 991.0,
+   "median_home_value": 207900.0,
+   "renter_share": 0.274
+  },
+  "44060": {
+   "name": "Spokane-Spokane Valley, WA (Metropolitan Statistical Area)",
+   "all_items": 100.346,
+   "goods": 105.028,
+   "housing": 97.059,
+   "utilities": 91.196,
+   "other_services": 99.472,
+   "acs_name": "Spokane-Spokane Valley, WA Metro Area",
+   "states": [
+    "WA"
+   ],
+   "median_gross_rent": 1187.0,
+   "median_home_value": 365700.0,
+   "renter_share": 0.349
+  },
+  "44100": {
+   "name": "Springfield, IL (Metropolitan Statistical Area)",
+   "all_items": 92.745,
+   "goods": 93.643,
+   "housing": 71.616,
+   "utilities": 90.406,
+   "other_services": 99.59,
+   "acs_name": "Springfield, IL Metro Area",
+   "states": [
+    "IL"
+   ],
+   "median_gross_rent": 949.0,
+   "median_home_value": 171100.0,
+   "renter_share": 0.289
+  },
+  "44140": {
+   "name": "Springfield, MA (Metropolitan Statistical Area)",
+   "all_items": 96.061,
+   "goods": 97.015,
+   "housing": 75.781,
+   "utilities": 154.996,
+   "other_services": 101.197,
+   "acs_name": "Springfield, MA Metro Area",
+   "states": [
+    "MA"
+   ],
+   "median_gross_rent": 1105.0,
+   "median_home_value": 276300.0,
+   "renter_share": 0.378
+  },
+  "44180": {
+   "name": "Springfield, MO (Metropolitan Statistical Area)",
+   "all_items": 88.585,
+   "goods": 94.193,
+   "housing": 65.568,
+   "utilities": 85.825,
+   "other_services": 93.026,
+   "acs_name": "Springfield, MO Metro Area",
+   "states": [
+    "MO"
+   ],
+   "median_gross_rent": 927.0,
+   "median_home_value": 213400.0,
+   "renter_share": 0.37
+  },
+  "44220": {
+   "name": "Springfield, OH (Metropolitan Statistical Area)",
+   "all_items": 90.482,
+   "goods": 93.628,
+   "housing": 61.726,
+   "utilities": 97.155,
+   "other_services": 98.939,
+   "acs_name": "Springfield, OH Metro Area",
+   "states": [
+    "OH"
+   ],
+   "median_gross_rent": 840.0,
+   "median_home_value": 155900.0,
+   "renter_share": 0.308
+  },
+  "44300": {
+   "name": "State College, PA (Metropolitan Statistical Area)",
+   "all_items": 96.762,
+   "goods": 100.684,
+   "housing": 85.688,
+   "utilities": 109.462,
+   "other_services": 97.726,
+   "acs_name": "State College, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 1181.0,
+   "median_home_value": 308100.0,
+   "renter_share": 0.382
+  },
+  "44420": {
+   "name": "Staunton-Stuarts Draft, VA (Metropolitan Statistical Area)",
+   "all_items": 91.128,
+   "goods": 96.773,
+   "housing": 68.232,
+   "utilities": 89.522,
+   "other_services": 98.612,
+   "acs_name": "Staunton-Stuarts Draft, VA Metro Area",
+   "states": [
+    "VA"
+   ],
+   "median_gross_rent": 1013.0,
+   "median_home_value": 264400.0,
+   "renter_share": 0.289
+  },
+  "44700": {
+   "name": "Stockton-Lodi, CA (Metropolitan Statistical Area)",
+   "all_items": 105.089,
+   "goods": 105.168,
+   "housing": 115.614,
+   "utilities": 158.247,
+   "other_services": 100.267,
+   "acs_name": "Stockton-Lodi, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1633.0,
+   "median_home_value": 494500.0,
+   "renter_share": 0.385
+  },
+  "44940": {
+   "name": "Sumter, SC (Metropolitan Statistical Area)",
+   "all_items": 88.02,
+   "goods": 96.339,
+   "housing": 60.833,
+   "utilities": 87.304,
+   "other_services": 98.284,
+   "acs_name": "Sumter, SC Metro Area",
+   "states": [
+    "SC"
+   ],
+   "median_gross_rent": 1006.0,
+   "median_home_value": 159500.0,
+   "renter_share": 0.332
+  },
+  "45060": {
+   "name": "Syracuse, NY (Metropolitan Statistical Area)",
+   "all_items": 95.742,
+   "goods": 99.693,
+   "housing": 80.656,
+   "utilities": 133.405,
+   "other_services": 97.754,
+   "acs_name": "Syracuse, NY Metro Area",
+   "states": [
+    "NY"
+   ],
+   "median_gross_rent": 1036.0,
+   "median_home_value": 175300.0,
+   "renter_share": 0.317
+  },
+  "45220": {
+   "name": "Tallahassee, FL (Metropolitan Statistical Area)",
+   "all_items": 93.919,
+   "goods": 96.24,
+   "housing": 78.528,
+   "utilities": 87.471,
+   "other_services": 98.864,
+   "acs_name": "Tallahassee, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1197.0,
+   "median_home_value": 249900.0,
+   "renter_share": 0.425
+  },
+  "45300": {
+   "name": "Tampa-St. Petersburg-Clearwater, FL (Metropolitan Statistical Area)",
+   "all_items": 100.89,
+   "goods": 95.47,
+   "housing": 125.839,
+   "utilities": 88.525,
+   "other_services": 97.565,
+   "acs_name": "Tampa-St. Petersburg-Clearwater, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1497.0,
+   "median_home_value": 306100.0,
+   "renter_share": 0.324
+  },
+  "45460": {
+   "name": "Terre Haute, IN (Metropolitan Statistical Area)",
+   "all_items": 87.797,
+   "goods": 94.318,
+   "housing": 51.923,
+   "utilities": 86.564,
+   "other_services": 99.141,
+   "acs_name": "Terre Haute, IN Metro Area",
+   "states": [
+    "IN"
+   ],
+   "median_gross_rent": 857.0,
+   "median_home_value": 132000.0,
+   "renter_share": 0.32
+  },
+  "45500": {
+   "name": "Texarkana, TX-AR (Metropolitan Statistical Area)",
+   "all_items": 84.012,
+   "goods": 93.693,
+   "housing": 49.885,
+   "utilities": 79.258,
+   "other_services": 95.895,
+   "acs_name": "Texarkana, TX-AR Metro Area",
+   "states": [
+    "TX",
+    "AR"
+   ],
+   "median_gross_rent": 933.0,
+   "median_home_value": 150800.0,
+   "renter_share": 0.351
+  },
+  "45780": {
+   "name": "Toledo, OH (Metropolitan Statistical Area)",
+   "all_items": 91.455,
+   "goods": 93.628,
+   "housing": 67.317,
+   "utilities": 96.285,
+   "other_services": 98.939,
+   "acs_name": "Toledo, OH Metro Area",
+   "states": [
+    "OH"
+   ],
+   "median_gross_rent": 917.0,
+   "median_home_value": 168500.0,
+   "renter_share": 0.364
+  },
+  "45820": {
+   "name": "Topeka, KS (Metropolitan Statistical Area)",
+   "all_items": 88.82,
+   "goods": 94.027,
+   "housing": 64.987,
+   "utilities": 88.942,
+   "other_services": 93.816,
+   "acs_name": "Topeka, KS Metro Area",
+   "states": [
+    "KS"
+   ],
+   "median_gross_rent": 947.0,
+   "median_home_value": 172200.0,
+   "renter_share": 0.298
+  },
+  "45900": {
+   "name": "Traverse City, MI (Metropolitan Statistical Area)",
+   "all_items": 93.372,
+   "goods": 93.711,
+   "housing": 78.146,
+   "utilities": 92.356,
+   "other_services": 99.561,
+   "acs_name": "Traverse City, MI Metro Area",
+   "states": [
+    "MI"
+   ],
+   "median_gross_rent": 1154.0,
+   "median_home_value": 286500.0,
+   "renter_share": 0.188
+  },
+  "45940": {
+   "name": "Trenton-Princeton, NJ (Metropolitan Statistical Area)",
+   "all_items": 103.18,
+   "goods": 99.79,
+   "housing": 135.082,
+   "utilities": 112.266,
+   "other_services": 97.925,
+   "acs_name": "Trenton-Princeton, NJ Metro Area",
+   "states": [
+    "NJ"
+   ],
+   "median_gross_rent": 1515.0,
+   "median_home_value": 351000.0,
+   "renter_share": 0.381
+  },
+  "46060": {
+   "name": "Tucson, AZ (Metropolitan Statistical Area)",
+   "all_items": 96.896,
+   "goods": 96.237,
+   "housing": 91.765,
+   "utilities": 89.521,
+   "other_services": 99.838,
+   "acs_name": "Tucson, AZ Metro Area",
+   "states": [
+    "AZ"
+   ],
+   "median_gross_rent": 1154.0,
+   "median_home_value": 286900.0,
+   "renter_share": 0.352
+  },
+  "46140": {
+   "name": "Tulsa, OK (Metropolitan Statistical Area)",
+   "all_items": 89.214,
+   "goods": 93.778,
+   "housing": 68.235,
+   "utilities": 73.856,
+   "other_services": 95.458,
+   "acs_name": "Tulsa, OK Metro Area",
+   "states": [
+    "OK"
+   ],
+   "median_gross_rent": 1034.0,
+   "median_home_value": 204400.0,
+   "renter_share": 0.346
+  },
+  "46220": {
+   "name": "Tuscaloosa, AL (Metropolitan Statistical Area)",
+   "all_items": 87.722,
+   "goods": 96.397,
+   "housing": 58.246,
+   "utilities": 84.396,
+   "other_services": 96.693,
+   "acs_name": "Tuscaloosa, AL Metro Area",
+   "states": [
+    "AL"
+   ],
+   "median_gross_rent": 966.0,
+   "median_home_value": 217100.0,
+   "renter_share": 0.359
+  },
+  "46300": {
+   "name": "Twin Falls, ID (Metropolitan Statistical Area) *",
+   "all_items": 92.108,
+   "goods": 96.179,
+   "housing": 73.833,
+   "utilities": 70.028,
+   "other_services": 98.974,
+   "acs_name": "Twin Falls, ID Metro Area",
+   "states": [
+    "ID"
+   ],
+   "median_gross_rent": 981.0,
+   "median_home_value": 284200.0,
+   "renter_share": 0.293
+  },
+  "46340": {
+   "name": "Tyler, TX (Metropolitan Statistical Area)",
+   "all_items": 92.156,
+   "goods": 93.757,
+   "housing": 79.911,
+   "utilities": 82.904,
+   "other_services": 96.24,
+   "acs_name": "Tyler, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1197.0,
+   "median_home_value": 220800.0,
+   "renter_share": 0.307
+  },
+  "46520": {
+   "name": "Urban Honolulu, HI (Metropolitan Statistical Area)",
+   "all_items": 110.961,
+   "goods": 111.562,
+   "housing": 135.538,
+   "utilities": 187.263,
+   "other_services": 102.898,
+   "acs_name": "Urban Honolulu, HI Metro Area",
+   "states": [
+    "HI"
+   ],
+   "median_gross_rent": 2054.0,
+   "median_home_value": 873000.0,
+   "renter_share": 0.405
+  },
+  "46540": {
+   "name": "Utica-Rome, NY (Metropolitan Statistical Area)",
+   "all_items": 92.678,
+   "goods": 99.693,
+   "housing": 66.063,
+   "utilities": 131.909,
+   "other_services": 97.754,
+   "acs_name": "Utica-Rome, NY Metro Area",
+   "states": [
+    "NY"
+   ],
+   "median_gross_rent": 896.0,
+   "median_home_value": 163400.0,
+   "renter_share": 0.305
+  },
+  "46660": {
+   "name": "Valdosta, GA (Metropolitan Statistical Area)",
+   "all_items": 88.271,
+   "goods": 96.269,
+   "housing": 58.758,
+   "utilities": 87.803,
+   "other_services": 98.667,
+   "acs_name": "Valdosta, GA Metro Area",
+   "states": [
+    "GA"
+   ],
+   "median_gross_rent": 976.0,
+   "median_home_value": 182300.0,
+   "renter_share": 0.409
+  },
+  "46700": {
+   "name": "Vallejo, CA (Metropolitan Statistical Area)",
+   "all_items": 108.479,
+   "goods": 105.168,
+   "housing": 142.042,
+   "utilities": 154.993,
+   "other_services": 100.267,
+   "acs_name": "Vallejo, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 2088.0,
+   "median_home_value": 589600.0,
+   "renter_share": 0.368
+  },
+  "47020": {
+   "name": "Victoria, TX (Metropolitan Statistical Area)",
+   "all_items": 89.839,
+   "goods": 93.757,
+   "housing": 69.318,
+   "utilities": 85.271,
+   "other_services": 96.24,
+   "acs_name": "Victoria, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1143.0,
+   "median_home_value": 196500.0,
+   "renter_share": 0.313
+  },
+  "47220": {
+   "name": "Vineland, NJ (Metropolitan Statistical Area)",
+   "all_items": 95.968,
+   "goods": 99.79,
+   "housing": 83.883,
+   "utilities": 108.227,
+   "other_services": 97.925,
+   "acs_name": "Vineland, NJ Metro Area",
+   "states": [
+    "NJ"
+   ],
+   "median_gross_rent": 1254.0,
+   "median_home_value": 205600.0,
+   "renter_share": 0.344
+  },
+  "47260": {
+   "name": "Virginia Beach-Chesapeake-Norfolk, VA-NC (Metropolitan Statistical Area)",
+   "all_items": 97.941,
+   "goods": 96.767,
+   "housing": 99.805,
+   "utilities": 89.579,
+   "other_services": 98.599,
+   "acs_name": "Virginia Beach-Chesapeake-Norfolk, VA-NC Metro Area",
+   "states": [
+    "VA",
+    "NC"
+   ],
+   "median_gross_rent": 1416.0,
+   "median_home_value": 318000.0,
+   "renter_share": 0.369
+  },
+  "47300": {
+   "name": "Visalia, CA (Metropolitan Statistical Area)",
+   "all_items": 99.825,
+   "goods": 105.168,
+   "housing": 84.053,
+   "utilities": 156.446,
+   "other_services": 100.267,
+   "acs_name": "Visalia, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1206.0,
+   "median_home_value": 303000.0,
+   "renter_share": 0.414
+  },
+  "47380": {
+   "name": "Waco, TX (Metropolitan Statistical Area)",
+   "all_items": 92.55,
+   "goods": 93.757,
+   "housing": 83.531,
+   "utilities": 80.967,
+   "other_services": 96.24,
+   "acs_name": "Waco, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 1094.0,
+   "median_home_value": 209600.0,
+   "renter_share": 0.369
+  },
+  "47460": {
+   "name": "Walla Walla, WA (Metropolitan Statistical Area)",
+   "all_items": 98.519,
+   "goods": 105.028,
+   "housing": 86.579,
+   "utilities": 94.308,
+   "other_services": 99.472,
+   "acs_name": "Walla Walla, WA Metro Area",
+   "states": [
+    "WA"
+   ],
+   "median_gross_rent": 1113.0,
+   "median_home_value": 375600.0,
+   "renter_share": 0.341
+  },
+  "47580": {
+   "name": "Warner Robins, GA (Metropolitan Statistical Area)",
+   "all_items": 93.789,
+   "goods": 96.269,
+   "housing": 79.172,
+   "utilities": 88.135,
+   "other_services": 98.667,
+   "acs_name": "Warner Robins, GA Metro Area",
+   "states": [
+    "GA"
+   ],
+   "median_gross_rent": 1112.0,
+   "median_home_value": 202800.0,
+   "renter_share": 0.324
+  },
+  "47900": {
+   "name": "Washington-Arlington-Alexandria, DC-VA-MD-WV (Metropolitan Statistical Area)",
+   "all_items": 108.884,
+   "goods": 104.847,
+   "housing": 151.134,
+   "utilities": 106.7,
+   "other_services": 102.321,
+   "acs_name": "Washington-Arlington-Alexandria, DC-VA-MD-WV Metro Area",
+   "states": [
+    "DC",
+    "VA",
+    "MD",
+    "WV"
+   ],
+   "median_gross_rent": 1975.0,
+   "median_home_value": 553000.0,
+   "renter_share": 0.365
+  },
+  "47930": {
+   "name": "Waterbury-Shelton, CT (Metropolitan Statistical Area)",
+   "all_items": 99.778,
+   "goods": 97.33,
+   "housing": 89.111,
+   "utilities": 147.562,
+   "other_services": 102.658,
+   "acs_name": "Waterbury-Shelton, CT Metro Area",
+   "states": [
+    "CT"
+   ],
+   "median_gross_rent": 1288.0,
+   "median_home_value": 290800.0,
+   "renter_share": 0.324
+  },
+  "47940": {
+   "name": "Waterloo-Cedar Falls, IA (Metropolitan Statistical Area)",
+   "all_items": 87.057,
+   "goods": 93.73,
+   "housing": 63.13,
+   "utilities": 83.652,
+   "other_services": 92.927,
+   "acs_name": "Waterloo-Cedar Falls, IA Metro Area",
+   "states": [
+    "IA"
+   ],
+   "median_gross_rent": 947.0,
+   "median_home_value": 186100.0,
+   "renter_share": 0.311
+  },
+  "48060": {
+   "name": "Watertown-Fort Drum, NY (Metropolitan Statistical Area)",
+   "all_items": 87.69,
+   "goods": 99.693,
+   "housing": 53.185,
+   "utilities": 132.18,
+   "other_services": 97.754,
+   "acs_name": "Watertown-Fort Drum, NY Metro Area",
+   "states": [
+    "NY"
+   ],
+   "median_gross_rent": 1214.0,
+   "median_home_value": 181000.0,
+   "renter_share": 0.459
+  },
+  "48140": {
+   "name": "Wausau, WI (Metropolitan Statistical Area)",
+   "all_items": 92.651,
+   "goods": 93.787,
+   "housing": 71.464,
+   "utilities": 89.981,
+   "other_services": 99.411,
+   "acs_name": "Wausau, WI Metro Area",
+   "states": [
+    "WI"
+   ],
+   "median_gross_rent": 950.0,
+   "median_home_value": 205500.0,
+   "renter_share": 0.266
+  },
+  "48260": {
+   "name": "Weirton-Steubenville, WV-OH (Metropolitan Statistical Area)",
+   "all_items": 89.024,
+   "goods": 96.446,
+   "housing": 52.383,
+   "utilities": 94.991,
+   "other_services": 99.651,
+   "acs_name": "Weirton-Steubenville, WV-OH Metro Area",
+   "states": [
+    "WV",
+    "OH"
+   ],
+   "median_gross_rent": 758.0,
+   "median_home_value": 121400.0,
+   "renter_share": 0.272
+  },
+  "48300": {
+   "name": "Wenatchee-East Wenatchee, WA (Metropolitan Statistical Area)",
+   "all_items": 103.855,
+   "goods": 105.028,
+   "housing": 114.958,
+   "utilities": 100.591,
+   "other_services": 99.472,
+   "acs_name": "Wenatchee-East Wenatchee, WA Metro Area",
+   "states": [
+    "WA"
+   ],
+   "median_gross_rent": 1198.0,
+   "median_home_value": 434900.0,
+   "renter_share": 0.35
+  },
+  "48540": {
+   "name": "Wheeling, WV-OH (Metropolitan Statistical Area)",
+   "all_items": 88.323,
+   "goods": 96.42,
+   "housing": 51.443,
+   "utilities": 94.892,
+   "other_services": 99.675,
+   "acs_name": "Wheeling, WV-OH Metro Area",
+   "states": [
+    "WV",
+    "OH"
+   ],
+   "median_gross_rent": 801.0,
+   "median_home_value": 149300.0,
+   "renter_share": 0.27
+  },
+  "48620": {
+   "name": "Wichita, KS (Metropolitan Statistical Area)",
+   "all_items": 88.946,
+   "goods": 94.027,
+   "housing": 66.245,
+   "utilities": 88.459,
+   "other_services": 93.816,
+   "acs_name": "Wichita, KS Metro Area",
+   "states": [
+    "KS"
+   ],
+   "median_gross_rent": 969.0,
+   "median_home_value": 188200.0,
+   "renter_share": 0.353
+  },
+  "48660": {
+   "name": "Wichita Falls, TX (Metropolitan Statistical Area)",
+   "all_items": 89.513,
+   "goods": 93.757,
+   "housing": 68.208,
+   "utilities": 84.092,
+   "other_services": 96.24,
+   "acs_name": "Wichita Falls, TX Metro Area",
+   "states": [
+    "TX"
+   ],
+   "median_gross_rent": 963.0,
+   "median_home_value": 144700.0,
+   "renter_share": 0.357
+  },
+  "48680": {
+   "name": "Wildwood-The Villages, FL (Metropolitan Statistical Area)",
+   "all_items": 85.424,
+   "goods": 96.24,
+   "housing": 51.733,
+   "utilities": 88.996,
+   "other_services": 98.864,
+   "acs_name": "Wildwood-The Villages, FL Metro Area",
+   "states": [
+    "FL"
+   ],
+   "median_gross_rent": 1225.0,
+   "median_home_value": 356000.0,
+   "renter_share": 0.119
+  },
+  "48700": {
+   "name": "Williamsport, PA (Metropolitan Statistical Area)",
+   "all_items": 92.35,
+   "goods": 100.684,
+   "housing": 64.392,
+   "utilities": 107.451,
+   "other_services": 97.726,
+   "acs_name": "Williamsport, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 887.0,
+   "median_home_value": 195600.0,
+   "renter_share": 0.308
+  },
+  "48900": {
+   "name": "Wilmington, NC (Metropolitan Statistical Area)",
+   "all_items": 96.422,
+   "goods": 96.621,
+   "housing": 93.215,
+   "utilities": 87.902,
+   "other_services": 98.186,
+   "acs_name": "Wilmington, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 1313.0,
+   "median_home_value": 328000.0,
+   "renter_share": 0.288
+  },
+  "49020": {
+   "name": "Winchester, VA-WV (Metropolitan Statistical Area)",
+   "all_items": 96.45,
+   "goods": 96.699,
+   "housing": 90.009,
+   "utilities": 89.716,
+   "other_services": 98.797,
+   "acs_name": "Winchester, VA-WV Metro Area",
+   "states": [
+    "VA",
+    "WV"
+   ],
+   "median_gross_rent": 1309.0,
+   "median_home_value": 322600.0,
+   "renter_share": 0.289
+  },
+  "49180": {
+   "name": "Winston-Salem, NC (Metropolitan Statistical Area)",
+   "all_items": 92.043,
+   "goods": 96.621,
+   "housing": 71.377,
+   "utilities": 88.421,
+   "other_services": 98.186,
+   "acs_name": "Winston-Salem, NC Metro Area",
+   "states": [
+    "NC"
+   ],
+   "median_gross_rent": 973.0,
+   "median_home_value": 213300.0,
+   "renter_share": 0.315
+  },
+  "49340": {
+   "name": "Worcester, MA (Metropolitan Statistical Area)",
+   "all_items": 102.523,
+   "goods": 97.015,
+   "housing": 113.001,
+   "utilities": 155.206,
+   "other_services": 101.197,
+   "acs_name": "Worcester, MA Metro Area",
+   "states": [
+    "MA"
+   ],
+   "median_gross_rent": 1347.0,
+   "median_home_value": 390700.0,
+   "renter_share": 0.343
+  },
+  "49420": {
+   "name": "Yakima, WA (Metropolitan Statistical Area)",
+   "all_items": 95.545,
+   "goods": 105.028,
+   "housing": 72.628,
+   "utilities": 91.901,
+   "other_services": 99.472,
+   "acs_name": "Yakima, WA Metro Area",
+   "states": [
+    "WA"
+   ],
+   "median_gross_rent": 1068.0,
+   "median_home_value": 281100.0,
+   "renter_share": 0.376
+  },
+  "49620": {
+   "name": "York-Hanover, PA (Metropolitan Statistical Area)",
+   "all_items": 96.0,
+   "goods": 100.684,
+   "housing": 79.762,
+   "utilities": 107.011,
+   "other_services": 97.726,
+   "acs_name": "York-Hanover, PA Metro Area",
+   "states": [
+    "PA"
+   ],
+   "median_gross_rent": 1150.0,
+   "median_home_value": 235000.0,
+   "renter_share": 0.242
+  },
+  "49660": {
+   "name": "Youngstown-Warren, OH (Metropolitan Statistical Area)",
+   "all_items": 87.394,
+   "goods": 93.628,
+   "housing": 53.448,
+   "utilities": 96.292,
+   "other_services": 98.939,
+   "acs_name": "Youngstown-Warren, OH Metro Area",
+   "states": [
+    "OH"
+   ],
+   "median_gross_rent": 779.0,
+   "median_home_value": 134600.0,
+   "renter_share": 0.291
+  },
+  "49700": {
+   "name": "Yuba City, CA (Metropolitan Statistical Area)",
+   "all_items": 104.233,
+   "goods": 105.168,
+   "housing": 108.279,
+   "utilities": 160.771,
+   "other_services": 100.267,
+   "acs_name": "Yuba City, CA Metro Area",
+   "states": [
+    "CA"
+   ],
+   "median_gross_rent": 1306.0,
+   "median_home_value": 390800.0,
+   "renter_share": 0.389
+  },
+  "49740": {
+   "name": "Yuma, AZ (Metropolitan Statistical Area)",
+   "all_items": 92.706,
+   "goods": 96.237,
+   "housing": 73.776,
+   "utilities": 87.834,
+   "other_services": 99.838,
+   "acs_name": "Yuma, AZ Metro Area",
+   "states": [
+    "AZ"
+   ],
+   "median_gross_rent": 983.0,
+   "median_home_value": 195700.0,
+   "renter_share": 0.3
+  }
+ },
+ "state": {
+  "Alabama": {
+   "all_items": 88.823,
+   "goods": 96.399,
+   "housing": 61.785,
+   "utilities": 84.643,
+   "other_services": 96.711
+  },
+  "Alaska": {
+   "all_items": 102.359,
+   "goods": 106.319,
+   "housing": 93.784,
+   "utilities": 119.021,
+   "other_services": 102.208
+  },
+  "Arizona": {
+   "all_items": 100.677,
+   "goods": 95.361,
+   "housing": 106.804,
+   "utilities": 92.317,
+   "other_services": 102.808
+  },
+  "Arkansas": {
+   "all_items": 86.937,
+   "goods": 93.597,
+   "housing": 58.203,
+   "utilities": 74.731,
+   "other_services": 95.312
+  },
+  "California": {
+   "all_items": 110.72,
+   "goods": 106.098,
+   "housing": 154.346,
+   "utilities": 158.899,
+   "other_services": 102.591
+  },
+  "Colorado": {
+   "all_items": 103.052,
+   "goods": 98.727,
+   "housing": 127.359,
+   "utilities": 84.971,
+   "other_services": 99.613
+  },
+  "Connecticut": {
+   "all_items": 103.61,
+   "goods": 97.33,
+   "housing": 117.048,
+   "utilities": 146.495,
+   "other_services": 102.658
+  },
+  "Delaware": {
+   "all_items": 99.808,
+   "goods": 96.155,
+   "housing": 102.015,
+   "utilities": 103.81,
+   "other_services": 101.235
+  },
+  "District of Columbia": {
+   "all_items": 109.901,
+   "goods": 106.502,
+   "housing": 154.984,
+   "utilities": 112.821,
+   "other_services": 102.964
+  },
+  "Florida": {
+   "all_items": 103.414,
+   "goods": 98.059,
+   "housing": 122.107,
+   "utilities": 90.074,
+   "other_services": 101.324
+  },
+  "Georgia": {
+   "all_items": 96.293,
+   "goods": 98.929,
+   "housing": 88.694,
+   "utilities": 92.814,
+   "other_services": 97.343
+  },
+  "Hawaii": {
+   "all_items": 109.951,
+   "goods": 111.562,
+   "housing": 125.304,
+   "utilities": 190.178,
+   "other_services": 102.898
+  },
+  "Idaho": {
+   "all_items": 95.494,
+   "goods": 96.311,
+   "housing": 90.027,
+   "utilities": 70.444,
+   "other_services": 99.015
+  },
+  "Illinois": {
+   "all_items": 99.958,
+   "goods": 103.832,
+   "housing": 93.944,
+   "utilities": 84.952,
+   "other_services": 100.156
+  },
+  "Indiana": {
+   "all_items": 93.329,
+   "goods": 95.509,
+   "housing": 73.926,
+   "utilities": 85.545,
+   "other_services": 99.145
+  },
+  "Iowa": {
+   "all_items": 87.762,
+   "goods": 93.73,
+   "housing": 65.322,
+   "utilities": 83.274,
+   "other_services": 92.927
+  },
+  "Kansas": {
+   "all_items": 90.068,
+   "goods": 94.027,
+   "housing": 71.156,
+   "utilities": 88.438,
+   "other_services": 93.816
+  },
+  "Kentucky": {
+   "all_items": 90.159,
+   "goods": 95.967,
+   "housing": 64.313,
+   "utilities": 75.313,
+   "other_services": 97.25
+  },
+  "Louisiana": {
+   "all_items": 88.207,
+   "goods": 93.7,
+   "housing": 63.104,
+   "utilities": 71.463,
+   "other_services": 95.706
+  },
+  "Maine": {
+   "all_items": 97.05,
+   "goods": 97.171,
+   "housing": 78.94,
+   "utilities": 135.189,
+   "other_services": 103.191
+  },
+  "Maryland": {
+   "all_items": 104.959,
+   "goods": 102.524,
+   "housing": 121.079,
+   "utilities": 110.86,
+   "other_services": 101.596
+  },
+  "Massachusetts": {
+   "all_items": 105.757,
+   "goods": 98.82,
+   "housing": 128.068,
+   "utilities": 152.07,
+   "other_services": 102.852
+  },
+  "Michigan": {
+   "all_items": 96.217,
+   "goods": 95.993,
+   "housing": 82.332,
+   "utilities": 100.15,
+   "other_services": 100.933
+  },
+  "Minnesota": {
+   "all_items": 98.621,
+   "goods": 100.519,
+   "housing": 91.281,
+   "utilities": 90.836,
+   "other_services": 100.213
+  },
+  "Mississippi": {
+   "all_items": 86.953,
+   "goods": 96.219,
+   "housing": 56.456,
+   "utilities": 78.415,
+   "other_services": 96.09
+  },
+  "Missouri": {
+   "all_items": 90.817,
+   "goods": 96.299,
+   "housing": 69.88,
+   "utilities": 79.406,
+   "other_services": 95.169
+  },
+  "Montana": {
+   "all_items": 94.645,
+   "goods": 96.006,
+   "housing": 84.648,
+   "utilities": 72.254,
+   "other_services": 98.715
+  },
+  "Nebraska": {
+   "all_items": 90.103,
+   "goods": 94.101,
+   "housing": 75.174,
+   "utilities": 75.604,
+   "other_services": 92.98
+  },
+  "Nevada": {
+   "all_items": 99.979,
+   "goods": 96.271,
+   "housing": 114.135,
+   "utilities": 90.51,
+   "other_services": 98.744
+  },
+  "New Hampshire": {
+   "all_items": 104.165,
+   "goods": 98.578,
+   "housing": 114.947,
+   "utilities": 133.663,
+   "other_services": 103.879
+  },
+  "New Jersey": {
+   "all_items": 108.805,
+   "goods": 107.066,
+   "housing": 134.292,
+   "utilities": 114.187,
+   "other_services": 103.529
+  },
+  "New Mexico": {
+   "all_items": 92.212,
+   "goods": 96.144,
+   "housing": 73.611,
+   "utilities": 77.895,
+   "other_services": 98.54
+  },
+  "New York": {
+   "all_items": 107.921,
+   "goods": 107.254,
+   "housing": 122.168,
+   "utilities": 134.37,
+   "other_services": 104.067
+  },
+  "North Carolina": {
+   "all_items": 94.326,
+   "goods": 96.621,
+   "housing": 81.364,
+   "utilities": 88.619,
+   "other_services": 98.186
+  },
+  "North Dakota": {
+   "all_items": 88.959,
+   "goods": 95.701,
+   "housing": 71.421,
+   "utilities": 73.669,
+   "other_services": 91.158
+  },
+  "Ohio": {
+   "all_items": 92.774,
+   "goods": 93.67,
+   "housing": 73.012,
+   "utilities": 95.823,
+   "other_services": 98.947
+  },
+  "Oklahoma": {
+   "all_items": 87.843,
+   "goods": 93.778,
+   "housing": 62.763,
+   "utilities": 73.882,
+   "other_services": 95.458
+  },
+  "Oregon": {
+   "all_items": 103.361,
+   "goods": 105.261,
+   "housing": 108.628,
+   "utilities": 107.046,
+   "other_services": 100.298
+  },
+  "Pennsylvania": {
+   "all_items": 97.572,
+   "goods": 99.357,
+   "housing": 85.068,
+   "utilities": 109.321,
+   "other_services": 99.762
+  },
+  "Rhode Island": {
+   "all_items": 102.28,
+   "goods": 97.165,
+   "housing": 105.62,
+   "utilities": 146.653,
+   "other_services": 102.84
+  },
+  "South Carolina": {
+   "all_items": 93.749,
+   "goods": 96.339,
+   "housing": 80.49,
+   "utilities": 88.303,
+   "other_services": 98.284
+  },
+  "South Dakota": {
+   "all_items": 88.586,
+   "goods": 95.473,
+   "housing": 67.642,
+   "utilities": 79.651,
+   "other_services": 91.899
+  },
+  "Tennessee": {
+   "all_items": 91.87,
+   "goods": 96.247,
+   "housing": 79.07,
+   "utilities": 72.137,
+   "other_services": 95.142
+  },
+  "Texas": {
+   "all_items": 97.057,
+   "goods": 98.083,
+   "housing": 96.503,
+   "utilities": 87.512,
+   "other_services": 97.081
+  },
+  "Utah": {
+   "all_items": 98.864,
+   "goods": 96.446,
+   "housing": 107.814,
+   "utilities": 78.739,
+   "other_services": 98.959
+  },
+  "Vermont": {
+   "all_items": 97.958,
+   "goods": 97.274,
+   "housing": 86.502,
+   "utilities": 125.833,
+   "other_services": 101.586
+  },
+  "Virginia": {
+   "all_items": 101.104,
+   "goods": 100.368,
+   "housing": 106.799,
+   "utilities": 92.185,
+   "other_services": 100.233
+  },
+  "Washington": {
+   "all_items": 107.013,
+   "goods": 104.359,
+   "housing": 125.979,
+   "utilities": 92.86,
+   "other_services": 103.873
+  },
+  "West Virginia": {
+   "all_items": 89.497,
+   "goods": 96.539,
+   "housing": 54.241,
+   "utilities": 92.242,
+   "other_services": 99.94
+  },
+  "Wisconsin": {
+   "all_items": 94.095,
+   "goods": 94.31,
+   "housing": 79.312,
+   "utilities": 89.906,
+   "other_services": 99.501
+  },
+  "Wyoming": {
+   "all_items": 92.691,
+   "goods": 95.368,
+   "housing": 71.127,
+   "utilities": 78.422,
+   "other_services": 100.428
+  }
+ }
+}
