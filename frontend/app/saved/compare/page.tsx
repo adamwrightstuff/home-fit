@@ -12,13 +12,23 @@ import { PILLAR_META, PILLAR_ORDER, isLongevityPillar, isHappinessPillar, type P
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import PillarInfoIcon from '@/components/PillarInfoIcon'
-import { RelocationForKey } from '@/components/RelocationEquivalent'
+import RelocationEquivalent from '@/components/RelocationEquivalent'
+import type { PlaceSpec } from '@/lib/relocation'
 import { applyExplorerScoreAdjustments, readCompareContext, type CompareContext } from '@/lib/explorerScoreAdjust'
 
 type ScoreMode = 'yours' | 'catalog'
 
 function isCatalogKey(id: string): boolean {
   return id.includes('|')
+}
+
+/** Identify a compared place for the cost estimate: catalog key, or a saved place's coordinates. */
+function relocationSpec(id: string, row: SavedScoreRow | null): PlaceSpec | null {
+  if (isCatalogKey(id)) return { key: id }
+  const coords = (row?.score_payload as { coordinates?: { lat?: number; lon?: number } } | undefined)?.coordinates
+  if (!row || typeof coords?.lat !== 'number' || typeof coords?.lon !== 'number') return null
+  const li = (row.location_info ?? {}) as { city?: string; state?: string }
+  return { saved: { name: row.input, lat: coords.lat, lon: coords.lon, city: li.city, state: li.state } }
 }
 
 async function loadRowForId(id: string): Promise<SavedScoreRow> {
@@ -600,18 +610,27 @@ function CompareContent() {
                 </div>
               </div>
             </section>
-            {catalogCompare && idA && idB && (
-              <section aria-label="Cost of living" style={{ marginTop: '0.75rem', display: 'grid', gap: '0.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--hf-homefit-green)', marginBottom: 4 }}>{placeNameA}</div>
-                  <RelocationForKey placeKey={idA} fallbackKey={idB} />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--hf-longevity-purple)', marginBottom: 4 }}>{placeNameB}</div>
-                  <RelocationForKey placeKey={idB} fallbackKey={idA} />
-                </div>
-              </section>
-            )}
+            {idA && idB && (() => {
+              const specA = relocationSpec(idA, rowA)
+              const specB = relocationSpec(idB, rowB)
+              if (!specA && !specB) return null
+              return (
+                <section aria-label="Cost of living" style={{ marginTop: '0.75rem', display: 'grid', gap: '0.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+                  {specA && (
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--hf-homefit-green)', marginBottom: 4 }}>{placeNameA}</div>
+                      <RelocationEquivalent dest={specA} fallbackOrigin={specB ?? undefined} />
+                    </div>
+                  )}
+                  {specB && (
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--hf-longevity-purple)', marginBottom: 4 }}>{placeNameB}</div>
+                      <RelocationEquivalent dest={specB} fallbackOrigin={specA ?? undefined} />
+                    </div>
+                  )}
+                </section>
+              )
+            })()}
 
             <section style={{ marginTop: '1rem' }}>
               <div

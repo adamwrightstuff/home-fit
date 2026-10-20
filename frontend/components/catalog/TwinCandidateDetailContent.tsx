@@ -73,7 +73,7 @@ export default function TwinCandidateDetailContent({
         {query.catalog.name}: {qIdx.homefit != null ? qIdx.homefit.toFixed(1) : '—'}
       </div>
 
-      <RelocationEquivalent dest={twin} fallbackOrigin={query} className="mb-2" />
+      <RelocationEquivalent dest={{ place: twin }} fallbackOrigin={{ place: query }} className="mb-2" />
 
       <div className="flex justify-center py-2">
         <RadarChart

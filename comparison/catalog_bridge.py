@@ -1,8 +1,8 @@
 """
 Bridge from catalog places (metro key, city, state) to the metro-level relocation calculator.
 
-The UI knows a place's catalog metro key ("nyc"), city ("New York") and state ("NY").  This maps
-the key to a CBSA code and applies city income tax only for the cities that have a citable rate
+The UI knows a place's catalog metro key ("nyc") or, for places outside the catalog, its CBSA code,
+plus city ("New York") and state ("NY").  This maps the key to a CBSA code and applies city income tax only for the cities that have a citable rate
 (New York, Philadelphia, Yonkers) when the place is inside that city.  Returns both a renter
 view and, when the user supplied their current monthly housing cost, an owner view.
 """
@@ -13,7 +13,7 @@ import json
 import os
 from typing import Any, Dict, Optional
 
-from comparison.relocation_equivalency import ESTIMATE_NOTE, equivalent_income
+from comparison.relocation_equivalency import ESTIMATE_NOTE, equivalent_income, metro as _metro
 
 with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "catalog_metro_cbsa.json"), "r", encoding="utf-8") as _f:
     _CBSA: Dict[str, str] = {k: v for k, v in json.load(_f).items() if not k.startswith("_")}
@@ -21,8 +21,21 @@ with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "cata
 CITY_TAX_CITIES = {"new york": "New York", "philadelphia": "Philadelphia", "yonkers": "Yonkers"}
 
 
+def resolve_metro(key: str) -> Optional[str]:
+    """CBSA code for a catalog metro key ("nyc") or a CBSA code itself ("35620"); None if unpriced."""
+    if key in _CBSA:
+        return _CBSA[key]
+    if key.isdigit():
+        try:
+            _metro(key)
+            return key
+        except KeyError:
+            return None
+    return None
+
+
 def known_metro(key: str) -> bool:
-    return key in _CBSA
+    return resolve_metro(key) is not None
 
 
 def _city(name: Optional[str]) -> Optional[str]:
@@ -38,11 +51,11 @@ def catalog_equivalency(origin_metro: str, dest_metro: str, income: float, *,
     monthly_cost is the user's current monthly housing cost (profile).  With it we return a
     renter view (cost scaled by the BEA rent level) and an owner view (scaled by Zillow home
     values); without it only the renter view at the origin metro's median rent."""
-    if origin_metro not in _CBSA or dest_metro not in _CBSA:
-        raise KeyError("unknown catalog metro")
+    o, d = resolve_metro(origin_metro), resolve_metro(dest_metro)
+    if o is None or d is None:
+        raise KeyError("unknown metro")
     kw = dict(origin_state=origin_state or None, dest_state=dest_state or None,
               origin_city=_city(origin_city), dest_city=_city(dest_city))
-    o, d = _CBSA[origin_metro], _CBSA[dest_metro]
     yearly = monthly_cost * 12.0 if monthly_cost and monthly_cost > 0 else None
     out: Dict[str, Any] = {"estimate_note": ESTIMATE_NOTE, "same_metro": o == d, "rent": None, "own": None}
     if o == d:

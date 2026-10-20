@@ -19,6 +19,7 @@ export interface RelocationResult {
 /** Where a catalog place sits for pricing: metro key, state, and city (for city income tax). */
 export interface PlaceCtx {
   name: string
+  /** Catalog metro key ("nyc") or, for places outside the catalog, a CBSA code. */
   metro: string
   state: string
   city: string
@@ -82,4 +83,36 @@ export function fetchRelocation(
     cache.set(key, p)
   }
   return p
+}
+
+/** How a caller identifies a place: a resolved catalog place, a catalog key, or a saved place's coordinates. */
+export type PlaceSpec =
+  | { place: CatalogMapPlace }
+  | { key: string }
+  | { saved: { name: string; lat: number; lon: number; city?: string; state?: string } }
+
+const metroCache = new Map<string, Promise<string | null>>()
+/** CBSA code for a coordinate (null outside the metros we price). */
+export function fetchMetroForPoint(lat: number, lon: number): Promise<string | null> {
+  const key = `${lat.toFixed(3)},${lon.toFixed(3)}`
+  let p = metroCache.get(key)
+  if (!p) {
+    p = fetch(`/api/relocation/metro?lat=${lat}&lon=${lon}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => (j && typeof j.cbsa === 'string' ? (j.cbsa as string) : null))
+      .catch(() => null)
+    metroCache.set(key, p)
+  }
+  return p
+}
+
+export async function ctxFromSpec(spec: PlaceSpec): Promise<PlaceCtx | null> {
+  if ('place' in spec) return placeCtx(spec.place)
+  if ('key' in spec) {
+    const p = await findPlaceByKey(spec.key)
+    return p ? placeCtx(p) : null
+  }
+  const s = spec.saved
+  const cbsa = await fetchMetroForPoint(s.lat, s.lon)
+  return cbsa ? { name: s.name, metro: cbsa, state: s.state ?? '', city: s.city ?? '' } : null
 }

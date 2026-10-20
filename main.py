@@ -5535,7 +5535,7 @@ def relocation_equivalent(
     """
     Income needed in dest_metro to keep the same money left over as `income` leaves in
     origin_metro (estimate; metro-level BEA prices, Census/Zillow housing, state and some city
-    income tax). Metros are catalog metro keys such as "nyc". Profile income and current
+    income tax). Metros are catalog metro keys such as "nyc" or CBSA codes for places outside the catalog. Profile income and current
     monthly housing cost come from the user's profile; nothing else is asked of the user.
     """
     from comparison.catalog_bridge import catalog_equivalency, known_metro
@@ -5551,6 +5551,21 @@ def relocation_equivalent(
         )
     except KeyError as e:
         raise HTTPException(status_code=422, detail=f"Cannot price that state: {e}")
+
+
+@app.get("/relocation/metro_for_point", dependencies=[Depends(require_proxy_auth)])
+def relocation_metro_for_point(lat: float, lon: float):
+    """
+    CBSA (metro) code for a coordinate, for places that are not in the catalog. Returns
+    {"cbsa": null} when the point is outside a metro we have prices for.
+    """
+    from comparison.catalog_bridge import known_metro
+    from data_sources.census_api import get_census_tract
+    tract = get_census_tract(lat, lon) or {}
+    code = str(tract.get("cbsa_code") or "")
+    if not code or not known_metro(code):
+        return {"cbsa": None}
+    return {"cbsa": code, "name": tract.get("cbsa_name")}
 
 
 @app.get("/climate_profile", dependencies=[Depends(require_proxy_auth)])

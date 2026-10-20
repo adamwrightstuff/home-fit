@@ -132,3 +132,12 @@ def test_every_catalog_metro_key_maps_to_a_priced_metro():
     from comparison import catalog_bridge as B
     for key, code in B._CBSA.items():
         assert code in R._msa, key
+
+
+def test_bridge_accepts_cbsa_codes_for_places_outside_the_catalog():
+    from comparison.catalog_bridge import catalog_equivalency, known_metro, resolve_metro
+    assert resolve_metro("nyc") == NYC and resolve_metro(NYC) == NYC and resolve_metro("00000") is None
+    assert known_metro(PHOENIX) and not known_metro("not-a-metro")
+    via_code = catalog_equivalency("19100", "35620", 100000)["rent"]["equivalent_income_in_dest"]
+    via_key = catalog_equivalency("dallas", "nyc", 100000)["rent"]["equivalent_income_in_dest"]
+    assert via_code == via_key
