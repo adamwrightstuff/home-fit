@@ -22,7 +22,7 @@ Rules (DESIGN_PRINCIPLES.md: objective, reproducible, same for every place)
                     miles) returns data -> map it to that agency (the automatic match picked a lookalike or a neighbour)
   T  transit        Transitland found no routes AND a retry agrees -> accept; reason states the OpenStreetMap bus stops
                     within 1.9 miles (so a reader can see whether service exists beyond the search radius)
-  H  healthcare     no clinics/pharmacies/hospitals found AND OpenStreetMap shows none within 3 miles -> accept
+  H  healthcare     no clinics/pharmacies/hospitals found AND OpenStreetMap shows no hospital, clinic, doctor or pharmacy within 3 miles (the kinds the pillar counts) -> accept
   P  political lean no precinct polygon within range of the pin -> accept (opt-in filter)
   E  education      no K-12 district covers the pin (Census 'School District Not Defined') -> reviewed exception
 """
@@ -322,7 +322,7 @@ def accept_by_rules(metro: str, path: Path, *, dry_run: bool = False, skip_crime
                 reason = (f"Rule T: Transitland returned no routes (confirmed on retry); OpenStreetMap shows {stops} bus stops "
                           f"within 1.9 miles; scores on the commute-time floor only.")
         elif pillar == "healthcare_access" and "no clinics" in ev:
-            near = osm_count(f'nwr[amenity~"hospital|clinic|doctors|pharmacy|dentist"](around:4800,{la},{lo});')
+            near = osm_count(f'nwr[amenity~"hospital|clinic|doctors|pharmacy"](around:4800,{la},{lo});')
             far = osm_count(f'nwr[amenity~"hospital|clinic|doctors|pharmacy"](around:12000,{la},{lo});')
             if near == 0:
                 reason = f"Rule H: no clinics, pharmacies or hospitals within 3 miles in OpenStreetMap ({far} within 7.5 miles)."
