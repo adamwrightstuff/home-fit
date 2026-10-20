@@ -2,7 +2,9 @@
  * Single registry of catalog metros. Adding a metro = one entry here, plus its JSONL in
  * route.ts / next.config.js (see docs/METRO_EXPANSION_PLAYBOOK.md, Phase B).
  */
-export const CATALOG_METROS = ['nyc', 'la', 'sf', 'seattle', 'austin', 'chicago', 'philadelphia', 'dallas', 'houston'] as const
+// BEGIN GENERATED list (scripts/metro_agent/registry.py; do not edit by hand)
+export const CATALOG_METROS = ['nyc', 'la', 'sf', 'seattle', 'austin', 'chicago', 'philadelphia', 'dallas', 'houston', 'phoenix'] as const
+// END GENERATED list
 export type CatalogMetro = (typeof CATALOG_METROS)[number]
 
 export interface CatalogMetroMeta {
@@ -16,6 +18,7 @@ export interface CatalogMetroMeta {
 }
 
 export const CATALOG_METRO_META: Record<CatalogMetro, CatalogMetroMeta> = {
+  // BEGIN GENERATED meta (scripts/metro_agent/registry.py; do not edit by hand)
   nyc: { label: 'NYC', longLabel: 'New York metro', color: '#6B5CE7', bounds: [[-74.35, 40.45], [-73.65, 41.05]] },
   la: { label: 'LA', longLabel: 'Los Angeles metro', color: '#E76B5C', bounds: [[-118.75, 33.55], [-117.55, 34.45]] },
   sf: { label: 'SF', longLabel: 'Bay Area', color: '#2A9D8F', bounds: [[-122.7, 37.2], [-121.7, 38.2]] },
@@ -25,6 +28,8 @@ export const CATALOG_METRO_META: Record<CatalogMetro, CatalogMetroMeta> = {
   philadelphia: { label: 'PHL', longLabel: 'Philadelphia metro', color: '#5B8C3A', bounds: [[-75.6, 39.7], [-74.8, 40.3]] },
   dallas: { label: 'DFW', longLabel: 'Dallas-Fort Worth metro', color: '#B5651D', bounds: [[-97.9, 32.5], [-96.3, 33.4]] },
   houston: { label: 'HOU', longLabel: 'Houston metro', color: '#0E7C86', bounds: [[-95.9, 29.3], [-94.7, 30.3]] },
+  phoenix: { label: 'PHX', longLabel: 'Phoenix metro', color: '#D1495B', bounds: [[-112.81, 32.8], [-111.31, 34.05]] },
+  // END GENERATED meta
 }
 
 export function isCatalogMetro(v: unknown): v is CatalogMetro {

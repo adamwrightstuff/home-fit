@@ -149,5 +149,43 @@
       "agency": "Elkton Police Department",
       "kind": "own"
     }
+  },
+  "AZ": {
+    "tempe": {
+      "agency": "Tempe Police Department",
+      "kind": "own"
+    },
+    "litchfield park": {
+      "agency": "Litchfield Park Police Department",
+      "kind": "own"
+    },
+    "anthem": {
+      "agency": "Maricopa County Sheriff's Office",
+      "kind": "county"
+    },
+    "carefree": {
+      "agency": "Maricopa County Sheriff's Office",
+      "kind": "county"
+    },
+    "cave creek": {
+      "agency": "Maricopa County Sheriff's Office",
+      "kind": "county"
+    },
+    "fountain hills": {
+      "agency": "Maricopa County Sheriff's Office",
+      "kind": "county"
+    },
+    "new river": {
+      "agency": "Maricopa County Sheriff's Office",
+      "kind": "county"
+    },
+    "rio verde": {
+      "agency": "Maricopa County Sheriff's Office",
+      "kind": "county"
+    },
+    "san tan valley": {
+      "agency": "Pinal County Sheriff's Office",
+      "kind": "county"
+    }
   }
 }

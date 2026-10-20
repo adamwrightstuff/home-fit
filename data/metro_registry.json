@@ -1,0 +1,690 @@
+{
+  "_doc": "Catalog metros. status 'live' shows the metro on the site; 'building' keeps it off. cbsa = {CBSA code: {state FIPS: [county FIPS]}} (Census delineation). inference = fallback rule that tags an untagged place with this metro (state, plus counties where a state holds several metros). Edit with `metro_agent registry`, then `registry generate`.",
+  "metros": {
+    "nyc": {
+      "label": "NYC",
+      "long_label": "New York metro",
+      "color": "#6B5CE7",
+      "bounds": [
+        [
+          -74.35,
+          40.45
+        ],
+        [
+          -73.65,
+          41.05
+        ]
+      ],
+      "status": "live"
+    },
+    "la": {
+      "label": "LA",
+      "long_label": "Los Angeles metro",
+      "color": "#E76B5C",
+      "bounds": [
+        [
+          -118.75,
+          33.55
+        ],
+        [
+          -117.55,
+          34.45
+        ]
+      ],
+      "status": "live"
+    },
+    "sf": {
+      "label": "SF",
+      "long_label": "Bay Area",
+      "color": "#2A9D8F",
+      "bounds": [
+        [
+          -122.7,
+          37.2
+        ],
+        [
+          -121.7,
+          38.2
+        ]
+      ],
+      "status": "live"
+    },
+    "seattle": {
+      "label": "SEA",
+      "long_label": "Seattle metro",
+      "color": "#1A8FBF",
+      "bounds": [
+        [
+          -122.65,
+          47.45
+        ],
+        [
+          -122.1,
+          47.85
+        ]
+      ],
+      "status": "live"
+    },
+    "austin": {
+      "label": "ATX",
+      "long_label": "Austin metro",
+      "color": "#D98E04",
+      "bounds": [
+        [
+          -98.1,
+          30.0
+        ],
+        [
+          -97.4,
+          30.7
+        ]
+      ],
+      "status": "live"
+    },
+    "chicago": {
+      "label": "CHI",
+      "long_label": "Chicago metro",
+      "color": "#C2417A",
+      "bounds": [
+        [
+          -88.4,
+          41.5
+        ],
+        [
+          -87.4,
+          42.3
+        ]
+      ],
+      "status": "live"
+    },
+    "philadelphia": {
+      "label": "PHL",
+      "long_label": "Philadelphia metro",
+      "color": "#5B8C3A",
+      "bounds": [
+        [
+          -75.6,
+          39.7
+        ],
+        [
+          -74.8,
+          40.3
+        ]
+      ],
+      "status": "live"
+    },
+    "dallas": {
+      "label": "DFW",
+      "long_label": "Dallas-Fort Worth metro",
+      "color": "#B5651D",
+      "bounds": [
+        [
+          -97.9,
+          32.5
+        ],
+        [
+          -96.3,
+          33.4
+        ]
+      ],
+      "status": "live",
+      "states": [
+        "TX"
+      ],
+      "cbsa": {
+        "19100": {
+          "48": [
+            "085",
+            "113",
+            "121",
+            "139",
+            "231",
+            "251",
+            "257",
+            "367",
+            "397",
+            "439",
+            "497"
+          ]
+        }
+      },
+      "inference": {
+        "state": "TX",
+        "counties": [
+          "Collin",
+          "Dallas",
+          "Denton",
+          "Ellis",
+          "Hunt",
+          "Johnson",
+          "Kaufman",
+          "Parker",
+          "Rockwall",
+          "Tarrant",
+          "Wise"
+        ]
+      }
+    },
+    "houston": {
+      "label": "HOU",
+      "long_label": "Houston metro",
+      "color": "#0E7C86",
+      "bounds": [
+        [
+          -95.9,
+          29.3
+        ],
+        [
+          -94.7,
+          30.3
+        ]
+      ],
+      "status": "live",
+      "states": [
+        "TX"
+      ],
+      "cbsa": {
+        "26420": {
+          "48": [
+            "015",
+            "039",
+            "071",
+            "157",
+            "167",
+            "201",
+            "291",
+            "339",
+            "473"
+          ]
+        }
+      },
+      "inference": {
+        "state": "TX",
+        "counties": [
+          "Austin",
+          "Brazoria",
+          "Chambers",
+          "Fort Bend",
+          "Galveston",
+          "Harris",
+          "Liberty",
+          "Montgomery",
+          "Waller"
+        ]
+      }
+    },
+    "phoenix": {
+      "label": "PHX",
+      "long_label": "Phoenix metro",
+      "color": "#D1495B",
+      "bounds": [
+        [
+          -112.81,
+          32.8
+        ],
+        [
+          -111.31,
+          34.05
+        ]
+      ],
+      "status": "live",
+      "states": [
+        "AZ"
+      ],
+      "cbsa": {
+        "38060": {
+          "04": [
+            "013",
+            "021"
+          ]
+        }
+      },
+      "inference": {
+        "state": "AZ"
+      }
+    },
+    "san_antonio": {
+      "label": "SAT",
+      "long_label": "San Antonio metro",
+      "color": "#AD1457",
+      "bounds": [
+        [
+          -99.15,
+          28.89
+        ],
+        [
+          -97.88,
+          30.05
+        ]
+      ],
+      "status": "building",
+      "states": [
+        "TX"
+      ],
+      "cbsa": {
+        "41700": {
+          "48": [
+            "013",
+            "019",
+            "029",
+            "091",
+            "187",
+            "259",
+            "325",
+            "493"
+          ]
+        }
+      },
+      "inference": {
+        "state": "TX",
+        "counties": [
+          "Atascosa",
+          "Bandera",
+          "Bexar",
+          "Comal",
+          "Guadalupe",
+          "Kendall",
+          "Medina",
+          "Wilson"
+        ]
+      }
+    },
+    "sacramento": {
+      "label": "SAC",
+      "long_label": "Sacramento metro",
+      "color": "#558B2F",
+      "bounds": [
+        [
+          -122.1,
+          38.19
+        ],
+        [
+          -120.51,
+          39.17
+        ]
+      ],
+      "status": "building",
+      "states": [
+        "CA"
+      ],
+      "cbsa": {
+        "40900": {
+          "06": [
+            "017",
+            "061",
+            "067",
+            "113"
+          ]
+        }
+      },
+      "inference": {
+        "state": "CA",
+        "counties": [
+          "El Dorado",
+          "Placer",
+          "Sacramento",
+          "Yolo"
+        ]
+      }
+    },
+    "las_vegas": {
+      "label": "LAS",
+      "long_label": "Las Vegas metro",
+      "color": "#E0A100",
+      "bounds": [
+        [
+          -115.75,
+          35.09
+        ],
+        [
+          -113.99,
+          36.88
+        ]
+      ],
+      "status": "building",
+      "states": [
+        "NV"
+      ],
+      "cbsa": {
+        "29820": {
+          "32": [
+            "003"
+          ]
+        }
+      },
+      "inference": {
+        "state": "NV"
+      }
+    },
+    "orlando": {
+      "label": "ORL",
+      "long_label": "Orlando metro",
+      "color": "#8E44AD",
+      "bounds": [
+        [
+          -82.01,
+          28.16
+        ],
+        [
+          -81.09,
+          29.0
+        ]
+      ],
+      "status": "building",
+      "states": [
+        "FL"
+      ],
+      "cbsa": {
+        "36740": {
+          "12": [
+            "069",
+            "095",
+            "097",
+            "117"
+          ]
+        }
+      },
+      "inference": {
+        "state": "FL",
+        "counties": [
+          "Lake",
+          "Orange",
+          "Osceola",
+          "Seminole"
+        ]
+      }
+    },
+    "tampa": {
+      "label": "TPA",
+      "long_label": "Tampa Bay metro",
+      "color": "#1B9AAA",
+      "bounds": [
+        [
+          -82.91,
+          27.64
+        ],
+        [
+          -82.04,
+          28.64
+        ]
+      ],
+      "status": "building",
+      "states": [
+        "FL"
+      ],
+      "cbsa": {
+        "45300": {
+          "12": [
+            "053",
+            "057",
+            "101",
+            "103"
+          ]
+        }
+      },
+      "inference": {
+        "state": "FL",
+        "counties": [
+          "Hernando",
+          "Hillsborough",
+          "Pasco",
+          "Pinellas"
+        ]
+      }
+    },
+    "miami": {
+      "label": "MIA",
+      "long_label": "Miami metro",
+      "color": "#E4572E",
+      "bounds": [
+        [
+          -80.56,
+          25.39
+        ],
+        [
+          -79.96,
+          27.04
+        ]
+      ],
+      "status": "building",
+      "states": [
+        "FL"
+      ],
+      "cbsa": {
+        "33100": {
+          "12": [
+            "011",
+            "086",
+            "099"
+          ]
+        }
+      },
+      "inference": {
+        "state": "FL",
+        "counties": [
+          "Broward",
+          "Miami-Dade",
+          "Palm Beach"
+        ]
+      }
+    },
+    "charlotte": {
+      "label": "CLT",
+      "long_label": "Charlotte metro",
+      "color": "#2E7D32",
+      "bounds": [
+        [
+          -81.32,
+          34.86
+        ],
+        [
+          -80.41,
+          35.87
+        ]
+      ],
+      "status": "building",
+      "states": [
+        "NC"
+      ],
+      "cbsa": {
+        "16740": {
+          "37": [
+            "007",
+            "025",
+            "071",
+            "097",
+            "109",
+            "119",
+            "159",
+            "179"
+          ],
+          "45": [
+            "023",
+            "057",
+            "091"
+          ]
+        }
+      },
+      "inference": {
+        "state": "NC",
+        "counties": [
+          "Cabarrus",
+          "Gaston",
+          "Iredell",
+          "Lincoln",
+          "Mecklenburg",
+          "Rowan",
+          "Union"
+        ]
+      }
+    },
+    "raleigh": {
+      "label": "RDU",
+      "long_label": "Raleigh metro",
+      "color": "#6D4C41",
+      "bounds": [
+        [
+          -78.93,
+          35.31
+        ],
+        [
+          -78.21,
+          36.18
+        ]
+      ],
+      "status": "building",
+      "states": [
+        "NC"
+      ],
+      "cbsa": {
+        "39580": {
+          "37": [
+            "069",
+            "101",
+            "183"
+          ]
+        }
+      },
+      "inference": {
+        "state": "NC",
+        "counties": [
+          "Franklin",
+          "Johnston",
+          "Wake"
+        ]
+      }
+    },
+    "atlanta": {
+      "label": "ATL",
+      "long_label": "Atlanta metro",
+      "color": "#C62828",
+      "bounds": [
+        [
+          -84.92,
+          33.23
+        ],
+        [
+          -83.77,
+          34.33
+        ]
+      ],
+      "status": "building",
+      "states": [
+        "GA"
+      ],
+      "cbsa": {
+        "12060": {
+          "13": [
+            "013",
+            "015",
+            "035",
+            "045",
+            "057",
+            "063",
+            "067",
+            "077",
+            "085",
+            "089",
+            "097",
+            "113",
+            "117",
+            "121",
+            "135",
+            "143",
+            "149",
+            "151",
+            "159",
+            "187",
+            "199",
+            "211",
+            "217",
+            "223",
+            "227",
+            "231",
+            "247",
+            "255",
+            "297"
+          ]
+        }
+      },
+      "inference": {
+        "state": "GA"
+      }
+    },
+    "boston": {
+      "label": "BOS",
+      "long_label": "Boston metro",
+      "color": "#283593",
+      "bounds": [
+        [
+          -71.6,
+          41.96
+        ],
+        [
+          -70.6,
+          42.78
+        ]
+      ],
+      "status": "building",
+      "states": [
+        "MA"
+      ],
+      "cbsa": {
+        "14460": {
+          "25": [
+            "009",
+            "017",
+            "021",
+            "023",
+            "025"
+          ],
+          "33": [
+            "015",
+            "017"
+          ]
+        }
+      },
+      "inference": {
+        "state": "MA"
+      }
+    },
+    "denver": {
+      "label": "DEN",
+      "long_label": "Denver metro",
+      "color": "#00897B",
+      "bounds": [
+        [
+          -105.42,
+          39.18
+        ],
+        [
+          -104.35,
+          40.06
+        ]
+      ],
+      "status": "building",
+      "states": [
+        "CO"
+      ],
+      "cbsa": {
+        "19740": {
+          "08": [
+            "001",
+            "005",
+            "014",
+            "019",
+            "031",
+            "035",
+            "039",
+            "047",
+            "059",
+            "093"
+          ]
+        }
+      },
+      "inference": {
+        "state": "CO"
+      }
+    }
+  }
+}

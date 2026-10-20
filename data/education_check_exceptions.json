@@ -1,5 +1,8 @@
 {
   "sf:Belvedere": "No rated school within the radius: its schools are in Tiburon, just past 2 mi. Education left out of the total.",
   "nyc:Babylon": "Babylon's junior-senior high has no SchoolDigger rating; only the elementary level can be scored.",
-  "nyc:Edgewater": "Edgewater's district is K-8 with no middle or high school in SchoolDigger's list; only elementary is scored."
+  "nyc:Edgewater": "Edgewater's district is K-8 with no middle or high school in SchoolDigger's list; only elementary is scored.",
+  "phoenix:Sun City": "Census lists the pin as 'School District Not Defined' (no K-12 district covers it: retirement community or unorganized rural land), so there is no zoned or home-district school. Nearest public schools are 1.4 to 7 miles away in other districts.",
+  "phoenix:Sun City West": "Census lists the pin as 'School District Not Defined' (no K-12 district covers it: retirement community or unorganized rural land), so there is no zoned or home-district school. Nearest public schools are 1.4 to 7 miles away in other districts.",
+  "phoenix:Rio Verde": "Census lists the pin as 'School District Not Defined' (no K-12 district covers it: retirement community or unorganized rural land), so there is no zoned or home-district school. Nearest public schools are 1.4 to 7 miles away in other districts."
 }

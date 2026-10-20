@@ -4,6 +4,7 @@ const path = require('path')
 // buildCommand before next build runs). Needed by any route that reads the
 // catalog at build/request time.
 const CATALOG_DATA_FILES = [
+  // BEGIN GENERATED files (scripts/metro_agent/registry.py; do not edit by hand)
   'data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   'data/la_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   'data/sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
@@ -13,6 +14,8 @@ const CATALOG_DATA_FILES = [
   'data/philadelphia_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   'data/dallas_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   'data/houston_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  'data/phoenix_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  // END GENERATED files
   'data/catalog_climate_profiles.jsonl',
 ]
 

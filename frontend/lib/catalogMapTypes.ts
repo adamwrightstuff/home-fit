@@ -98,19 +98,28 @@ export function catalogRowKey(c: Pick<CatalogRow, 'name' | 'county_borough' | 's
 
 const SF_COUNTIES = new Set(['San Francisco', 'San Mateo', 'Santa Clara', 'Alameda', 'Contra Costa', 'Marin'])
 const PHILLY_NJ_COUNTIES = new Set(['Burlington', 'Camden', 'Gloucester', 'Salem'])
-const DALLAS_TX_COUNTIES = new Set(['Collin', 'Dallas', 'Denton', 'Ellis', 'Hunt', 'Johnson', 'Kaufman', 'Parker', 'Rockwall', 'Tarrant', 'Wise'])
-const HOUSTON_TX_COUNTIES = new Set(['Austin', 'Brazoria', 'Chambers', 'Fort Bend', 'Galveston', 'Harris', 'Liberty', 'Montgomery', 'Waller'])
 
 /**
  * Fallback when a place carries no `metro` tag (the API tags every place; this only runs on stale
  * data). State alone decides unambiguous states; CA and NJ are split by county. Add new states here.
  */
+// BEGIN GENERATED infer (scripts/metro_agent/registry.py; do not edit by hand)
+function inferFromRegistry(state: string, county: string): CatalogMetro | null {
+  if (state === 'TX' && ['Collin', 'Dallas', 'Denton', 'Ellis', 'Hunt', 'Johnson', 'Kaufman', 'Parker', 'Rockwall', 'Tarrant', 'Wise'].includes(county)) return 'dallas'
+  if (state === 'TX' && ['Austin', 'Brazoria', 'Chambers', 'Fort Bend', 'Galveston', 'Harris', 'Liberty', 'Montgomery', 'Waller'].includes(county)) return 'houston'
+  if (state === 'AZ') return 'phoenix'
+  return null
+}
+// END GENERATED infer
+
 export function inferCatalogMetro(p: CatalogMapPlace & { metro?: CatalogMetro }): CatalogMetro {
   if (isCatalogMetro(p.metro)) return p.metro
   const state = p.catalog.state_abbr
   const county = p.catalog.county_borough
+  const fromRegistry = inferFromRegistry(state, county)
+  if (fromRegistry) return fromRegistry
   if (state === 'WA') return 'seattle'
-  if (state === 'TX') return DALLAS_TX_COUNTIES.has(county) ? 'dallas' : HOUSTON_TX_COUNTIES.has(county) ? 'houston' : 'austin'
+  if (state === 'TX') return 'austin'
   if (state === 'IL' || state === 'IN') return 'chicago'
   if (state === 'PA' || state === 'DE' || state === 'MD') return 'philadelphia'
   if (state === 'NJ' && PHILLY_NJ_COUNTIES.has(county)) return 'philadelphia'

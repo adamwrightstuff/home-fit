@@ -33,6 +33,7 @@ export interface NeighborhoodEntry {
 }
 
 const METRO_FILES: Record<CatalogMetro, string> = {
+  // BEGIN GENERATED server (scripts/metro_agent/registry.py; do not edit by hand)
   nyc: 'nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   la: 'la_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   sf: 'sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
@@ -42,6 +43,8 @@ const METRO_FILES: Record<CatalogMetro, string> = {
   philadelphia: 'philadelphia_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   dallas: 'dallas_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   houston: 'houston_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  phoenix: 'phoenix_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  // END GENERATED server
 }
 
 function dataRoots(): string[] {
