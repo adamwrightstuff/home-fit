@@ -602,8 +602,8 @@
       "kind": "county"
     },
     "tampa": {
-      "agency": "Tampa Police Department",
-      "kind": "own"
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
     },
     "tampa township": {
       "agency": "Tampa Police Department",
@@ -736,6 +736,66 @@
     "cutler bay township": {
       "agency": "Cutler Bay Police Department",
       "kind": "own"
+    },
+    "keystone": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "saint petersburg": {
+      "agency": "St. Petersburg Police Department",
+      "kind": "own"
+    },
+    "saint petersburg township": {
+      "agency": "St. Petersburg Police Department",
+      "kind": "own"
+    },
+    "saint pete beach": {
+      "agency": "St. Pete Beach Police Department",
+      "kind": "own"
+    },
+    "saint pete beach township": {
+      "agency": "St. Pete Beach Police Department",
+      "kind": "own"
+    },
+    "town \"n\" country": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "lutz": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "lutz township": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "palm harbor": {
+      "agency": "Pinellas County Sheriff's Office",
+      "kind": "county"
+    },
+    "palm harbor township": {
+      "agency": "Pinellas County Sheriff's Office",
+      "kind": "county"
+    },
+    "dunedin": {
+      "agency": "Pinellas County Sheriff's Office",
+      "kind": "county"
+    },
+    "kendall": {
+      "agency": "Miami-Dade County Police Department",
+      "kind": "county"
+    },
+    "kendall township": {
+      "agency": "Miami-Dade County Police Department",
+      "kind": "county"
+    },
+    "the hammocks": {
+      "agency": "Miami-Dade County Police Department",
+      "kind": "county"
+    },
+    "the hammocks township": {
+      "agency": "Miami-Dade County Police Department",
+      "kind": "county"
     }
   },
   "NC": {
@@ -762,6 +822,40 @@
     "charlotte township": {
       "agency": "Charlotte-Mecklenburg Police Department",
       "kind": "own"
+    }
+  },
+  "GA": {
+    "cartersville": {
+      "agency": "Cartersville Police Department",
+      "kind": "own"
+    },
+    "cartersville township": {
+      "agency": "Cartersville Police Department",
+      "kind": "own"
+    },
+    "mableton": {
+      "agency": "Cobb County Police Department",
+      "kind": "county"
+    },
+    "mableton township": {
+      "agency": "Cobb County Police Department",
+      "kind": "county"
+    },
+    "peachtree city": {
+      "agency": "Peachtree City Police Department",
+      "kind": "own"
+    },
+    "peachtree city township": {
+      "agency": "Peachtree City Police Department",
+      "kind": "own"
+    },
+    "vinings": {
+      "agency": "Cobb County Police Department",
+      "kind": "county"
+    },
+    "vinings township": {
+      "agency": "Cobb County Police Department",
+      "kind": "county"
     }
   }
 }

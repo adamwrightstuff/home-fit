@@ -23,6 +23,7 @@ const CATALOG_DATA_FILES = [
   'data/miami_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   'data/charlotte_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   'data/raleigh_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  'data/atlanta_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   // END GENERATED files
   'data/catalog_climate_profiles.jsonl',
 ]
