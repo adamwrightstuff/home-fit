@@ -242,6 +242,38 @@
     "san tan valley": {
       "agency": "Pinal County Sheriff's Office",
       "kind": "county"
+    },
+    "gold canyon": {
+      "agency": "Pinal County Sheriff's Office",
+      "kind": "county"
+    },
+    "gold canyon township": {
+      "agency": "Pinal County Sheriff's Office",
+      "kind": "county"
+    },
+    "sun city west": {
+      "agency": "Maricopa County Sheriff's Office",
+      "kind": "county"
+    },
+    "sun city west township": {
+      "agency": "Maricopa County Sheriff's Office",
+      "kind": "county"
+    },
+    "sun city": {
+      "agency": "Maricopa County Sheriff's Office",
+      "kind": "county"
+    },
+    "sun city township": {
+      "agency": "Maricopa County Sheriff's Office",
+      "kind": "county"
+    },
+    "sun lakes": {
+      "agency": "Maricopa County Sheriff's Office",
+      "kind": "county"
+    },
+    "sun lakes township": {
+      "agency": "Maricopa County Sheriff's Office",
+      "kind": "county"
     }
   },
   "CA": {
@@ -427,6 +459,308 @@
     },
     "citrus heights township": {
       "agency": "Citrus Heights Police Department",
+      "kind": "own"
+    }
+  },
+  "NV": {
+    "north las vegas": {
+      "agency": "North Las Vegas Police Department",
+      "kind": "own"
+    },
+    "north las vegas township": {
+      "agency": "North Las Vegas Police Department",
+      "kind": "own"
+    },
+    "las vegas": {
+      "agency": "Las Vegas Metropolitan Police Department",
+      "kind": "own"
+    },
+    "las vegas township": {
+      "agency": "Las Vegas Metropolitan Police Department",
+      "kind": "own"
+    },
+    "paradise": {
+      "agency": "Las Vegas Metropolitan Police Department",
+      "kind": "county"
+    },
+    "paradise township": {
+      "agency": "Las Vegas Metropolitan Police Department",
+      "kind": "county"
+    },
+    "spring valley": {
+      "agency": "Las Vegas Metropolitan Police Department",
+      "kind": "county"
+    },
+    "spring valley township": {
+      "agency": "Las Vegas Metropolitan Police Department",
+      "kind": "county"
+    },
+    "sunrise manor": {
+      "agency": "Las Vegas Metropolitan Police Department",
+      "kind": "county"
+    },
+    "sunrise manor township": {
+      "agency": "Las Vegas Metropolitan Police Department",
+      "kind": "county"
+    },
+    "whitney": {
+      "agency": "Las Vegas Metropolitan Police Department",
+      "kind": "county"
+    },
+    "whitney township": {
+      "agency": "Las Vegas Metropolitan Police Department",
+      "kind": "county"
+    },
+    "winchester": {
+      "agency": "Las Vegas Metropolitan Police Department",
+      "kind": "county"
+    },
+    "winchester township": {
+      "agency": "Las Vegas Metropolitan Police Department",
+      "kind": "county"
+    }
+  },
+  "FL": {
+    "orlando": {
+      "agency": "Orlando Police Department",
+      "kind": "own"
+    },
+    "orlando township": {
+      "agency": "Orlando Police Department",
+      "kind": "own"
+    },
+    "celebration": {
+      "agency": "Osceola County Sheriff's Office",
+      "kind": "county"
+    },
+    "celebration township": {
+      "agency": "Osceola County Sheriff's Office",
+      "kind": "county"
+    },
+    "fruitland park": {
+      "agency": "Fruitland Park Police Department",
+      "kind": "own"
+    },
+    "fruitland park township": {
+      "agency": "Fruitland Park Police Department",
+      "kind": "own"
+    },
+    "ocoee": {
+      "agency": "Ocoee Police Department",
+      "kind": "own"
+    },
+    "ocoee township": {
+      "agency": "Ocoee Police Department",
+      "kind": "own"
+    },
+    "pine hills": {
+      "agency": "Orange County Sheriff's Office",
+      "kind": "county"
+    },
+    "pine hills township": {
+      "agency": "Orange County Sheriff's Office",
+      "kind": "county"
+    },
+    "union park": {
+      "agency": "Orange County Sheriff's Office",
+      "kind": "county"
+    },
+    "union park township": {
+      "agency": "Orange County Sheriff's Office",
+      "kind": "county"
+    },
+    "winter garden": {
+      "agency": "Winter Garden Police Department",
+      "kind": "own"
+    },
+    "winter garden township": {
+      "agency": "Winter Garden Police Department",
+      "kind": "own"
+    },
+    "winter park": {
+      "agency": "Winter Park Police Department",
+      "kind": "own"
+    },
+    "winter park township": {
+      "agency": "Winter Park Police Department",
+      "kind": "own"
+    },
+    "apollo beach": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "apollo beach township": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "brandon": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "brandon township": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "tampa": {
+      "agency": "Tampa Police Department",
+      "kind": "own"
+    },
+    "tampa township": {
+      "agency": "Tampa Police Department",
+      "kind": "own"
+    },
+    "citrus park": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "citrus park township": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "st. petersburg": {
+      "agency": "St. Petersburg Police Department",
+      "kind": "own"
+    },
+    "st. petersburg township": {
+      "agency": "St. Petersburg Police Department",
+      "kind": "own"
+    },
+    "land o' lakes": {
+      "agency": "Pasco County Sheriff's Office",
+      "kind": "county"
+    },
+    "land o' lakes township": {
+      "agency": "Pasco County Sheriff's Office",
+      "kind": "county"
+    },
+    "odessa": {
+      "agency": "Pasco County Sheriff's Office",
+      "kind": "county"
+    },
+    "odessa township": {
+      "agency": "Pasco County Sheriff's Office",
+      "kind": "county"
+    },
+    "pinellas park": {
+      "agency": "Pinellas Park Police Department",
+      "kind": "own"
+    },
+    "pinellas park township": {
+      "agency": "Pinellas Park Police Department",
+      "kind": "own"
+    },
+    "riverview": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "riverview township": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "ruskin": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "ruskin township": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "safety harbor": {
+      "agency": "Safety Harbor Police Department",
+      "kind": "own"
+    },
+    "safety harbor township": {
+      "agency": "Safety Harbor Police Department",
+      "kind": "own"
+    },
+    "spring hill": {
+      "agency": "Hernando County Sheriff's Office",
+      "kind": "county"
+    },
+    "spring hill township": {
+      "agency": "Hernando County Sheriff's Office",
+      "kind": "county"
+    },
+    "st. pete beach": {
+      "agency": "St. Pete Beach Police Department",
+      "kind": "own"
+    },
+    "st. pete beach township": {
+      "agency": "St. Pete Beach Police Department",
+      "kind": "own"
+    },
+    "town 'n' country": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "town 'n' country township": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "valrico": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "valrico township": {
+      "agency": "Hillsborough County Sheriff's Office",
+      "kind": "county"
+    },
+    "wesley chapel": {
+      "agency": "Pasco County Sheriff's Office",
+      "kind": "county"
+    },
+    "wesley chapel township": {
+      "agency": "Pasco County Sheriff's Office",
+      "kind": "county"
+    },
+    "coconut creek": {
+      "agency": "Coconut Creek Police Department",
+      "kind": "own"
+    },
+    "coconut creek township": {
+      "agency": "Coconut Creek Police Department",
+      "kind": "own"
+    },
+    "miami": {
+      "agency": "Miami Police Department",
+      "kind": "own"
+    },
+    "miami township": {
+      "agency": "Miami Police Department",
+      "kind": "own"
+    },
+    "cutler bay": {
+      "agency": "Cutler Bay Police Department",
+      "kind": "own"
+    },
+    "cutler bay township": {
+      "agency": "Cutler Bay Police Department",
+      "kind": "own"
+    }
+  },
+  "NC": {
+    "belmont": {
+      "agency": "Belmont Police Department",
+      "kind": "own"
+    },
+    "belmont township": {
+      "agency": "Belmont Police Department",
+      "kind": "own"
+    },
+    "denver": {
+      "agency": "Lincoln County Sheriff's Office",
+      "kind": "county"
+    },
+    "denver township": {
+      "agency": "Lincoln County Sheriff's Office",
+      "kind": "county"
+    },
+    "charlotte": {
+      "agency": "Charlotte-Mecklenburg Police Department",
+      "kind": "own"
+    },
+    "charlotte township": {
+      "agency": "Charlotte-Mecklenburg Police Department",
       "kind": "own"
     }
   }

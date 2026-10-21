@@ -2,7 +2,8 @@
   "sf:Belvedere": "No rated school within the radius: its schools are in Tiburon, just past 2 mi. Education left out of the total.",
   "nyc:Babylon": "Babylon's junior-senior high has no SchoolDigger rating; only the elementary level can be scored.",
   "nyc:Edgewater": "Edgewater's district is K-8 with no middle or high school in SchoolDigger's list; only elementary is scored.",
-  "phoenix:Sun City": "Census lists the pin as 'School District Not Defined' (no K-12 district covers it: retirement community or unorganized rural land), so there is no zoned or home-district school. Nearest public schools are 1.4 to 7 miles away in other districts.",
-  "phoenix:Sun City West": "Census lists the pin as 'School District Not Defined' (no K-12 district covers it: retirement community or unorganized rural land), so there is no zoned or home-district school. Nearest public schools are 1.4 to 7 miles away in other districts.",
-  "phoenix:Rio Verde": "Census lists the pin as 'School District Not Defined' (no K-12 district covers it: retirement community or unorganized rural land), so there is no zoned or home-district school. Nearest public schools are 1.4 to 7 miles away in other districts."
+  "phoenix:Sun City": "Rule E: Census lists the pin as 'School District Not Defined' (no K-12 district covers it), so there is no zoned or home-district school.",
+  "phoenix:Sun City West": "Rule E: Census lists the pin as 'School District Not Defined' (no K-12 district covers it), so there is no zoned or home-district school.",
+  "phoenix:Rio Verde": "Rule E: Census lists the pin as 'School District Not Defined' (no K-12 district covers it), so there is no zoned or home-district school.",
+  "las_vegas:Indian Springs": "Rule E2: Clark County School District covers the pin and 3 public schools are within 3 miles, but none has a SchoolDigger rating (very small schools are unrated), so there is nothing to score."
 }
