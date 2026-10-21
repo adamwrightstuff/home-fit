@@ -73,6 +73,12 @@
 
   --hf-danger: #dc3545;
 
+  /* Control sizing: desktop toolbar controls (search, picker, buttons) share these. Mobile uses --hf-control-h-touch. */
+  --hf-control-h: 1.75rem;
+  --hf-control-h-touch: 2.5rem;
+  --hf-control-radius: 0.5rem;
+  --hf-control-text: 0.75rem;
+
   /* Color scale aliases (old scales → new palette for backward compat) */
   --c-purple-50:  var(--tr-accent-50);
   --c-purple-200: var(--tr-accent-200);

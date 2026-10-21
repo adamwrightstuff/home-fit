@@ -11,10 +11,12 @@ interface MetroPickerProps {
   value: MetroValue
   onChange: (v: MetroValue) => void
   counts?: Record<CatalogMetro, number> | null
+  /** Desktop toolbar size, matching the adjacent search input and buttons. */
+  compact?: boolean
 }
 
 /** Single-button metro selector that opens a searchable bottom sheet; scales to any number of metros. */
-export default function MetroPicker({ value, onChange, counts }: MetroPickerProps) {
+export default function MetroPicker({ value, onChange, counts, compact = false }: MetroPickerProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
 
@@ -63,11 +65,13 @@ export default function MetroPicker({ value, onChange, counts }: MetroPickerProp
         type="button"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        className="flex w-full items-center gap-2 rounded-full border border-[var(--hf-border)] bg-white px-3 py-2 text-sm font-semibold text-[var(--hf-text-primary)] shadow-sm"
+        className={compact
+          ? 'flex h-[var(--hf-control-h)] w-full items-center gap-1.5 rounded-[var(--hf-control-radius)] border border-[var(--hf-border)] bg-white px-2 text-[length:var(--hf-control-text)] font-semibold text-[var(--hf-text-primary)]'
+          : 'flex w-full items-center gap-2 rounded-full border border-[var(--hf-border)] bg-white px-3 py-2 text-sm font-semibold text-[var(--hf-text-primary)] shadow-sm'}
       >
-        <MapPin className="h-4 w-4 shrink-0" style={{ color: 'var(--hf-primary-1)' }} aria-hidden />
+        <MapPin className={compact ? 'h-3.5 w-3.5 shrink-0' : 'h-4 w-4 shrink-0'} style={{ color: 'var(--hf-primary-1)' }} aria-hidden />
         <span className="flex-1 truncate text-left">{triggerLabel}</span>
-        <ChevronDown className="h-4 w-4 shrink-0 text-[var(--hf-text-tertiary)]" aria-hidden />
+        <ChevronDown className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} shrink-0 text-[var(--hf-text-tertiary)]`} aria-hidden />
       </button>
 
       {open && createPortal(

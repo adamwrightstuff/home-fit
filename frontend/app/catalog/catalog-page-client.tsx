@@ -1258,7 +1258,7 @@ export default function CatalogPageClient({
               placeholder="Search neighborhoods…"
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
-              className="w-44 rounded-lg border border-[var(--hf-border)] px-2 py-1 text-xs shrink-0"
+              className="h-[var(--hf-control-h)] w-44 rounded-[var(--hf-control-radius)] border border-[var(--hf-border)] px-2 text-[length:var(--hf-control-text)] shrink-0"
             />
           ) : (
             <div className="relative flex items-center shrink-0">
@@ -1309,8 +1309,8 @@ export default function CatalogPageClient({
             <>
               <div className="h-4 w-px bg-[var(--hf-border)] shrink-0" />
               {/* Metro — searchable picker, scales to any number of metros */}
-              <div className="w-48 shrink-0">
-                <MetroPicker value={filterMetro} onChange={setFilterMetro} counts={metroResultCounts} />
+              <div className="w-44 shrink-0">
+                <MetroPicker compact value={filterMetro} onChange={setFilterMetro} counts={metroResultCounts} />
               </div>
             </>
           )}
@@ -1358,7 +1358,7 @@ export default function CatalogPageClient({
               <>
                 <button
                   type="button"
-                  className="flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2.5 py-1 text-xs font-semibold text-[var(--hf-text-secondary)] hover:bg-[var(--hf-hover-bg)]"
+                  className="flex h-[var(--hf-control-h)] items-center gap-1 rounded-[var(--hf-control-radius)] border border-[var(--hf-border)] px-2.5 text-[length:var(--hf-control-text)] font-semibold text-[var(--hf-text-secondary)] hover:bg-[var(--hf-hover-bg)]"
                   onClick={() => setFilterSheetOpen(true)}
                 >
                   <span>⚙</span>
@@ -1372,7 +1372,7 @@ export default function CatalogPageClient({
                 <button
                   type="button"
                   title={indexMode !== 'homefit' ? 'Weights apply to HomeFit score only' : undefined}
-                  className="rounded-lg border border-[var(--hf-border-strong)] px-2.5 py-1 text-xs font-bold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
+                  className="h-[var(--hf-control-h)] rounded-[var(--hf-control-radius)] border border-[var(--hf-border-strong)] px-2.5 text-[length:var(--hf-control-text)] font-bold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
                   style={{ opacity: indexMode !== 'homefit' ? 0.4 : 1, pointerEvents: indexMode !== 'homefit' ? 'none' : 'auto' }}
                   onClick={() => setWeightOpen(true)}
                 >Adjust weights</button>
