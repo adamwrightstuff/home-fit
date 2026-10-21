@@ -2,7 +2,7 @@
 
 import { neighborhoodHref } from '@/lib/neighborhoodPriorities'
 import { placeSlug } from '@/lib/neighborhoodSlug'
-import { CATALOG_METROS, CATALOG_METRO_META, zeroMetroCounts, type CatalogMetro } from '@/lib/catalogMetros'
+import { zeroMetroCounts, type CatalogMetro } from '@/lib/catalogMetros'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -1308,22 +1308,9 @@ export default function CatalogPageClient({
           {catalogMode === 'explorer' && (
             <>
               <div className="h-4 w-px bg-[var(--hf-border)] shrink-0" />
-              {/* Metro — segmented control */}
-              <div className="flex items-center shrink-0 overflow-hidden rounded-lg border border-[var(--hf-border)]">
-                {(['all', ...CATALOG_METROS] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    className={`border-r border-[var(--hf-border)] px-2.5 py-0.5 text-[0.65rem] font-bold last:border-r-0 ${filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)] hover:bg-white'}`}
-                    style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
-                    onClick={() => setFilterMetro(m)}
-                  >
-                    {m === 'all' ? 'All' : CATALOG_METRO_META[m].label}
-                    {m !== 'all' && metroResultCounts && (
-                      <span className="ml-0.5 font-normal opacity-60">({metroResultCounts[m]})</span>
-                    )}
-                  </button>
-                ))}
+              {/* Metro — searchable picker, scales to any number of metros */}
+              <div className="w-48 shrink-0">
+                <MetroPicker value={filterMetro} onChange={setFilterMetro} counts={metroResultCounts} />
               </div>
             </>
           )}
