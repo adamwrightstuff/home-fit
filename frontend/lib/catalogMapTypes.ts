@@ -117,6 +117,7 @@ function inferFromRegistry(state: string, county: string): CatalogMetro | null {
   if (state === 'AZ') return 'phoenix'
   if (state === 'NV') return 'las_vegas'
   if (state === 'GA') return 'atlanta'
+  if (state === 'MA') return 'boston'
   return null
 }
 // END GENERATED infer
