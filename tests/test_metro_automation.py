@@ -280,3 +280,14 @@ def test_c6_leaves_incorporated_places_and_places_already_on_a_sheriff_alone(mon
     already = scored("Anthem", "Maricopa County Sheriff's Office", 33.86, -112.13)
     already["catalog"]["state_abbr"] = "AZ"
     assert fin.mismatch_decisions([inc, already], "m", lambda st: agencies, rate, 2024, {("AZ", "Peoria"): "25", ("AZ", "Anthem"): "57"}) == []
+
+
+def test_c3_uses_a_consolidated_metropolitan_department_when_there_is_no_sheriff(monkeypatch):
+    metro_pd = [cand("Las Vegas Metropolitan Police Department", 9.0, ["within 15 km"])]
+    d = decide(monkeypatch, [result("Paradise", metro_pd, "NV")], {"Paradise": {"type": "suburb"}}, {("NV", "Paradise"): "57"})[0]
+    assert d["action"] == "map" and d["kind"] == "county" and d["agency"] == "Las Vegas Metropolitan Police Department"
+    inc = decide(monkeypatch, [result("Boulder City", metro_pd, "NV")], {"Boulder City": {"type": "suburb"}}, {("NV", "Boulder City"): "25"})[0]
+    assert inc["action"] == "gap"                              # an incorporated city is never given a county proxy
+    far = decide(monkeypatch, [result("Laughlin", [cand("Las Vegas Metropolitan Police Department", 150.0, ["within 15 km"])], "NV")],
+                 {"Laughlin": {"type": "suburb"}}, {("NV", "Laughlin"): "57"})[0]
+    assert far["action"] == "gap"                              # too far to be its police

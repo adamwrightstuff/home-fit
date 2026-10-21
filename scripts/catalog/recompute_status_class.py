@@ -30,6 +30,14 @@ sys.path.insert(0, str(REPO))
 
 CBSA = {"nyc": "35620", "sf": "41860", "la": "31080", "seattle": "42660", "austin": "12420",
         "chicago": "16980", "philadelphia": "37980", "dallas": "19100", "houston": "26420"}
+try:  # metros added since carry their CBSA in data/metro_registry.json (single source of truth)
+    from scripts.metro_agent import registry as _registry
+
+    for _slug, _m in _registry.load().items():
+        for _code in (_m.get("cbsa") or {}):
+            CBSA.setdefault(_slug, _code)
+except Exception:  # noqa: BLE001
+    pass
 ORDER = ["Struggling", "Working Class", "Middle Class", "Affluent", "Elite"]
 ACS = "https://api.census.gov/data/2022/acs/acs5"
 

@@ -18,8 +18,9 @@ Rules (DESIGN_PRINCIPLES.md: objective, reproducible, same for every place)
   C1 own agency     a police agency named for the place that returns agency-level data  -> map the place to it
   C2 neighborhood   a neighborhood of city X when a police agency whose name contains X (so "Charlotte-Mecklenburg Police
                     Department" counts for Charlotte) returns data and sits within 15 miles -> map city X to it
-  C3 unincorporated a Census-designated place (CDP) with no agency of its own and a county sheriff with data
-                    -> map to the sheriff as a county proxy (lower confidence, labelled by the scorer)
+  C3 unincorporated a Census-designated place (CDP) with no agency of its own and a county sheriff with data, or (when
+                    there is no sheriff) a consolidated "Metropolitan" or "County" police department within 15 miles
+                    -> map to it as a county proxy (lower confidence, labelled by the scorer)
   C4 otherwise      record the gap with the probe's evidence; never borrow a neighbouring town's numbers
   C6 unincorporated a Census-designated place scored with an agency that is neither its own nor a sheriff (a neighbouring
      scored city's police) while its county sheriff returns data -> map to the sheriff (county proxy)
@@ -162,6 +163,8 @@ def crime_decisions(results: List[Dict[str, Any]], metro: str, lsad: Dict[Tuple[
             if cp:
                 city_pd = [{"name": cp["name"], "data": cp["data"]}]
         sheriff = [c for c in usable if "sheriff" in c["name"].lower() and "county agency" in c["why"]]
+        consolidated = [c for c in police if re.search(r"metropolitan|county police", c["name"], re.I)
+                        and c.get("km") is not None and c["km"] <= OWN_MAX_KM]
         if not is_neigh and own:
             c = own[0]
             dec.update(action="map", kind="own", agency=c["name"], keys=_keys(place),
@@ -170,8 +173,8 @@ def crime_decisions(results: List[Dict[str, Any]], metro: str, lsad: Dict[Tuple[
             c = city_pd[0]
             dec.update(action="map", kind="own", agency=c["name"], keys=_keys(city),
                        reason=f"C2: neighborhood of {city}; {c['name']} returns {c['data']['year']} agency data")
-        elif not is_neigh and lsad.get((st, place)) == CDP_LSAD and not own and sheriff:
-            c = sheriff[0]
+        elif not is_neigh and lsad.get((st, place)) == CDP_LSAD and not own and (sheriff or consolidated):
+            c = (sheriff or consolidated)[0]
             dec.update(action="map", kind="county", agency=c["name"], keys=_keys(place),
                        reason=f"C3: census-designated (unincorporated) place with no agency of its own; {c['name']} "
                               f"returns {c['data']['year']} data (county proxy)")
