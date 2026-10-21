@@ -67,7 +67,7 @@ export default function MetroPicker({ value, onChange, counts, compact = false }
         aria-haspopup="dialog"
         className={compact
           ? 'flex h-[var(--hf-control-h)] w-full items-center gap-1.5 rounded-[var(--hf-control-radius)] border border-[var(--hf-border)] bg-white px-2 text-[length:var(--hf-control-text)] font-semibold text-[var(--hf-text-primary)]'
-          : 'flex w-full items-center gap-2 rounded-full border border-[var(--hf-border)] bg-white px-3 py-2 text-sm font-semibold text-[var(--hf-text-primary)] shadow-sm'}
+          : 'flex w-full items-center gap-2 rounded-full border border-[var(--hf-border)] bg-white px-3 h-[var(--hf-control-h-touch)] text-sm font-semibold text-[var(--hf-text-primary)] shadow-sm'}
       >
         <MapPin className={compact ? 'h-3.5 w-3.5 shrink-0' : 'h-4 w-4 shrink-0'} style={{ color: 'var(--hf-primary-1)' }} aria-hidden />
         <span className="flex-1 truncate text-left">{triggerLabel}</span>

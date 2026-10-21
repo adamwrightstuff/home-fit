@@ -1479,13 +1479,13 @@ export default function CatalogPageClient({
           <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
-              className={`rounded-full px-3 py-1.5 text-xs font-bold ${catalogMode === 'explorer' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+              className={`rounded-full px-3 h-[var(--hf-control-h-touch)] text-xs font-bold ${catalogMode === 'explorer' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
               style={catalogMode === 'explorer' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
               onClick={() => { setCatalogMode('explorer'); setTwinQueryKey(null); setTwinSearchText(''); router.replace('/catalog', { scroll: false }) }}
             >Explorer</button>
             <button
               type="button"
-              className={`rounded-full px-3 py-1.5 text-xs font-bold ${catalogMode === 'twin' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+              className={`rounded-full px-3 h-[var(--hf-control-h-touch)] text-xs font-bold ${catalogMode === 'twin' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
               style={catalogMode === 'twin' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
               onClick={() => { setCatalogMode('twin'); setViewMode('list') }}
             >Twin</button>
@@ -1495,7 +1495,7 @@ export default function CatalogPageClient({
             {/* Filters pill */}
             <button
               type="button"
-              className="flex items-center gap-1.5 rounded-full border border-[var(--hf-border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--hf-text-primary)] shadow-sm"
+              className="flex items-center gap-1.5 rounded-full border border-[var(--hf-border)] bg-white px-3 h-[var(--hf-control-h-touch)] text-xs font-semibold text-[var(--hf-text-primary)] shadow-sm"
               onClick={() => setFilterSheetOpen(true)}
               aria-label="Filters"
             >
@@ -1524,19 +1524,19 @@ export default function CatalogPageClient({
               <button
                 type="button"
                 disabled={twinControlsLocked}
-                className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold disabled:opacity-40 ${twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
+                className={`rounded-full px-2.5 h-[var(--hf-chip-h-touch)] text-[0.7rem] font-bold disabled:opacity-40 ${twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
                 onClick={() => setTwinCrossMetro(true)}
               >Cross-metro</button>
               <button
                 type="button"
                 disabled={twinControlsLocked}
-                className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold disabled:opacity-40 ${!twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
+                className={`rounded-full px-2.5 h-[var(--hf-chip-h-touch)] text-[0.7rem] font-bold disabled:opacity-40 ${!twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
                 onClick={() => setTwinCrossMetro(false)}
               >Same metro</button>
               <button
                 type="button"
                 disabled={twinControlsLocked}
-                className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold disabled:opacity-40 ${twinSameBand ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
+                className={`rounded-full px-2.5 h-[var(--hf-chip-h-touch)] text-[0.7rem] font-bold disabled:opacity-40 ${twinSameBand ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
                 onClick={() => setTwinSameBand((v) => !v)}
               >Same class</button>
               <button
@@ -1629,7 +1629,7 @@ export default function CatalogPageClient({
                       type="button"
                       aria-pressed={active}
                       onClick={() => setIndexModeAndListSort(x.id)}
-                      className="shrink-0 rounded-full px-3 py-1.5 text-xs font-bold shadow-sm"
+                      className="shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
                       style={active
                         ? { ...activeStyle, border: 'none' }
                         : { background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }
@@ -1641,7 +1641,7 @@ export default function CatalogPageClient({
                   type="button"
                   aria-pressed={sortByName}
                   onClick={() => setSortByName(true)}
-                  className="shrink-0 rounded-full px-3 py-1.5 text-xs font-bold shadow-sm"
+                  className="shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
                   style={sortByName
                     ? { background: 'var(--hf-primary-1)', color: '#fff', border: 'none' }
                     : { background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }
@@ -1654,7 +1654,7 @@ export default function CatalogPageClient({
                   type="button"
                   onClick={() => setWeightOpen(true)}
                   aria-label="Adjust weights"
-                  className="pointer-events-auto shrink-0 rounded-full px-3 py-1.5 text-xs font-bold shadow-sm"
+                  className="pointer-events-auto shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
                   style={{ background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }}
                 >⚖ Weights</button>
               )}
