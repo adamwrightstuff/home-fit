@@ -2078,7 +2078,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         
         # Submit water proximity call
         try:
-            from data_sources import osm_api
             futures['water'] = executor.submit(osm_api.query_water_features, lat, lon, 15000)
         except Exception:
             pass
@@ -3208,7 +3207,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             # If query failed (not available) OR if fallback was used but still 0, try direct query
             if query_failed or (not available and not local_green_meta.get("fallback_used", False)):
                 try:
-                    from data_sources import osm_api
                     # Try 1000m query directly as last resort
                     fallback_green = osm_api.query_green_spaces(lat, lon, radius_m=1000)
                     if not _greenspaces_osm_unavailable(fallback_green):
