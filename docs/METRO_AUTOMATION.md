@@ -62,6 +62,7 @@ Each decision is written to the output with the evidence that triggered it. A pl
 | T transit | Transitland found no routes and a retry agrees | Accept; the reason states the OpenStreetMap bus stops within 1.9 miles |
 | H healthcare | No clinics, pharmacies or hospitals found and OpenStreetMap shows none within 3 miles | Accept; the reason states the 7.5-mile count |
 | P political lean | No precinct polygon within range of the pin | Accept (opt-in filter) |
+| E2 education | A district covers the pin and public schools are within 3 miles, but none has a SchoolDigger rating (very small schools are unrated) | Reviewed exception; the reason states the counts |
 | E education | No K-12 district covers the pin (Census "School District Not Defined") | Reviewed exception in `data/education_check_exceptions.json` |
 
 Agencies for special purposes (university, school district, hospital, park rangers, constable, fire, transit, state police, campus) are never used for C1 to C3.

@@ -14,7 +14,8 @@ Steps
 
 Rules (DESIGN_PRINCIPLES.md: objective, reproducible, same for every place)
   C1 own agency     a police agency named for the place that returns agency-level data  -> map the place to it
-  C2 neighborhood   a neighborhood of city X when "X Police Department" returns data    -> map city X to it
+  C2 neighborhood   a neighborhood of city X when a police agency whose name contains X (so "Charlotte-Mecklenburg Police
+                    Department" counts for Charlotte) returns data and sits within 15 miles -> map city X to it
   C3 unincorporated a Census-designated place (CDP) with no agency of its own and a county sheriff with data
                     -> map to the sheriff as a county proxy (lower confidence, labelled by the scorer)
   C4 otherwise      record the gap with the probe's evidence; never borrow a neighbouring town's numbers
@@ -25,6 +26,8 @@ Rules (DESIGN_PRINCIPLES.md: objective, reproducible, same for every place)
   H  healthcare     no clinics/pharmacies/hospitals found AND OpenStreetMap shows no hospital, clinic, doctor or pharmacy within 3 miles (the kinds the pillar counts) -> accept
   P  political lean no precinct polygon within range of the pin -> accept (opt-in filter)
   E  education      no K-12 district covers the pin (Census 'School District Not Defined') -> reviewed exception
+  E2 education      a district covers the pin and public schools are within 3 miles, but none has a SchoolDigger rating
+                    (very small schools are unrated) -> reviewed exception; the reason states the counts
 """
 from __future__ import annotations
 
@@ -111,8 +114,33 @@ def _city_of(query: str) -> str:
     return parts[1] if len(parts) >= 3 else ""
 
 
-def crime_decisions(results: List[Dict[str, Any]], metro: str, lsad: Dict[Tuple[str, str], str]) -> List[Dict[str, Any]]:
-    """Apply rules C1-C4 to FBI probe results. Pure function: returns decisions, writes nothing."""
+def city_police(state: str, city: str, lat: float, lon: float, agencies_for: Callable[[str], List[Dict[str, Any]]],
+                rate_fn: Callable, last_year: int) -> Optional[Dict[str, Any]]:
+    """The nearest police agency of the state whose name contains the city's name (whole word) and that returns agency data."""
+    from . import fbi_probe as fp
+
+    word = re.compile(rf"\b{re.escape(city)}\b", re.I)
+    best = None
+    for ag in agencies_for(state):
+        name = fp._name(ag)
+        if not word.search(name) or not re.search(r"police", name, re.I) or SPECIAL_AGENCY.search(name):
+            continue
+        try:
+            d = fp._km((lat, lon), (float(fp._get(ag, "latitude", "lat")), float(fp._get(ag, "longitude", "lng", "lon"))))
+        except (TypeError, ValueError):
+            continue
+        if d > OWN_MAX_KM:
+            continue
+        data = fp.agency_data(fp._ori(ag), name, rate_fn, last_year)
+        if data and (best is None or d < best["km"]):
+            best = {"name": name, "km": d, "data": data}
+    return best
+
+
+def crime_decisions(results: List[Dict[str, Any]], metro: str, lsad: Dict[Tuple[str, str], str],
+                    agencies_for: Optional[Callable[[str], List[Dict[str, Any]]]] = None, rate_fn: Optional[Callable] = None,
+                    last_year: int = 0) -> List[Dict[str, Any]]:
+    """Apply rules C1-C4 to FBI probe results. Pure given its inputs: returns decisions, writes nothing."""
     cat = _catalog_rows(metro)
     out = []
     for r in results:
@@ -125,6 +153,10 @@ def crime_decisions(results: List[Dict[str, Any]], metro: str, lsad: Dict[Tuple[
         dec: Dict[str, Any] = {"place": place, "state": st, "action": "gap", "reason": r["note"]}
         own = [c for c in police if "named for the place" in c["why"] and c.get("km") is not None and c["km"] <= OWN_MAX_KM]
         city_pd = [c for c in police if city and c["name"].lower() == f"{city.lower()} police department"]
+        if is_neigh and city and not city_pd and agencies_for is not None:
+            cp = city_police(st, city, float(row.get("lat", 0) or 0), float(row.get("lon", 0) or 0), agencies_for, rate_fn, last_year)
+            if cp:
+                city_pd = [{"name": cp["name"], "data": cp["data"]}]
         sheriff = [c for c in usable if "sheriff" in c["name"].lower() and "county agency" in c["why"]]
         if not is_neigh and own:
             c = own[0]
@@ -240,11 +272,6 @@ def finish(metro: str, *, dry_run: bool = False, api_base: str = "http://127.0.0
     if os.getenv("FBI_CRIME_API_KEY") or os.getenv("FBI_API_KEY"):
         from . import fbi_probe as fp
         results = fp.run(rows, log=lambda s: None)
-        decisions = crime_decisions(results, metro, census_lsad())
-        if not dry_run:
-            path.with_suffix(".crime_decisions.json").write_text(json.dumps(decisions, indent=2))
-        for d in decisions:
-            log(f"   {d['place']:26} {d['action']:4} {d.get('agency', '-')[:40]:40} | {d['reason'][:90]}")
         import datetime
 
         from data_sources import crime_api
@@ -255,7 +282,13 @@ def finish(metro: str, *, dry_run: bool = False, api_base: str = "http://127.0.0
                 cache[st] = crime_api._fetch_fbi_agencies(st) or []
             return cache[st]
 
-        extra = mismatch_decisions(rows, metro, agencies_for, crime_api._fetch_fbi_agency_rate, datetime.date.today().year - 1)
+        last_year = datetime.date.today().year - 1
+        decisions = crime_decisions(results, metro, census_lsad(), agencies_for, crime_api._fetch_fbi_agency_rate, last_year)
+        if not dry_run:
+            path.with_suffix(".crime_decisions.json").write_text(json.dumps(decisions, indent=2))
+        for d in decisions:
+            log(f"   {d['place']:26} {d['action']:4} {d.get('agency', '-')[:40]:40} | {d['reason'][:90]}")
+        extra = mismatch_decisions(rows, metro, agencies_for, crime_api._fetch_fbi_agency_rate, last_year)
         for d in extra:
             log(f"   {d['place']:26} map  {d['agency'][:40]:40} | {d['reason'][:100]}")
         decisions += extra
@@ -344,6 +377,12 @@ def accept_by_rules(metro: str, path: Path, *, dry_run: bool = False, skip_crime
                 edu_exceptions[f"{metro}:{c['name']}"] = (
                     "Rule E: Census lists the pin as 'School District Not Defined' (no K-12 district covers it), so there is "
                     "no zoned or home-district school.")
+            else:
+                near, rated = nearby_schools(c["state_abbr"], float(c["lat"]), float(c["lon"]))
+                if near and not rated:
+                    edu_exceptions[f"{metro}:{c['name']}"] = (
+                        f"Rule E2: {ds[0]['name']} covers the pin and {near} public schools are within 3 miles, but none has a "
+                        f"SchoolDigger rating (very small schools are unrated), so there is nothing to score.")
     log(f"   {len(verdicts)} gaps accepted by rules T/H/P/C4, {len(edu_exceptions)} education exceptions (rule E)")
     for v in verdicts[:40]:
         log(f"     {v.place:24} {v.pillar:22} {v.evidence[19:110]}")
@@ -357,6 +396,26 @@ def accept_by_rules(metro: str, path: Path, *, dry_run: bool = False, skip_crime
         d.update(edu_exceptions)
         p.write_text(json.dumps(d, indent=2) + "\n")
     return len(verdicts) + len(edu_exceptions)
+
+
+def nearby_schools(state: str, lat: float, lon: float, radius_mi: float = 3.0) -> Tuple[int, int]:
+    """(public schools within the radius, how many of them have a SchoolDigger rating) from the local snapshot."""
+    import math
+
+    from data_sources import school_snapshot as ss
+
+    snap = ss.load_state(state)
+    near = rated = 0
+    for sc in (snap or {}).get("schools", []):
+        ll = (sc.get("address") or {}).get("latLong") or {}
+        if sc.get("isPrivate") or ll.get("latitude") is None:
+            continue
+        p = math.pi / 180
+        h = 0.5 - math.cos((ll["latitude"] - lat) * p) / 2 + math.cos(lat * p) * math.cos(ll["latitude"] * p) * (1 - math.cos((ll["longitude"] - lon) * p)) / 2
+        if 7917.5 * math.asin(math.sqrt(h)) <= radius_mi:
+            near += 1
+            rated += 1 if sc.get("rankHistory") else 0
+    return near, rated
 
 
 def _probe_note(metro: str, place: str) -> str:

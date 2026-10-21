@@ -229,3 +229,32 @@ def test_check_queries_reports_a_place_the_county_form_cannot_fix(monkeypatch):
     rows = [{"name": "Nowhere", "type": "suburb", "county_borough": "Y", "state_abbr": "TX", "search_query": "Nowhere, TX", "lat": 30.0, "lon": -98.0}]
     problems = pl.check_queries(rows, log=lambda s: None)
     assert len(problems) == 1 and "Nowhere" in problems[0]
+
+
+def test_c2_accepts_a_consolidated_department_named_for_the_city(monkeypatch):
+    monkeypatch.setattr(fin, "_catalog_rows", lambda metro: {"NoDa": {"type": "neighborhood", "search_query": "NoDa, Charlotte, NC", "lat": "35.25", "lon": "-80.80"}})
+    agencies = [{"agency_name": "Charlotte-Mecklenburg Police Department", "ori": "C1", "latitude": 35.22, "longitude": -80.84},
+                {"agency_name": "Mecklenburg County Sheriff's Office", "ori": "C2", "latitude": 35.2, "longitude": -80.8}]
+    rate = lambda ori, kind, yr, name: (5.0, "agency", 1000)  # noqa: E731
+    d = fin.crime_decisions([result("NoDa", [], "NC")], "m", {}, lambda st: agencies, rate, 2024)[0]
+    assert d["action"] == "map" and d["agency"] == "Charlotte-Mecklenburg Police Department" and d["keys"][0] == "charlotte"
+
+
+def test_c2_does_not_use_a_same_named_agency_in_a_far_city(monkeypatch):
+    monkeypatch.setattr(fin, "_catalog_rows", lambda metro: {"X": {"type": "neighborhood", "search_query": "X, Columbia, SC", "lat": "34.0", "lon": "-81.0"}})
+    agencies = [{"agency_name": "Columbia Police Department", "ori": "C1", "latitude": 38.9, "longitude": -92.3}]   # Columbia, MO
+    d = fin.crime_decisions([result("X", [], "SC")], "m", {}, lambda st: agencies, lambda *a: (1.0, "agency", 1), 2024)[0]
+    assert d["action"] == "gap"
+
+
+def test_nearby_schools_counts_rated_and_unrated(monkeypatch):
+    from data_sources import school_snapshot as ss
+
+    snap = {"schools": [
+        {"isPrivate": False, "address": {"latLong": {"latitude": 36.577, "longitude": -115.670}}, "rankHistory": []},
+        {"isPrivate": False, "address": {"latLong": {"latitude": 36.578, "longitude": -115.671}}, "rankHistory": [{"rankStars": 3}]},
+        {"isPrivate": True, "address": {"latLong": {"latitude": 36.577, "longitude": -115.670}}, "rankHistory": []},
+        {"isPrivate": False, "address": {"latLong": {"latitude": 37.5, "longitude": -115.670}}, "rankHistory": []},
+    ]}
+    monkeypatch.setattr(ss, "load_state", lambda st: snap)
+    assert fin.nearby_schools("NV", 36.5767, -115.6701) == (2, 1)       # private and distant schools are not counted
