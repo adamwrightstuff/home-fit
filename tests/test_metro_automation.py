@@ -258,3 +258,25 @@ def test_nearby_schools_counts_rated_and_unrated(monkeypatch):
     ]}
     monkeypatch.setattr(ss, "load_state", lambda st: snap)
     assert fin.nearby_schools("NV", 36.5767, -115.6701) == (2, 1)       # private and distant schools are not counted
+
+
+def test_c6_remaps_an_unincorporated_place_scored_with_a_neighbouring_citys_police(monkeypatch):
+    monkeypatch.setattr(fin, "_catalog_rows", lambda metro: {"Sun City": {"type": "suburb", "county_borough": "Maricopa"}})
+    agencies = [{"agency_name": "Maricopa County Sheriff's Office", "ori": "S1", "latitude": 33.4, "longitude": -112.0},
+                {"agency_name": "Peoria Police Department", "ori": "P1", "latitude": 33.58, "longitude": -112.24}]
+    rate = lambda ori, kind, yr, name: (5.0, "agency", 1000)  # noqa: E731
+    row = scored("Sun City", "Peoria Police Department", 33.61, -112.28)
+    row["catalog"]["state_abbr"] = "AZ"
+    out = fin.mismatch_decisions([row], "m", lambda st: agencies, rate, 2024, {("AZ", "Sun City"): "57"})
+    assert len(out) == 1 and out[0]["kind"] == "county" and out[0]["agency"] == "Maricopa County Sheriff's Office" and out[0]["reason"].startswith("C6")
+
+
+def test_c6_leaves_incorporated_places_and_places_already_on_a_sheriff_alone(monkeypatch):
+    monkeypatch.setattr(fin, "_catalog_rows", lambda metro: {"Peoria": {"type": "suburb", "county_borough": "Maricopa"}, "Anthem": {"type": "suburb", "county_borough": "Maricopa"}})
+    agencies = [{"agency_name": "Maricopa County Sheriff's Office", "ori": "S1", "latitude": 33.4, "longitude": -112.0}]
+    rate = lambda ori, kind, yr, name: (5.0, "agency", 1000)  # noqa: E731
+    inc = scored("Peoria", "Glendale Police Department", 33.58, -112.24)
+    inc["catalog"]["state_abbr"] = "AZ"
+    already = scored("Anthem", "Maricopa County Sheriff's Office", 33.86, -112.13)
+    already["catalog"]["state_abbr"] = "AZ"
+    assert fin.mismatch_decisions([inc, already], "m", lambda st: agencies, rate, 2024, {("AZ", "Peoria"): "25", ("AZ", "Anthem"): "57"}) == []

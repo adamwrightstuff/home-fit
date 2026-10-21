@@ -58,6 +58,7 @@ Each decision is written to the output with the evidence that triggered it. A pl
 | C2 neighborhood | The place is a neighborhood of city X and "X Police Department" returns data | Map city X to it |
 | C3 unincorporated | A Census-designated place (CDP) with no agency of its own and a county sheriff with data | Map to the sheriff as a county proxy (lower confidence; the scorer labels it) |
 | C5 mismatch | A scored suburb whose matched agency is not named for it, while a police agency named for it (within 15 miles) returns data | Map it to that agency (the automatic match picked a lookalike or a neighbor: Highland Village matched to the Houston PD, Citrus Heights to "Fontana") |
+| C6 unincorporated, mismatched | A Census-designated place scored with an agency that is neither its own nor a sheriff (a neighboring city's police) while its county sheriff returns data | Map to the sheriff as a county proxy (Sun City was scored with Peoria's police) |
 | C4 otherwise | None of the above | Record the gap with the nearby agencies that were not borrowed. Never use a neighboring town's numbers |
 | T transit | Transitland found no routes and a retry agrees | Accept; the reason states the OpenStreetMap bus stops within 1.9 miles |
 | H healthcare | No clinics, pharmacies or hospitals found and OpenStreetMap shows none within 3 miles | Accept; the reason states the 7.5-mile count |
@@ -66,6 +67,10 @@ Each decision is written to the output with the evidence that triggered it. A pl
 | E education | No K-12 district covers the pin (Census "School District Not Defined") | Reviewed exception in `data/education_check_exceptions.json` |
 
 Agencies for special purposes (university, school district, hospital, park rangers, constable, fire, transit, state police, campus) are never used for C1 to C3.
+
+## Order of the offline steps
+
+`finish` runs them in this order, and it matters: education, then composites (`recompute_catalog_composites.py --no-census`), then retries and gap acceptance (composites again), and last `recompute_status_class.py --write`. The composites recompute overwrites `status_signal` and `it_score` with an older blend; the status-class step restores the current one. Run any composites recompute by hand and you must run the status-class step after it. `apply_aura.py` (the Aura badge) is applied only to the metros listed on its command line, not to new metros.
 
 ## Prerequisites per state (`prereqs`)
 

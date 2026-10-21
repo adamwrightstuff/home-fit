@@ -10,7 +10,9 @@ Steps
   2  crime       probe the FBI agency list for places with no crime data and apply RULE C
   3  retry       retry what can be retried (resolver, through a local API on its own port)
   4  accept      record the remaining gaps that meet RULES T, H, P, E (evidence is written into the reason)
-  5  report      health verdict and what is still open
+  5  status      apply the status-signal class and trajectory blend (scripts/catalog/recompute_status_class.py). It must run
+                 AFTER the last composites recompute, which otherwise overwrites status_signal and it_score
+  6  report      health verdict and what is still open
 
 Rules (DESIGN_PRINCIPLES.md: objective, reproducible, same for every place)
   C1 own agency     a police agency named for the place that returns agency-level data  -> map the place to it
@@ -19,6 +21,8 @@ Rules (DESIGN_PRINCIPLES.md: objective, reproducible, same for every place)
   C3 unincorporated a Census-designated place (CDP) with no agency of its own and a county sheriff with data
                     -> map to the sheriff as a county proxy (lower confidence, labelled by the scorer)
   C4 otherwise      record the gap with the probe's evidence; never borrow a neighbouring town's numbers
+  C6 unincorporated a Census-designated place scored with an agency that is neither its own nor a sheriff (a neighbouring
+     scored city's police) while its county sheriff returns data -> map to the sheriff (county proxy)
   C5 mismatch       a scored suburb whose matched agency is not named for it, while a police agency named for it (within 15
                     miles) returns data -> map it to that agency (the automatic match picked a lookalike or a neighbour)
   T  transit        Transitland found no routes AND a retry agrees -> accept; reason states the OpenStreetMap bus stops
@@ -182,8 +186,9 @@ def crime_decisions(results: List[Dict[str, Any]], metro: str, lsad: Dict[Tuple[
 
 
 def mismatch_decisions(rows: List[Dict[str, Any]], metro: str, agencies_for: Callable[[str], List[Dict[str, Any]]],
-                       rate_fn: Callable, last_year: int) -> List[Dict[str, Any]]:
-    """Rule C5. Pure given its inputs: for scored suburbs, compare the matched agency with agencies named for the place."""
+                       rate_fn: Callable, last_year: int, lsad: Optional[Dict[Tuple[str, str], str]] = None) -> List[Dict[str, Any]]:
+    """Rules C5 and C6. Pure given its inputs: for scored suburbs, compare the matched agency with agencies named for the
+    place (C5) and, for unincorporated census-designated places, with the county sheriff (C6)."""
     from . import fbi_probe as fp
 
     cat = _catalog_rows(metro)
@@ -215,6 +220,20 @@ def mismatch_decisions(rows: List[Dict[str, Any]], metro: str, agencies_for: Cal
             out.append({"place": c["name"], "state": c["state_abbr"], "action": "map", "kind": "own", "agency": best[1], "keys": _keys(c["name"]),
                         "reason": f"C5: scored with '{matched}', but {best[1]} is named for the place, {best[0] / 1.609:.0f} miles away, "
                                   f"and returns {best[2]['year']} agency data"})
+            continue
+        county = (cat.get(c["name"], {}).get("county_borough") or c.get("county_borough") or "").strip()
+        if lsad and county and lsad.get((c["state_abbr"], c["name"])) == CDP_LSAD and "sheriff" not in matched.lower():
+            for ag in agencies_for(c["state_abbr"]):
+                name = fp._name(ag)
+                if county.lower() not in name.lower() or "sheriff" not in name.lower() or SPECIAL_AGENCY.search(name):
+                    continue
+                data = fp.agency_data(fp._ori(ag), name, rate_fn, last_year)
+                if data:
+                    out.append({"place": c["name"], "state": c["state_abbr"], "action": "map", "kind": "county", "agency": name,
+                                "keys": _keys(c["name"]),
+                                "reason": f"C6: census-designated (unincorporated) place scored with '{matched}', which polices another "
+                                          f"place; {name} returns {data['year']} data (county proxy)"})
+                    break
     return out
 
 
@@ -288,7 +307,7 @@ def finish(metro: str, *, dry_run: bool = False, api_base: str = "http://127.0.0
             path.with_suffix(".crime_decisions.json").write_text(json.dumps(decisions, indent=2))
         for d in decisions:
             log(f"   {d['place']:26} {d['action']:4} {d.get('agency', '-')[:40]:40} | {d['reason'][:90]}")
-        extra = mismatch_decisions(rows, metro, agencies_for, crime_api._fetch_fbi_agency_rate, last_year)
+        extra = mismatch_decisions(rows, metro, agencies_for, crime_api._fetch_fbi_agency_rate, last_year, census_lsad())
         for d in extra:
             log(f"   {d['place']:26} map  {d['agency'][:40]:40} | {d['reason'][:100]}")
         decisions += extra
@@ -318,7 +337,16 @@ def finish(metro: str, *, dry_run: bool = False, api_base: str = "http://127.0.0
     accepted = accept_by_rules(metro, path, dry_run=dry_run,
                                skip_crime={d["place"] for d in decisions if d["action"] == "map"} if dry_run else None, log=log)
 
-    log("\n== 5. report")
+    log("\n== 5. status class and it_score blend (after the last composites recompute)")
+    if dry_run:
+        log("   (dry run) would run recompute_status_class.py --write")
+    else:
+        out = _sh([PY, "scripts/catalog/recompute_status_class.py", "--metro", metro, "--write"])
+        for ln in out.splitlines():
+            if "trajectory" in ln or "labels changed" in ln or "wrote" in ln:
+                log("   " + ln.strip()[:150])
+
+    log("\n== 6. report")
     rep = hl.audit_all([metro], offline=True)[0]
     log(f"   verdict: {rep['verdict']}; accepted by rule this run: {accepted}")
     for pr in rep.get("problems", []):
