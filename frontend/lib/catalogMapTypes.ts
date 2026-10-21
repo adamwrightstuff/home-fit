@@ -113,6 +113,7 @@ function inferFromRegistry(state: string, county: string): CatalogMetro | null {
   if (state === 'FL' && ['Hernando', 'Hillsborough', 'Pasco', 'Pinellas'].includes(county)) return 'tampa'
   if (state === 'FL' && ['Broward', 'Miami-Dade', 'Palm Beach'].includes(county)) return 'miami'
   if (state === 'NC' && ['Cabarrus', 'Gaston', 'Iredell', 'Lincoln', 'Mecklenburg', 'Rowan', 'Union'].includes(county)) return 'charlotte'
+  if (state === 'NC' && ['Franklin', 'Johnston', 'Wake'].includes(county)) return 'raleigh'
   if (state === 'AZ') return 'phoenix'
   if (state === 'NV') return 'las_vegas'
   return null
