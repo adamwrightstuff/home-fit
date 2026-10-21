@@ -51,6 +51,7 @@ const METRO_FILES: Record<CatalogMetro, string> = {
   sacramento: 'sacramento_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   las_vegas: 'las_vegas_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   orlando: 'orlando_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  tampa: 'tampa_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   // END GENERATED server
 }
 
