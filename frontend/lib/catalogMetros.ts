@@ -3,7 +3,7 @@
  * route.ts / next.config.js (see docs/METRO_EXPANSION_PLAYBOOK.md, Phase B).
  */
 // BEGIN GENERATED list (scripts/metro_agent/registry.py; do not edit by hand)
-export const CATALOG_METROS = ['nyc', 'la', 'sf', 'seattle', 'austin', 'chicago', 'philadelphia', 'dallas', 'houston', 'phoenix', 'san_antonio', 'sacramento'] as const
+export const CATALOG_METROS = ['nyc', 'la', 'sf', 'seattle', 'austin', 'chicago', 'philadelphia', 'dallas', 'houston', 'phoenix', 'san_antonio', 'sacramento', 'las_vegas'] as const
 // END GENERATED list
 export type CatalogMetro = (typeof CATALOG_METROS)[number]
 
@@ -31,6 +31,7 @@ export const CATALOG_METRO_META: Record<CatalogMetro, CatalogMetroMeta> = {
   phoenix: { label: 'PHX', longLabel: 'Phoenix metro', color: '#D1495B', bounds: [[-112.81, 32.8], [-111.31, 34.05]] },
   san_antonio: { label: 'SAT', longLabel: 'San Antonio metro', color: '#AD1457', bounds: [[-99.15, 28.89], [-97.88, 30.05]] },
   sacramento: { label: 'SAC', longLabel: 'Sacramento metro', color: '#558B2F', bounds: [[-122.1, 38.19], [-120.51, 39.17]] },
+  las_vegas: { label: 'LAS', longLabel: 'Las Vegas metro', color: '#E0A100', bounds: [[-115.75, 35.09], [-113.99, 36.88]] },
   // END GENERATED meta
 }
 
