@@ -3,7 +3,7 @@
  * route.ts / next.config.js (see docs/METRO_EXPANSION_PLAYBOOK.md, Phase B).
  */
 // BEGIN GENERATED list (scripts/metro_agent/registry.py; do not edit by hand)
-export const CATALOG_METROS = ['nyc', 'la', 'sf', 'seattle', 'austin', 'chicago', 'philadelphia', 'dallas', 'houston', 'phoenix', 'san_antonio', 'sacramento', 'las_vegas', 'orlando', 'tampa', 'miami'] as const
+export const CATALOG_METROS = ['nyc', 'la', 'sf', 'seattle', 'austin', 'chicago', 'philadelphia', 'dallas', 'houston', 'phoenix', 'san_antonio', 'sacramento', 'las_vegas', 'orlando', 'tampa', 'miami', 'charlotte'] as const
 // END GENERATED list
 export type CatalogMetro = (typeof CATALOG_METROS)[number]
 
@@ -35,6 +35,7 @@ export const CATALOG_METRO_META: Record<CatalogMetro, CatalogMetroMeta> = {
   orlando: { label: 'ORL', longLabel: 'Orlando metro', color: '#8E44AD', bounds: [[-82.01, 28.16], [-81.09, 29.0]] },
   tampa: { label: 'TPA', longLabel: 'Tampa Bay metro', color: '#1B9AAA', bounds: [[-82.91, 27.64], [-82.04, 28.64]] },
   miami: { label: 'MIA', longLabel: 'Miami metro', color: '#E4572E', bounds: [[-80.56, 25.39], [-79.96, 27.04]] },
+  charlotte: { label: 'CLT', longLabel: 'Charlotte metro', color: '#2E7D32', bounds: [[-81.32, 34.86], [-80.41, 35.87]] },
   // END GENERATED meta
 }
 
