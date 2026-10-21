@@ -119,6 +119,18 @@ def _city_of(query: str) -> str:
     return parts[1] if len(parts) >= 3 else ""
 
 
+def scorer_data(ori: str, name: str, rate_fn: Callable, last_year: int, years_back: int = 4) -> Optional[Dict[str, Any]]:
+    """The scorer's own test for usable agency data (data_sources.crime_api._agency_year): the agency returns agency-tier
+    violent AND property rates for a year and they are not both zero. The probe's lenient test ("violent rate at agency tier")
+    let a county sheriff through that the scorer then rejected, so the rules use this one."""
+    for yr in range(last_year, last_year - years_back, -1):
+        v, p = rate_fn(ori, "violent-crime", yr, name), rate_fn(ori, "property-crime", yr, name)
+        if (isinstance(v, (list, tuple)) and len(v) >= 2 and isinstance(p, (list, tuple)) and len(p) >= 2
+                and v[1] == "agency" and p[1] == "agency" and (v[0] or 0) + (p[0] or 0) > 0):
+            return {"year": yr, "violent_per_100k": v[0], "population": v[2] if len(v) > 2 else None}
+    return None
+
+
 def city_police(state: str, city: str, lat: float, lon: float, agencies_for: Callable[[str], List[Dict[str, Any]]],
                 rate_fn: Callable, last_year: int) -> Optional[Dict[str, Any]]:
     """The nearest police agency of the state whose name contains the city's name (whole word) and that returns agency data."""
@@ -136,7 +148,7 @@ def city_police(state: str, city: str, lat: float, lon: float, agencies_for: Cal
             continue
         if d > OWN_MAX_KM:
             continue
-        data = fp.agency_data(fp._ori(ag), name, rate_fn, last_year)
+        data = scorer_data(fp._ori(ag), name, rate_fn, last_year)
         if data and (best is None or d < best["km"]):
             best = {"name": name, "km": d, "data": data}
     return best
@@ -144,8 +156,9 @@ def city_police(state: str, city: str, lat: float, lon: float, agencies_for: Cal
 
 def crime_decisions(results: List[Dict[str, Any]], metro: str, lsad: Dict[Tuple[str, str], str],
                     agencies_for: Optional[Callable[[str], List[Dict[str, Any]]]] = None, rate_fn: Optional[Callable] = None,
-                    last_year: int = 0) -> List[Dict[str, Any]]:
-    """Apply rules C1-C4 to FBI probe results. Pure given its inputs: returns decisions, writes nothing."""
+                    last_year: int = 0, verify: Optional[Callable[[Dict[str, Any]], bool]] = None) -> List[Dict[str, Any]]:
+    """Apply rules C1-C4 to FBI probe results. Pure given its inputs: returns decisions, writes nothing.
+    `verify(candidate)` re-checks a candidate with the scorer's own data test before any rule may use it."""
     cat = _catalog_rows(metro)
     out = []
     for r in results:
@@ -153,7 +166,7 @@ def crime_decisions(results: List[Dict[str, Any]], metro: str, lsad: Dict[Tuple[
         row = cat.get(place, {})
         is_neigh = row.get("type") == "neighborhood"
         city = _city_of(row.get("search_query", "")) if is_neigh else ""
-        usable = [c for c in r["candidates"] if c.get("data") and not SPECIAL_AGENCY.search(c["name"])]
+        usable = [c for c in r["candidates"] if c.get("data") and not SPECIAL_AGENCY.search(c["name"]) and (verify is None or verify(c))]
         police = [c for c in usable if re.search(r"police", c["name"], re.I)]
         dec: Dict[str, Any] = {"place": place, "state": st, "action": "gap", "reason": r["note"]}
         own = [c for c in police if "named for the place" in c["why"] and c.get("km") is not None and c["km"] <= OWN_MAX_KM]
@@ -216,7 +229,7 @@ def mismatch_decisions(rows: List[Dict[str, Any]], metro: str, agencies_for: Cal
                 continue
             if d > OWN_MAX_KM:
                 continue
-            data = fp.agency_data(fp._ori(ag), name, rate_fn, last_year)
+            data = scorer_data(fp._ori(ag), name, rate_fn, last_year)
             if data and (best is None or d < best[0]):
                 best = (d, name, data)
         if best:
@@ -230,7 +243,7 @@ def mismatch_decisions(rows: List[Dict[str, Any]], metro: str, agencies_for: Cal
                 name = fp._name(ag)
                 if county.lower() not in name.lower() or "sheriff" not in name.lower() or SPECIAL_AGENCY.search(name):
                     continue
-                data = fp.agency_data(fp._ori(ag), name, rate_fn, last_year)
+                data = scorer_data(fp._ori(ag), name, rate_fn, last_year)
                 if data:
                     out.append({"place": c["name"], "state": c["state_abbr"], "action": "map", "kind": "county", "agency": name,
                                 "keys": _keys(c["name"]),
@@ -241,8 +254,25 @@ def mismatch_decisions(rows: List[Dict[str, Any]], metro: str, agencies_for: Cal
 
 
 def _keys(name: str) -> List[str]:
-    base = name.lower()
-    return [base, f"{base} township"]
+    """Lookup keys for a place in data/crime_agency_map.json. The scorer keys on the city its geocoder returns, which may be
+    spelled differently ("Saint Petersburg" for "St. Petersburg"), so every spelling variant is registered."""
+    base = name.lower().strip()
+    variants = [base, f"{base} township"]
+    for pat, rep in ((r"\bst\.? ", "saint "), (r"\bsaint ", "st. "), (r"\bft\.? ", "fort "), (r"\bmt\.? ", "mount ")):
+        v = re.sub(pat, rep, base)
+        if v != base and v not in variants:
+            variants += [v, f"{v} township"]
+    return variants
+
+
+def add_geocoded_city_keys(decisions: List[Dict[str, Any]], rows: List[Dict[str, Any]]) -> None:
+    """Also register the city name the scorer actually saw for a mapped place (a CDP can geocode to a neighbouring town)."""
+    seen = {r["catalog"]["name"]: ((r.get("score") or {}).get("location_info") or {}).get("city", "") for r in rows}
+    for d in decisions:
+        city = (seen.get(d["place"]) or "").lower().strip()
+        if d["action"] == "map" and city and city not in d["keys"]:
+            d["keys"].append(city)
+            d["reason"] += f" (the scorer's geocoder names the city '{seen[d['place']]}', so that key is registered too)"
 
 
 def apply_map(decisions: List[Dict[str, Any]]) -> int:
@@ -305,7 +335,8 @@ def finish(metro: str, *, dry_run: bool = False, api_base: str = "http://127.0.0
             return cache[st]
 
         last_year = datetime.date.today().year - 1
-        decisions = crime_decisions(results, metro, census_lsad(), agencies_for, crime_api._fetch_fbi_agency_rate, last_year)
+        verify = lambda c: scorer_data(c["ori"], c["name"], crime_api._fetch_fbi_agency_rate, last_year) is not None  # noqa: E731
+        decisions = crime_decisions(results, metro, census_lsad(), agencies_for, crime_api._fetch_fbi_agency_rate, last_year, verify)
         if not dry_run:
             path.with_suffix(".crime_decisions.json").write_text(json.dumps(decisions, indent=2))
         for d in decisions:
@@ -320,6 +351,7 @@ def finish(metro: str, *, dry_run: bool = False, api_base: str = "http://127.0.0
     proc = None
     try:
         if not dry_run:
+            add_geocoded_city_keys(decisions, rows)
             n = apply_map(decisions)
             log(f"   mapped {n} places in data/crime_agency_map.json")
             proc = runner.start_server(api_base, log) if runner.is_local(api_base) else None
@@ -336,9 +368,17 @@ def finish(metro: str, *, dry_run: bool = False, api_base: str = "http://127.0.0
         if proc is not None:
             proc.terminate()
 
+    mapped_places = {d["place"] for d in decisions if d["action"] == "map"}
+    still_empty: List[str] = []
+    if not dry_run and mapped_places:
+        for r in dg.load_rows(path):
+            cs = (r.get("score") or {}).get("livability_pillars", {}).get("community_safety", {})
+            if r["catalog"]["name"] in mapped_places and cs.get("score") is None:
+                still_empty.append(r["catalog"]["name"])
     log("\n== 4. accept gaps that meet the rules")
-    accepted = accept_by_rules(metro, path, dry_run=dry_run,
-                               skip_crime={d["place"] for d in decisions if d["action"] == "map"} if dry_run else None, log=log)
+    if still_empty:
+        log(f"   MAPPED BUT STILL NO CRIME DATA (left flagged, not accepted; the scorer rejected the agency): {', '.join(still_empty)}")
+    accepted = accept_by_rules(metro, path, dry_run=dry_run, skip_crime=(mapped_places if dry_run else set(still_empty)), log=log)
 
     log("\n== 5. status class and it_score blend (after the last composites recompute)")
     if dry_run:

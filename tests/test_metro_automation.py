@@ -291,3 +291,42 @@ def test_c3_uses_a_consolidated_metropolitan_department_when_there_is_no_sheriff
     far = decide(monkeypatch, [result("Laughlin", [cand("Las Vegas Metropolitan Police Department", 150.0, ["within 15 km"])], "NV")],
                  {"Laughlin": {"type": "suburb"}}, {("NV", "Laughlin"): "57"})[0]
     assert far["action"] == "gap"                              # too far to be its police
+
+
+# ---------------------------------------------------------------------------------------------- the scorer's own data test
+def test_scorer_data_requires_agency_tier_violent_and_property_and_nonzero():
+    ok = lambda ori, kind, yr, name: (5.0, "agency", 1000)  # noqa: E731
+    assert fin.scorer_data("X", "A PD", ok, 2024)["year"] == 2024
+    state_only = lambda ori, kind, yr, name: (5.0, "state", 1000)  # noqa: E731
+    assert fin.scorer_data("X", "A PD", state_only, 2024) is None
+    violent_only = lambda ori, kind, yr, name: (5.0, "agency", 1) if kind == "violent-crime" else (None, None)  # noqa: E731
+    assert fin.scorer_data("X", "A PD", violent_only, 2024) is None
+    zero = lambda ori, kind, yr, name: (0.0, "agency", 1000)  # noqa: E731
+    assert fin.scorer_data("X", "A PD", zero, 2024) is None
+    late = lambda ori, kind, yr, name: (5.0, "agency", 1000) if yr == 2022 else (None, None)  # noqa: E731
+    assert fin.scorer_data("X", "A PD", late, 2024)["year"] == 2022
+
+
+def test_a_sheriff_the_scorer_rejects_is_skipped_for_the_county_police(monkeypatch):
+    """Cobb County: the sheriff 'has data' by the probe's lenient test but not by the scorer's; the county police is the patrol agency."""
+    sheriff, police = cand("Cobb County Sheriff's Office", 9.0, ["county agency"]), cand("Cobb County Police Department", 8.0, ["within 15 km"])
+    verify = lambda c: c["name"] != "Cobb County Sheriff's Office"  # noqa: E731
+    monkeypatch.setattr(fin, "_catalog_rows", lambda m: {"Mableton": {"type": "suburb"}})
+    d = fin.crime_decisions([result("Mableton", [sheriff, police], "GA")], "m", {("GA", "Mableton"): "57"}, None, None, 0, verify)[0]
+    assert d["action"] == "map" and d["agency"] == "Cobb County Police Department"
+
+
+def test_keys_cover_the_geocoders_spelling_variants():
+    assert "saint petersburg" in fin._keys("St. Petersburg") and "st. petersburg" in fin._keys("St. Petersburg")
+    assert "saint pete beach" in fin._keys("St. Pete Beach")
+    assert "fort worth" in fin._keys("Ft. Worth") and "mount laurel" in fin._keys("Mt. Laurel")
+    assert fin._keys("Plano") == ["plano", "plano township"]
+
+
+def test_the_city_the_scorer_saw_is_registered_for_a_mapped_place():
+    decisions = [{"place": "Citrus Park", "action": "map", "keys": ["citrus park", "citrus park township"], "reason": "C3: x"},
+                 {"place": "Oak Lawn", "action": "gap", "keys": [], "reason": "C4"}]
+    rows = [{"catalog": {"name": "Citrus Park"}, "score": {"location_info": {"city": "Keystone"}}},
+            {"catalog": {"name": "Oak Lawn"}, "score": {"location_info": {"city": "Dallas"}}}]
+    fin.add_geocoded_city_keys(decisions, rows)
+    assert "keystone" in decisions[0]["keys"] and "Keystone" in decisions[0]["reason"] and decisions[1]["keys"] == []
