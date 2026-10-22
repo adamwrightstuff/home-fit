@@ -169,7 +169,10 @@ def crime_decisions(results: List[Dict[str, Any]], metro: str, lsad: Dict[Tuple[
         usable = [c for c in r["candidates"] if c.get("data") and not SPECIAL_AGENCY.search(c["name"]) and (verify is None or verify(c))]
         police = [c for c in usable if re.search(r"police", c["name"], re.I)]
         dec: Dict[str, Any] = {"place": place, "state": st, "action": "gap", "reason": r["note"]}
-        own = [c for c in police if "named for the place" in c["why"] and c.get("km") is not None and c["km"] <= OWN_MAX_KM]
+        named = [c for c in police if "named for the place" in c["why"]]
+        own = [c for c in named if c.get("km") is not None and c["km"] <= OWN_MAX_KM]
+        if not own and len(named) == 1 and named[0].get("coord_shared"):   # county-level point in the FBI file: distance is meaningless
+            own = named                                                      # the only police agency in the state named for the place
         city_pd = [c for c in police if city and c["name"].lower() == f"{city.lower()} police department"]
         if is_neigh and city and not city_pd and agencies_for is not None:
             cp = city_police(st, city, float(row.get("lat", 0) or 0), float(row.get("lon", 0) or 0), agencies_for, rate_fn, last_year)

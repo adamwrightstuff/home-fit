@@ -50,6 +50,13 @@ def candidates(agencies: List[Dict[str, Any]], place: str, county: str, lat: flo
     """Agencies worth checking: named for the place, the county sheriff, and the nearest others."""
     place_l, county_l = place.lower(), (county or "").lower()
     out: Dict[str, Dict[str, Any]] = {}
+    # The FBI file gives some agencies a county-level point instead of their own location: several agencies share
+    # one coordinate pair (Englewood and Greenwood Village police are both at the Arapahoe County point). Distance
+    # to such an agency says nothing, so the candidate is marked and the distance rules do not apply to it.
+    pts: Dict[Any, int] = {}
+    for ag in agencies:
+        k = (_get(ag, "latitude", "lat"), _get(ag, "longitude", "lng", "lon"))
+        pts[k] = pts.get(k, 0) + 1
 
     def add(ag, why):
         ori = _ori(ag)
@@ -60,7 +67,8 @@ def candidates(agencies: List[Dict[str, Any]], place: str, county: str, lat: flo
         except (TypeError, ValueError):
             d = None
         row = out.setdefault(ori, {"ori": ori, "name": _name(ag), "type": _get(ag, "agencyType", "agency_type"),
-                                   "is_nibrs": bool(_get(ag, "is_nibrs")), "km": None if d is None else round(d, 1), "why": []})
+                                   "is_nibrs": bool(_get(ag, "is_nibrs")), "km": None if d is None else round(d, 1), "why": [],
+                                   "coord_shared": pts.get((_get(ag, "latitude", "lat"), _get(ag, "longitude", "lng", "lon")), 0) > 1})
         if why not in row["why"]:
             row["why"].append(why)
 
@@ -87,7 +95,7 @@ def agency_data(ori: str, name: str, rate_fn: Callable, last_year: int, years_ba
     """Most recent year in which the FBI returns an agency-tier violent rate for this agency, else None."""
     for yr in range(last_year, last_year - years_back, -1):
         res = rate_fn(ori, "violent-crime", yr, name)
-        if isinstance(res, tuple) and len(res) >= 2 and res[1] == "agency":
+        if isinstance(res, (tuple, list)) and len(res) >= 2 and res[1] == "agency":   # a list when read back from the disk cache
             return {"year": yr, "violent_per_100k": res[0], "population": res[2] if len(res) > 2 else None}
     return None
 
