@@ -12,8 +12,16 @@ Bridgeport), an isolated town scores low, and within a metro, proximity to jobs 
 Returns a 0–100 score (or None if the LODES grid doesn't cover the area — caller should fall
 back to the regional market score).
 
-Data: data/lodes_h8_commuter.parquet (build: scripts/baselines/build_lodes_h8_commuter.py
---states ...). H3 resolution 8 (~0.46 km edge).
+Data: data/lodes_h8_jobs_national.parquet, LODES 2022 workplace jobs for all states (build:
+scripts/baselines/build_lodes_h8_commuter.py --states all --year 2022 --output
+data/lodes_h8_jobs_national.parquet). H3 resolution 8 (~0.46 km edge).  This is a separate file from
+data/lodes_h8_commuter.parquet, which the community-safety commuter adjustment still uses, so
+changing one does not change the other.  Override the path with env LODES_H8_JOBS_PARQUET.
+
+Coverage guard: a point counts as covered only if a grid cell lies within COVERAGE_MAX_KM.  Before
+the national grid, a few stray cells near the edge of the covered states (Boston, Las Vegas) made
+uncovered places read as "isolated" (score ~0) instead of "no data".  Under the national grid every
+catalog place has a cell within 2.6 km (p99 0.7 km).
 """
 from __future__ import annotations
 
@@ -26,10 +34,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_PARQUET = os.path.join(_REPO_ROOT, "data", "lodes_h8_commuter.parquet")
+_PARQUET = os.getenv("LODES_H8_JOBS_PARQUET", os.path.join(_REPO_ROOT, "data", "lodes_h8_jobs_national.parquet"))
 
 D0_KM = 20.0           # commute distance decay (mean metro commute ~25-30 km by car)
 CUTOFF_KM = 75.0       # ignore jobs beyond a plausible commute
+COVERAGE_MAX_KM = 15.0  # nearest grid cell must be this close, else "grid does not cover this point"
 # log10(gravity) is mapped linearly to 0-100 between these. LO ~ a small local economy,
 # HI ~ a dense central-city job mass (NYC core log10 ~6.55).
 _LOG_LO = 2.5
@@ -69,14 +78,18 @@ def gravity_jobs(lat: float, lon: float) -> Optional[float]:
         return None
     import numpy as np
     la, lo = math.radians(lat), math.radians(lon)
-    dlat = _CLAT - la
-    dlon = _CLON - lo
-    a = np.sin(dlat / 2) ** 2 + np.cos(la) * np.cos(_CLAT) * np.sin(dlon / 2) ** 2
-    dist = 6371.0 * 2 * np.arcsin(np.sqrt(a))
-    m = dist < CUTOFF_KM
-    if not m.any():
+    # Latitude prefilter (1.5 degrees ~ 165 km) keeps the national grid fast; it is wider than both
+    # CUTOFF_KM and COVERAGE_MAX_KM, so results are unchanged.
+    idx = np.nonzero(np.abs(_CLAT - la) < math.radians(1.5))[0]
+    if idx.size == 0:
         return None
-    total = float(np.sum(_JOBS[m] * np.exp(-dist[m] / D0_KM)))
+    clat, clon, jobs = _CLAT[idx], _CLON[idx], _JOBS[idx]
+    a = np.sin((clat - la) / 2) ** 2 + np.cos(la) * np.cos(clat) * np.sin((clon - lo) / 2) ** 2
+    dist = 6371.0 * 2 * np.arcsin(np.sqrt(a))
+    if float(dist.min()) > COVERAGE_MAX_KM:
+        return None
+    m = dist < CUTOFF_KM
+    total = float(np.sum(jobs[m] * np.exp(-dist[m] / D0_KM)))
     # No reachable jobs within range but grid covers the area => genuinely isolated (not "no data")
     return total
 
