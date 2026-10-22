@@ -57,6 +57,7 @@ const METRO_FILES: Record<CatalogMetro, string> = {
   raleigh: 'raleigh_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   atlanta: 'atlanta_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   boston: 'boston_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+  denver: 'denver_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   // END GENERATED server
 }
 

@@ -857,5 +857,147 @@
       "agency": "Cobb County Police Department",
       "kind": "county"
     }
+  },
+  "CO": {
+    "aspen park": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "aspen park township": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "dakota ridge": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "dakota ridge township": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "evergreen": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "evergreen township": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "franktown": {
+      "agency": "Douglas County Sheriff's Office",
+      "kind": "county"
+    },
+    "franktown township": {
+      "agency": "Douglas County Sheriff's Office",
+      "kind": "county"
+    },
+    "genesee": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "genesee township": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "highlands ranch": {
+      "agency": "Douglas County Sheriff's Office",
+      "kind": "county"
+    },
+    "highlands ranch township": {
+      "agency": "Douglas County Sheriff's Office",
+      "kind": "county"
+    },
+    "idledale": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "idledale township": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "indian hills": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "indian hills township": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "morrison": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "ken caryl": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "ken caryl township": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    },
+    "perry park": {
+      "agency": "Douglas County Sheriff's Office",
+      "kind": "county"
+    },
+    "perry park township": {
+      "agency": "Douglas County Sheriff's Office",
+      "kind": "county"
+    },
+    "roxborough park": {
+      "agency": "Douglas County Sheriff's Office",
+      "kind": "county"
+    },
+    "roxborough park township": {
+      "agency": "Douglas County Sheriff's Office",
+      "kind": "county"
+    },
+    "sedalia": {
+      "agency": "Douglas County Sheriff's Office",
+      "kind": "county"
+    },
+    "sedalia township": {
+      "agency": "Douglas County Sheriff's Office",
+      "kind": "county"
+    },
+    "columbine": {
+      "agency": "Columbine Valley Police Department",
+      "kind": "own"
+    },
+    "columbine township": {
+      "agency": "Columbine Valley Police Department",
+      "kind": "own"
+    },
+    "littleton": {
+      "agency": "Columbine Valley Police Department",
+      "kind": "own"
+    },
+    "commerce city": {
+      "agency": "Commerce City Police Department",
+      "kind": "own"
+    },
+    "commerce city township": {
+      "agency": "Commerce City Police Department",
+      "kind": "own"
+    },
+    "englewood": {
+      "agency": "Englewood Police Department",
+      "kind": "own"
+    },
+    "englewood township": {
+      "agency": "Englewood Police Department",
+      "kind": "own"
+    },
+    "greenwood village": {
+      "agency": "Greenwood Village Police Department",
+      "kind": "own"
+    },
+    "greenwood village township": {
+      "agency": "Greenwood Village Police Department",
+      "kind": "own"
+    },
+    "morrison township": {
+      "agency": "Jefferson County Sheriff's Office",
+      "kind": "county"
+    }
   }
 }
