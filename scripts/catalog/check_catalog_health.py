@@ -15,6 +15,7 @@ Checks:
   9. Missing catalog metadata — null lat/lon, empty search_query, null lean_2024
  10. No area type — area_classification empty and score.area_type null
  11. Composite drift — stored happiness/longevity vs recomputed from breakdown
+ 12. Shared community_safety rate — >= 4 neighborhoods on one agency rate (no incident-level feed)
 
 Usage:
   PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py
@@ -359,6 +360,30 @@ def compute_outliers(
                 outliers[(name, pillar)] = (z, mean, sd, area_type, "high")
 
     return outliers
+
+
+SHARED_SAFETY_MIN_GROUP = 4
+
+
+def compute_shared_safety_rates(rows: List[Dict[str, Any]]) -> List[Tuple[str, float, List[str]]]:
+    """Groups of >= SHARED_SAFETY_MIN_GROUP neighborhoods with an identical agency
+    community_safety rate (same agency, same violent_per_1k).  Returns
+    [(agency, violent_per_1k, [names])], largest group first."""
+    groups: Dict[Tuple[str, float], List[str]] = defaultdict(list)
+    for row in rows:
+        if not row.get("success"):
+            continue
+        cat = row.get("catalog") or {}
+        if cat.get("type") not in (None, "neighborhood"):
+            continue
+        cs = ((row.get("score") or {}).get("livability_pillars") or {}).get("community_safety") or {}
+        bd = cs.get("breakdown") or {}
+        rate = bd.get("violent_per_1k")
+        if cs.get("score") is None or rate is None or str(bd.get("source", "")).endswith("_open_data"):
+            continue
+        groups[(bd.get("agency_name") or bd.get("source") or "?", rate)].append(cat.get("name") or "?")
+    out = [(a, r, names) for (a, r), names in groups.items() if len(names) >= SHARED_SAFETY_MIN_GROUP]
+    return sorted(out, key=lambda g: -len(g[2]))
 
 
 def check_row(
@@ -771,6 +796,21 @@ def main() -> int:
                 print(f"    • {name:<32} score={score_str:<6} z={z:+.2f}  ({area_type}: mean={mean:.1f} sd={sd:.1f})  {tag}")
     else:
         print("\n  ✓ No plausibility outliers detected.")
+
+    # ── Section 9b: Shared community_safety rate ──────────────────────────
+    # Neighborhoods in a city with no incident-level crime feed all get that
+    # department's city-wide rate, so they score identically. A shared rate is
+    # never a statistical outlier, so section 9 cannot catch it.
+    shared_groups = compute_shared_safety_rates(rows)
+    if shared_groups:
+        n_places = sum(len(g[2]) for g in shared_groups)
+        print(f"\n── SHARED COMMUNITY_SAFETY RATE ({n_places} neighborhood(s) in {len(shared_groups)} group(s)) ──")
+        print(f"  ≥{SHARED_SAFETY_MIN_GROUP} neighborhoods share one agency rate, so safety does not differ between them.")
+        for agency, rate, names in shared_groups:
+            truncated = ', '.join(names[:6]) + (f' +{len(names)-6} more' if len(names) > 6 else '')
+            print(f"  • {agency} (violent {rate}/1k): {len(names)} neighborhoods — {truncated}")
+    else:
+        print("\n  ✓ No shared community_safety rates among neighborhoods.")
 
     # ── Section 10: Place metadata ─────────────────────────────────────────
     if place_meta_issues:
