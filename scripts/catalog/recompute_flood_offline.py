@@ -79,7 +79,7 @@ def main() -> int:
             if isinstance(sc, dict):
                 c = sc.get("coordinates") or {}
                 key = place_key(c["lat"], c["lon"]) if "lat" in c and "lon" in c else None
-                if key not in places:
+                if places.get(key) is None:  # not in the snapshot, or its FEMA request failed: leave the place as stored
                     missing += 1
                 else:
                     info = recompute_place(sc, places[key])
@@ -95,7 +95,7 @@ def main() -> int:
         if not args.dry_run:
             with open(path, "w", encoding="utf-8") as f:
                 f.write("\n".join(out) + "\n")
-    print(f"{changed} of {total} places changed; {missing} places not in the snapshot" + (" (dry run)" if args.dry_run else ""))
+    print(f"{changed} of {total} places changed; {missing} places left as stored (not in the snapshot or the FEMA request failed)" + (" (dry run)" if args.dry_run else ""))
     return 0
 
 
