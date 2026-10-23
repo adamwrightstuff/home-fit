@@ -4206,9 +4206,12 @@ _NB_REGION_BOXES = [
     ("hawaii",            18.0,  23.5, -162.0, -154.0),
     ("alaska",            54.0,  72.0, -170.0, -130.0),
     ("pacific_northwest", 42.0,  49.5, -125.0, -116.5),
-    ("california",        32.0,  42.5, -125.0, -114.0),
-    ("southwest_arid",    31.0,  37.5, -114.5, -103.0),
-    ("mountain_west",     36.0,  49.0, -116.5, -102.0),
+    ("california",        32.0,  42.5, -125.0, -114.0),   # reached only inside the polygon below
+    # West edge -117.5 (was -114.5) so the Mojave and Las Vegas valley are arid; California proper
+    # is claimed first by _CALIFORNIA_POLYGON, so the coast and Southern California keep California baselines.
+    ("southwest_arid",    31.0,  37.5, -117.5, -103.0),
+    # West edge -120.2 (was -116.5) so the Great Basin (Reno, Tahoe's Nevada side) is not unassigned.
+    ("mountain_west",     36.0,  49.0, -120.2, -102.0),
     ("great_plains",      34.0,  49.0, -104.0,  -93.0),
     ("texas",             25.5,  37.0, -107.0,  -93.0),
     ("midwest",           36.0,  49.0,  -93.0,  -80.0),
@@ -4216,6 +4219,26 @@ _NB_REGION_BOXES = [
     ("mid_atlantic",      37.0,  42.5,  -80.5,  -73.5),
     ("northeast",         40.0,  47.5,  -80.0,  -66.0),
 ]
+
+# California's actual outline (lon, lat), with a generous ocean margin on the west.  The old rectangle
+# (lon -125 to -114) also covered Nevada west of -114, so every Las Vegas place was normalized against
+# California green-view and canopy medians instead of southwest_arid (metro audit, 2026-10-22).
+# East edge: the 120 W line to Lake Tahoe, the diagonal to the Colorado River near 35 N, then the river.
+_CALIFORNIA_POLYGON = [
+    (-125.0, 42.1), (-119.9, 42.1), (-119.9, 39.0), (-114.55, 34.98),
+    (-114.4, 34.3), (-114.7, 32.6), (-125.0, 32.4),
+]
+
+
+def _point_in_polygon(lon: float, lat: float, poly) -> bool:
+    inside = False
+    n = len(poly)
+    for i in range(n):
+        x1, y1 = poly[i]
+        x2, y2 = poly[(i + 1) % n]
+        if (y1 > lat) != (y2 > lat) and lon < (x2 - x1) * (lat - y1) / (y2 - y1) + x1:
+            inside = not inside
+    return inside
 
 # Regional median GVI (%) and canopy (%) from Treepedia, NLCD urban canopy inventories,
 # and urban greenery literature. Used to normalize raw values before scoring.
@@ -4240,7 +4263,11 @@ def _get_nb_region(lat: Optional[float], lon: Optional[float]) -> str:
     """Return the US natural-beauty region name for a coordinate, or 'international'."""
     if lat is None or lon is None:
         return "international"
+    if _point_in_polygon(lon, lat, _CALIFORNIA_POLYGON):
+        return "california"
     for name, lat_min, lat_max, lon_min, lon_max in _NB_REGION_BOXES:
+        if name == "california":
+            continue  # California is decided by the polygon above, not the rectangle
         if lat_min <= lat <= lat_max and lon_min <= lon <= lon_max:
             return name
     return "international"
