@@ -94,6 +94,8 @@ _PRECISION_MAP = {
     "chicago_open_data":      "HYPER_LOCAL",
     "philadelphia_open_data": "HYPER_LOCAL",
     "austin_open_data":       "HYPER_LOCAL",
+    "dallas_open_data":       "HYPER_LOCAL",
+    "boston_open_data":       "HYPER_LOCAL",
     "lasd_open_data":   "HYPER_LOCAL",
     "lasd_station":     "PRECINCT_PROXY",
     "ny_state_ucr":     "AGENCY_VERIFIED",

@@ -302,3 +302,47 @@ def test_agency_map_resolves_unmatched_places():
 def test_county_agency_source_is_lower_precision_not_degraded():
     from pillars.community_safety import _PRECISION_MAP
     assert _PRECISION_MAP["fbi_county_agency"] == "PRECINCT_PROXY"
+
+
+def test_open_data_city_covers_dallas_boston():
+    for geoid, lat, lon, want in (
+        ("4819000", 32.7791, -96.7970, "dallas"),
+        ("2507000", 42.3503, -71.0810, "boston"),
+    ):
+        with mock.patch("data_sources.census_api.get_incorporated_place_geoid", return_value=geoid):
+            assert crime_api.open_data_city(lat, lon) == want
+    # Irving sits inside the Dallas bbox but polices itself
+    with mock.patch("data_sources.census_api.get_incorporated_place_geoid", return_value="4837000"):
+        assert crime_api.open_data_city(32.8140, -96.9489) is None
+
+
+def test_dallas_part1_filters_on_nibrs_codes():
+    calls = []
+
+    def fake(url, select, where, label):
+        calls.append(where)
+        return 7
+
+    with mock.patch.object(crime_api, "_socrata_count", side_effect=fake):
+        r = crime_api._fetch_dallas_part1.__wrapped__(32.78, -96.80, 1000, 2025)
+    assert r == {"violent": 7, "property": 7}
+    assert "within_circle(geocoded_column, 32.78, -96.8, 1000)" in calls[0]
+    assert "'13A'" in calls[0] and "'23C'" in calls[1] and "'240'" in calls[1]
+    assert "13B" not in calls[0]  # simple assault is Part II
+
+
+def test_boston_count_applies_circle_to_bounding_box_rows():
+    rows = [
+        {"Lat": "42.3503", "Long": "-71.0810"},   # at the centre
+        {"Lat": "42.3550", "Long": "-71.0810"},   # ~520 m north: inside 1000 m
+        {"Lat": "42.3590", "Long": "-71.0810"},   # ~990 m north: inside, near the edge
+        {"Lat": "42.3590", "Long": "-71.0900"},   # in the bbox corner, outside the circle
+        {"Lat": "", "Long": ""},                  # no coordinates
+    ]
+    resp = mock.Mock(status_code=200)
+    resp.json.return_value = {"result": {"records": rows}}
+    with mock.patch.object(crime_api.requests, "get", return_value=resp) as g:
+        n = crime_api._bos_count(crime_api._BOS_VIOLENT_CODES, 42.3503, -71.0810, 1000, 2025)
+    assert n == 3
+    sql = g.call_args.kwargs["params"]["sql"]
+    assert "'423'" in sql and "NULLIF" not in sql and "POWER" not in sql  # the portal firewall rejects both

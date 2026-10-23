@@ -57,6 +57,13 @@ _PHL_CARTO = "https://phl.carto.com/api/v2/sql"
 # only a census block group, so counts are apportioned to a circle by polygon overlap.
 _AUS_SOCRATA = "https://data.austintexas.gov/resource/fdj4-gpfu.json"
 
+# Dallas PD "Police Incidents" (Socrata; NIBRS code and a point per offense row).
+_DAL_SOCRATA = "https://www.dallasopendata.com/resource/qv6i-rri7.json"
+# Boston PD "Crime Incident Reports" (CKAN datastore SQL).  Uses BPD's own offense codes,
+# and the public file omits rape/sexual-assault offenses entirely.
+_BOS_CKAN_SQL = "https://data.boston.gov/api/3/action/datastore_search_sql"
+_BOS_RESOURCE = "b973d8cb-eeb2-4e7e-99da-c92938efc9c0"
+
 # FBI Crime Data Explorer
 _FBI_CDE_BASE = "https://api.usa.gov/crime/fbi/cde"
 
@@ -156,6 +163,7 @@ _SF_BBOX = (37.703, -122.53, 37.835, -122.355)
 _OPEN_DATA_CITY_GEOID = {
     "nyc": "3651000", "la": "0644000", "sf": "0667000",
     "chicago": "1714000", "philadelphia": "4260000", "austin": "4805000",
+    "dallas": "4819000", "boston": "2507000",
 }
 
 # City neighborhoods scored from incident data: the smallest of these radii whose
@@ -171,6 +179,9 @@ _LA_BBOX  = (33.70, -118.67, 34.34, -118.13)
 _CHI_BBOX = (41.64, -87.94, 42.03, -87.52)
 _PHL_BBOX = (39.86, -75.29, 40.14, -74.95)
 _AUS_BBOX = (30.07, -98.07, 30.52, -97.56)
+# Dallas and Boston city limits (trimmed by GEOID, since each bbox covers neighbouring towns)
+_DAL_BBOX = (32.617, -97.000, 33.020, -96.517)
+_BOS_BBOX = (42.227, -71.191, 42.400, -70.986)
 
 # Minimum incident count to trust the data (low counts = unreliable rate)
 _MIN_INCIDENTS = 5
@@ -197,6 +208,13 @@ _SF_PROPERTY_WHERE = (
 # assault/battery; 05 burglary, 06 larceny-theft, 07 motor vehicle theft, 09 arson.
 _CHI_VIOLENT_FBI = ("01A", "02", "03", "04A", "04B")
 _CHI_PROPERTY_FBI = ("05", "06", "07", "09")
+# Dallas carries NIBRS codes: same Part I sets as LAPD (see _LA_*_NIBRS).
+# Boston BPD offense codes: 111 murder, 301 robbery, 423 aggravated assault;
+# 520/540 burglary, 530 B&E motor vehicle, 611-619 larceny, 706/724/727 vehicle theft.
+# Excluded: 121 vehicular manslaughter, 531 (no property stolen), 735/736 recovered vehicles.
+_BOS_VIOLENT_CODES = ("111", "301", "423")
+_BOS_PROPERTY_CODES = ("520", "530", "540", "611", "612", "613", "614", "615", "616", "617", "619",
+                       "706", "724", "727")
 # Philadelphia UCR general codes: 100 homicide, 200 rape, 300 robbery, 400 aggravated assault;
 # 500 burglary, 600 theft (incl. from vehicle), 700 motor vehicle theft.  800 is simple assault.
 _PHL_VIOLENT_UCR = (100, 200, 300, 400)
@@ -680,6 +698,78 @@ def _open_data_rates(fetch, source: str, lat: float, lon: float, population: int
         "incidents_current": cur["violent"] + cur["property"],
         "data_period": str(year),
     }
+
+
+# ---------------------------------------------------------------------------
+# Dallas Open Data (Socrata, NIBRS code per offense row)
+# ---------------------------------------------------------------------------
+
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _fetch_dallas_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
+    """Part I violent/property offense counts within a circle for one calendar year."""
+    base = f"within_circle(geocoded_column, {lat}, {lon}, {radius_m}) AND " + _year_bounds(year, "date1")
+    v = _socrata_count(_DAL_SOCRATA, "count(*)", f"{base} AND nibrs_code in ({_soql_list(_LA_VIOLENT_NIBRS)})", "Dallas")
+    p = _socrata_count(_DAL_SOCRATA, "count(*)", f"{base} AND nibrs_code in ({_soql_list(_LA_PROPERTY_NIBRS)})", "Dallas")
+    if v is None or p is None:
+        return None
+    return {"violent": v, "property": p}
+
+
+def _get_dallas_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
+    return _open_data_rates(_fetch_dallas_part1, "dallas_open_data", lat, lon, population, radius_m)
+
+
+# ---------------------------------------------------------------------------
+# Boston Open Data (CKAN datastore SQL, BPD offense codes)
+# ---------------------------------------------------------------------------
+
+def _bos_count(codes, lat: float, lon: float, radius_m: int, year: int) -> Optional[int]:
+    import math
+
+    code_list = ", ".join("'" + c + "'" for c in codes)
+    dlat = radius_m / 111320.0
+    dlon = radius_m / (111320.0 * math.cos(math.radians(lat)))
+    # The portal's firewall rejects arithmetic and NULLIF in SQL, so the query keeps to a
+    # bounding box (BETWEEN) and the circle test is applied here.
+    sql = (
+        f'SELECT "Lat", "Long" FROM "{_BOS_RESOURCE}" '
+        f"WHERE \"YEAR\" = '{int(year)}' AND \"OFFENSE_CODE\" IN ({code_list}) "
+        f'AND CAST("Lat" AS float) BETWEEN {lat - dlat:.6f} AND {lat + dlat:.6f} '
+        f'AND CAST("Long" AS float) BETWEEN {lon - dlon:.6f} AND {lon + dlon:.6f} LIMIT 32000'
+    )
+    try:
+        resp = requests.get(_BOS_CKAN_SQL, params={"sql": sql}, timeout=_REQUEST_TIMEOUT)
+        if resp.status_code != 200:
+            logger.warning("Boston crime API returned %d", resp.status_code)
+            return None
+        n = 0
+        for r in resp.json().get("result", {}).get("records") or []:
+            try:
+                dy = (float(r["Lat"]) - lat) * 111320.0
+                dx = (float(r["Long"]) - lon) * 111320.0 * math.cos(math.radians(lat))
+            except (TypeError, ValueError):
+                continue
+            if dx * dx + dy * dy <= radius_m * radius_m:
+                n += 1
+        return n
+    except Exception as e:
+        logger.warning("Boston crime fetch failed: %s", e)
+        return None
+
+
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _fetch_boston_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
+    """Part I violent/property offense counts within a circle for one calendar year."""
+    v = _bos_count(_BOS_VIOLENT_CODES, lat, lon, radius_m, year)
+    p = _bos_count(_BOS_PROPERTY_CODES, lat, lon, radius_m, year)
+    if v is None or p is None:
+        return None
+    return {"violent": v, "property": p}
+
+
+def _get_boston_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
+    return _open_data_rates(_fetch_boston_part1, "boston_open_data", lat, lon, population, radius_m)
+
 
 
 def _get_nyc_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
@@ -1651,7 +1741,8 @@ def open_data_city(lat: float, lon: float) -> Optional[str]:
     """'nyc' / 'la' / 'sf' when the point is inside a city whose police publish
     incident-level open data, else None."""
     boxes = (("nyc", _NYC_BBOX), ("la", _LA_BBOX), ("sf", _SF_BBOX),
-             ("chicago", _CHI_BBOX), ("philadelphia", _PHL_BBOX), ("austin", _AUS_BBOX))
+             ("chicago", _CHI_BBOX), ("philadelphia", _PHL_BBOX), ("austin", _AUS_BBOX),
+             ("dallas", _DAL_BBOX), ("boston", _BOS_BBOX))
     key = next(
         (k for k, (la0, lo0, la1, lo1) in boxes if la0 <= lat <= la1 and lo0 <= lon <= lo1),
         None,
@@ -1711,7 +1802,7 @@ def get_crime_rates(
     if source:
         getter = {"nyc": _get_nyc_rates, "la": _get_la_rates, "sf": _get_sf_rates,
                   "chicago": _get_chicago_rates, "philadelphia": _get_philadelphia_rates,
-                  "austin": _get_austin_rates,
+                  "austin": _get_austin_rates, "dallas": _get_dallas_rates, "boston": _get_boston_rates,
                   "lasd": _get_lasd_incident_rates}[source]
         result = getter(lat, lon, population, radius_m)
         if result:
