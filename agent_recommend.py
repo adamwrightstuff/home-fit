@@ -18,25 +18,10 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
 from climate_preferences import score_climate_match
+from pillar_registry import PRIORITY_KEYS
 
 # Mirrors frontend/lib/pillars.ts PillarKey (order matches validation set)
-PILLAR_KEYS: tuple[str, ...] = (
-    "natural_beauty",
-    "built_environment",
-    "neighborhood_amenities",
-    "active_outdoors",
-    "healthcare_access",
-    "public_transit_access",
-    "air_travel_access",
-    "economic_opportunity",
-    "quality_education",
-    "housing_value",
-    "climate_risk",
-    "social_fabric",
-    "diversity",
-    "community_safety",
-    "political_lean",
-)
+PILLAR_KEYS: tuple[str, ...] = PRIORITY_KEYS
 
 VALID_POLITICAL_PREFERENCES = frozenset({"progressive", "conservative", "moderate"})
 

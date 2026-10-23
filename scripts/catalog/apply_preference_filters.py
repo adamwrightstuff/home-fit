@@ -41,17 +41,16 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from pillar_registry import PRIORITY_KEYS  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Pillar keys (matches Trovamo / agent_recommend.py)
 # ---------------------------------------------------------------------------
 
-ALL_PILLARS = [
-    "community_safety", "quality_education", "social_fabric",
-    "neighborhood_amenities", "natural_beauty", "active_outdoors",
-    "healthcare_access", "public_transit_access", "housing_value",
-    "diversity", "air_travel_access", "economic_opportunity",
-    "climate_risk", "political_lean", "built_environment",
-]
+ALL_PILLARS = list(PRIORITY_KEYS)
 
 PRIORITY_TO_NUMERIC = {"None": 0, "Low": 33, "Medium": 66, "High": 100}
 

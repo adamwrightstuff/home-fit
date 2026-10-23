@@ -24,22 +24,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from pillar_registry import SCORED_PILLARS  # noqa: E402
 
-PILLAR_ORDER: List[str] = [
-    "quality_education",
-    "neighborhood_amenities",
-    "economic_opportunity",
-    "climate_risk",
-    "active_outdoors",
-    "natural_beauty",
-    "diversity",
-    "social_fabric",
-    "built_environment",
-    "healthcare_access",
-    "public_transit_access",
-    "air_travel_access",
-    "housing_value",
-]
+PILLAR_ORDER: List[str] = list(SCORED_PILLARS)
 
 DEFAULT_JSONL_BY_METRO: Dict[str, Path] = {
     "nyc": REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.jsonl",

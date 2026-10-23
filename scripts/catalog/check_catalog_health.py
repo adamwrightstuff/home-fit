@@ -34,6 +34,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from pillar_registry import SCORED_PILLARS  # noqa: E402
 JSONL = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
 
 # Per-pillar confidence thresholds. Pillars with structurally low confidence
@@ -52,12 +55,7 @@ NO_SCORE_EXPECTED = {"political_lean"}
 
 # Pillars that must be present and scored in every catalog row.
 # Absence of the key entirely (not just null score) is flagged as pillar_absent.
-EXPECTED_PILLARS = {
-    "active_outdoors", "natural_beauty", "neighborhood_amenities",
-    "air_travel_access", "public_transit_access", "healthcare_access",
-    "economic_opportunity", "quality_education", "housing_value",
-    "climate_risk", "social_fabric", "diversity", "community_safety",
-}
+EXPECTED_PILLARS = set(SCORED_PILLARS)
 
 # Known OLD versions that should be flagged (scored under a superseded algorithm).
 # None = pillar isn't versioned yet, handled separately.

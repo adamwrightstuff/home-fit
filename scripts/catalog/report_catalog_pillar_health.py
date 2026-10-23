@@ -32,25 +32,12 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 from data_sources.data_quality import data_quality_indicates_fallback  # noqa: E402
+from pillar_registry import SCORED_PILLARS  # noqa: E402
 
 DEFAULT_JSONL = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.jsonl"
 
-# Match frontend/lib/pillars.ts PILLAR_ORDER for display consistency.
-PILLAR_ORDER: List[str] = [
-    "quality_education",
-    "neighborhood_amenities",
-    "economic_opportunity",
-    "climate_risk",
-    "active_outdoors",
-    "natural_beauty",
-    "diversity",
-    "social_fabric",
-    "built_environment",
-    "healthcare_access",
-    "public_transit_access",
-    "air_travel_access",
-    "housing_value",
-]
+# Frontend display order.
+PILLAR_ORDER: List[str] = list(SCORED_PILLARS)
 
 
 def catalog_key(cat: Dict[str, Any]) -> str:

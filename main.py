@@ -72,6 +72,7 @@ from data_sources.arch_diversity import compute_arch_diversity
 from data_sources.job_category_overlays import parse_job_categories
 from data_sources.data_quality import INFORMATIONAL_DATA_WARNINGS, data_quality_indicates_fallback
 from pillars.vacation_weights import get_vacation_pillar_set, get_vacation_token_allocation, get_vacation_natural_beauty_preference
+from pillar_registry import SCORED_PILLARS
 
 ##########################
 # CONFIGURATION FLAGS
@@ -1294,12 +1295,7 @@ def _apply_allocation_to_cached_response(
         token_allocation = parse_priority_allocation(priorities_dict)
         allocation_type = "priority_based"
         priority_levels: Optional[Dict[str, str]] = {}
-        primary_pillars = [
-            "active_outdoors", "natural_beauty", "neighborhood_amenities",
-            "air_travel_access", "public_transit_access", "healthcare_access",
-            "economic_opportunity", "quality_education", "housing_value",
-            "climate_risk", "social_fabric", "diversity", "community_safety",
-        ]
+        primary_pillars = list(SCORED_PILLARS)
         for pillar in primary_pillars:
             original_priority = priorities_dict.get(pillar, "none")
             if original_priority:
