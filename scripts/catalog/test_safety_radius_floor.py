@@ -62,25 +62,27 @@ def _load_places(path: Path, names):
     return out
 
 
-def _ambient_series(lat, lon, area_type):
-    series = {}
-    for r in RADII:
-        for attempt in range(6):
-            residents, meta = pop_fn(lat, lon, r, area_type=area_type)
-            if meta.get("population_denominator_method") == "areal_acs_tracts_in_disk":
-                break
-            time.sleep(5 * (attempt + 1))
-        else:
-            raise RuntimeError(f"Census lookup failed at {lat},{lon} r={r}")
-        jobs = jobs_in_disk(lat, lon, r)
-        ambient = people_present(residents, jobs[0], jobs[1]) if jobs else float(residents)
-        series[r] = {"residents": float(residents), "ambient": float(ambient)}
-    return series
+def _ambient_at(lat, lon, area_type, r):
+    for attempt in range(6):
+        residents, meta = pop_fn(lat, lon, r, area_type=area_type)
+        if meta.get("population_denominator_method") == "areal_acs_tracts_in_disk":
+            break
+        time.sleep(5 * (attempt + 1))
+    else:
+        raise RuntimeError(f"Census lookup failed at {lat},{lon} r={r}")
+    jobs = jobs_in_disk(lat, lon, r)
+    ambient = people_present(residents, jobs[0], jobs[1]) if jobs else float(residents)
+    return {"residents": float(residents), "ambient": float(ambient)}
 
 
-def _radius_for(series, floor):
+def _radius_for(lat, lon, area_type, floor, series):
+    """Smallest radius >= floor holding the minimum residents; looks up each radius lazily."""
     for r in RADII:
-        if r >= floor and series[r]["residents"] >= ca.MIN_NEIGHBORHOOD_RESIDENTS:
+        if r < floor:
+            continue
+        if r not in series:
+            series[r] = _ambient_at(lat, lon, area_type, r)
+        if series[r]["residents"] >= ca.MIN_NEIGHBORHOOD_RESIDENTS:
             return r
     return RADII[-1]
 
@@ -91,13 +93,15 @@ def _work(args):
     for tag, dn, de in SHIFTS:
         la = lat + dn / 111320.0
         lo = lon + de / (111320.0 * math.cos(math.radians(lat)))
-        series = _ambient_series(la, lo, area_type)
+        series = {}
         pin = {"series": series, "floors": {}}
         for f in floors:
-            r = _radius_for(series, f)
+            r = _radius_for(la, lo, area_type, f, series)
             c = ca._fetch_nyc_part1(la, lo, r, year)
             if not c:
                 continue
+            if r not in series:
+                series[r] = _ambient_at(la, lo, area_type, r)
             p = series[r]["ambient"]
             score = _score_rates(c["violent"] / p * 1000, c["property"] / p * 1000)[2]
             pin["floors"][str(f)] = {"radius": r, "violent": c["violent"], "property": c["property"],
