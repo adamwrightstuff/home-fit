@@ -136,6 +136,18 @@
     "timberwood park township": {
       "agency": "Bexar County Sheriff's Office",
       "kind": "county"
+    },
+    "highland village": {
+      "agency": "Highland Village Police Department",
+      "kind": "own"
+    },
+    "highland village township": {
+      "agency": "Highland Village Police Department",
+      "kind": "own"
+    },
+    "houston": {
+      "agency": "Highland Village Police Department",
+      "kind": "own"
     }
   },
   "IL": {
