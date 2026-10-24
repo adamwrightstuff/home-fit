@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "description": "Weight of the property-crime slot in community_safety, derived from published cost-of-crime estimates and national offense rates.",
+    "formula": "property_weight = H_property / (H_violent + H_property); H = sum(rate_per_100k x cost_per_offense)",
+    "cost_source": "McCollister, French & Fang (2010), Drug and Alcohol Dependence 108, Table 5",
+    "rate_source": "BJS NIBRS-based national estimates, 2023",
+    "rebuild": "PYTHONPATH=. python3 scripts/baselines/derive_community_safety_weight.py"
+  },
+  "property_weight": 0.098,
+  "sensitivity": {
+    "total_cost_murder_excluded": 0.197,
+    "victim_cost_only": 0.299,
+    "victim_cost_only_murder_excluded": 0.519
+  },
+  "inputs": {
+    "rates_per_100k": {
+      "murder": 5.9,
+      "rape": 40.1,
+      "aggravated_assault": 273.1,
+      "robbery": 68.7,
+      "burglary": 253.4,
+      "larceny_theft": 1431.1,
+      "motor_vehicle_theft": 330.7
+    },
+    "total_cost_2008usd": {
+      "murder": 8982907,
+      "rape": 240776,
+      "aggravated_assault": 107020,
+      "robbery": 42310,
+      "burglary": 6462,
+      "larceny_theft": 3532,
+      "motor_vehicle_theft": 10772
+    },
+    "victim_cost_2008usd": {
+      "murder": 737517,
+      "rape": 5556,
+      "aggravated_assault": 8700,
+      "robbery": 3299,
+      "burglary": 1362,
+      "larceny_theft": 480,
+      "motor_vehicle_theft": 6114
+    }
+  }
+}

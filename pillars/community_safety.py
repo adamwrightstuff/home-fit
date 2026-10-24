@@ -13,7 +13,10 @@ Scoring
 -------
 1. Each rate's slot = 100 - its percentile among a random national sample of US
    city/town police departments (safer than 90% of US towns → 90).
-2. Blend: 65% violent slot + 35% property slot (15% property in retail-theft hubs).
+2. Blend: violent slot x (1 - w) + property slot x w, with w = the property share of total
+   harm (about 0.098), derived from published cost-of-crime estimates and national offense
+   rates (data/community_safety_harm_weights.json; scripts/baselines/derive_community_safety_weight.py;
+   docs/PILLAR_COMMUNITY_SAFETY.md).  One weight for every place: no retail-hub exception.
 3. Add capped trend modifier: improving trend → +up to 5pts, worsening → -up to 5pts.
 4. Final = clip(blend + trend_delta, 0, 100).
 
@@ -76,6 +79,21 @@ except Exception as e:
     logger.warning("Failed to load community safety national scale: %s", e)
 
 
+# Property share of total harm (see module docstring).  Falls back to the derived value if the
+# file is missing so scoring never silently reverts to an untested weight.
+_HARM_WEIGHTS_PATH = os.getenv(
+    "COMMUNITY_SAFETY_HARM_WEIGHTS_PATH",
+    os.path.join(_DEFAULT_DATA_DIR, "community_safety_harm_weights.json"),
+)
+_PROPERTY_WEIGHT_FALLBACK = 0.098
+try:
+    with open(_HARM_WEIGHTS_PATH, "r", encoding="utf-8") as _f:
+        PROPERTY_WEIGHT = float(json.load(_f)["property_weight"])
+except Exception as e:
+    logger.warning("Failed to load community safety harm weights (%s); using %.3f", e, _PROPERTY_WEIGHT_FALLBACK)
+    PROPERTY_WEIGHT = _PROPERTY_WEIGHT_FALLBACK
+
+
 # ---------------------------------------------------------------------------
 # Scoring helpers
 # ---------------------------------------------------------------------------
@@ -111,16 +129,6 @@ _CONFIDENCE_BASE: Dict[str, int] = {
     "PRECINCT_PROXY": 69,
     "AGENCY_VERIFIED": 82,
 }
-
-# Commercial/retail-hub detector: when property crime rate is this many times
-# higher than violent crime AND violent rate is below this threshold, the area's
-# crime profile is dominated by commercial theft (shoplifting, package theft,
-# pickpocketing) rather than community violence.  Dampen property weight so
-# a larceny-heavy commercial corridor doesn't score below a violent neighbourhood.
-_COMMERCIAL_PROPERTY_RATIO = 8.0   # property_per_1k / violent_per_1k threshold
-_COMMERCIAL_VIOLENT_CEILING = 8.0  # only apply dampening when violent_per_1k < this
-_COMMERCIAL_PROPERTY_WEIGHT = 0.15  # reduced from default 0.35
-
 
 def _confidence_and_dqi(precision_level: str, commuter_meta: Dict[str, Any]) -> Tuple[int, float]:
     base = float(_CONFIDENCE_BASE.get(precision_level, 45))
@@ -175,14 +183,7 @@ def _score_rates(
     v_slot = 100.0 - v_pct
     p_slot = 100.0 - p_pct
 
-    # Commercial-hub dampening: reduce property weight when the crime profile
-    # is dominated by property crime (retail theft, pickpockets) vs. violence.
-    p_weight = _COMMERCIAL_PROPERTY_WEIGHT if (
-        violent_per_1k < _COMMERCIAL_VIOLENT_CEILING
-        and property_per_1k > 0
-        and violent_per_1k > 0
-        and property_per_1k / violent_per_1k >= _COMMERCIAL_PROPERTY_RATIO
-    ) else 0.35
+    p_weight = PROPERTY_WEIGHT
     v_weight = 1.0 - p_weight
 
     raw = v_weight * v_slot + p_weight * p_slot

@@ -346,3 +346,25 @@ def test_boston_count_applies_circle_to_bounding_box_rows():
     assert n == 3
     sql = g.call_args.kwargs["params"]["sql"]
     assert "'423'" in sql and "NULLIF" not in sql and "POWER" not in sql  # the portal firewall rejects both
+
+
+def test_property_weight_is_the_derived_harm_share_and_has_no_hub_exception():
+    from pillars import community_safety as cs
+
+    assert abs(cs.PROPERTY_WEIGHT - 0.098) < 1e-9
+    # A retail-theft profile (property 20x violent) gets the same weight as any other.
+    v_slot, p_slot, raw, _ = cs._score_rates(1.0, 20.0)
+    assert abs(raw - ((1 - cs.PROPERTY_WEIGHT) * v_slot + cs.PROPERTY_WEIGHT * p_slot)) < 1e-9
+    v_slot2, p_slot2, raw2, _ = cs._score_rates(1.0, 5.0)
+    assert abs(raw2 - ((1 - cs.PROPERTY_WEIGHT) * v_slot2 + cs.PROPERTY_WEIGHT * p_slot2)) < 1e-9
+
+
+def test_derive_property_weight_matches_the_published_inputs():
+    import importlib.util, pathlib
+
+    path = pathlib.Path(__file__).resolve().parents[1] / "scripts" / "baselines" / "derive_community_safety_weight.py"
+    spec = importlib.util.spec_from_file_location("derive_weight", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert round(mod.property_share(mod.TOTAL_COST), 3) == 0.098
+    assert round(mod.property_share(mod.TOTAL_COST, ("murder",)), 3) == 0.197

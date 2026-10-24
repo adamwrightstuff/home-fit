@@ -29,10 +29,10 @@ import math
 
 from pillars.community_safety import _score_rates, _trend_delta, national_scale_meta
 
-DEFAULT_INPUTS = [
-    os.path.join(ROOT, "data", "nyc_metro_place_catalog_scores_merged.jsonl"),
-    os.path.join(ROOT, "data", "la_metro_place_catalog_scores_merged.jsonl"),
-]
+import glob
+
+# Every metro's canonical scored file (the composites_recomputed one is the live catalog).
+DEFAULT_INPUTS = sorted(glob.glob(os.path.join(ROOT, "data", "*_metro_place_catalog_scores_merged.composites_recomputed.jsonl")))
 
 
 def _get_area_type(score: dict) -> str | None:
@@ -128,7 +128,7 @@ def process_file(path: str, dry_run: bool) -> None:
             if old != new:
                 diffs.append((d.get("catalog", {}).get("name", "?"), old, new))
 
-        out_lines.append(json.dumps(d, separators=(",", ":")))
+        out_lines.append(json.dumps(d, ensure_ascii=False))  # same style as the catalog files, so diffs stay small
 
     print(f"  {os.path.basename(path)}: {updated} recomputed, {skipped} skipped, {len(diffs)} changed")
 
