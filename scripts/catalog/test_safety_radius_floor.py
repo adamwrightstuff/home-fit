@@ -47,7 +47,11 @@ FETCHERS = {
     "chicago": ("chicago_open_data", "_fetch_chicago_part1"),
     "philadelphia": ("philadelphia_open_data", "_fetch_philadelphia_part1"),
     "sf": ("sf_open_data", "_fetch_sf_part1"),
+    "la": ("la_open_data", "_fetch_la_county_part1"),
+    "austin": ("austin_open_data", "_fetch_austin_part1"),
 }
+# LA counts incidents in a square box, so production scales the population by 4/pi to match.
+POP_SCALE = {"la": 4.0 / math.pi}
 RADII = (600, 800, 1000, 1200, 1500, 2000, 3000, 4000)
 SHIFTS = (("c", 0.0, 0.0), ("n", 500.0, 0.0), ("e", 0.0, 500.0))
 
@@ -96,7 +100,7 @@ def _radius_for(lat, lon, area_type, floor, series):
 
 
 def _work(args):
-    name, (lat, lon, area_type, current), floors, year, fetch = args
+    name, (lat, lon, area_type, current), floors, year, fetch, scale = args
     res = {"current": current, "pins": {}}
     for tag, dn, de in SHIFTS:
         la = lat + dn / 111320.0
@@ -110,7 +114,7 @@ def _work(args):
                 continue
             if r not in series:
                 series[r] = _ambient_at(la, lo, area_type, r)
-            p = series[r]["ambient"]
+            p = series[r]["ambient"] * scale
             score = _score_rates(c["violent"] / p * 1000, c["property"] / p * 1000)[2]
             pin["floors"][str(f)] = {"radius": r, "violent": c["violent"], "property": c["property"],
                                      "ambient": p, "score": round(score, 1)}
@@ -142,7 +146,7 @@ def main() -> int:
     print(f"{len(items)} places, floors {floors}", flush=True)
 
     with ThreadPoolExecutor(a.threads) as ex:
-        results = dict(ex.map(_work, [(n, v, floors, a.year, fetch) for n, v in items]))
+        results = dict(ex.map(_work, [(n, v, floors, a.year, fetch, POP_SCALE.get(a.metro, 1.0)) for n, v in items]))
     a.out = a.out or REPO_ROOT / "analysis" / f"safety_radius_floor_{a.metro}.json"
     a.out.parent.mkdir(parents=True, exist_ok=True)
     a.out.write_text(json.dumps(results))
