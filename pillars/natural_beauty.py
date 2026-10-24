@@ -65,6 +65,9 @@ ENABLE_NATURAL_BEAUTY_V8 = False
 #   20% canopy %, 10% terrain relief, 7% natural landcover, 3% biodiversity.
 # No uplift. Reuses all existing data collection; only the scoring formula changes.
 ENABLE_NATURAL_BEAUTY_V9 = True
+# Version stamp written to details.scoring_formula when V9 mode is on. v10 = two-part score (streets + scenery,
+# 2026-10); v9 was the six-component OWA. The flag name is kept for compatibility.
+NATURAL_BEAUTY_SCORING_FORMULA = "v10"
 
 # Personalization: weight profiles from "What kind of natural scenery matters most to you?" quiz.
 ENABLE_NATURAL_BEAUTY_PREFERENCE = True
@@ -4629,7 +4632,7 @@ def get_natural_beauty_score(lat: float,
         "score_v7": round(natural_score_norm, 2),
         "score_v9": round(v9_score, 2),
         "v9_breakdown": v9_breakdown,
-        "scoring_formula": "v9" if ENABLE_NATURAL_BEAUTY_V9 else "v7",
+        "scoring_formula": NATURAL_BEAUTY_SCORING_FORMULA if ENABLE_NATURAL_BEAUTY_V9 else "v7",
     }
 
     return final_score, details

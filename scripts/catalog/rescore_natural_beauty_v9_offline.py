@@ -72,7 +72,7 @@ def rescore_row(row: dict) -> tuple[bool, str]:
     det["score_v9"] = round(float(v9_score), 2)
     det["score_v7"] = round(float(nb.get("score") or 0), 2)
     det["v9_breakdown"] = v9_breakdown
-    det["scoring_formula"] = "v9" if nb_module.ENABLE_NATURAL_BEAUTY_V9 else "v7"
+    det["scoring_formula"] = nb_module.NATURAL_BEAUTY_SCORING_FORMULA if nb_module.ENABLE_NATURAL_BEAUTY_V9 else "v7"
     nb["details"] = det
 
     if nb_module.ENABLE_NATURAL_BEAUTY_V9:

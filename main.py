@@ -562,7 +562,8 @@ def _apply_v9_to_natural(natural_calc: Dict, natural_score: float, natural_detai
         natural_details["score_v7"] = round(float(natural_score), 2)
         natural_details["score_v9"] = round(float(v9_score), 2)
         natural_details["v9_breakdown"] = v9_breakdown
-        natural_details["scoring_formula"] = "v9" if natural_beauty.ENABLE_NATURAL_BEAUTY_V9 else "v7"
+        natural_details["scoring_formula"] = (natural_beauty.NATURAL_BEAUTY_SCORING_FORMULA
+                                              if natural_beauty.ENABLE_NATURAL_BEAUTY_V9 else "v7")
         final_score = v9_score if natural_beauty.ENABLE_NATURAL_BEAUTY_V9 else natural_score
     except Exception:
         final_score = natural_score

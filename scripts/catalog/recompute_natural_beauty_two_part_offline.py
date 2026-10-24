@@ -61,6 +61,9 @@ def recompute_place(score: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     v9["missing_parts"] = ["streets"] if missing else None
     for k in _OLD_KEYS:
         v9.pop(k, None)
+    details["scoring_formula"] = NB.NATURAL_BEAUTY_SCORING_FORMULA
+    if "scoring_formula" in nb:  # older batches (NYC, LA) also keep the stamp at the pillar root
+        nb["scoring_formula"] = NB.NATURAL_BEAUTY_SCORING_FORMULA
     nb["details"] = details
     if isinstance(nb.get("weight"), (int, float)):
         nb["contribution"] = round(nb["weight"] * nb["score"] / 100.0, 4)

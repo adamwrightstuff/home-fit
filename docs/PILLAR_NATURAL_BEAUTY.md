@@ -26,6 +26,11 @@ score   = quantile map of blend onto the old V9 score distribution       # data/
 `nb_two_part()` returns `streets`, `scenery`, `blend`, `score`, `streets_share`. The stored breakdown carries
 `method = "two_part_v10"`, `streets_score`, `scenery_score`, `blend_raw`.
 
+### Versioning
+`details.scoring_formula` is `"v10"` (constant `NATURAL_BEAUTY_SCORING_FORMULA`; `"v9"` was the six-component OWA, `"v7"` the legacy path
+when `ENABLE_NATURAL_BEAUTY_V9` is off, a flag name kept for compatibility). `check_catalog_health.py` treats v10 as current and flags v9 as an
+old version. Older NYC and LA rows also keep the stamp at the pillar root; the offline recompute updates both.
+
 ### Score scale
 The blend runs lower than the old six-component score (mean 47 vs 65), so each blend value is mapped to the old-score
 value at the same percentile of the catalog (21 metros, 1,476 places). This keeps the catalog mean and spread (64.6 and

@@ -63,6 +63,7 @@ EXPECTED_PILLARS = set(SCORED_PILLARS)
 OLD_VERSIONS: Dict[str, set] = {
     "public_transit_access": {"commuter_access_floor_fresh"},
     "social_fabric":         {"v14_two_morphology", "v14_sf_two_morphology"},
+    "natural_beauty":        {"v9", "v7"},  # v10 = two-part score (streets + scenery)
 }
 
 # Latest version per pillar — presence of this version means the place is current.
@@ -73,6 +74,7 @@ OLD_VERSIONS: Dict[str, set] = {
 # The transit-specific check below handles this; LATEST_VERSIONS holds the floor version
 # so unversioned places surface correctly.
 LATEST_VERSIONS: Dict[str, str] = {
+    "natural_beauty":         "v10",
     "active_outdoors":        "active_outdoors_v2_component_sum",
     "air_travel_access":      "air_travel_commute_bands",
     # economic_opportunity: live scorer computes job_access natively; no migration stamp expected
@@ -234,7 +236,7 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
 
     # natural_beauty v9_breakdown — stored at pillar root in older batches (NYC/LA),
     # inside details in newer batches (SF). Check both locations.
-    if pillar == "natural_beauty" and got == "v9":
+    if pillar == "natural_beauty" and got in ("v9", "v10"):
         v9 = data.get("v9_breakdown") or (data.get("details") or {}).get("v9_breakdown") or {}
         for key in NB_V9_KEYS:
             if v9.get(key) is None:

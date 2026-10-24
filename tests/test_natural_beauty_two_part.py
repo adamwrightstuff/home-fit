@@ -97,3 +97,20 @@ def test_offline_recompute_is_idempotent_and_keeps_the_original_score():
     assert "owa_score" not in nb["details"]["v9_breakdown"]
     again = OFF.recompute_place(score)
     assert again["after"] == first["after"] and nb["details"]["score_before_two_part"] == 70.0
+
+
+def test_version_stamp_is_v10_and_the_offline_script_writes_it_where_the_old_stamp_lived():
+    assert NB.NATURAL_BEAUTY_SCORING_FORMULA == "v10"
+    score = {"livability_pillars": {"natural_beauty": {"score": 70.0, "weight": 0.1, "scoring_formula": "v9",
+             "details": {"scoring_formula": "v9", "v9_breakdown": dict(COMP)}}}}
+    OFF.recompute_place(score)
+    nb = score["livability_pillars"]["natural_beauty"]
+    assert nb["details"]["scoring_formula"] == "v10" and nb["scoring_formula"] == "v10"
+
+
+def test_health_check_reads_v10_as_current_and_v9_as_old():
+    from scripts.catalog import check_catalog_health as H
+    assert H.LATEST_VERSIONS["natural_beauty"] == "v10" and "v9" in H.OLD_VERSIONS["natural_beauty"]
+    assert H.pillar_version("natural_beauty", {"details": {"scoring_formula": "v10"}}) == "v10"
+    old = H.check_pillar("natural_beauty", {"score": 60, "weight": 0.1, "confidence": 80, "details": {"scoring_formula": "v9"}}, False)
+    assert "OLD_VERSION:v9" in old
