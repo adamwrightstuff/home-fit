@@ -64,6 +64,19 @@ _DAL_SOCRATA = "https://www.dallasopendata.com/resource/qv6i-rri7.json"
 _BOS_CKAN_SQL = "https://data.boston.gov/api/3/action/datastore_search_sql"
 _BOS_RESOURCE = "b973d8cb-eeb2-4e7e-99da-c92938efc9c0"
 
+# Denver PD "Crime Offenses" (ArcGIS feature service, no key; category per offense row,
+# lat/lon points).  The public file omits rape/sexual-assault offenses.
+_DEN_ARCGIS = "https://services1.arcgis.com/zdB7qR0BtYrg0Xpl/arcgis/rest/services/ODC_CRIME_OFFENSES_P/FeatureServer/324/query"
+
+# CMPD Incidents (Charlotte; ArcGIS map service, public lat/lon fields).  One row per incident
+# carrying only its highest NIBRS offense, so property offenses under a violent incident are not
+# counted.
+_CLT_ARCGIS = "https://gis.charlottenc.gov/arcgis/rest/services/CMPD/CMPDIncidents/MapServer/0/query"
+# LVMPD Reported NIBRS Crime (Las Vegas; ArcGIS feature service, lat/lon fields).  Holds 2025 onward,
+# so there is no prior year for a trend.  LVMPD also polices unincorporated Clark County, so the
+# city GEOID check trims the box.
+_LV_ARCGIS = "https://services.arcgis.com/jjSk6t82vIntwDbs/arcgis/rest/services/Weekly_Public_Crimes/FeatureServer/0/query"
+
 # FBI Crime Data Explorer
 _FBI_CDE_BASE = "https://api.usa.gov/crime/fbi/cde"
 
@@ -163,7 +176,8 @@ _SF_BBOX = (37.703, -122.53, 37.835, -122.355)
 _OPEN_DATA_CITY_GEOID = {
     "nyc": "3651000", "la": "0644000", "sf": "0667000",
     "chicago": "1714000", "philadelphia": "4260000", "austin": "4805000",
-    "dallas": "4819000", "boston": "2507000",
+    "dallas": "4819000", "boston": "2507000", "denver": "0820000",
+    "charlotte": "3712000", "las_vegas": "3240000",
 }
 
 # City neighborhoods scored from incident data: the smallest of these radii whose
@@ -182,6 +196,9 @@ _AUS_BBOX = (30.07, -98.07, 30.52, -97.56)
 # Dallas and Boston city limits (trimmed by GEOID, since each bbox covers neighbouring towns)
 _DAL_BBOX = (32.617, -97.000, 33.020, -96.517)
 _BOS_BBOX = (42.227, -71.191, 42.400, -70.986)
+_DEN_BBOX = (39.614, -105.110, 39.915, -104.600)
+_CLT_BBOX = (35.00, -81.01, 35.42, -80.55)
+_LV_BBOX = (36.00, -115.35, 36.32, -115.00)
 
 # Minimum incident count to trust the data (low counts = unreliable rate)
 _MIN_INCIDENTS = 5
@@ -213,6 +230,8 @@ _CHI_PROPERTY_FBI = ("05", "06", "07", "09")
 # 520/540 burglary, 530 B&E motor vehicle, 611-619 larceny, 706/724/727 vehicle theft.
 # Excluded: 121 vehicular manslaughter, 531 (no property stolen), 735/736 recovered vehicles.
 _BOS_VIOLENT_CODES = ("111", "301", "423")
+_DEN_VIOLENT_CATEGORIES = ("murder", "aggravated-assault", "robbery")
+_DEN_PROPERTY_CATEGORIES = ("burglary", "larceny", "theft-from-motor-vehicle", "auto-theft")
 _BOS_PROPERTY_CODES = ("520", "530", "540", "611", "612", "613", "614", "615", "616", "617", "619",
                        "706", "724", "727")
 # Philadelphia UCR general codes: 100 homicide, 200 rape, 300 robbery, 400 aggravated assault;
@@ -769,6 +788,126 @@ def _fetch_boston_part1(lat: float, lon: float, radius_m: int, year: int) -> Opt
 
 def _get_boston_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
     return _open_data_rates(_fetch_boston_part1, "boston_open_data", lat, lon, population, radius_m)
+
+
+
+# ---------------------------------------------------------------------------
+# Denver Open Data (ArcGIS feature service, offense category per row)
+# ---------------------------------------------------------------------------
+
+def _arcgis_circle_count(url: str, where: str, lat_field: str, lon_field: str,
+                         lat: float, lon: float, radius_m: int, label: str) -> Optional[int]:
+    """Rows of an ArcGIS point layer within a circle.  Some services' own distance filter is not
+    in metres (Denver: a 500 m query returned 17 and a 1 km one 205 where a 1 km box has 8), so the
+    query is a lat/lon bounding box on two attribute fields and the circle is applied here."""
+    import math
+
+    dlat = radius_m / 111320.0
+    dlon = radius_m / (111320.0 * math.cos(math.radians(lat)))
+    where = (
+        f"({where}) AND {lat_field} BETWEEN {lat - dlat:.6f} AND {lat + dlat:.6f} AND "
+        f"{lon_field} BETWEEN {lon - dlon:.6f} AND {lon + dlon:.6f}"
+    )
+    n, offset = 0, 0
+    while True:
+        params = {"where": where, "outFields": f"{lat_field},{lon_field}", "returnGeometry": "false",
+                  "resultOffset": offset, "resultRecordCount": 2000, "f": "json"}
+        body = None
+        for attempt in range(3):  # a busy service answers with an error body or a timeout
+            try:
+                resp = requests.get(url, params=params, timeout=_REQUEST_TIMEOUT)
+                body = resp.json() if resp.status_code == 200 else {}
+                if "features" in body:
+                    break
+                logger.warning("%s crime API %s: %s", label, resp.status_code, str(body.get("error"))[:120])
+            except Exception as e:
+                logger.warning("%s crime fetch failed: %s", label, e)
+            body = None
+            time.sleep(2 * (attempt + 1))
+        if body is None:
+            return None
+        feats = body["features"]
+        for f in feats:
+            a = f.get("attributes") or {}
+            try:
+                dy = (float(a[lat_field]) - lat) * 111320.0
+                dx = (float(a[lon_field]) - lon) * 111320.0 * math.cos(math.radians(lat))
+            except (TypeError, ValueError, KeyError):
+                continue
+            if dx * dx + dy * dy <= radius_m * radius_m:
+                n += 1
+        if len(feats) < 2000 and not body.get("exceededTransferLimit"):
+            return n
+        offset += len(feats)
+
+
+def _sql_in(field: str, values) -> str:
+    return f"{field} IN (" + ", ".join("'" + v.replace("'", "''") + "'" for v in values) + ")"
+
+
+def _year_where(field: str, year: int) -> str:
+    return (f"{field} >= TIMESTAMP '{int(year)}-01-01 00:00:00' AND "
+            f"{field} < TIMESTAMP '{int(year) + 1}-01-01 00:00:00'")
+
+
+def _den_count(categories, lat: float, lon: float, radius_m: int, year: int) -> Optional[int]:
+    where = _year_where("FIRST_OCCURRENCE_DATE", year) + " AND " + _sql_in("OFFENSE_CATEGORY_ID", categories)
+    return _arcgis_circle_count(_DEN_ARCGIS, where, "GEO_LAT", "GEO_LON", lat, lon, radius_m, "Denver")
+
+
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _fetch_denver_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
+    """Part I violent/property offense counts within a circle for one calendar year."""
+    v = _den_count(_DEN_VIOLENT_CATEGORIES, lat, lon, radius_m, year)
+    p = _den_count(_DEN_PROPERTY_CATEGORIES, lat, lon, radius_m, year)
+    if v is None or p is None:
+        return None
+    return {"violent": v, "property": p}
+
+
+def _get_denver_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
+    return _open_data_rates(_fetch_denver_part1, "denver_open_data", lat, lon, population, radius_m)
+
+
+
+# ---------------------------------------------------------------------------
+# Charlotte (CMPD incidents) and Las Vegas (LVMPD NIBRS crimes): ArcGIS point layers, NIBRS codes
+# ---------------------------------------------------------------------------
+
+def _clt_count(codes, lat: float, lon: float, radius_m: int, year: int) -> Optional[int]:
+    where = _year_where("DATE_INCIDENT_BEGAN", year) + " AND " + _sql_in("HIGHEST_NIBRS_CODE", codes)
+    return _arcgis_circle_count(_CLT_ARCGIS, where, "LATITUDE_PUBLIC", "LONGITUDE_PUBLIC", lat, lon, radius_m, "Charlotte")
+
+
+def _lv_count(codes, lat: float, lon: float, radius_m: int, year: int) -> Optional[int]:
+    where = _year_where("ReportedOn", year) + " AND " + _sql_in("NIBRSOffenseCode", codes)
+    return _arcgis_circle_count(_LV_ARCGIS, where, "Latitude", "Longitude", lat, lon, radius_m, "Las Vegas")
+
+
+def _nibrs_part1(count_fn, lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
+    v = count_fn(_LA_VIOLENT_NIBRS, lat, lon, radius_m, year)
+    p = count_fn(_LA_PROPERTY_NIBRS, lat, lon, radius_m, year)
+    if v is None or p is None:
+        return None
+    return {"violent": v, "property": p}
+
+
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _fetch_charlotte_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
+    return _nibrs_part1(_clt_count, lat, lon, radius_m, year)
+
+
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _fetch_las_vegas_part1(lat: float, lon: float, radius_m: int, year: int) -> Optional[Dict]:
+    return _nibrs_part1(_lv_count, lat, lon, radius_m, year)
+
+
+def _get_charlotte_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
+    return _open_data_rates(_fetch_charlotte_part1, "charlotte_open_data", lat, lon, population, radius_m)
+
+
+def _get_las_vegas_rates(lat: float, lon: float, population: int, radius_m: int) -> Optional[Dict]:
+    return _open_data_rates(_fetch_las_vegas_part1, "las_vegas_open_data", lat, lon, population, radius_m)
 
 
 
@@ -1742,7 +1881,8 @@ def open_data_city(lat: float, lon: float) -> Optional[str]:
     incident-level open data, else None."""
     boxes = (("nyc", _NYC_BBOX), ("la", _LA_BBOX), ("sf", _SF_BBOX),
              ("chicago", _CHI_BBOX), ("philadelphia", _PHL_BBOX), ("austin", _AUS_BBOX),
-             ("dallas", _DAL_BBOX), ("boston", _BOS_BBOX))
+             ("dallas", _DAL_BBOX), ("boston", _BOS_BBOX), ("denver", _DEN_BBOX),
+             ("charlotte", _CLT_BBOX), ("las_vegas", _LV_BBOX))
     key = next(
         (k for k, (la0, lo0, la1, lo1) in boxes if la0 <= lat <= la1 and lo0 <= lon <= lo1),
         None,
@@ -1803,6 +1943,8 @@ def get_crime_rates(
         getter = {"nyc": _get_nyc_rates, "la": _get_la_rates, "sf": _get_sf_rates,
                   "chicago": _get_chicago_rates, "philadelphia": _get_philadelphia_rates,
                   "austin": _get_austin_rates, "dallas": _get_dallas_rates, "boston": _get_boston_rates,
+                  "denver": _get_denver_rates, "charlotte": _get_charlotte_rates,
+                  "las_vegas": _get_las_vegas_rates,
                   "lasd": _get_lasd_incident_rates}[source]
         result = getter(lat, lon, population, radius_m)
         if result:

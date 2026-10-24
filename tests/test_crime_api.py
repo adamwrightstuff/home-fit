@@ -368,3 +368,70 @@ def test_derive_property_weight_matches_the_published_inputs():
     spec.loader.exec_module(mod)
     assert round(mod.property_share(mod.TOTAL_COST), 3) == 0.098
     assert round(mod.property_share(mod.TOTAL_COST, ("murder",)), 3) == 0.197
+
+
+def test_open_data_city_covers_denver():
+    with mock.patch("data_sources.census_api.get_incorporated_place_geoid", return_value="0820000"):
+        assert crime_api.open_data_city(39.7392, -104.9847) == "denver"
+    # Aurora borders Denver but polices itself
+    with mock.patch("data_sources.census_api.get_incorporated_place_geoid", return_value="0804000"):
+        assert crime_api.open_data_city(39.7294, -104.8319) is None
+
+
+def test_denver_count_applies_the_circle_to_bounding_box_rows():
+    rows = [
+        {"attributes": {"GEO_LAT": 39.7400, "GEO_LON": -104.9800}},   # centre
+        {"attributes": {"GEO_LAT": 39.7440, "GEO_LON": -104.9800}},   # ~445 m north
+        {"attributes": {"GEO_LAT": 39.7480, "GEO_LON": -104.9900}},   # box corner, outside the circle
+        {"attributes": {"GEO_LAT": None, "GEO_LON": None}},           # no coordinates
+    ]
+    resp = mock.Mock(status_code=200)
+    resp.json.return_value = {"features": rows}
+    with mock.patch.object(crime_api.requests, "get", return_value=resp) as g:
+        n = crime_api._den_count(crime_api._DEN_VIOLENT_CATEGORIES, 39.74, -104.98, 1000, 2025)
+    assert n == 2
+    where = g.call_args.kwargs["params"]["where"]
+    assert "'aggravated-assault'" in where and "'larceny'" not in where and "GEO_LAT BETWEEN" in where
+    assert "distance" not in g.call_args.kwargs["params"]  # the service's distance unit is unreliable
+
+
+def test_denver_count_pages_through_large_boxes_and_gives_up_on_errors():
+    page1 = mock.Mock(status_code=200)
+    page1.json.return_value = {"features": [{"attributes": {"GEO_LAT": 39.74, "GEO_LON": -104.98}}] * 2000,
+                               "exceededTransferLimit": True}
+    page2 = mock.Mock(status_code=200)
+    page2.json.return_value = {"features": [{"attributes": {"GEO_LAT": 39.74, "GEO_LON": -104.98}}] * 5}
+    with mock.patch.object(crime_api.requests, "get", side_effect=[page1, page2]) as g:
+        assert crime_api._den_count(crime_api._DEN_PROPERTY_CATEGORIES, 39.74, -104.98, 1000, 2025) == 2005
+    assert g.call_args_list[1].kwargs["params"]["resultOffset"] == 2000
+    bad = mock.Mock(status_code=200)
+    bad.json.return_value = {"error": {"code": 499}}
+    with mock.patch.object(crime_api.requests, "get", return_value=bad) as g, \
+         mock.patch.object(crime_api.time, "sleep"):
+        assert crime_api._den_count(crime_api._DEN_VIOLENT_CATEGORIES, 39.74, -104.98, 1000, 2025) is None
+    assert g.call_count == 3
+
+
+def test_open_data_city_covers_charlotte_and_las_vegas():
+    for geoid, lat, lon, want in (("3712000", 35.2271, -80.8431, "charlotte"), ("3240000", 36.1699, -115.1398, "las_vegas")):
+        with mock.patch("data_sources.census_api.get_incorporated_place_geoid", return_value=geoid):
+            assert crime_api.open_data_city(lat, lon) == want
+    # Henderson polices itself and sits inside the Las Vegas box
+    with mock.patch("data_sources.census_api.get_incorporated_place_geoid", return_value="3231900"):
+        assert crime_api.open_data_city(36.0395, -114.9817) is None
+
+
+def test_arcgis_part1_queries_nibrs_codes_on_each_citys_fields():
+    seen = []
+
+    def fake(url, where, lat_field, lon_field, lat, lon, radius_m, label):
+        seen.append((label, lat_field, lon_field, where))
+        return 3
+
+    with mock.patch.object(crime_api, "_arcgis_circle_count", side_effect=fake):
+        clt = crime_api._fetch_charlotte_part1.__wrapped__(35.2, -80.8, 1000, 2025)
+        lv = crime_api._fetch_las_vegas_part1.__wrapped__(36.1, -115.1, 1000, 2025)
+    assert clt == lv == {"violent": 3, "property": 3}
+    assert seen[0][:3] == ("Charlotte", "LATITUDE_PUBLIC", "LONGITUDE_PUBLIC") and "HIGHEST_NIBRS_CODE IN" in seen[0][3]
+    assert seen[2][:3] == ("Las Vegas", "Latitude", "Longitude") and "NIBRSOffenseCode IN" in seen[2][3]
+    assert "'13A'" in seen[0][3] and "'13B'" not in seen[0][3]  # simple assault is Part II
