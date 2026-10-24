@@ -15,6 +15,8 @@ export interface QualitativeBand {
 
 export interface DetailMetricBase {
   label: string
+  /** Fallback paths tried in order when `path` has no value (older catalog rows keep fields elsewhere). */
+  altPaths?: string[]
 }
 
 export interface DetailMetricPercent extends DetailMetricBase {
@@ -150,8 +152,10 @@ const TRANSIT_DISTANCE_BANDS: QualitativeBand[] = [
 
 export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
   natural_beauty: {
-    topLine: 'Trees, water, topography, and scenic character — how much nature is woven into the place.',
+    topLine: 'Two parts: how green the streets are, and how scenic the setting is (terrain and water).',
     metrics: [
+      { label: 'Streets and greenery', path: 'details.v9_breakdown.streets_score', altPaths: ['v9_breakdown.streets_score'], format: 'count', suffix: ' / 100' },
+      { label: 'Scenic setting', path: 'details.v9_breakdown.scenery_score', altPaths: ['v9_breakdown.scenery_score'], format: 'count', suffix: ' / 100' },
       { label: 'Best natural fit', path: 'breakdown.nb_best_fit_label', format: 'text' },
       { label: 'Neighborhood canopy', path: 'summary.neighborhood_canopy_pct', format: 'percent', max: 100 },
       { label: 'Nearest mapped water', path: 'summary.water_proximity_km', format: 'distance' },

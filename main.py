@@ -1349,7 +1349,9 @@ def _apply_allocation_to_cached_response(
                 comp = {k: v9b_standalone.get(k) for k in (
                     "gvi_score", "water_score", "canopy_score",
                     "topo_score", "landcover_score", "bio_score")}
-                recomputed = natural_beauty.v9_score_from_components(comp, natural_beauty_preference)
+                recomputed = natural_beauty.v9_score_from_components(
+                    comp, natural_beauty_preference,
+                    water_type=(v9b_standalone.get("inputs") or {}).get("water_type"))
                 if recomputed is not None:
                     nb_standalone["score"] = recomputed
                     v9b_standalone["preference_applied"] = natural_beauty_preference

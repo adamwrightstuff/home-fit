@@ -36,7 +36,19 @@ export function getNaturalBeautyNarrative(
     else if (localCanopy <= 15) blockPhrase = ' even right around your block'
   }
 
-  const locationSentence = `${placeLabel} has ${greeneryPhrase}${blockPhrase}.`
+  const streets = getPillarValue(pillar, 'details.v9_breakdown.streets_score') ?? getPillarValue(pillar, 'v9_breakdown.streets_score')
+  const scenery = getPillarValue(pillar, 'details.v9_breakdown.scenery_score') ?? getPillarValue(pillar, 'v9_breakdown.scenery_score')
+  if (typeof streets === 'number') {
+    if (streets >= 70) greeneryPhrase = 'leafy, green streets'
+    else if (streets <= 25) greeneryPhrase = 'few trees and little greenery'
+  }
+  let sceneryPhrase = ''
+  if (typeof scenery === 'number') {
+    if (scenery >= 60) sceneryPhrase = ' It also sits in a scenic setting of hills, mountains or water.'
+    else if (scenery <= 20) sceneryPhrase = ' The setting itself is flat and open, without notable hills or water.'
+  }
+
+  const locationSentence = `${placeLabel} has ${greeneryPhrase}${blockPhrase}.${sceneryPhrase}`
   const genericSentence =
     'Nearby trees, water, and natural views are linked to lower stress, better mental health, and more time spent walking outside.'
 

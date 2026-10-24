@@ -145,7 +145,8 @@ function formatSpecMetricValue(
     const t = staticTexts[key as keyof typeof staticTexts]
     return t ?? null
   }
-  const path = 'path' in metric ? metric.path : ''
+  const paths = 'path' in metric ? [metric.path, ...(metric.altPaths ?? [])] : ['']
+  const path = paths.find((p) => getPillarValue(pillar, p) !== undefined || (getPillarString(pillar, p) ?? '') !== '') ?? paths[0]
   const num = getPillarValue(pillar, path)
   const str = getPillarString(pillar, path)
 
@@ -186,6 +187,8 @@ function formatSpecMetricValue(
 }
 
 const METRIC_EXPLAINERS: Record<string, string> = {
+  'natural_beauty:Streets and greenery': 'Tree canopy and green view around the pin. Checked against ratings of street scenes (MIT Place Pulse).',
+  'natural_beauty:Scenic setting': 'Terrain and nearby water. Checked against ratings of landscape photos (ScenicOrNot) and the USDA Natural Amenities Scale.',
   'natural_beauty:Neighborhood canopy': 'Share of your neighborhood area with tree cover (satellite canopy).',
   'natural_beauty:Nearest mapped water': 'Distance to the nearest water feature we use for scoring (rivers, lakes, coast, etc.).',
   'natural_beauty:Terrain relief (local)': 'Elevation range nearby—hills and valleys add texture.',

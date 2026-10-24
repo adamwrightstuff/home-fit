@@ -263,7 +263,7 @@ export const PILLAR_META: Record<
     icon: '🌿',
     name: 'Natural Beauty',
     description:
-      'Tree canopy coverage, green space, water features, and topography. Captures the scenic character of the surrounding landscape.',
+      'Two parts: how green your streets are (tree canopy and green view) and how scenic the setting is (terrain and water).',
   },
   built_environment: {
     icon: '🏙️',
@@ -409,7 +409,7 @@ export function getPillarFailureType(pillar: {
 // ---------------------------------------------------------------------------
 export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
   natural_beauty:
-    'Trees, water, topography, and scenic landscape — how much nature is woven into the place, from ocean views to urban tree canopy. Adjust the scenery preference to weight your preferred landscape type.',
+    'Two kinds of beauty: how green the streets are (tree canopy and green view) and how scenic the setting is (hills, mountains and water). Each part is checked against public beauty ratings; how the two are weighted together is our judgment. Pick a scenery preference to lean toward greenery or toward mountains, ocean, lakes and rivers.',
   built_environment:
     'How well the neighborhood type matches what you are looking for — urban core, urban neighborhood, suburban, exurban, or rural. Score reflects how closely the area type aligns with your preference.',
   neighborhood_amenities:

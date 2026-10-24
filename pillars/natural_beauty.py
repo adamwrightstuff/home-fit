@@ -4,7 +4,10 @@ Natural Beauty pillar implementation (trees, scenic context, and enhancers).
 
 from __future__ import annotations
 
+import bisect
+import json
 import math
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Optional, Tuple
 
@@ -4287,74 +4290,136 @@ def _v9_regional_normalize(raw: float, component: str, region: str) -> float:
     return min(100.0, raw / regional_median * global_ref)
 
 
-# Map each scenery-quiz preference to the V9 OWA component(s) it favors.
-_PREFERENCE_V9_COMPONENTS = {
-    PREFERENCE_MOUNTAINS: ("topo_score",),
-    PREFERENCE_OCEAN: ("water_score",),
-    PREFERENCE_LAKES_RIVERS: ("water_score",),
-    PREFERENCE_CANOPY: ("canopy_score", "gvi_score"),
+# Two-part natural beauty (V10, 2026-10). Streets and greenery (green view, canopy) and scenic setting
+# (terrain, water) are scored separately, then blended. Evidence and judgment calls are listed in
+# analysis/natural_beauty_two_part_proposal_2026-10-24.md. Landcover and biodiversity are still computed
+# and stored in v9_breakdown but no longer scored (0.95 correlated with each other, no third-party test).
+_V9_STREETS_KEYS = ("gvi_score", "canopy_score")
+_V9_SCENERY_KEYS = ("topo_score", "water_score")
+_V9_PART_LEAD = 0.7  # within a part: 0.7 x stronger component + 0.3 x weaker (the OWA idea, two slots)
+_V9_BLEND_NEUTRAL = 0.5  # share of streets in the blend with no scenery preference (judgment)
+_V9_BLEND_TILT_STREETS = 0.75  # streets share when the user picked tree canopy (scenery prefs use 1 - this)
+# The blend is mapped onto the old V9 score distribution by percentile (data/natural_beauty_two_part_scale.json,
+# built by scripts/baselines/build_natural_beauty_two_part_scale.py). Calibration to the previous score, not evidence.
+_V9_SCALE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                              "data", "natural_beauty_two_part_scale.json")
+_v9_scale_cache: Optional[Dict[str, List[float]]] = None
+
+
+def _v9_scale() -> Dict[str, List[float]]:
+    global _v9_scale_cache
+    if _v9_scale_cache is None:
+        with open(_V9_SCALE_PATH, encoding="utf-8") as f:  # a missing table must fail loudly, not score
+            _v9_scale_cache = json.load(f)
+    return _v9_scale_cache
+
+
+def _blend_to_score(blend: float) -> float:
+    """Piecewise-linear lookup of the blend in the quantile table; clamps to the table ends."""
+    t = _v9_scale()
+    xs, ys = t["blend"], t["score"]
+    if blend <= xs[0]:
+        return ys[0]
+    if blend >= xs[-1]:
+        return ys[-1]
+    hi = bisect.bisect_right(xs, blend)
+    lo = hi - 1
+    return ys[lo] + (ys[hi] - ys[lo]) * (blend - xs[lo]) / (xs[hi] - xs[lo])
+# Map each scenery-quiz preference to the part it favors.
+_PREFERENCE_V9_PART = {
+    PREFERENCE_MOUNTAINS: "scenery",
+    PREFERENCE_OCEAN: "scenery",
+    PREFERENCE_LAKES_RIVERS: "scenery",
+    PREFERENCE_CANOPY: "streets",
 }
-_V9_OWA_WEIGHTS = [0.62, 0.25, 0.10, 0.02, 0.01, 0.00]
+_WATER_COASTAL_RE = ("ocean", "coast", "bay", "harbor", "sea")
+_WATER_FRESH_RE = ("lake", "reservoir", "river", "stream", "canal")
 
 
-def _owa(scores: List[float]) -> float:
-    """Ordered Weighted Average: rank desc, apply positional weights (renormalized to the
-    number of components present)."""
-    s = sorted(scores, reverse=True)
-    w = _V9_OWA_WEIGHTS[:len(s)]
-    tot = sum(w) or 1.0
-    return sum((wi / tot) * si for wi, si in zip(w, s))
+def _lead_pair(a: Optional[float], b: Optional[float]) -> Optional[float]:
+    vals = sorted([v for v in (a, b) if isinstance(v, (int, float))], reverse=True)
+    if not vals:
+        return None
+    if len(vals) == 1:
+        return float(vals[0])
+    return _V9_PART_LEAD * vals[0] + (1.0 - _V9_PART_LEAD) * vals[1]
 
 
-def apply_v9_preference(owa_score: float, component_scores: Dict[str, float],
-                        preference_names: Optional[List[str]]) -> float:
-    """Bias the V9 natural-beauty score toward the user's preferred dimension(s).
-
-    The neutral OWA judges a place on its strongest dimensions (top slot = 0.62). A
-    preference forces the preferred dimension into that top slot, so it becomes the lead
-    criterion: a place whose preferred dimension is already its strength (a beach town for
-    "ocean") stays high, while a place weak in it is forced to lead with that weakness and
-    drops. preferred = mean of the preference's target components; the remaining dimensions
-    fill the lower OWA slots in rank order.
-
-    component_scores holds the per-dimension V9 scores (gvi/water/canopy/topo/landcover/bio).
-    Reusable by live scoring and the catalog fast-path. No / unknown preference -> unchanged.
-    """
-    if not preference_names:
-        return owa_score
-    targets: list[str] = []
-    for name in preference_names:
-        targets.extend(_PREFERENCE_V9_COMPONENTS.get(name, ()))
-    targets = list(dict.fromkeys(targets))  # dedup, preserve order
-    pref_vals = [component_scores[t] for t in targets
-                 if isinstance(component_scores.get(t), (int, float))]
-    if not pref_vals:
-        return owa_score
-    preferred = sum(pref_vals) / len(pref_vals)
-    others = sorted((v for k, v in component_scores.items()
-                     if k not in targets and isinstance(v, (int, float))), reverse=True)
-    ranked = [preferred] + others
-    w = _V9_OWA_WEIGHTS[:len(ranked)]
-    tot = sum(w) or 1.0
-    return round(sum((wi / tot) * si for wi, si in zip(w, ranked)), 2)
+def _streets_share(preference_names: Optional[List[str]]) -> float:
+    """Streets share of the blend: 0.5 neutral; each preference pulls toward its part, and picks average out."""
+    shares = []
+    for name in preference_names or []:
+        part = _PREFERENCE_V9_PART.get(name)
+        if part == "streets":
+            shares.append(_V9_BLEND_TILT_STREETS)
+        elif part == "scenery":
+            shares.append(1.0 - _V9_BLEND_TILT_STREETS)
+    return sum(shares) / len(shares) if shares else _V9_BLEND_NEUTRAL
 
 
-_V9_COMPONENT_KEYS = ("gvi_score", "water_score", "canopy_score",
-                      "topo_score", "landcover_score", "bio_score")
+def streets_inputs_missing(gvi_pct: Optional[float], canopy_pct: Optional[float],
+                           measured: Optional[bool] = None) -> bool:
+    """True when no greenery measurement exists, so a streets score would be a made-up zero.
+    `measured` is the live signal (any of green view or canopy returned a value); stored places do not
+    keep it, so exact zeros on both inputs stand in (real measurements are small nonzero floats)."""
+    if measured is not None:
+        return not measured
+    return (gvi_pct in (None, 0, 0.0)) and (canopy_pct in (None, 0, 0.0))
+
+
+def nb_two_part(component_scores: Dict[str, float],
+                preference_names: Optional[List[str]] = None,
+                water_type: Optional[str] = None,
+                scale: bool = True,
+                streets_missing: bool = False) -> Optional[Dict[str, float]]:
+    """Streets, scenery and blended natural beauty score from the stored per-dimension scores.
+
+    Returns {streets, scenery, blend, score, streets_share} or None when neither part has a usable
+    component.  streets_missing drops the streets part (no greenery data) so the score rests on scenery
+    alone; the caller flags it as low confidence.  A water-type preference (ocean, lakes/rivers) that does
+    not match the place's water type cuts the water score to a quarter, same as the explorer.
+    scale=False returns the raw blend as the score (used when building the scale table)."""
+    cs = {k: component_scores.get(k) for k in _V9_STREETS_KEYS + _V9_SCENERY_KEYS}
+    if streets_missing:
+        cs["gvi_score"] = cs["canopy_score"] = None
+    water = cs.get("water_score")
+    if isinstance(water, (int, float)) and water_type:
+        wt = str(water_type).lower()
+        coastal = any(t in wt for t in _WATER_COASTAL_RE)
+        fresh = any(t in wt for t in _WATER_FRESH_RE)
+        for name in preference_names or []:
+            if name == PREFERENCE_OCEAN and not coastal:
+                water = water * 0.25
+            elif name == PREFERENCE_LAKES_RIVERS and not fresh:
+                water = water * 0.25
+        cs["water_score"] = water
+    streets = _lead_pair(cs["gvi_score"], cs["canopy_score"])
+    scenery = _lead_pair(cs["topo_score"], cs["water_score"])
+    if streets is None and scenery is None:
+        return None
+    w = _streets_share(preference_names)
+    if streets is None:
+        blend = scenery
+    elif scenery is None:
+        blend = streets
+    else:
+        blend = w * streets + (1.0 - w) * scenery
+    score = _blend_to_score(blend) if scale else blend
+    return {"streets": round(streets, 2) if streets is not None else None,
+            "scenery": round(scenery, 2) if scenery is not None else None,
+            "blend": round(blend, 4), "score": round(score, 2), "streets_share": w}
 
 
 def v9_score_from_components(component_scores: Dict[str, float],
-                            preference_names: Optional[List[str]] = None) -> Optional[float]:
-    """Recompute the V9 natural-beauty score from its stored per-dimension component
-    scores (preference-independent), then apply any scenery preference. Used by the
-    catalog/cache fast-path so the served score is always correct regardless of what
-    score was cached. Returns None if no usable components are present."""
-    vals = [component_scores[k] for k in _V9_COMPONENT_KEYS
-            if isinstance(component_scores.get(k), (int, float))]
-    if not vals:
-        return None
-    owa_all = round(_owa(vals), 2)
-    return apply_v9_preference(owa_all, component_scores, preference_names)
+                             preference_names: Optional[List[str]] = None,
+                             water_type: Optional[str] = None,
+                             streets_missing: bool = False) -> Optional[float]:
+    """Recompute the natural-beauty score from its stored per-dimension component scores
+    (preference-independent), then apply any scenery preference. Used by the catalog/cache
+    fast-path so the served score is always correct regardless of what score was cached.
+    Returns None if no usable components are present."""
+    res = nb_two_part(component_scores, preference_names, water_type, streets_missing=streets_missing)
+    return res["score"] if res else None
 
 
 def _apply_v9_formula(
@@ -4366,10 +4431,10 @@ def _apply_v9_formula(
 ) -> Tuple[float, Dict]:
     """
     Apply V9 formula to already-collected natural beauty data.
-    Single weight profile (30/25/20/15/7/3). GVI and canopy are normalized against
-    regional medians so climate-determined vegetation levels score fairly across all US regions.
-    Topo and water remain absolute — dramatic terrain and coastal proximity are
-    universally valuable regardless of region.
+    Two-part score: streets (green view, canopy) and scenic setting (terrain, water), blended and
+    rescaled (see nb_two_part). GVI and canopy are normalized against regional medians so
+    climate-determined vegetation levels score fairly across US regions; the baselines are judgment,
+    not validated. Topo and water remain absolute.
     Returns (score_0_100, v9_breakdown).
     """
     nc = (tree_details.get("natural_context") or {})
@@ -4377,7 +4442,6 @@ def _apply_v9_formula(
     dbg = nc.get("debug_breakdown") or {}
 
     region = _get_nb_region(lat, lon)
-    weights = _V9_OWA_WEIGHTS
 
     # GVI: use direct measurement; fall back to canopy proxy if street-view data absent
     gvi_pct = tree_details.get("green_view_index") or 0.0
@@ -4435,26 +4499,26 @@ def _apply_v9_formula(
     landcover_score = _v9_score_landcover(float(landcover_raw))
     bio_score = _v9_score_bio(float(bio_val))
 
-    # Ordered Weighted Average (OWA): score by ranking component scores from best to worst
-    # and applying fixed positional weights. A place is judged on its strengths — two
-    # exceptional dimensions reach 80+, three reach 90+. Weak components contribute
-    # almost nothing, so a place isn't penalized for lacking features outside its character.
-    component_scores = sorted(
-        [gvi_score, water_score, canopy_score, topo_score, landcover_score, bio_score],
-        reverse=True
-    )
-    owa_total = round(sum(w * s for w, s in zip(_V9_OWA_WEIGHTS, component_scores)), 2)
-
-    # Bias toward the user's scenery preference (no-op when none supplied).
+    # Two-part score: streets (green view, canopy) and scenic setting (terrain, water), blended and rescaled.
+    # Landcover and biodiversity stay in the breakdown for reference but are not scored.
     comp_by_name = {
         "gvi_score": gvi_score, "water_score": water_score, "canopy_score": canopy_score,
         "topo_score": topo_score, "landcover_score": landcover_score, "bio_score": bio_score,
     }
-    total = apply_v9_preference(owa_total, comp_by_name, preference_names)
+    streets_missing = streets_inputs_missing(
+        gvi_pct, canopy_pct,
+        measured=any(tree_details.get(k) is not None for k in ("green_view_index", "weighted_canopy_pct", "gee_canopy_pct")))
+    parts = nb_two_part(comp_by_name, preference_names, water_type, streets_missing=streets_missing)
+    total = parts["score"] if parts else 0.0
 
     breakdown = {
-        "owa_components": [round(s, 2) for s in component_scores],
-        "owa_score": owa_total,
+        "method": "two_part_v10",
+        "low_confidence": True if streets_missing else None,
+        "missing_parts": ["streets"] if streets_missing else None,
+        "streets_score": parts["streets"] if parts else None,
+        "scenery_score": parts["scenery"] if parts else None,
+        "blend_raw": parts["blend"] if parts else None,
+        "streets_share": parts["streets_share"] if parts else None,
         "preference_applied": preference_names or None,
         "gvi_score": round(gvi_score, 2),
         "water_score": round(water_score, 2),
@@ -4463,7 +4527,6 @@ def _apply_v9_formula(
         "landcover_score": round(landcover_score, 2),
         "bio_score": round(bio_score, 2),
         "region": region,
-        "weights": weights,
         "inputs": {
             "gvi_pct": round(float(gvi_pct), 2),
             "gvi_normalized": round(gvi_normalized, 2),

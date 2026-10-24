@@ -151,7 +151,9 @@ These re-derive scores from numbers already in the JSONL. No external calls.
 | `recompute_waterfront_offline.py` | AO waterfront_lifestyle artifact correction. |
 | `recompute_community_safety_scores.py` | Community safety from stored crime data. |
 | `rescore_community_safety_offline.py` | Community safety offline rescore. |
-| `rescore_natural_beauty_v9_offline.py` | Natural beauty V9 from stored GEE/canopy data. |
+| `rescore_natural_beauty_v9_offline.py` | Natural beauty component scores from stored GEE/canopy data (re-derives the inputs). |
+| `recompute_natural_beauty_two_part_offline.py` | Natural beauty two-part score from stored component scores, no API calls. Run `recompute_catalog_composites.py` after. |
+| `scripts/baselines/build_natural_beauty_two_part_scale.py` | Percentile table that maps the two-part blend onto the old score distribution (also writes `frontend/lib/nbTwoPartScale.ts`). |
 | `rescore_built_environment_offline.py` | Built environment offline (preview-safe). |
 | `recalibrate_waterfront_offline.py` | Waterfront scores from revised base values. |
 | `_merge_neighborhood_beauty_offline.py` | Merge built_environment + natural_beauty → neighborhood_beauty. |

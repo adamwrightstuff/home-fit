@@ -35,7 +35,9 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import bisect
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -58,13 +60,21 @@ PRIORITY_TO_NUMERIC = {"None": 0, "Low": 33, "Medium": 66, "High": 100}
 # OWA helpers — mirrors frontend/lib/nbPreference.ts + aoPreference.ts
 # ---------------------------------------------------------------------------
 
-_V9_OWA_WEIGHTS = [0.62, 0.25, 0.10, 0.02, 0.01, 0.0]
-_V9_COMPONENT_KEYS = ["gvi_score", "water_score", "canopy_score", "topo_score", "landcover_score", "bio_score"]
-_PREFERENCE_V9_COMPONENTS: dict[str, list[str]] = {
-    "mountains":    ["topo_score"],
-    "ocean":        ["water_score"],
-    "lakes_rivers": ["water_score"],
-    "canopy":       ["gvi_score"],
+_V9_STREETS_KEYS = ("gvi_score", "canopy_score")
+_V9_SCENERY_KEYS = ("topo_score", "water_score")
+# Two-part natural beauty (mirrors pillars/natural_beauty.py nb_two_part and frontend/lib/nbPreference.ts).
+_V9_PART_LEAD = 0.7
+_V9_BLEND_NEUTRAL = 0.5
+_V9_BLEND_TILT_STREETS = 0.75
+_V9_SCALE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                              "data", "natural_beauty_two_part_scale.json")
+with open(_V9_SCALE_PATH, encoding="utf-8") as _f:  # quantile map to the old score distribution
+    _V9_SCALE = json.load(_f)
+_PREFERENCE_V9_PART: dict[str, str] = {
+    "mountains":    "scenery",
+    "ocean":        "scenery",
+    "lakes_rivers": "scenery",
+    "canopy":       "streets",
 }
 
 _AO_OWA_WEIGHTS = [0.62, 0.25, 0.13]
@@ -79,34 +89,51 @@ _WATERFRONT_OWA_WEIGHTS = [0.62, 0.25, 0.13]
 _WATERFRONT_KEYS = ["ocean_beach", "lake_river", "bay_harbor"]
 
 
+def _lead_pair(a: Optional[float], b: Optional[float]) -> Optional[float]:
+    vals = sorted([v for v in (a, b) if isinstance(v, (int, float))], reverse=True)
+    if not vals:
+        return None
+    if len(vals) == 1:
+        return float(vals[0])
+    return _V9_PART_LEAD * vals[0] + (1.0 - _V9_PART_LEAD) * vals[1]
+
+
 def apply_nb_preferences_v9(v9: dict, preferences: list[str]) -> Optional[float]:
-    """Re-weight NB score toward selected scenery preferences using OWA (mirrors nbPreference.ts)."""
+    """Tilt the two-part NB score toward selected scenery preferences (mirrors nbPreference.ts)."""
     if not v9 or not preferences:
         return None
     water_type = (v9.get("inputs") or {}).get("water_type", "") or ""
-    effective: dict[str, float] = {}
-    for key in _V9_COMPONENT_KEYS:
+    eff: dict[str, Optional[float]] = {}
+    for key in _V9_STREETS_KEYS + _V9_SCENERY_KEYS:
         val = v9.get(key)
-        if isinstance(val, (int, float)) and not isinstance(val, bool):
-            effective[key] = float(val)
+        eff[key] = float(val) if isinstance(val, (int, float)) and not isinstance(val, bool) else None
     for pref in preferences:
-        if pref in ("ocean", "lakes_rivers") and "water_score" in effective:
+        if pref in ("ocean", "lakes_rivers") and eff.get("water_score") is not None:
             is_coastal = bool(re.search(r"ocean|coast|bay|harbor|sea", water_type, re.I))
             is_lake_river = bool(re.search(r"lake|reservoir|river|stream|canal", water_type, re.I))
             match = is_coastal if pref == "ocean" else is_lake_river
             if not match:
-                effective["water_score"] *= 0.25
-    targets: set[str] = set(c for p in preferences for c in _PREFERENCE_V9_COMPONENTS.get(p, []))
-    pref_vals = [effective[t] for t in targets if t in effective]
-    if not pref_vals:
+                eff["water_score"] *= 0.25
+    parts = [_PREFERENCE_V9_PART[p] for p in preferences if p in _PREFERENCE_V9_PART]
+    if not parts:
         return None
-    preferred = sum(pref_vals) / len(pref_vals)
-    others = sorted([v for k, v in effective.items() if k not in targets], reverse=True)
-    dynamic_lead = min(1.0, 0.62 + 0.38 * (preferred / 100))
-    ranked = [preferred] + others
-    weights = [dynamic_lead] + _V9_OWA_WEIGHTS[1:len(ranked)]
-    tot = sum(weights) or 1
-    return round(sum(w / tot * s for w, s in zip(weights, ranked)), 2)
+    shares = [_V9_BLEND_TILT_STREETS if x == "streets" else 1.0 - _V9_BLEND_TILT_STREETS for x in parts]
+    w = sum(shares) / len(shares)
+    inp = v9.get("inputs") or {}
+    if (inp.get("gvi_pct") in (None, 0, 0.0)) and (inp.get("canopy_pct") in (None, 0, 0.0)) and "gvi_pct" in inp:
+        eff["gvi_score"] = eff["canopy_score"] = None  # no greenery measurement: do not score a made-up zero
+    streets = _lead_pair(eff["gvi_score"], eff["canopy_score"])
+    scenery = _lead_pair(eff["topo_score"], eff["water_score"])
+    if streets is None and scenery is None:
+        return None
+    blend = scenery if streets is None else streets if scenery is None else w * streets + (1.0 - w) * scenery
+    xs, ys = _V9_SCALE["blend"], _V9_SCALE["score"]
+    if blend <= xs[0]:
+        return round(ys[0], 2)
+    if blend >= xs[-1]:
+        return round(ys[-1], 2)
+    hi = bisect.bisect_right(xs, blend)
+    return round(ys[hi - 1] + (ys[hi] - ys[hi - 1]) * (blend - xs[hi - 1]) / (xs[hi] - xs[hi - 1]), 2)
 
 
 def apply_ao_preferences(ao_bd: dict, preferences: list[str]) -> Optional[float]:

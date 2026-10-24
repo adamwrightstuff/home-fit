@@ -15,15 +15,17 @@ When a user taps **Show details** on a pillar card on the Place Results screen, 
 
 ## 1. Natural Beauty
 
-**Top line:** "Natural scenery based on topography/views, water, greenery, and land cover."
+**Top line:** "Two parts: how green the streets are, and how scenic the setting is (terrain and water)."
 
 | # | Label | Source | Format |
 |---|--------|--------|--------|
-| 1 | Topography & views | Component score(s) | **%** (0–100 → %) |
-| 2 | Water access | Water component | **%** |
-| 3 | Tree canopy | Canopy component or % | "X% within 1 km" (keep as %) |
-| 4 | Natural land cover | Forest/wetland/shrub/grass | **Qualitative:** "Rich" / "Moderate" / "Sparse" |
-| 5 | Scenery preference | `natural_beauty_preference` | Text: "Weighted for: Mountains, Ocean, …" |
+| 1 | Streets and greenery | `details.v9_breakdown.streets_score` (older rows: `v9_breakdown.streets_score`) | "NN / 100" |
+| 2 | Scenic setting | `details.v9_breakdown.scenery_score` (older rows: `v9_breakdown.scenery_score`) | "NN / 100" |
+| 3 | Best natural fit | `breakdown.nb_best_fit_label` | Text |
+| 4 | Neighborhood canopy | `summary.neighborhood_canopy_pct` | % |
+| 5 | Nearest mapped water | `summary.water_proximity_km` | Distance (mi) |
+| 6 | Terrain relief (local) | `summary.terrain_relief_m` | Elevation (ft) |
+| 7 | Scenery preference | `natural_beauty_preference` | Text: "Weighted for: Mountains, Ocean, …" (chips on the card) |
 
 **Degraded only:** "Limited data: some natural data sources were unavailable."
 
