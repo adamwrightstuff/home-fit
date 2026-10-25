@@ -58,3 +58,17 @@ def test_fewer_than_three_components_raises(monkeypatch):
         _run(monkeypatch, flood=None, trend=None)
     with pytest.raises(RuntimeError):
         _run(monkeypatch, heat=None, air=None, flood=None, trend=None)
+
+
+@pytest.mark.parametrize("lst", [-21.5, 7.7, 14.0, 80.0])
+def test_implausible_surface_temperature_is_no_data_not_full_heat_points(monkeypatch, lst):
+    score, d = _run(monkeypatch, heat={"local_lst_c": lst, "land_pixel_fraction": 1.0})
+    assert d["breakdown"]["heat_exposure_pts"] is None
+    assert d["summary"]["heat_status"] == "implausible_lst" and d["summary"]["local_lst_rejected_c"] == lst
+    assert d["data_quality"]["degraded"] is True
+
+
+def test_coastal_fog_temperature_is_still_scored(monkeypatch):
+    score, d = _run(monkeypatch, heat={"local_lst_c": 19.0, "land_pixel_fraction": 1.0})
+    assert d["breakdown"]["heat_exposure_pts"] == pytest.approx(25.0)
+    assert d["summary"]["heat_status"] == "ok"

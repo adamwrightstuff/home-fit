@@ -29,6 +29,11 @@ HEAT_MAX_PTS = 25.0
 HEAT_LST_BEST = 30.0   # °C local LST → full points
 HEAT_LST_WORST = 42.0  # °C local LST → 0 points
 HEAT_MIN_LAND_FRACTION = 0.3
+# A June-August daytime land-surface temperature outside this range is a bad pixel (cloud, water, ice), not heat:
+# 13 catalog places read below 20 C (Dunedin -21 C) and got full heat points. The bounds are a judgment about what is
+# physically plausible for US land in summer; Pacifica's coastal-fog 19 C passes, 14 C inland Florida does not.
+LST_PLAUSIBLE_MIN_C = 15.0
+LST_PLAUSIBLE_MAX_C = 75.0
 
 # Fewer present components than this and the pillar has no score (it raises, so the app marks it failed).
 MIN_COMPONENTS = 3
@@ -98,6 +103,8 @@ def get_climate_risk_score(
     heat_pts: Optional[float] = None
     local_lst = None
     land_fraction = None
+    heat_status = "no_data"
+    local_lst_rejected = None
     if heat_data is not None:
         local_lst = heat_data.get("local_lst_c")
         land_fraction = heat_data.get("land_pixel_fraction", 1.0)
@@ -105,7 +112,13 @@ def get_climate_risk_score(
             local_lst = float(local_lst) if local_lst is not None else None
         except (TypeError, ValueError):
             local_lst = None
-        if local_lst is not None and land_fraction >= HEAT_MIN_LAND_FRACTION:
+        if local_lst is not None and not (LST_PLAUSIBLE_MIN_C <= local_lst <= LST_PLAUSIBLE_MAX_C):
+            logger.warning("Climate risk: implausible land-surface temperature %.1f C at (%s, %s); heat is no data", local_lst, lat, lon)
+            heat_status = "implausible_lst"
+            local_lst_rejected = local_lst
+            local_lst = None
+        elif local_lst is not None and land_fraction >= HEAT_MIN_LAND_FRACTION:
+            heat_status = "ok"
             heat_pts = max(0.0, HEAT_MAX_PTS - ((local_lst - HEAT_LST_BEST) / (HEAT_LST_WORST - HEAT_LST_BEST)) * HEAT_MAX_PTS)
             heat_pts = round(min(HEAT_MAX_PTS, heat_pts), 2)
 
@@ -205,6 +218,8 @@ def get_climate_risk_score(
     summary = {
         "local_lst_c": heat_data.get("local_lst_c") if heat_data else None,
         "land_pixel_fraction": heat_data.get("land_pixel_fraction") if heat_data else None,
+        "heat_status": heat_status,
+        "local_lst_rejected_c": local_lst_rejected,
         "pm25_ugm3": round(pm25, 2) if pm25 is not None else None,
         "pm25_years": air_data.get("years") if air_data else None,
         "pm25_source": air_data.get("source") if air_data else None,
