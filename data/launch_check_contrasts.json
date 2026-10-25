@@ -1,0 +1,40 @@
+{
+  "_readme": "Fill in 'contrasts' BEFORE you look at launch check results. Each entry: pillar, group_a, group_b, expected ('a_higher' or 'b_higher'), min_gap (points, the smallest mean gap that counts as passing), reason (why you expect it, ideally with a source). A group selects places by any of: area_type, metro, state, or an explicit list 'places' of 'metro|name'. Use contrasts you are certain of; the check is a tripwire for data or logic problems, not a target to tune toward. Entries under '_examples' are ignored. 'expected_uniform' lists sub-metrics (pillar, path_prefix, optional metros, reason) that are uniform within a metro by design, so the degenerate-metro section does not show them; leave it empty until you have decided which findings are by design.",
+  "contrasts": [],
+  "_examples": [
+    {
+      "pillar": "healthcare_access",
+      "group_a": {
+        "area_type": "urban_core"
+      },
+      "group_b": {
+        "area_type": "rural"
+      },
+      "expected": "a_higher",
+      "min_gap": 10,
+      "reason": "Hospital and clinic counts and distances differ by an order of magnitude between dense cores and rural areas."
+    },
+    {
+      "pillar": "public_transit_access",
+      "group_a": {
+        "places": [
+          "nyc|Midtown"
+        ]
+      },
+      "group_b": {
+        "area_type": "exurban"
+      },
+      "expected": "a_higher",
+      "min_gap": 20,
+      "reason": "Example of a named place against a group (a named group needs at least 10 places to be evaluated)."
+    }
+  ],
+  "expected_uniform": [],
+  "_expected_uniform_example": [
+    {
+      "pillar": "economic_opportunity",
+      "path_prefix": "breakdown.",
+      "reason": "Market-quality components come from metro-level data, so places in one metro share them by design (tracker D8)."
+    }
+  ]
+}
