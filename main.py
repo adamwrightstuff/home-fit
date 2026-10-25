@@ -2250,7 +2250,7 @@ def _compute_single_score_internal(
     ]
     for _pillar_key, _score_val, _details_val in _ghost_weight_candidates:
         _confidence = (_details_val or {}).get("data_quality", {}).get("confidence", 100) if _details_val is not None else 100
-        _no_real_data = (_score_val is None) or (_confidence == 0)
+        _no_real_data = (_score_val is None) or (_confidence == 0) or (_pillar_key in exceptions)
         if _no_real_data and _pillar_key in token_allocation and token_allocation[_pillar_key] > 0:
             token_allocation = dict(token_allocation)
             token_allocation[_pillar_key] = 0.0
@@ -3912,7 +3912,7 @@ async def _stream_score_with_progress(
         ]
         for _pillar_key, _score_val, _details_val in _ghost_weight_candidates:
             _confidence = (_details_val or {}).get("data_quality", {}).get("confidence", 100) if _details_val is not None else 100
-            _no_real_data = (_score_val is None) or (_confidence == 0)
+            _no_real_data = (_score_val is None) or (_confidence == 0) or (_pillar_key in exceptions)
             if _no_real_data and _pillar_key in token_allocation and token_allocation[_pillar_key] > 0:
                 token_allocation = dict(token_allocation)
                 token_allocation[_pillar_key] = 0.0

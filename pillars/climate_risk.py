@@ -30,6 +30,9 @@ HEAT_LST_BEST = 30.0   # °C local LST → full points
 HEAT_LST_WORST = 42.0  # °C local LST → 0 points
 HEAT_MIN_LAND_FRACTION = 0.3
 
+# Fewer present components than this and the pillar has no score (it raises, so the app marks it failed).
+MIN_COMPONENTS = 3
+
 # Air (0-20 pts). Score = max(0, 20 - (pm25_ugm3 / 35) * 20). 35 ug/m3 = 0 pts.
 AIR_MAX_PTS = 20.0
 PM25_UNHEALTHY = 35.0  # EPA Unhealthy threshold (ug/m3)
@@ -67,10 +70,12 @@ def get_climate_risk_score(
         flood_data = f_flood.result()
         trend_data = f_trend.result()
 
+    # Fail loudly: a component that cannot be measured is None (no data), never a neutral or invented
+    # value. The score is built from the components that are present, scaled to their maximum points, and
+    # the pillar is marked degraded with the reason. Fewer than MIN_COMPONENTS present means no score.
     no_heat = heat_data is None
     no_air = air_data is None
-    no_data = no_heat and no_air
-    if no_data:
+    if no_heat and no_air:
         logger.warning(
             "Climate risk: no GEE data (heat=%s, air=%s). GEE_AVAILABLE=%s. "
             "Set GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_APPLICATION_CREDENTIALS_JSON in production for real scores.",
@@ -78,7 +83,10 @@ def get_climate_risk_score(
         )
 
     # Heat exposure (0-25 pts). Absolute local LST: 30°C = full, 42°C = 0.
-    # Falls back to neutral (12.5) when data is missing or buffer is mostly water.
+    # No data when the lookup failed or the 500 m buffer is mostly water (LST would describe water, not land).
+    heat_pts: Optional[float] = None
+    local_lst = None
+    land_fraction = None
     if heat_data is not None:
         local_lst = heat_data.get("local_lst_c")
         land_fraction = heat_data.get("land_pixel_fraction", 1.0)
@@ -89,73 +97,65 @@ def get_climate_risk_score(
         if local_lst is not None and land_fraction >= HEAT_MIN_LAND_FRACTION:
             heat_pts = max(0.0, HEAT_MAX_PTS - ((local_lst - HEAT_LST_BEST) / (HEAT_LST_WORST - HEAT_LST_BEST)) * HEAT_MAX_PTS)
             heat_pts = round(min(HEAT_MAX_PTS, heat_pts), 2)
-        else:
-            heat_pts = round(HEAT_MAX_PTS * 0.5, 2)  # neutral: missing data or mostly-water buffer
-    else:
-        local_lst = None
-        land_fraction = None
-        heat_pts = round(HEAT_MAX_PTS * 0.5, 2)
 
-    # Air quality (0-20 pts). Inverse: lower pm25_proxy = higher score.
+    # Air quality (0-20 pts). Inverse: lower pm25_proxy = higher score. 0 is valid (best air).
+    air_pts: Optional[float] = None
+    pm25_proxy = None
     if air_data is not None:
         raw_pm = air_data.get("pm25_proxy_ugm3")
-        # Use 35 (worst) only when key is missing; 0 is valid (best air)
-        pm25_proxy = 35.0 if raw_pm is None else raw_pm
         try:
-            pm25_proxy = float(pm25_proxy)
+            pm25_proxy = float(raw_pm) if raw_pm is not None else None
         except (TypeError, ValueError):
             pm25_proxy = None
         if pm25_proxy is not None and (pm25_proxy != pm25_proxy or pm25_proxy < 0):
             pm25_proxy = None
-        if pm25_proxy is not None and pm25_proxy > 35:
-            pm25_proxy = min(35.0, pm25_proxy)
         if pm25_proxy is not None:
+            pm25_proxy = min(35.0, pm25_proxy)
             air_pts = max(0.0, AIR_MAX_PTS - (pm25_proxy / PM25_UNHEALTHY) * AIR_MAX_PTS)
             air_pts = round(min(AIR_MAX_PTS, air_pts), 2)
-        else:
-            pm25_proxy = None
-            air_pts = 0.0
-    else:
-        pm25_proxy = None
-        air_pts = 0.0
 
-    # Flood (0-30 pts). From FEMA NFHL; neutral when FEMA unavailable.
-    if flood_data is not None:
-        flood_pts = float(flood_data.get("flood_zone_pts", FLOOD_MAX_PTS * 0.5))
-        flood_pts = round(min(FLOOD_MAX_PTS, max(0.0, flood_pts)), 2)
+    # Flood (0-30 pts). From FEMA NFHL; no data when the FEMA lookup failed.
+    flood_pts: Optional[float] = None
+    risk_tier = None
+    fld_zone = None
+    flood_label = None
+    if flood_data is not None and flood_data.get("flood_zone_pts") is not None:
+        flood_pts = round(min(FLOOD_MAX_PTS, max(0.0, float(flood_data["flood_zone_pts"]))), 2)
         risk_tier = flood_data.get("risk_tier")
         fld_zone = flood_data.get("fld_zone")
         flood_label = flood_data.get("label")
-    else:
-        flood_pts = round(FLOOD_MAX_PTS * 0.5, 2)  # neutral when missing
-        risk_tier = None
-        fld_zone = None
-        flood_label = None
 
-    # Climate trend (0-25 pts). Warming = fewer pts; neutral when GEE trend unavailable.
-    if trend_data is not None:
-        trend_c_per_decade = float(trend_data.get("trend_c_per_decade", 0.0) or 0.0)
+    # Climate trend (0-25 pts). Warming = fewer pts; no data when the GEE trend is unavailable.
+    trend_pts: Optional[float] = None
+    trend_c_per_decade = None
+    if trend_data is not None and trend_data.get("trend_c_per_decade") is not None:
+        trend_c_per_decade = float(trend_data["trend_c_per_decade"])
         trend_pts = max(
             0.0,
             TREND_MAX_PTS - (max(0.0, trend_c_per_decade) / TREND_C_PER_DECADE_FOR_ZERO) * TREND_MAX_PTS,
         )
         trend_pts = round(min(TREND_MAX_PTS, trend_pts), 2)
-    else:
-        trend_c_per_decade = None
-        trend_pts = round(TREND_MAX_PTS * 0.5, 2)  # neutral when missing
 
-    # Total: heat 25 + air 20 + flood 30 + trend 25 = 100 max.
-    total_raw = heat_pts + air_pts + flood_pts + trend_pts
-    score = min(100.0, total_raw)
-    if no_data and flood_data is None and trend_data is None:
-        score = 50.0  # all data missing → neutral
+    component_pts = {"heat": heat_pts, "air": air_pts, "flood": flood_pts, "trend": trend_pts}
+    component_max = {"heat": HEAT_MAX_PTS, "air": AIR_MAX_PTS, "flood": FLOOD_MAX_PTS, "trend": TREND_MAX_PTS}
+    present = [k for k, v in component_pts.items() if v is not None]
+    missing = [k for k in component_pts if k not in present]
+    if len(present) < MIN_COMPONENTS:
+        raise RuntimeError(
+            f"Climate risk: only {len(present)} of 4 components available (missing: {', '.join(missing)})"
+        )
+    # Heat 25 + air 20 + flood 30 + trend 25 = 100 max; scaled to the present components' maximum.
+    score = min(100.0, sum(component_pts[k] for k in present) / sum(component_max[k] for k in present) * 100.0)
     score = round(score, 1)
 
-    # Sub-scores for API (0-100 scale for consistency)
-    lst_score_0_100 = round((heat_pts / HEAT_MAX_PTS) * 100.0, 1) if HEAT_MAX_PTS else 0.0
-    aqi_score_0_100 = round((air_pts / AIR_MAX_PTS) * 100.0, 1) if AIR_MAX_PTS else 0.0
-    flood_score_0_100 = round((flood_pts / FLOOD_MAX_PTS) * 100.0, 1) if FLOOD_MAX_PTS else 0.0
-    trend_score_0_100 = round((trend_pts / TREND_MAX_PTS) * 100.0, 1) if TREND_MAX_PTS else 0.0
+    # Sub-scores for API (0-100 scale for consistency); None when the component has no data.
+    def _sub(pts, max_pts):
+        return round((pts / max_pts) * 100.0, 1) if pts is not None else None
+
+    lst_score_0_100 = _sub(heat_pts, HEAT_MAX_PTS)
+    aqi_score_0_100 = _sub(air_pts, AIR_MAX_PTS)
+    flood_score_0_100 = _sub(flood_pts, FLOOD_MAX_PTS)
+    trend_score_0_100 = _sub(trend_pts, TREND_MAX_PTS)
 
     # Data quality
     combined_data = {
@@ -163,6 +163,7 @@ def get_climate_risk_score(
         "air_data": air_data,
         "flood_data": flood_data,
         "trend_data": trend_data,
+        "components_present": present,
         "score": score,
         "heat_pts": heat_pts,
         "air_pts": air_pts,
@@ -173,6 +174,11 @@ def get_climate_risk_score(
     quality_metrics = assess_pillar_data_quality(
         "climate_risk", combined_data, lat, lon, area_type_dq
     )
+    if missing:
+        quality_metrics["degraded"] = True
+        quality_metrics["degraded_reasons"] = list(quality_metrics.get("degraded_reasons") or []) + [
+            f"climate_risk_missing_components: {', '.join(missing)}"
+        ]
 
     breakdown = {
         "heat_exposure_pts": heat_pts,
@@ -195,7 +201,8 @@ def get_climate_risk_score(
         "flood_label": flood_label,
         "climate_trend_score": trend_score_0_100,
         "trend_c_per_decade": trend_c_per_decade,
-        "data_available": not no_data,
+        "data_available": bool(present),
+        "components_missing": missing,
     }
     details = {
         "breakdown": breakdown,
@@ -206,15 +213,8 @@ def get_climate_risk_score(
     }
 
     logger.info(
-        "Climate Risk Score: %s/100 (heat=%s, air=%s, flood=%s, trend=%s) local_lst=%s land_frac=%s pm25=%s flood_tier=%s trend_c_decade=%s",
-        score, heat_pts, air_pts, flood_pts, trend_pts,
-        heat_data.get("local_lst_c") if heat_data else None,
-        heat_data.get("land_pixel_fraction") if heat_data else None,
-        pm25_proxy, risk_tier, trend_c_per_decade,
+        "Climate Risk Score: %s/100 (heat=%s, air=%s, flood=%s, trend=%s) missing=%s local_lst=%s land_frac=%s pm25=%s flood_tier=%s trend_c_decade=%s",
+        score, heat_pts, air_pts, flood_pts, trend_pts, missing,
+        local_lst, land_fraction, pm25_proxy, risk_tier, trend_c_per_decade,
     )
-    if score == 0 and not no_data:
-        logger.warning(
-            "Climate risk score 0 with data: heat_excess=%s pm25_proxy=%s (check units or thresholds)",
-            heat_excess, pm25_proxy,
-        )
     return score, details

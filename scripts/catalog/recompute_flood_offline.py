@@ -29,7 +29,6 @@ sys.path.insert(0, ROOT)
 from data_sources.fema_flood import FLOOD_MAX_PTS_DEFAULT, flood_zone_from_features  # noqa: E402
 
 FLOOD_MAX_PTS = 30.0  # keep in step with pillars/climate_risk.py
-NEUTRAL_FLOOD_PTS = FLOOD_MAX_PTS * 0.5  # the pillar's score when FEMA is unavailable
 _PTS_KEYS = ("heat_exposure_pts", "air_quality_pts", "climate_trend_pts")
 
 
@@ -41,9 +40,8 @@ def recompute_place(score: Dict[str, Any], features: Optional[list]) -> Optional
         return None
     flood = flood_zone_from_features(features, FLOOD_MAX_PTS_DEFAULT)
     if flood is None:
-        pts, tier, zone, label = NEUTRAL_FLOOD_PTS, None, None, None
-    else:
-        pts, tier, zone, label = float(flood["flood_zone_pts"]), flood["risk_tier"], flood["fld_zone"], flood["label"]
+        return None  # failed lookup: no data, leave the place as stored rather than invent a neutral value
+    pts, tier, zone, label = float(flood["flood_zone_pts"]), flood["risk_tier"], flood["fld_zone"], flood["label"]
     pts = round(min(FLOOD_MAX_PTS, max(0.0, pts)), 2)
     before = cr["score"]
     after = round(min(100.0, bd["heat_exposure_pts"] + bd["air_quality_pts"] + pts + bd["climate_trend_pts"]), 1)

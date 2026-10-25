@@ -68,11 +68,11 @@ def test_offline_recompute_replaces_only_the_flood_points():
     assert cr["summary"]["flood_risk_tier"] == "sfha" and cr["summary"]["fld_zone"] == "AE"
 
 
-def test_offline_recompute_uses_neutral_points_for_a_failed_lookup():
+def test_offline_recompute_leaves_the_place_as_stored_for_a_failed_lookup():
     p = _place()
-    _mod.recompute_place(p, None)
+    assert _mod.recompute_place(p, None) is None
     cr = p["livability_pillars"]["climate_risk"]
-    assert cr["breakdown"]["flood_zone_pts"] == 15.0 and cr["summary"]["flood_risk_tier"] is None
+    assert cr["breakdown"]["flood_zone_pts"] == 30.0 and cr["summary"]["flood_risk_tier"] == "minimal"
 
 
 def test_offline_recompute_skips_places_without_stored_points():

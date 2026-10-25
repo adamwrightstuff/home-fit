@@ -1479,6 +1479,10 @@ class DataQualityManager:
         """Assess climate_risk (Phase 1A GEE-only) data completeness."""
         if not data:
             return 0.0, 'very_poor'
+        present = data.get('components_present')
+        if isinstance(present, (list, tuple)):
+            completeness = len(present) / 4.0
+            return completeness, self._get_quality_tier(completeness)
         heat_data = data.get('heat_data')
         air_data = data.get('air_data')
         has_heat = heat_data is not None and isinstance(heat_data, dict)
