@@ -47,83 +47,12 @@ def get_housing_value_score(lat: float, lon: float,
     housing_data = census_api.get_housing_data(lat, lon, tract=census_tract, area_type=area_type)
 
     if housing_data is None:
-        print("⚠️  Housing data unavailable")
-        quality_metrics = data_quality.assess_pillar_data_quality('housing_value', {}, lat, lon, area_type)
-        
-        # FALLBACK SCORING: Apply conservative minimum scores for urban/suburban areas
-        # when Census API fails or returns incomplete data
-        # This handles Census data gaps similar to neighborhood_amenities and healthcare_access
-        is_urban_suburban = (
-            area_type in ("urban_core", "urban_residential", "suburban") or 
-            (density and density > 1500)
+        # No median household income for the pin's tract (suppressed by the ACS) and the place-level data
+        # is not usable. That is no data: the pillar fails and drops out of the total. It used to return a
+        # hard-coded score by area type (45 to 65), which was invented and biased upward in dense cities.
+        raise RuntimeError(
+            f"No Census housing data for ({lat}, {lon}): median household income unavailable at the tract"
         )
-        
-        if is_urban_suburban:
-            # Apply conservative fallback scores based on area type and density
-            # Urban areas typically have higher prices (lower affordability) but better space/efficiency
-            # Conservative scores reflect typical urban housing characteristics
-            fallback_scores = {
-                "urban_core": {
-                    "affordability": 15.0,  # Urban cores are expensive (lower affordability)
-                    "space": 20.0,  # Moderate space (apartments/condos)
-                    "efficiency": 10.0,  # Moderate efficiency
-                },
-                "urban_residential": {
-                    "affordability": 20.0,
-                    "space": 22.0,
-                    "efficiency": 12.0,
-                },
-                "suburban": {
-                    "affordability": 25.0,  # Suburbs more affordable
-                    "space": 25.0,  # More space (houses)
-                    "efficiency": 15.0,  # Better efficiency
-                },
-            }
-            
-            # Determine fallback based on area_type or density
-            if area_type in fallback_scores:
-                fallback = fallback_scores[area_type]
-            elif density and density > 5000:
-                fallback = fallback_scores["urban_core"]
-            elif density and density > 2000:
-                fallback = fallback_scores["urban_residential"]
-            elif density and density > 1500:
-                fallback = fallback_scores["suburban"]
-            else:
-                fallback = None
-            
-            if fallback:
-                fallback_total = fallback["affordability"] + fallback["space"] + fallback["efficiency"]
-                
-                print(f"   📊 Applying fallback score {fallback_total:.1f} for {area_type or 'unknown'} area (Census API unavailable)")
-                
-                return fallback_total, {
-                    "score": round(fallback_total, 1),
-                    "breakdown": {
-                        "local_affordability": round(fallback["affordability"], 1),
-                        "space": round(fallback["space"], 1),
-                        "value_efficiency": round(fallback["efficiency"], 1)
-                    },
-                    "summary": {
-                        "median_home_value": 0,
-                        "median_household_income": 0,
-                        "median_rooms": 0,
-                        "price_to_income_ratio": 0,
-                        "cost_per_room": 0,
-                        "housing_type": "Unknown",
-                        "affordability_rating": "Unknown",
-                        "fallback_applied": True,
-                        "fallback_reason": f"Census API unavailable for {area_type or 'unknown'} area"
-                    },
-                    "data_quality": quality_metrics,
-                    "area_classification": {}
-                }
-        
-        # Return empty breakdown with proper data quality assessment
-        empty_breakdown = _empty_breakdown()
-        empty_breakdown["data_quality"] = quality_metrics
-        empty_breakdown["area_classification"] = {}
-        return 0, empty_breakdown
 
     median_value = housing_data["median_home_value"]
     median_value, _zillow_used = get_home_value(median_value, zip_code)
@@ -175,15 +104,21 @@ def get_housing_value_score(lat: float, lon: float,
         # Blended path
         owner_afford = _score_local_affordability(median_value, median_income_for_affordability)
         rent_afford = _score_rent_affordability(median_gross_rent, median_income_for_affordability)
-        affordability_score = owner_pct * owner_afford + renter_pct * rent_afford
+        affordability_score = (
+            owner_pct * owner_afford + renter_pct * rent_afford
+            if owner_afford is not None and rent_afford is not None else None
+        )
         space_score = _score_space(median_rooms)
-        efficiency_score = _score_value_efficiency(median_value, median_rooms, metro_name) * owner_pct
+        _eff = _score_value_efficiency(median_value, median_rooms, metro_name)
+        efficiency_score = _eff * owner_pct if _eff is not None else None
         print(f"   ℹ️  Blended affordability ({owner_pct:.0%} owner / {renter_pct:.0%} renter)")
     elif not has_value and has_rent:
-        # No owner value — rent-only (classic renter-dominant tract)
+        # No owner value — rent-only (classic renter-dominant tract). Value efficiency is an ownership measure,
+        # so with no owner-occupied value it is 0 by the formula (a design choice, see tracker D11), but it
+        # still needs a room count to be defined.
         affordability_score = _score_rent_affordability(median_gross_rent, median_income_for_affordability)
         space_score = _score_space(median_rooms)
-        efficiency_score = 0.0
+        efficiency_score = 0.0 if space_score is not None else None
         print(f"   ℹ️  Rent-only affordability (no owner value reported, rent=${int(median_gross_rent):,}/mo)")
     else:
         # Owner value only — pure owner path
@@ -191,7 +126,21 @@ def get_housing_value_score(lat: float, lon: float,
         space_score = _score_space(median_rooms)
         efficiency_score = _score_value_efficiency(median_value, median_rooms, metro_name)
 
-    total_score = affordability_score + space_score + efficiency_score
+    # Fail loudly: a component that cannot be computed is left out and the rest are scaled to 100 (identical to
+    # the plain sum when all three are present). Affordability is required and at least one more component is
+    # needed, otherwise there is no score. Nothing is scored as zero because it is missing.
+    _components = {
+        "local_affordability": (affordability_score, 50.0),
+        "space": (space_score, 30.0),
+        "value_efficiency": (efficiency_score, 20.0),
+    }
+    _present = {k: v for k, v in _components.items() if v[0] is not None}
+    _missing = [k for k in _components if k not in _present]
+    if "local_affordability" not in _present or len(_present) < 2:
+        raise RuntimeError(
+            f"Housing value: not enough data to score for ({lat}, {lon}) (missing: {', '.join(_missing)})"
+        )
+    total_score = sum(v[0] for v in _present.values()) * (100.0 / sum(v[1] for v in _present.values()))
 
     # Assess data quality
     combined_data = {
@@ -207,15 +156,20 @@ def get_housing_value_score(lat: float, lon: float,
     # Use provided city if available for better classification
     area_type = data_quality.detect_area_type(lat, lon, density, city=city)
     quality_metrics = data_quality.assess_pillar_data_quality('housing_value', combined_data, lat, lon, area_type)
+    if _missing:
+        quality_metrics["degraded"] = True
+        quality_metrics["degraded_reasons"] = list(quality_metrics.get("degraded_reasons") or []) + [
+            f"housing_value_components_missing: {', '.join(_missing)}"
+        ]
 
     # Build response (summary uses income denominator that was used for affordability)
     summary_income = median_income_for_affordability if affordability_denominator == "us_median" else median_income
     breakdown = {
         "score": round(total_score, 1),
         "breakdown": {
-            "local_affordability": round(affordability_score, 1),
-            "space": round(space_score, 1),
-            "value_efficiency": round(efficiency_score, 1)
+            "local_affordability": round(affordability_score, 1) if affordability_score is not None else None,
+            "space": round(space_score, 1) if space_score is not None else None,
+            "value_efficiency": round(efficiency_score, 1) if efficiency_score is not None else None
         },
         "summary": _build_summary(median_value, summary_income, median_rooms,
                                    affordability_denominator=affordability_denominator,
@@ -231,21 +185,25 @@ def get_housing_value_score(lat: float, lon: float,
 
     # Log results
     print(f"✅ Housing Value Score: {total_score:.0f}/100")
-    print(f"   💰 Local Affordability: {affordability_score:.0f}/50")
-    print(f"   🏡 Space: {space_score:.0f}/30")
-    print(f"   📊 Value Efficiency: {efficiency_score:.0f}/20")
+    print(f"   💰 Local Affordability: {_fmt0(affordability_score)}/50")
+    print(f"   🏡 Space: {_fmt0(space_score)}/30")
+    print(f"   📊 Value Efficiency: {_fmt0(efficiency_score)}/20")
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown
 
 
-def _score_rent_affordability(monthly_rent: float, annual_income: float) -> float:
+def _fmt0(v):
+    return f"{v:.0f}" if v is not None else "n/a"
+
+
+def _score_rent_affordability(monthly_rent: float, annual_income: float) -> Optional[float]:
     """
     Score affordability (0-50 points) for renter-dominant tracts using rent-to-income ratio.
     Standard: 30% of income on housing is the threshold for cost-burden.
     """
-    if annual_income <= 0:
-        return 0.0
+    if not annual_income or annual_income <= 0 or not monthly_rent or monthly_rent <= 0:
+        return None
     ratio = (monthly_rent * 12) / annual_income
     if ratio <= 0.20:
         return 50.0   # <20%: very affordable
@@ -263,17 +221,15 @@ def _score_rent_affordability(monthly_rent: float, annual_income: float) -> floa
         return 0.0    # >50%: extreme burden
 
 
-def _score_local_affordability(home_value: Optional[float], income: float) -> float:
+def _score_local_affordability(home_value: Optional[float], income: float) -> Optional[float]:
     """
     Score local affordability (0-50 points).
     Based on price-to-income ratio.
 
     Standard: Housing should be ≤3x annual income
     """
-    if home_value is None:
-        return 0.0
-    if income == 0:
-        return 0.0
+    if home_value is None or not income or income <= 0:
+        return None
 
     ratio = home_value / income
 
@@ -299,13 +255,15 @@ def _score_local_affordability(home_value: Optional[float], income: float) -> fl
         return 5.0   # Extremely expensive
 
 
-def _score_space(median_rooms: float) -> float:
+def _score_space(median_rooms: Optional[float]) -> Optional[float]:
     """
     Score housing space (0-30 points).
     Based on median rooms per unit.
 
-    Census rooms = all rooms except bathrooms, halls, closets
+    Census rooms = all rooms except bathrooms, halls, closets. None when the room count is unavailable.
     """
+    if median_rooms is None or median_rooms <= 0:
+        return None
     if median_rooms >= 8:
         return 30.0  # Large single-family
     elif median_rooms >= 6.5:
@@ -320,7 +278,7 @@ def _score_space(median_rooms: float) -> float:
         return 5.0   # Studio/tiny
 
 
-def _score_value_efficiency(home_value: Optional[float], median_rooms: float, metro_name: Optional[str] = None) -> float:
+def _score_value_efficiency(home_value: Optional[float], median_rooms: Optional[float], metro_name: Optional[str] = None) -> Optional[float]:
     """
     Score value efficiency (0-20 points).
     Reframed as "usable space per dollar" rather than cheapness.
@@ -328,8 +286,8 @@ def _score_value_efficiency(home_value: Optional[float], median_rooms: float, me
 
     Higher rooms per $100k = better value (more usable space per dollar)
     """
-    if home_value is None or median_rooms == 0 or home_value == 0:
-        return 0.0
+    if home_value is None or not median_rooms or median_rooms <= 0 or home_value <= 0:
+        return None
 
     # Calculate rooms per $100k (positive metric: higher = better)
     rooms_per_100k = (median_rooms / home_value) * 100000
@@ -416,11 +374,13 @@ def _score_value_efficiency(home_value: Optional[float], median_rooms: float, me
 def _build_summary(home_value: Optional[float], income: float, rooms: float, *, affordability_denominator: str = "local_median", median_gross_rent: Optional[float] = None, renter_pct: Optional[float] = None) -> Dict:
     """Build summary of housing value characteristics."""
     ratio = (home_value / income) if (home_value is not None and income > 0) else 0
-    cost_per_room = (home_value / rooms) if (home_value is not None and rooms > 0) else 0
-    rooms_per_100k = ((rooms / home_value) * 100000) if (home_value is not None and home_value > 0) else 0
+    cost_per_room = (home_value / rooms) if (home_value is not None and rooms and rooms > 0) else 0
+    rooms_per_100k = ((rooms / home_value) * 100000) if (home_value is not None and home_value > 0 and rooms) else 0
 
     # Determine housing type based on rooms
-    if rooms >= 7:
+    if not rooms:
+        housing_type = "Unknown"
+    elif rooms >= 7:
         housing_type = "Large single-family home"
     elif rooms >= 6:
         housing_type = "Typical single-family home"
@@ -446,7 +406,7 @@ def _build_summary(home_value: Optional[float], income: float, rooms: float, *, 
     out: Dict = {
         "median_home_value": int(home_value) if home_value is not None else None,
         "median_household_income": int(income),
-        "median_rooms": round(rooms, 1),
+        "median_rooms": round(rooms, 1) if rooms else None,
         "price_to_income_ratio": round(ratio, 2),
         "cost_per_room": int(cost_per_room),
         "rooms_per_100k": round(rooms_per_100k, 3),
