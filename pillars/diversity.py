@@ -44,6 +44,11 @@ def parse_diversity_preference(raw: Optional[Any]) -> Optional[List[str]]:
     return out if out else None
 
 
+# ACS B02001: six single-race groups plus "two or more races" (_008). _009 and _010 split _008.
+RACE_CATEGORY_COUNT = 7
+RACE_SUBSET_KEYS: Tuple[str, ...] = ("B02001_009E", "B02001_010E")
+
+
 def _entropy(counts: Iterable[int]) -> float:
     total = sum(c for c in counts if c is not None)
     if total <= 0:
@@ -103,9 +108,13 @@ def get_diversity_score(
         income_counts = diversity_data.get("income_counts") or {}
         age_counts_dict = diversity_data.get("age_counts") or {}
         if race_counts:
-            n_race = sum(1 for v in race_counts.values() if v > 0)
+            # B02001_009 and _010 are the two parts of _008 (two or more races); keep _008 only so
+            # multiracial residents are counted once. Entropy is normalized by the fixed seven groups
+            # (six single-race groups plus two or more), so tiny groups appearing or not cannot swing it.
+            race_values = [v for k, v in race_counts.items() if k not in RACE_SUBSET_KEYS]
+            n_race = sum(1 for v in race_values if v > 0)
             if n_race >= 2:
-                race_e = _normalized_entropy(race_counts.values(), n_race)
+                race_e = _normalized_entropy(race_values, RACE_CATEGORY_COUNT)
                 components_present.append("race")
                 breakdown["race_entropy"] = round(race_e, 1)
         if income_counts:

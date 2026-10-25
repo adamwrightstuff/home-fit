@@ -17,6 +17,12 @@ dimension_score = normalized_entropy(counts) → 0–100
 diversity_score = mean(available dimension scores)
 ```
 
+**Race (changed 2026-10-24):** B02001 `_009` and `_010` are the two parts of `_008` (two or more
+races), so they are dropped to avoid counting multiracial residents twice, and race entropy is
+normalized by the fixed seven groups (six single-race groups plus two or more) instead of the number
+of non-empty groups. Income and age still normalize by non-empty bins/buckets. Catalog values were
+rewritten offline by `scripts/catalog/recompute_diversity_race_offline.py` (old values backed up).
+
 ## Preference (optional)
 `diversity_preference` (subset of race / income / age) averages **only** the selected
 dimensions instead of all available. `version: v2_preference_optional`.
