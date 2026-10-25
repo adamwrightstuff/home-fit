@@ -153,6 +153,22 @@ def get_volunteering_score(
     return None
 
 
+def blend_participation(bmf_slot: Optional[float], vol_slot: Optional[float]) -> Tuple[Optional[float], str]:
+    """
+    (score 0-100 or None, mix). Both inputs: 50/50. One input: that input alone. Neither: no score (None); the
+    retired code returned a made-up 50.0 here. Shared by the live pillar and the offline catalog recompute.
+    """
+    if bmf_slot is not None and vol_slot is not None:
+        score, mix = 0.50 * bmf_slot + 0.50 * vol_slot, "full"
+    elif bmf_slot is not None:
+        score, mix = bmf_slot, "bmf_only"
+    elif vol_slot is not None:
+        score, mix = vol_slot, "vol_only"
+    else:
+        return None, "none"
+    return max(0.0, min(100.0, float(score))), mix
+
+
 def compute_participation_score(
     lat: float,
     lon: float,
@@ -204,22 +220,8 @@ def compute_participation_score(
         diag["volunteering_z"], diag["volunteering_resolution"] = vol[0], vol[1]
     z_vol = vol[0] if vol else None
 
-    score: Optional[float]
-    if bmf_slot is not None and z_vol is not None:
-        score = 0.50 * bmf_slot + 0.50 * z_vol
-        diag["mix"] = "full"
-    elif bmf_slot is not None:
-        score = bmf_slot
-        diag["mix"] = "bmf_only"
-    elif z_vol is not None:
-        score = z_vol
-        diag["mix"] = "vol_only"
-    else:
-        score = 50.0
-        diag["mix"] = "median_fallback"
-        diag["median_fallback"] = True
-
-    if score is not None:
-        score = max(0.0, min(100.0, float(score)))
+    score, diag["mix"] = blend_participation(bmf_slot, z_vol)
+    if score is None:
+        diag["no_data"] = True
 
     return score, diag

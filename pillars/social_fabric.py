@@ -1,16 +1,21 @@
 """
-Social Fabric pillar: stability (tract + place mobility), civic gathering (OSM),
-and engagement (IRS BMF 50% + volunteering 50%), z-scored vs area type where applicable.
+Social Fabric pillar (current model v16b weights, fail-loud blend since 2026-10-24).
 
-Composite: (1.2×Stability + 1.2×Civic + 1.2×Engagement) / 3.6 (participation module).
-Rootedness input: 0.8×B25038 long-tenure housing % + 0.2×B07003 same-house 1yr; then 70/30 tract/place.
+score = blend of four components, each 0-100, with base weights
+    participation 0.60   engagement: IRS BMF organizations per 1k and volunteering (50/50), then 65/35 with the
+                         Social Capital Atlas civic-organization rate (community_participation + social_capital_cohesion)
+    cohesion      0.20   Social Capital Atlas clustering and support, peer-normalized by area type
+    rootedness    0.10   residential stability: 0.8 x B25038 long-tenure + 0.2 x B07003 same-house, blended 0.7 tract /
+                         0.3 place, scored against regional bands (above-85% penalty suppressed when home values >= $350k)
+    civic         0.10   OSM/Places civic gathering nodes, peer-normalized by area type (radius 600 / 1200 / 3000 m by density)
+A component that cannot be measured is left out and the remaining weights are scaled proportionally (see
+blend_social_fabric); the pillar is then marked degraded with the reason. Nothing is scored as zero because it is
+missing. Civic nodes found to be zero are treated as "no civic data" and also left out (disclosed in the summary).
+
+About 60% of the score comes from one source (the Social Capital Atlas), and the base weights were chosen by
+validating against that same Atlas (circular; see analysis/pillar_audit_tracker_v2.md, D7). Treat them as a
+judgment call, not an outcome-validated result.
 Diversity is a separate pillar (pillars/diversity.py).
-
-Stability blend: 0.7×tract same-house + 0.3×place same-house (place is B07003). Tract same-house uses ACS 5-year
-B07003 blended with B07013 (0.6×B07013 + 0.4×B07003) when B07013 is available in census_api.get_mobility_data.
-If tract mobility is missing but place same-house exists, stability uses place-only (honest geography).
-Civic search radius follows tract population density: ~600 m / 1200 m / 3000 m.
-Places augments thin/failed OSM. Imputed civic floor only when HOMEFIT_SF_CIVIC_IMPUTATION_ENABLED is on (default off).
 """
 
 from __future__ import annotations
@@ -25,6 +30,7 @@ from typing import Any, Dict, Optional, Tuple
 from data_sources import census_api, data_quality, osm_api
 from data_sources import irs_bmf
 from data_sources import community_participation
+from pillars.social_fabric_blend import SF_BASE_WEIGHTS, blend_social_fabric  # noqa: F401
 from data_sources import social_capital_cohesion
 from data_sources.places_social_fabric_client import maybe_augment_civic_nodes_with_places
 from data_sources import social_fabric_bands
@@ -478,12 +484,17 @@ def get_social_fabric_score(
     )
 
     turnout_rate = participation_diag.get("turnout_rate")
+    # IRS nonprofit counts do not exist for some states (see irs_bmf.MIN_TRACTS_PER_STATE): that is no data,
+    # not a rate of zero. Participation then rests on volunteering and the Atlas civic-organization rate.
+    irs_status = "ok"
+    if not irs_bmf.state_has_coverage((tract or {}).get("state_fips"), either=True):
+        irs_status = "no_state_coverage"
 
-    e = float(engagement_score) if engagement_score is not None else 0.0
+    e = float(engagement_score) if engagement_score is not None else None
     # Blend in the Atlas behavioral civic-org signal (where people actually join)
     # alongside the IRS BMF registration-based engagement.
     civic_orgs_score = social_capital_cohesion.get_civic_orgs_score(zip_code, area_type)
-    if civic_orgs_score is not None:
+    if civic_orgs_score is not None and e is not None:
         e = 0.65 * e + 0.35 * civic_orgs_score
 
     # ------------------------------------------------------------------
@@ -492,33 +503,34 @@ def get_social_fabric_score(
     #      Measured directly from the Social Capital Atlas (clustering + support),
     #      area-type peer-normalized, with residential tenure as a minor input.
     #   B. Infrastructure x encounter — dense walkable third-place life (urban-
-    #      leaning). Civic node score tilted by the Jacobs encounter multiplier.
-    # A place can win via either; engagement is a steadier, area-neutral term.
+    #      leaning); retained for summary diagnostics only (channel_b).
     # ------------------------------------------------------------------
     cohesion_score, cohesion_diag = social_capital_cohesion.get_cohesion_score(zip_code, area_type)
 
     # Retained for summary diagnostics only — not in composite.
     channel_b = _infra_density_score(civic_effective, civic_radius_m)
 
-    # Weights from external validation (ec_zip + atlas_civic_orgs, non-circular):
-    #   participation=70%, social_capital=20%, peer_civic_gathering=10%, rootedness=0%
-    # Clustering reverted to 0.65 weight (external corr 0.30 vs support 0.07).
-    # Peer_civic re-enters as minor pathway term per Zahnow (2024): social infrastructure
-    # facilitates encounter → cohesion → wellbeing; peer-normalized so dense villages
-    # don't inflate it. Rootedness dropped: negatively correlated with external measures.
     channel_a_source = "atlas_cohesion" if cohesion_score is not None else "none"
     channel_a = cohesion_score if cohesion_score is not None else None
 
-    w_sc    = 0.20 if cohesion_score is not None else 0.0
-    w_civic = 0.10 if civic_score > 0 else 0.0
-    w_root  = 0.10
-    w_part  = 1.0 - w_sc - w_civic - w_root
-
-    raw = (w_sc   * (cohesion_score or 0.0)
-           + w_root * stability_score
-           + w_part * e
-           + w_civic * civic_score)
-    score = max(0.0, min(100.0, round(raw, 1)))
+    # Base weights participation 0.60 / cohesion 0.20 / rootedness 0.10 / civic 0.10 (judgment call, see module
+    # docstring). A missing component is left out and the rest scaled proportionally; never scored as zero.
+    civic_osm_status = civic.get("osm_source_status") or civic.get("source_status")
+    sf_missing_reasons: Dict[str, str] = {}
+    if e is None:
+        sf_missing_reasons["participation"] = "engagement_unavailable"
+    if cohesion_score is None:
+        sf_missing_reasons["cohesion"] = "atlas_zip_not_found"
+    if stability_pct is None:
+        sf_missing_reasons["rootedness"] = "no_tract_or_place_mobility_data"
+    if civic_score <= 0:
+        sf_missing_reasons["civic"] = "osm_error" if civic_osm_status == "error" else "no_civic_nodes_found"
+    score, sf_weights, _sf_left_out = blend_social_fabric(
+        participation=e,
+        cohesion=cohesion_score,
+        rootedness=stability_score if stability_pct is not None else None,
+        civic=civic_score if civic_score > 0 else None,
+    )
 
     source_status: Dict[str, str] = {}
     source_errors: list = []
@@ -628,11 +640,22 @@ def get_social_fabric_score(
         area_type,
         fallback_used=bool(civic_imputed_floor_applied),
     )
+    # Missing data (not a genuine zero) marks the pillar degraded; "no civic nodes found" on a good OSM read
+    # is disclosed in components_missing but is not a data failure.
+    _degraded = [f"social_fabric_{k}_missing: {v}" for k, v in sf_missing_reasons.items()
+                 if not (k == "civic" and v == "no_civic_nodes_found")]
+    if irs_status != "ok":
+        _degraded.append(f"social_fabric_irs_bmf_unavailable: {irs_status} (state FIPS {(tract or {}).get('state_fips')})")
+    if civic.get("civic_reliability") == "suspect_thin" and "civic" not in sf_missing_reasons:
+        _degraded.append("social_fabric_civic_suspect_thin: OSM civic count implausibly low for the density")
+    if _degraded:
+        quality_metrics["degraded"] = True
+        quality_metrics["degraded_reasons"] = list(quality_metrics.get("degraded_reasons") or []) + _degraded
 
     rooted_pct = mobility.get("rooted_pct") if mobility else None
 
     breakdown = {
-        "participation": round(e, 1),
+        "participation": round(e, 1) if e is not None else None,
         "social_capital": cohesion_score,
         "peer_civic": round(civic_score, 1) if civic_score else None,
         "rootedness": round(rooted_pct, 1) if rooted_pct is not None else None,
@@ -680,6 +703,9 @@ def get_social_fabric_score(
         "social_fabric_bands": bool(bands),
         "civic_places_fallback_used": places_recovered,
         "civic_imputed_floor_applied": civic_imputed_floor_applied,
+        "irs_bmf_status": irs_status,
+        "weights_used": {k: round(v, 4) for k, v in sf_weights.items()},
+        "components_missing": sf_missing_reasons,
     }
 
     details = {
@@ -689,7 +715,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v16b_sf_with_rootedness",
+        "version": "v17_sf_failloud_blend",
     }
 
     logger.info(

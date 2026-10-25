@@ -205,6 +205,39 @@ STATE_FIPS_TO_ABBREV_IRS: Dict[str, str] = {
 }
 
 
+# A state counts as covered only if the IRS tract-count file has at least this many tracts for it. The files
+# built so far have no tracts at all for DE, DC, IL, IN, IA, KY, MD, MI, MN, NC, OH, PA, SC, VA, WV, WI and
+# almost none for NE, ND, SD (the IRS regional file for those states was never ingested), so a rate of 0 there
+# means "no data", not "no nonprofits". Rebuilding the files makes the states covered again with no code change.
+MIN_TRACTS_PER_STATE = 30
+_coverage_cache: Dict[int, Dict[str, int]] = {}
+
+
+def _state_tract_counts(count_map: Dict[str, int]) -> Dict[str, int]:
+    key = id(count_map)
+    cached = _coverage_cache.get(key)
+    if cached is None or cached.get("_n") != len(count_map):
+        counts: Dict[str, int] = {}
+        for geoid in count_map:
+            counts[geoid[:2]] = counts.get(geoid[:2], 0) + 1
+        counts["_n"] = len(count_map)
+        _coverage_cache[key] = counts
+        cached = counts
+    return cached
+
+
+def state_has_coverage(state_fips: Optional[str], *, legacy: bool = False, either: bool = False) -> bool:
+    """True when the IRS tract-count file (refined, legacy, or either) has data for the state."""
+    if not state_fips:
+        return False
+    maps = []
+    if either or not legacy:
+        maps.append(org_count_by_tract)
+    if either or legacy:
+        maps.append(org_count_by_tract_legacy)
+    return any(_state_tract_counts(m).get(str(state_fips), 0) >= MIN_TRACTS_PER_STATE for m in maps if m)
+
+
 def _effective_org_count_eff(
     geoid: str,
     lat: float,
@@ -324,6 +357,10 @@ def get_civic_orgs_per_1k(
 
     geoid = tract.get("geoid")
     if not geoid:
+        return None
+
+    # No IRS data for this state: no data, not a rate of zero.
+    if not state_has_coverage(geoid[:2], legacy=(mode == "legacy"), either=(mode == "auto")):
         return None
 
     use_legacy = False

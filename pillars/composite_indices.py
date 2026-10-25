@@ -418,15 +418,14 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
             uncapped = min(100.0, (stab_pct / 85.0) * 100.0)
             if rootedness < uncapped:
                 corrected_root = uncapped
-                s_cap = float(sf_breakdown.get("social_capital") or 0.0)
-                p_civ = float(sf_breakdown.get("peer_civic") or 0.0)
-                part = float(sf_breakdown.get("participation") or 0.0)
-                w_sc = 0.20 if s_cap > 0 else 0.0
-                w_civic = 0.10 if p_civ > 0 else 0.0
-                w_root = 0.10
-                w_part = 1.0 - w_sc - w_civic - w_root
-                new_raw = w_sc * s_cap + w_root * corrected_root + w_part * part + w_civic * p_civ
-                sf_data["score"] = round(max(0.0, min(100.0, new_raw)), 1)
+                from pillars.social_fabric_blend import blend_social_fabric
+                _civ = sf_breakdown.get("peer_civic")
+                sf_data["score"], _w_used, _ = blend_social_fabric(
+                    participation=sf_breakdown.get("participation"),
+                    cohesion=sf_breakdown.get("social_capital"),
+                    rootedness=corrected_root,
+                    civic=_civ if isinstance(_civ, (int, float)) and _civ > 0 else None,
+                )
                 sf_breakdown["rootedness"] = round(corrected_root, 1)
                 # Update stored contribution so total_score recomputation picks up the fix.
                 _sf_w = sf_data.get("weight")
