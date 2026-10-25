@@ -436,6 +436,7 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
     na_data = pillars.get("neighborhood_amenities")
     if isinstance(na_data, dict) and na_data.get("confidence") == 0 and na_data.get("score") is not None:
         na_data["score"] = None
+        na_data["contribution"] = 0.0  # stored-gap shape: weight is redistributed in the total below
 
     try:
         li, contrib = compute_longevity_index(
@@ -562,7 +563,9 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
         _pillar_w = float(p_data.get("weight") or (token_allocation or {}).get(p_name) or 0)
         # Stored data-gap: score=None but contribution=0.0 and weight>0 was written at
         # scoring time (None × weight = 0 coercion).  Exclude from denominator.
-        _is_stored_gap = (contrib == 0.0 and p_data.get("score") is None and _pillar_w > 0)
+        # A no-data pillar is stored either with contribution 0.0 or with no contribution at all (None); both are
+        # gaps whose weight is redistributed. Treating only 0.0 as a gap left the None rows understated by ~4 points.
+        _is_stored_gap = (contrib in (None, 0.0) and p_data.get("score") is None and _pillar_w > 0)
         if isinstance(contrib, (int, float)) and not _is_stored_gap:
             _stored_total += float(contrib)
         elif _is_stored_gap:
