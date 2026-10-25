@@ -1,6 +1,115 @@
 {
   "_readme": "Fill in 'contrasts' BEFORE you look at launch check results. Each entry: pillar, group_a, group_b, expected ('a_higher' or 'b_higher'), min_gap (points, the smallest mean gap that counts as passing), reason (why you expect it, ideally with a source). A group selects places by any of: area_type, metro, state, or an explicit list 'places' of 'metro|name'. Use contrasts you are certain of; the check is a tripwire for data or logic problems, not a target to tune toward. Entries under '_examples' are ignored. 'expected_uniform' lists sub-metrics (pillar, path_prefix, optional metros, reason) that are uniform within a metro by design, so the degenerate-metro section does not show them; leave it empty until you have decided which findings are by design.",
-  "contrasts": [],
+  "contrasts": [
+    {
+      "pillar": "healthcare_access",
+      "group_a": {
+        "area_type": "urban_core"
+      },
+      "group_b": {
+        "area_type": "rural"
+      },
+      "expected": "a_higher",
+      "min_gap": 15,
+      "reason": "Rural areas are sparse and far from major hospitals and hospital networks (owner, very sure)."
+    },
+    {
+      "pillar": "public_transit_access",
+      "group_a": {
+        "area_type": "urban_core"
+      },
+      "group_b": {
+        "area_type": "exurban"
+      },
+      "expected": "a_higher",
+      "min_gap": 20,
+      "reason": "There is almost no public transit in exurban areas (owner, very sure)."
+    },
+    {
+      "pillar": "neighborhood_amenities",
+      "group_a": {
+        "area_type": "urban_core"
+      },
+      "group_b": {
+        "area_type": "rural"
+      },
+      "expected": "a_higher",
+      "min_gap": 20,
+      "reason": "Rural areas have very small towns with limited options, or places are spread out (owner, very sure)."
+    },
+    {
+      "pillar": "air_travel_access",
+      "group_a": {
+        "area_type": "urban_core"
+      },
+      "group_b": {
+        "area_type": "rural"
+      },
+      "expected": "a_higher",
+      "min_gap": 10,
+      "reason": "Airports are built near cities, even when some sit far out, like Denver (owner, sure)."
+    },
+    {
+      "pillar": "economic_opportunity",
+      "group_a": {
+        "area_type": "urban_core"
+      },
+      "group_b": {
+        "area_type": "rural"
+      },
+      "expected": "a_higher",
+      "min_gap": 5,
+      "reason": "Most jobs are in cities, and rural workers commute into cities (owner, very sure). Small gap because the pillar has little spread."
+    },
+    {
+      "pillar": "housing_value",
+      "group_a": {
+        "area_type": "rural"
+      },
+      "group_b": {
+        "area_type": "urban_core"
+      },
+      "expected": "a_higher",
+      "min_gap": 10,
+      "reason": "Homes are cheaper relative to income in rural areas than in expensive metros; some metros and some rural areas are exceptions (owner, very sure)."
+    },
+    {
+      "pillar": "natural_beauty",
+      "group_a": {
+        "area_type": "rural"
+      },
+      "group_b": {
+        "area_type": "urban_core"
+      },
+      "expected": "a_higher",
+      "min_gap": 5,
+      "reason": "More concrete in cities; some cities invest in trees, parks and waterfronts, so the gap is small (owner, sure)."
+    },
+    {
+      "pillar": "natural_beauty",
+      "group_a": {
+        "area_type": "exurban"
+      },
+      "group_b": {
+        "area_type": "urban_core"
+      },
+      "expected": "a_higher",
+      "min_gap": 5,
+      "reason": "Same statement for exurban areas (owner, sure)."
+    },
+    {
+      "pillar": "active_outdoors",
+      "group_a": {
+        "metro": "denver"
+      },
+      "group_b": {
+        "metro": "houston"
+      },
+      "expected": "a_higher",
+      "min_gap": 10,
+      "reason": "Denver sits next to the Rockies (trails, skiing, mountain parks); Houston is flat and hot and humid with far fewer trail and ski options (drafted by Claude at the owner's request; owner to confirm)."
+    }
+  ],
   "_examples": [
     {
       "pillar": "healthcare_access",
