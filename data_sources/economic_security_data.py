@@ -250,6 +250,33 @@ def fetch_bds_establishment_dynamics(
     return parsed
 
 
+@cached(ttl_seconds=CACHE_TTL["census_data"])
+def fetch_cbp_employment(*, year: int, geo: EconomicGeo) -> Optional[Dict[str, Optional[float]]]:
+    """
+    Census County Business Patterns, all sectors (NAICS 00): paid employment (EMP, mid-March) and
+    establishments (ESTAB) for the geography. Excludes government, farm and self-employed workers.
+    Replaces BLS QCEW, which blocks scripted access. Returns None on any failure (no data, not zero).
+    """
+    if not CENSUS_API_KEY:
+        return None
+    params: Dict[str, str] = {"get": "EMP,ESTAB,NAME", "NAICS2017": "00", "key": CENSUS_API_KEY}
+    if geo.level == "cbsa" and geo.cbsa_code:
+        params["for"] = f"metropolitan statistical area/micropolitan statistical area:{geo.cbsa_code}"
+    else:
+        if not geo.county_fips:
+            return None
+        params["for"] = f"county:{geo.county_fips}"
+        params["in"] = f"state:{geo.state_fips}"
+    try:
+        resp = requests.get(f"{CENSUS_BASE_URL}/{year}/cbp", params=params, timeout=20)
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+    except Exception:
+        return None
+    return _parse_first_row_table(data, ["EMP", "ESTAB"])
+
+
 def compute_industry_hhi(industry_shares_pct: Dict[str, Optional[float]]) -> Optional[float]:
     """
     Compute Herfindahl-Hirschman Index (HHI) from industry share percentages.

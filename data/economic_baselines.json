@@ -662,5 +662,80 @@
       }
     },
     "urban": {}
+  },
+  "all": {
+    "all": {
+      "unemployment_rate": {
+        "mean": 5.361025982721728,
+        "std": 1.197902481755884,
+        "n": 873
+      },
+      "emp_pop_ratio": {
+        "mean": 60.210370637101974,
+        "std": 4.770193613452221,
+        "n": 873
+      },
+      "estabs_per_1k": {
+        "mean": 22.288646947593584,
+        "std": 3.9414629421217167,
+        "n": 873
+      },
+      "net_estab_entry_per_1k": {
+        "mean": 0.4862910401119564,
+        "std": 0.3250637377085753,
+        "n": 873
+      },
+      "industry_hhi": {
+        "mean": 0.12446740824068156,
+        "std": 0.013142754700180613,
+        "n": 873
+      },
+      "anchored_balance": {
+        "mean": 0.022488129565718957,
+        "std": 0.0732923659370734,
+        "n": 873
+      },
+      "wage_p25_annual": {
+        "mean": 37139.40781121278,
+        "std": 3906.906242448969,
+        "n": 379
+      },
+      "wage_p75_annual": {
+        "mean": 81337.93189844207,
+        "std": 16403.43787026136,
+        "n": 379
+      },
+      "qcew_employment_per_1k": {
+        "mean": 394.70036673712747,
+        "std": 73.9599450099632,
+        "n": 873
+      },
+      "qcew_employment_growth_pct": {
+        "mean": 3.0964115887217676,
+        "std": 1.9142661304549085,
+        "n": 873
+      },
+      "log10_employment": {
+        "mean": 5.759058848494537,
+        "std": 0.7784212556115032,
+        "n": 873
+      },
+      "log10_establishments": {
+        "mean": 4.512935497688396,
+        "std": 0.7579104472735815,
+        "n": 873
+      }
+    },
+    "_meta": {
+      "description": "National baseline: population-weighted mean and std over all US metro and micro areas. Sourced and reproducible, not validated against an outcome (see analysis/economic_national_baseline_estimate_2026-10-24.md).",
+      "built_by": "scripts/baselines/build_economic_national_baseline.py",
+      "sources": {
+        "acs": "ACS 5-year 2022 DP03 and B01001",
+        "bds": "Census BDS 2022",
+        "cbp": "Census County Business Patterns 2022 (level) and 2023 (growth)",
+        "oews": "BLS OEWS May 2024 metro areas only (data/oews_metro_wage_distribution.json)"
+      },
+      "weighting": "ACS population"
+    }
   }
 }

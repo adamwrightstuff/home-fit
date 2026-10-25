@@ -2,20 +2,18 @@
 """
 Build data/oews_metro_wage_distribution.json for the economic pillar wage-distribution signal.
 
-BLS OEWS publishes metropolitan (and nonmetropolitan) area data with 10th, 25th, 75th, 90th
-percentile wages. Download the annual metro area file from:
+BLS OEWS metropolitan-area file (MSA_M<year>_dl.xlsx inside oesm<yy>ma.zip):
   https://www.bls.gov/oes/special-requests/oesm24ma.zip  (May 2024)
-  https://www.bls.gov/oes/special-requests/oesm23ma.zip  (May 2023)
+BLS blocks scripted downloads, so download the zip in a browser and extract it.
 
-The zip contains XLSX files. This script expects either:
-  - A path to the extracted directory or a single XLSX (--input),
-  - Or it writes an empty JSON so the pillar still runs (wage_distribution will be null until populated).
-
-To parse XLSX you need: pip install openpyxl
+Keeps one row per area: all occupations (OCC_CODE 00-0000), cross-industry (NAICS 000000,
+OWN_CODE 1235), and writes the annual 25th and 75th percentile wages keyed by the 5-digit area
+(CBSA) code. An annual 75th percentile BLS prints as "#" means "at or above $239,200"; it is stored
+as null, never as a made-up number. Parsing uses only the standard library (the XLSX is read as
+zip + XML), so nothing needs installing.
 
 Run from project root:
-  PYTHONPATH=. python3 scripts/build_oews_metro_wages.py
-  PYTHONPATH=. python3 scripts/build_oews_metro_wages.py --input /path/to/oesm24ma
+  PYTHONPATH=. python3 -I scripts/baselines/build_oews_metro_wages.py --input ~/Downloads/oesm24ma
 """
 
 from __future__ import annotations
@@ -23,80 +21,109 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
+import zipfile
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
-OUT_PATH = Path(ROOT) / "data" / "oews_metro_wage_distribution.json"
+ROOT = Path(__file__).resolve().parents[2]
+OUT_PATH = ROOT / "data" / "oews_metro_wage_distribution.json"
+NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+WANTED = ("AREA", "AREA_TITLE", "NAICS", "OWN_CODE", "OCC_CODE", "TOT_EMP", "A_PCT25", "A_MEDIAN", "A_PCT75")
+
+
+def _shared_strings(z: zipfile.ZipFile) -> list:
+    out = []
+    with z.open("xl/sharedStrings.xml") as fh:
+        for _, el in ET.iterparse(fh):
+            if el.tag == NS + "si":
+                out.append("".join(t.text or "" for t in el.iter(NS + "t")))
+                el.clear()
+    return out
+
+
+def _col(ref: str) -> str:
+    return re.match(r"[A-Z]+", ref).group(0)
+
+
+def _rows(z: zipfile.ZipFile, sheet: str, strings: list):
+    """Yield {column letter: value} per row."""
+    with z.open(sheet) as fh:
+        for _, el in ET.iterparse(fh):
+            if el.tag != NS + "row":
+                continue
+            row = {}
+            for c in el.findall(NS + "c"):
+                v = c.find(NS + "v")
+                if v is None or v.text is None:
+                    continue
+                row[_col(c.get("r"))] = strings[int(v.text)] if c.get("t") == "s" else v.text
+            yield row
+            el.clear()
+
+
+def _num(x):
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None  # "#", "*", "**" and other BLS flags are not numbers
+
+
+def build(xlsx: Path) -> dict:
+    out = {}
+    with zipfile.ZipFile(xlsx) as z:
+        strings = _shared_strings(z)
+        for sheet in sorted(n for n in z.namelist() if re.fullmatch(r"xl/worksheets/sheet\d+\.xml", n)):
+            header = None
+            for row in _rows(z, sheet, strings):
+                if header is None:
+                    if "OCC_CODE" in row.values() and "AREA" in row.values():
+                        header = {col: name for col, name in row.items() if name in WANTED}
+                        header_cols = {name: col for col, name in header.items()}
+                        if not all(k in header_cols for k in ("AREA", "OCC_CODE", "A_PCT25", "A_PCT75")):
+                            break
+                    continue
+                g = lambda name: row.get(header_cols.get(name))
+                if g("OCC_CODE") != "00-0000":
+                    continue
+                if "NAICS" in header_cols and g("NAICS") not in ("000000", "0"):
+                    continue
+                if "OWN_CODE" in header_cols and g("OWN_CODE") not in ("1235", None):
+                    continue
+                area = g("AREA")
+                if not area or not str(area).strip().isdigit():
+                    continue
+                out[str(int(float(area)))] = {
+                    "wage_p25_annual": _num(g("A_PCT25")),
+                    "wage_median_annual": _num(g("A_MEDIAN")),
+                    "wage_p75_annual": _num(g("A_PCT75")),
+                    "total_employment": _num(g("TOT_EMP")),
+                    "area_title": g("AREA_TITLE"),
+                }
+            if header is not None:
+                break
+    return out
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--input", default="", help="Path to OEWS metro zip extract dir or single XLSX.")
-    ap.add_argument("--output", default=str(OUT_PATH), help="Output JSON path.")
+    ap.add_argument("--input", required=True, help="Extracted oesm directory or MSA_M*_dl.xlsx")
+    ap.add_argument("--output", default=str(OUT_PATH))
     args = ap.parse_args()
-
-    out: dict = {}
-
-    if args.input and os.path.exists(args.input):
-        path = Path(args.input)
-        try:
-            import openpyxl
-        except ImportError:
-            print("Install openpyxl to parse OEWS XLSX: pip install openpyxl", file=sys.stderr)
-            _write_output(out, args.output)
-            return
-
-        # Find XLSX files (area codes often in filename or inside)
-        if path.is_file() and path.suffix.lower() in (".xlsx", ".xls"):
-            files = [path]
-        else:
-            files = list(path.rglob("*.xlsx")) or list(path.rglob("*.xls"))
-        for f in files:
-            try:
-                wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
-                for sheet in wb.worksheets:
-                    # BLS metro files: typically area code in col A or in a header row; 25th/75th columns
-                    # Structure varies by release; adapt row/col if needed
-                    for row in sheet.iter_rows(min_row=1, max_row=min(sheet.max_row, 5000), values_only=True):
-                        if not row or len(row) < 5:
-                            continue
-                        # Heuristic: first cell might be area code (e.g. 35620), look for numeric wage columns
-                        area_code = None
-                        p25 = p75 = None
-                        for i, cell in enumerate(row):
-                            if cell is None:
-                                continue
-                            if isinstance(cell, (int, float)):
-                                if area_code is None and 10000 <= cell <= 99999 and i == 0:
-                                    area_code = str(int(cell))
-                                elif i > 5 and 10000 < cell < 500000:
-                                    if p25 is None:
-                                        p25 = cell
-                                    elif p75 is None:
-                                        p75 = cell
-                                        break
-                            elif isinstance(cell, str) and cell.strip().isdigit() and len(cell.strip()) == 5:
-                                area_code = cell.strip()
-                        if area_code and (p25 is not None or p75 is not None):
-                            out[area_code] = {"wage_p25_annual": p25, "wage_p75_annual": p75}
-                wb.close()
-            except Exception as e:
-                print(f"Skip {f}: {e}", file=sys.stderr)
-    else:
-        print("No --input path or file not found. Writing empty JSON.", file=sys.stderr)
-        print("Download OEWS metro data from https://www.bls.gov/oes/special-requests/oesm24ma.zip", file=sys.stderr)
-
-    _write_output(out, args.output)
-    print(f"Wrote {len(out)} area(s) to {args.output}")
-
-
-def _write_output(data: dict, path: str) -> None:
-    p = Path(path)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    with open(p, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, sort_keys=True)
+    path = Path(args.input).expanduser()
+    files = [path] if path.is_file() else sorted(path.rglob("MSA_M*_dl.xlsx"))
+    if not files:
+        sys.exit(f"No MSA_M*_dl.xlsx found under {path}")
+    data = build(files[0])
+    if not data:
+        sys.exit("Parsed zero areas; refusing to write an empty file")
+    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+    with open(args.output, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=1, sort_keys=True)
+    n25 = sum(v["wage_p25_annual"] is not None for v in data.values())
+    n75 = sum(v["wage_p75_annual"] is not None for v in data.values())
+    print(f"Wrote {len(data)} areas to {args.output} (p25 present {n25}, p75 present {n75})")
 
 
 if __name__ == "__main__":

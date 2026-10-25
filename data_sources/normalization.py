@@ -1,9 +1,10 @@
 """
 Normalization helpers for converting raw area-level metrics to 0–100 scores.
 
-For economic_opportunity, we normalize within (census_division × area_bucket) using
-precomputed mean/std stored in `data/economic_baselines.json`, then convert z-scores
-to percentiles (Normal CDF) and map to 0–100.
+For economic_opportunity, metrics are normalized against the national baseline stored under
+baselines["all"]["all"] in `data/economic_baselines.json` (see normalize_national_0_100); the
+division × area-bucket cells are kept for the job-category overlays. Z-scores are converted to
+percentiles (Normal CDF) and mapped to 0–100.
 """
 
 from __future__ import annotations
@@ -53,6 +54,34 @@ def _zscore_to_0_100(value: float, *, mean: float, std: float) -> float:
     z = (value - mean) / std
     p = _normal_cdf(z)
     return max(0.0, min(100.0, 100.0 * p))
+
+
+def normalize_national_0_100(
+    *,
+    metric: str,
+    value: Optional[float],
+    invert: bool = False,
+    **_ignored: Any,
+) -> Optional[float]:
+    """
+    Normalize against the NATIONAL baseline (baselines["all"]["all"][metric] = {mean, std}) built by
+    scripts/baselines/build_economic_national_baseline.py: population-weighted over all US metro and
+    micro areas. Returns None when the metric has no national baseline. Extra keyword arguments (the
+    old division / area_bucket) are accepted and ignored so call sites can stay unchanged.
+    """
+    if value is None:
+        return None
+    baselines = load_economic_baselines()
+    stats = ((baselines.get("all") or {}).get("all") or {}).get(metric) if isinstance(baselines, dict) else None
+    if not isinstance(stats, dict):
+        return None
+    mean, std = stats.get("mean"), stats.get("std")
+    if not isinstance(mean, (int, float)) or not isinstance(std, (int, float)):
+        return None
+    score = _zscore_to_0_100(float(value), mean=float(mean), std=float(std))
+    if invert:
+        score = 100.0 - score
+    return max(0.0, min(100.0, score))
 
 
 def normalize_metric_to_0_100(

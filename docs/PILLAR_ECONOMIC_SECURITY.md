@@ -34,9 +34,15 @@ score = logscale(access) → 0–100        (LOG_LO=2.5, LOG_HI=6.6)
 
 ### Term 2 — market_quality (existing components)
 The pre-existing CBSA labor-market score: Density / Mobility / Ecosystem / Resilience built
-from ACS + QCEW/OEWS (employment ratio, wages, establishment churn, industry diversity),
-normalized within (Census Division × area-type bucket). Captures how *good* the reachable
-market is (wages, growth, diversity), not its size.
+from ACS, BDS, Census County Business Patterns and the BLS OEWS wage file (employment ratio, wages,
+job growth, establishment churn, industry diversity), normalized against a **national,
+population-weighted baseline** over all US metro and micro areas (changed 2026-10-24; it was
+Census Division × area-type cells with a median of 8 reference areas). Job growth and market size
+come from County Business Patterns 2022 to 2023 because BLS QCEW blocks scripted access; that
+source covers private payroll jobs only. Wages are available for metro areas only. The baseline is
+sourced and reproducible (`scripts/baselines/build_economic_national_baseline.py`) but not validated
+against an outcome (`analysis/economic_national_baseline_estimate_2026-10-24.md`): treat it as a
+judgment call. Captures how *good* the reachable market is (wages, growth, diversity), not its size.
 
 ## Why the blend, and why uniformity is correct
 Before this, the pillar was market_quality alone at CBSA level → **47% of NYC places shared

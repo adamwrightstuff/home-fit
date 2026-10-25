@@ -1,0 +1,2753 @@
+{
+ "10180": {
+  "area_title": "Abilene, TX",
+  "total_employment": 74090.0,
+  "wage_median_annual": 42120.0,
+  "wage_p25_annual": 29640.0,
+  "wage_p75_annual": 61020.0
+ },
+ "10380": {
+  "area_title": "Aguadilla, PR",
+  "total_employment": 48300.0,
+  "wage_median_annual": 23120.0,
+  "wage_p25_annual": 20190.0,
+  "wage_p75_annual": 33620.0
+ },
+ "10420": {
+  "area_title": "Akron, OH",
+  "total_employment": 320080.0,
+  "wage_median_annual": 47530.0,
+  "wage_p25_annual": 35900.0,
+  "wage_p75_annual": 74340.0
+ },
+ "10500": {
+  "area_title": "Albany, GA",
+  "total_employment": 58980.0,
+  "wage_median_annual": 40590.0,
+  "wage_p25_annual": 29580.0,
+  "wage_p75_annual": 61340.0
+ },
+ "10540": {
+  "area_title": "Albany, OR",
+  "total_employment": 45880.0,
+  "wage_median_annual": 48010.0,
+  "wage_p25_annual": 37900.0,
+  "wage_p75_annual": 66540.0
+ },
+ "10580": {
+  "area_title": "Albany-Schenectady-Troy, NY",
+  "total_employment": 442970.0,
+  "wage_median_annual": 56460.0,
+  "wage_p25_annual": 39020.0,
+  "wage_p75_annual": 82150.0
+ },
+ "10740": {
+  "area_title": "Albuquerque, NM",
+  "total_employment": 401280.0,
+  "wage_median_annual": 46940.0,
+  "wage_p25_annual": 34840.0,
+  "wage_p75_annual": 75410.0
+ },
+ "10780": {
+  "area_title": "Alexandria, LA",
+  "total_employment": 59310.0,
+  "wage_median_annual": 39510.0,
+  "wage_p25_annual": 28540.0,
+  "wage_p75_annual": 60070.0
+ },
+ "10900": {
+  "area_title": "Allentown-Bethlehem-Easton, PA-NJ",
+  "total_employment": 370040.0,
+  "wage_median_annual": 47770.0,
+  "wage_p25_annual": 36450.0,
+  "wage_p75_annual": 73480.0
+ },
+ "11020": {
+  "area_title": "Altoona, PA",
+  "total_employment": 58090.0,
+  "wage_median_annual": 43100.0,
+  "wage_p25_annual": 30910.0,
+  "wage_p75_annual": 61350.0
+ },
+ "11100": {
+  "area_title": "Amarillo, TX",
+  "total_employment": 122390.0,
+  "wage_median_annual": 42060.0,
+  "wage_p25_annual": 30260.0,
+  "wage_p75_annual": 61500.0
+ },
+ "11180": {
+  "area_title": "Ames, IA",
+  "total_employment": 56310.0,
+  "wage_median_annual": 48860.0,
+  "wage_p25_annual": 36180.0,
+  "wage_p75_annual": 73280.0
+ },
+ "11200": {
+  "area_title": "Amherst Town-Northampton, MA",
+  "total_employment": 70240.0,
+  "wage_median_annual": 56860.0,
+  "wage_p25_annual": 39470.0,
+  "wage_p75_annual": 81220.0
+ },
+ "11260": {
+  "area_title": "Anchorage, AK",
+  "total_employment": 174740.0,
+  "wage_median_annual": 59060.0,
+  "wage_p25_annual": 40110.0,
+  "wage_p75_annual": 90520.0
+ },
+ "11460": {
+  "area_title": "Ann Arbor, MI",
+  "total_employment": 217820.0,
+  "wage_median_annual": 51990.0,
+  "wage_p25_annual": 37410.0,
+  "wage_p75_annual": 83830.0
+ },
+ "11500": {
+  "area_title": "Anniston-Oxford, AL",
+  "total_employment": 43320.0,
+  "wage_median_annual": 39610.0,
+  "wage_p25_annual": 28740.0,
+  "wage_p75_annual": 59290.0
+ },
+ "11540": {
+  "area_title": "Appleton, WI",
+  "total_employment": 123920.0,
+  "wage_median_annual": 48490.0,
+  "wage_p25_annual": 36610.0,
+  "wage_p75_annual": 69140.0
+ },
+ "11640": {
+  "area_title": "Arecibo, PR",
+  "total_employment": 34970.0,
+  "wage_median_annual": 23500.0,
+  "wage_p25_annual": 20640.0,
+  "wage_p75_annual": 33940.0
+ },
+ "11700": {
+  "area_title": "Asheville, NC",
+  "total_employment": 187430.0,
+  "wage_median_annual": 44990.0,
+  "wage_p25_annual": 34710.0,
+  "wage_p75_annual": 62920.0
+ },
+ "12020": {
+  "area_title": "Athens-Clarke County, GA",
+  "total_employment": 95250.0,
+  "wage_median_annual": 39340.0,
+  "wage_p25_annual": 29570.0,
+  "wage_p75_annual": 60750.0
+ },
+ "12060": {
+  "area_title": "Atlanta-Sandy Springs-Roswell, GA",
+  "total_employment": 2871980.0,
+  "wage_median_annual": 49770.0,
+  "wage_p25_annual": 36210.0,
+  "wage_p75_annual": 80090.0
+ },
+ "12100": {
+  "area_title": "Atlantic City-Hammonton, NJ",
+  "total_employment": 166720.0,
+  "wage_median_annual": 46290.0,
+  "wage_p25_annual": 35570.0,
+  "wage_p75_annual": 71930.0
+ },
+ "12220": {
+  "area_title": "Auburn-Opelika, AL",
+  "total_employment": 71720.0,
+  "wage_median_annual": 38060.0,
+  "wage_p25_annual": 28480.0,
+  "wage_p75_annual": 60010.0
+ },
+ "12260": {
+  "area_title": "Augusta-Richmond County, GA-SC",
+  "total_employment": 229650.0,
+  "wage_median_annual": 44280.0,
+  "wage_p25_annual": 30830.0,
+  "wage_p75_annual": 68160.0
+ },
+ "12420": {
+  "area_title": "Austin-Round Rock-San Marcos, TX",
+  "total_employment": 1260220.0,
+  "wage_median_annual": 52610.0,
+  "wage_p25_annual": 36920.0,
+  "wage_p75_annual": 82910.0
+ },
+ "12540": {
+  "area_title": "Bakersfield-Delano, CA",
+  "total_employment": 335190.0,
+  "wage_median_annual": 46930.0,
+  "wage_p25_annual": 35750.0,
+  "wage_p75_annual": 74380.0
+ },
+ "12580": {
+  "area_title": "Baltimore-Columbia-Towson, MD",
+  "total_employment": 1340750.0,
+  "wage_median_annual": 57340.0,
+  "wage_p25_annual": 38000.0,
+  "wage_p75_annual": 92200.0
+ },
+ "12620": {
+  "area_title": "Bangor, ME",
+  "total_employment": 71650.0,
+  "wage_median_annual": 47120.0,
+  "wage_p25_annual": 37260.0,
+  "wage_p75_annual": 65950.0
+ },
+ "12700": {
+  "area_title": "Barnstable Town, MA",
+  "total_employment": 93510.0,
+  "wage_median_annual": 53640.0,
+  "wage_p25_annual": 38790.0,
+  "wage_p75_annual": 79760.0
+ },
+ "12940": {
+  "area_title": "Baton Rouge, LA",
+  "total_employment": 403240.0,
+  "wage_median_annual": 47940.0,
+  "wage_p25_annual": 31730.0,
+  "wage_p75_annual": 73370.0
+ },
+ "12980": {
+  "area_title": "Battle Creek, MI",
+  "total_employment": 53610.0,
+  "wage_median_annual": 48200.0,
+  "wage_p25_annual": 36330.0,
+  "wage_p75_annual": 72440.0
+ },
+ "13020": {
+  "area_title": "Bay City, MI",
+  "total_employment": 33370.0,
+  "wage_median_annual": 41940.0,
+  "wage_p25_annual": 31810.0,
+  "wage_p75_annual": 63680.0
+ },
+ "13140": {
+  "area_title": "Beaumont-Port Arthur, TX",
+  "total_employment": 158920.0,
+  "wage_median_annual": 46740.0,
+  "wage_p25_annual": 32780.0,
+  "wage_p75_annual": 71770.0
+ },
+ "13220": {
+  "area_title": "Beckley, WV",
+  "total_employment": 42810.0,
+  "wage_median_annual": 38460.0,
+  "wage_p25_annual": 28310.0,
+  "wage_p75_annual": 59570.0
+ },
+ "13380": {
+  "area_title": "Bellingham, WA",
+  "total_employment": 90970.0,
+  "wage_median_annual": 54860.0,
+  "wage_p25_annual": 42170.0,
+  "wage_p75_annual": 80620.0
+ },
+ "13460": {
+  "area_title": "Bend, OR",
+  "total_employment": 107570.0,
+  "wage_median_annual": 50620.0,
+  "wage_p25_annual": 39260.0,
+  "wage_p75_annual": 76070.0
+ },
+ "13740": {
+  "area_title": "Billings, MT",
+  "total_employment": 93790.0,
+  "wage_median_annual": 47640.0,
+  "wage_p25_annual": 36170.0,
+  "wage_p75_annual": 70950.0
+ },
+ "13780": {
+  "area_title": "Binghamton, NY",
+  "total_employment": 96360.0,
+  "wage_median_annual": 48380.0,
+  "wage_p25_annual": 36460.0,
+  "wage_p75_annual": 74950.0
+ },
+ "13820": {
+  "area_title": "Birmingham, AL",
+  "total_employment": 517920.0,
+  "wage_median_annual": 46330.0,
+  "wage_p25_annual": 33140.0,
+  "wage_p75_annual": 66780.0
+ },
+ "13900": {
+  "area_title": "Bismarck, ND",
+  "total_employment": 70140.0,
+  "wage_median_annual": 49990.0,
+  "wage_p25_annual": 37650.0,
+  "wage_p75_annual": 72940.0
+ },
+ "13980": {
+  "area_title": "Blacksburg-Christiansburg-Radford, VA",
+  "total_employment": 74400.0,
+  "wage_median_annual": 47700.0,
+  "wage_p25_annual": 34710.0,
+  "wage_p75_annual": 65940.0
+ },
+ "14010": {
+  "area_title": "Bloomington, IL",
+  "total_employment": 90160.0,
+  "wage_median_annual": 51270.0,
+  "wage_p25_annual": 35550.0,
+  "wage_p75_annual": 80660.0
+ },
+ "14020": {
+  "area_title": "Bloomington, IN",
+  "total_employment": 73180.0,
+  "wage_median_annual": 46430.0,
+  "wage_p25_annual": 34980.0,
+  "wage_p75_annual": 67210.0
+ },
+ "14260": {
+  "area_title": "Boise City, ID",
+  "total_employment": 386560.0,
+  "wage_median_annual": 47580.0,
+  "wage_p25_annual": 36440.0,
+  "wage_p75_annual": 71540.0
+ },
+ "14460": {
+  "area_title": "Boston-Cambridge-Newton, MA-NH",
+  "total_employment": 2707940.0,
+  "wage_median_annual": 64620.0,
+  "wage_p25_annual": 45010.0,
+  "wage_p75_annual": 103210.0
+ },
+ "14500": {
+  "area_title": "Boulder, CO",
+  "total_employment": 195570.0,
+  "wage_median_annual": 67510.0,
+  "wage_p25_annual": 45810.0,
+  "wage_p75_annual": 108540.0
+ },
+ "14540": {
+  "area_title": "Bowling Green, KY",
+  "total_employment": 80400.0,
+  "wage_median_annual": 43640.0,
+  "wage_p25_annual": 32000.0,
+  "wage_p75_annual": 61260.0
+ },
+ "14580": {
+  "area_title": "Bozeman, MT",
+  "total_employment": 71630.0,
+  "wage_median_annual": 49920.0,
+  "wage_p25_annual": 38540.0,
+  "wage_p75_annual": 73010.0
+ },
+ "14740": {
+  "area_title": "Bremerton-Silverdale-Port Orchard, WA",
+  "total_employment": 93560.0,
+  "wage_median_annual": 61090.0,
+  "wage_p25_annual": 45360.0,
+  "wage_p75_annual": 92390.0
+ },
+ "14860": {
+  "area_title": "Bridgeport-Stamford-Danbury, CT",
+  "total_employment": 402330.0,
+  "wage_median_annual": 60440.0,
+  "wage_p25_annual": 39670.0,
+  "wage_p75_annual": 99830.0
+ },
+ "15180": {
+  "area_title": "Brownsville-Harlingen, TX",
+  "total_employment": 157630.0,
+  "wage_median_annual": 35050.0,
+  "wage_p25_annual": 24420.0,
+  "wage_p75_annual": 53890.0
+ },
+ "15260": {
+  "area_title": "Brunswick-St. Simons, GA",
+  "total_employment": 46150.0,
+  "wage_median_annual": 39850.0,
+  "wage_p25_annual": 29870.0,
+  "wage_p75_annual": 62960.0
+ },
+ "15380": {
+  "area_title": "Buffalo-Cheektowaga, NY",
+  "total_employment": 531990.0,
+  "wage_median_annual": 50190.0,
+  "wage_p25_annual": 36980.0,
+  "wage_p75_annual": 77460.0
+ },
+ "15500": {
+  "area_title": "Burlington, NC",
+  "total_employment": 68010.0,
+  "wage_median_annual": 40980.0,
+  "wage_p25_annual": 31290.0,
+  "wage_p75_annual": 59230.0
+ },
+ "15540": {
+  "area_title": "Burlington-South Burlington, VT",
+  "total_employment": 121320.0,
+  "wage_median_annual": 57920.0,
+  "wage_p25_annual": 43330.0,
+  "wage_p75_annual": 81840.0
+ },
+ "15940": {
+  "area_title": "Canton-Massillon, OH",
+  "total_employment": 165140.0,
+  "wage_median_annual": 44460.0,
+  "wage_p25_annual": 33320.0,
+  "wage_p75_annual": 62570.0
+ },
+ "15980": {
+  "area_title": "Cape Coral-Fort Myers, FL",
+  "total_employment": 300380.0,
+  "wage_median_annual": 45130.0,
+  "wage_p25_annual": 35190.0,
+  "wage_p75_annual": 63920.0
+ },
+ "16020": {
+  "area_title": "Cape Girardeau, MO-IL",
+  "total_employment": 44760.0,
+  "wage_median_annual": 42060.0,
+  "wage_p25_annual": 31830.0,
+  "wage_p75_annual": 61590.0
+ },
+ "16180": {
+  "area_title": "Carson City, NV",
+  "total_employment": 31010.0,
+  "wage_median_annual": 51830.0,
+  "wage_p25_annual": 37450.0,
+  "wage_p75_annual": 77790.0
+ },
+ "16220": {
+  "area_title": "Casper, WY",
+  "total_employment": 39730.0,
+  "wage_median_annual": 47640.0,
+  "wage_p25_annual": 35580.0,
+  "wage_p75_annual": 69340.0
+ },
+ "16300": {
+  "area_title": "Cedar Rapids, IA",
+  "total_employment": 139240.0,
+  "wage_median_annual": 48570.0,
+  "wage_p25_annual": 36440.0,
+  "wage_p75_annual": 71040.0
+ },
+ "16540": {
+  "area_title": "Chambersburg, PA",
+  "total_employment": 57940.0,
+  "wage_median_annual": 46670.0,
+  "wage_p25_annual": 35550.0,
+  "wage_p75_annual": 63660.0
+ },
+ "16580": {
+  "area_title": "Champaign-Urbana, IL",
+  "total_employment": 104620.0,
+  "wage_median_annual": 48600.0,
+  "wage_p25_annual": 36050.0,
+  "wage_p75_annual": 76260.0
+ },
+ "16620": {
+  "area_title": "Charleston, WV",
+  "total_employment": 106820.0,
+  "wage_median_annual": 45170.0,
+  "wage_p25_annual": 31100.0,
+  "wage_p75_annual": 65350.0
+ },
+ "16700": {
+  "area_title": "Charleston-North Charleston, SC",
+  "total_employment": 388220.0,
+  "wage_median_annual": 47620.0,
+  "wage_p25_annual": 35280.0,
+  "wage_p75_annual": 74680.0
+ },
+ "16740": {
+  "area_title": "Charlotte-Concord-Gastonia, NC-SC",
+  "total_employment": 1340800.0,
+  "wage_median_annual": 48880.0,
+  "wage_p25_annual": 36310.0,
+  "wage_p75_annual": 78020.0
+ },
+ "16820": {
+  "area_title": "Charlottesville, VA",
+  "total_employment": 112830.0,
+  "wage_median_annual": 51740.0,
+  "wage_p25_annual": 36900.0,
+  "wage_p75_annual": 82570.0
+ },
+ "16860": {
+  "area_title": "Chattanooga, TN-GA",
+  "total_employment": 269330.0,
+  "wage_median_annual": 45440.0,
+  "wage_p25_annual": 33650.0,
+  "wage_p75_annual": 63590.0
+ },
+ "16940": {
+  "area_title": "Cheyenne, WY",
+  "total_employment": 47490.0,
+  "wage_median_annual": 50100.0,
+  "wage_p25_annual": 36870.0,
+  "wage_p75_annual": 74060.0
+ },
+ "16980": {
+  "area_title": "Chicago-Naperville-Elgin, IL-IN",
+  "total_employment": 4473740.0,
+  "wage_median_annual": 51510.0,
+  "wage_p25_annual": 37640.0,
+  "wage_p75_annual": 83660.0
+ },
+ "17020": {
+  "area_title": "Chico, CA",
+  "total_employment": 78260.0,
+  "wage_median_annual": 47360.0,
+  "wage_p25_annual": 36100.0,
+  "wage_p75_annual": 74730.0
+ },
+ "17140": {
+  "area_title": "Cincinnati, OH-KY-IN",
+  "total_employment": 1092300.0,
+  "wage_median_annual": 48490.0,
+  "wage_p25_annual": 36490.0,
+  "wage_p75_annual": 76680.0
+ },
+ "17300": {
+  "area_title": "Clarksville, TN-KY",
+  "total_employment": 100910.0,
+  "wage_median_annual": 42990.0,
+  "wage_p25_annual": 31660.0,
+  "wage_p75_annual": 60130.0
+ },
+ "17410": {
+  "area_title": "Cleveland, OH",
+  "total_employment": 1036780.0,
+  "wage_median_annual": 49000.0,
+  "wage_p25_annual": 36620.0,
+  "wage_p75_annual": 77320.0
+ },
+ "17420": {
+  "area_title": "Cleveland, TN",
+  "total_employment": 44770.0,
+  "wage_median_annual": 39650.0,
+  "wage_p25_annual": 30870.0,
+  "wage_p75_annual": 58070.0
+ },
+ "17660": {
+  "area_title": "Coeur d'Alene, ID",
+  "total_employment": 71680.0,
+  "wage_median_annual": 46010.0,
+  "wage_p25_annual": 35970.0,
+  "wage_p75_annual": 63840.0
+ },
+ "17780": {
+  "area_title": "College Station-Bryan, TX",
+  "total_employment": 132440.0,
+  "wage_median_annual": 43010.0,
+  "wage_p25_annual": 29610.0,
+  "wage_p75_annual": 63130.0
+ },
+ "17820": {
+  "area_title": "Colorado Springs, CO",
+  "total_employment": 318850.0,
+  "wage_median_annual": 51410.0,
+  "wage_p25_annual": 37850.0,
+  "wage_p75_annual": 80020.0
+ },
+ "17860": {
+  "area_title": "Columbia, MO",
+  "total_employment": 105740.0,
+  "wage_median_annual": 45670.0,
+  "wage_p25_annual": 33850.0,
+  "wage_p75_annual": 66770.0
+ },
+ "17900": {
+  "area_title": "Columbia, SC",
+  "total_employment": 385940.0,
+  "wage_median_annual": 45380.0,
+  "wage_p25_annual": 33630.0,
+  "wage_p75_annual": 66550.0
+ },
+ "17980": {
+  "area_title": "Columbus, GA-AL",
+  "total_employment": 116210.0,
+  "wage_median_annual": 40780.0,
+  "wage_p25_annual": 29640.0,
+  "wage_p75_annual": 62400.0
+ },
+ "18020": {
+  "area_title": "Columbus, IN",
+  "total_employment": 50880.0,
+  "wage_median_annual": 46490.0,
+  "wage_p25_annual": 35620.0,
+  "wage_p75_annual": 69310.0
+ },
+ "18140": {
+  "area_title": "Columbus, OH",
+  "total_employment": 1085150.0,
+  "wage_median_annual": 49510.0,
+  "wage_p25_annual": 37080.0,
+  "wage_p75_annual": 78620.0
+ },
+ "18580": {
+  "area_title": "Corpus Christi, TX",
+  "total_employment": 187690.0,
+  "wage_median_annual": 43770.0,
+  "wage_p25_annual": 29870.0,
+  "wage_p75_annual": 64540.0
+ },
+ "18700": {
+  "area_title": "Corvallis, OR",
+  "total_employment": 38600.0,
+  "wage_median_annual": 54310.0,
+  "wage_p25_annual": 37660.0,
+  "wage_p75_annual": 83080.0
+ },
+ "18880": {
+  "area_title": "Crestview-Fort Walton Beach-Destin, FL",
+  "total_employment": 124720.0,
+  "wage_median_annual": 45980.0,
+  "wage_p25_annual": 34600.0,
+  "wage_p75_annual": 72170.0
+ },
+ "19100": {
+  "area_title": "Dallas-Fort Worth-Arlington, TX",
+  "total_employment": 4003820.0,
+  "wage_median_annual": 49740.0,
+  "wage_p25_annual": 36020.0,
+  "wage_p75_annual": 79750.0
+ },
+ "19140": {
+  "area_title": "Dalton, GA",
+  "total_employment": 66420.0,
+  "wage_median_annual": 40820.0,
+  "wage_p25_annual": 33430.0,
+  "wage_p75_annual": 59560.0
+ },
+ "19300": {
+  "area_title": "Daphne-Fairhope-Foley, AL",
+  "total_employment": 84090.0,
+  "wage_median_annual": 37430.0,
+  "wage_p25_annual": 28630.0,
+  "wage_p75_annual": 56490.0
+ },
+ "19340": {
+  "area_title": "Davenport-Moline-Rock Island, IA-IL",
+  "total_employment": 179940.0,
+  "wage_median_annual": 47470.0,
+  "wage_p25_annual": 35370.0,
+  "wage_p75_annual": 73690.0
+ },
+ "19430": {
+  "area_title": "Dayton-Kettering-Beavercreek, OH",
+  "total_employment": 373320.0,
+  "wage_median_annual": 48580.0,
+  "wage_p25_annual": 36230.0,
+  "wage_p75_annual": 77800.0
+ },
+ "19460": {
+  "area_title": "Decatur, AL",
+  "total_employment": 59180.0,
+  "wage_median_annual": 44470.0,
+  "wage_p25_annual": 31390.0,
+  "wage_p75_annual": 64840.0
+ },
+ "19500": {
+  "area_title": "Decatur, IL",
+  "total_employment": 45270.0,
+  "wage_median_annual": 49640.0,
+  "wage_p25_annual": 36690.0,
+  "wage_p75_annual": 73580.0
+ },
+ "19660": {
+  "area_title": "Deltona-Daytona Beach-Ormond Beach, FL",
+  "total_employment": 217920.0,
+  "wage_median_annual": 41750.0,
+  "wage_p25_annual": 33190.0,
+  "wage_p75_annual": 61000.0
+ },
+ "19740": {
+  "area_title": "Denver-Aurora-Centennial, CO",
+  "total_employment": 1618390.0,
+  "wage_median_annual": 61110.0,
+  "wage_p25_annual": 43910.0,
+  "wage_p75_annual": 97210.0
+ },
+ "19780": {
+  "area_title": "Des Moines-West Des Moines, IA",
+  "total_employment": 405130.0,
+  "wage_median_annual": 50450.0,
+  "wage_p25_annual": 37230.0,
+  "wage_p75_annual": 77270.0
+ },
+ "19820": {
+  "area_title": "Detroit-Warren-Dearborn, MI",
+  "total_employment": 1909060.0,
+  "wage_median_annual": 50740.0,
+  "wage_p25_annual": 37390.0,
+  "wage_p75_annual": 79860.0
+ },
+ "20020": {
+  "area_title": "Dothan, AL",
+  "total_employment": 60210.0,
+  "wage_median_annual": 36730.0,
+  "wage_p25_annual": 27820.0,
+  "wage_p75_annual": 56180.0
+ },
+ "20100": {
+  "area_title": "Dover, DE",
+  "total_employment": 68450.0,
+  "wage_median_annual": 45190.0,
+  "wage_p25_annual": 34200.0,
+  "wage_p75_annual": 65870.0
+ },
+ "20220": {
+  "area_title": "Dubuque, IA",
+  "total_employment": 58930.0,
+  "wage_median_annual": 47910.0,
+  "wage_p25_annual": 36880.0,
+  "wage_p75_annual": 66500.0
+ },
+ "20260": {
+  "area_title": "Duluth, MN-WI",
+  "total_employment": 124530.0,
+  "wage_median_annual": 48610.0,
+  "wage_p25_annual": 36000.0,
+  "wage_p75_annual": 73830.0
+ },
+ "20500": {
+  "area_title": "Durham-Chapel Hill, NC",
+  "total_employment": 342530.0,
+  "wage_median_annual": 59740.0,
+  "wage_p25_annual": 39030.0,
+  "wage_p75_annual": 98180.0
+ },
+ "20580": {
+  "area_title": "Eagle Pass, TX",
+  "total_employment": 18480.0,
+  "wage_median_annual": 33640.0,
+  "wage_p25_annual": 24490.0,
+  "wage_p75_annual": 56950.0
+ },
+ "20740": {
+  "area_title": "Eau Claire, WI",
+  "total_employment": 85190.0,
+  "wage_median_annual": 47370.0,
+  "wage_p25_annual": 35700.0,
+  "wage_p75_annual": 66450.0
+ },
+ "20940": {
+  "area_title": "El Centro, CA",
+  "total_employment": 63230.0,
+  "wage_median_annual": 44470.0,
+  "wage_p25_annual": 35100.0,
+  "wage_p75_annual": 71830.0
+ },
+ "21060": {
+  "area_title": "Elizabethtown, KY",
+  "total_employment": 51330.0,
+  "wage_median_annual": 44810.0,
+  "wage_p25_annual": 32300.0,
+  "wage_p75_annual": 62280.0
+ },
+ "21140": {
+  "area_title": "Elkhart-Goshen, IN",
+  "total_employment": 128550.0,
+  "wage_median_annual": 47050.0,
+  "wage_p25_annual": 36560.0,
+  "wage_p75_annual": 64520.0
+ },
+ "21300": {
+  "area_title": "Elmira, NY",
+  "total_employment": 33720.0,
+  "wage_median_annual": 47220.0,
+  "wage_p25_annual": 35870.0,
+  "wage_p75_annual": 68700.0
+ },
+ "21340": {
+  "area_title": "El Paso, TX",
+  "total_employment": 332330.0,
+  "wage_median_annual": 37880.0,
+  "wage_p25_annual": 27750.0,
+  "wage_p75_annual": 60290.0
+ },
+ "21420": {
+  "area_title": "Enid, OK",
+  "total_employment": 23420.0,
+  "wage_median_annual": 38790.0,
+  "wage_p25_annual": 29240.0,
+  "wage_p75_annual": 59480.0
+ },
+ "21500": {
+  "area_title": "Erie, PA",
+  "total_employment": 119610.0,
+  "wage_median_annual": 43410.0,
+  "wage_p25_annual": 31430.0,
+  "wage_p75_annual": 62900.0
+ },
+ "21660": {
+  "area_title": "Eugene-Springfield, OR",
+  "total_employment": 157600.0,
+  "wage_median_annual": 48200.0,
+  "wage_p25_annual": 37440.0,
+  "wage_p75_annual": 72800.0
+ },
+ "21780": {
+  "area_title": "Evansville, IN",
+  "total_employment": 134960.0,
+  "wage_median_annual": 45220.0,
+  "wage_p25_annual": 34030.0,
+  "wage_p75_annual": 64020.0
+ },
+ "21820": {
+  "area_title": "Fairbanks-College, AK",
+  "total_employment": 35970.0,
+  "wage_median_annual": 58820.0,
+  "wage_p25_annual": 40660.0,
+  "wage_p75_annual": 87400.0
+ },
+ "22020": {
+  "area_title": "Fargo, ND-MN",
+  "total_employment": 147570.0,
+  "wage_median_annual": 49690.0,
+  "wage_p25_annual": 37570.0,
+  "wage_p75_annual": 72720.0
+ },
+ "22140": {
+  "area_title": "Farmington, NM",
+  "total_employment": 46030.0,
+  "wage_median_annual": 43620.0,
+  "wage_p25_annual": 31420.0,
+  "wage_p75_annual": 62820.0
+ },
+ "22180": {
+  "area_title": "Fayetteville, NC",
+  "total_employment": 132690.0,
+  "wage_median_annual": 44600.0,
+  "wage_p25_annual": 31200.0,
+  "wage_p75_annual": 64650.0
+ },
+ "22220": {
+  "area_title": "Fayetteville-Springdale-Rogers, AR",
+  "total_employment": 266970.0,
+  "wage_median_annual": 44870.0,
+  "wage_p25_annual": 33230.0,
+  "wage_p75_annual": 65570.0
+ },
+ "22380": {
+  "area_title": "Flagstaff, AZ",
+  "total_employment": 65850.0,
+  "wage_median_annual": 45900.0,
+  "wage_p25_annual": 36220.0,
+  "wage_p75_annual": 64390.0
+ },
+ "22420": {
+  "area_title": "Flint, MI",
+  "total_employment": 133920.0,
+  "wage_median_annual": 45010.0,
+  "wage_p25_annual": 34340.0,
+  "wage_p75_annual": 69810.0
+ },
+ "22500": {
+  "area_title": "Florence, SC",
+  "total_employment": 89940.0,
+  "wage_median_annual": 40200.0,
+  "wage_p25_annual": 30130.0,
+  "wage_p75_annual": 61320.0
+ },
+ "22520": {
+  "area_title": "Florence-Muscle Shoals, AL",
+  "total_employment": 55490.0,
+  "wage_median_annual": 38640.0,
+  "wage_p25_annual": 28590.0,
+  "wage_p75_annual": 58390.0
+ },
+ "22540": {
+  "area_title": "Fond du Lac, WI",
+  "total_employment": 44700.0,
+  "wage_median_annual": 49590.0,
+  "wage_p25_annual": 36440.0,
+  "wage_p75_annual": 68850.0
+ },
+ "22660": {
+  "area_title": "Fort Collins-Loveland, CO",
+  "total_employment": 175790.0,
+  "wage_median_annual": 53620.0,
+  "wage_p25_annual": 39250.0,
+  "wage_p75_annual": 81230.0
+ },
+ "22900": {
+  "area_title": "Fort Smith, AR-OK",
+  "total_employment": 96450.0,
+  "wage_median_annual": 38340.0,
+  "wage_p25_annual": 29910.0,
+  "wage_p75_annual": 56780.0
+ },
+ "23060": {
+  "area_title": "Fort Wayne, IN",
+  "total_employment": 224020.0,
+  "wage_median_annual": 46630.0,
+  "wage_p25_annual": 35550.0,
+  "wage_p75_annual": 66870.0
+ },
+ "23420": {
+  "area_title": "Fresno, CA",
+  "total_employment": 470480.0,
+  "wage_median_annual": 45810.0,
+  "wage_p25_annual": 35480.0,
+  "wage_p75_annual": 72210.0
+ },
+ "23460": {
+  "area_title": "Gadsden, AL",
+  "total_employment": 33060.0,
+  "wage_median_annual": 35220.0,
+  "wage_p25_annual": 27260.0,
+  "wage_p75_annual": 51860.0
+ },
+ "23540": {
+  "area_title": "Gainesville, FL",
+  "total_employment": 151400.0,
+  "wage_median_annual": 46950.0,
+  "wage_p25_annual": 34960.0,
+  "wage_p75_annual": 69600.0
+ },
+ "23580": {
+  "area_title": "Gainesville, GA",
+  "total_employment": 102560.0,
+  "wage_median_annual": 44300.0,
+  "wage_p25_annual": 35260.0,
+  "wage_p75_annual": 63400.0
+ },
+ "23900": {
+  "area_title": "Gettysburg, PA",
+  "total_employment": 32130.0,
+  "wage_median_annual": 45160.0,
+  "wage_p25_annual": 34060.0,
+  "wage_p75_annual": 61700.0
+ },
+ "24020": {
+  "area_title": "Glens Falls, NY",
+  "total_employment": 50290.0,
+  "wage_median_annual": 48360.0,
+  "wage_p25_annual": 36690.0,
+  "wage_p75_annual": 68700.0
+ },
+ "24140": {
+  "area_title": "Goldsboro, NC",
+  "total_employment": 41010.0,
+  "wage_median_annual": 38540.0,
+  "wage_p25_annual": 30410.0,
+  "wage_p75_annual": 56090.0
+ },
+ "24220": {
+  "area_title": "Grand Forks, ND-MN",
+  "total_employment": 51240.0,
+  "wage_median_annual": 48280.0,
+  "wage_p25_annual": 36410.0,
+  "wage_p75_annual": 68790.0
+ },
+ "24260": {
+  "area_title": "Grand Island, NE",
+  "total_employment": 39520.0,
+  "wage_median_annual": 48660.0,
+  "wage_p25_annual": 36190.0,
+  "wage_p75_annual": 62540.0
+ },
+ "24300": {
+  "area_title": "Grand Junction, CO",
+  "total_employment": 66890.0,
+  "wage_median_annual": 47250.0,
+  "wage_p25_annual": 36300.0,
+  "wage_p75_annual": 68550.0
+ },
+ "24340": {
+  "area_title": "Grand Rapids-Wyoming-Kentwood, MI",
+  "total_employment": 561410.0,
+  "wage_median_annual": 47510.0,
+  "wage_p25_annual": 36710.0,
+  "wage_p75_annual": 70840.0
+ },
+ "24420": {
+  "area_title": "Grants Pass, OR",
+  "total_employment": 31030.0,
+  "wage_median_annual": 49010.0,
+  "wage_p25_annual": 37900.0,
+  "wage_p75_annual": 60730.0
+ },
+ "24500": {
+  "area_title": "Great Falls, MT",
+  "total_employment": 36770.0,
+  "wage_median_annual": 44770.0,
+  "wage_p25_annual": 34890.0,
+  "wage_p75_annual": 62610.0
+ },
+ "24540": {
+  "area_title": "Greeley, CO",
+  "total_employment": 115470.0,
+  "wage_median_annual": 52110.0,
+  "wage_p25_annual": 40050.0,
+  "wage_p75_annual": 73590.0
+ },
+ "24580": {
+  "area_title": "Green Bay, WI",
+  "total_employment": 171070.0,
+  "wage_median_annual": 48580.0,
+  "wage_p25_annual": 36630.0,
+  "wage_p75_annual": 70560.0
+ },
+ "24660": {
+  "area_title": "Greensboro-High Point, NC",
+  "total_employment": 358650.0,
+  "wage_median_annual": 44910.0,
+  "wage_p25_annual": 33810.0,
+  "wage_p75_annual": 62900.0
+ },
+ "24780": {
+  "area_title": "Greenville, NC",
+  "total_employment": 81410.0,
+  "wage_median_annual": 44980.0,
+  "wage_p25_annual": 32420.0,
+  "wage_p75_annual": 66780.0
+ },
+ "24860": {
+  "area_title": "Greenville-Anderson-Greer, SC",
+  "total_employment": 427770.0,
+  "wage_median_annual": 44920.0,
+  "wage_p25_annual": 33540.0,
+  "wage_p75_annual": 65200.0
+ },
+ "25020": {
+  "area_title": "Guayama, PR",
+  "total_employment": 12060.0,
+  "wage_median_annual": 23120.0,
+  "wage_p25_annual": 20420.0,
+  "wage_p75_annual": 33690.0
+ },
+ "25060": {
+  "area_title": "Gulfport-Biloxi, MS",
+  "total_employment": 158310.0,
+  "wage_median_annual": 41610.0,
+  "wage_p25_annual": 29070.0,
+  "wage_p75_annual": 61870.0
+ },
+ "25180": {
+  "area_title": "Hagerstown-Martinsburg, MD-WV",
+  "total_employment": 105920.0,
+  "wage_median_annual": 45920.0,
+  "wage_p25_annual": 34720.0,
+  "wage_p75_annual": 66570.0
+ },
+ "25220": {
+  "area_title": "Hammond, LA",
+  "total_employment": 47380.0,
+  "wage_median_annual": 36960.0,
+  "wage_p25_annual": 27390.0,
+  "wage_p75_annual": 56590.0
+ },
+ "25260": {
+  "area_title": "Hanford-Corcoran, CA",
+  "total_employment": 47230.0,
+  "wage_median_annual": 47920.0,
+  "wage_p25_annual": 36480.0,
+  "wage_p75_annual": 76160.0
+ },
+ "25420": {
+  "area_title": "Harrisburg-Carlisle, PA",
+  "total_employment": 330750.0,
+  "wage_median_annual": 48510.0,
+  "wage_p25_annual": 36300.0,
+  "wage_p75_annual": 75250.0
+ },
+ "25500": {
+  "area_title": "Harrisonburg, VA",
+  "total_employment": 65270.0,
+  "wage_median_annual": 45610.0,
+  "wage_p25_annual": 34980.0,
+  "wage_p75_annual": 64050.0
+ },
+ "25540": {
+  "area_title": "Hartford-West Hartford-East Hartford, CT",
+  "total_employment": 592620.0,
+  "wage_median_annual": 59270.0,
+  "wage_p25_annual": 39150.0,
+  "wage_p75_annual": 93350.0
+ },
+ "25620": {
+  "area_title": "Hattiesburg, MS",
+  "total_employment": 62320.0,
+  "wage_median_annual": 36360.0,
+  "wage_p25_annual": 27420.0,
+  "wage_p75_annual": 55440.0
+ },
+ "25740": {
+  "area_title": "Helena, MT",
+  "total_employment": 43730.0,
+  "wage_median_annual": 49300.0,
+  "wage_p25_annual": 36960.0,
+  "wage_p75_annual": 75730.0
+ },
+ "25860": {
+  "area_title": "Hickory-Lenoir-Morganton, NC",
+  "total_employment": 155050.0,
+  "wage_median_annual": 43270.0,
+  "wage_p25_annual": 33830.0,
+  "wage_p75_annual": 58970.0
+ },
+ "25940": {
+  "area_title": "Hilton Head Island-Bluffton-Port Royal, SC",
+  "total_employment": 81820.0,
+  "wage_median_annual": 40090.0,
+  "wage_p25_annual": 30500.0,
+  "wage_p75_annual": 61080.0
+ },
+ "25980": {
+  "area_title": "Hinesville, GA",
+  "total_employment": 20190.0,
+  "wage_median_annual": 45840.0,
+  "wage_p25_annual": 30940.0,
+  "wage_p75_annual": 62290.0
+ },
+ "26140": {
+  "area_title": "Homosassa Springs, FL",
+  "total_employment": 34980.0,
+  "wage_median_annual": 38560.0,
+  "wage_p25_annual": 30550.0,
+  "wage_p75_annual": 58660.0
+ },
+ "26300": {
+  "area_title": "Hot Springs, AR",
+  "total_employment": 37840.0,
+  "wage_median_annual": 36010.0,
+  "wage_p25_annual": 28200.0,
+  "wage_p75_annual": 50900.0
+ },
+ "26380": {
+  "area_title": "Houma-Bayou Cane-Thibodaux, LA",
+  "total_employment": 82770.0,
+  "wage_median_annual": 44150.0,
+  "wage_p25_annual": 29750.0,
+  "wage_p75_annual": 62500.0
+ },
+ "26420": {
+  "area_title": "Houston-Pasadena-The Woodlands, TX",
+  "total_employment": 3246360.0,
+  "wage_median_annual": 48490.0,
+  "wage_p25_annual": 34860.0,
+  "wage_p75_annual": 77670.0
+ },
+ "26580": {
+  "area_title": "Huntington-Ashland, WV-KY-OH",
+  "total_employment": 140160.0,
+  "wage_median_annual": 42390.0,
+  "wage_p25_annual": 29770.0,
+  "wage_p75_annual": 62360.0
+ },
+ "26620": {
+  "area_title": "Huntsville, AL",
+  "total_employment": 260190.0,
+  "wage_median_annual": 50470.0,
+  "wage_p25_annual": 35550.0,
+  "wage_p75_annual": 86380.0
+ },
+ "26820": {
+  "area_title": "Idaho Falls, ID",
+  "total_employment": 81000.0,
+  "wage_median_annual": 45080.0,
+  "wage_p25_annual": 33690.0,
+  "wage_p75_annual": 70160.0
+ },
+ "26900": {
+  "area_title": "Indianapolis-Carmel-Greenwood, IN",
+  "total_employment": 1096770.0,
+  "wage_median_annual": 48210.0,
+  "wage_p25_annual": 36640.0,
+  "wage_p75_annual": 74530.0
+ },
+ "26980": {
+  "area_title": "Iowa City, IA",
+  "total_employment": 92330.0,
+  "wage_median_annual": 49390.0,
+  "wage_p25_annual": 35910.0,
+  "wage_p75_annual": 74900.0
+ },
+ "27060": {
+  "area_title": "Ithaca, NY",
+  "total_employment": 48030.0,
+  "wage_median_annual": 56350.0,
+  "wage_p25_annual": 38670.0,
+  "wage_p75_annual": 79990.0
+ },
+ "27100": {
+  "area_title": "Jackson, MI",
+  "total_employment": 56310.0,
+  "wage_median_annual": 46710.0,
+  "wage_p25_annual": 35500.0,
+  "wage_p75_annual": 71330.0
+ },
+ "27140": {
+  "area_title": "Jackson, MS",
+  "total_employment": 268750.0,
+  "wage_median_annual": 42010.0,
+  "wage_p25_annual": 30120.0,
+  "wage_p75_annual": 62740.0
+ },
+ "27180": {
+  "area_title": "Jackson, TN",
+  "total_employment": 84400.0,
+  "wage_median_annual": 43170.0,
+  "wage_p25_annual": 32620.0,
+  "wage_p75_annual": 59480.0
+ },
+ "27260": {
+  "area_title": "Jacksonville, FL",
+  "total_employment": 756360.0,
+  "wage_median_annual": 47030.0,
+  "wage_p25_annual": 35690.0,
+  "wage_p75_annual": 73890.0
+ },
+ "27340": {
+  "area_title": "Jacksonville, NC",
+  "total_employment": 52970.0,
+  "wage_median_annual": 37610.0,
+  "wage_p25_annual": 28530.0,
+  "wage_p75_annual": 56750.0
+ },
+ "27500": {
+  "area_title": "Janesville-Beloit, WI",
+  "total_employment": 69210.0,
+  "wage_median_annual": 47410.0,
+  "wage_p25_annual": 36090.0,
+  "wage_p75_annual": 67950.0
+ },
+ "27620": {
+  "area_title": "Jefferson City, MO",
+  "total_employment": 78020.0,
+  "wage_median_annual": 45440.0,
+  "wage_p25_annual": 34820.0,
+  "wage_p75_annual": 63320.0
+ },
+ "27740": {
+  "area_title": "Johnson City, TN",
+  "total_employment": 81910.0,
+  "wage_median_annual": 41170.0,
+  "wage_p25_annual": 30700.0,
+  "wage_p75_annual": 59760.0
+ },
+ "27780": {
+  "area_title": "Johnstown, PA",
+  "total_employment": 48550.0,
+  "wage_median_annual": 42020.0,
+  "wage_p25_annual": 30040.0,
+  "wage_p75_annual": 60590.0
+ },
+ "27860": {
+  "area_title": "Jonesboro, AR",
+  "total_employment": 59780.0,
+  "wage_median_annual": 39900.0,
+  "wage_p25_annual": 30650.0,
+  "wage_p75_annual": 58460.0
+ },
+ "27900": {
+  "area_title": "Joplin, MO-KS",
+  "total_employment": 86790.0,
+  "wage_median_annual": 43610.0,
+  "wage_p25_annual": 33000.0,
+  "wage_p75_annual": 60510.0
+ },
+ "27980": {
+  "area_title": "Kahului-Wailuku, HI",
+  "total_employment": 71920.0,
+  "wage_median_annual": 54790.0,
+  "wage_p25_annual": 41210.0,
+  "wage_p75_annual": 76390.0
+ },
+ "28020": {
+  "area_title": "Kalamazoo-Portage, MI",
+  "total_employment": 119780.0,
+  "wage_median_annual": 47360.0,
+  "wage_p25_annual": 36120.0,
+  "wage_p75_annual": 72540.0
+ },
+ "28100": {
+  "area_title": "Kankakee, IL",
+  "total_employment": 42490.0,
+  "wage_median_annual": 45260.0,
+  "wage_p25_annual": 34400.0,
+  "wage_p75_annual": 64020.0
+ },
+ "28140": {
+  "area_title": "Kansas City, MO-KS",
+  "total_employment": 1093430.0,
+  "wage_median_annual": 49480.0,
+  "wage_p25_annual": 36910.0,
+  "wage_p75_annual": 76880.0
+ },
+ "28420": {
+  "area_title": "Kennewick-Richland, WA",
+  "total_employment": 127290.0,
+  "wage_median_annual": 55490.0,
+  "wage_p25_annual": 40300.0,
+  "wage_p75_annual": 88160.0
+ },
+ "28450": {
+  "area_title": "Kenosha, WI",
+  "total_employment": 74050.0,
+  "wage_median_annual": 47590.0,
+  "wage_p25_annual": 36610.0,
+  "wage_p75_annual": 64100.0
+ },
+ "28660": {
+  "area_title": "Killeen-Temple, TX",
+  "total_employment": 148640.0,
+  "wage_median_annual": 44610.0,
+  "wage_p25_annual": 30860.0,
+  "wage_p75_annual": 64500.0
+ },
+ "28700": {
+  "area_title": "Kingsport-Bristol, TN-VA",
+  "total_employment": 117550.0,
+  "wage_median_annual": 43800.0,
+  "wage_p25_annual": 32180.0,
+  "wage_p75_annual": 62830.0
+ },
+ "28740": {
+  "area_title": "Kingston, NY",
+  "total_employment": 58400.0,
+  "wage_median_annual": 49050.0,
+  "wage_p25_annual": 37090.0,
+  "wage_p75_annual": 72230.0
+ },
+ "28880": {
+  "area_title": "Kiryas Joel-Poughkeepsie-Newburgh, NY",
+  "total_employment": 264070.0,
+  "wage_median_annual": 49730.0,
+  "wage_p25_annual": 37340.0,
+  "wage_p75_annual": 76390.0
+ },
+ "28940": {
+  "area_title": "Knoxville, TN",
+  "total_employment": 418120.0,
+  "wage_median_annual": 45460.0,
+  "wage_p25_annual": 33760.0,
+  "wage_p75_annual": 64560.0
+ },
+ "29020": {
+  "area_title": "Kokomo, IN",
+  "total_employment": 35550.0,
+  "wage_median_annual": 47310.0,
+  "wage_p25_annual": 33960.0,
+  "wage_p75_annual": 73540.0
+ },
+ "29100": {
+  "area_title": "La Crosse-Onalaska, WI-MN",
+  "total_employment": 83080.0,
+  "wage_median_annual": 48060.0,
+  "wage_p25_annual": 36170.0,
+  "wage_p75_annual": 70630.0
+ },
+ "29180": {
+  "area_title": "Lafayette, LA",
+  "total_employment": 175530.0,
+  "wage_median_annual": 39600.0,
+  "wage_p25_annual": 28520.0,
+  "wage_p75_annual": 60280.0
+ },
+ "29200": {
+  "area_title": "Lafayette-West Lafayette, IN",
+  "total_employment": 102060.0,
+  "wage_median_annual": 47070.0,
+  "wage_p25_annual": 34730.0,
+  "wage_p75_annual": 66210.0
+ },
+ "29340": {
+  "area_title": "Lake Charles, LA",
+  "total_employment": 100270.0,
+  "wage_median_annual": 45170.0,
+  "wage_p25_annual": 30160.0,
+  "wage_p75_annual": 66340.0
+ },
+ "29420": {
+  "area_title": "Lake Havasu City-Kingman, AZ",
+  "total_employment": 55410.0,
+  "wage_median_annual": 42320.0,
+  "wage_p25_annual": 34340.0,
+  "wage_p75_annual": 59240.0
+ },
+ "29460": {
+  "area_title": "Lakeland-Winter Haven, FL",
+  "total_employment": 261610.0,
+  "wage_median_annual": 44610.0,
+  "wage_p25_annual": 34600.0,
+  "wage_p75_annual": 62490.0
+ },
+ "29540": {
+  "area_title": "Lancaster, PA",
+  "total_employment": 250210.0,
+  "wage_median_annual": 46960.0,
+  "wage_p25_annual": 35500.0,
+  "wage_p75_annual": 65320.0
+ },
+ "29620": {
+  "area_title": "Lansing-East Lansing, MI",
+  "total_employment": 213610.0,
+  "wage_median_annual": 50620.0,
+  "wage_p25_annual": 36900.0,
+  "wage_p75_annual": 77720.0
+ },
+ "29700": {
+  "area_title": "Laredo, TX",
+  "total_employment": 106130.0,
+  "wage_median_annual": 36640.0,
+  "wage_p25_annual": 26310.0,
+  "wage_p75_annual": 58150.0
+ },
+ "29740": {
+  "area_title": "Las Cruces, NM",
+  "total_employment": 77990.0,
+  "wage_median_annual": 38620.0,
+  "wage_p25_annual": 29820.0,
+  "wage_p75_annual": 61970.0
+ },
+ "29820": {
+  "area_title": "Las Vegas-Henderson-North Las Vegas, NV",
+  "total_employment": 1119360.0,
+  "wage_median_annual": 45120.0,
+  "wage_p25_annual": 34330.0,
+  "wage_p75_annual": 65570.0
+ },
+ "29940": {
+  "area_title": "Lawrence, KS",
+  "total_employment": 51290.0,
+  "wage_median_annual": 45240.0,
+  "wage_p25_annual": 32970.0,
+  "wage_p75_annual": 64930.0
+ },
+ "30020": {
+  "area_title": "Lawton, OK",
+  "total_employment": 42690.0,
+  "wage_median_annual": 40000.0,
+  "wage_p25_annual": 29570.0,
+  "wage_p75_annual": 60490.0
+ },
+ "30140": {
+  "area_title": "Lebanon, PA",
+  "total_employment": 53350.0,
+  "wage_median_annual": 45810.0,
+  "wage_p25_annual": 35410.0,
+  "wage_p75_annual": 63420.0
+ },
+ "30300": {
+  "area_title": "Lewiston, ID-WA",
+  "total_employment": 27910.0,
+  "wage_median_annual": 47340.0,
+  "wage_p25_annual": 36550.0,
+  "wage_p75_annual": 65790.0
+ },
+ "30340": {
+  "area_title": "Lewiston-Auburn, ME",
+  "total_employment": 48280.0,
+  "wage_median_annual": 48070.0,
+  "wage_p25_annual": 38020.0,
+  "wage_p75_annual": 65560.0
+ },
+ "30460": {
+  "area_title": "Lexington-Fayette, KY",
+  "total_employment": 282920.0,
+  "wage_median_annual": 47580.0,
+  "wage_p25_annual": 35170.0,
+  "wage_p75_annual": 70230.0
+ },
+ "30500": {
+  "area_title": "Lexington Park, MD",
+  "total_employment": 71670.0,
+  "wage_median_annual": 62970.0,
+  "wage_p25_annual": 38480.0,
+  "wage_p75_annual": 108480.0
+ },
+ "30620": {
+  "area_title": "Lima, OH",
+  "total_employment": 49640.0,
+  "wage_median_annual": 46430.0,
+  "wage_p25_annual": 34270.0,
+  "wage_p75_annual": 68760.0
+ },
+ "30700": {
+  "area_title": "Lincoln, NE",
+  "total_employment": 180880.0,
+  "wage_median_annual": 48860.0,
+  "wage_p25_annual": 36330.0,
+  "wage_p75_annual": 72900.0
+ },
+ "30780": {
+  "area_title": "Little Rock-North Little Rock-Conway, AR",
+  "total_employment": 352900.0,
+  "wage_median_annual": 44730.0,
+  "wage_p25_annual": 31920.0,
+  "wage_p75_annual": 63210.0
+ },
+ "30860": {
+  "area_title": "Logan, UT-ID",
+  "total_employment": 66730.0,
+  "wage_median_annual": 44770.0,
+  "wage_p25_annual": 34670.0,
+  "wage_p75_annual": 63230.0
+ },
+ "30980": {
+  "area_title": "Longview, TX",
+  "total_employment": 117650.0,
+  "wage_median_annual": 42710.0,
+  "wage_p25_annual": 30250.0,
+  "wage_p75_annual": 61130.0
+ },
+ "31020": {
+  "area_title": "Longview-Kelso, WA",
+  "total_employment": 40980.0,
+  "wage_median_annual": 54120.0,
+  "wage_p25_annual": 41910.0,
+  "wage_p75_annual": 77810.0
+ },
+ "31080": {
+  "area_title": "Los Angeles-Long Beach-Anaheim, CA",
+  "total_employment": 6199940.0,
+  "wage_median_annual": 53490.0,
+  "wage_p25_annual": 38120.0,
+  "wage_p75_annual": 90360.0
+ },
+ "31140": {
+  "area_title": "Louisville/Jefferson County, KY-IN",
+  "total_employment": 686050.0,
+  "wage_median_annual": 47750.0,
+  "wage_p25_annual": 36170.0,
+  "wage_p75_annual": 66680.0
+ },
+ "31180": {
+  "area_title": "Lubbock, TX",
+  "total_employment": 165480.0,
+  "wage_median_annual": 39560.0,
+  "wage_p25_annual": 29120.0,
+  "wage_p75_annual": 61020.0
+ },
+ "31340": {
+  "area_title": "Lynchburg, VA",
+  "total_employment": 97210.0,
+  "wage_median_annual": 45440.0,
+  "wage_p25_annual": 32040.0,
+  "wage_p75_annual": 64390.0
+ },
+ "31420": {
+  "area_title": "Macon-Bibb County, GA",
+  "total_employment": 95070.0,
+  "wage_median_annual": 43680.0,
+  "wage_p25_annual": 31200.0,
+  "wage_p75_annual": 63900.0
+ },
+ "31540": {
+  "area_title": "Madison, WI",
+  "total_employment": 405450.0,
+  "wage_median_annual": 54620.0,
+  "wage_p25_annual": 39150.0,
+  "wage_p75_annual": 81060.0
+ },
+ "31700": {
+  "area_title": "Manchester-Nashua, NH",
+  "total_employment": 202320.0,
+  "wage_median_annual": 54410.0,
+  "wage_p25_annual": 38340.0,
+  "wage_p75_annual": 81990.0
+ },
+ "31740": {
+  "area_title": "Manhattan, KS",
+  "total_employment": 52890.0,
+  "wage_median_annual": 44510.0,
+  "wage_p25_annual": 31840.0,
+  "wage_p75_annual": 64300.0
+ },
+ "31860": {
+  "area_title": "Mankato, MN",
+  "total_employment": 55370.0,
+  "wage_median_annual": 48060.0,
+  "wage_p25_annual": 36730.0,
+  "wage_p75_annual": 69990.0
+ },
+ "31900": {
+  "area_title": "Mansfield, OH",
+  "total_employment": 49090.0,
+  "wage_median_annual": 43730.0,
+  "wage_p25_annual": 33180.0,
+  "wage_p75_annual": 61310.0
+ },
+ "32420": {
+  "area_title": "Mayaguez, PR",
+  "total_employment": 52200.0,
+  "wage_median_annual": 22610.0,
+  "wage_p25_annual": 20110.0,
+  "wage_p75_annual": 33700.0
+ },
+ "32580": {
+  "area_title": "McAllen-Edinburg-Mission, TX",
+  "total_employment": 290580.0,
+  "wage_median_annual": 34670.0,
+  "wage_p25_annual": 24970.0,
+  "wage_p75_annual": 53730.0
+ },
+ "32780": {
+  "area_title": "Medford, OR",
+  "total_employment": 88610.0,
+  "wage_median_annual": 48340.0,
+  "wage_p25_annual": 37640.0,
+  "wage_p75_annual": 69400.0
+ },
+ "32820": {
+  "area_title": "Memphis, TN-MS-AR",
+  "total_employment": 620100.0,
+  "wage_median_annual": 45610.0,
+  "wage_p25_annual": 35270.0,
+  "wage_p75_annual": 66230.0
+ },
+ "32900": {
+  "area_title": "Merced, CA",
+  "total_employment": 78910.0,
+  "wage_median_annual": 45930.0,
+  "wage_p25_annual": 35730.0,
+  "wage_p75_annual": 66580.0
+ },
+ "33100": {
+  "area_title": "Miami-Fort Lauderdale-West Palm Beach, FL",
+  "total_employment": 2782340.0,
+  "wage_median_annual": 47920.0,
+  "wage_p25_annual": 35800.0,
+  "wage_p75_annual": 76990.0
+ },
+ "33140": {
+  "area_title": "Michigan City-La Porte, IN",
+  "total_employment": 41240.0,
+  "wage_median_annual": 44190.0,
+  "wage_p25_annual": 34230.0,
+  "wage_p75_annual": 60980.0
+ },
+ "33220": {
+  "area_title": "Midland, MI",
+  "total_employment": 37870.0,
+  "wage_median_annual": 50650.0,
+  "wage_p25_annual": 36220.0,
+  "wage_p75_annual": 81180.0
+ },
+ "33260": {
+  "area_title": "Midland, TX",
+  "total_employment": 119220.0,
+  "wage_median_annual": 52320.0,
+  "wage_p25_annual": 37690.0,
+  "wage_p75_annual": 79360.0
+ },
+ "33340": {
+  "area_title": "Milwaukee-Waukesha, WI",
+  "total_employment": 819450.0,
+  "wage_median_annual": 49720.0,
+  "wage_p25_annual": 37310.0,
+  "wage_p75_annual": 77400.0
+ },
+ "33460": {
+  "area_title": "Minneapolis-St. Paul-Bloomington, MN-WI",
+  "total_employment": 1931660.0,
+  "wage_median_annual": 57640.0,
+  "wage_p25_annual": 39700.0,
+  "wage_p75_annual": 84880.0
+ },
+ "33500": {
+  "area_title": "Minot, ND",
+  "total_employment": 33530.0,
+  "wage_median_annual": 48210.0,
+  "wage_p25_annual": 36370.0,
+  "wage_p75_annual": 67950.0
+ },
+ "33540": {
+  "area_title": "Missoula, MT",
+  "total_employment": 66580.0,
+  "wage_median_annual": 46660.0,
+  "wage_p25_annual": 35970.0,
+  "wage_p75_annual": 66440.0
+ },
+ "33660": {
+  "area_title": "Mobile, AL",
+  "total_employment": 169130.0,
+  "wage_median_annual": 44600.0,
+  "wage_p25_annual": 30920.0,
+  "wage_p75_annual": 64100.0
+ },
+ "33700": {
+  "area_title": "Modesto, CA",
+  "total_employment": 194560.0,
+  "wage_median_annual": 49360.0,
+  "wage_p25_annual": 37810.0,
+  "wage_p75_annual": 76450.0
+ },
+ "33740": {
+  "area_title": "Monroe, LA",
+  "total_employment": 87150.0,
+  "wage_median_annual": 37000.0,
+  "wage_p25_annual": 26880.0,
+  "wage_p75_annual": 56690.0
+ },
+ "33780": {
+  "area_title": "Monroe, MI",
+  "total_employment": 40800.0,
+  "wage_median_annual": 46220.0,
+  "wage_p25_annual": 35100.0,
+  "wage_p75_annual": 68280.0
+ },
+ "33860": {
+  "area_title": "Montgomery, AL",
+  "total_employment": 163140.0,
+  "wage_median_annual": 42600.0,
+  "wage_p25_annual": 30190.0,
+  "wage_p75_annual": 62600.0
+ },
+ "34060": {
+  "area_title": "Morgantown, WV",
+  "total_employment": 66970.0,
+  "wage_median_annual": 46260.0,
+  "wage_p25_annual": 32450.0,
+  "wage_p75_annual": 71760.0
+ },
+ "34100": {
+  "area_title": "Morristown, TN",
+  "total_employment": 48040.0,
+  "wage_median_annual": 40320.0,
+  "wage_p25_annual": 31250.0,
+  "wage_p75_annual": 56000.0
+ },
+ "34580": {
+  "area_title": "Mount Vernon-Anacortes, WA",
+  "total_employment": 51700.0,
+  "wage_median_annual": 57480.0,
+  "wage_p25_annual": 43650.0,
+  "wage_p75_annual": 81890.0
+ },
+ "34620": {
+  "area_title": "Muncie, IN",
+  "total_employment": 44580.0,
+  "wage_median_annual": 43000.0,
+  "wage_p25_annual": 32360.0,
+  "wage_p75_annual": 62280.0
+ },
+ "34740": {
+  "area_title": "Muskegon-Norton Shores, MI",
+  "total_employment": 62510.0,
+  "wage_median_annual": 43140.0,
+  "wage_p25_annual": 32820.0,
+  "wage_p75_annual": 61050.0
+ },
+ "34820": {
+  "area_title": "Myrtle Beach-Conway-North Myrtle Beach, SC",
+  "total_employment": 144400.0,
+  "wage_median_annual": 36510.0,
+  "wage_p25_annual": 28220.0,
+  "wage_p75_annual": 54900.0
+ },
+ "34900": {
+  "area_title": "Napa, CA",
+  "total_employment": 78480.0,
+  "wage_median_annual": 52750.0,
+  "wage_p25_annual": 41880.0,
+  "wage_p75_annual": 79990.0
+ },
+ "34940": {
+  "area_title": "Naples-Marco Island, FL",
+  "total_employment": 171160.0,
+  "wage_median_annual": 46520.0,
+  "wage_p25_annual": 36100.0,
+  "wage_p75_annual": 70470.0
+ },
+ "34980": {
+  "area_title": "Nashville-Davidson--Murfreesboro--Franklin, TN",
+  "total_employment": 1096500.0,
+  "wage_median_annual": 48840.0,
+  "wage_p25_annual": 36960.0,
+  "wage_p75_annual": 74710.0
+ },
+ "35300": {
+  "area_title": "New Haven, CT",
+  "total_employment": 283810.0,
+  "wage_median_annual": 57600.0,
+  "wage_p25_annual": 39320.0,
+  "wage_p75_annual": 87830.0
+ },
+ "35380": {
+  "area_title": "New Orleans-Metairie, LA",
+  "total_employment": 441250.0,
+  "wage_median_annual": 45970.0,
+  "wage_p25_annual": 30730.0,
+  "wage_p75_annual": 71610.0
+ },
+ "35620": {
+  "area_title": "New York-Newark-Jersey City, NY-NJ",
+  "total_employment": 9363020.0,
+  "wage_median_annual": 60460.0,
+  "wage_p25_annual": 40340.0,
+  "wage_p75_annual": 101370.0
+ },
+ "35660": {
+  "area_title": "Niles, MI",
+  "total_employment": 59670.0,
+  "wage_median_annual": 45180.0,
+  "wage_p25_annual": 34810.0,
+  "wage_p75_annual": 66380.0
+ },
+ "35840": {
+  "area_title": "North Port-Bradenton-Sarasota, FL",
+  "total_employment": 334550.0,
+  "wage_median_annual": 46030.0,
+  "wage_p25_annual": 35650.0,
+  "wage_p75_annual": 66160.0
+ },
+ "35980": {
+  "area_title": "Norwich-New London-Willimantic, CT",
+  "total_employment": 124550.0,
+  "wage_median_annual": 54670.0,
+  "wage_p25_annual": 37260.0,
+  "wage_p75_annual": 84510.0
+ },
+ "36100": {
+  "area_title": "Ocala, FL",
+  "total_employment": 118840.0,
+  "wage_median_annual": 42230.0,
+  "wage_p25_annual": 32790.0,
+  "wage_p75_annual": 59560.0
+ },
+ "36220": {
+  "area_title": "Odessa, TX",
+  "total_employment": 79150.0,
+  "wage_median_annual": 47420.0,
+  "wage_p25_annual": 35160.0,
+  "wage_p75_annual": 66160.0
+ },
+ "36260": {
+  "area_title": "Ogden, UT",
+  "total_employment": 270300.0,
+  "wage_median_annual": 47520.0,
+  "wage_p25_annual": 36050.0,
+  "wage_p75_annual": 73200.0
+ },
+ "36420": {
+  "area_title": "Oklahoma City, OK",
+  "total_employment": 669400.0,
+  "wage_median_annual": 45880.0,
+  "wage_p25_annual": 32610.0,
+  "wage_p75_annual": 69310.0
+ },
+ "36500": {
+  "area_title": "Olympia-Lacey-Tumwater, WA",
+  "total_employment": 127360.0,
+  "wage_median_annual": 60300.0,
+  "wage_p25_annual": 44720.0,
+  "wage_p75_annual": 91490.0
+ },
+ "36540": {
+  "area_title": "Omaha, NE-IA",
+  "total_employment": 491140.0,
+  "wage_median_annual": 48720.0,
+  "wage_p25_annual": 36940.0,
+  "wage_p75_annual": 74300.0
+ },
+ "36740": {
+  "area_title": "Orlando-Kissimmee-Sanford, FL",
+  "total_employment": 1397600.0,
+  "wage_median_annual": 45410.0,
+  "wage_p25_annual": 34850.0,
+  "wage_p75_annual": 66560.0
+ },
+ "36780": {
+  "area_title": "Oshkosh-Neenah, WI",
+  "total_employment": 93760.0,
+  "wage_median_annual": 50320.0,
+  "wage_p25_annual": 37530.0,
+  "wage_p75_annual": 74160.0
+ },
+ "36980": {
+  "area_title": "Owensboro, KY",
+  "total_employment": 48520.0,
+  "wage_median_annual": 42740.0,
+  "wage_p25_annual": 31000.0,
+  "wage_p75_annual": 61020.0
+ },
+ "37100": {
+  "area_title": "Oxnard-Thousand Oaks-Ventura, CA",
+  "total_employment": 320180.0,
+  "wage_median_annual": 50010.0,
+  "wage_p25_annual": 37500.0,
+  "wage_p75_annual": 80300.0
+ },
+ "37140": {
+  "area_title": "Paducah, KY-IL",
+  "total_employment": 50590.0,
+  "wage_median_annual": 44140.0,
+  "wage_p25_annual": 31160.0,
+  "wage_p75_annual": 65240.0
+ },
+ "37340": {
+  "area_title": "Palm Bay-Melbourne-Titusville, FL",
+  "total_employment": 242240.0,
+  "wage_median_annual": 47590.0,
+  "wage_p25_annual": 35020.0,
+  "wage_p75_annual": 77110.0
+ },
+ "37460": {
+  "area_title": "Panama City-Panama City Beach, FL",
+  "total_employment": 87870.0,
+  "wage_median_annual": 43000.0,
+  "wage_p25_annual": 32420.0,
+  "wage_p75_annual": 62320.0
+ },
+ "37620": {
+  "area_title": "Parkersburg-Vienna, WV",
+  "total_employment": 37170.0,
+  "wage_median_annual": 39690.0,
+  "wage_p25_annual": 29070.0,
+  "wage_p75_annual": 62200.0
+ },
+ "37860": {
+  "area_title": "Pensacola-Ferry Pass-Brent, FL",
+  "total_employment": 188880.0,
+  "wage_median_annual": 44990.0,
+  "wage_p25_annual": 33460.0,
+  "wage_p75_annual": 63530.0
+ },
+ "37900": {
+  "area_title": "Peoria, IL",
+  "total_employment": 165230.0,
+  "wage_median_annual": 47990.0,
+  "wage_p25_annual": 35680.0,
+  "wage_p75_annual": 75210.0
+ },
+ "37980": {
+  "area_title": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",
+  "total_employment": 2868720.0,
+  "wage_median_annual": 51760.0,
+  "wage_p25_annual": 36890.0,
+  "wage_p75_annual": 82350.0
+ },
+ "38060": {
+  "area_title": "Phoenix-Mesa-Chandler, AZ",
+  "total_employment": 2343250.0,
+  "wage_median_annual": 49840.0,
+  "wage_p25_annual": 37950.0,
+  "wage_p75_annual": 77790.0
+ },
+ "38240": {
+  "area_title": "Pinehurst-Southern Pines, NC",
+  "total_employment": 40090.0,
+  "wage_median_annual": 41130.0,
+  "wage_p25_annual": 30030.0,
+  "wage_p75_annual": 61750.0
+ },
+ "38300": {
+  "area_title": "Pittsburgh, PA",
+  "total_employment": 1109050.0,
+  "wage_median_annual": 48210.0,
+  "wage_p25_annual": 35710.0,
+  "wage_p75_annual": 75690.0
+ },
+ "38340": {
+  "area_title": "Pittsfield, MA",
+  "total_employment": 57390.0,
+  "wage_median_annual": 49970.0,
+  "wage_p25_annual": 38070.0,
+  "wage_p75_annual": 77450.0
+ },
+ "38540": {
+  "area_title": "Pocatello, ID",
+  "total_employment": 37440.0,
+  "wage_median_annual": 43180.0,
+  "wage_p25_annual": 32190.0,
+  "wage_p75_annual": 60280.0
+ },
+ "38660": {
+  "area_title": "Ponce, PR",
+  "total_employment": 63650.0,
+  "wage_median_annual": 24040.0,
+  "wage_p25_annual": 20560.0,
+  "wage_p75_annual": 35730.0
+ },
+ "38860": {
+  "area_title": "Portland-South Portland, ME",
+  "total_employment": 284300.0,
+  "wage_median_annual": 53280.0,
+  "wage_p25_annual": 40490.0,
+  "wage_p75_annual": 78060.0
+ },
+ "38900": {
+  "area_title": "Portland-Vancouver-Hillsboro, OR-WA",
+  "total_employment": 1213760.0,
+  "wage_median_annual": 59040.0,
+  "wage_p25_annual": 43500.0,
+  "wage_p75_annual": 92920.0
+ },
+ "38940": {
+  "area_title": "Port St. Lucie, FL",
+  "total_employment": 167590.0,
+  "wage_median_annual": 44820.0,
+  "wage_p25_annual": 34340.0,
+  "wage_p75_annual": 62850.0
+ },
+ "39150": {
+  "area_title": "Prescott Valley-Prescott, AZ",
+  "total_employment": 70940.0,
+  "wage_median_annual": 45560.0,
+  "wage_p25_annual": 35830.0,
+  "wage_p75_annual": 63030.0
+ },
+ "39300": {
+  "area_title": "Providence-Warwick, RI-MA",
+  "total_employment": 706440.0,
+  "wage_median_annual": 51250.0,
+  "wage_p25_annual": 37920.0,
+  "wage_p75_annual": 80030.0
+ },
+ "39340": {
+  "area_title": "Provo-Orem-Lehi, UT",
+  "total_employment": 298460.0,
+  "wage_median_annual": 46610.0,
+  "wage_p25_annual": 35360.0,
+  "wage_p75_annual": 72790.0
+ },
+ "39380": {
+  "area_title": "Pueblo, CO",
+  "total_employment": 62700.0,
+  "wage_median_annual": 47780.0,
+  "wage_p25_annual": 36570.0,
+  "wage_p75_annual": 69550.0
+ },
+ "39460": {
+  "area_title": "Punta Gorda, FL",
+  "total_employment": 56040.0,
+  "wage_median_annual": 44080.0,
+  "wage_p25_annual": 34330.0,
+  "wage_p75_annual": 63160.0
+ },
+ "39540": {
+  "area_title": "Racine-Mount Pleasant, WI",
+  "total_employment": 76560.0,
+  "wage_median_annual": 47290.0,
+  "wage_p25_annual": 35950.0,
+  "wage_p75_annual": 67970.0
+ },
+ "39580": {
+  "area_title": "Raleigh-Cary, NC",
+  "total_employment": 723590.0,
+  "wage_median_annual": 49560.0,
+  "wage_p25_annual": 35940.0,
+  "wage_p75_annual": 79940.0
+ },
+ "39660": {
+  "area_title": "Rapid City, SD",
+  "total_employment": 71890.0,
+  "wage_median_annual": 44260.0,
+  "wage_p25_annual": 33180.0,
+  "wage_p75_annual": 61610.0
+ },
+ "39740": {
+  "area_title": "Reading, PA",
+  "total_employment": 171480.0,
+  "wage_median_annual": 48210.0,
+  "wage_p25_annual": 36150.0,
+  "wage_p75_annual": 67430.0
+ },
+ "39820": {
+  "area_title": "Redding, CA",
+  "total_employment": 69620.0,
+  "wage_median_annual": 47890.0,
+  "wage_p25_annual": 36170.0,
+  "wage_p75_annual": 75380.0
+ },
+ "39900": {
+  "area_title": "Reno, NV",
+  "total_employment": 272970.0,
+  "wage_median_annual": 48970.0,
+  "wage_p25_annual": 37540.0,
+  "wage_p75_annual": 74120.0
+ },
+ "40060": {
+  "area_title": "Richmond, VA",
+  "total_employment": 652900.0,
+  "wage_median_annual": 50020.0,
+  "wage_p25_annual": 36660.0,
+  "wage_p75_annual": 78040.0
+ },
+ "40140": {
+  "area_title": "Riverside-San Bernardino-Ontario, CA",
+  "total_employment": 1695430.0,
+  "wage_median_annual": 48240.0,
+  "wage_p25_annual": 37400.0,
+  "wage_p75_annual": 74170.0
+ },
+ "40220": {
+  "area_title": "Roanoke, VA",
+  "total_employment": 152120.0,
+  "wage_median_annual": 46010.0,
+  "wage_p25_annual": 34590.0,
+  "wage_p75_annual": 65370.0
+ },
+ "40340": {
+  "area_title": "Rochester, MN",
+  "total_employment": 121610.0,
+  "wage_median_annual": 59220.0,
+  "wage_p25_annual": 39990.0,
+  "wage_p75_annual": 86760.0
+ },
+ "40380": {
+  "area_title": "Rochester, NY",
+  "total_employment": 490900.0,
+  "wage_median_annual": 50050.0,
+  "wage_p25_annual": 37080.0,
+  "wage_p75_annual": 77120.0
+ },
+ "40420": {
+  "area_title": "Rockford, IL",
+  "total_employment": 139310.0,
+  "wage_median_annual": 45970.0,
+  "wage_p25_annual": 35350.0,
+  "wage_p75_annual": 69430.0
+ },
+ "40580": {
+  "area_title": "Rocky Mount, NC",
+  "total_employment": 54530.0,
+  "wage_median_annual": 41180.0,
+  "wage_p25_annual": 30260.0,
+  "wage_p75_annual": 60430.0
+ },
+ "40660": {
+  "area_title": "Rome, GA",
+  "total_employment": 44190.0,
+  "wage_median_annual": 40930.0,
+  "wage_p25_annual": 30800.0,
+  "wage_p75_annual": 61510.0
+ },
+ "40900": {
+  "area_title": "Sacramento-Roseville-Folsom, CA",
+  "total_employment": 1066390.0,
+  "wage_median_annual": 58880.0,
+  "wage_p25_annual": 39950.0,
+  "wage_p75_annual": 93770.0
+ },
+ "40980": {
+  "area_title": "Saginaw, MI",
+  "total_employment": 79670.0,
+  "wage_median_annual": 45630.0,
+  "wage_p25_annual": 34620.0,
+  "wage_p75_annual": 69870.0
+ },
+ "41060": {
+  "area_title": "St. Cloud, MN",
+  "total_employment": 103600.0,
+  "wage_median_annual": 49820.0,
+  "wage_p25_annual": 37440.0,
+  "wage_p75_annual": 73740.0
+ },
+ "41100": {
+  "area_title": "St. George, UT",
+  "total_employment": 86740.0,
+  "wage_median_annual": 44070.0,
+  "wage_p25_annual": 34200.0,
+  "wage_p75_annual": 61110.0
+ },
+ "41140": {
+  "area_title": "St. Joseph, MO-KS",
+  "total_employment": 53880.0,
+  "wage_median_annual": 46420.0,
+  "wage_p25_annual": 34650.0,
+  "wage_p75_annual": 62090.0
+ },
+ "41180": {
+  "area_title": "St. Louis, MO-IL",
+  "total_employment": 1339700.0,
+  "wage_median_annual": 48290.0,
+  "wage_p25_annual": 36000.0,
+  "wage_p75_annual": 76340.0
+ },
+ "41420": {
+  "area_title": "Salem, OR",
+  "total_employment": 186340.0,
+  "wage_median_annual": 50810.0,
+  "wage_p25_annual": 37950.0,
+  "wage_p75_annual": 77980.0
+ },
+ "41500": {
+  "area_title": "Salinas, CA",
+  "total_employment": 186110.0,
+  "wage_median_annual": 46790.0,
+  "wage_p25_annual": 37180.0,
+  "wage_p75_annual": 74590.0
+ },
+ "41540": {
+  "area_title": "Salisbury, MD",
+  "total_employment": 53660.0,
+  "wage_median_annual": 46650.0,
+  "wage_p25_annual": 35240.0,
+  "wage_p75_annual": 72020.0
+ },
+ "41620": {
+  "area_title": "Salt Lake City-Murray, UT",
+  "total_employment": 816680.0,
+  "wage_median_annual": 51430.0,
+  "wage_p25_annual": 38110.0,
+  "wage_p75_annual": 80250.0
+ },
+ "41660": {
+  "area_title": "San Angelo, TX",
+  "total_employment": 50120.0,
+  "wage_median_annual": 41770.0,
+  "wage_p25_annual": 29800.0,
+  "wage_p75_annual": 61490.0
+ },
+ "41700": {
+  "area_title": "San Antonio-New Braunfels, TX",
+  "total_employment": 1114520.0,
+  "wage_median_annual": 46010.0,
+  "wage_p25_annual": 33490.0,
+  "wage_p75_annual": 69290.0
+ },
+ "41740": {
+  "area_title": "San Diego-Chula Vista-Carlsbad, CA",
+  "total_employment": 1533290.0,
+  "wage_median_annual": 56580.0,
+  "wage_p25_annual": 38830.0,
+  "wage_p75_annual": 95260.0
+ },
+ "41780": {
+  "area_title": "Sandusky, OH",
+  "total_employment": 49240.0,
+  "wage_median_annual": 43820.0,
+  "wage_p25_annual": 32090.0,
+  "wage_p75_annual": 62310.0
+ },
+ "41860": {
+  "area_title": "San Francisco-Oakland-Fremont, CA",
+  "total_employment": 2405740.0,
+  "wage_median_annual": 73960.0,
+  "wage_p25_annual": 46630.0,
+  "wage_p75_annual": 129060.0
+ },
+ "41940": {
+  "area_title": "San Jose-Sunnyvale-Santa Clara, CA",
+  "total_employment": 1134660.0,
+  "wage_median_annual": 82470.0,
+  "wage_p25_annual": 48460.0,
+  "wage_p75_annual": 166220.0
+ },
+ "41980": {
+  "area_title": "San Juan-Bayamon-Caguas, PR",
+  "total_employment": 691660.0,
+  "wage_median_annual": 28080.0,
+  "wage_p25_annual": 21480.0,
+  "wage_p75_annual": 42480.0
+ },
+ "42020": {
+  "area_title": "San Luis Obispo-Paso Robles, CA",
+  "total_employment": 121040.0,
+  "wage_median_annual": 49760.0,
+  "wage_p25_annual": 37600.0,
+  "wage_p75_annual": 80200.0
+ },
+ "42100": {
+  "area_title": "Santa Cruz-Watsonville, CA",
+  "total_employment": 98750.0,
+  "wage_median_annual": 52770.0,
+  "wage_p25_annual": 38500.0,
+  "wage_p75_annual": 82030.0
+ },
+ "42140": {
+  "area_title": "Santa Fe, NM",
+  "total_employment": 61400.0,
+  "wage_median_annual": 47180.0,
+  "wage_p25_annual": 35690.0,
+  "wage_p75_annual": 71720.0
+ },
+ "42200": {
+  "area_title": "Santa Maria-Santa Barbara, CA",
+  "total_employment": 201750.0,
+  "wage_median_annual": 50240.0,
+  "wage_p25_annual": 37710.0,
+  "wage_p75_annual": 81150.0
+ },
+ "42220": {
+  "area_title": "Santa Rosa-Petaluma, CA",
+  "total_employment": 204980.0,
+  "wage_median_annual": 55140.0,
+  "wage_p25_annual": 40630.0,
+  "wage_p75_annual": 81930.0
+ },
+ "42340": {
+  "area_title": "Savannah, GA",
+  "total_employment": 195030.0,
+  "wage_median_annual": 46100.0,
+  "wage_p25_annual": 33390.0,
+  "wage_p75_annual": 69950.0
+ },
+ "42540": {
+  "area_title": "Scranton--Wilkes-Barre, PA",
+  "total_employment": 254190.0,
+  "wage_median_annual": 45400.0,
+  "wage_p25_annual": 34860.0,
+  "wage_p75_annual": 62900.0
+ },
+ "42660": {
+  "area_title": "Seattle-Tacoma-Bellevue, WA",
+  "total_employment": 2082610.0,
+  "wage_median_annual": 67510.0,
+  "wage_p25_annual": 47950.0,
+  "wage_p75_annual": 107730.0
+ },
+ "42680": {
+  "area_title": "Sebastian-Vero Beach-West Vero Corridor, FL",
+  "total_employment": 57230.0,
+  "wage_median_annual": 43200.0,
+  "wage_p25_annual": 33470.0,
+  "wage_p75_annual": 61980.0
+ },
+ "42700": {
+  "area_title": "Sebring, FL",
+  "total_employment": 27940.0,
+  "wage_median_annual": 38460.0,
+  "wage_p25_annual": 30290.0,
+  "wage_p75_annual": 57920.0
+ },
+ "43100": {
+  "area_title": "Sheboygan, WI",
+  "total_employment": 60670.0,
+  "wage_median_annual": 49300.0,
+  "wage_p25_annual": 37860.0,
+  "wage_p75_annual": 66400.0
+ },
+ "43300": {
+  "area_title": "Sherman-Denison, TX",
+  "total_employment": 52000.0,
+  "wage_median_annual": 40410.0,
+  "wage_p25_annual": 30400.0,
+  "wage_p75_annual": 61540.0
+ },
+ "43340": {
+  "area_title": "Shreveport-Bossier City, LA",
+  "total_employment": 159970.0,
+  "wage_median_annual": 42270.0,
+  "wage_p25_annual": 28990.0,
+  "wage_p75_annual": 63460.0
+ },
+ "43420": {
+  "area_title": "Sierra Vista-Douglas, AZ",
+  "total_employment": 34120.0,
+  "wage_median_annual": 45940.0,
+  "wage_p25_annual": 34550.0,
+  "wage_p75_annual": 74810.0
+ },
+ "43580": {
+  "area_title": "Sioux City, IA-NE-SD",
+  "total_employment": 75270.0,
+  "wage_median_annual": 45930.0,
+  "wage_p25_annual": 36030.0,
+  "wage_p75_annual": 61550.0
+ },
+ "43620": {
+  "area_title": "Sioux Falls, SD-MN",
+  "total_employment": 174730.0,
+  "wage_median_annual": 46720.0,
+  "wage_p25_annual": 36430.0,
+  "wage_p75_annual": 64520.0
+ },
+ "43640": {
+  "area_title": "Slidell-Mandeville-Covington, LA",
+  "total_employment": 100690.0,
+  "wage_median_annual": 40760.0,
+  "wage_p25_annual": 29360.0,
+  "wage_p75_annual": 62100.0
+ },
+ "43780": {
+  "area_title": "South Bend-Mishawaka, IN-MI",
+  "total_employment": 131060.0,
+  "wage_median_annual": 45800.0,
+  "wage_p25_annual": 35100.0,
+  "wage_p75_annual": 65440.0
+ },
+ "43900": {
+  "area_title": "Spartanburg, SC",
+  "total_employment": 163980.0,
+  "wage_median_annual": 46210.0,
+  "wage_p25_annual": 34640.0,
+  "wage_p75_annual": 66040.0
+ },
+ "44060": {
+  "area_title": "Spokane-Spokane Valley, WA",
+  "total_employment": 255370.0,
+  "wage_median_annual": 51600.0,
+  "wage_p25_annual": 40180.0,
+  "wage_p75_annual": 77050.0
+ },
+ "44100": {
+  "area_title": "Springfield, IL",
+  "total_employment": 102720.0,
+  "wage_median_annual": 49550.0,
+  "wage_p25_annual": 35680.0,
+  "wage_p75_annual": 79560.0
+ },
+ "44140": {
+  "area_title": "Springfield, MA",
+  "total_employment": 198740.0,
+  "wage_median_annual": 49710.0,
+  "wage_p25_annual": 38780.0,
+  "wage_p75_annual": 78200.0
+ },
+ "44180": {
+  "area_title": "Springfield, MO",
+  "total_employment": 222150.0,
+  "wage_median_annual": 44110.0,
+  "wage_p25_annual": 33760.0,
+  "wage_p75_annual": 60980.0
+ },
+ "44220": {
+  "area_title": "Springfield, OH",
+  "total_employment": 47300.0,
+  "wage_median_annual": 44700.0,
+  "wage_p25_annual": 34310.0,
+  "wage_p75_annual": 62770.0
+ },
+ "44300": {
+  "area_title": "State College, PA",
+  "total_employment": 68760.0,
+  "wage_median_annual": 50250.0,
+  "wage_p25_annual": 35570.0,
+  "wage_p75_annual": 77850.0
+ },
+ "44420": {
+  "area_title": "Staunton-Stuarts Draft, VA",
+  "total_employment": 50510.0,
+  "wage_median_annual": 46140.0,
+  "wage_p25_annual": 34390.0,
+  "wage_p75_annual": 61380.0
+ },
+ "44700": {
+  "area_title": "Stockton-Lodi, CA",
+  "total_employment": 286420.0,
+  "wage_median_annual": 49000.0,
+  "wage_p25_annual": 37780.0,
+  "wage_p75_annual": 72950.0
+ },
+ "44940": {
+  "area_title": "Sumter, SC",
+  "total_employment": 35260.0,
+  "wage_median_annual": 41590.0,
+  "wage_p25_annual": 30530.0,
+  "wage_p75_annual": 59970.0
+ },
+ "45060": {
+  "area_title": "Syracuse, NY",
+  "total_employment": 295110.0,
+  "wage_median_annual": 50800.0,
+  "wage_p25_annual": 37570.0,
+  "wage_p75_annual": 77510.0
+ },
+ "45220": {
+  "area_title": "Tallahassee, FL",
+  "total_employment": 184180.0,
+  "wage_median_annual": 45760.0,
+  "wage_p25_annual": 33840.0,
+  "wage_p75_annual": 66450.0
+ },
+ "45300": {
+  "area_title": "Tampa-St. Petersburg-Clearwater, FL",
+  "total_employment": 1442290.0,
+  "wage_median_annual": 47720.0,
+  "wage_p25_annual": 35830.0,
+  "wage_p75_annual": 75550.0
+ },
+ "45460": {
+  "area_title": "Terre Haute, IN",
+  "total_employment": 64580.0,
+  "wage_median_annual": 43960.0,
+  "wage_p25_annual": 31420.0,
+  "wage_p75_annual": 61170.0
+ },
+ "45500": {
+  "area_title": "Texarkana, TX-AR",
+  "total_employment": 57420.0,
+  "wage_median_annual": 41050.0,
+  "wage_p25_annual": 29470.0,
+  "wage_p75_annual": 60750.0
+ },
+ "45780": {
+  "area_title": "Toledo, OH",
+  "total_employment": 291660.0,
+  "wage_median_annual": 47320.0,
+  "wage_p25_annual": 35800.0,
+  "wage_p75_annual": 71430.0
+ },
+ "45820": {
+  "area_title": "Topeka, KS",
+  "total_employment": 112540.0,
+  "wage_median_annual": 47840.0,
+  "wage_p25_annual": 35210.0,
+  "wage_p75_annual": 69450.0
+ },
+ "45900": {
+  "area_title": "Traverse City, MI",
+  "total_employment": 67200.0,
+  "wage_median_annual": 46530.0,
+  "wage_p25_annual": 36160.0,
+  "wage_p75_annual": 64420.0
+ },
+ "45940": {
+  "area_title": "Trenton-Princeton, NJ",
+  "total_employment": 239220.0,
+  "wage_median_annual": 62610.0,
+  "wage_p25_annual": 42490.0,
+  "wage_p75_annual": 99480.0
+ },
+ "46060": {
+  "area_title": "Tucson, AZ",
+  "total_employment": 385930.0,
+  "wage_median_annual": 46450.0,
+  "wage_p25_annual": 35910.0,
+  "wage_p75_annual": 71310.0
+ },
+ "46140": {
+  "area_title": "Tulsa, OK",
+  "total_employment": 453400.0,
+  "wage_median_annual": 45460.0,
+  "wage_p25_annual": 32920.0,
+  "wage_p75_annual": 66320.0
+ },
+ "46220": {
+  "area_title": "Tuscaloosa, AL",
+  "total_employment": 108360.0,
+  "wage_median_annual": 45440.0,
+  "wage_p25_annual": 31420.0,
+  "wage_p75_annual": 63840.0
+ },
+ "46300": {
+  "area_title": "Twin Falls, ID",
+  "total_employment": 49570.0,
+  "wage_median_annual": 44160.0,
+  "wage_p25_annual": 33970.0,
+  "wage_p75_annual": 59870.0
+ },
+ "46340": {
+  "area_title": "Tyler, TX",
+  "total_employment": 112810.0,
+  "wage_median_annual": 41230.0,
+  "wage_p25_annual": 29580.0,
+  "wage_p75_annual": 61310.0
+ },
+ "46520": {
+  "area_title": "Urban Honolulu, HI",
+  "total_employment": 443350.0,
+  "wage_median_annual": 54660.0,
+  "wage_p25_annual": 38080.0,
+  "wage_p75_annual": 81830.0
+ },
+ "46540": {
+  "area_title": "Utica-Rome, NY",
+  "total_employment": 117260.0,
+  "wage_median_annual": 48080.0,
+  "wage_p25_annual": 36280.0,
+  "wage_p75_annual": 69000.0
+ },
+ "46660": {
+  "area_title": "Valdosta, GA",
+  "total_employment": 54320.0,
+  "wage_median_annual": 38000.0,
+  "wage_p25_annual": 28580.0,
+  "wage_p75_annual": 57580.0
+ },
+ "46700": {
+  "area_title": "Vallejo, CA",
+  "total_employment": 142930.0,
+  "wage_median_annual": 57170.0,
+  "wage_p25_annual": 39500.0,
+  "wage_p75_annual": 87460.0
+ },
+ "47020": {
+  "area_title": "Victoria, TX",
+  "total_employment": 38310.0,
+  "wage_median_annual": 41190.0,
+  "wage_p25_annual": 30000.0,
+  "wage_p75_annual": 63030.0
+ },
+ "47220": {
+  "area_title": "Vineland, NJ",
+  "total_employment": 61230.0,
+  "wage_median_annual": 47650.0,
+  "wage_p25_annual": 35440.0,
+  "wage_p75_annual": 72950.0
+ },
+ "47260": {
+  "area_title": "Virginia Beach-Chesapeake-Norfolk, VA-NC",
+  "total_employment": 754860.0,
+  "wage_median_annual": 48430.0,
+  "wage_p25_annual": 35500.0,
+  "wage_p75_annual": 76940.0
+ },
+ "47300": {
+  "area_title": "Visalia, CA",
+  "total_employment": 170070.0,
+  "wage_median_annual": 44320.0,
+  "wage_p25_annual": 35170.0,
+  "wage_p75_annual": 62730.0
+ },
+ "47380": {
+  "area_title": "Waco, TX",
+  "total_employment": 129920.0,
+  "wage_median_annual": 44530.0,
+  "wage_p25_annual": 31830.0,
+  "wage_p75_annual": 63470.0
+ },
+ "47460": {
+  "area_title": "Walla Walla, WA",
+  "total_employment": 25690.0,
+  "wage_median_annual": 49920.0,
+  "wage_p25_annual": 39570.0,
+  "wage_p75_annual": 76400.0
+ },
+ "47580": {
+  "area_title": "Warner Robins, GA",
+  "total_employment": 75750.0,
+  "wage_median_annual": 47490.0,
+  "wage_p25_annual": 32250.0,
+  "wage_p75_annual": 73440.0
+ },
+ "47900": {
+  "area_title": "Washington-Arlington-Alexandria, DC-VA-MD-WV",
+  "total_employment": 3118630.0,
+  "wage_median_annual": 68430.0,
+  "wage_p25_annual": 43910.0,
+  "wage_p75_annual": 119020.0
+ },
+ "47930": {
+  "area_title": "Waterbury-Shelton, CT",
+  "total_employment": 158640.0,
+  "wage_median_annual": 50110.0,
+  "wage_p25_annual": 37280.0,
+  "wage_p75_annual": 78950.0
+ },
+ "47940": {
+  "area_title": "Waterloo-Cedar Falls, IA",
+  "total_employment": 85420.0,
+  "wage_median_annual": 46580.0,
+  "wage_p25_annual": 35550.0,
+  "wage_p75_annual": 62640.0
+ },
+ "48060": {
+  "area_title": "Watertown-Fort Drum, NY",
+  "total_employment": 39050.0,
+  "wage_median_annual": 46630.0,
+  "wage_p25_annual": 35670.0,
+  "wage_p75_annual": 65830.0
+ },
+ "48140": {
+  "area_title": "Wausau, WI",
+  "total_employment": 70000.0,
+  "wage_median_annual": 47970.0,
+  "wage_p25_annual": 37050.0,
+  "wage_p75_annual": 66990.0
+ },
+ "48260": {
+  "area_title": "Weirton-Steubenville, WV-OH",
+  "total_employment": 36870.0,
+  "wage_median_annual": 44830.0,
+  "wage_p25_annual": 31860.0,
+  "wage_p75_annual": 64460.0
+ },
+ "48300": {
+  "area_title": "Wenatchee-East Wenatchee, WA",
+  "total_employment": 51580.0,
+  "wage_median_annual": 47920.0,
+  "wage_p25_annual": 38140.0,
+  "wage_p75_annual": 73650.0
+ },
+ "48540": {
+  "area_title": "Wheeling, WV-OH",
+  "total_employment": 58940.0,
+  "wage_median_annual": 41840.0,
+  "wage_p25_annual": 30070.0,
+  "wage_p75_annual": 62920.0
+ },
+ "48620": {
+  "area_title": "Wichita, KS",
+  "total_employment": 306950.0,
+  "wage_median_annual": 46650.0,
+  "wage_p25_annual": 34210.0,
+  "wage_p75_annual": 67090.0
+ },
+ "48660": {
+  "area_title": "Wichita Falls, TX",
+  "total_employment": 56710.0,
+  "wage_median_annual": 40410.0,
+  "wage_p25_annual": 29490.0,
+  "wage_p75_annual": 60990.0
+ },
+ "48680": {
+  "area_title": "Wildwood-The Villages, FL",
+  "total_employment": 39830.0,
+  "wage_median_annual": 44660.0,
+  "wage_p25_annual": 34160.0,
+  "wage_p75_annual": 63440.0
+ },
+ "48700": {
+  "area_title": "Williamsport, PA",
+  "total_employment": 50020.0,
+  "wage_median_annual": 45310.0,
+  "wage_p25_annual": 33680.0,
+  "wage_p75_annual": 64060.0
+ },
+ "48900": {
+  "area_title": "Wilmington, NC",
+  "total_employment": 186900.0,
+  "wage_median_annual": 44470.0,
+  "wage_p25_annual": 31680.0,
+  "wage_p75_annual": 63440.0
+ },
+ "49020": {
+  "area_title": "Winchester, VA-WV",
+  "total_employment": 68300.0,
+  "wage_median_annual": 47310.0,
+  "wage_p25_annual": 35770.0,
+  "wage_p75_annual": 66770.0
+ },
+ "49180": {
+  "area_title": "Winston-Salem, NC",
+  "total_employment": 273340.0,
+  "wage_median_annual": 45050.0,
+  "wage_p25_annual": 33790.0,
+  "wage_p75_annual": 65910.0
+ },
+ "49340": {
+  "area_title": "Worcester, MA",
+  "total_employment": 351970.0,
+  "wage_median_annual": 55300.0,
+  "wage_p25_annual": 39520.0,
+  "wage_p75_annual": 83320.0
+ },
+ "49420": {
+  "area_title": "Yakima, WA",
+  "total_employment": 98540.0,
+  "wage_median_annual": 46740.0,
+  "wage_p25_annual": 37200.0,
+  "wage_p75_annual": 65110.0
+ },
+ "49620": {
+  "area_title": "York-Hanover, PA",
+  "total_employment": 183070.0,
+  "wage_median_annual": 46970.0,
+  "wage_p25_annual": 35880.0,
+  "wage_p75_annual": 67730.0
+ },
+ "49660": {
+  "area_title": "Youngstown-Warren, OH",
+  "total_employment": 160480.0,
+  "wage_median_annual": 42330.0,
+  "wage_p25_annual": 31120.0,
+  "wage_p75_annual": 60560.0
+ },
+ "49700": {
+  "area_title": "Yuba City, CA",
+  "total_employment": 50820.0,
+  "wage_median_annual": 48330.0,
+  "wage_p25_annual": 36860.0,
+  "wage_p75_annual": 75030.0
+ },
+ "49740": {
+  "area_title": "Yuma, AZ",
+  "total_employment": 68990.0,
+  "wage_median_annual": 42690.0,
+  "wage_p25_annual": 33850.0,
+  "wage_p75_annual": 61270.0
+ }
+}

@@ -11,8 +11,11 @@ stability over velocity).
 - E = Ecosystem: industry diversity and establishment density.
 - R = Resilience: industry diversification and anchored vs cyclical balance.
 
-All inputs from free public APIs (Census ACS/BDS, BLS QCEW/OEWS). Normalized within
-(Census Division × area-type bucket). Scale metrics use log10(employment+1) and log10(establishments+1).
+All inputs from free public sources (Census ACS / BDS / County Business Patterns, BLS OEWS wage file).
+Normalized against a national, population-weighted baseline over all US metro and micro areas
+(data/economic_baselines.json "all"/"all", built by scripts/baselines/build_economic_national_baseline.py).
+Adopted 2026-10-24 as a sourced but not outcome-validated judgment call; the earlier division x area-type
+cells had a median of 8 reference areas. Scale metrics use log10(employment+1) and log10(establishments+1).
 """
 
 from __future__ import annotations
@@ -27,11 +30,13 @@ from data_sources.economic_security_data import (
     fetch_acs_profile_dp03,
     fetch_acs_table,
     fetch_bds_establishment_dynamics,
+    fetch_cbp_employment,
     compute_industry_hhi,
     compute_anchored_vs_cyclical_balance,
 )
 from data_sources import bls_data
-from data_sources.normalization import normalize_metric_to_0_100
+from data_sources.normalization import normalize_national_0_100
+from logging_config import get_logger
 from data_sources.us_census_divisions import get_division
 from data_sources.job_category_overlays import (
     compute_job_category_overlays,
@@ -40,6 +45,11 @@ from data_sources.job_category_overlays import (
 
 
 CURRENT_ACS_YEAR = 2022
+CBP_BASE_YEAR = 2022
+CBP_LATEST_YEAR = 2023  # growth = CBP_LATEST_YEAR employment over CBP_BASE_YEAR
+
+
+logger = get_logger(__name__)
 
 
 def _area_bucket(area_type: Optional[str]) -> str:
@@ -132,17 +142,30 @@ def _normalize(
     division: str,
     area_bucket: str,
     invert: bool = False,
+    used_fallback: Optional[List[str]] = None,
 ) -> Optional[float]:
-    score = normalize_metric_to_0_100(
+    score = normalize_national_0_100(
         metric=metric,
         value=value,
-        division=division,
-        area_bucket=area_bucket,
         invert=invert,
     )
     if score is None:
-        return _fallback_normalize(metric, value, invert=invert)
+        fallback = _fallback_normalize(metric, value, invert=invert)
+        if fallback is not None and used_fallback is not None:
+            used_fallback.append(metric)  # surfaced in the response; the hard-coded scale is not silent
+        return fallback
     return score
+
+
+def _job_access_with_status(lat: float, lon: float) -> Tuple[Optional[float], str]:
+    """(score, status): status is "ok", "no_grid_coverage" (grid does not cover the point) or "error"."""
+    try:
+        from data_sources.job_accessibility import job_access_score
+        score = job_access_score(lat, lon)
+    except Exception as e:
+        logger.warning("Job-access lookup failed for (%s, %s): %s", lat, lon, e)
+        return None, "error"
+    return (score, "ok") if score is not None else (None, "no_grid_coverage")
 
 
 def _weighted_avg(scores: Dict[str, Optional[float]], weights: Dict[str, float]) -> Tuple[Optional[float], Dict[str, float]]:
@@ -157,6 +180,43 @@ def _weighted_avg(scores: Dict[str, Optional[float]], weights: Dict[str, float])
         renorm = {k: weights.get(k, 0.0) / total_w for k in present.keys()}
     out = sum(float(present[k]) * renorm[k] for k in present.keys())
     return out, renorm
+
+
+DENSITY_WEIGHTS = {"emp_pop_ratio": 0.25, "scale": 0.30, "estabs_per_1k": 0.25, "wage_p25_annual": 0.20}
+MOBILITY_WEIGHTS = {"qcew_employment_growth_pct": 0.40, "net_estab_entry_per_1k": 0.35, "wage_p75_annual": 0.25}
+ECOSYSTEM_WEIGHTS = {"industry_diversity": 0.70, "estabs_per_1k": 0.30}
+RESILIENCE_WEIGHTS = {"industry_diversity": 0.60, "anchored_balance": 0.40}
+COMPONENT_WEIGHTS = {"density": 0.40, "mobility": 0.15, "ecosystem": 0.20, "resilience": 0.25}
+
+
+def compute_market_components(sub_scores: Dict[str, Optional[float]]) -> Dict[str, Any]:
+    """
+    Market-quality score from the normalized sub-scores: adds the scale score, applies the anchor floor,
+    then Density / Mobility / Ecosystem / Resilience and their weighted blend. Mutates sub_scores (scale,
+    floored growth). Shared by the live pillar and the offline catalog recompute so they cannot diverge.
+    """
+    # Scale score: average of normalized log10 employment and establishments (rewards market depth)
+    scale_vals = [sub_scores.get("log10_employment"), sub_scores.get("log10_establishments")]
+    scale_vals = [v for v in scale_vals if isinstance(v, (int, float))]
+    if scale_vals:
+        sub_scores["scale"] = sum(scale_vals) / len(scale_vals)
+
+    # Anchor floor: high-anchor markets (gov/health/edu) don't get crushed by low growth
+    if sub_scores.get("anchored_balance") is not None and sub_scores["anchored_balance"] > 75:
+        growth = sub_scores.get("qcew_employment_growth_pct")
+        if growth is not None:
+            sub_scores["qcew_employment_growth_pct"] = max(float(growth), 40.0)
+
+    out: Dict[str, Any] = {}
+    for key, weights in (("density", DENSITY_WEIGHTS), ("mobility", MOBILITY_WEIGHTS),
+                         ("ecosystem", ECOSYSTEM_WEIGHTS), ("resilience", RESILIENCE_WEIGHTS)):
+        score, renorm = _weighted_avg({k: sub_scores.get(k) for k in weights}, weights)
+        out[f"{key}_score"], out[f"{key}_renorm"] = score, renorm
+    out["components"] = {k: out[f"{k}_score"] for k in COMPONENT_WEIGHTS}
+    base_final_score, base_component_renorm = _weighted_avg(out["components"], COMPONENT_WEIGHTS)
+    out["base_final_score"] = float(base_final_score or 0.0)
+    out["base_component_renorm"] = base_component_renorm
+    return out
 
 
 def get_economic_opportunity_score(
@@ -285,26 +345,23 @@ def get_economic_opportunity_score(
             total_establishments = float(total_estab)
             estabs_per_1k = total_establishments / float(total_pop) * 1000.0
 
-    # BLS QCEW: employment level and YoY growth (demand-side)
+    # Demand-side employment from Census County Business Patterns (BLS QCEW blocks scripted access).
+    # Level = CBP_BASE_YEAR paid employment; growth = CBP_LATEST_YEAR over CBP_BASE_YEAR. Private-sector
+    # payroll jobs only (no government, farm or self-employed). Summary keys keep their old "qcew_" names
+    # so stored catalog data and consumers do not change; the source is recorded in the summary.
     qcew_employment_per_1k = None
     qcew_employment_growth_pct = None
     total_employment = None
-    if effective_geo.level == "cbsa" and effective_geo.cbsa_code:
-        qcew_area = bls_data.cbsa_to_qcew_area_code(effective_geo.cbsa_code)
-    elif effective_geo.county_fips and effective_geo.state_fips:
-        qcew_area = bls_data.county_to_qcew_area_code(effective_geo.state_fips, effective_geo.county_fips)
-    else:
-        qcew_area = ""
-    if qcew_area:
-        qcew_row = bls_data.fetch_qcew_annual_for_area(qcew_area, year=CURRENT_ACS_YEAR)
-        if qcew_row and isinstance(total_pop, (int, float)) and total_pop > 0:
-            empl = qcew_row.get("annual_avg_emplvl")
-            if isinstance(empl, (int, float)) and empl >= 0:
-                total_employment = float(empl)
-                qcew_employment_per_1k = total_employment / float(total_pop) * 1000.0
-            pct = qcew_row.get("oty_annual_avg_emplvl_pct_chg")
-            if isinstance(pct, (int, float)):
-                qcew_employment_growth_pct = float(pct)
+    cbp_base = fetch_cbp_employment(year=CBP_BASE_YEAR, geo=effective_geo) or {}
+    cbp_latest = fetch_cbp_employment(year=CBP_LATEST_YEAR, geo=effective_geo) or {}
+    empl = cbp_base.get("EMP")
+    if isinstance(empl, (int, float)) and empl >= 0:
+        total_employment = float(empl)
+        if isinstance(total_pop, (int, float)) and total_pop > 0:
+            qcew_employment_per_1k = total_employment / float(total_pop) * 1000.0
+        latest = cbp_latest.get("EMP")
+        if empl > 0 and isinstance(latest, (int, float)) and latest > 0:
+            qcew_employment_growth_pct = 100.0 * (float(latest) / float(empl) - 1.0)
 
     # BLS OEWS: 25th and 75th percentile wages by metro (wage distribution)
     wage_p25_annual = None
@@ -326,74 +383,37 @@ def get_economic_opportunity_score(
     log10_employment = math.log10(total_employment + 1) if isinstance(total_employment, (int, float)) and total_employment >= 0 else None
     log10_establishments = math.log10(total_establishments + 1) if isinstance(total_establishments, (int, float)) and total_establishments >= 0 else None
 
+    fallback_metrics: List[str] = []
     # Normalize to 0-100 submetric scores
     sub_scores = {
         # Lower unemployment is better → invert
-        "unemployment_rate": _normalize(metric="unemployment_rate", value=unemp_rate, division=division, area_bucket=bucket, invert=True),
-        "emp_pop_ratio": _normalize(metric="emp_pop_ratio", value=emp_pop_ratio, division=division, area_bucket=bucket),
-        "net_estab_entry_per_1k": _normalize(metric="net_estab_entry_per_1k", value=net_estab_entry_per_1k, division=division, area_bucket=bucket),
-        "estabs_per_1k": _normalize(metric="estabs_per_1k", value=estabs_per_1k, division=division, area_bucket=bucket),
+        "unemployment_rate": _normalize(metric="unemployment_rate", value=unemp_rate, division=division, area_bucket=bucket, used_fallback=fallback_metrics, invert=True),
+        "emp_pop_ratio": _normalize(metric="emp_pop_ratio", value=emp_pop_ratio, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
+        "net_estab_entry_per_1k": _normalize(metric="net_estab_entry_per_1k", value=net_estab_entry_per_1k, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
+        "estabs_per_1k": _normalize(metric="estabs_per_1k", value=estabs_per_1k, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
         # Wage distribution (OEWS 25th/75th)
-        "wage_p25_annual": _normalize(metric="wage_p25_annual", value=wage_p25_annual, division=division, area_bucket=bucket),
-        "wage_p75_annual": _normalize(metric="wage_p75_annual", value=wage_p75_annual, division=division, area_bucket=bucket),
+        "wage_p25_annual": _normalize(metric="wage_p25_annual", value=wage_p25_annual, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
+        "wage_p75_annual": _normalize(metric="wage_p75_annual", value=wage_p75_annual, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
         # Demand-side (QCEW)
-        "qcew_employment_per_1k": _normalize(metric="qcew_employment_per_1k", value=qcew_employment_per_1k, division=division, area_bucket=bucket),
-        "qcew_employment_growth_pct": _normalize(metric="qcew_employment_growth_pct", value=qcew_employment_growth_pct, division=division, area_bucket=bucket),
+        "qcew_employment_per_1k": _normalize(metric="qcew_employment_per_1k", value=qcew_employment_per_1k, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
+        "qcew_employment_growth_pct": _normalize(metric="qcew_employment_growth_pct", value=qcew_employment_growth_pct, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
         # Scale (log10 absolute counts)
-        "log10_employment": _normalize(metric="log10_employment", value=log10_employment, division=division, area_bucket=bucket),
-        "log10_establishments": _normalize(metric="log10_establishments", value=log10_establishments, division=division, area_bucket=bucket),
+        "log10_employment": _normalize(metric="log10_employment", value=log10_employment, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
+        "log10_establishments": _normalize(metric="log10_establishments", value=log10_establishments, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
         # Lower HHI is better (more diversified) → invert
-        "industry_diversity": _normalize(metric="industry_hhi", value=industry_hhi, division=division, area_bucket=bucket, invert=True),
-        "anchored_balance": _normalize(metric="anchored_balance", value=anchored_balance, division=division, area_bucket=bucket),
+        "industry_diversity": _normalize(metric="industry_hhi", value=industry_hhi, division=division, area_bucket=bucket, used_fallback=fallback_metrics, invert=True),
+        "anchored_balance": _normalize(metric="anchored_balance", value=anchored_balance, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
     }
 
-    # Scale score: average of normalized log10 employment and establishments (rewards market depth)
-    scale_vals = [sub_scores.get("log10_employment"), sub_scores.get("log10_establishments")]
-    scale_vals = [v for v in scale_vals if isinstance(v, (int, float))]
-    if scale_vals:
-        sub_scores["scale"] = sum(scale_vals) / len(scale_vals)
-
-    # Anchor floor: high-anchor markets (gov/health/edu) don't get crushed by low growth
-    if sub_scores.get("anchored_balance") is not None and sub_scores["anchored_balance"] > 75:
-        growth = sub_scores.get("qcew_employment_growth_pct")
-        if growth is not None:
-            sub_scores["qcew_employment_growth_pct"] = max(float(growth), 40.0)
-
-    # Career ecosystem: S = w1·D + w2·M + w3·E + w4·R
-    density_weights = {"emp_pop_ratio": 0.25, "scale": 0.30, "estabs_per_1k": 0.25, "wage_p25_annual": 0.20}
-    density_score, density_renorm = _weighted_avg(
-        {k: sub_scores.get(k) for k in density_weights.keys()},
-        density_weights,
-    )
-
-    mobility_weights = {"qcew_employment_growth_pct": 0.40, "net_estab_entry_per_1k": 0.35, "wage_p75_annual": 0.25}
-    mobility_score, mobility_renorm = _weighted_avg(
-        {k: sub_scores.get(k) for k in mobility_weights.keys()},
-        mobility_weights,
-    )
-
-    ecosystem_weights = {"industry_diversity": 0.70, "estabs_per_1k": 0.30}
-    ecosystem_score, ecosystem_renorm = _weighted_avg(
-        {k: sub_scores.get(k) for k in ecosystem_weights.keys()},
-        ecosystem_weights,
-    )
-
-    resilience_weights = {"industry_diversity": 0.60, "anchored_balance": 0.40}
-    resilience_score, resilience_renorm = _weighted_avg(
-        {k: sub_scores.get(k) for k in resilience_weights.keys()},
-        resilience_weights,
-    )
-
-    components = {
-        "density": density_score,
-        "mobility": mobility_score,
-        "ecosystem": ecosystem_score,
-        "resilience": resilience_score,
-    }
-    component_weights = {"density": 0.40, "mobility": 0.15, "ecosystem": 0.20, "resilience": 0.25}
-
-    base_final_score, base_component_renorm = _weighted_avg(components, component_weights)
-    base_final_score = float(base_final_score or 0.0)
+    _mc = compute_market_components(sub_scores)
+    density_score, density_renorm = _mc["density_score"], _mc["density_renorm"]
+    mobility_score, mobility_renorm = _mc["mobility_score"], _mc["mobility_renorm"]
+    ecosystem_score, ecosystem_renorm = _mc["ecosystem_score"], _mc["ecosystem_renorm"]
+    resilience_score, resilience_renorm = _mc["resilience_score"], _mc["resilience_renorm"]
+    density_weights, mobility_weights = DENSITY_WEIGHTS, MOBILITY_WEIGHTS
+    ecosystem_weights, resilience_weights = ECOSYSTEM_WEIGHTS, RESILIENCE_WEIGHTS
+    components, component_weights = _mc["components"], COMPONENT_WEIGHTS
+    base_final_score, base_component_renorm = _mc["base_final_score"], _mc["base_component_renorm"]
 
     selected = parse_job_categories(job_categories)
     overlays_payload: Optional[Dict[str, Any]] = None
@@ -459,12 +479,7 @@ def get_economic_opportunity_score(
     # high — close to Manhattan jobs). Falls back to market quality alone where the LODES grid
     # has no coverage.
     market_quality_score = final_score
-    job_access_score_val = None
-    try:
-        from data_sources.job_accessibility import job_access_score
-        job_access_score_val = job_access_score(lat, lon)
-    except Exception:
-        job_access_score_val = None
+    job_access_score_val, job_access_status = _job_access_with_status(lat, lon)
     if job_access_score_val is not None:
         final_score = round(0.55 * job_access_score_val + 0.45 * market_quality_score, 1)
     final_score = float(final_score or 0.0)
@@ -499,6 +514,14 @@ def get_economic_opportunity_score(
         },
     }
     dq = assess_pillar_data_quality("economic_opportunity", combined_data, lat, lon, area_type or "suburban")
+    degraded_notes = []
+    if job_access_status != "ok":
+        degraded_notes.append(f"economic_job_access_{job_access_status}: scored on market quality alone")
+    if fallback_metrics:
+        degraded_notes.append("economic_baseline_fallback: " + ", ".join(sorted(set(fallback_metrics))))
+    if degraded_notes:
+        dq["degraded"] = True
+        dq["degraded_reasons"] = list(dq.get("degraded_reasons") or []) + degraded_notes
 
     breakdown = {
         "density": {
@@ -544,6 +567,8 @@ def get_economic_opportunity_score(
         "industry_diversity_hhi": round(float(industry_hhi), 4) if isinstance(industry_hhi, (int, float)) else None,
         "anchored_balance": round(float(anchored_balance), 3) if isinstance(anchored_balance, (int, float)) else None,
         "job_access_score": job_access_score_val,
+        "job_access_status": job_access_status,
+        "baseline_fallback_metrics": sorted(set(fallback_metrics)),
         "market_quality_score": round(market_quality_score, 1),
     }
 
