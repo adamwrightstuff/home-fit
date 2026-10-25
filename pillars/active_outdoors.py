@@ -23,6 +23,33 @@ from logging_config import get_logger
 # Initialize logger
 logger = get_logger(__name__)
 
+# Point budgets per component. They add to 110 (kept as the component scales), so the score is the points earned over the
+# budgets of the components that were read, scaled to 100: all three present means points x 100 / 110, which removes the
+# old cap at 100 that put 15% of places at exactly 100. A component whose data read failed is left out (no data), not
+# scored as zero, and the pillar is marked degraded.
+AO_BUDGETS = {"daily_urban_outdoors": 35.0, "wild_adventure": 50.0, "waterfront_lifestyle": 25.0}
+_OVERPASS_FAILURES = ("overpass_error", "overpass_timeout")
+_POPULATED_AREA_TYPES = {"urban_core", "urban_residential", "urban_core_lowrise", "suburban"}
+
+
+def overpass_read_failed(outcome, area_type=None, *, empty_is_failure: bool = False) -> bool:
+    """True when an Overpass read is a failure rather than a real answer. An empty parks read in a populated area
+    counts as a failure (no parks at all is implausible there); an empty trail or camping read is a legitimate zero."""
+    if outcome in _OVERPASS_FAILURES:
+        return True
+    return bool(empty_is_failure and outcome == "overpass_empty" and area_type in _POPULATED_AREA_TYPES)
+
+
+def scale_active_outdoors(points: dict) -> tuple:
+    """(score 0-100, names of components left out) from {component: points or None}; raises with fewer than two present."""
+    present = {k: v for k, v in points.items() if v is not None}
+    missing = [k for k in AO_BUDGETS if k not in present]
+    if len(present) < 2:
+        raise RuntimeError(f"Active outdoors: not enough components could be read (missing: {', '.join(missing)})")
+    score = sum(present.values()) / sum(AO_BUDGETS[k] for k in present) * 100.0
+    return max(0.0, min(100.0, score)), missing
+
+
 # A2: stagger sequential Overpass calls to reduce 429/timeouts vs parallel bursts.
 _OVERPASS_STAGGER_S = 1.0
 
@@ -406,8 +433,23 @@ def get_active_outdoors_score_v2(
     )
 
     # 4) Final score: transparent component sum (30% + 50% + 20% of total points)
-    total_raw = daily_score + wild_score + water_score
-    calibrated_total = max(0.0, min(100.0, total_raw))
+    local_failed = overpass_read_failed(local_overpass_outcome, area_type, empty_is_failure=True)
+    trail_failed = overpass_read_failed(trail_overpass_outcome, area_type)
+    regional_failed = overpass_read_failed(regional_overpass_outcome, area_type)
+    if places_ao_meta.get("used"):
+        local_failed = trail_failed = regional_failed = False  # Google Places filled the gap (the score is capped below)
+    component_points = {
+        "daily_urban_outdoors": None if local_failed else daily_score,
+        # wild adventure reads trails (trail query) and camping (regional query)
+        "wild_adventure": None if (trail_failed or regional_failed) else wild_score,
+        "waterfront_lifestyle": None if regional_failed else water_score,
+    }
+    calibrated_total, components_missing = scale_active_outdoors(component_points)
+    if components_missing:
+        dq["degraded"] = True
+        dq["degraded_reasons"] = list(dq.get("degraded_reasons") or []) + [
+            f"active_outdoors_missing_components: {', '.join(components_missing)} (Overpass read failed)"
+        ]
     cap = places_ao_meta.get("osm_down_score_cap")
     if places_ao_meta.get("degraded_osm_substitute") and cap is not None:
         calibrated_total = min(calibrated_total, float(cap))
@@ -427,9 +469,9 @@ def get_active_outdoors_score_v2(
     breakdown: Dict = {
         "score": round(calibrated_total, 1),
         "breakdown": {
-            "daily_urban_outdoors": round(daily_score, 1),
-            "wild_adventure": round(wild_score, 1),
-            "waterfront_lifestyle": round(water_score, 1),
+            "daily_urban_outdoors": None if local_failed else round(daily_score, 1),
+            "wild_adventure": None if (trail_failed or regional_failed) else round(wild_score, 1),
+            "waterfront_lifestyle": None if regional_failed else round(water_score, 1),
             "waterfront_breakdown": waterfront_breakdown,
         },
         "summary": {
@@ -449,6 +491,7 @@ def get_active_outdoors_score_v2(
                 else None,
             },
             "places_ao": places_ao_meta,
+            "components_missing": components_missing,
         },
         "data_quality": dq,
         "confidence_notes": conf_notes,
@@ -465,8 +508,8 @@ def get_active_outdoors_score_v2(
             "wild_adventure": 50,
             "waterfront_lifestyle": 25,
             "budget_total": 110,
-            "budget_cap": 100,
-            "note": "Point budgets (max per component). Budget sums to 110; final score capped at 100.",
+            "scaled_to": 100,
+            "note": "Point budgets (max per component). The score is points earned over the budgets of the components that were read, scaled to 100 (all three: points x 100 / 110). A failed read leaves its component out.",
         },
         "context": {
             "area_type_for_scoring": scoring_area_type,
