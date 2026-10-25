@@ -30,3 +30,5 @@ degraded (`active_outdoors_missing_components`), and fewer than two components m
 zero local parks are still treated as a real zero. Catalog: 1,476 rows rescored offline by
 `scripts/catalog/recompute_active_outdoors_budget_offline.py` (mean 78.5 to 72.3; share at 100 from 15.2% to 0.5%; 45 places
 degraded), then composites recomputed.
+
+The 45 places with a failed read were then re-read through the private Overpass server (all components read) and written back by `scripts/catalog/apply_active_outdoors_retry.py`; none is degraded now.
