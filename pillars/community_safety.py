@@ -194,7 +194,7 @@ def _score_rates(
 
 
 def _neighborhood_ambient_population(
-    lat: float, lon: float, area_type: Optional[str]
+    lat: float, lon: float, area_type: Optional[str], state: Optional[str] = None
 ) -> Tuple[int, int, Dict[str, Any]]:
     """
     For open-data city neighborhoods: pick the smallest radius holding
@@ -211,7 +211,8 @@ def _neighborhood_ambient_population(
         if residents >= MIN_NEIGHBORHOOD_RESIDENTS:
             break
     ambient = float(residents)
-    jobs = jobs_in_disk(lat, lon, radius)
+    jobs = jobs_in_disk(lat, lon, radius, state=state)
+    adjustment = "applied" if jobs is not None else "unavailable"
     if jobs is not None:
         workplace_jobs, resident_workers = jobs
         ambient = people_present(residents, workplace_jobs, resident_workers)
@@ -222,6 +223,7 @@ def _neighborhood_ambient_population(
         }
     meta = {
         **meta,
+        "commuter_adjustment": adjustment,
         "population_denominator_method": "ambient_residents_plus_workers",
         "residents_in_radius": int(residents),
         "ambient_population": int(round(ambient)),
@@ -285,7 +287,7 @@ def get_community_safety_score(
     ambient_neighborhood = False
     incident_source = neighborhood_incident_source(lat, lon, city, fallback_city)
     if incident_source:
-        radius_override, pop, population_denominator_meta = _neighborhood_ambient_population(lat, lon, area_type)
+        radius_override, pop, population_denominator_meta = _neighborhood_ambient_population(lat, lon, area_type, state=state)
         ambient_neighborhood = True
 
     rates = get_crime_rates(
@@ -401,4 +403,6 @@ def get_community_safety_score(
         details["effective_pop_denominator_multiplier"] = round(commuter_mult, 4)
     if population_denominator_meta:
         details["population_denominator"] = population_denominator_meta
+        if population_denominator_meta.get("commuter_adjustment") == "unavailable":
+            details["degraded_reasons"] = ["community_safety_commuter_adjustment_unavailable: no LODES grid cells near the place"]
     return final_score, details

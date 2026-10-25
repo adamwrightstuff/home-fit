@@ -199,6 +199,11 @@ def main() -> None:
         )
         os.makedirs(os.path.dirname(ns.output), exist_ok=True)
         pq.write_table(table, ns.output, compression="zstd")
+        # Record which states were built so the lookup can say "unavailable" (not zero) for the rest.
+        import json as _json
+        _sidecar = os.path.join(os.path.dirname(os.path.abspath(ns.output)), "lodes_h8_commuter_states.json")
+        with open(_sidecar, "w", encoding="utf-8") as _fh:
+            _json.dump({"states": sorted(x.upper() for x in states), "note": "written by build_lodes_h8_commuter.py"}, _fh, indent=1)
         print(f"Wrote {ns.output} ({len(rows_sorted):,} cells)")
     except ImportError:
         print("pyarrow not installed — install with: python3 -m pip install pyarrow")

@@ -25,6 +25,7 @@ Override path via env ``LODES_H8_COMMUTER_PARQUET``.
 
 from __future__ import annotations
 
+import json
 import math
 import os
 from typing import Any, Dict, Optional, Tuple
@@ -91,14 +92,20 @@ def _ensure_table() -> None:
     _TABLE_LOADED = True
 
 
-def jobs_in_disk(lat: float, lon: float, radius_m: float) -> Optional[Tuple[float, float]]:
+def jobs_in_disk(lat: float, lon: float, radius_m: float, state: Optional[str] = None) -> Optional[Tuple[float, float]]:
     """
     Area-weighted (workplace_jobs, resident_workers) inside a circle, summed over
     the H3 res-8 cells it covers (each cell weighted by the share of it inside).
-    Returns None when the LODES table or h3 is unavailable.
+    Returns None when the LODES table or h3 is unavailable, or when the point is outside the area the grid was built for:
+    "unavailable", not zero. With `state` (postal abbreviation) a state missing from data/lodes_h8_commuter_states.json
+    is unavailable even if a few cells across the border fall in the disk; without it, an empty disk is unavailable
+    when fewer than 20% of the cells in an 8-ring around the point are indexed.
     """
     _ensure_table()
     if h3 is None or not _H8_INDEX:
+        return None
+    built = built_states()
+    if state and built is not None and state.upper() not in built:
         return None
     n = 12  # sample grid: (2n+1)^2 points over the circle's bounding square
     step = float(radius_m) / n
@@ -117,14 +124,41 @@ def jobs_in_disk(lat: float, lon: float, radius_m: float) -> Optional[Tuple[floa
                 continue
             hits[cell] = hits.get(cell, 0) + 1
     jobs = resident_workers = 0.0
+    found = False
     for cell, count in hits.items():
         row = _H8_INDEX.get(cell)
         if not row:
             continue
+        found = True
         share = min(1.0, count * pt_km2 / cell_km2)
         jobs += row["workplace_jobs"] * share
         resident_workers += row["rac_c000"] * share
+    if not found and not _grid_covers(lat, lon):
+        return None  # outside the states the grid was built for: unavailable, not zero
     return jobs, resident_workers
+
+
+COVERAGE_RING_K = 8        # H3 res-8 rings (about 4 km)
+COVERAGE_MIN_SHARE = 0.20  # an indexed share below this around an empty disk means the grid does not cover the area
+_STATES_PATH = os.path.join(_REPO_ROOT, "data", "lodes_h8_commuter_states.json")
+
+
+def built_states() -> Optional[set]:
+    """Postal abbreviations of the states in the grid, or None when the sidecar file is missing."""
+    try:
+        with open(_STATES_PATH, encoding="utf-8") as fh:
+            return {x.upper() for x in json.load(fh).get("states", [])}
+    except (OSError, ValueError):
+        return None
+
+
+def _grid_covers(lat: float, lon: float) -> bool:
+    """True when enough of the cells around the point are indexed that an empty disk is a real zero."""
+    try:
+        ring = list(h3.grid_disk(h3.latlng_to_cell(lat, lon, 8), COVERAGE_RING_K))
+        return sum(1 for c in ring if str(c) in _H8_INDEX) / len(ring) >= COVERAGE_MIN_SHARE
+    except Exception:
+        return False
 
 
 # Gated commuter denominator boost (aligned with pillar PRD iterations)

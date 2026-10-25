@@ -2592,7 +2592,8 @@ def _compute_single_score_internal(
             "summary": {},
             "confidence": int(community_safety_details.get("confidence", 80 if community_safety_details.get("data_available") else 0)),
             "data_quality": {
-                "degraded": community_safety_score is None,
+                "degraded": community_safety_score is None or bool(community_safety_details.get("degraded_reasons")),
+                "degraded_reasons": community_safety_details.get("degraded_reasons") or [],
                 "data_available": community_safety_details.get("data_available", False),
                 "source": community_safety_details.get("source"),
             },
@@ -4315,7 +4316,8 @@ async def _stream_score_with_progress(
                 "summary": {},
                 "confidence": int(community_safety_details.get("confidence", 80 if community_safety_details.get("data_available") else 0)),
                 "data_quality": {
-                    "degraded": community_safety_score is None,
+                    "degraded": community_safety_score is None or bool(community_safety_details.get("degraded_reasons")),
+                "degraded_reasons": community_safety_details.get("degraded_reasons") or [],
                     "data_available": community_safety_details.get("data_available", False),
                     "source": community_safety_details.get("source"),
                 },

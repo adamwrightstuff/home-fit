@@ -1,0 +1,11 @@
+{
+ "states": [
+  "CA",
+  "CT",
+  "MA",
+  "NJ",
+  "NY",
+  "TX"
+ ],
+ "note": "States with cells in data/lodes_h8_commuter.parquet, verified 2026-10-25 from cell locations (Hartford, New Haven, Newark, Albany, Buffalo, San Diego, El Paso, Springfield, Boston, Dallas, Houston, Austin covered; Philadelphia, Pittsburgh, Chicago, Providence, Wilmington, Atlanta, Denver, Miami, Phoenix, Seattle not). scripts/baselines/build_lodes_h8_commuter.py rewrites this file when it builds the parquet."
+}
