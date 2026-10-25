@@ -72,3 +72,19 @@ def test_coastal_fog_temperature_is_still_scored(monkeypatch):
     score, d = _run(monkeypatch, heat={"local_lst_c": 19.0, "land_pixel_fraction": 1.0})
     assert d["breakdown"]["heat_exposure_pts"] == pytest.approx(25.0)
     assert d["summary"]["heat_status"] == "ok"
+
+
+@pytest.mark.parametrize("lst,expected", [(30.0, 25.0), (25.0, 25.0), (45.0, 12.5), (58.3, 1.42), (60.0, 0.0), (70.0, 0.0)])
+def test_heat_points_are_linear_from_30_to_60_c(lst, expected):
+    assert cr.heat_points(lst) == pytest.approx(expected, abs=0.01)
+
+
+@pytest.mark.parametrize("trend,expected", [(0.0, 25.0), (0.4, 12.5), (0.58, 6.88), (0.8, 0.0), (1.2, 0.0)])
+def test_trend_points_are_linear_from_zero_to_0_8_c_per_decade(trend, expected):
+    assert cr.trend_points(trend) == pytest.approx(expected, abs=0.01)
+
+
+def test_hottest_catalog_places_no_longer_collapse_to_zero(monkeypatch):
+    # Phoenix-like (50 C) and Las Vegas-like (55 C) surfaces keep distinct, non-zero heat points
+    pts = [_run(monkeypatch, heat={"local_lst_c": t, "land_pixel_fraction": 1.0})[1]["breakdown"]["heat_exposure_pts"] for t in (45.0, 50.0, 55.0)]
+    assert pts[0] > pts[1] > pts[2] > 0

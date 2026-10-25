@@ -26,6 +26,15 @@ sets the slope (no US place is near 35), so treat the air weight as an unvalidat
 with no value means no data for this component (the climate score uses the other three, flagged degraded).
 Wildfire smoke is part of PM2.5 and is kept.
 
+## Heat and warming-trend scales (changed 2026-10-25, judgments)
+Heat is linear in the June to August Landsat land-surface temperature: 25 points at 30 C down to 0 at 60 C. Warming trend is linear in the
+30-year tmax trend: 25 points at no warming down to 0 at 0.8 C per decade. Both anchors are judgments, not sourced thresholds: surface
+temperature runs well above the air temperature health evidence uses, and the old zero points (42 C and 0.5) sat inside the observed
+ranges and flattened 36% of places on heat and 10% on trend. Sensitivity (analysis/launch_check_findings_2026-10-25.md): a pure rescale
+(rank agreement 0.97 for the climate score), Phoenix and Las Vegas stay about 12 points below Seattle and Boston, urban cores stay below
+exurbs in the same metro, the climate score rises about 16 points (about +1.25 on totals, +1.2 on longevity). A scale relative to the metro
+background was rejected because it erases real differences between metros. Surface temperatures outside 15 to 75 C are no data.
+
 ## Fail loud (changed 2026-10-24)
 A component that cannot be measured is no data, not a neutral value; the score is built from the rest and marked
 degraded, and fewer than three of four components means the pillar fails.

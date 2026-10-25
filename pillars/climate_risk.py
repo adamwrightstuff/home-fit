@@ -23,14 +23,20 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-# Heat (0-25 pts). Absolute local LST: 30°C = 25 pts, 42°C = 0 pts.
-# If land_pixel_fraction < 0.3 the 500m buffer is mostly water — fall back to neutral.
+# Heat (0-25 pts). Linear in June-August Landsat land-surface temperature (LST): 25 points at 30 C down to 0 at 60 C.
+# Both anchors are JUDGMENTS (2026-10-25). Surface temperature runs well above the air temperature that health evidence
+# uses, so no published threshold maps onto it. The old zero point of 42 C sat inside the observed range (36% of catalog
+# places, and 97-98% of Phoenix, Las Vegas and Dallas, scored 0); 60 C sits just above the hottest place (58.3 C).
+# Sensitivity (tracker D13, analysis/launch_check_findings_2026-10-25.md): the change is a pure rescale of the heat part
+# (rank agreement 0.97 for the climate score), it keeps Phoenix and Las Vegas about 12 points below Seattle and Boston,
+# keeps urban cores below exurbs in the same metro, and raises the climate score about 13-16 points (about +1.1 on totals).
+# A scale relative to the metro background was rejected because it erases real differences between metros.
 HEAT_MAX_PTS = 25.0
-HEAT_LST_BEST = 30.0   # °C local LST → full points
-HEAT_LST_WORST = 42.0  # °C local LST → 0 points
+HEAT_LST_BEST = 30.0   # C local LST: full points
+HEAT_LST_WORST = 60.0  # C local LST: 0 points
 HEAT_MIN_LAND_FRACTION = 0.3
 # A June-August daytime land-surface temperature outside this range is a bad pixel (cloud, water, ice), not heat:
-# 13 catalog places read below 20 C (Dunedin -21 C) and got full heat points. The bounds are a judgment about what is
+# 9 catalog places read below 15 C (Dunedin -21 C) and got full heat points. The bounds are a judgment about what is
 # physically plausible for US land in summer; Pacifica's coastal-fog 19 C passes, 14 C inland Florida does not.
 LST_PLAUSIBLE_MIN_C = 15.0
 LST_PLAUSIBLE_MAX_C = 75.0
@@ -52,7 +58,22 @@ FLOOD_MAX_PTS = 30.0
 
 # Climate trend (0-25 pts). 30-year TerraClimate tmax trend; 0°C/decade = max, 0.5°C/decade = 0.
 TREND_MAX_PTS = 25.0
-TREND_C_PER_DECADE_FOR_ZERO = 0.5  # °C per decade warming → 0 pts
+# Zero point is a JUDGMENT (2026-10-25): the observed 30-year tmax trends run 0.15 to 0.58 C per decade, and the old
+# zero point of 0.5 clipped 10% of places (Austin 97%, San Antonio 100%, Phoenix 39%). 0.8 keeps every place above 0.
+# The trend is regional (a metro's places share a value), so it differentiates metros, not neighborhoods.
+TREND_C_PER_DECADE_FOR_ZERO = 0.8  # C per decade warming: 0 pts
+
+
+def heat_points(local_lst_c: float) -> float:
+    """Heat points (0 to HEAT_MAX_PTS): linear from full at HEAT_LST_BEST to 0 at HEAT_LST_WORST."""
+    frac = (HEAT_LST_WORST - float(local_lst_c)) / (HEAT_LST_WORST - HEAT_LST_BEST)
+    return round(HEAT_MAX_PTS * max(0.0, min(1.0, frac)), 2)
+
+
+def trend_points(trend_c_per_decade: float) -> float:
+    """Warming-trend points (0 to TREND_MAX_PTS): full at no warming, 0 at TREND_C_PER_DECADE_FOR_ZERO per decade."""
+    frac = 1.0 - max(0.0, float(trend_c_per_decade)) / TREND_C_PER_DECADE_FOR_ZERO
+    return round(TREND_MAX_PTS * max(0.0, min(1.0, frac)), 2)
 
 
 def air_quality_points(pm25_ugm3: float) -> float:
@@ -119,8 +140,7 @@ def get_climate_risk_score(
             local_lst = None
         elif local_lst is not None and land_fraction >= HEAT_MIN_LAND_FRACTION:
             heat_status = "ok"
-            heat_pts = max(0.0, HEAT_MAX_PTS - ((local_lst - HEAT_LST_BEST) / (HEAT_LST_WORST - HEAT_LST_BEST)) * HEAT_MAX_PTS)
-            heat_pts = round(min(HEAT_MAX_PTS, heat_pts), 2)
+            heat_pts = heat_points(local_lst)
 
     # Air quality (0-20 pts). Annual mean PM2.5 (ug/m3) for the tract; no data when the tract has no value.
     air_pts: Optional[float] = None
@@ -151,11 +171,7 @@ def get_climate_risk_score(
     trend_c_per_decade = None
     if trend_data is not None and trend_data.get("trend_c_per_decade") is not None:
         trend_c_per_decade = float(trend_data["trend_c_per_decade"])
-        trend_pts = max(
-            0.0,
-            TREND_MAX_PTS - (max(0.0, trend_c_per_decade) / TREND_C_PER_DECADE_FOR_ZERO) * TREND_MAX_PTS,
-        )
-        trend_pts = round(min(TREND_MAX_PTS, trend_pts), 2)
+        trend_pts = trend_points(trend_c_per_decade)
 
     component_pts = {"heat": heat_pts, "air": air_pts, "flood": flood_pts, "trend": trend_pts}
     component_max = {"heat": HEAT_MAX_PTS, "air": AIR_MAX_PTS, "flood": FLOOD_MAX_PTS, "trend": TREND_MAX_PTS}
