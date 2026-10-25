@@ -4,14 +4,14 @@ import pytest
 import pillars.climate_risk as cr
 
 HEAT = {"local_lst_c": 36.0, "land_pixel_fraction": 1.0}
-AIR = {"pm25_proxy_ugm3": 0.0, "aer_ai_mean": -0.3}
+AIR = {"pm25_ugm3": 8.0, "years": [2021, 2022], "source": "cdc_tracking_epa_downscaler"}
 FLOOD = {"flood_zone_pts": 30.0, "risk_tier": "minimal", "fld_zone": "X", "label": "AREA OF MINIMAL FLOOD HAZARD"}
 TREND = {"trend_c_per_decade": 0.25}
 
 
 def _run(monkeypatch, heat=HEAT, air=AIR, flood=FLOOD, trend=TREND):
     monkeypatch.setattr(cr, "get_heat_exposure_lst", lambda *a, **k: heat)
-    monkeypatch.setattr(cr, "get_air_quality_aer_ai", lambda *a, **k: air)
+    monkeypatch.setattr(cr, "get_air_quality_pm25", lambda *a, **k: air)
     monkeypatch.setattr(cr, "get_fema_flood_zone", lambda *a, **k: flood)
     monkeypatch.setattr(cr, "get_climate_trend_terraclimate", lambda *a, **k: trend)
     monkeypatch.setattr(cr, "detect_area_type", lambda *a, **k: "suburban")
@@ -39,9 +39,18 @@ def test_mostly_water_buffer_is_no_heat_data(monkeypatch):
     assert d["breakdown"]["heat_exposure_pts"] is None
 
 
-def test_missing_air_key_is_no_data_not_worst_case(monkeypatch):
-    score, d = _run(monkeypatch, air={"aer_ai_mean": 0.1})
+def test_missing_air_value_is_no_data_not_worst_case(monkeypatch):
+    score, d = _run(monkeypatch, air={"years": [2022]})
     assert d["breakdown"]["air_quality_pts"] is None
+    score, d = _run(monkeypatch, air=None)  # tract with no PM2.5 value
+    assert d["breakdown"]["air_quality_pts"] is None and d["data_quality"]["degraded"] is True
+
+
+@pytest.mark.parametrize("pm,expected", [(5.0, 20.0), (4.0, 20.0), (20.0, 10.0), (35.0, 0.0), (50.0, 0.0)])
+def test_air_points_are_linear_from_the_who_guideline_to_the_zero_point(monkeypatch, pm, expected):
+    score, d = _run(monkeypatch, air={"pm25_ugm3": pm, "years": [2022], "source": "x"})
+    assert d["breakdown"]["air_quality_pts"] == pytest.approx(expected)
+    assert d["summary"]["pm25_ugm3"] == pytest.approx(pm)
 
 
 def test_fewer_than_three_components_raises(monkeypatch):

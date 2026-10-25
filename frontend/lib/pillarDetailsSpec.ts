@@ -265,7 +265,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     degradedMessage: 'Limited data: some housing or income data were unavailable.',
   },
   climate_risk: {
-    topLine: 'Flood class, extra summer heat vs the region, and air pollution proxy (not another 0–100 score).',
+    topLine: 'Flood class, extra summer heat vs the region, and measured air pollution (annual PM2.5; not another 0–100 score).',
     metrics: [
       {
         label: 'Flood zone (FEMA)',
@@ -274,7 +274,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
         valueLabels: { floodway: 'High', sfha: 'High', x_500yr: 'Moderate', d: 'Moderate', minimal: 'Low' },
       },
       { label: 'Extra heat vs region', path: 'summary.heat_excess_deg_c', format: 'temperatureDelta' },
-      { label: 'PM2.5 proxy (µg/m³)', path: 'summary.pm25_proxy_ugm3', format: 'text' },
+      { label: 'PM2.5, annual average (µg/m³)', path: 'summary.pm25_ugm3', format: 'text' },
     ],
     degradedMessage: 'Limited data: some climate/flood data were unavailable.',
   },

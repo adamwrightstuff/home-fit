@@ -2,7 +2,7 @@
 Climate & Flood Risk pillar (Phase 2: heat, air, flood, climate trend).
 
 Scores forward-looking environmental risk: heat exposure (urban heat island), air quality
-(PM2.5 proxy from Sentinel-5P), FEMA flood zone, and 30-year temperature trend (TerraClimate).
+(annual PM2.5 by census tract, CDC / EPA Downscaler), FEMA flood zone, and 30-year temperature trend (TerraClimate).
 
 All sub-scores are inverse: higher raw value = worse; pillar score 0 = very high risk,
 100 = very low risk.
@@ -13,10 +13,10 @@ from typing import Dict, Tuple, Optional
 
 from data_sources.gee_api import (
     get_heat_exposure_lst,
-    get_air_quality_aer_ai,
     get_climate_trend_terraclimate,
     GEE_AVAILABLE,
 )
+from data_sources.air_quality_pm25 import get_pm25 as get_air_quality_pm25
 from data_sources.fema_flood import get_fema_flood_zone
 from data_sources.data_quality import assess_pillar_data_quality, detect_area_type
 from logging_config import get_logger
@@ -33,9 +33,14 @@ HEAT_MIN_LAND_FRACTION = 0.3
 # Fewer present components than this and the pillar has no score (it raises, so the app marks it failed).
 MIN_COMPONENTS = 3
 
-# Air (0-20 pts). Score = max(0, 20 - (pm25_ugm3 / 35) * 20). 35 ug/m3 = 0 pts.
+# Air (0-20 pts). Annual mean PM2.5 by census tract, linear from full points at PM25_BEST to 0 at PM25_WORST.
+# PM25_BEST is the WHO 2021 annual guideline (5 ug/m3), which is evidence-based. PM25_WORST (35, the WHO interim
+# target 1 and the zero point the old proxy used) is a JUDGMENT: the mortality evidence supports a roughly linear
+# risk (about +7% per 10 ug/m3, Di et al. 2017, NEJM) but does not say how many points a ug/m3 is worth, and no
+# US place is near 35, so this choice only sets the slope (0.67 points per ug/m3). See tracker D13.
 AIR_MAX_PTS = 20.0
-PM25_UNHEALTHY = 35.0  # EPA Unhealthy threshold (ug/m3)
+PM25_BEST = 5.0
+PM25_WORST = 35.0
 
 # Flood (0-30 pts). From FEMA NFHL; floodway=0, SFHA=15%, X/D/minimal scaled. Neutral when missing.
 FLOOD_MAX_PTS = 30.0
@@ -43,6 +48,12 @@ FLOOD_MAX_PTS = 30.0
 # Climate trend (0-25 pts). 30-year TerraClimate tmax trend; 0°C/decade = max, 0.5°C/decade = 0.
 TREND_MAX_PTS = 25.0
 TREND_C_PER_DECADE_FOR_ZERO = 0.5  # °C per decade warming → 0 pts
+
+
+def air_quality_points(pm25_ugm3: float) -> float:
+    """Air quality points (0 to AIR_MAX_PTS): linear from full points at PM25_BEST to 0 at PM25_WORST."""
+    frac = (PM25_WORST - float(pm25_ugm3)) / (PM25_WORST - PM25_BEST)
+    return round(AIR_MAX_PTS * max(0.0, min(1.0, frac)), 2)
 
 
 def get_climate_risk_score(
@@ -62,7 +73,7 @@ def get_climate_risk_score(
     # Fetch all four data sources in parallel (same requests, less wall time; no extra error risk).
     with ThreadPoolExecutor(max_workers=4) as executor:
         f_heat = executor.submit(get_heat_exposure_lst, lat, lon)
-        f_air = executor.submit(get_air_quality_aer_ai, lat, lon)
+        f_air = executor.submit(get_air_quality_pm25, lat, lon)
         f_flood = executor.submit(get_fema_flood_zone, lat, lon)
         f_trend = executor.submit(get_climate_trend_terraclimate, lat, lon)
         heat_data = f_heat.result()
@@ -98,21 +109,18 @@ def get_climate_risk_score(
             heat_pts = max(0.0, HEAT_MAX_PTS - ((local_lst - HEAT_LST_BEST) / (HEAT_LST_WORST - HEAT_LST_BEST)) * HEAT_MAX_PTS)
             heat_pts = round(min(HEAT_MAX_PTS, heat_pts), 2)
 
-    # Air quality (0-20 pts). Inverse: lower pm25_proxy = higher score. 0 is valid (best air).
+    # Air quality (0-20 pts). Annual mean PM2.5 (ug/m3) for the tract; no data when the tract has no value.
     air_pts: Optional[float] = None
-    pm25_proxy = None
+    pm25 = None
     if air_data is not None:
-        raw_pm = air_data.get("pm25_proxy_ugm3")
         try:
-            pm25_proxy = float(raw_pm) if raw_pm is not None else None
+            pm25 = float(air_data.get("pm25_ugm3"))
         except (TypeError, ValueError):
-            pm25_proxy = None
-        if pm25_proxy is not None and (pm25_proxy != pm25_proxy or pm25_proxy < 0):
-            pm25_proxy = None
-        if pm25_proxy is not None:
-            pm25_proxy = min(35.0, pm25_proxy)
-            air_pts = max(0.0, AIR_MAX_PTS - (pm25_proxy / PM25_UNHEALTHY) * AIR_MAX_PTS)
-            air_pts = round(min(AIR_MAX_PTS, air_pts), 2)
+            pm25 = None
+        if pm25 is not None and (pm25 != pm25 or pm25 < 0):
+            pm25 = None
+        if pm25 is not None:
+            air_pts = air_quality_points(pm25)
 
     # Flood (0-30 pts). From FEMA NFHL; no data when the FEMA lookup failed.
     flood_pts: Optional[float] = None
@@ -174,6 +182,10 @@ def get_climate_risk_score(
     quality_metrics = assess_pillar_data_quality(
         "climate_risk", combined_data, lat, lon, area_type_dq
     )
+    if air_data and air_data.get("match") == "nearest_centroid":
+        quality_metrics["data_warnings"] = list(quality_metrics.get("data_warnings") or []) + [
+            f"pm25_nearest_tract_centroid_{air_data.get('match_km')}km"
+        ]
     if missing:
         quality_metrics["degraded"] = True
         quality_metrics["degraded_reasons"] = list(quality_metrics.get("degraded_reasons") or []) + [
@@ -193,8 +205,11 @@ def get_climate_risk_score(
     summary = {
         "local_lst_c": heat_data.get("local_lst_c") if heat_data else None,
         "land_pixel_fraction": heat_data.get("land_pixel_fraction") if heat_data else None,
-        "pm25_proxy_ugm3": pm25_proxy,
-        "aer_ai_mean": air_data.get("aer_ai_mean") if air_data else None,
+        "pm25_ugm3": round(pm25, 2) if pm25 is not None else None,
+        "pm25_years": air_data.get("years") if air_data else None,
+        "pm25_source": air_data.get("source") if air_data else None,
+        "pm25_match": air_data.get("match") if air_data else None,
+        "pm25_match_km": air_data.get("match_km") if air_data else None,
         "flood_zone_score": flood_score_0_100,
         "flood_risk_tier": risk_tier,
         "fld_zone": fld_zone,
@@ -215,6 +230,6 @@ def get_climate_risk_score(
     logger.info(
         "Climate Risk Score: %s/100 (heat=%s, air=%s, flood=%s, trend=%s) missing=%s local_lst=%s land_frac=%s pm25=%s flood_tier=%s trend_c_decade=%s",
         score, heat_pts, air_pts, flood_pts, trend_pts, missing,
-        local_lst, land_fraction, pm25_proxy, risk_tier, trend_c_per_decade,
+        local_lst, land_fraction, pm25, risk_tier, trend_c_per_decade,
     )
     return score, details
