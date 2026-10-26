@@ -34,3 +34,8 @@ Permission to pull Walk Score values; decision on the 43 inconsistent pins; sign
 
 ## Held pins resolved (2026-10-26)
 Tiburon 63.8, Youngtown 10.3, Cherry Hills Village 14.1, Corinth 33.0 and Prosper 33.8 were re-read at the OSM place-node pin their old lists came from (within 1.3 points of the old scores); the pin is stored as pin_used. Highland Village keeps 82.0 by owner decision with a data warning: its list belongs to another place; at the correct pin it would score 0.0, and its retail cluster (43 businesses incl. The Cheesecake Factory) is 2.7 km from the stored pin. The pin-consistency check flags Highland Village and Ridgewood. Other pillars for these places were scored at the stored boundary-center pins.
+
+## Owner decisions (2026-10-26)
+- P4 and P5: unsourced weights accepted as documented judgment with measured ranges (option A). Both are recorded as met with caveats, not as sourced.
+- P7: Walk Score values to be looked up by hand for the 50-place sample in analysis/amenities_walkscore_sample_2026-10-26.csv; compare with scripts/qa/amenities_walkscore_compare.py. Not independent of our inputs.
+- Push: branch amenities-v2-on-origin only, no deploy. The two local natural beauty commits stay with their owner.
