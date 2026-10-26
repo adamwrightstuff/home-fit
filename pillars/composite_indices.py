@@ -434,7 +434,10 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
 
     # F19: Nullify fabricated neighborhood_amenities scores (confidence=0 with a score set).
     na_data = pillars.get("neighborhood_amenities")
-    if isinstance(na_data, dict) and na_data.get("confidence") == 0 and na_data.get("score") is not None:
+    # A verified empty walkable area (control query saw map data, zero businesses in range) is a real 0, not fabricated.
+    _na_verified_empty = "no_businesses_within_radius" in ((na_data or {}).get("data_quality") or {}).get("data_warnings", []) \
+        if isinstance(na_data, dict) else False
+    if isinstance(na_data, dict) and na_data.get("confidence") == 0 and na_data.get("score") is not None and not _na_verified_empty:
         na_data["score"] = None
         na_data["contribution"] = 0.0  # stored-gap shape: weight is redistributed in the total below
 

@@ -42,3 +42,26 @@ def test_no_gap_leaves_the_total_alone(recompute):
     p = _payload(None)
     p["livability_pillars"]["c"].update({"score": 50.0, "contribution": 12.5})
     assert recompute(p)["total_score"] == pytest.approx(57.5)
+
+
+def _na_payload(score, warnings):
+    pillars = {
+        "neighborhood_amenities": {"score": score, "weight": 50.0, "contribution": 0.0, "confidence": 0,
+                                   "data_quality": {"data_warnings": warnings}},
+        "b": {"score": 60.0, "weight": 50.0, "contribution": 30.0},
+    }
+    return pillars, {"livability_pillars": pillars, "location_info": {}, "coordinates": {}}
+
+
+def test_verified_empty_amenities_zero_is_kept_as_a_real_zero(recompute):
+    pillars, payload = _na_payload(0.0, ["no_businesses_within_radius"])
+    out = recompute(payload)
+    assert pillars["neighborhood_amenities"]["score"] == 0.0
+    assert out["total_score"] == pytest.approx(30.0)  # the zero keeps its weight
+
+
+def test_fabricated_zero_confidence_amenities_score_is_still_nullified(recompute):
+    pillars, payload = _na_payload(30.0, [])
+    out = recompute(payload)
+    assert pillars["neighborhood_amenities"]["score"] is None
+    assert out["total_score"] == pytest.approx(60.0)
