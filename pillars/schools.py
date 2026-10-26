@@ -120,7 +120,7 @@ def _get_school_data_legacy(
     lon: Optional[float] = None,
     area_type: Optional[str] = None,
     place_name: Optional[str] = None
-) -> Tuple[float, Dict[str, List[Dict]], Dict]:
+) -> Tuple[Optional[float], Dict[str, List[Dict]], Dict]:
     """
     Calculate school score (0-100) and return schools by level.
     
@@ -145,7 +145,7 @@ def _get_school_data_legacy(
 
     if not schools:
         print("⚠️  No schools found")
-        return 0.0, {"elementary": [], "middle": [], "high": []}, {
+        return None, {"elementary": [], "middle": [], "high": []}, {
             "base_avg_rating": 0.0,
             "access_bonus": 0.0,
             "early_ed_bonus": 0.0,
@@ -166,7 +166,7 @@ def _get_school_data_legacy(
     if schools_with_ratings == 0:
         print(f"⚠️  Found {len(schools)} schools but none have rating data")
         print("   Sample school data:", school.get("schoolName", "Unknown") if schools else "No schools")
-        return 0.0, {"elementary": [], "middle": [], "high": []}, {
+        return None, {"elementary": [], "middle": [], "high": []}, {
             "base_avg_rating": 0.0,
             "access_bonus": 0.0,
             "early_ed_bonus": 0.0,
@@ -309,7 +309,7 @@ def _get_school_data_legacy(
 
     if not all_ratings:
         print("⚠️  Schools found but no ratings available")
-        return 0.0, {"elementary": [], "middle": [], "high": []}, {
+        return None, {"elementary": [], "middle": [], "high": []}, {
             "base_avg_rating": 0.0,
             "access_bonus": 0.0,
             "early_ed_bonus": 0.0,
@@ -629,7 +629,7 @@ def get_school_data(
     place_name: Optional[str] = None,
     early_ed_override: Optional[Dict] = None,
     early_ed_unknown: bool = False,
-) -> Tuple[float, Dict[str, List[Dict]], Dict]:
+) -> Tuple[Optional[float], Dict[str, List[Dict]], Dict]:
     """
     Education score (0-100), schools by level, breakdown. `early_ed_override` reuses stored early-education access
     (offline re-scores) instead of querying OpenStreetMap again. Uses the zoned model when the point has
@@ -661,7 +661,7 @@ def get_school_data(
     total = headline_from_levels(levels, early)
     if total is None:
         print("⚠️  No rated schools for any level")
-        return 0.0, {"elementary": [], "middle": [], "high": []}, {
+        return None, {"elementary": [], "middle": [], "high": []}, {
             "model": MODEL, "base_avg_rating": 0.0, "access_bonus": 0.0, "early_ed_bonus": 0.0,
             "levels": levels, "districts": cands["districts"],
         }
