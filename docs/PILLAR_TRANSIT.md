@@ -106,7 +106,7 @@ Score = 100 x log(1 + weighted routes) / log(1 + 120), weighted routes = 3 x sub
 | Subway 3, light rail 2, bus 0.7 | judgments | Kept: refits to tract transit commute share did not beat them out of sample or on an independent measure |
 | Commuter rail 3 | documented choice, range 2 to 4 | Largest weight at which no validation measure falls more than 0.01 below its value at weight 1 |
 | Anchor 120 and log curve | judgment | Only ratios are identified by the data; the level is a judgment |
-| Search radius 1.5 to 3 km by area type | judgment, unsourced | Open (P3): published walking distances (about 524 to 990 m bus, 1,100 to 1,260 m rail) would shrink it; needs a route re-fetch |
+| Search radius 1.5 to 3 km by area type | judgment, unsourced | Tested 2026-10-26 against published walking catchments (bus 750 m, tram 710 m, subway and rail 1,180 m, the midpoints of published 85th-percentile walks): tract-share Spearman 0.715 vs 0.691, but within-metro 0.488 vs 0.526, no-vehicle 0.615 vs 0.609, pin-shift 95th percentile 13.1 vs 9.6 points, and 359 places move more than 15 points. Not adopted; the current radius stays as a recorded judgment |
 | Schedule bonuses | judgments | Present for 9 to 207 places, scaled from small samples; unsourced |
 
 ### Validation (P7)
@@ -117,7 +117,7 @@ Score = 100 x log(1 + weighted routes) / log(1 + 120), weighted routes = 3 x sub
 - Why people ride commuter rail in some towns (230 commuter-only towns): reachable jobs (LODES gravity) correlates 0.38 to 0.75 with tract transit share within metros, peak trains per hour 0.23 to 0.45, income 0.42. Station frequency was pulled for these towns (data not kept; 57 places had stale feeds, 29 in Boston).
 
 ### Sensitivity (P6), catalog mean 39.2
-Per-place change across the recorded ranges (median / 95th percentile / maximum): commuter rail 2 to 4 weight 0.0 / 4.4 / 7.0; light rail 1 to 3 weight 0.0 / 2.4 / 8.5; subway 2 to 4 weight 0.0 / 3.3 / 6.5; bus 0.5 to 1.0 weight 3.3 to 4.1 / 6.1 to 6.8 / 7.3 (the bus weight moves the catalog mean by 3 to 4 points). The pin-shift test is not done (needs route re-fetches at shifted pins).
+Per-place change across the recorded ranges (median / 95th percentile / maximum): commuter rail 2 to 4 weight 0.0 / 4.4 / 7.0; light rail 1 to 3 weight 0.0 / 2.4 / 8.5; subway 2 to 4 weight 0.0 / 3.3 / 6.5; bus 0.5 to 1.0 weight 3.3 to 4.1 / 6.1 to 6.8 / 7.3 (the bus weight moves the catalog mean by 3 to 4 points). Pin-shift test (500 m, 8 bearings, 30 places, 240 shifted points, route counts re-fetched at each point): median change 0, 95th percentile 9.6 points, maximum 24.2 (North Andover). This exceeds the 5-point gate set for the audit, so it is a known limitation: a hard route-count circle is sensitive to pin position. Averaging scores over a ring of points would fix it but costs about nine times the route calls.
 
 ### Catalog effect
 All 1,476 rows were recomputed offline from stored route counts by `scripts/catalog/recompute_transit_v2_offline.py`: transit mean 41.8 to 39.2, total score -0.17 on average. Commuter-rail towns: Harrison 76 to 44, Darien 68 to 44, Greenwich 62 to 52, Bronxville 59 to 51, Hinsdale 58 to 29. Subway neighborhoods barely move (Astoria 91 to 91).
