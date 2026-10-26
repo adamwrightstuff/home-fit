@@ -6,9 +6,11 @@ proficiency (reading and math), served by the Urban Institute Education Data API
 SchoolDigger's ratings are state-wide percentiles built from state test results, so they should rank schools the
 way proficiency does. This compares them school by school (SchoolDigger school IDs are NCES IDs) per level and
 lists the lowest-rated schools in the lowest-scoring catalog places with their proficiency.
-Caveat: EDFacts' newest school-level year here is 2017-18 (API year 2018), so this tests the ranking, not the latest year.
+Caveat: the original run used API year 2018 (labelled 2017-18 when written; the API's own year convention was not confirmed).
+Checked 2026-10-26: API years 2019 and 2021 onward return errors, 2020 returns data, so 2020 is the newest year. COVID-era 2020 data may
+have opt-outs and suppression. SchoolDigger ratings in the snapshot are the 2025 ratings, so this tests the ranking only.
 
-  PYTHONPATH=. python3 scripts/catalog/validate_education_vs_edfacts.py [--lowest 12]
+  PYTHONPATH=. python3 scripts/catalog/validate_education_vs_edfacts.py [--lowest 12] [--year 2018]
 """
 from __future__ import annotations
 
@@ -67,10 +69,11 @@ def spearman(a: List[float], b: List[float]) -> float:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     ap.add_argument("--lowest", type=int, default=12, help="how many lowest-scoring catalog places to list")
+    ap.add_argument("--year", type=int, default=2018, help="EDFacts API year (2018 or 2020 return data)")
     args = ap.parse_args()
 
     # 1) rank agreement in the big districts (one request per district and grade)
-    print("Rank agreement: SchoolDigger percentile vs EDFacts 2018 proficiency (Spearman)")
+    print(f"Rank agreement: SchoolDigger percentile vs EDFacts {args.year} proficiency (Spearman)")
     pools = dict(BIG)
     csd = _nyc_csd_ids_by_number("NY")
     for n, did in sorted(csd.items()):
@@ -81,7 +84,7 @@ def main() -> int:
         group = "NYC" if label.startswith("NYC") else label
         schools = {s["schoolid"]: s for s in (ss.district_schools(st, leaid) or [])}
         for lv, grade in GRADE.items():
-            prof = fetch(leaid, grade)
+            prof = fetch(leaid, grade, args.year)
             for sid, p in prof.items():
                 s = schools.get(sid)
                 r = school_rating(s) if s and s.get("rankHistory") else None
@@ -109,7 +112,7 @@ def main() -> int:
             if p.get("score") is not None:
                 rows.append((p["score"], m, o))
     rows.sort(key=lambda r: r[0])
-    print(f"\nLowest {args.lowest} places: scored school vs EDFacts 2018 proficiency (reading/math midpoint, grade 4/8/9)")
+    print(f"\nLowest {args.lowest} places: scored school vs EDFacts {args.year} proficiency (reading/math midpoint, grade 4/8/9)")
     for score, m, o in rows[: args.lowest]:
         c = o["catalog"]
         st = normalize_state(o["score"]["location_info"]["state"])
@@ -123,7 +126,7 @@ def main() -> int:
                     for s in ss.district_schools(st, d["id"]) or []:
                         if s["schoolName"] == e["name"]:
                             match = s
-                            prof = fetch(d["id"] if "New York City" not in d["name"] else str(s["district"]["districtID"]), GRADE[lv])
+                            prof = fetch(d["id"] if "New York City" not in d["name"] else str(s["district"]["districtID"]), GRADE[lv], args.year)
                             p = prof.get(s["schoolid"])
                             print(f"    {lv:<10} {e['name'][:34]:<36} SchoolDigger pct {e['rating']:>5.1f}  proficiency {('%.1f%%' % p) if p is not None else 'n/a'}")
                             break
