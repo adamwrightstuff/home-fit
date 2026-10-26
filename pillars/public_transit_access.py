@@ -644,8 +644,10 @@ def get_public_transit_score(
         })
         from data_sources import osm_api as osm
         osm_stations = osm.query_railway_stations(lat, lon, radius_m=2000)
+        if osm_stations is None:
+            raise TransitReadError("OSM railway station read failed after Transitland returned no routes")
         
-        if osm_stations and len(osm_stations) > 0:
+        if len(osm_stations) > 0:
             # Convert OSM stations to route-like format for scoring
             routes_data = _convert_osm_stations_to_routes(osm_stations)
             logger.info(f"Found {len(routes_data)} railway stations via OSM", extra={
@@ -662,82 +664,8 @@ def get_public_transit_score(
                 "area_type": area_type
             })
             
-            # FALLBACK SCORING: Apply conservative minimum scores for urban/suburban areas
-            # when Transitland API fails or returns no routes, but commute_time suggests transit exists
-            # This handles API data gaps similar to healthcare_access pillar
-            is_urban_suburban = (
-                area_type in ("urban_core", "urban_residential", "suburban") or 
-                (density and density > 1500)
-            )
-            
-            if is_urban_suburban:
-                # Try to get commute_time as proxy for transit availability
-                try:
-                    from data_sources.census_api import get_commute_time
-                    commute_minutes = get_commute_time(lat, lon)
-                    
-                    # If commute_time is reasonable (< 60 min), it suggests transit might exist
-                    # but Transitland API isn't finding it (data gap, not truly no transit)
-                    if commute_minutes and commute_minutes > 0 and commute_minutes < 60:
-                        commute_score = _score_commute_time(commute_minutes, area_type)
-                        
-                        # Apply conservative fallback scores based on area type and commute_time
-                        # These are minimum floors, not full scores
-                        if area_type == "urban_core" or (density and density > 5000):
-                            # Urban cores should have transit - apply moderate fallback
-                            fallback_heavy = 15.0
-                            fallback_bus = 12.0
-                        elif area_type == "urban_residential" or (density and density > 2000):
-                            fallback_heavy = 10.0
-                            fallback_bus = 10.0
-                        elif area_type == "suburban" or (density and density > 1500):
-                            fallback_heavy = 5.0
-                            fallback_bus = 8.0
-                        else:
-                            fallback_heavy = 0.0
-                            fallback_bus = 0.0
-                        
-                        # Use commute_score as additional signal (weighted 5%)
-                        commute_weighted = commute_score * COMMUTE_WEIGHT
-                        
-                        # Total fallback score
-                        fallback_total = fallback_heavy + fallback_bus + commute_weighted
-                        fallback_total = min(100.0, fallback_total)
-                        
-                        logger.info(f"📊 Applying fallback transit score {fallback_total:.1f} for {area_type or 'unknown'} area (Transitland API unavailable, commute_time={commute_minutes:.1f} min)", extra={
-                            "pillar_name": "public_transit_access",
-                            "lat": lat,
-                            "lon": lon,
-                            "area_type": area_type,
-                            "fallback_score": fallback_total,
-                            "commute_minutes": commute_minutes
-                        })
-                        
-                        return fallback_total, {
-                            "score": round(fallback_total, 1),
-                            "breakdown": {
-                                "heavy_rail": round(fallback_heavy, 1),
-                                "light_rail": 0.0,
-                                "bus": round(fallback_bus, 1),
-                                "commute_time": round(commute_score, 1)
-                            },
-                            "summary": {
-                                "total_routes": 0,
-                                "heavy_rail_routes": 0,
-                                "light_rail_routes": 0,
-                                "bus_routes": 0,
-                                "fallback_applied": True,
-                                "fallback_reason": f"Transitland API unavailable for {area_type or 'unknown'} area (commute_time={commute_minutes:.1f} min suggests transit exists)"
-                            }
-                        }
-                except Exception as e:
-                    logger.warning(f"⚠️  Could not calculate fallback score: {e}", extra={
-                        "pillar_name": "public_transit_access",
-                        "lat": lat,
-                        "lon": lon,
-                        "error": str(e)
-                    })
-            
+            # Transitland answered (HTTP 200) with no routes and OSM lists no railway station: a real zero, marked as
+            # "no service found". No invented fallback score is applied (design principles v2, P9).
             return 0, _empty_breakdown()
 
     # Categorize routes by type
@@ -1488,11 +1416,16 @@ def get_public_transit_score(
     return round(total_score, 1), breakdown
 
 
+class TransitReadError(RuntimeError):
+    """The Transitland read failed (no key, HTTP error, timeout). That is missing data, not 'no transit' (P9)."""
+
+
 def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dict]:
     """
     Query Transitland API for nearby transit routes.
     
-    Returns list of routes with their types and distances.
+    Returns list of routes with their types and distances. An empty list means Transitland answered with no routes;
+    a failed read raises TransitReadError so the pillar shows no data and is retried.
     """
     if not TRANSITLAND_API_KEY:
         logger.warning("⚠️  TRANSITLAND_API_KEY not found in .env", extra={
@@ -1501,7 +1434,7 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
             "lon": lon,
             "api_name": "transitland"
         })
-        return []
+        raise TransitReadError("TRANSITLAND_API_KEY is not set")
     
     try:
         url = f"{TRANSITLAND_API}/routes"
@@ -1557,7 +1490,7 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
                     raise
         
         if response is None:
-            return []
+            raise TransitReadError("Transitland returned no response")
         
         if response.status_code != 200:
             logger.warning(f"⚠️  Transitland API returned status {response.status_code}", extra={
@@ -1568,7 +1501,7 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
                 "status_code": response.status_code,
                 "error_type": "http_error"
             })
-            return []
+            raise TransitReadError(f"Transitland returned HTTP {response.status_code}")
         
         data = response.json()
         routes = data.get("routes", [])
@@ -1742,7 +1675,9 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
             "lat": lat,
             "lon": lon
         })
-        return []
+        if isinstance(e, TransitReadError):
+            raise
+        raise TransitReadError(f"Transitland read failed: {e}") from e
 
 
 def _score_heavy_rail_routes(routes: List[Dict], lat: float = None, lon: float = None, area_type: str = None, city: Optional[str] = None) -> float:
@@ -2148,7 +2083,9 @@ def _empty_breakdown() -> Dict:
             "nearest_light_rail": None,
             "nearest_bus": None,
             "transit_modes_available": [],
-            "access_level": "None - No transit service"
-        }
+            "access_level": "None - No transit service",
+            "no_service_found": True
+        },
+        "data_quality": {"degraded": False, "data_warnings": ["no_transit_routes_found"]}
     }
     

@@ -89,3 +89,8 @@ The catalog is rescored offline (not via live fetch — too noisy):
   stored counts. See LIVE_SCORER_VS_EXPLORER.
 - Mixed subway+commuter hubs (PATH + NJ Transit, etc.): `subway_count > 0` excludes them from
   the commuter floor (correct — they already score high on subway supply).
+
+## Failed reads and fallbacks (changed 2026-10-26)
+A failed Transitland read (no key, HTTP error, timeout) or a failed OSM railway-station read after an empty Transitland answer now raises `TransitReadError`, so the pillar shows as no data and is retried; it is no longer scored as 0. A 200 answer with no routes and no OSM station is a real zero, marked `summary.no_service_found` and `no_transit_routes_found` in the data warnings. The invented fallback scores (15/12, 10/10, 5/8 plus 5% of a commute score) were removed.
+
+Catalog: 273 places (169 stored as 0, 104 carrying the fallback) were re-read live. All 273 reads succeeded. 269 are confirmed no service within the search radius (166 stayed 0, 103 fallback places went from a mean of 23 to 0); 4 had real service the stored value missed (Pelham Bay 0 to 63, Glendale 0 to 55, Southport 0 to 14, Cedar Park 17 to 18). Total score moved -1.7 on average for the 104 fallback places and -0.5 across the 273. Caveats: the zeros are zeros inside the radius (1.5 km exurban and rural, 2 km suburban, 3 km urban core); Acton (MA) has one route at 2 km and Weston five at 5 km, so the radius, not a failed read, explains those zeros (a measurement-area question, audit P3). The data-quality assessor still gives confidence 0 to any empty transit read, so the 269 confirmed zeros keep confidence 0 in the catalog.
