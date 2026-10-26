@@ -13,7 +13,7 @@ Branch: `amenities-v2-on-origin` (built on origin/main, not pushed). Evidence pe
 | P7 validation | Open | Walk Score pull not done (needs permission; not independent). Price check: median within-metro Spearman 0.03 vs home value, -0.21 vs income, a null result |
 | P8 all-places check | Met | Every change run on all 1,476 places; impacts in the audit and estimate files |
 | P9 fail loud | Met | 0 amenities no-data rows. 49 verified empties score 0.0 with a warning; control query on the same endpoint; failed Places fallback marks degraded |
-| P10 launch check | Met by tool; pairs await owner approval | Launch check PASS (gap +48.2 vs 20 required). Eight proposed pairs all pass but were looked up before writing |
+| P10 launch check | Met | Launch check PASS (gap +48.2 vs 20 required). Eight owner-approved pairs all pass (analysis/amenities_launch_pairs_2026-10-26.md); they were looked up before writing, so a check not a blind test |
 | P11 disclose limits | Partial | Live response carries chains_included, data source, pin_sensitivity. Catalog rows do not carry Places fallback metadata |
 | P12 re-validate | Partial | Live and catalog version tag now the same (amenities_v3_1_decay_grocery_2026-10-26) and stamped on all rows; health check updated. No schedule set |
 
@@ -27,4 +27,4 @@ For 43 of 1,360 places with a business list, the stored distances disagree with 
 No amenities no-data rows. 32 re-read places (28 empty at 0.0, 4 with data) and 18 earlier ones are written; totals for the 32 dropped 3.3 to 6.0 points (mean -4.9). Several zero places are in large neighborhoods whose pin sits 1.5 km or more from the commercial center (for example Coconut Grove, Pinecrest, Pine Hills, Snell Isle); they are real zeros at the pin and a pin-quality question.
 
 ## Still needs the owner
-Approve or change the proposed launch pairs; permission to pull Walk Score values; decision on the 43 inconsistent pins; sign-off; merge and push (main also holds two local natural beauty commits that are not part of this branch).
+Permission to pull Walk Score values; decision on the 43 inconsistent pins; sign-off; merge and push (main also holds two local natural beauty commits that are not part of this branch).
