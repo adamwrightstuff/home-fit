@@ -51,6 +51,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("results")
     ap.add_argument("--write", action="store_true")
+    ap.add_argument("--any-status", action="store_true", help="also replace rows that already have a score (pin corrections)")
     ap.add_argument("--backup-dir")
     ap.add_argument("--glob", default=str(ROOT / "data" / "*_metro_place_catalog_scores_merged.composites_recomputed.jsonl"))
     a = ap.parse_args()
@@ -76,7 +77,7 @@ def main():
             s = rec.get("score") or {}
             P = s.get("livability_pillars") or {}
             old = P.get("neighborhood_amenities")
-            if det is None or not isinstance(old, dict) or old.get("status") != "no_data":
+            if det is None or not isinstance(old, dict) or (old.get("status") != "no_data" and not a.any_status):
                 out.append(line)
                 continue
             old = json.loads(json.dumps(old))
