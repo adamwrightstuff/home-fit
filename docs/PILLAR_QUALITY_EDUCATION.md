@@ -89,7 +89,10 @@ Census district data). All six catalog metros are scored with `zoned_v1`:
 rated schools of the home district; lottery levels show the district pool average), measured by statewide test-score percentile.
 **Frame:** within-state percentile (relative). It is comparable only inside a state, not between, say, CT and FL.
 **Weight:** an equal 1/13 share for everyone, an owner judgment with no source. **Pin sensitivity:** a 0.5 mile pin shift moves the
-score a median 5.8 points (p95 42.9, 2026-10-25); it is disclosed, and a confidence flag is the agreed treatment (not built yet).
+score a median 5.8 points (p95 42.9, 2026-10-25). Each place stores `breakdown.pin_sensitivity` (largest and mean change over
+0.5 mile shifts north, south, east and west) and a place whose largest change exceeds 15 points (owner judgment, no source;
+387 of 1,472 places) carries `data_warnings` "pin_sensitive" and `summary.pin_sensitive`. Build or refresh it with
+`scripts/catalog/compute_education_pin_sensitivity.py` (offline); re-run it after any `rescore_education_offline.py`, which drops it.
 Spec sheet: `analysis/education_spec_sheet_2026-10-26.md`. Unsourced parameters (radii, nearest-3, caps, pool average) are TODOs.
 
 ## Early-education access (2026-10-25)
