@@ -23,6 +23,7 @@ from data_sources.places_env import google_places_api_key, places_na_fallback_en
 from .places_osm_mapping import (
     TIER_PLACE_TYPES,
     included_types_for_nearby_search,
+    resolve_matched_google_type,
     resolve_tier_and_type_from_google_types,
 )
 from .utils import haversine_distance
@@ -289,13 +290,18 @@ def place_json_to_business(
         "lon": float(plon),
         "distance_m": distance_m,
         "type": biz_type,
-        "shop": None,
+        # Keep the grocery subtype so the essentials check can tell a supermarket from a convenience store.
+        "shop": _places_grocery_shop(types) if biz_type == "grocery" else None,
         "leisure": None,
         "amenity": None,
         "source": "google_places",
         "google_place_id": pid,
         "_tier_key": tier_key,
     }
+
+
+def _places_grocery_shop(types: List[str]) -> str:
+    return "convenience" if resolve_matched_google_type(types) == "convenience_store" else "supermarket"
 
 
 def _merge_places_into_base(

@@ -87,6 +87,14 @@ def resolve_tier_and_type_from_google_types(types: Optional[List[str]]) -> Optio
     return None
 
 
+def resolve_matched_google_type(types: Optional[List[str]]) -> Optional[str]:
+    """The Places type that `resolve_tier_and_type_from_google_types` matched on, or None."""
+    if not types:
+        return None
+    tset = set(types)
+    return next((gt for gt in _TYPE_MATCH_ORDER if gt in tset), None)
+
+
 def included_types_for_nearby_search() -> List[str]:
     """All mapped Google types (union of `included_type_batches_for_nearby_search()`)."""
     return list(dict.fromkeys(GOOGLE_TYPE_TO_TIER.keys()))

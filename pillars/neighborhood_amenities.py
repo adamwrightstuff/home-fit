@@ -212,6 +212,8 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
         "places_fallback": places_fallback_meta,
         "data_quality": quality_metrics,
         "empty_walkable_area": empty_walkable_area,
+        "pin_sensitivity": _pin_sensitivity(all_businesses, lat, lon, area_type, vacation_mode, walkable_distance),
+        "limits": {"chains_included": include_chains, "osm_with_places_fallback": bool(places_fallback_meta.get("used"))},
         "version": "neighborhood_amenities_v2_places_fallback",
         "raw_total": round(raw_total, 1),
         "calibration": {"a": None, "b": None, "note": "Calibration removed - using pure data-backed scoring per design principles"},
@@ -261,6 +263,10 @@ _T1_DAILY = {"cafe", "bakery", "grocery"}
 _T2_SOCIAL = {"restaurant", "bar", "ice_cream"}
 _T3_CULTURE = {"bookstore", "gallery", "theater", "museum", "market", "attraction", "landmark"}
 _T4_SERVICES = {"boutique", "salon", "records", "fitness", "garden"}
+# Convenience stores and greengrocers still count as businesses, but not for the grocery run: USDA's
+# Food Access Research Atlas measures healthy-food access to supermarkets, supercenters and large grocers.
+# A stored Places record with no subtype (shop None) is kept, since its type is unknown.
+_NOT_A_GROCERY_RUN = {"convenience", "greengrocer"}
 
 
 def _score_walkable_density(walk_biz: List[Dict], max_points: float = 50) -> float:
@@ -290,7 +296,8 @@ def _score_essentials_proximity(walk_biz: List[Dict], max_points: float = 25) ->
     """The 'milk run': can you WALK to a grocery, a cafe/bakery, and a restaurant/bar?
     A car-dependent suburb whose grocery is a 1.2km drive loses here even with a Main Street."""
     def nearest(types):
-        ds = [b["distance_m"] for b in walk_biz if b.get("type") in types and b.get("distance_m") is not None]
+        ds = [b["distance_m"] for b in walk_biz if b.get("type") in types and b.get("distance_m") is not None
+              and not (b.get("type") == "grocery" and b.get("shop") in _NOT_A_GROCERY_RUN)]
         return min(ds) if ds else None
 
     def prox(d):
@@ -310,6 +317,34 @@ def _score_essentials_proximity(walk_biz: List[Dict], max_points: float = 25) ->
     caf = prox(nearest({"cafe", "bakery"}))
     eat = prox(nearest({"restaurant", "bar"}))
     return round((groc * 0.45 + caf * 0.30 + eat * 0.25) * max_points, 2)
+
+
+_PIN_SHIFT_M = 200
+
+
+def _pin_sensitivity(all_businesses: List[Dict], lat: float, lon: float, area_type: Optional[str],
+                     vacation_mode: bool, walkable_distance: int) -> Dict:
+    """Score range when the pin moves 200 m north, south, east and west.
+
+    Uses the businesses already fetched, so businesses beyond the query radius are not seen: the result is
+    an estimate of how much the score depends on exactly where the pin sits, reported as confidence only.
+    """
+    if not all_businesses:
+        return {"shift_m": _PIN_SHIFT_M, "min": None, "max": None, "range": None}
+    walk_m = min(walkable_distance, 2000) if vacation_mode else min(walkable_distance, 800)
+    scores = []
+    for dn, de in ((_PIN_SHIFT_M, 0), (-_PIN_SHIFT_M, 0), (0, _PIN_SHIFT_M), (0, -_PIN_SHIFT_M)):
+        nlat = lat + dn / 111320.0
+        nlon = lon + de / (111320.0 * max(0.01, math.cos(math.radians(lat))))
+        moved = [dict(b, distance_m=haversine_distance(nlat, nlon, b["lat"], b["lon"])) for b in all_businesses]
+        near = [b for b in moved if b["distance_m"] <= walk_m]
+        home = (_score_walkable_density(near, 50)
+                + _score_walkable_variety(*[[b for b in near if b.get("type") in t]
+                                            for t in (_T1_DAILY, _T2_SOCIAL, _T3_CULTURE, _T4_SERVICES)], max_points=25)
+                + _score_essentials_proximity(near, 25))
+        scores.append(min(100.0, home * 0.6 + _score_location_quality(moved, nlat, nlon, 40, area_type)))
+    lo, hi = min(scores), max(scores)
+    return {"shift_m": _PIN_SHIFT_M, "min": round(lo, 1), "max": round(hi, 1), "range": round(hi - lo, 1)}
 
 
 def _score_cultural_bonus(tier3_cluster: List[Dict]) -> float:
