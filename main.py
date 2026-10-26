@@ -2357,8 +2357,7 @@ def _compute_single_score_internal(
     nb_effective_area_type = (built_calc or {}).get("effective_area_type") or area_type
     built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
 
-    if school_avg is None:
-        school_avg = 0.0
+    # a missing education score stays None (no data); only the weighted sum below treats it as 0 contribution
 
     if schools_by_level:
         total_schools = sum([
@@ -2384,7 +2383,7 @@ def _compute_single_score_internal(
         + (transit_score * token_allocation["public_transit_access"] / 100)
         + (healthcare_score * token_allocation["healthcare_access"] / 100)
         + (economic_opportunity_score * token_allocation["economic_opportunity"] / 100)
-        + (school_avg * token_allocation["quality_education"] / 100)
+        + ((school_avg or 0.0) * token_allocation["quality_education"] / 100)
         + (housing_score * token_allocation["housing_value"] / 100)
         + (climate_risk_score * token_allocation["climate_risk"] / 100)
         + (social_fabric_score * token_allocation["social_fabric"] / 100)
@@ -2508,7 +2507,7 @@ def _compute_single_score_internal(
             "score": school_avg,
             "weight": token_allocation["quality_education"],
             "importance_level": priority_levels.get("quality_education") if priority_levels else None,
-            "contribution": round(school_avg * token_allocation["quality_education"] / 100, 2),
+            "contribution": round((school_avg or 0.0) * token_allocation["quality_education"] / 100, 2),
             "breakdown": school_breakdown,
             "summary": {
                 "base_avg_rating": round(school_breakdown.get("base_avg_rating", 0), 2),
@@ -2530,6 +2529,8 @@ def _compute_single_score_internal(
                 "fallback_used": not use_school_scoring or not schools_found,
                 "reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else "School data available"),
                 "error": "Pillar execution failed" if 'quality_education' in exceptions else None,
+                "degraded": school_avg is None and use_school_scoring,
+                "degraded_reasons": ["quality_education_no_data: no rated school or school lookup failed"] if (school_avg is None and use_school_scoring) else [],
                 "quality_tier": "poor" if (not use_school_scoring or not schools_found) else "fair",
                 "fallback_reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else None),
             },
@@ -4042,8 +4043,7 @@ async def _stream_score_with_progress(
             school_avg = None
             schools_by_level = {"elementary": [], "middle": [], "high": []}
         
-        if school_avg is None:
-            school_avg = 0.0
+        # a missing education score stays None (no data); only the weighted sum below treats it as 0 contribution
         
         if schools_by_level:
             total_schools = sum([
@@ -4117,7 +4117,7 @@ async def _stream_score_with_progress(
             + (transit_score * token_allocation["public_transit_access"] / 100)
             + (healthcare_score * token_allocation["healthcare_access"] / 100)
             + (economic_opportunity_score * token_allocation["economic_opportunity"] / 100)
-            + (school_avg * token_allocation["quality_education"] / 100)
+            + ((school_avg or 0.0) * token_allocation["quality_education"] / 100)
             + (housing_score * token_allocation["housing_value"] / 100)
             + (climate_risk_score * token_allocation["climate_risk"] / 100)
             + (social_fabric_score * token_allocation["social_fabric"] / 100)
@@ -4234,7 +4234,7 @@ async def _stream_score_with_progress(
                 "score": school_avg,
                 "weight": token_allocation["quality_education"],
                 "importance_level": priority_levels.get("quality_education") if priority_levels else None,
-                "contribution": round(school_avg * token_allocation["quality_education"] / 100, 2),
+                "contribution": round((school_avg or 0.0) * token_allocation["quality_education"] / 100, 2),
                 "breakdown": school_breakdown,
                 "summary": {
                     "base_avg_rating": round(school_breakdown.get("base_avg_rating", 0), 2),
@@ -4255,7 +4255,9 @@ async def _stream_score_with_progress(
                 "data_quality": {
                     "fallback_used": not use_school_scoring or not schools_found,
                     "reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else "School data available"),
-                    "error": "Pillar execution failed" if 'quality_education' in exceptions else None
+                    "error": "Pillar execution failed" if 'quality_education' in exceptions else None,
+                    "degraded": school_avg is None and use_school_scoring,
+                    "degraded_reasons": ["quality_education_no_data: no rated school or school lookup failed"] if (school_avg is None and use_school_scoring) else [],
                 },
                 "error": exceptions.get('quality_education').__class__.__name__ if 'quality_education' in exceptions and exceptions.get('quality_education') else None
             },

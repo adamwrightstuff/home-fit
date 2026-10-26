@@ -55,7 +55,7 @@ Census district data). All six catalog metros are scored with `zoned_v1`:
   resident campus is averaged. Zones listing two schools (NYC '10X363,10X447') average both.
 - **NYC**: the zone's own community school district is loaded too (`_nyc_csd_ids_by_number`), because a zone often
   assigns a school in the neighboring district.
-- **Headline** = mean of the scored level scores + early-ed bonus (no access bonus).
+- **Headline** = mean of the scored level scores. No bonuses: the early-education bonus carries 0 points (see "Early-education access" below). A place with no rated school at any level is **no data** (score null, status no_data, degraded), never 0.
 - **Charters and choice** are listed in `breakdown.choice` and scored separately: `split.public` is the
   headline, `split.charter` the mean of the nearby rated charters (thin below 3). The Explorer filter
   (any / public_only / charter) switches between them.
@@ -84,11 +84,22 @@ Census district data). All six catalog metros are scored with `zoned_v1`:
   (K-8 district), Belvedere.
 - **State names**: the API passes "New York"; `normalize_state` makes it "NY" (this once sent every place to the legacy lookup).
 
-## What it measures
-School quality near a location: the rating of nearby public and charter schools, with small
-bonuses for elite options and early-education availability.
+## What it measures (owner decisions 2026-10-26, DPv2)
+**Construct:** the quality of the school a child at this address would be assigned to (the zoned school, else the nearest
+rated schools of the home district; lottery levels show the district pool average), measured by statewide test-score percentile.
+**Frame:** within-state percentile (relative). It is comparable only inside a state, not between, say, CT and FL.
+**Weight:** an equal 1/13 share for everyone, an owner judgment with no source. **Pin sensitivity:** a 0.5 mile pin shift moves the
+score a median 5.8 points (p95 42.9, 2026-10-25); it is disclosed, and a confidence flag is the agreed treatment (not built yet).
+Spec sheet: `analysis/education_spec_sheet_2026-10-26.md`. Unsourced parameters (radii, nearest-3, caps, pool average) are TODOs.
 
-## Scoring (`pillars/schools.py`)
+## Early-education access (2026-10-25)
+`breakdown.early_ed` stores kindergarten and childcare facilities within 2 km and 800 m of the pin and the nearest distance
+(OpenStreetMap, distinct facilities, `amenity` kindergarten, childcare, preschool, nursery). It carries **0 points** until a published
+source sizes it. A failed lookup, or a state outside the private Overpass server, is `early_ed_missing`, never a count of 0.
+Fill it with `scripts/catalog/requery_early_ed.py`, then `rescore_education_offline.py --no-osm`.
+
+## Legacy radius scoring (`pillars/schools.py`, `_get_school_data_legacy`; only for places with no Census district data)
+The numbered rules below are the older model, kept as the fallback. The early-ed bonus in rule 4 is no longer applied (0 points).
 1. Every school SchoolDigger returns for the place is rated from `rankHistory[0]`:
    `rankStars * 20`; a 0-star school falls back to its statewide percentile. Schools with no
    rating (most private schools, brand-new schools) are ignored. Ratings of 20 or less are
