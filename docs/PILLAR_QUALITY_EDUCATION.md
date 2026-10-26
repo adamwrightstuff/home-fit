@@ -95,6 +95,13 @@ score a median 5.8 points (p95 42.9, 2026-10-25). Each place stores `breakdown.p
 `scripts/catalog/compute_education_pin_sensitivity.py` (offline); re-run it after any `rescore_education_offline.py`, which drops it.
 Spec sheet: `analysis/education_spec_sheet_2026-10-26.md`. Unsourced parameters (radii, nearest-3, caps, pool average) are TODOs.
 
+## Data-limit flags (2026-10-26)
+`scripts/catalog/flag_education_data_limits.py` (offline, idempotent, scores unchanged) writes, from the stored levels:
+`degraded` with `quality_education_levels_missing` where a level has no rated school and the score comes from the other levels
+(32 places); `zone_map_2015_16` warning where a level uses the 2015-16 attendance survey, about 10% of whose zones may have
+changed (1,023 places); `no_zone_map` warning where a level is scored from the nearest schools (364 places). Re-run it after
+any `rescore_education_offline.py`, which replaces the breakdown.
+
 ## Early-education access (2026-10-25)
 `breakdown.early_ed` stores kindergarten and childcare facilities within 2 km and 800 m of the pin and the nearest distance
 (OpenStreetMap, distinct facilities, `amenity` kindergarten, childcare, preschool, nursery). It carries **0 points** until a published
