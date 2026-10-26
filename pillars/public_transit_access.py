@@ -31,7 +31,20 @@ TRANSITLAND_API_KEY = os.getenv("TRANSITLAND_API_KEY")
 # Data-backed commute time weight
 # Commute time shows moderate correlation (r=0.485) with transit scores
 # Weight: 5% - balances commute time with transit availability
-COMMUTE_WEIGHT = 0.05
+COMMUTE_WEIGHT = 0.0  # commute no longer enters the transit score (audit P5); kept as an informational field
+
+# Mode weights per route in range (documented judgments, validated; design principles v2, P4 and P7).
+# Subway 3, light rail 2 and bus 0.7 are kept: refits to tract transit commute share (ACS B08301, 1,471 places) did not
+# beat them out of sample (held-out metro Spearman 0.527 vs 0.518 fitted) or on an independent measure (households with
+# no vehicle, ACS B25044: 0.615 vs 0.593 fitted). Commuter rail is set to 3 by a stated rule: the largest weight at which
+# no validation measure falls more than 0.01 below its value at weight 1. At 3: tract-share Spearman 0.691 (0.668 at 1),
+# within-metro 0.526 (0.527), no-vehicle 0.609 (0.615). Plausible range 2 to 4; above 4 the independent measure and the
+# within-metro rank both degrade. Only ratios matter for rank; the level (log curve, anchor 120) is a judgment.
+# Commuter-rail towns land in the 40s to 50s, in line with Walk Score Transit Score (Harrison 31, Darien 36, Hinsdale 23).
+W_BUS = 0.7
+W_SUBWAY = 3.0
+W_COMMUTER_RAIL = 3.0
+W_LIGHT_RAIL = 2.0
 def _nearest_heavy_rail_km(lat: float, lon: float, search_m: int = 2500, cached_stops: Optional[Dict] = None) -> float:
     """Find nearest heavy rail/subway distance using Transitland stops API (km),
     falling back to coordinate distance and OSM stations when needed.
@@ -953,14 +966,14 @@ def get_public_transit_score(
         return 100.0 * min(1.0, math.log(1.0 + weighted_routes) / math.log(1.0 + _ANCHOR))
 
     # Per-mode display scores (heavy rail = subway + commuter at their weights).
-    heavy_rail_score = _abs_supply(3.0 * subway_count + 1.0 * commuter_count)
-    light_rail_score = _abs_supply(2.0 * light_count)
-    bus_score = _abs_supply(0.7 * bus_count)
+    heavy_rail_score = _abs_supply(W_SUBWAY * subway_count + W_COMMUTER_RAIL * commuter_count)
+    light_rail_score = _abs_supply(W_LIGHT_RAIL * light_count)
+    bus_score = _abs_supply(W_BUS * bus_count)
 
     # Combined supply IS the score: summing weighted routes rewards multimodality, so
     # no separate multimodal bonus is needed.
     base_supply = _abs_supply(
-        3.0 * subway_count + 1.0 * commuter_count + 2.0 * light_count + 0.7 * bus_count
+        W_SUBWAY * subway_count + W_COMMUTER_RAIL * commuter_count + W_LIGHT_RAIL * light_count + W_BUS * bus_count
     )
     multimodal_bonus = 0.0
     total_score = base_supply
@@ -998,9 +1011,9 @@ def get_public_transit_score(
     commute_score = None
     effective_area_type = area_type or area_type_dq
     if commute_minutes is not None and commute_minutes > 0:
+        # Informational only (weight 0): commute quality is the opt-in commute feature's job, and the area average
+        # is carried by the Happiness commute component. Counting it here too was double counting (audit P5).
         commute_score = _score_commute_time(commute_minutes, effective_area_type)
-        weighted_total = (total_score * (1.0 - COMMUTE_WEIGHT)) + (commute_score * COMMUTE_WEIGHT)
-        total_score = min(100.0, max(0.0, weighted_total))
         try:
             dq_sources = quality_metrics.get('data_sources', []) or []
             if 'census' not in dq_sources:
@@ -1012,7 +1025,6 @@ def get_public_transit_score(
     # Commuter rail suburb bonuses: frequency, commute time, weekend service, hub connectivity, destinations
     # These bonuses are research-backed and use smooth curves (design principles compliant)
     frequency_bonus = 0.0
-    commute_bonus_additional = 0.0
     weekend_bonus = 0.0
     hub_bonus = 0.0
     destination_bonus = 0.0
@@ -1155,120 +1167,28 @@ def get_public_transit_score(
                                        "error": str(e)
                                    })
         
-        # Additional commute bonus (beyond the 10% weight already applied)
-        # This rewards exceptionally good commute times for commuter rail suburbs
-        if commute_minutes:
-            commute_bonus_additional = _calculate_commute_bonus(commute_minutes)
-            if commute_bonus_additional > 0:
-                logger.info(f"📊 Commute bonus: {commute_bonus_additional:.1f} points (commute={commute_minutes:.1f}min)",
-                            extra={
-                                "pillar_name": "public_transit_access",
-                                "lat": lat,
-                                "lon": lon,
-                                "commute_bonus": commute_bonus_additional,
-                                "commute_minutes": commute_minutes
-                            })
+        # No commute bonus: commute is not part of the transit score (audit P5).
         
         # Add all bonuses to total score
-        total_bonus = frequency_bonus + commute_bonus_additional + weekend_bonus + hub_bonus + destination_bonus
+        total_bonus = frequency_bonus + weekend_bonus + hub_bonus + destination_bonus
         total_score = min(100.0, total_score + total_bonus)
         
         if total_bonus > 0:
-            logger.info(f"📊 Total commuter rail bonuses: {total_bonus:.1f} points (freq={frequency_bonus:.1f}, commute={commute_bonus_additional:.1f}, weekend={weekend_bonus:.1f}, hub={hub_bonus:.1f}, dest={destination_bonus:.1f})",
+            logger.info(f"📊 Total commuter rail bonuses: {total_bonus:.1f} points (freq={frequency_bonus:.1f}, weekend={weekend_bonus:.1f}, hub={hub_bonus:.1f}, dest={destination_bonus:.1f})",
                         extra={
                             "pillar_name": "public_transit_access",
                             "lat": lat,
                             "lon": lon,
                             "total_bonus": total_bonus,
                             "frequency_bonus": frequency_bonus,
-                            "commute_bonus": commute_bonus_additional,
                             "weekend_bonus": weekend_bonus,
                             "hub_bonus": hub_bonus,
                             "destination_bonus": destination_bonus
                         })
 
-    # Suburban/Exurban/Rural commuter-centric layer: nearest rail + connectivity tier
-    # Only applies as a fallback when base score is low (< 50) - helps catch commuter rail
-    # that might not be in Transitland, but shouldn't boost already high scores
-    #
-    # NOTE: This fallback layer uses hardcoded distance breakpoints and bonuses that are
-    # not research-backed. This violates design principles but is kept temporarily to handle
-    # Transitland API coverage gaps. TODO: Replace with research-backed expected values
-    # and data-backed scoring curves, or remove if Transitland coverage improves.
-    #
-    # TODO: Research needed:
-    # - Calibrate distance breakpoints (0.5km, 1km, 2km, 3km) from empirical data
-    # - Calibrate connectivity bonus amounts (0, 6, 10, 15) from route count analysis
-    # - Calibrate bus bonus multiplier (3.0) from empirical data
-    if (area_type or 'unknown') in ('suburban', 'exurban', 'rural') and total_score < 50:
-        # PERFORMANCE OPTIMIZATION: Use cached stops data
-        nearest_hr_km = _nearest_heavy_rail_km(lat, lon, search_m=2500, cached_stops=cached_stops_data)
-        connectivity_tier = _connectivity_tier_heavy_rail(len(heavy_rail_routes))
-
-        # Distance-based base (max ~70)
-        if nearest_hr_km <= 0.5:
-            base = 70
-        elif nearest_hr_km <= 1.0:
-            base = 65
-        elif nearest_hr_km <= 2.0:
-            base = 60
-        elif nearest_hr_km <= 3.0:
-            base = 50
-        elif nearest_hr_km < float('inf'):
-            base = 40
-        else:
-            base = 20  # no rail nearby
-
-        # Connectivity bonus (0-15) - based on route count (more routes = better connectivity)
-        connectivity_bonus = {0: 0, 1: 6, 2: 10, 3: 15}[connectivity_tier]
-        # Bus bonus (0-15) proxy
-        bus_bonus = min(15.0, max(0.0, len(bus_routes) * 3.0))
-
-        commuter_score = min(100.0, base + connectivity_bonus + bus_bonus)
-        # Only use commuter score if it's better than the low base score
-        total_score = max(total_score, commuter_score)
-
-        # Augment quality to reflect successful data retrieval, not mode variety
-        try:
-            if (routes_data and len(routes_data) > 0) or nearest_hr_km < float('inf'):
-                quality_metrics['quality_tier'] = 'good'
-                quality_metrics['confidence'] = max(quality_metrics.get('confidence', 0), 70)
-        except Exception:
-            pass
-
-    # Commuter-access floor: a town served by commuter rail with a reasonable Census commute
-    # is a genuinely good place to commute from — the reason people choose Pelham, Bronxville,
-    # Larchmont or Scarsdale — even when its raw route-supply is low. The station-distance
-    # heuristic above frequently fails to locate suburban rail stops (returns inf), so we
-    # credit the reliable Census commute-time signal directly. Gated on actual commuter rail
-    # so it rewards rail commute-ease (not car commuting), excludes subway places (already
-    # scored on supply), and applies as a FLOOR so it never lowers a higher supply score.
-    commuter_access_floor = None
-    if commuter_count > 0 and subway_count == 0 and total_score < 85.0:
-        try:
-            from data_sources.census_api import get_commute_time_stable, get_transit_mode_share
-            # Stable, area-aware commute (pop-weighted over the place's tracts) — single-pin
-            # get_commute_time resolves an unstable tract and drifts (Harrison 28<->39).
-            _commute_min = get_commute_time_stable(lat, lon)
-            _transit_share = get_transit_mode_share(lat, lon)
-        except Exception:
-            _commute_min = _transit_share = None
-        if _commute_min and _commute_min > 0 and _transit_share is not None:
-            # Weight the commute-quality credit by actual transit ridership (tract-level ACS
-            # B08301): a short *car* commute earns no transit credit, a town where people
-            # genuinely take the train does. Ramp 0->1 between 5% and 30% transit share. No
-            # artificial ceiling — share x commute-quality is self-limiting and naturally
-            # stays below subway hubs (which already score high on supply and are excluded).
-            ridership_ramp = max(0.0, min(1.0, (_transit_share - 0.05) / 0.25))
-            commuter_access_floor = round(_score_commute_time(_commute_min, area_type) * ridership_ramp, 1)
-            if commuter_access_floor > total_score:
-                logger.info(f"📊 Commuter-access floor: {total_score:.1f} -> {commuter_access_floor:.1f} "
-                            f"(commute={_commute_min:.0f}min, transit_share={_transit_share*100:.0f}%, "
-                            f"{commuter_count} commuter routes)",
-                            extra={"pillar_name": "public_transit_access", "lat": lat, "lon": lon,
-                                   "commuter_access_floor": commuter_access_floor,
-                                   "transit_share": round(_transit_share, 3)})
-            total_score = max(total_score, commuter_access_floor)
+    # The legacy suburban layer (hard-coded distance base, connectivity and bus bonuses) and the ridership-weighted
+    # commuter-access floor were removed 2026-10-26: neither had a source, and the floor counted commute a second time.
+    # Commuter-rail suburbs are scored on the rail routes in range like any other place.
 
     # Record data sources used
     try:
@@ -1296,15 +1216,14 @@ def get_public_transit_score(
             stops_counts=stops_counts,
             subway_rail=subway_routes, commuter_rail=commuter_rail_routes
         ),
-        "data_quality": quality_metrics
+        "data_quality": quality_metrics,
+        "area_classification": {"area_type": effective_area_type, "density": density},
     }
     
     # Add commuter rail suburb bonuses to breakdown if applicable
     if is_commuter_rail_suburb:
         if frequency_bonus > 0:
             breakdown["breakdown"]["frequency_bonus"] = round(frequency_bonus, 1)
-        if commute_bonus_additional > 0:
-            breakdown["breakdown"]["commute_bonus"] = round(commute_bonus_additional, 1)
         if weekend_bonus > 0:
             breakdown["breakdown"]["weekend_service_bonus"] = round(weekend_bonus, 1)
         if hub_bonus > 0:
@@ -1334,14 +1253,14 @@ def get_public_transit_score(
         breakdown.setdefault("details", {})["commute_time"] = {
             "mean_minutes": round(commute_minutes, 1),
             "score": round(commute_score, 1),
-            "weight": COMMUTE_WEIGHT,
-            "note": "Mean commute time (ACS) blended into transit score"
+            "weight": 0.0,
+            "note": "Mean commute time (ACS), informational only; not part of the transit score"
         }
     else:
         breakdown.setdefault("details", {})["commute_time"] = {
             "mean_minutes": None,
             "score": None,
-            "weight": COMMUTE_WEIGHT,
+            "weight": 0.0,
             "note": "Commute data unavailable from ACS"
         }
 
