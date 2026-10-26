@@ -155,8 +155,8 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
 
     home_score = density_score + variety_score + proximity_score  # 0-100 (the full amenity-access score)
 
-    # Town-center / "main street" signal: kept for display + narrative only. It NO LONGER
-    # inflates the score (the old model let a drive-to Main Street tie a walkable urban core).
+    # Town-center signal (0-40): adds to the score (0e2096e). Unsourced judgment; see
+    # analysis/audit_amenities_2026-10-25.md.
     location_score = _score_location_quality(all_businesses, lat, lon, max_points=40, area_type=area_type)
 
     # Home walkability (0-60) + location quality (0-40) = 0-100.
@@ -180,6 +180,12 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
         area_type = data_quality.detect_area_type(lat, lon, density)
     combined_data["places_augmented"] = bool(places_fallback_meta.get("used"))
     quality_metrics = data_quality.assess_pillar_data_quality('neighborhood_amenities', combined_data, lat, lon, area_type)
+    if places_fallback_meta.get("triggered") and places_fallback_meta.get("error"):
+        quality_metrics = dict(quality_metrics)
+        quality_metrics["degraded"] = True
+        quality_metrics["degraded_reasons"] = list(quality_metrics.get("degraded_reasons") or []) + [
+            f"places_fallback_failed ({places_fallback_meta.get('error')})"
+        ]
     if empty_walkable_area:
         quality_metrics = dict(quality_metrics)
         quality_metrics["confidence"] = min(int(quality_metrics.get("confidence") or 0), 40)
@@ -196,7 +202,8 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
                     "variety": round(variety_score, 1),
                     "proximity": round(proximity_score, 1)
                 },
-                "businesses_within_1km": len(nearby)
+                "businesses_within_1km": len(nearby),
+                "businesses_within_walk": len(walk_biz),
             },
             "location_quality": round(location_score, 1)
         },
@@ -305,144 +312,6 @@ def _score_essentials_proximity(walk_biz: List[Dict], max_points: float = 25) ->
     return round((groc * 0.45 + caf * 0.30 + eat * 0.25) * max_points, 2)
 
 
-def _score_density(businesses: List[Dict], max_points: float = 25,
-                   area_type: Optional[str] = None) -> float:
-    """
-    Score business density with adjustable max and context-aware thresholds.
-    
-    Uses contextual expectations to adjust thresholds by area type:
-    - Urban core: Higher expectations (60+ for excellent)
-    - Suburban: Base expectations (50+ for excellent)
-    - Exurban/Rural: Lower expectations (35+ for excellent)
-    """
-    count = len(businesses)
-    scale = max_points / 25  # Adjusted for 25 max points (was 40)
-    
-    # Context-aware thresholds based on research
-    # Research: 50+ excellent, 30+ good, 15+ adequate
-    # Adjust for area type: urban needs 20% more, small towns 30% less
-    if area_type == "urban_core":
-        excellent_threshold = 60  # 20% higher than base 50
-        good_threshold = 36       # 20% higher than base 30
-        adequate_threshold = 18    # 20% higher than base 15
-    elif area_type in ["exurban", "rural"]:
-        excellent_threshold = 35   # 30% lower than base 50
-        good_threshold = 21        # 30% lower than base 30
-        adequate_threshold = 11    # 30% lower than base 15
-    else:  # suburban (baseline)
-        excellent_threshold = 50
-        good_threshold = 30
-        adequate_threshold = 15
-    
-    # Score with context-aware thresholds
-    if count >= excellent_threshold:
-        return 25.0 * scale  # Excellent
-    elif count >= 40:  # NEW: Add explicit 40-business tier
-        return 24.0 * scale  # Very good (between 30 and 50)
-    elif count >= good_threshold:
-        return 20.0 * scale  # Good
-    elif count >= 20:
-        return 15.0 * scale
-    elif count >= adequate_threshold:
-        return 12.0 * scale  # Adequate
-    elif count >= 10:
-        return 10.0 * scale
-    elif count >= 5:
-        return 6.0 * scale
-    else:
-        return count * 1.2 * scale
-
-
-def _score_variety(tier1: List, tier2: List, tier3: List, tier4: List, max_points: float = 30) -> float:
-    """Score business variety with adjustable max points."""
-    score = 0
-    
-    # Scale points based on max
-    tier1_pts = max_points * 0.4  # Daily Essentials: 40%
-    tier2_pts = max_points * 0.33  # Social & Dining: 33%
-    tier3_pts = max_points * 0.17  # Culture: 17%
-    tier4_pts = max_points * 0.10  # Services: 10%
-    
-    # Tier 1: Daily Essentials
-    tier1_types = set(b["type"] for b in tier1)
-    tier1_variety = len(tier1_types)
-    if tier1_variety >= 3:
-        score += tier1_pts
-    elif tier1_variety >= 2:
-        score += tier1_pts * 0.67
-    elif tier1_variety >= 1:
-        score += tier1_pts * 0.33
-    
-    # Tier 2: Social & Dining
-    tier2_types = set(b["type"] for b in tier2)
-    tier2_variety = len(tier2_types)
-    if tier2_variety >= 2:
-        score += tier2_pts
-    elif tier2_variety >= 1:
-        score += tier2_pts * 0.6
-    
-    # Tier 3: Culture & Leisure
-    tier3_types = set(b["type"] for b in tier3)
-    tier3_variety = len(tier3_types)
-    if tier3_variety >= 2:
-        score += tier3_pts
-    elif tier3_variety >= 1:
-        score += tier3_pts * 0.6
-    
-    # Tier 4: Services & Retail
-    tier4_types = set(b["type"] for b in tier4)
-    tier4_variety = len(tier4_types)
-    if tier4_variety >= 2:
-        score += tier4_pts
-    elif tier4_variety >= 1:
-        score += tier4_pts * 0.33
-    
-    return score
-
-
-def _score_proximity(businesses: List[Dict], max_points: float = 15, area_type: Optional[str] = None) -> float:
-    """
-    Score proximity to downtown cluster with area-type aware thresholds.
-    
-    Research-backed thresholds (adjusted for better discrimination):
-    - ≤200m: Optimal (15 points)
-    - ≤400m: Very Good (13 points)
-    - ≤600m: Good (11 points)
-    - ≤800m: Adequate (10 points) - less harsh for suburban/urban_residential
-    - ≤1000m: Acceptable (7 points)
-    - >1000m: Poor (2.5 points)
-    """
-    if not businesses:
-        return 0.0
-    
-    distances = sorted([b["distance_m"] for b in businesses])
-    median_idx = len(distances) // 2
-    median_distance = distances[median_idx]
-    
-    scale = max_points / 15  # Adjusted for 15 max points (was 30)
-    
-    # Slightly more lenient for suburban/urban_residential at 500-800m range
-    # (addresses Lincoln Park type cases where businesses exist but are 500-600m away)
-    if median_distance <= 200:
-        return 15.0 * scale  # Optimal
-    elif median_distance <= 400:
-        return 13.0 * scale  # Very Good
-    elif median_distance <= 600:
-        # For suburban/urban_residential, treat 500-600m as still "good" if there are businesses
-        if area_type in {"suburban", "urban_residential"} and len(businesses) >= 10:
-            return 12.0 * scale  # Good (slightly higher)
-        return 11.0 * scale  # Good
-    elif median_distance <= 800:
-        # For suburban/urban_residential, 600-800m is still "adequate" if there's a cluster
-        if area_type in {"suburban", "urban_residential"} and len(businesses) >= 15:
-            return 10.5 * scale  # Adequate (slightly higher)
-        return 10.0 * scale  # Adequate
-    elif median_distance <= 1000:
-        return 7.0 * scale   # Acceptable
-    else:
-        return 2.5 * scale   # Poor
-
-
 def _score_cultural_bonus(tier3_cluster: List[Dict]) -> float:
     """
     Bonus points for cultural amenities in downtown cluster.
@@ -549,22 +418,18 @@ def _score_location_quality(all_businesses: List[Dict], lat: float, lon: float,
     
     variety_pts = min(variety_pts, 20)  # Cap at 20
     
-    # Context-aware vibrancy thresholds (tightened to reduce saturation)
-    # Goal: Make it harder to max out location_quality at 40, especially for urban_core
+    # Cluster-density divisor by area type. Unsourced judgment (tracker D10): swapping all four for the
+    # suburban value moves stored scores by a mean of -0.3 and at most 3.6 points.
     if area_type == "urban_core":
-        vibrant_threshold = 100  # Urban: 100+ businesses for truly vibrant downtown (raised from 50)
-        density_divisor = 12.5   # 100 businesses = 8 pts (100/12.5 = 8) - much harder to max
+        density_divisor = 12.5
     elif area_type in ["urban_residential"]:
-        vibrant_threshold = 80   # Urban residential: 80+ businesses for vibrant downtown
-        density_divisor = 10.0   # 80 businesses = 8 pts
+        density_divisor = 10.0
     elif area_type in ["exurban", "rural"]:
-        vibrant_threshold = 30   # Small towns: 30+ businesses for vibrant downtown (unchanged)
-        density_divisor = 3.75   # 30 businesses = 8 pts (30/3.75 = 8)
+        density_divisor = 3.75
     else:  # suburban (baseline)
-        vibrant_threshold = 60   # Suburban: 60+ businesses for vibrant downtown (raised from 40)
-        density_divisor = 7.5    # 60 businesses = 8 pts (60/7.5 = 8)
-    
-    # Density bonus (0-8) - context-aware, now harder to max
+        density_divisor = 7.5
+
+    # Density bonus (0-8)
     density_pts = min(8, len(cluster_all) / density_divisor)
     
     vibrancy_pts = variety_pts + density_pts
@@ -632,81 +497,3 @@ def _build_summary(tier1: List, tier2: List, tier3: List, tier4: List, all_busin
             "location_quality": round(location_score, 1)
         }
     }
-
-
-def _empty_breakdown(lat: float, lon: float, area_type: Optional[str]) -> Dict:
-    """Return empty breakdown when no data."""
-    at = area_type or "suburban"
-    dq = data_quality.assess_pillar_data_quality(
-        "neighborhood_amenities",
-        {"all_businesses": []},
-        lat,
-        lon,
-        at,
-    )
-    return {
-        "score": 0,
-        "breakdown": {
-            "home_walkability": {"score": 0, "breakdown": {"density": 0, "variety": 0, "proximity": 0}, "businesses_within_1km": 0},
-            "location_quality": 0
-        },
-        "summary": {
-            "total_businesses": 0,
-            "by_tier": {
-                "daily_essentials": {"count": 0, "types": []},
-                "social_dining": {"count": 0, "types": []},
-                "culture_leisure": {"count": 0, "types": []},
-                "services_retail": {"count": 0, "types": []}
-            },
-            "downtown_center_distance_m": 0,
-            "closest_business": None,
-            "within_5min_walk": 0,
-            "within_10min_walk": 0,
-            "score_breakdown": {
-                "home_walkability": 0,
-                "location_quality": 0
-            }
-        },
-        "data_quality": dq,
-    }
-
-
-def _empty_breakdown_with_fallback(fallback_score: float, area_type: str, lat: float, lon: float) -> Dict:
-    """Return breakdown with fallback score for OSM data gaps."""
-    at = area_type or "suburban"
-    dq = data_quality.assess_pillar_data_quality(
-        "neighborhood_amenities",
-        {"all_businesses": [], "fallback_applied": True},
-        lat,
-        lon,
-        at,
-        fallback_used=True,
-    )
-    return {
-        "score": round(fallback_score, 1),
-        "breakdown": {
-            "home_walkability": {"score": 0, "breakdown": {"density": 0, "variety": 0, "proximity": 0}, "businesses_within_1km": 0},
-            "location_quality": round(fallback_score, 1)
-        },
-        "summary": {
-            "total_businesses": 0,
-            "by_tier": {
-                "daily_essentials": {"count": 0, "types": []},
-                "social_dining": {"count": 0, "types": []},
-                "culture_leisure": {"count": 0, "types": []},
-                "services_retail": {"count": 0, "types": []}
-            },
-            "downtown_center_distance_m": 0,
-            "closest_business": None,
-            "within_5min_walk": 0,
-            "within_10min_walk": 0,
-            "score_breakdown": {
-                "home_walkability": 0,
-                "location_quality": round(fallback_score, 1)
-            },
-            "fallback_applied": True,
-            "fallback_reason": f"OSM data gap - no businesses found for {area_type} area"
-        },
-        "data_quality": dq,
-    }
-
