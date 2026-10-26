@@ -508,10 +508,10 @@ def get_healthcare_access_score(lat: float, lon: float,
     - Pharmacies (0-15): Pharmacies within radius (expectations-aware)
     - Bonuses shown separately (cap at 100)
 
-    Fallback Mechanism:
-    - If OSM query fails or returns no hospitals, uses MAJOR_HOSPITALS database
-    - This ensures coverage even when OSM is unavailable (rate limits, timeouts, etc.)
-    - MAJOR_HOSPITALS covers major medical centers across all US metropolitan areas
+    Failure handling (design principles v2, P9):
+    - A failed OSM read raises (the pillar shows no data and is retried); it is never scored as zero facilities and
+      no invented component scores are applied. If Google Places recovered facilities, the result is flagged degraded.
+    - If OSM succeeds but lists no hospital, MAJOR_HOSPITALS supplies the distance to the nearest real hospital.
 
     Returns:
         (total_score, detailed_breakdown)
@@ -586,6 +586,16 @@ def get_healthcare_access_score(lat: float, lon: float,
     if places_meta.get("triggered"):
         print(f"   🔍 Places HC: {places_meta['reason']} — added {places_meta['hospitals_added']} hospitals, {places_meta['pharmacies_added']} pharmacies, {places_meta['doctors_added']} doctors (calls={places_meta['http_calls']})")
 
+    # A failed OSM read is no data, not zero facilities (design principles v2, P9). Retry later; the pillar drops out of the
+    # headline meanwhile. If Google Places (when enabled) added facilities after the failure, the data is real and the
+    # result is flagged degraded instead.
+    places_recovered = bool(places_meta.get("triggered")) and (
+        (places_meta.get("hospitals_added") or 0) + (places_meta.get("pharmacies_added") or 0)
+        + (places_meta.get("doctors_added") or 0)
+    ) > 0
+    if query_failed and not places_recovered:
+        raise RuntimeError("healthcare facility read failed (Overpass); no data until it is retried")
+
     # Log warning if no data found (could indicate OSM failure)
     if not hospitals and not urgent_care and not pharmacies and not clinics and not doctors:
         print(f"   ⚠️  WARNING: No healthcare facilities found. This may indicate:")
@@ -637,28 +647,6 @@ def get_healthcare_access_score(lat: float, lon: float,
     pharmacies = _filter_by_radius(pharmacies, pharm_radius_m, "pharmacies")
 
     print(f"   🔍 FINAL COUNTS (filtered): {len(hospitals)} hospitals, {len(urgent_care)} urgent care, {len(pharmacies)} pharmacies, {len(clinics)} clinics, {len(doctors)} doctors | area={area_type}")
-
-    # FALLBACK SCORING: Apply conservative minimum scores for pharmacies/primary care when OSM fails
-    # This handles OSM data gaps (timeouts, rate limits, incomplete data) similar to neighborhood_amenities
-    # Only apply when OSM query failed AND we have no pharmacies/clinics/doctors AND we're in urban/suburban area
-    apply_pharmacy_fallback = False
-    apply_primary_care_fallback = False
-    
-    if query_failed:
-        # Check if this is an urban/suburban area that should have healthcare facilities
-        is_urban_suburban = (
-            area_type in ("urban_core", "urban_residential", "suburban") or 
-            (pop_density and pop_density > 1500)
-        )
-        
-        if is_urban_suburban:
-            if len(pharmacies) == 0:
-                apply_pharmacy_fallback = True
-            if len(clinics) == 0 and len(doctors) == 0:
-                apply_primary_care_fallback = True
-            
-            if apply_pharmacy_fallback or apply_primary_care_fallback:
-                print(f"   ⚠️  OSM query failed for urban/suburban area - applying fallback scores for missing components")
 
     # Population density (proxy) for normalization (per 10k)
     # pop_density already computed
@@ -719,20 +707,7 @@ def get_healthcare_access_score(lat: float, lon: float,
     target_primary = max(1.0, exp_urgent)
     
     if primary_count <= 0:
-        if apply_primary_care_fallback:
-            # Apply fallback score for urban/suburban areas when OSM fails
-            # Conservative minimum based on area type
-            if area_type == "urban_core" or (pop_density and pop_density > 5000):
-                primary_score = 15.0
-            elif area_type == "urban_residential" or (pop_density and pop_density > 2000):
-                primary_score = 12.0
-            elif area_type == "suburban" or (pop_density and pop_density > 1500):
-                primary_score = 10.0
-            else:
-                primary_score = 0.0
-            print(f"   📊 Applied fallback primary care score: {primary_score:.1f}")
-        else:
-            primary_score = 0.0
+        primary_score = 0.0
     else:
         primary_ratio = primary_count / target_primary
         # Use data-backed curve for smooth, research-backed scoring
@@ -768,17 +743,6 @@ def get_healthcare_access_score(lat: float, lon: float,
         if specialty_count > 0:
             specialty_ratio = specialty_count / expected_specialties
             specialty_score = _ratio_score(specialty_ratio, max_score=15.0)
-        elif apply_primary_care_fallback and len(hospitals) > 0:
-            # Legacy density-based fallback when NPI is unavailable or returned 0
-            if area_type == "urban_core" or (pop_density and pop_density > 5000):
-                specialty_score = 8.0
-            elif area_type == "urban_residential" or (pop_density and pop_density > 2000):
-                specialty_score = 6.0
-            elif area_type == "suburban" or (pop_density and pop_density > 1500):
-                specialty_score = 4.0
-            else:
-                specialty_score = 0.0
-            print(f"   📊 Applied fallback specialized care score: {specialty_score:.1f}")
         else:
             specialty_score = 0.0
     else:
@@ -812,20 +776,7 @@ def get_healthcare_access_score(lat: float, lon: float,
     target_pharm = max(1.0, exp_pharm)
     
     if pharm_count <= 0:
-        if apply_pharmacy_fallback:
-            # Apply fallback score for urban/suburban areas when OSM fails
-            # Conservative minimum based on area type
-            if area_type == "urban_core" or (pop_density and pop_density > 5000):
-                pharmacy_score = 10.0
-            elif area_type == "urban_residential" or (pop_density and pop_density > 2000):
-                pharmacy_score = 8.0
-            elif area_type == "suburban" or (pop_density and pop_density > 1500):
-                pharmacy_score = 6.0
-            else:
-                pharmacy_score = 0.0
-            print(f"   📊 Applied fallback pharmacy score: {pharmacy_score:.1f}")
-        else:
-            pharmacy_score = 0.0
+        pharmacy_score = 0.0
     else:
         pharm_ratio = pharm_count / target_pharm
         # Use data-backed curve for smooth, research-backed scoring
@@ -854,16 +805,12 @@ def get_healthcare_access_score(lat: float, lon: float,
     area_type_dq = data_quality.detect_area_type(lat, lon, pop_density)
     quality_metrics = data_quality.assess_pillar_data_quality('healthcare_access', combined_data, lat, lon, area_type_dq)
     
-    # If query failed, adjust confidence to indicate API failure (not data absence)
+    # OSM failed but Google Places supplied facilities: the data is real but thinner, so flag it.
     if query_failed:
-        # Cap confidence low to indicate API failure (non-zero distinguishes it
-        # from "no data found"). Previously used max(10, ...), which is a floor
-        # against an already-higher pre-failure confidence and never fires.
-        quality_metrics['confidence'] = min(10, quality_metrics.get('confidence', 0))
-        quality_metrics['quality_tier'] = 'very_poor'
-        quality_metrics['completeness'] = 0.0
-        quality_metrics['data_warning'] = 'api_error'
-        print(f"   ⚠️  Healthcare query failed - confidence adjusted to {quality_metrics['confidence']}%")
+        quality_metrics['degraded'] = True
+        quality_metrics['degraded_reasons'] = list(dict.fromkeys(
+            list(quality_metrics.get('degraded_reasons') or []) + ["osm_query_failed_recovered_from_google_places"]))
+        print("   ⚠️  OSM query failed; facilities recovered from Google Places (flagged degraded)")
 
     # Build response
     # Identify nearest hospital for summary (by reported distance_km)
