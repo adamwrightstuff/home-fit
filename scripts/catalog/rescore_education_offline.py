@@ -66,14 +66,14 @@ def main() -> int:
                 out.append(line.rstrip("\n"))
                 continue
             old_bd = p.get("breakdown") or {}
-            early = old_bd.get("early_ed_bonus")
+            early = old_bd.get("early_ed")        # stored access facts; None when never looked up or the lookup failed
             if old_bd.get("early_ed_missing") or not p.get("score"):
-                early = None                      # never really looked up (schools were off, or OSM was down): try again
+                early = None
             kwargs = {}
             if early is None and args.no_osm:
-                kwargs = {"early_ed_bonus_override": 0.0, "early_ed_unknown": True}
+                kwargs = {"early_ed_unknown": True}
             elif early is not None:
-                kwargs = {"early_ed_bonus_override": float(early)}
+                kwargs = {"early_ed_override": early}
             score, by_level, bd = get_school_data(
                 (sc.get("location_info") or {}).get("zip"), st, (sc.get("location_info") or {}).get("city"),
                 lat, lon, _area_type(sc), cat.get("name"), **kwargs)

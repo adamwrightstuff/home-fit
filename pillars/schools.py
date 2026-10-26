@@ -58,58 +58,58 @@ def split_scores(rated_schools: List[Dict], early_ed_bonus: float = 0.0) -> Dict
     return out
 
 
-def _early_ed_bonus(lat: Optional[float], lon: Optional[float]) -> Optional[float]:
-    """Early-education bonus (0-3): preschools/kindergartens within 2 km (OSM), x0.7 if the nearest is over 1 km.
-    None when OpenStreetMap could not be queried (a true 0 means it was queried and nothing was found)."""
-    # Early education bonus: preschool/kindergarten proximity matters for families with young kids
-    early_ed_bonus = 0.0
-    queried = False
+EARLY_ED_RADIUS_M = 2000
+EARLY_ED_WALK_M = 800   # about a 10 minute walk
+# Points awarded for early-education access. No published source for a size yet (audit 2026-10-25), so it is
+# recorded as data (breakdown.early_ed) and carries no points until one is found.
+EARLY_ED_POINTS = 0.0
 
-    if lat is not None and lon is not None:
-        try:
-            import math
-            from data_sources.osm_api import get_overpass_url, requests, _retry_overpass
 
-            early_ed_query = f"""
-            [out:json][timeout:20];
-            (
-              node["amenity"~"kindergarten|preschool|nursery"](around:2000,{lat},{lon});
-              way["amenity"~"kindergarten|preschool|nursery"](around:2000,{lat},{lon});
-              relation["amenity"~"kindergarten|preschool|nursery"](around:2000,{lat},{lon});
-            );
-            out body;
-            >;
-            out skel qt;
-            """
-
-            def _do_request():
-                return requests.post(get_overpass_url(), data={"data": early_ed_query}, timeout=25, headers={"User-Agent": "HomeFit/1.0"})
-
-            resp = _retry_overpass(_do_request, query_type="schools")
-            if resp and resp.status_code == 200:
-                queried = True
-                elements = resp.json().get("elements", [])
-                early_ed_count = len([e for e in elements if e.get("type") in ("node", "way", "relation")])
-                if early_ed_count > 0:
-                    closest_distance = float('inf')
-                    for elem in elements:
-                        if elem.get("type") == "node" and elem.get("lat") and elem.get("lon"):
-                            dist = math.sqrt((elem["lat"] - lat)**2 + (elem["lon"] - lon)**2) * 111000
-                            closest_distance = min(closest_distance, dist)
-                    if early_ed_count >= 3:
-                        early_ed_bonus = 3.0
-                    elif early_ed_count >= 2:
-                        early_ed_bonus = 2.0
-                    elif early_ed_count >= 1:
-                        early_ed_bonus = 1.0
-                    if closest_distance > 1000:
-                        early_ed_bonus *= 0.7
-                    print(f"   🎓 Early education bonus: +{early_ed_bonus:.1f} ({early_ed_count} facilities)")
-        except Exception as e:
-            print(f"   ⚠️  Early education query failed: {e}")
-    if lat is not None and lon is not None and not queried:
+def early_ed_access(lat: Optional[float], lon: Optional[float]) -> Optional[Dict]:
+    """Early-education access from OpenStreetMap: distinct kindergarten/childcare facilities within 2 km and the
+    nearest one, by straight-line distance from the pin. None when the lookup failed (no response, non-200, or an
+    Overpass 200 whose body is a runtime-error remark with no elements); a count of 0 means it was queried and
+    nothing was mapped."""
+    if lat is None or lon is None:
         return None
-    return early_ed_bonus
+    try:
+        import math
+        from data_sources.osm_api import get_overpass_url, requests, _retry_overpass, _overpass_remark_error
+
+        query = f"""
+        [out:json][timeout:25];
+        nwr["amenity"~"^(kindergarten|childcare|preschool|nursery)$"](around:{EARLY_ED_RADIUS_M},{lat},{lon});
+        out center tags;
+        """
+
+        def _do_request():
+            return requests.post(get_overpass_url(), data={"data": query}, timeout=30, headers={"User-Agent": "HomeFit/1.0"})
+
+        resp = _retry_overpass(_do_request, query_type="schools")
+        if resp is None or resp.status_code != 200 or _overpass_remark_error(resp):
+            return None
+        seen, dists = set(), []
+        for e in resp.json().get("elements", []):
+            c = e if e.get("type") == "node" else (e.get("center") or {})
+            if c.get("lat") is None or c.get("lon") is None:
+                continue
+            # a facility mapped as both a point and a building is one facility: same name, same ~100 m cell
+            name = ((e.get("tags") or {}).get("name") or "").strip().lower()
+            key = (name, round(c["lat"], 3), round(c["lon"], 3)) if name else (e.get("type"), e.get("id"))
+            if key in seen:
+                continue
+            seen.add(key)
+            dy = (c["lat"] - lat) * 111320.0
+            dx = (c["lon"] - lon) * 111320.0 * math.cos(math.radians(lat))
+            dists.append(math.hypot(dx, dy))
+        return {
+            "count_2km": len(dists),
+            "count_800m": sum(1 for d in dists if d <= EARLY_ED_WALK_M),
+            "nearest_m": round(min(dists)) if dists else None,
+        }
+    except Exception as e:
+        print(f"   ⚠️  Early education query failed: {e}")
+        return None
 
 
 def _get_school_data_legacy(
@@ -346,7 +346,7 @@ def _get_school_data_legacy(
     print(
         f"\n✅ Lower-2/3 avg: {base_avg_rating:.2f} (base from {len(base_ratings)}/{len(all_ratings)} schools, access_bonus=+{access_bonus:.1f})")
     
-    early_ed_bonus = _early_ed_bonus(lat, lon) or 0.0
+    early_ed_bonus = EARLY_ED_POINTS
 
     # Apply bonuses (capped at 100)
     total_score = min(100.0, avg_rating + access_bonus + early_ed_bonus)
@@ -562,6 +562,13 @@ _SOURCE_LABEL = {"zone": "zoned school", "nearest": "nearest in district", "dist
                  "choice_avg": "choice by application, pool average"}
 
 
+def _early_ed_text(e: Dict) -> str:
+    if not e.get("count_2km"):
+        return "No kindergarten or childcare mapped within 2 km (not scored)"
+    return (f"{e['count_2km']} kindergarten/childcare facilities within 2 km, {e['count_800m']} within 800 m, "
+            f"nearest {e['nearest_m']} m (shown, not scored)")
+
+
 def summary_extras(breakdown: Dict) -> Dict[str, Optional[str]]:
     """Plain-language fields for the Explorer's school details (zoned_v1 only)."""
     levels = breakdown.get("levels") or {}
@@ -606,8 +613,9 @@ def summary_extras(breakdown: Dict) -> Dict[str, Optional[str]]:
         "level_sources": "; ".join(srcs),
         "zone_map_years": ", ".join(years) if years else "No zone map used",
         "levels_scored": f"{scored} of {len(levels)} levels{note}" + (" (thin)" if scored < min(2, counted) else ""),
-        **({"early_ed_note": "Early-education bonus not available yet (map data was unreachable)"}
+        **({"early_ed_note": "Early-education access not available (map data was unreachable)"}
            if breakdown.get("early_ed_missing") else {}),
+        **({"early_ed_access": _early_ed_text(breakdown["early_ed"])} if breakdown.get("early_ed") else {}),
     }
 
 
@@ -619,12 +627,12 @@ def get_school_data(
     lon: Optional[float] = None,
     area_type: Optional[str] = None,
     place_name: Optional[str] = None,
-    early_ed_bonus_override: Optional[float] = None,
+    early_ed_override: Optional[Dict] = None,
     early_ed_unknown: bool = False,
 ) -> Tuple[float, Dict[str, List[Dict]], Dict]:
     """
-    Education score (0-100), schools by level, breakdown. `early_ed_bonus_override` reuses a stored early-education
-    bonus (offline re-scores) instead of querying OpenStreetMap again. Uses the zoned model when the point has
+    Education score (0-100), schools by level, breakdown. `early_ed_override` reuses stored early-education access
+    (offline re-scores) instead of querying OpenStreetMap again. Uses the zoned model when the point has
     Census district data; otherwise the legacy radius model (places outside the boundary files).
     """
     print("📚 Fetching school data (zoned model)...")
@@ -645,12 +653,11 @@ def get_school_data(
     levels = build_levels(cands["pool"], zoned, cands["radius_miles"], cands.get("charters"), choice_pools,
                           lottery_levels_for([d["id"] for d in cands["districts"]]))
     early_missing = early_ed_unknown
-    if early_ed_bonus_override is not None:
-        early = early_ed_bonus_override
-    else:
-        early = _early_ed_bonus(lat, lon)
-        if early is None:           # OpenStreetMap unreachable: score without it and say so
-            early, early_missing = 0.0, True
+    early_ed = early_ed_override
+    if early_ed is None and not early_ed_unknown:
+        early_ed = early_ed_access(lat, lon)
+        early_missing = early_ed is None   # lookup failed: say so, never store it as zero facilities
+    early = EARLY_ED_POINTS
     total = headline_from_levels(levels, early)
     if total is None:
         print("⚠️  No rated schools for any level")
@@ -684,6 +691,7 @@ def get_school_data(
         "base_avg_rating": round(base_avg, 2),
         "access_bonus": 0.0,
         "early_ed_bonus": round(early, 2),
+        "early_ed": early_ed,
         "early_ed_missing": early_missing,
         "total_schools_rated": len(rated_schools),
         "elite_schools_count": sum(1 for e in rated_schools if (e["rating"] or 0) >= 85),
