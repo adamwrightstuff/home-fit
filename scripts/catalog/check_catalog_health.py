@@ -79,7 +79,7 @@ LATEST_VERSIONS: Dict[str, str] = {
     "air_travel_access":      "air_travel_commute_bands",
     # economic_opportunity: live scorer computes job_access natively; no migration stamp expected
     "housing_value":          "housing_empty_tract_fix",
-    "neighborhood_amenities": "amenities_v3_walkable_density",
+    "neighborhood_amenities": "amenities_v3_1_decay_grocery_2026-10-26",
     "public_transit_access":  "commuter_access_floor_ridership",
     "quality_education":      "education_weight_enabled",
     "social_fabric":          "v16b_sf_with_rootedness",

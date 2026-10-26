@@ -43,7 +43,7 @@ def build_pillar(old: dict, det: dict) -> dict:
         "area_classification": old.get("area_classification") or {},
         "status": "success",
         "pin_sensitivity": det.get("pin_sensitivity"),
-        "_rescore_version": "amenities_v3_walkable_density",
+        "_rescore_version": "amenities_v3_1_decay_grocery_2026-10-26",
     }
 
 

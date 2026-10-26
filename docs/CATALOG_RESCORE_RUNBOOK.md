@@ -20,7 +20,7 @@ so you can audit what's applied.
 | quality_education | `education_weight_enabled` | `scripts/enable_education_weight.py` | give education its weight (scores already existed) |
 | diversity | `diversity_transient_refetch` / `diversity_nodata_unresolvable` | `scripts/repair_diversity_and_weights.py` | fix the 2 broken diversity=0 records + renormalize weights to 100 |
 | economic_security | `econ_job_access_blend` | `scripts/apply_econ_job_access.py` | blend 0.55·job_access (LODES gravity) + 0.45·market_quality |
-| neighborhood_amenities | `amenities_v3_walkable_density` | *(prior session — see script)* | walkable-density amenities model |
+| neighborhood_amenities | `amenities_v3_1_decay_grocery_2026-10-26` | *(prior session — see script)* | walkable-density amenities model |
 | social_fabric | `v14_two_morphology` | `scripts/apply_social_fabric_rescore.py` *(prior)* | two-morphology cohesion model |
 
 (Natural-beauty preference is **not** stored — it's applied at serve time: live in

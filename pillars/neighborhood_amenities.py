@@ -214,7 +214,7 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
         "empty_walkable_area": empty_walkable_area,
         "pin_sensitivity": _pin_sensitivity(all_businesses, lat, lon, area_type, vacation_mode, walkable_distance),
         "limits": {"chains_included": include_chains, "osm_with_places_fallback": bool(places_fallback_meta.get("used"))},
-        "version": "neighborhood_amenities_v2_places_fallback",
+        "version": "amenities_v3_1_decay_grocery_2026-10-26",
         "raw_total": round(raw_total, 1),
         "calibration": {"a": None, "b": None, "note": "Calibration removed - using pure data-backed scoring per design principles"},
         "diagnostics": {

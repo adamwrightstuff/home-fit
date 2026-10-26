@@ -25,11 +25,11 @@ Parameters:
   grocery run | supermarkets only (convenience stores and greengrocers do not count) | USDA Food Access Research Atlas defines access to supermarkets, supercenters and large grocers (policy definition, not a study) | n/a | mean -1.1 points on stored records
 Shared inputs with other pillars: business_list feeds Status Signal luxury presence; location quality and home score share one business list (correlation 0.86)
 Pin-shift sensitivity (200 m): median 2.2 points, p95 about 12, max 69; 405 of 1,426 places move more than 5. Reported live as pin_sensitivity.
-Independent validation source and result: none on file. The "Walk Score Pearson 0.90" in commit e701eb5 is not reproducible here and predates location quality.
+Independent validation source and result: none on file. The "Walk Score Pearson 0.90" in commit e701eb5 is not reproducible here and predates location quality. Price sanity check (2026-10-26, tier 2, weak): within-metro Spearman of amenities score against median home value is 0.03 (median of 20 metros), against household income -0.21; rich suburbs are car-dependent, so this neither supports nor contradicts the score. Walk Score pull not done (needs owner permission).
 All-places check: 2026-10-25, n = 1,476 (this audit)
 Fail-loud conditions: failed or unconfirmed-empty Overpass read = no data with reason; empty read confirmed on a second endpoint = low score with warning; failed Places fallback = degraded
-Launch check pairs: not yet defined
-Known data limits: OSM sparsity outside cities; chains included; 50 catalog places have no score pending a re-read; stored Places grocery records have no subtype (counted)
+Launch check: scripts/qa/launch_check.py passes for amenities (urban core vs rural gap +48.2 against the owner's 20; 1.2% of places at 100, 3.3% at 0). Proposed pairs (not yet owner-approved, scores looked up first): West Village vs Plano 100 vs 35.5, Park Slope vs Sherborn 99.1 vs 0, Back Bay vs Hamilton 99.5 vs 0, Hayes Valley vs Los Altos Hills 97.6 vs 0, Lincoln Park vs Lakeway 88.3 vs 0 (all differ by 20 or more); West Village vs Greenwich Village 100 vs 100, Back Bay vs Beacon Hill 99.5 vs 91.5, Mission District vs Hayes Valley 98.8 vs 97.6 (all within 10).
+Known data limits: OSM sparsity outside cities; chains included; 49 places score 0.0 because no tracked business lies within 1,500 m of the pin (verified by a control query on the private Overpass server); 43 places have stored coordinates that disagree with the pin their business list was measured from (median gap over 100 m), so their scores are suspect; stored Places grocery records have no subtype (counted)
 Last re-validated: 2026-10-25 (audit only)
 ```
 
@@ -41,7 +41,7 @@ Last re-validated: 2026-10-25 (audit only)
 | essentials proximity | 0-25 | nearest supermarket, cafe or bakery, restaurant or bar, linear decay 400 to 1,200 m |
 | location quality | 0-40 | pin distance to the center of nearby businesses, plus cluster variety and density |
 
-Score = min(100, 0.6 x (density + variety + proximity) + location quality). Catalog version tag: `amenities_v3_walkable_density`.
+Score = min(100, 0.6 x (density + variety + proximity) + location quality). Version tag (live and catalog): `amenities_v3_1_decay_grocery_2026-10-26` (v3 walkable density plus the supermarket-only grocery rule and the 400 to 1,200 m proximity decay).
 
 ## Known weaknesses
 - Location quality measures the median coordinate of all nearby businesses, not a real town center, and counts auto-oriented clusters. Redesign pending.
