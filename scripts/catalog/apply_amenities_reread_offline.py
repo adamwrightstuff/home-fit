@@ -23,7 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def build_pillar(old: dict, det: dict) -> dict:
+def build_pillar(old: dict, det: dict, pin=None) -> dict:
     weight = old.get("weight") or 0.0
     score = det["score"]
     bd = dict(det.get("breakdown") or {})
@@ -44,6 +44,7 @@ def build_pillar(old: dict, det: dict) -> dict:
         "status": "success",
         "pin_sensitivity": det.get("pin_sensitivity"),
         "_rescore_version": "amenities_v3_1_decay_grocery_2026-10-26",
+        **({"pin_used": {"lat": pin[0], "lon": pin[1], "source": "osm_place_node"}} if pin else {}),
     }
 
 
@@ -57,7 +58,9 @@ def main():
     a = ap.parse_args()
     if a.write and not a.backup_dir:
         sys.exit("--write requires --backup-dir")
-    results = {(r["metro"], r["q"]): r["det"] for r in json.load(open(a.results)) if r["det"].get("score") is not None}
+    loaded = [r for r in json.load(open(a.results)) if r["det"].get("score") is not None]
+    results = {(r["metro"], r["q"]): r["det"] for r in loaded}
+    pins = {(r["metro"], r["q"]): r.get("new") for r in loaded}
     hits = []
     for path in sorted(glob.glob(a.glob)):
         metro = os.path.basename(path).split("_metro")[0]
@@ -81,7 +84,7 @@ def main():
                 out.append(line)
                 continue
             old = json.loads(json.dumps(old))
-            new = build_pillar(old, det)
+            new = build_pillar(old, det, pins.get((metro, cat.get("search_query"))))
             P["neighborhood_amenities"] = new
             tb = (s.get("total_score_breakdown") or {}).get("neighborhood_amenities")
             if isinstance(tb, dict):

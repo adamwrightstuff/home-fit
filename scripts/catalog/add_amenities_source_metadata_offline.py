@@ -41,6 +41,11 @@ def main():
             if not isinstance(h, dict) or h.get("score") is None or "lat" not in co:
                 out.append(line)
                 continue
+            if any("business_list_measured_at_a_different_place" in w for w in (h.get("data_quality") or {}).get("data_warnings", [])):
+                out.append(line)  # the list does not belong to this place; pin sensitivity would be meaningless
+                continue
+            if h.get("pin_used"):
+                co = {"lat": h["pin_used"]["lat"], "lon": h["pin_used"]["lon"]}
             bl = (h.get("breakdown") or {}).get("business_list") or []
             places = sum(1 for b in bl if b.get("source") == "google_places")
             at = ((s.get("data_quality_summary") or {}).get("area_classification") or {}).get("area_type")

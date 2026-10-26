@@ -42,7 +42,9 @@ def main() -> int:
             s = r.get("score") or {}
             a = (s.get("livability_pillars") or {}).get("neighborhood_amenities") or {}
             bl = (a.get("breakdown") or {}).get("business_list") or []
-            co = s.get("coordinates") or {}
+            co = dict(s.get("coordinates") or {})
+            if a.get("pin_used"):  # the list was measured from a recorded pin that differs from the catalog coordinates
+                co = {"lat": a["pin_used"]["lat"], "lon": a["pin_used"]["lon"]}
             if a.get("score") is None or len(bl) < 3 or "lat" not in co:
                 continue
             diffs = sorted(abs(hav(co["lat"], co["lon"], b["lat"], b["lon"]) - b["distance_m"])

@@ -31,3 +31,6 @@ Permission to pull Walk Score values; decision on the 43 inconsistent pins; sign
 
 ## Pin batch result (2026-10-26)
 36 re-read at the stored pin and written (for example Reading 25.4 to 80.7, Chamblee 15.9 to 61.0, Lynn 56.0 to 83.5, Almaden Valley 82.3 to 72.3, Windsor Square 63.2 to 53.0, Loomis 64.5 to 31.9). 6 held as no data because the re-read found no business and the stored pin may be wrong. Totals for the 42 moved +0.7 on average (-2.7 to +4.4).
+
+## Held pins resolved (2026-10-26)
+Tiburon 63.8, Youngtown 10.3, Cherry Hills Village 14.1, Corinth 33.0 and Prosper 33.8 were re-read at the OSM place-node pin their old lists came from (within 1.3 points of the old scores); the pin is stored as pin_used. Highland Village keeps 82.0 by owner decision with a data warning: its list belongs to another place; at the correct pin it would score 0.0, and its retail cluster (43 businesses incl. The Cheesecake Factory) is 2.7 km from the stored pin. The pin-consistency check flags Highland Village and Ridgewood. Other pillars for these places were scored at the stored boundary-center pins.
