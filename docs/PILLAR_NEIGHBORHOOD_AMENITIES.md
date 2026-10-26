@@ -19,7 +19,7 @@ Parameters:
   home split | 50 density / 25 variety / 25 proximity | judgment | 40/30/30 to 60/20/20 | at most 4.6 points
   variety tier points | 10 / 7 / 5 / 3 | judgment | 7/7/7/4 to 12/6/4/3 | at most 1.8 points
   proximity weights | grocery .45, cafe or bakery .30, restaurant or bar .25 | judgment | .34/.33/.33 to .6/.2/.2 | at most 2.2 points
-  proximity steps | 150/300/500/800 m = 1.0/.85/.6/.35 | judgment | n/a | part of the window result
+  proximity decay | linear, full credit within 400 m, zero at 1,200 m | judgment anchored on Walk Score's 5-minute (0.25 mile) full-credit point; Walk Score's own curve is not public and ends at a 30-minute walk | zero point 1,200 to 2,400 m, linear or exponential | proximity-only variants +2.5 to +4.2 points on average (analysis/amenities_proximity_decay_estimate_2026-10-26.md)
   home x0.6 + location 0-40 | 60/40 | judgment (added 2026-09-06) | 0.5 to 0.7 on home | mean -5.1 to +4.8 points
   location steps and divisors | 400/800/1200/1600 m; divisors 12.5/10/7.5/3.75 by area type | judgment | uniform divisor | mean -0.3, max 3.6 points
   grocery run | supermarkets only (convenience stores and greengrocers do not count) | USDA Food Access Research Atlas defines access to supermarkets, supercenters and large grocers (policy definition, not a study) | n/a | mean -1.1 points on stored records
@@ -38,7 +38,7 @@ Last re-validated: 2026-10-25 (audit only)
 |---|---|---|
 | walkable density | 0-50 | log-scaled count of businesses within 800 m |
 | variety | 0-25 | distinct types across tiers t1 to t4 within 800 m |
-| essentials proximity | 0-25 | nearest supermarket, cafe or bakery, restaurant or bar |
+| essentials proximity | 0-25 | nearest supermarket, cafe or bakery, restaurant or bar, linear decay 400 to 1,200 m |
 | location quality | 0-40 | pin distance to the center of nearby businesses, plus cluster variety and density |
 
 Score = min(100, 0.6 x (density + variety + proximity) + location quality). Catalog version tag: `amenities_v3_walkable_density`.

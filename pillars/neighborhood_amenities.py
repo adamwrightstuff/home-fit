@@ -151,7 +151,7 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
 
     density_score = _score_walkable_density(walk_biz, max_points=50)        # 0-50
     variety_score = _score_walkable_variety(walk_t1, walk_t2, walk_t3, walk_t4, max_points=25)  # 0-25
-    proximity_score = _score_essentials_proximity(walk_biz, max_points=25)  # 0-25
+    proximity_score = _score_essentials_proximity(all_businesses, max_points=25)  # 0-25, decays out to 1,200 m
 
     home_score = density_score + variety_score + proximity_score  # 0-100 (the full amenity-access score)
 
@@ -267,6 +267,8 @@ _T4_SERVICES = {"boutique", "salon", "records", "fitness", "garden"}
 # Food Access Research Atlas measures healthy-food access to supermarkets, supercenters and large grocers.
 # A stored Places record with no subtype (shop None) is kept, since its type is unknown.
 _NOT_A_GROCERY_RUN = {"convenience", "greengrocer"}
+PROXIMITY_FULL_M = 400
+PROXIMITY_ZERO_M = 1200
 
 
 def _score_walkable_density(walk_biz: List[Dict], max_points: float = 50) -> float:
@@ -293,25 +295,25 @@ def _score_walkable_variety(t1: List, t2: List, t3: List, t4: List, max_points: 
 
 
 def _score_essentials_proximity(walk_biz: List[Dict], max_points: float = 25) -> float:
-    """The 'milk run': can you WALK to a grocery, a cafe/bakery, and a restaurant/bar?
-    A car-dependent suburb whose grocery is a 1.2km drive loses here even with a Main Street."""
+    """The 'milk run': how close is the nearest grocery, cafe/bakery and restaurant/bar?
+    Credit decays linearly from full at 400 m to zero at 1,200 m, so a car-dependent suburb whose grocery
+    is a 1.2 km drive loses here even with a Main Street."""
     def nearest(types):
         ds = [b["distance_m"] for b in walk_biz if b.get("type") in types and b.get("distance_m") is not None
               and not (b.get("type") == "grocery" and b.get("shop") in _NOT_A_GROCERY_RUN)]
         return min(ds) if ds else None
 
     def prox(d):
+        # Linear decay: full credit within 400 m (Walk Score's 5-minute full-credit point), zero at 1,200 m.
+        # The shape and the 1,200 m end are judgment (Walk Score's curve is not public and ends at 30 minutes);
+        # 1,200 m is the smallest query radius, so every place is measured out to the same distance.
         if d is None:
             return 0.0
-        if d <= 150:
+        if d <= PROXIMITY_FULL_M:
             return 1.0
-        if d <= 300:
-            return 0.85
-        if d <= 500:
-            return 0.6
-        if d <= 800:
-            return 0.35
-        return 0.0
+        if d >= PROXIMITY_ZERO_M:
+            return 0.0
+        return (PROXIMITY_ZERO_M - d) / (PROXIMITY_ZERO_M - PROXIMITY_FULL_M)
 
     groc = prox(nearest({"grocery"}))
     caf = prox(nearest({"cafe", "bakery"}))
@@ -341,7 +343,7 @@ def _pin_sensitivity(all_businesses: List[Dict], lat: float, lon: float, area_ty
         home = (_score_walkable_density(near, 50)
                 + _score_walkable_variety(*[[b for b in near if b.get("type") in t]
                                             for t in (_T1_DAILY, _T2_SOCIAL, _T3_CULTURE, _T4_SERVICES)], max_points=25)
-                + _score_essentials_proximity(near, 25))
+                + _score_essentials_proximity(moved, 25))
         scores.append(min(100.0, home * 0.6 + _score_location_quality(moved, nlat, nlon, 40, area_type)))
     lo, hi = min(scores), max(scores)
     return {"shift_m": _PIN_SHIFT_M, "min": round(lo, 1), "max": round(hi, 1), "range": round(hi - lo, 1)}

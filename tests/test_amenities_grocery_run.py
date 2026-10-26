@@ -36,3 +36,13 @@ def test_pin_sensitivity_reports_a_range():
     ps = na._pin_sensitivity(biz, 30.0, -97.0, "suburban", False, 800)
     assert ps["shift_m"] == 200 and ps["range"] >= 0 and ps["min"] <= ps["max"]
     assert na._pin_sensitivity([], 30.0, -97.0, "suburban", False, 800)["range"] is None
+
+
+def test_proximity_decays_linearly_from_400_to_1200_m():
+    cafe = lambda d: [_biz("cafe", None, d)]
+    full = na._score_essentials_proximity(cafe(400))
+    assert full == round(0.30 * 25, 2)
+    assert na._score_essentials_proximity(cafe(1200)) == 0.0
+    assert na._score_essentials_proximity(cafe(1500)) == 0.0
+    assert na._score_essentials_proximity(cafe(800)) == round(full / 2, 2)
+    assert na._score_essentials_proximity(cafe(401)) < full
