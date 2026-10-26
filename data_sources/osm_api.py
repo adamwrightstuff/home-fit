@@ -1690,31 +1690,31 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=60)
-def _reread_businesses_on_alternate_endpoint(query: str, lat: float, lon: float, include_chains: bool) -> Optional[Dict]:
-    """Re-run an empty businesses query on a different Overpass endpoint.
+def _empty_result_is_genuine(lat: float, lon: float, radius_m: int) -> bool:
+    """Control query on the same endpoint: does the database hold any OSM nodes in the search circle?
 
-    Returns the processed businesses, or None when no other endpoint exists or the re-read fails.
+    An overloaded or half-loaded server can answer 200 with no elements. If the same server cannot show
+    a single node in the circle, the empty business result is a failed read, not an empty place.
     """
-    primary = get_overpass_url()
-    alt = next((u for u in OVERPASS_URLS if u != primary), None)
-    if alt is None:
-        return None
     try:
         r = requests.post(
-            alt,
-            data={"data": query},
+            get_overpass_url(),
+            data={"data": f"[out:json][timeout:25];node(around:{int(radius_m)},{lat},{lon});out count;"},
             timeout=_overpass_timeout(30),
             headers={"User-Agent": "HomeFit/1.0"},
         )
         if r.status_code != 200 or _overpass_remark_error(r):
-            return None
-        data = _safe_overpass_json(r, context="businesses confirm")
-        if data is None:
-            return None
-        return _process_business_features(data.get("elements", []), lat, lon, include_chains)
+            return False
+        data = _safe_overpass_json(r, context="businesses control")
+        if not data:
+            return False
+        for el in data.get("elements", []):
+            if el.get("type") == "count":
+                return int((el.get("tags") or {}).get("total", 0)) > 0
+        return False
     except Exception as e:
-        logger.warning(f"OSM empty-result confirmation failed: {e}")
-        return None
+        logger.warning(f"OSM empty-result control query failed: {e}")
+        return False
 
 
 def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include_chains: bool = True, vacation_mode: bool = False) -> Optional[Dict]:
@@ -1894,14 +1894,11 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
         # Avoid caching empty business results; transient Overpass failures can otherwise poison cache.
         total_processed = sum(len(businesses.get(k, [])) for k in ["tier1_daily", "tier2_social", "tier3_culture", "tier4_services"])
         if total_processed == 0:
-            # An empty 200 can be an overloaded server, not an empty place. Only accept zero
-            # businesses if a second endpoint agrees; an unconfirmed read is a failed read.
-            confirmed = _reread_businesses_on_alternate_endpoint(query, lat, lon, include_chains)
-            if confirmed is None:
-                logger.warning("OSM business query returned empty and could not be confirmed on another endpoint")
+            # An empty 200 can be an overloaded server, not an empty place. Accept zero businesses only if a
+            # control query on the same endpoint can see map data in the circle; otherwise it is a failed read.
+            if not _empty_result_is_genuine(lat, lon, radius_m):
+                logger.warning("OSM business query returned empty and the control query found no map data")
                 return None
-            if sum(len(confirmed.get(k, [])) for k in ["tier1_daily", "tier2_social", "tier3_culture", "tier4_services"]) > 0:
-                return confirmed
             businesses["_cache_skip"] = True
             businesses["data_warning"] = "empty_businesses_result_not_cached"
         return businesses
