@@ -564,7 +564,16 @@ def _apply_v9_to_natural(natural_calc: Dict, natural_score: float, natural_detai
         natural_details["v9_breakdown"] = v9_breakdown
         natural_details["scoring_formula"] = (natural_beauty.NATURAL_BEAUTY_SCORING_FORMULA
                                               if natural_beauty.ENABLE_NATURAL_BEAUTY_V9 else "v7")
+        reasons = v9_breakdown.get("degraded_reasons") or []
+        if reasons:
+            dq = natural_details.get("data_quality")
+            dq = dq if isinstance(dq, dict) else {}
+            dq["degraded"] = True
+            dq["degraded_reasons"] = list(dq.get("degraded_reasons") or []) + [f"natural_beauty: {r}" for r in reasons]
+            natural_details["data_quality"] = dq
         final_score = v9_score if natural_beauty.ENABLE_NATURAL_BEAUTY_V9 else natural_score
+    except natural_beauty.NaturalBeautyNoData:
+        raise  # no data is a failure, not a reason to fall back to the old V7 score
     except Exception:
         final_score = natural_score
     return final_score, natural_details
@@ -2348,10 +2357,13 @@ def _compute_single_score_internal(
         )
 
     pillar_results['built_environment'] = (built_score, built_details)
-    natural_score, natural_details = _apply_v9_to_natural(
-        natural_calc or {}, natural_score, natural_details, lat, lon,
-        natural_beauty_preference=natural_beauty_preference
-    )
+    try:
+        natural_score, natural_details = _apply_v9_to_natural(
+            natural_calc or {}, natural_score, natural_details, lat, lon,
+            natural_beauty_preference=natural_beauty_preference
+        )
+    except natural_beauty.NaturalBeautyNoData as exc:
+        exceptions['natural_beauty'] = exc  # same failure path as a raised pillar: no data, weight redistributed
     pillar_results['natural_beauty'] = (natural_score, natural_details)
 
     nb_effective_area_type = (built_calc or {}).get("effective_area_type") or area_type
@@ -3999,10 +4011,13 @@ async def _stream_score_with_progress(
             )
 
         pillar_results['built_environment'] = (built_score, built_details)
-        natural_score, natural_details = _apply_v9_to_natural(
-            natural_calc or {}, natural_score, natural_details, lat, lon,
-            natural_beauty_preference=natural_beauty_preference
-        )
+        try:
+            natural_score, natural_details = _apply_v9_to_natural(
+                natural_calc or {}, natural_score, natural_details, lat, lon,
+                natural_beauty_preference=natural_beauty_preference
+            )
+        except natural_beauty.NaturalBeautyNoData as exc:
+            exceptions['natural_beauty'] = exc
         pillar_results['natural_beauty'] = (natural_score, natural_details)
 
         # Handle school scoring

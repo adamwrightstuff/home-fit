@@ -42,7 +42,7 @@ def test_catalog_scores_keep_the_old_mean_and_spread_without_a_pile_up_at_100():
     for f in glob.glob("data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl"):
         for line in open(f):
             nb = ((json.loads(line).get("score") or {}).get("livability_pillars") or {}).get("natural_beauty") or {}
-            if (nb.get("details") or {}).get("score_before_two_part") is not None:
+            if (nb.get("details") or {}).get("score_before_two_part") is not None and nb.get("score") is not None:  # no-data places have no score
                 sc.append(nb["score"])
     if len(sc) < 1400:
         pytest.skip("catalog files not present")

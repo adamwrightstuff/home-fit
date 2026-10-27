@@ -21,6 +21,11 @@ from pillars.beauty_common import NATURAL_ENHANCER_CAP, normalize_beauty_score
 logger = get_logger(__name__)
 
 
+class NaturalBeautyNoData(RuntimeError):
+    """Natural beauty has no usable measurement for one of its two parts (streets or scenery).
+    The pillar fails and drops out of the total; it is never filled with a neutral or zero value."""
+
+
 def _greenspaces_osm_unavailable(green_spaces: Optional[Dict]) -> bool:
     """True when Overpass failed (timeout/error), matching the legacy ``None`` query path."""
     if green_spaces is None or not isinstance(green_spaces, dict):
@@ -2109,6 +2114,17 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                         logger.debug(f"Parallel {key} data fetch failed: {exc}, using defaults")
                         break
     
+    # Keep a failed water read apart from a read that found nothing: the OSM query returns None when it
+    # fails and source "osm_empty" when nothing lies within 15 km.  The scorer needs the difference
+    # (see _v9_score_water), so record it before the result is nulled below.
+    _osm_water = water_proximity_data
+    if not isinstance(_osm_water, dict):
+        _osm_water_read = "unavailable"
+    elif _osm_water.get("nearest_distance_km") is None:
+        _osm_water_read = "none_within_15km" if _osm_water.get("source") == "osm_empty" else "unavailable"
+    else:
+        _osm_water_read = "measured"
+
     # Normalize: treat "query succeeded but no usable nearest distance" as missing for scoring purposes.
     # This prevents confusing states like "Water Proximity Available: Yes" with nearest_km=None.
     if water_proximity_data and water_proximity_data.get("nearest_distance_km") is None:
@@ -2216,6 +2232,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         except Exception as e:
             logger.debug("Water proximity micro landcover fallback failed (non-fatal): %s", e)
     
+    # Final water read state after the landcover fallbacks: "measured" when any source gave a nearest water
+    # body (the fallbacks carry their own source and confidence), "none_within_15km" when OSM answered and
+    # nothing was found, "unavailable" when OSM failed and no fallback could stand in.
+    details["water_read_status"] = "measured" if water_proximity_data else _osm_water_read
+
     # Validate results
     if topography_metrics and not isinstance(topography_metrics, dict):
         topography_metrics = None
@@ -4125,14 +4146,21 @@ def _v9_score_gvi(gvi_pct: float) -> float:
     return min(100.0, 95.0 + (gvi_pct - 50) * 0.3)
 
 
-def _v9_score_water(dist_km: Optional[float], water_type: Optional[str]) -> float:
+def _v9_score_water(dist_km: Optional[float], water_type: Optional[str],
+                    water_status: str = "measured") -> Optional[float]:
     """
     Water proximity → 0-100. Type-specific exponential decay.
     Ocean/bay max=100; lake max=70; river/stream max=40.
     Coastal >> freshwater per blue-space wellbeing literature.
+
+    water_status "none_within_15km" (the read succeeded and found nothing) takes the curve's own floor of
+    3.0.  A missing distance or type with any other status is a failed read and returns None: no score,
+    never a neutral value.
     """
+    if water_status == "none_within_15km":
+        return 3.0
     if dist_km is None or water_type is None:
-        return 5.0
+        return None
     wt = str(water_type).lower()
     if wt in ("ocean", "bay", "coastline", "coast"):
         max_score, decay = 100.0, 0.20
@@ -4446,13 +4474,30 @@ def _apply_v9_formula(
 
     region = _get_nb_region(lat, lon)
 
-    # GVI: use direct measurement; fall back to canopy proxy if street-view data absent
-    gvi_pct = tree_details.get("green_view_index") or 0.0
-    canopy_pct = tree_details.get("weighted_canopy_pct") or tree_details.get("gee_canopy_pct") or 0.0
+    # Missing inputs stay None and are listed in degraded_reasons.  A zero is only ever a measured zero:
+    # a failed read must not turn into a green view of 0 or a canopy of 0 (design principles v2, P9).
+    degraded_reasons: List[str] = []
+    canopy_pct = tree_details.get("weighted_canopy_pct") or tree_details.get("gee_canopy_pct")
+    if canopy_pct is None:
+        canopy_pct = next((tree_details[k] for k in ("weighted_canopy_pct", "gee_canopy_pct")
+                           if tree_details.get(k) is not None), None)
+    if canopy_pct is None:
+        degraded_reasons.append("canopy_unavailable: no GEE canopy result")
+
+    # Green view is used as measured, however low.  (A measured value under 2% used to be replaced by
+    # 0.7 x canopy; both numbers were unsourced and the replacement hid possible bad readings.)
+    _gvi_raw = tree_details.get("green_view_index")
+    gvi_pct = float(_gvi_raw) if _gvi_raw is not None else None
     gvi_source = "measured"
-    if not gvi_pct or gvi_pct < 2.0:
-        gvi_pct = min(50.0, float(canopy_pct) * 0.7)
-        gvi_source = "canopy_proxy"
+    if (tree_details.get("green_view_details") or {}).get("method") == "composite":
+        # The composite is built from canopy, street trees and parks, not from a green view reading.
+        gvi_source = "composite_fallback"
+        if canopy_pct is None:
+            gvi_pct = None  # nothing real underneath it
+        else:
+            degraded_reasons.append("green_view_fallback: no green view reading, estimated from canopy and street trees")
+    if gvi_pct is None:
+        degraded_reasons.append("green_view_unavailable: no green view result")
 
     # Street-tree GVI boost: satellite-derived GVI systematically undercounts narrow urban
     # street trees, which are bare in winter but fully leafed in summer. GVI is supposed to
@@ -4468,7 +4513,7 @@ def _apply_v9_formula(
         _st_boost_count, _st_boost_src = _other_st, "street_tree_feature"
     else:
         _st_boost_count, _st_boost_src = 0, None
-    if _st_boost_count > 0:
+    if _st_boost_count > 0 and gvi_pct is not None:
         _st_boost = min(20.0, math.log1p(_st_boost_count / 500.0) * 8.0)
         gvi_pct = min(50.0, float(gvi_pct) + _st_boost)
         gvi_source = f"{gvi_source}+st_boost_{_st_boost_src}({_st_boost_count},+{_st_boost:.1f}pct)"
@@ -4481,25 +4526,30 @@ def _apply_v9_formula(
     # substantially exceeds the current gvi_pct (> 2x), so it doesn't override well-measured GVI.
     _vgf = float((tree_details.get("gvi_metrics") or {}).get("visible_green_fraction") or 0.0)
     _vgf_floor = _vgf * 0.85
-    if _vgf_floor > float(gvi_pct) * 2.0 and _vgf_floor > 5.0:
+    if gvi_pct is not None and _vgf_floor > float(gvi_pct) * 2.0 and _vgf_floor > 5.0:
         gvi_pct = min(50.0, _vgf_floor)
         gvi_source = f"{gvi_source}+vgf_floor({_vgf:.1f}pct)"
 
     # Normalize GVI and canopy against regional medians before applying scoring curves.
-    gvi_normalized = _v9_regional_normalize(float(gvi_pct), "gvi", region)
-    canopy_normalized = _v9_regional_normalize(float(canopy_pct), "canopy", region)
+    gvi_normalized = _v9_regional_normalize(float(gvi_pct), "gvi", region) if gvi_pct is not None else None
+    canopy_normalized = _v9_regional_normalize(float(canopy_pct), "canopy", region) if canopy_pct is not None else None
 
     water_type = dbg.get("water_proximity_type")
     water_dist_km = dbg.get("water_proximity_nearest_km")
-    topo_raw = cs.get("topography_raw") or 0.0
+    water_status = tree_details.get("water_read_status") or "unavailable"
+    topo_raw = cs.get("topography_raw")  # absent when the terrain read failed
     landcover_raw = cs.get("landcover_raw") or 0.0
     bio_val = nc.get("biodiversity_index") or nc.get("biodiversity_entropy") or 0.0
 
-    gvi_score = _v9_score_gvi(gvi_normalized)
-    water_score = _v9_score_water(water_dist_km, water_type)
-    canopy_score = _v9_score_canopy(canopy_normalized)
-    topo_score = _v9_score_topo(float(topo_raw))
-    landcover_score = _v9_score_landcover(float(landcover_raw))
+    gvi_score = _v9_score_gvi(gvi_normalized) if gvi_normalized is not None else None
+    water_score = _v9_score_water(water_dist_km, water_type, water_status)
+    canopy_score = _v9_score_canopy(canopy_normalized) if canopy_normalized is not None else None
+    topo_score = _v9_score_topo(float(topo_raw)) if topo_raw is not None else None
+    if water_score is None:
+        degraded_reasons.append("water_read_unavailable: scenery scored from terrain alone")
+    if topo_score is None:
+        degraded_reasons.append("topography_unavailable: scenery scored from water alone")
+    landcover_score = _v9_score_landcover(float(landcover_raw or 0.0))
     bio_score = _v9_score_bio(float(bio_val))
 
     # Two-part score: streets (green view, canopy) and scenic setting (terrain, water), blended and rescaled.
@@ -4508,37 +4558,48 @@ def _apply_v9_formula(
         "gvi_score": gvi_score, "water_score": water_score, "canopy_score": canopy_score,
         "topo_score": topo_score, "landcover_score": landcover_score, "bio_score": bio_score,
     }
-    streets_missing = streets_inputs_missing(
-        gvi_pct, canopy_pct,
-        measured=any(tree_details.get(k) is not None for k in ("green_view_index", "weighted_canopy_pct", "gee_canopy_pct")))
-    parts = nb_two_part(comp_by_name, preference_names, water_type, streets_missing=streets_missing)
-    total = parts["score"] if parts else 0.0
+    # Both parts are required: a part needs at least one measured component.  Otherwise the pillar has no
+    # data and drops out of the total (design principles v2, P9), instead of scoring a half-made construct.
+    missing_parts = [name for name, keys in (("streets", ("gvi_score", "canopy_score")),
+                                             ("scenery", ("topo_score", "water_score")))
+                     if all(comp_by_name[k] is None for k in keys)]
+    if missing_parts:
+        raise NaturalBeautyNoData(
+            f"Natural beauty has no measurement for: {', '.join(missing_parts)} "
+            f"({'; '.join(degraded_reasons) or 'no reasons recorded'})")
+    parts = nb_two_part(comp_by_name, preference_names, water_type)
+    total = parts["score"]
+
+    def _r(v, nd=2):
+        return round(float(v), nd) if v is not None else None
 
     breakdown = {
         "method": "two_part_v10",
-        "low_confidence": True if streets_missing else None,
-        "missing_parts": ["streets"] if streets_missing else None,
-        "streets_score": parts["streets"] if parts else None,
-        "scenery_score": parts["scenery"] if parts else None,
-        "blend_raw": parts["blend"] if parts else None,
-        "streets_share": parts["streets_share"] if parts else None,
+        "low_confidence": True if degraded_reasons else None,
+        "missing_parts": None,
+        "degraded_reasons": degraded_reasons or None,
+        "water_status": water_status,
+        "streets_score": parts["streets"],
+        "scenery_score": parts["scenery"],
+        "blend_raw": parts["blend"],
+        "streets_share": parts["streets_share"],
         "preference_applied": preference_names or None,
-        "gvi_score": round(gvi_score, 2),
-        "water_score": round(water_score, 2),
-        "canopy_score": round(canopy_score, 2),
-        "topo_score": round(topo_score, 2),
+        "gvi_score": _r(gvi_score),
+        "water_score": _r(water_score),
+        "canopy_score": _r(canopy_score),
+        "topo_score": _r(topo_score),
         "landcover_score": round(landcover_score, 2),
         "bio_score": round(bio_score, 2),
         "region": region,
         "inputs": {
-            "gvi_pct": round(float(gvi_pct), 2),
-            "gvi_normalized": round(gvi_normalized, 2),
+            "gvi_pct": _r(gvi_pct),
+            "gvi_normalized": _r(gvi_normalized),
             "gvi_source": gvi_source,
-            "canopy_pct": round(float(canopy_pct), 2),
-            "canopy_normalized": round(canopy_normalized, 2),
+            "canopy_pct": _r(canopy_pct),
+            "canopy_normalized": _r(canopy_normalized),
             "water_type": water_type,
-            "water_dist_km": round(float(water_dist_km), 3) if water_dist_km is not None else None,
-            "topo_raw": round(float(topo_raw), 3),
+            "water_dist_km": _r(water_dist_km, 3),
+            "topo_raw": _r(topo_raw, 3),
             "landcover_raw": round(float(landcover_raw), 3),
             "bio_val": round(float(bio_val), 3),
         },
@@ -4584,13 +4645,11 @@ def get_natural_beauty_score(lat: float,
     uplift_bonus = result.get("uplift_bonus", 0.0)
     tree_details = result["details"]
 
-    # When all sub-fetches fail, tree_analysis and scenic_proxy both come back as {}.
-    # Previously this raised RuntimeError so the pillar failed with score=0 and kept its weight,
-    # which is worse than returning a low-confidence partial score (especially for vacation mode
-    # where natural_beauty is 30-35% weighted). Log a warning but continue — V9 will compute
-    # what it can from partial data, and confidence will reflect the data gap.
+    # When all sub-fetches fail, tree_analysis and scenic_proxy both come back as {}.  That is no data:
+    # the pillar fails and drops out of the total (design principles v2, P9, decided 2026-10-24).  An earlier
+    # version scored it from zeros (3.1) and an even earlier one failed with score 0 and kept its weight.
     if isinstance(tree_details, dict) and not tree_details.get("tree_analysis") and not tree_details.get("scenic_proxy"):
-        logger.warning(f"Natural beauty data sources all failed for ({lat}, {lon}) — returning low-confidence score")
+        raise NaturalBeautyNoData(f"Natural beauty data sources all failed for ({lat}, {lon})")
 
     # V9: compute alongside V7 when flag enabled; also always stash for comparison
     v9_score, v9_breakdown = _apply_v9_formula(
@@ -4633,6 +4692,8 @@ def get_natural_beauty_score(lat: float,
         "score_v9": round(v9_score, 2),
         "v9_breakdown": v9_breakdown,
         "scoring_formula": NATURAL_BEAUTY_SCORING_FORMULA if ENABLE_NATURAL_BEAUTY_V9 else "v7",
+        "data_quality": {"degraded": bool(v9_breakdown.get("degraded_reasons")),
+                         "degraded_reasons": list(v9_breakdown.get("degraded_reasons") or [])},
     }
 
     return final_score, details
