@@ -44,6 +44,11 @@ Re-validation schedule: quarterly (next 2027-01-26), and whenever the OSM source
 
 Score = min(100, 0.6 x (density + variety + proximity) + location quality). Version tag (live and catalog): `amenities_v3_1_decay_grocery_2026-10-26` (v3 walkable density plus the supermarket-only grocery rule and the 400 to 1,200 m proximity decay).
 
+## Owner decisions on the design (2026-10-26)
+- The 60/40 split between home access and the nearby business center stays, as documented judgment. The score serves movers who walk to things and movers who drive to a town center; dense cores are unaffected by the split (West Village and Park Slope score 98 to 100 under any split), and it matters mostly for car-dependent suburbs (Plano 36 today, 22 at 80/20, 9 home only; Frisco 65, 59, 53).
+- The 1,200 m reach stays. A longer, drive-distance reach (credit for a downtown several kilometers away, including in the next town) and a whole-town-boundary measure were considered and rejected as too messy: boundaries erase "near me" and break on neighborhoods and big cities, and a longer reach needs much larger map queries and overlaps with hub effects in other pillars. No published source sets the weight or the reach (searched 2026-10-26: hedonic distance-to-center studies, Huff gravity distance decay, resident surveys).
+- Known consequence: a town whose shopping district lies beyond 1,200 m of the pin scores low even though it has amenities people use (Highland Village's retail cluster is 2.7 km from its stored pin; Preston Hollow, Granite Bay and similar places score 0.0).
+
 ## Known weaknesses
 - Location quality measures the median coordinate of all nearby businesses, not a real town center, and counts auto-oriented clusters. Redesign pending.
 - Every weight and threshold is judgment (table above).
