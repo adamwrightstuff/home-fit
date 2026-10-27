@@ -64,6 +64,8 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
 
     # Ensure area_type is detected early (needed for fallback scoring when OSM data unavailable)
     from data_sources import census_api
+    if place_context is not None:
+        area_type, density = place_context.area_type, place_context.density
     # Use pre-computed density if provided, otherwise fetch it
     if density is None:
         density = census_api.get_population_density(lat, lon)
@@ -77,7 +79,7 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     all_businesses = tier1_all + tier2_all + tier3_all + tier4_all
 
     # Google Places (New): thin OSM *or* empty OSM / failed OSM query — try before imputed fallback.
-    expected_minimums_pre = data_quality_manager.get_expected_minimums(lat, lon, area_type or "suburban")
+    expected_minimums_pre = data_quality_manager.get_expected_minimums(lat, lon, area_type or "suburban", density=density)
     osm_completeness_pre, _ = data_quality_manager.assess_data_completeness(
         "neighborhood_amenities",
         {"all_businesses": all_businesses},
@@ -185,11 +187,10 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     }
     
     # Assess data quality (re-use area_type if already detected)
-    density = census_api.get_population_density(lat, lon) or 0.0
     if area_type is None:  # Only detect if not already set
-        area_type = data_quality.detect_area_type(lat, lon, density)
+        area_type = data_quality.detect_area_type(lat, lon, density or 0.0)
     combined_data["places_augmented"] = bool(places_fallback_meta.get("used"))
-    quality_metrics = data_quality.assess_pillar_data_quality('neighborhood_amenities', combined_data, lat, lon, area_type)
+    quality_metrics = data_quality.assess_pillar_data_quality('neighborhood_amenities', combined_data, lat, lon, area_type, density=density)
     if places_fallback_meta.get("triggered") and places_fallback_meta.get("error"):
         quality_metrics = dict(quality_metrics)
         quality_metrics["degraded"] = True

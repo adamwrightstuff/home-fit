@@ -212,3 +212,69 @@ def test_expected_minimums_without_density_still_fetches_it(monkeypatch):
     from data_sources import data_quality as dq
     monkeypatch.setattr(dq, "get_population_density", lambda lat, lon: 37000.0)
     assert dq.data_quality_manager.get_expected_minimums(1.0, 2.0, "urban_residential")["business_count"] == 50
+
+
+# ---- every pillar takes the one context ----
+
+def test_resolver_returns_the_context_untouched_and_ignores_conflicting_arguments(monkeypatch):
+    from data_sources import census_api
+    monkeypatch.setattr(census_api, "get_population_density", lambda *a: (_ for _ in ()).throw(AssertionError("no fetch")))
+    ctx = PlaceContext(lat=1.0, lon=2.0, city=None, area_type="urban_residential", density=9000.0)
+    got = pc.resolve_place_context(1.0, 2.0, place_context=ctx, area_type="rural", density=5.0)
+    assert got is ctx
+
+
+def test_resolver_without_context_derives_once_and_marks_the_source(monkeypatch):
+    from data_sources import census_api, data_quality
+    monkeypatch.setattr(census_api, "get_population_density", lambda *a: 4200.0)
+    monkeypatch.setattr(data_quality, "detect_area_type", lambda *a, **k: "suburban")
+    got = pc.resolve_place_context(1.0, 2.0)
+    assert (got.area_type, got.density, got.area_type_source) == ("suburban", 4200.0, "derived_by_pillar")
+
+
+def test_resolver_pays_for_no_density_call_when_the_caller_supplies_the_type(monkeypatch):
+    from data_sources import census_api
+    monkeypatch.setattr(census_api, "get_population_density", lambda *a: (_ for _ in ()).throw(AssertionError("no fetch")))
+    got = pc.resolve_place_context(1.0, 2.0, area_type="rural")
+    assert got.area_type == "rural" and got.density is None
+
+
+PILLAR_ENTRY_POINTS = [
+    ("pillars.active_outdoors", "get_active_outdoors_score_v2"),
+    ("pillars.built_environment", "calculate_built_environment"),
+    ("pillars.natural_beauty", "calculate_natural_beauty"),
+    ("pillars.neighborhood_amenities", "get_neighborhood_amenities_score"),
+    ("pillars.air_travel_access", "get_air_travel_score"),
+    ("pillars.public_transit_access", "get_public_transit_score"),
+    ("pillars.healthcare_access", "get_healthcare_access_score"),
+    ("pillars.economic_opportunity", "get_economic_opportunity_score"),
+    ("pillars.housing_value", "get_housing_value_score"),
+    ("pillars.climate_risk", "get_climate_risk_score"),
+    ("pillars.social_fabric", "get_social_fabric_score"),
+    ("pillars.diversity", "get_diversity_score"),
+    ("pillars.community_safety", "get_community_safety_score"),
+    ("pillars.schools", "get_school_data"),
+]
+
+
+@pytest.mark.parametrize("module,func", PILLAR_ENTRY_POINTS)
+def test_every_area_type_pillar_accepts_the_place_context(module, func):
+    import importlib
+    import inspect
+    fn = getattr(importlib.import_module(module), func)
+    assert "place_context" in inspect.signature(fn).parameters
+
+
+def test_main_hands_the_context_to_every_area_type_pillar():
+    import re
+    src = (pathlib.Path(__file__).resolve().parents[1] / "main.py").read_text()
+    for _, func in PILLAR_ENTRY_POINTS:
+        for m in re.finditer(r"\('[a-z_]+', (?:[a-z_]+\.)?" + func + r", \{\n(.*?)\n\s+\}\)", src, re.S):
+            assert "'place_context': place_ctx" in m.group(1), func
+
+
+def test_healthcare_survives_an_unknown_density_from_the_context():
+    import inspect
+    from pillars import healthcare_access as ha
+    src = inspect.getsource(ha.get_healthcare_access_score)
+    assert "(pop_density or 0.0)" in src  # unknown density must not raise in the radius-normalising step

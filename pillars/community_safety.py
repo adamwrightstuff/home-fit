@@ -292,6 +292,7 @@ def get_community_safety_score(
     population: Optional[int] = None,
     population_denominator_meta: Optional[Dict[str, Any]] = None,
     fallback_city: Optional[str] = None,
+    place_context=None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Score community safety for a location.
@@ -310,6 +311,8 @@ def get_community_safety_score(
         population_denominator_meta: Optional telemetry from main (areal ACS disk estimate).
         fallback_city: Jurisdiction city for agency matching when `city` is a neighborhood.
     """
+    if place_context is not None:
+        area_type = place_context.area_type
     scale_meta = national_scale_meta()
     if not _scale_ready():
         return _no_data("community_safety_national_scale_unavailable: scale file missing or empty", scale_meta)

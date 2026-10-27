@@ -10,6 +10,7 @@ import math
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from data_sources import census_api, data_quality
+from data_sources.place_context import resolve_place_context
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -79,6 +80,7 @@ def get_diversity_score(
     density: Optional[float] = None,
     city: Optional[str] = None,
     diversity_preference: Optional[List[str]] = None,
+    place_context=None,
 ) -> Tuple[float, Dict]:
     """
     Returns (score_0_100, details) with education_attainment / self_employed_pct for Status Signal.
@@ -87,10 +89,8 @@ def get_diversity_score(
     (mean of selected dimensions that have data). None = average all available (legacy behavior).
     """
     tract = census_api.get_census_tract(lat, lon)
-    if density is None:
-        density = census_api.get_population_density(lat, lon) or 0.0
-    if area_type is None:
-        area_type = data_quality.detect_area_type(lat, lon, density=density, city=city)
+    ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, density=density, city=city, need_density=True)
+    area_type = ctx.area_type
 
     diversity_data = census_api.get_diversity_data(lat, lon, tract=tract, area_type=area_type)
     if not diversity_data:
@@ -176,6 +176,7 @@ def get_diversity_score(
             lat,
             lon,
             area_type,
+            density=ctx.density,
         ),
         "area_classification": {"area_type": area_type},
         "version": "v2_preference_optional",

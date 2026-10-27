@@ -11,6 +11,7 @@ from data_sources import osm_api
 from data_sources.osm_api import coerce_green_spaces_response, coerce_nature_features_response
 from data_sources.utils import haversine_distance
 from data_sources.data_quality import assess_pillar_data_quality, get_baseline_context
+from data_sources.place_context import resolve_place_context
 from data_sources.gee_api import get_tree_canopy_gee
 from data_sources.regional_baselines import (
     get_area_classification,
@@ -107,6 +108,7 @@ def get_active_outdoors_score_v2(
     location_scope: Optional[str] = None,
     precomputed_tree_canopy_5km: Optional[float] = None,
     trip_type: Optional[str] = None,
+    place_context=None,
 ) -> Tuple[float, Dict]:
     """
     Compute Active Outdoors v2 (0–100).
@@ -130,11 +132,8 @@ def get_active_outdoors_score_v2(
 
     # 1) Area classification and radius profile
     # Use provided area_type from main.py for consistency, or fallback to detect_area_type()
-    if area_type is None:
-        # Fallback: compute area type if not provided (use same method as main.py)
-        from data_sources import data_quality, census_api
-        density = census_api.get_population_density(lat, lon) or 0.0
-        area_type = data_quality.detect_area_type(lat, lon, density=density, city=city)
+    ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, city=city)
+    area_type = ctx.area_type
     
     # Get metadata for area_classification field (still need metro_name)
     _, metro_name, area_metadata = get_area_classification(lat, lon, city=city)
@@ -368,7 +367,7 @@ def get_active_outdoors_score_v2(
         "tree_canopy_pct_5km": canopy_pct_5km,
     }
     dq = assess_pillar_data_quality(
-        "active_outdoors_v2", combined_data, lat, lon, area_type
+        "active_outdoors_v2", combined_data, lat, lon, area_type, density=ctx.density
     )
     conf_notes = _active_outdoors_confidence_notes(
         dq, parks, playgrounds, hiking_trails, swimming, camping
@@ -1190,8 +1189,9 @@ def get_active_outdoors_score(
     city: Optional[str] = None,
     area_type: Optional[str] = None,
     location_scope: Optional[str] = None,
+    place_context=None,
 ) -> Tuple[float, Dict]:
     """Backward-compatible alias; legacy v1 implementation removed — delegates to v2."""
     return get_active_outdoors_score_v2(
-        lat, lon, city=city, area_type=area_type, location_scope=location_scope
+        lat, lon, city=city, area_type=area_type, location_scope=location_scope, place_context=place_context
     )

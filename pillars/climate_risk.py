@@ -18,7 +18,8 @@ from data_sources.gee_api import (
 )
 from data_sources.air_quality_pm25 import get_pm25 as get_air_quality_pm25
 from data_sources.fema_flood import get_fema_flood_zone
-from data_sources.data_quality import assess_pillar_data_quality, detect_area_type
+from data_sources.data_quality import assess_pillar_data_quality
+from data_sources.place_context import resolve_place_context
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -88,6 +89,7 @@ def get_climate_risk_score(
     area_type: Optional[str] = None,
     density: Optional[float] = None,
     city: Optional[str] = None,
+    place_context=None,
 ) -> Tuple[float, Dict]:
     """
     Compute Climate & Flood Risk pillar score (Phase 2: heat, air, flood, trend).
@@ -207,9 +209,9 @@ def get_climate_risk_score(
         "flood_pts": flood_pts,
         "trend_pts": trend_pts,
     }
-    area_type_dq = detect_area_type(lat, lon, density=density, city=city)
+    ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, density=density, city=city)
     quality_metrics = assess_pillar_data_quality(
-        "climate_risk", combined_data, lat, lon, area_type_dq
+        "climate_risk", combined_data, lat, lon, ctx.area_type, density=ctx.density
     )
     if air_data and air_data.get("match") == "nearest_centroid":
         quality_metrics["data_warnings"] = list(quality_metrics.get("data_warnings") or []) + [
@@ -254,7 +256,7 @@ def get_climate_risk_score(
         "breakdown": breakdown,
         "summary": summary,
         "data_quality": quality_metrics,
-        "area_classification": {"area_type": area_type or area_type_dq},
+        "area_classification": {"area_type": ctx.area_type},
         "phase": "2_heat_air_flood_trend",
     }
 

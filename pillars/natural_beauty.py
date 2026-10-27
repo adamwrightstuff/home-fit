@@ -3683,10 +3683,13 @@ def calculate_natural_beauty(lat: float,
                              precomputed_tree_canopy_5km: Optional[float] = None,
                              density: Optional[float] = None,
                              form_context: Optional[str] = None,
-                             natural_beauty_preference: Optional[List[str]] = None) -> Dict:
+                             natural_beauty_preference: Optional[List[str]] = None,
+                             place_context=None) -> Dict:
     """
     Compute natural beauty components prior to normalization.
     """
+    if place_context is not None:
+        area_type, density = place_context.area_type, place_context.density
     # -------------------------------------------------------------------------
     # V8: New formula 40% topo/viewshed, 30% water (NE + GEE), 20% greenery, 10% context. No uplift.
     # -------------------------------------------------------------------------
@@ -4067,7 +4070,7 @@ def calculate_natural_beauty(lat: float,
         "scenic_metadata": scenic_meta,
     }
     quality_metrics = assess_pillar_data_quality(
-        "natural_beauty", combined_data, lat, lon, area_type or "suburban"
+        "natural_beauty", combined_data, lat, lon, area_type or "suburban", density=density,
     )
 
     return {
@@ -4616,7 +4619,8 @@ def get_natural_beauty_score(lat: float,
                              overrides: Optional[Dict[str, float]] = None,
                              enhancers_data: Optional[Dict] = None,
                              disable_enhancers: bool = False,
-                             natural_beauty_preference: Optional[List[str]] = None) -> Tuple[float, Dict]:
+                             natural_beauty_preference: Optional[List[str]] = None,
+                             place_context=None) -> Tuple[float, Dict]:
     """
     Public entry point for the natural beauty pillar.
 
@@ -4632,7 +4636,8 @@ def get_natural_beauty_score(lat: float,
         location_name=location_name,
         overrides=overrides,
         enhancers_data=enhancers_data,
-        disable_enhancers=disable_enhancers
+        disable_enhancers=disable_enhancers,
+        place_context=place_context,
     )
 
     # Use the already-normalized score from calculate_natural_beauty

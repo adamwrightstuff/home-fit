@@ -1900,6 +1900,7 @@ def _compute_single_score_internal(
     if _include_pillar('active_outdoors'):
         pillar_tasks.append(
             ('active_outdoors', get_active_outdoors_score_v2, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope,
                 'precomputed_tree_canopy_5km': tree_canopy_5km,
@@ -1909,6 +1910,7 @@ def _compute_single_score_internal(
     if need_built_environment:
         pillar_tasks.append(
             ('built_environment', built_environment.calculate_built_environment, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
                 'test_overrides': beauty_overrides if beauty_overrides else None,
@@ -1921,6 +1923,7 @@ def _compute_single_score_internal(
     if need_natural_beauty:
         pillar_tasks.append(
             ('natural_beauty', natural_beauty.calculate_natural_beauty, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
                 'overrides': beauty_overrides if beauty_overrides else None,
@@ -1942,6 +1945,7 @@ def _compute_single_score_internal(
     if _include_pillar('air_travel_access'):
         pillar_tasks.append(
             ('air_travel_access', get_air_travel_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'density': density
             })
@@ -1949,6 +1953,7 @@ def _compute_single_score_internal(
     if _include_pillar('public_transit_access'):
         pillar_tasks.append(
             ('public_transit_access', get_public_transit_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 
                 'city': city, 'density': density
             })
@@ -1956,6 +1961,7 @@ def _compute_single_score_internal(
     if _include_pillar('healthcare_access'):
         pillar_tasks.append(
             ('healthcare_access', get_healthcare_access_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 'city': city,
                 'density': density, 'vacation_mode': is_vacation_mode,
             })
@@ -1963,6 +1969,7 @@ def _compute_single_score_internal(
     if _include_pillar('economic_opportunity'):
         pillar_tasks.append(
             ('economic_opportunity', get_economic_opportunity_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'state': state, 'area_type': area_type,
                 'census_tract': census_tract,
                 'job_categories': job_categories,
@@ -1973,6 +1980,7 @@ def _compute_single_score_internal(
         _remote_only = len(_selected_jobcats) == 1 and _selected_jobcats[0] == "remote_flexible"
         pillar_tasks.append(
             ('housing_value', get_housing_value_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city,
                 'zip_code': zip_code,
                 'use_national_income_for_affordability': _remote_only,
@@ -1983,12 +1991,14 @@ def _compute_single_score_internal(
     if _include_pillar('climate_risk'):
         pillar_tasks.append(
             ('climate_risk', get_climate_risk_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
             })
         )
     if _include_pillar('social_fabric'):
         pillar_tasks.append(
             ('social_fabric', get_social_fabric_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
                 'zip_code': zip_code,
             })
@@ -1996,6 +2006,7 @@ def _compute_single_score_internal(
     if _include_pillar('diversity'):
         pillar_tasks.append(
             ('diversity', get_diversity_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
                 'diversity_preference': diversity_preference,
             })
@@ -2011,6 +2022,7 @@ def _compute_single_score_internal(
         )
         pillar_tasks.append(
             ('community_safety', get_community_safety_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'city': city, 'state': state, 'zip_code': zip_code,
                 'population': _pop_est,
@@ -2021,6 +2033,7 @@ def _compute_single_score_internal(
     if use_school_scoring and _include_pillar('quality_education'):
         pillar_tasks.append(
             ('quality_education', get_school_data, {
+                'place_context': place_ctx,
                 'zip_code': zip_code, 'state': state, 'city': city,
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'place_name': _place_name_from_location(location)
@@ -3627,6 +3640,7 @@ async def _stream_score_with_progress(
         pillar_tasks = []
         pillar_tasks.append(
             ('active_outdoors', get_active_outdoors_score_v2, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope,
                 'precomputed_tree_canopy_5km': tree_canopy_5km
@@ -3634,6 +3648,7 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('built_environment', built_environment.calculate_built_environment, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
                 'test_overrides': None,
@@ -3645,6 +3660,7 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('natural_beauty', natural_beauty.calculate_natural_beauty, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
                 'overrides': None,
@@ -3662,12 +3678,14 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('air_travel_access', get_air_travel_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'density': density
             })
         )
         pillar_tasks.append(
             ('public_transit_access', get_public_transit_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'location_scope': location_scope,
                 'city': city, 'density': density
@@ -3675,6 +3693,7 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('healthcare_access', get_healthcare_access_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'location_scope': location_scope,
                 'city': city, 'density': density
@@ -3682,6 +3701,7 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('economic_opportunity', get_economic_opportunity_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'state': state, 'area_type': area_type,
                 'census_tract': census_tract,
                 'job_categories': job_categories,
@@ -3691,6 +3711,7 @@ async def _stream_score_with_progress(
         _remote_only = len(_selected_jobcats) == 1 and _selected_jobcats[0] == "remote_flexible"
         pillar_tasks.append(
             ('housing_value', get_housing_value_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'census_tract': census_tract,
                 'density': density, 'city': city,
                 'zip_code': zip_code,
@@ -3700,17 +3721,20 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('climate_risk', get_climate_risk_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
             })
         )
         pillar_tasks.append(
             ('social_fabric', get_social_fabric_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
                 'zip_code': zip_code,
             })
         )
         pillar_tasks.append(
             ('diversity', get_diversity_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
                 'diversity_preference': diversity_preference,
             })
@@ -3724,6 +3748,7 @@ async def _stream_score_with_progress(
         if use_school_scoring:
             pillar_tasks.append(
                 ('quality_education', get_school_data, {
+                    'place_context': place_ctx,
                     'zip_code': zip_code, 'state': state, 'city': city,
                     'lat': lat, 'lon': lon, 'area_type': area_type,
                     'place_name': _place_name_from_location(location)

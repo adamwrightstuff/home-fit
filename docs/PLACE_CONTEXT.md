@@ -14,7 +14,14 @@ Amenities takes the merged list from the context and skips its own Places call, 
 ## Why the business list is not cached
 Google's Places policy lets place IDs be stored indefinitely and says other Places content must not be pre-fetched, cached or stored beyond the allowed exceptions. The merged list therefore lives only on the request-local context. The shared pre-pillar cache (schema 2) stores the area type label, as before.
 
+## How every pillar gets its place
+Every pillar that depends on the area type or density (active outdoors, built environment, natural beauty, amenities, air travel, transit, healthcare, economic, housing, climate, social fabric, diversity, community safety, schools) takes `place_context=` and `main.py` passes the same object to all of them. The pillar reads `area_type` and `density` from it and no longer detects its own. The data-quality step (`assess_pillar_data_quality`, `get_expected_minimums`) takes the context's density too, so it does not fetch a second, possibly different, density from the Census.
+
+`resolve_place_context` is the one resolver. Given a context it returns it unchanged and ignores any conflicting `area_type` or `density` argument. Given none (catalog batch scripts, tests, direct calls) it derives the place once, with the density-first rule each pillar used to carry its own copy of, and marks the result `area_type_source="derived_by_pillar"`. Density is fetched only when the type must be derived or the pillar needs it.
+
+Four pillars used to ignore the type they were handed and re-detect it from density alone, without the business count: housing value, climate risk (for its data-quality step), healthcare (for its data-quality step) and transit (for its data-quality step). They now use the context's type. Housing value's Census lookup is area-type aware, so its score can move for places where the two types differed. Political lean and the shelved cost-of-living pillar do not use an area type.
+
 ## Known limits
-- Eleven pillars still re-derive an area type when called without one (direct calls, scripts). In the API path they always receive the context's value.
-- Pillars take `area_type` and `density` as arguments rather than the whole object; only amenities takes `place_context`.
+- Direct calls without a context still derive per pillar (through the one resolver). The catalog batch scripts work this way; they are not changed here.
+- Built environment, natural beauty and transit keep their own fallback inside helper functions for direct callers; with a context those paths are not reached.
 - Catalog results scored under older area types (249 places, 656 pillar results in the 2026-10-26 check) are not touched by this change.

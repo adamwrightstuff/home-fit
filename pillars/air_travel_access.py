@@ -197,7 +197,8 @@ def score_location(lat: float, lon: float, drive_minutes: Optional[Dict[str, flo
 
 def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None,
                          density: Optional[float] = None,
-                         drive_minutes: Optional[Dict[str, float]] = None) -> Tuple[float, Dict]:
+                         drive_minutes: Optional[Dict[str, float]] = None,
+                         place_context=None) -> Tuple[float, Dict]:
     """
     Air travel access (0-100) for a location.
 
@@ -211,13 +212,10 @@ def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None
     print("✈️  Analyzing air travel access...")
     score, breakdown, nearby = score_location(lat, lon, drive_minutes)
 
-    from data_sources.census_api import get_population_density
-    if density is None:
-        density = get_population_density(lat, lon) or 0.0
+    from data_sources.place_context import resolve_place_context
+    ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, density=density, need_density=True)
+    area_type, density = ctx.area_type, ctx.density
     from data_sources.regional_baselines import regional_baseline_manager
-    if area_type is None:
-        from data_sources import data_quality
-        area_type = data_quality.detect_area_type(lat, lon, density=density)
     metro_name = regional_baseline_manager._detect_metro_area(None, lat, lon)
     breakdown["area_classification"] = {
         "density": density,
@@ -225,7 +223,7 @@ def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None
         "area_type": area_type,
         "classification_confidence": regional_baseline_manager._get_classification_confidence(density, metro_name),
     }
-    breakdown["data_quality"] = assess_pillar_data_quality("air_travel_access", {"airports": nearby}, lat, lon, area_type)
+    breakdown["data_quality"] = assess_pillar_data_quality("air_travel_access", {"airports": nearby}, lat, lon, area_type, density=density)
 
     if breakdown["primary_airport"]:
         nearest = nearby[0]

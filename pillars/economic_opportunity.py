@@ -228,10 +228,14 @@ def get_economic_opportunity_score(
     area_type: Optional[str] = None,
     census_tract: Optional[Dict[str, Any]] = None,
     job_categories: Optional[str] = None,
+    place_context=None,
 ) -> Tuple[float, Dict[str, Any]]:
     """
     Compute Economic Security & Opportunity score (0-100).
     """
+    density = None
+    if place_context is not None:
+        area_type, density = place_context.area_type, place_context.density
     geo = get_economic_geography(lat, lon, tract=census_tract)
 
     division = get_division(state)
@@ -240,7 +244,7 @@ def get_economic_opportunity_score(
     # If we can't resolve geography, return 0 with low confidence but consistent shape.
     if geo is None:
         combined_data = {"metrics_present": [], "raw": {}, "geo": None}
-        dq = assess_pillar_data_quality("economic_opportunity", combined_data, lat, lon, area_type or "suburban")
+        dq = assess_pillar_data_quality("economic_opportunity", combined_data, lat, lon, area_type or "suburban", density=density)
         return 0.0, {
             "score": 0.0,
             "breakdown": {},
@@ -513,7 +517,7 @@ def get_economic_opportunity_score(
             "year": year_now,
         },
     }
-    dq = assess_pillar_data_quality("economic_opportunity", combined_data, lat, lon, area_type or "suburban")
+    dq = assess_pillar_data_quality("economic_opportunity", combined_data, lat, lon, area_type or "suburban", density=density)
     degraded_notes = []
     if job_access_status != "ok":
         degraded_notes.append(f"economic_job_access_{job_access_status}: scored on market quality alone")

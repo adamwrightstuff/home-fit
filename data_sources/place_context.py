@@ -68,6 +68,40 @@ class PlaceContext:
         return {k: list(self.prefetched_businesses.get(k) or []) for k in TIER_KEYS}
 
 
+def resolve_place_context(
+    lat: float,
+    lon: float,
+    *,
+    place_context: Optional["PlaceContext"] = None,
+    area_type: Optional[str] = None,
+    density: Optional[float] = None,
+    city: Optional[str] = None,
+    need_density: bool = False,
+) -> "PlaceContext":
+    """
+    The one way a pillar learns the area type and density of its place.
+
+    With a context from main.py the pillar gets that context, unchanged, and any area_type or density
+    argument is ignored: the context is the single source. Without one (catalog batch scripts, tests and
+    other direct callers) the place is derived here, once, with the same density-first rule the pillars each
+    used to carry their own copy of, and the source is recorded as "derived_by_pillar" so the audit trail
+    shows the pillar did not get the request-wide answer. Density is fetched only when the area type has to be
+    derived or the pillar says it needs it (need_density), so a caller that supplies a type pays for no extra call.
+    """
+    if place_context is not None:
+        return place_context
+    if density is None and (area_type is None or need_density):
+        from data_sources import census_api
+        density = census_api.get_population_density(lat, lon) or 0.0
+    if area_type is None:
+        from data_sources import data_quality
+        area_type = data_quality.detect_area_type(lat, lon, density=density, city=city)
+    return PlaceContext(
+        lat=lat, lon=lon, city=city, area_type=area_type, density=density,
+        area_type_source="derived_by_pillar" if place_context is None else "unknown",
+    )
+
+
 def _all_businesses(data: Optional[Mapping[str, List[Dict]]]) -> List[Dict]:
     if not data:
         return []

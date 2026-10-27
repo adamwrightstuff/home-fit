@@ -29,6 +29,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from data_sources import census_api, data_quality, osm_api
 from data_sources import irs_bmf
+from data_sources.place_context import resolve_place_context
 from data_sources import community_participation
 from pillars.social_fabric_blend import SF_BASE_WEIGHTS, blend_social_fabric  # noqa: F401
 from data_sources import social_capital_cohesion
@@ -246,12 +247,11 @@ def get_social_fabric_score(
     density: Optional[float] = None,
     city: Optional[str] = None,
     zip_code: Optional[str] = None,
+    place_context=None,
 ) -> Tuple[float, Dict]:
     tract = census_api.get_census_tract(lat, lon)
-    if density is None:
-        density = census_api.get_population_density(lat, lon) or 0.0
-    if area_type is None:
-        area_type = data_quality.detect_area_type(lat, lon, density=density, city=city)
+    ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, density=density, city=city, need_density=True)
+    area_type, density = ctx.area_type, ctx.density
 
     civic_radius_m = _civic_radius_m_from_tract_density(density)
     # Commercial/campus zones (Midtown, university areas) have low residential population
@@ -347,7 +347,7 @@ def get_social_fabric_score(
             },
         }
 
-    expected_m = data_quality.data_quality_manager.get_expected_minimums(lat, lon, area_type or "suburban")
+    expected_m = data_quality.data_quality_manager.get_expected_minimums(lat, lon, area_type or "suburban", density=density)
     civic_min = max(1, int(expected_m.get("civic_nodes_min") or 3))
     osm_cs_pre = civic.get("source_status")
     n_pre = len([x for x in (civic.get("nodes") or []) if isinstance(x, dict)])
@@ -639,6 +639,7 @@ def get_social_fabric_score(
         lon,
         area_type,
         fallback_used=bool(civic_imputed_floor_applied),
+        density=density,
     )
     # Missing data (not a genuine zero) marks the pillar degraded; "no civic nodes found" on a good OSM read
     # is disclosed in components_missing but is not a data failure.

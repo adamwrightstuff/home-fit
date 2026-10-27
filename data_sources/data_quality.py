@@ -1742,6 +1742,7 @@ def assess_pillar_data_quality(
     area_type: str,
     *,
     fallback_used: bool = False,
+    density: Optional[float] = None,
 ) -> Dict:
     """
     Assess data quality for a pillar and return quality metrics.
@@ -1752,11 +1753,12 @@ def assess_pillar_data_quality(
         lat, lon: Coordinates
         area_type: Area classification
         fallback_used: When True, apply extra confidence discount (imputed / weak evidence)
+        density: Place density from the shared context; when None the expected minimums fetch their own
 
     Returns:
         Dictionary with quality metrics
     """
-    expected_minimums = data_quality_manager.get_expected_minimums(lat, lon, area_type)
+    expected_minimums = data_quality_manager.get_expected_minimums(lat, lon, area_type, density=density)
     completeness, quality_tier = data_quality_manager.assess_data_completeness(
         pillar_name, data, expected_minimums
     )
