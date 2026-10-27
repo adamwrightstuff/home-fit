@@ -76,7 +76,7 @@ try:
         _scale.get("_meta", {}).get("agencies_used"), _scale.get("_meta", {}).get("data_year"),
     )
 except Exception as e:
-    logger.warning("Failed to load community safety national scale: %s", e)
+    logger.error("Failed to load community safety national scale: %s; community_safety will report no data", e)
 
 
 # Property share of total harm (see module docstring).  Falls back to the derived value if the
@@ -153,7 +153,7 @@ def _national_percentile(rate: float, key: str) -> float:
     stored 0th..100th percentile breakpoints."""
     pts = _scale.get(key) or []
     if not pts:
-        return 50.0
+        raise ValueError(f"community safety national scale has no '{key}' breakpoints")
     if rate <= pts[0]:
         return 0.0
     if rate >= pts[-1]:
@@ -164,6 +164,31 @@ def _national_percentile(rate: float, key: str) -> float:
     if pts[lo] == rate or hi > lo + 1:
         return (bisect.bisect_left(pts, rate) + bisect.bisect_right(pts, rate) - 1) / 2
     return lo + (rate - pts[lo]) / (pts[lo + 1] - pts[lo])
+
+
+def _scale_ready() -> bool:
+    return bool(_scale.get("violent_per_1k_percentiles")) and bool(_scale.get("property_per_1k_percentiles"))
+
+
+class _DenominatorUnavailable(Exception):
+    """The residents-in-circle estimate rests on an assumed density, so the rate would be invented."""
+
+
+def _no_data(reason: str, scale_meta: Dict[str, Any]) -> Tuple[None, Dict[str, Any]]:
+    return None, {
+        "violent_per_1k": None,
+        "property_per_1k": None,
+        "trend_pct": None,
+        "trend_delta": 0.0,
+        "source": "none",
+        "precision_level": "DEGRADED",
+        "status": "DEGRADED",
+        "data_available": False,
+        "national_scale": scale_meta,
+        "confidence": 0,
+        "data_quality_index": 0.0,
+        "degraded_reasons": [reason],
+    }
 
 
 def national_scale_meta() -> Dict[str, Any]:
@@ -207,6 +232,13 @@ def _neighborhood_ambient_population(
     radius, residents, meta = NEIGHBORHOOD_RADII_M[-1], 0, {}
     for r in NEIGHBORHOOD_RADII_M:
         residents, meta = estimate_community_safety_disk_population(lat, lon, r, area_type=area_type)
+        if (
+            meta.get("population_denominator_method") == "density_disk_legacy"
+            or meta.get("population_denominator_floor_applied")
+            or meta.get("population_denominator_fragment_blend")
+        ):
+            reason = meta.get("population_denominator_skip_reason") or "assumed_density_or_floor"
+            raise _DenominatorUnavailable(f"residents in the circle were assumed, not measured ({reason})")
         radius = r
         if residents >= MIN_NEIGHBORHOOD_RESIDENTS:
             break
@@ -274,12 +306,14 @@ def get_community_safety_score(
         state:        Two-letter state abbreviation (for FBI CDE routing).
         zip_code:     ZIP code (unused currently, reserved for future data source).
         population:   Estimated residential population for per-1k conversion.
-                      Defaults to 10,000 when not supplied.
+                      No default: with no population (and no incident-feed circle) the pillar returns no data.
         population_denominator_meta: Optional telemetry from main (areal ACS disk estimate).
         fallback_city: Jurisdiction city for agency matching when `city` is a neighborhood.
     """
-    pop = population or 10_000
     scale_meta = national_scale_meta()
+    if not _scale_ready():
+        return _no_data("community_safety_national_scale_unavailable: scale file missing or empty", scale_meta)
+    pop = population if population and population > 0 else None
 
     # City neighborhoods with incident-level open data get a neighborhood-sized
     # radius and an ambient (residents + workers) denominator.
@@ -287,8 +321,14 @@ def get_community_safety_score(
     ambient_neighborhood = False
     incident_source = neighborhood_incident_source(lat, lon, city, fallback_city)
     if incident_source:
-        radius_override, pop, population_denominator_meta = _neighborhood_ambient_population(lat, lon, area_type, state=state)
+        try:
+            radius_override, pop, population_denominator_meta = _neighborhood_ambient_population(lat, lon, area_type, state=state)
+        except _DenominatorUnavailable as e:
+            return _no_data(f"community_safety_denominator_unavailable: {e}", scale_meta)
         ambient_neighborhood = True
+
+    if pop is None:
+        return _no_data("community_safety_population_unavailable: no population estimate was supplied", scale_meta)
 
     rates = get_crime_rates(
         lat, lon,
@@ -349,6 +389,10 @@ def get_community_safety_score(
             "agency_name": rates.get("agency_name"),
             "confidence": 0,
             "data_quality_index": 0.0,
+            "degraded_reasons": [
+                "community_safety_state_aggregate_only: no local agency crime data was found, "
+                "and a state-wide average is not used as a place score"
+            ],
         }
         return None, details
 
@@ -401,8 +445,29 @@ def get_community_safety_score(
     }
     if commuter_mult != 1.0:
         details["effective_pop_denominator_multiplier"] = round(commuter_mult, 4)
+    reasons: list = []
+    warnings: list = []
     if population_denominator_meta:
         details["population_denominator"] = population_denominator_meta
         if population_denominator_meta.get("commuter_adjustment") == "unavailable":
-            details["degraded_reasons"] = ["community_safety_commuter_adjustment_unavailable: no LODES grid cells near the place"]
+            reasons.append("community_safety_commuter_adjustment_unavailable: no LODES grid cells near the place")
+        if ambient_neighborhood:
+            # Tracts with no population row (not zero population) leave the circle's denominator short.
+            no_row = population_denominator_meta.get("population_denominator_missing_tract_pops") or 0
+            if no_row:
+                reasons.append(
+                    f"community_safety_denominator_incomplete: {no_row} census tract(s) in the circle have no population row"
+                )
+        filled = population_denominator_meta.get("population_denominator_tracts_filled")
+        if filled:
+            warnings.append(
+                "community_safety_denominator_older_vintage: tract population filled from an older ACS vintage "
+                + ", ".join(f"{k} x{v}" for k, v in sorted(filled.items()))
+            )
+    if trend_pct is None:
+        reasons.append("community_safety_trend_unavailable: no prior-year count, so no trend adjustment")
+    if reasons:
+        details["degraded_reasons"] = reasons
+    if warnings:
+        details["data_warnings"] = warnings
     return final_score, details
