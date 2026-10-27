@@ -64,7 +64,10 @@ const METRO_FILES: Record<CatalogMetro, string> = {
 function dataRoots(): string[] {
   // Mirrors app/api/catalog-map/route.ts: repo-root data/ in dev,
   // frontend/data/ on Vercel (populated by the buildCommand copy).
-  return [path.join(process.cwd(), '..', 'data'), path.join(process.cwd(), 'data')]
+  // Vercel: build copies the catalogs into frontend/data; reading ../data would bundle the whole repo data folder.
+  return process.env.VERCEL
+    ? [path.join(process.cwd(), 'data')]
+    : [path.join(process.cwd(), '..', 'data'), path.join(process.cwd(), 'data')]
 }
 
 function findFile(name: string): string | null {

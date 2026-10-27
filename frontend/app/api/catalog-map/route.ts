@@ -16,7 +16,10 @@ const METRO_FILES = Object.fromEntries(
 ) as unknown as Record<CatalogMapMetro, readonly string[]>
 
 function dataRoots(): string[] {
-  return [path.join(process.cwd(), '..', 'data'), path.join(process.cwd(), 'data')]
+  // Vercel: build copies the catalogs into frontend/data; reading ../data would bundle the whole repo data folder.
+  return process.env.VERCEL
+    ? [path.join(process.cwd(), 'data')]
+    : [path.join(process.cwd(), '..', 'data'), path.join(process.cwd(), 'data')]
 }
 
 function findFile(name: string): string | null {
