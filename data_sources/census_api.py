@@ -1923,6 +1923,7 @@ def estimate_community_safety_disk_population(
             dens = float(p0) / float(la0)
     if dens <= 0:
         dens = 3000.0
+        meta["population_denominator_density_assumed"] = True
     disk_sq_mi = math.pi * (radius_m / 1609.34) ** 2
     legacy = max(500, int(dens * disk_sq_mi))
     meta["population_denominator_legacy_estimate"] = legacy
@@ -2037,6 +2038,7 @@ def estimate_community_safety_disk_population(
 
     weighted = 0.0
     missing = 0
+    zero_pop = 0
     filled: Dict[str, int] = {}
     for gid, frac in overlap_by_geoid.items():
         pop = pop_by_geoid.get(gid)
@@ -2047,8 +2049,11 @@ def estimate_community_safety_disk_population(
             )
             if pop is not None:
                 filled[how] = filled.get(how, 0) + 1
-        if pop is None or pop <= 0:
-            missing += 1
+        if pop is None:
+            missing += 1  # no population row at all
+            continue
+        if pop <= 0:
+            zero_pop += 1  # a real zero (park, water, industrial land): valid, not missing
             continue
         weighted += float(pop) * float(frac)
 
@@ -2069,10 +2074,13 @@ def estimate_community_safety_disk_population(
         areal_int = min(blended, legacy)
 
     final_pop = max(500, areal_int)
+    if final_pop != areal_int:
+        meta["population_denominator_floor_applied"] = True
     meta["population_denominator_method"] = "areal_acs_tracts_in_disk"
     meta["population_denominator_tracts_overlapping"] = len(overlap_by_geoid)
     meta["population_denominator_weighted_estimate"] = int(round(weighted))
-    meta["population_denominator_missing_tract_pops"] = missing
+    meta["population_denominator_missing_tract_pops"] = missing  # tracts with no population row
+    meta["population_denominator_zero_pop_tracts"] = zero_pop
     if filled:
         meta["population_denominator_tracts_filled"] = filled
     return final_pop, meta
