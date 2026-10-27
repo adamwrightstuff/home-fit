@@ -190,14 +190,29 @@ def surrounding_stats(lat: float, lon: float, radius_m: int = RADIUS_M,
 #   (urban center 1,500 per km2 = 3,885 per sq mi; moderate density 300 per km2 = 777 per sq mi) but not
 #   those values. TODO: the exact choice of 3,000 and 800 is unsourced.
 URBAN_ACTIVITY_PER_ACRE = 25.0
+# The urban step depends on whether the pin is inside a principal city (data_sources/principal_city.py).
+# Fit to HUD's labels (1,413 catalog places, 5-fold cross-validated accuracy 0.835 against 0.805 for the single
+# 25 cutoff): the best pair was 15 inside a principal city and 35 outside (15/30 to 15/40 across folds).
+# These two numbers come from that fit, not from a published source. TODO: unsourced.
+URBAN_ACTIVITY_PER_ACRE_PRINCIPAL_CITY = 15.0
+URBAN_ACTIVITY_PER_ACRE_ELSEWHERE = 35.0
 SUBURBAN_PEOPLE_PER_SQMI = 3000.0
 EXURBAN_PEOPLE_PER_SQMI = 800.0
 
 
-def classify_surrounding(stats: Optional[SurroundingStats]) -> str:
+def urban_step(in_principal_city: Optional[bool]) -> float:
+    """Activity per acre at which a place reads urban. Unknown membership uses the single cutoff."""
+    if in_principal_city is True:
+        return URBAN_ACTIVITY_PER_ACRE_PRINCIPAL_CITY
+    if in_principal_city is False:
+        return URBAN_ACTIVITY_PER_ACRE_ELSEWHERE
+    return URBAN_ACTIVITY_PER_ACRE
+
+
+def classify_surrounding(stats: Optional[SurroundingStats], in_principal_city: Optional[bool] = None) -> str:
     if stats is None or (stats.people_density <= 0 and stats.activity_per_acre <= 0):
         return "unknown"
-    if stats.activity_per_acre >= URBAN_ACTIVITY_PER_ACRE:
+    if stats.activity_per_acre >= urban_step(in_principal_city):
         return "urban_residential"
     if stats.people_density >= SUBURBAN_PEOPLE_PER_SQMI:
         return "suburban"

@@ -929,13 +929,16 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
     if census_tract and all(census_tract.get(k) for k in ("state_fips", "county_fips", "tract_fips")):
         geoid = f"{census_tract['state_fips']}{census_tract['county_fips']}{census_tract['tract_fips']}"
     stats = surrounding_stats(lat, lon, tract_geoid=geoid)
-    base_type = classify_surrounding(stats)
+    from .principal_city import principal_city_at
+    in_pc = principal_city_at(lat, lon, (census_tract or {}).get("state_fips"))
+    base_type = classify_surrounding(stats, in_pc)
     if diagnostic_record is not None and stats is not None:
         diagnostic_record.update({
             "surrounding_people_density": round(stats.people_density, 1),
             "activity_per_acre": round(stats.activity_per_acre, 2),
             "density_method": stats.density_method,
             "jobs_known": stats.jobs_known,
+            "in_principal_city": in_pc,
         })
     return _finalize(base_type)
 
