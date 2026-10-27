@@ -82,8 +82,9 @@ def _stats(people, activity):
 
 @pytest.mark.parametrize("people,activity,expected", [
     (4579, 914.0, "urban_residential"),   # Midtown: sparse tract, jobs make it urban
-    (30000, 44.9, "suburban"),            # just under the activity step: density alone decides
-    (30000, 45.0, "urban_residential"),
+    (30000, 24.9, "suburban"),            # just under the activity step: density alone decides
+    (30000, 25.0, "urban_residential"),
+    (18000, 41.0, "urban_residential"),   # a dense inner neighborhood (West Hollywood) is urban
     (3000, 10.0, "suburban"),
     (2999, 10.0, "exurban"),
     (800, 3.0, "exurban"),

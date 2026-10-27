@@ -176,14 +176,20 @@ def surrounding_stats(lat: float, lon: float, radius_m: int = RADIUS_M,
     return _stats_cached(round(float(lat), 4), round(float(lon), 4), int(radius_m), tract_geoid)
 
 
-# Cutoffs (owner decision 2026-10-27, "Option A", see the proposal).
-# URBAN_ACTIVITY_PER_ACRE: transit commuting steps up between 30 to 45 and 45 to 60 people plus jobs per
-#   gross acre in the catalog (median transit share 8% to 18%), and Puget Sound Regional Council uses 45
-#   activity units per gross acre as its Regional Growth Center floor (citing Pivo and Frank 1994).
+# Cutoffs (owner decisions 2026-10-27, see the proposal).
+# URBAN_ACTIVITY_PER_ACRE: 25 people plus jobs per gross acre (owner decision 2026-10-27).
+#   - HUD's Urbanization Perceptions Small Area Index (tract labels modeled from how households describe
+#     their neighborhood, American Housing Survey 2017): across 1,409 catalog places the activity cutoff that
+#     best matches HUD's urban label is about 24 per acre (accuracy 0.81; 45 gives 0.74, 30 gives 0.79).
+#   - Behavior: Puget Sound Regional Council's transit density paper cites Pivo and Frank (1994): transit gains
+#     begin past 30 activity units per gross acre and are largest past 45 to 50; in the catalog median transit
+#     commuting is 7% to 8% at 20 to 45 per acre against 1% to 3% below 20.
+#   The first version used 45 and labeled dense city neighborhoods (Logan Square, Albany Park, Dorchester)
+#   suburban; HUD calls 35 of those 40 places urban.
 # SUBURBAN / EXURBAN: kept from the previous classifier. Close to the Degree of Urbanisation values
 #   (urban center 1,500 per km2 = 3,885 per sq mi; moderate density 300 per km2 = 777 per sq mi) but not
 #   those values. TODO: the exact choice of 3,000 and 800 is unsourced.
-URBAN_ACTIVITY_PER_ACRE = 45.0
+URBAN_ACTIVITY_PER_ACRE = 25.0
 SUBURBAN_PEOPLE_PER_SQMI = 3000.0
 EXURBAN_PEOPLE_PER_SQMI = 800.0
 
