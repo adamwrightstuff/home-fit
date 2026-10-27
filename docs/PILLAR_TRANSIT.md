@@ -124,3 +124,33 @@ All 1,476 rows were recomputed offline from stored route counts by `scripts/cata
 
 ### Known limits
 Route counts do not see line quality (Harrison's tract share is 35% but route counts predict far less); the search radius is unsourced; frequency is only available as bonuses for some commuter-rail suburbs; confirmed zeros keep confidence 0 in the data-quality assessor.
+
+## v2 spec sheet
+
+```
+Pillar: public_transit_access
+Construct (one sentence): Access to public transit service near home (how much useful service is within reach), so a resident could live there without a car. It is not a commute-time score and not a ridership score.
+Reference frame: fixed standard with distance decay intended; implemented as a hard route-count circle (no decay)
+  Evidence for the frame: tier 1 (published walking distances: Montreal 85th percentile 524 m bus and 1,259 m commuter rail, El-Geneidy et al. 2014; UK planning 800 m bus and 1,610 m rail; Calgary light rail near 1 km). Read from search summaries, not the full papers. Says nothing about the numbers below.
+Measurement area: pin + circle, radius 3 km urban core, 2 km suburban, 1.5 km exurban and rural, all modes alike
+  Reason: judgment, unsourced, larger than any published walking distance. Tested 2026-10-26 against published catchments (bus 750 m, tram 710 m, rail 1,180 m): pooled Spearman 0.715 vs 0.691 but within-metro 0.488 vs 0.526 and pin-shift p95 13.1 vs 9.6, so not adopted.
+Inputs and data sources (with vintage): Transitland routes by GTFS route_type (live), OSM railway stations only when Transitland returns an empty answer; Census ACS only as informational commute fields (weight 0)
+Parameters:
+  name | value | source | plausible range | sensitivity result
+  subway weight | 3 | judgment | 2 to 4 | median 0.0, p95 3.3, max 6.5 points
+  commuter rail weight | 3 | documented fit: largest weight at which no validation measure drops more than 0.01 below its weight-1 value | 2 to 4 | median 0.0, p95 4.4, max 7.0
+  light rail weight | 2 | judgment | 1 to 3 | median 0.0, p95 2.4, max 8.5
+  bus weight | 0.7 | judgment | 0.5 to 1.0 | median 3.3 to 4.1, p95 6.1 to 6.8, max 7.3; moves the catalog mean 3 to 4 points
+  log anchor | 120 weighted routes | judgment (only ratios are identified by the data) | not tested | not measured
+  search radius | 1.5 / 2 / 3 km | judgment | 0.33 to 1.0 mi from the published walks | see above
+  schedule bonuses | frequency, weekend, hub, destinations | judgment, small samples | not tested | present for 9 to 207 places
+Shared inputs with other pillars: none in the score. Commute minutes are carried by the Happiness commute component and are no longer in this score (counted once).
+Pin-shift sensitivity (500 m, 8 bearings, 30 places, 240 shifted points): median 0, p95 9.6 points, max 24.2 (North Andover). Above the 5-point gate; known limitation. Averaging a ring of points would fix it at about 9x the route calls.
+Independent validation source and result: tract transit commute share (ACS B08301) and households with no vehicle (ACS B25044), 1,471 places: Spearman 0.691 and 0.609. Within-metro 0.526. Not timetables. Walk Score (31, 36, 23 for Harrison, Darien, Hinsdale) is a proprietary proxy and is not counted. Adding peak frequency or reachable jobs improved held-out fit by under 0.005.
+All-places check: 2026-10-26, n = 1,476; transit mean 41.8 to 39.2, total score -0.17 on average; 440 places moved more than 5 points
+Fail-loud conditions: failed Transitland read or failed OSM station read after an empty answer raises TransitReadError (pillar = no data, retried); a confirmed empty read is a real zero marked no_service_found; no invented fallback scores
+Launch check: scripts/qa/launch_check.py PASS (exurban vs urban gap +56.1 against the owner's 20; 11.4% of places at 0, all confirmed no service in the radius; 2.3% at 100). Owner pair: almost no transit in exurban areas, 84.0 vs 28.0.
+Known data limits: route counts do not see line quality or frequency (Harrison's tract share is 35% but route counts predict far less); Transitland route fetch is noisy under load; the data-quality assessor still gives confidence 0 to confirmed zeros; zeros are zeros inside the radius (Acton has a route at 2 km, Weston at 5 km); jobs-by-transit is the commute feature's and exists only for NYC, SF and LA
+Last re-validated: 2026-10-26
+Re-validation schedule: quarterly (next 2027-01-26), and whenever the Transitland source, a mode weight or the radius changes. Run: `PYTHONPATH=. python3 scripts/qa/launch_check.py`, `PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py --no-unversioned --pillar public_transit_access`, then re-run the transit-share and no-vehicle validation, and compare the live scorer with the catalog (docs/LIVE_SCORER_VS_EXPLORER.md, still manual).
+```
