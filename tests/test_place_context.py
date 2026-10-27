@@ -21,7 +21,7 @@ def _detect_by_count(lat, lon, *, business_count, **_):
     return "urban_residential" if business_count >= 40 else "suburban"
 
 
-def _no_completeness(lat, lon, base, area_type):
+def _no_completeness(lat, lon, base, area_type, density=None):
     return 0.1
 
 
@@ -158,3 +158,23 @@ def test_main_no_longer_overwrites_the_area_type_after_the_pillars():
     assert "_reclassify_area_type_post_pillars" not in src
     assert "_corrected_area_type" not in src
     assert src.count("'place_context': place_ctx") >= 2
+
+
+def test_completeness_uses_the_density_it_was_given_and_does_not_refetch(monkeypatch):
+    from data_sources import data_quality as dq
+
+    def boom(lat, lon):
+        raise AssertionError("must not re-fetch density when the caller supplied it")
+
+    monkeypatch.setattr(dq, "get_population_density", boom)
+    # 37,000 people per sq mi gives the urban expectations even though the area type string is not 'urban_core'
+    exp = dq.data_quality_manager.get_expected_minimums(1.0, 2.0, "urban_residential", density=37000.0)
+    assert exp["business_count"] == 50
+    score = pc._default_completeness(1.0, 2.0, _lists(tier1=10), "urban_residential", 37000.0)
+    assert score < 0.6  # thin against an urban expectation, so the Places top-up is triggered
+
+
+def test_expected_minimums_without_density_still_fetches_it(monkeypatch):
+    from data_sources import data_quality as dq
+    monkeypatch.setattr(dq, "get_population_density", lambda lat, lon: 37000.0)
+    assert dq.data_quality_manager.get_expected_minimums(1.0, 2.0, "urban_residential")["business_count"] == 50

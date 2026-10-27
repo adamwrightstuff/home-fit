@@ -1584,7 +1584,7 @@ class DataQualityManager:
                 return tier
         return 'very_poor'
     
-    def get_expected_minimums(self, lat: float, lon: float, area_type: str) -> Dict:
+    def get_expected_minimums(self, lat: float, lon: float, area_type: str, density: Optional[float] = None) -> Dict:
         """
         Get expected minimum data counts based on area type and density.
         
@@ -1595,8 +1595,10 @@ class DataQualityManager:
         Returns:
             Dictionary of expected minimums
         """
-        # Get population density for more precise expectations
-        density = get_population_density(lat, lon)
+        # Get population density for more precise expectations. Callers that already hold the density pass it
+        # in, so a Census timeout here cannot silently turn the expectations into the rural ones.
+        if density is None:
+            density = get_population_density(lat, lon)
         
         if area_type == 'urban_core' or (density and density > 10000):
             return {

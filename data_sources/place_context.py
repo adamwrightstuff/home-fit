@@ -91,7 +91,7 @@ def resolve_area_type(
     include_chains: bool = True,
     detect: Optional[Callable[..., str]] = None,
     augment: Optional[Callable[..., Tuple[Dict, Dict]]] = None,
-    completeness: Optional[Callable[[float, float, Dict, str], float]] = None,
+    completeness: Optional[Callable[..., float]] = None,
 ) -> Tuple[str, str, Optional[str], Optional[Dict], Optional[Dict]]:
     """
     Decide the area type once. Returns (area_type, source, provisional, merged_businesses, places_meta).
@@ -120,7 +120,7 @@ def resolve_area_type(
     try:
         merged, meta = augment(
             base, lat, lon, float(PREFETCH_RADIUS_M), include_chains,
-            float(completeness(lat, lon, base, provisional)),
+            float(completeness(lat, lon, base, provisional, density)),
             area_type=provisional, density=density,
         )
     except Exception as e:
@@ -142,10 +142,11 @@ def resolve_area_type(
     return final, "osm_plus_places", provisional, merged, meta
 
 
-def _default_completeness(lat: float, lon: float, base: Mapping[str, List[Dict]], area_type: str) -> float:
+def _default_completeness(lat: float, lon: float, base: Mapping[str, List[Dict]], area_type: str,
+                          density: Optional[float] = None) -> float:
     """Same OSM completeness the amenities pillar computes before it asks for a Places top-up."""
     from data_sources.data_quality import data_quality_manager
-    expected = data_quality_manager.get_expected_minimums(lat, lon, area_type or "suburban")
+    expected = data_quality_manager.get_expected_minimums(lat, lon, area_type or "suburban", density=density)
     score, _ = data_quality_manager.assess_data_completeness(
         "neighborhood_amenities", {"all_businesses": _all_businesses(base)}, expected
     )
