@@ -55,3 +55,11 @@ The construct is access to a variety of daily-life businesses near home, not wal
 
 ## Owner decision (2026-10-26): keep the 60/40 split and the 1,200 m reach
 Recorded as documented judgment (rule P4) with the measured ranges; no source exists. Alternatives rejected: a longer drive-distance reach (messy: bigger queries, hub overlap, no sourced fade without a travel-survey download) and a whole-town boundary (erases near-me, fails on neighborhoods and big cities). Double counting (rule P5, correlation 0.86 between home and location parts) accepted: it mostly raises already-high scores and rank order barely moves (0.98 without the location part). Pillar doc updated with this and the known consequence for towns whose center lies beyond 1,200 m.
+
+## Sign-off (2026-10-26)
+Owner signed off the neighborhood amenities pillar for DPv2 with rule P7 (independent validation) open and noted. Final state:
+- Met: fail loudly (no amenities no-data rows; verified empties score 0.0 with a warning), sensitivity, all-places check, launch check and eight approved pairs, data-limit fields on every catalog row, re-validation schedule and three checks, one version tag.
+- Met as documented judgment, no source exists: the 60/40 split, the 1,200 m reach, the within-home split and weights, the proximity fade (rules P4 and P5).
+- Open: independent validation (P7). Walk Score ruled out as a target (it measures walkability and its town pages are area averages); the EPA National Walkability Index check was started and stopped (the EPA service was too slow), no result; the only evidence is a null relationship with home values within metros (median Spearman 0.03). Script left uncommitted: scripts/qa/amenities_epa_walkability.py.
+- Known limits: places whose business center lies beyond 1,200 m of the pin score low; Highland Village keeps 82.0 by owner decision with a data warning; the other pillars for five re-pinned places use a different pin; Ridgewood has a spurious 254 m pin mismatch.
+- Not done: merge to main and deploy; the two local natural beauty commits are not on this branch.
