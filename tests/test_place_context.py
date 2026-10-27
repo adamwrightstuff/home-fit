@@ -32,13 +32,13 @@ def test_osm_only_when_places_adds_nothing():
         calls.append((radius, kw.get("area_type")))
         return base, {"used": False, "reason": "completeness_above_threshold"}
 
-    area, source, prov, merged, meta = resolve_area_type(
+    area, source, prov, merged, meta, radius = resolve_area_type(
         1.0, 2.0, city="X", location_input="X", density=3000.0, osm_businesses=_lists(tier1=10),
         built_coverage=None, metro_distance_km=None,
-        detect=_detect_by_count, augment=augment, completeness=_no_completeness,
+        detect=_detect_by_count, augment=augment, completeness=_no_completeness, radius_for=lambda a, sc: 1500,
     )
-    assert (area, source, prov) == ("suburban", "osm_only", "suburban")
-    assert calls == [(float(pc.PREFETCH_RADIUS_M), "suburban")]  # budgeted on the provisional type, one call
+    assert (area, source, prov, radius) == ("suburban", "osm_only", "suburban", 1500)
+    assert calls == [(1500.0, "suburban")]  # budgeted on the provisional type, one call
     assert merged is not None and meta["used"] is False
 
 
@@ -48,10 +48,10 @@ def test_places_topup_can_settle_a_denser_type_and_provisional_is_recorded():
         out["tier1_daily"] += _biz(45)
         return out, {"used": True, "mapped_added": 45}
 
-    area, source, prov, merged, meta = resolve_area_type(
+    area, source, prov, merged, meta, radius = resolve_area_type(
         1.0, 2.0, city=None, location_input=None, density=9000.0, osm_businesses=_lists(tier1=5),
         built_coverage=None, metro_distance_km=None,
-        detect=_detect_by_count, augment=augment, completeness=_no_completeness,
+        detect=_detect_by_count, augment=augment, completeness=_no_completeness, radius_for=lambda a, sc: 1500,
     )
     assert prov == "suburban"
     assert area == "urban_residential"
@@ -71,6 +71,7 @@ def test_count_for_classification_ignores_businesses_beyond_one_km():
         osm_businesses=_lists(tier1=7, far=30),  # 30 more sit at 1,300 m
         built_coverage=None, metro_distance_km=None, detect=detect,
         augment=lambda base, *a, **k: (base, {"used": False}), completeness=_no_completeness,
+        radius_for=lambda a, sc: 1500,
     )
     assert seen == [7]
 
@@ -79,9 +80,10 @@ def test_failed_osm_read_means_no_topup_and_nothing_handed_to_amenities():
     def augment(*a, **k):
         raise AssertionError("must not pay for a Places call when the OSM read failed")
 
-    area, source, prov, merged, meta = resolve_area_type(
+    area, source, prov, merged, meta, radius = resolve_area_type(
         1.0, 2.0, city=None, location_input=None, density=500.0, osm_businesses=None,
         built_coverage=None, metro_distance_km=None, detect=_detect_by_count, augment=augment,
+        radius_for=lambda a, sc: 1500,
     )
     assert merged is None and meta is None and source == "osm_only"
 
@@ -90,30 +92,61 @@ def test_places_failure_falls_back_to_osm_list():
     def augment(*a, **k):
         raise RuntimeError("quota")
 
-    area, source, prov, merged, meta = resolve_area_type(
+    area, source, prov, merged, meta, radius = resolve_area_type(
         1.0, 2.0, city=None, location_input=None, density=500.0, osm_businesses=_lists(tier1=3),
         built_coverage=None, metro_distance_km=None, detect=_detect_by_count, augment=augment,
-        completeness=_no_completeness,
+        completeness=_no_completeness, radius_for=lambda a, sc: 1500,
     )
     assert source == "osm_only" and len(merged["tier1_daily"]) == 3
     assert meta["used"] is False and "quota" in meta["error"]
 
 
-def _ctx(businesses):
+def _ctx(businesses, radius=1500):
     return PlaceContext(lat=1.0, lon=2.0, city=None, area_type="suburban", density=1000.0,
-                        prefetched_businesses=businesses)
+                        prefetched_businesses=businesses, prefetched_radius_m=radius)
 
 
-def test_businesses_for_radius_trims_to_the_pillars_own_radius():
-    lists = {"tier1_daily": _biz(2, 500.0) + _biz(3, 1400.0), "tier2_social": [], "tier3_culture": [], "tier4_services": []}
-    out = _ctx(lists).businesses_for_radius(1200, True, False)
-    assert len(out["tier1_daily"]) == 2
+def test_topup_runs_at_the_radius_the_amenities_pillar_would_use_and_the_base_is_trimmed_to_it():
+    seen = {}
+
+    def augment(base, lat, lon, radius, chains, completeness, **kw):
+        seen["radius"] = radius
+        seen["base_count"] = sum(len(v) for v in base.values())
+        return base, {"used": False}
+
+    area, source, prov, merged, meta, radius = resolve_area_type(
+        1.0, 2.0, city=None, location_input=None, density=3000.0,
+        osm_businesses=_lists(tier1=6, far=5),  # 5 more sit at 1,300 m, outside a 1,200 m query
+        built_coverage=None, metro_distance_km=None, detect=_detect_by_count, augment=augment,
+        completeness=_no_completeness, radius_for=lambda a, sc: 1200,
+    )
+    assert seen == {"radius": 1200.0, "base_count": 6}
+    assert radius == 1200
 
 
-@pytest.mark.parametrize("radius,chains,vacation", [(1500, False, False), (1500, True, True), (3000, True, False)])
-def test_prefetched_list_does_not_stand_in_when_the_query_would_differ(radius, chains, vacation):
+def test_radius_wider_than_the_osm_read_hands_nothing_to_amenities():
+    def augment(*a, **k):
+        raise AssertionError("no top-up when the OSM read does not cover the pillar's radius")
+
+    area, source, prov, merged, meta, radius = resolve_area_type(
+        1.0, 2.0, city=None, location_input=None, density=3000.0, osm_businesses=_lists(tier1=6),
+        built_coverage=None, metro_distance_km=None, detect=_detect_by_count, augment=augment,
+        completeness=_no_completeness, radius_for=lambda a, sc: 2000,
+    )
+    assert merged is None and radius is None
+
+
+def test_prefetched_list_stands_in_only_at_exactly_its_own_radius():
     lists = {"tier1_daily": _biz(2), "tier2_social": [], "tier3_culture": [], "tier4_services": []}
-    assert _ctx(lists).businesses_for_radius(radius, chains, vacation) is None
+    assert len(_ctx(lists, 1200).businesses_for_radius(1200, True, False)["tier1_daily"]) == 2
+    assert _ctx(lists, 1500).businesses_for_radius(1200, True, False) is None
+    assert _ctx(lists, 1200).businesses_for_radius(1500, True, False) is None
+
+
+@pytest.mark.parametrize("chains,vacation", [(False, False), (True, True)])
+def test_prefetched_list_does_not_stand_in_when_the_query_would_differ(chains, vacation):
+    lists = {"tier1_daily": _biz(2), "tier2_social": [], "tier3_culture": [], "tier4_services": []}
+    assert _ctx(lists).businesses_for_radius(1500, chains, vacation) is None
 
 
 def test_no_prefetched_list_means_the_pillar_reads_for_itself():
@@ -133,7 +166,8 @@ def test_amenities_reuses_the_list_and_skips_its_own_places_call(monkeypatch):
         for i, b in enumerate(items):
             b.update({"type": "cafe", "name": f"{k}{i}", "lat": 0.0, "lon": 0.0})
     ctx = PlaceContext(lat=1.0, lon=2.0, city=None, area_type="suburban", density=3000.0,
-                       prefetched_businesses=lists, places_meta={"used": True, "mapped_added": 4})
+                       prefetched_businesses=lists, prefetched_radius_m=1500,
+                       places_meta={"used": True, "mapped_added": 4})
 
     def no_osm(*a, **k):
         raise AssertionError("amenities must not re-read OSM when the context supplies the list")

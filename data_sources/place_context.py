@@ -8,8 +8,12 @@ The area type is decided here, once, from a business count that already includes
 top-up when OpenStreetMap is thin. Nothing changes it afterwards.
 
 The circle (the top-up wants an area type, the area type wants the top-up) is broken with a provisional
-type: density plus the raw OSM count. The provisional type only sets the Places call budget and whether the
-list is thin enough to top up. It is recorded for audit and never reaches a pillar.
+type: density plus the raw OSM count. The provisional type picks the radius the amenities pillar would use
+and budgets the Places top-up. It is recorded for audit and never reaches a pillar.
+
+The top-up result depends on the radius it runs at (Flatlands: 16 grocery and bakery results at 1,200 m,
+4 at 1,500 m), so the list is handed to the amenities pillar only when the pillar's own radius, for the
+final area type, is the radius the list was built at. Otherwise the pillar reads and tops up for itself.
 """
 
 from __future__ import annotations
@@ -21,8 +25,8 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-# One OSM query (plus at most one Places top-up) covers both the 1 km classification count and the
-# widest amenities query (neighborhood_amenities uses 1,200 m for urban core and 1,500 m otherwise).
+# One OSM read at the widest amenities radius gives the 1 km classification count and the base list that is
+# trimmed to the radius the amenities pillar will use (1,200 m or 1,500 m).
 PREFETCH_RADIUS_M = 1500
 CLASSIFICATION_RADIUS_M = 1000
 
@@ -40,29 +44,28 @@ class PlaceContext:
     metro_distance_km: Optional[float] = None
     # How the area type was reached: "osm_only", "osm_plus_places", "cache" or "unknown".
     area_type_source: str = "unknown"
-    # The type used only to budget the Places top-up. Audit field, never read by a pillar.
+    # The type used only to pick the radius and budget the Places top-up. Audit field, never read by a pillar.
     provisional_area_type: Optional[str] = None
-    # Request-local business list (OSM plus Places) at PREFETCH_RADIUS_M. Not cached or stored, because
-    # Google's terms restrict storing Places content. None when it was not fetched or the OSM read failed.
+    # Request-local business list (OSM plus Places) built at prefetched_radius_m. Not cached or stored, because
+    # Google's terms restrict storing Places content. None when it was not built or the OSM read failed.
     prefetched_businesses: Optional[Mapping[str, List[Dict]]] = field(default=None, repr=False, compare=False)
+    prefetched_radius_m: Optional[int] = None
     prefetched_include_chains: bool = True
     places_meta: Optional[Mapping[str, Any]] = field(default=None, repr=False, compare=False)
 
     def businesses_for_radius(self, radius_m: float, include_chains: bool, vacation_mode: bool):
         """
-        The prefetched list trimmed to radius_m, or None when it cannot stand in for the pillar's own query.
+        The prefetched list, or None when it cannot stand in for the pillar's own query.
 
-        It can stand in only when the OSM read succeeded, the chain filter matches, vacation mode is off
-        (vacation mode adds tourism tags and widens the radius) and the radius fits inside what was fetched.
+        It stands in only when the OSM read succeeded, the chain filter matches, vacation mode is off
+        (vacation mode adds tourism tags and widens the radius) and the pillar's radius is exactly the radius
+        the list was built at. The Places top-up depends on the radius, so another radius is another list.
         """
-        if self.prefetched_businesses is None or vacation_mode:
+        if self.prefetched_businesses is None or self.prefetched_radius_m is None or vacation_mode:
             return None
-        if include_chains != self.prefetched_include_chains or radius_m > PREFETCH_RADIUS_M:
+        if include_chains != self.prefetched_include_chains or int(radius_m) != int(self.prefetched_radius_m):
             return None
-        return {
-            k: [b for b in (self.prefetched_businesses.get(k) or []) if b.get("distance_m", 0) <= radius_m]
-            for k in TIER_KEYS
-        }
+        return {k: list(self.prefetched_businesses.get(k) or []) for k in TIER_KEYS}
 
 
 def _all_businesses(data: Optional[Mapping[str, List[Dict]]]) -> List[Dict]:
@@ -78,6 +81,15 @@ def count_within(data: Optional[Mapping[str, List[Dict]]], radius_m: float) -> i
     return sum(1 for b in _all_businesses(data) if b.get("distance_m", 0) <= radius_m)
 
 
+def _trim(data: Mapping[str, List[Dict]], radius_m: float) -> Dict[str, List[Dict]]:
+    return {k: [b for b in (data.get(k) or []) if b.get("distance_m", 0) <= radius_m] for k in TIER_KEYS}
+
+
+def amenities_query_radius(area_type: Optional[str], location_scope: Optional[str]) -> int:
+    from data_sources.radius_profiles import get_radius_profile
+    return int(get_radius_profile("neighborhood_amenities", area_type, location_scope).get("query_radius_m", 1500))
+
+
 def resolve_area_type(
     lat: float,
     lon: float,
@@ -88,13 +100,16 @@ def resolve_area_type(
     osm_businesses: Optional[Mapping[str, List[Dict]]],
     built_coverage: Optional[float],
     metro_distance_km: Optional[float],
+    location_scope: Optional[str] = None,
     include_chains: bool = True,
     detect: Optional[Callable[..., str]] = None,
     augment: Optional[Callable[..., Tuple[Dict, Dict]]] = None,
     completeness: Optional[Callable[..., float]] = None,
-) -> Tuple[str, str, Optional[str], Optional[Dict], Optional[Dict]]:
+    radius_for: Optional[Callable[[Optional[str], Optional[str]], int]] = None,
+) -> Tuple[str, str, Optional[str], Optional[Dict], Optional[Dict], Optional[int]]:
     """
-    Decide the area type once. Returns (area_type, source, provisional, merged_businesses, places_meta).
+    Decide the area type once.
+    Returns (area_type, source, provisional, merged_businesses, places_meta, merged_radius_m).
 
     osm_businesses is the raw OSM answer at PREFETCH_RADIUS_M, or None when the read failed. When it failed
     there is nothing to top up and nothing to hand to amenities: the type comes from density alone (count 0,
@@ -107,6 +122,8 @@ def resolve_area_type(
         from data_sources.places_fallback_client import maybe_augment_business_data_with_places as augment
     if completeness is None:
         completeness = _default_completeness
+    if radius_for is None:
+        radius_for = amenities_query_radius
 
     raw_count = count_within(osm_businesses, CLASSIFICATION_RADIUS_M)
     provisional = detect(
@@ -114,12 +131,17 @@ def resolve_area_type(
         business_count=raw_count, built_coverage=built_coverage, metro_distance_km=metro_distance_km,
     )
     if osm_businesses is None:
-        return provisional, "osm_only", provisional, None, None
+        return provisional, "osm_only", provisional, None, None, None
 
-    base = {k: list(osm_businesses.get(k) or []) for k in TIER_KEYS}
+    radius = radius_for(provisional, location_scope)
+    if radius > PREFETCH_RADIUS_M:
+        # The OSM read does not cover this radius, so no list can stand in for the pillar's own query.
+        return provisional, "osm_only", provisional, None, None, None
+
+    base = _trim(osm_businesses, radius)
     try:
         merged, meta = augment(
-            base, lat, lon, float(PREFETCH_RADIUS_M), include_chains,
+            base, lat, lon, float(radius), include_chains,
             float(completeness(lat, lon, base, provisional, density)),
             area_type=provisional, density=density,
         )
@@ -130,7 +152,7 @@ def resolve_area_type(
         merged, meta = base, {"used": False, "error": f"{type(e).__name__}: {e}"}
 
     if not meta.get("used"):
-        return provisional, "osm_only", provisional, merged, meta
+        return provisional, "osm_only", provisional, merged, meta, radius
 
     final = detect(
         lat, lon, density=density, city=city, location_input=location_input,
@@ -139,7 +161,7 @@ def resolve_area_type(
     )
     if final != provisional:
         logger.info("area_type settled after Places top-up: %s -> %s", provisional, final)
-    return final, "osm_plus_places", provisional, merged, meta
+    return final, "osm_plus_places", provisional, merged, meta, radius
 
 
 def _default_completeness(lat: float, lon: float, base: Mapping[str, List[Dict]], area_type: str,

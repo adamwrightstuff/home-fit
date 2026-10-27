@@ -1621,6 +1621,7 @@ def _compute_single_score_internal(
     area_type_source = "unknown"
     provisional_area_type = None
     prefetched_businesses = None
+    prefetched_radius_m = None
     places_meta = None
     metro_distance_km = None
 
@@ -1747,7 +1748,7 @@ def _compute_single_score_internal(
             built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
 
             from data_sources.place_context import resolve_area_type
-            area_type, area_type_source, provisional_area_type, prefetched_businesses, places_meta = resolve_area_type(
+            area_type, area_type_source, provisional_area_type, prefetched_businesses, places_meta, prefetched_radius_m = resolve_area_type(
                 lat, lon,
                 city=city,
                 location_input=location,
@@ -1755,6 +1756,7 @@ def _compute_single_score_internal(
                 osm_businesses=osm_businesses,
                 built_coverage=built_coverage,
                 metro_distance_km=metro_distance_km,
+                location_scope=location_scope,
             )
         except Exception:
             area_type = "unknown"
@@ -1864,7 +1866,8 @@ def _compute_single_score_internal(
         lat=lat, lon=lon, city=city, area_type=area_type, density=density, census_tract=census_tract,
         metro_distance_km=metro_distance_km, area_type_source=area_type_source,
         provisional_area_type=provisional_area_type,
-        prefetched_businesses=prefetched_businesses, places_meta=places_meta,
+        prefetched_businesses=prefetched_businesses, prefetched_radius_m=prefetched_radius_m,
+        places_meta=places_meta,
     )
 
     # Step 2: Calculate all pillar scores in parallel
@@ -3537,7 +3540,7 @@ async def _stream_score_with_progress(
                     metro_distance_km = None
                 
                 from data_sources.place_context import PlaceContext, resolve_area_type
-                area_type, area_type_source, provisional_area_type, prefetched_businesses, places_meta = resolve_area_type(
+                area_type, area_type_source, provisional_area_type, prefetched_businesses, places_meta, prefetched_radius_m = resolve_area_type(
                     lat, lon,
                     city=city,
                     location_input=location,
@@ -3545,12 +3548,14 @@ async def _stream_score_with_progress(
                     osm_businesses=osm_businesses,
                     built_coverage=built_coverage,
                     metro_distance_km=metro_distance_km,
+                    location_scope=location_scope,
                 )
                 place_ctx = PlaceContext(
                     lat=lat, lon=lon, city=city, area_type=area_type, density=density, census_tract=census_tract,
                     metro_distance_km=metro_distance_km, area_type_source=area_type_source,
                     provisional_area_type=provisional_area_type,
-                    prefetched_businesses=prefetched_businesses, places_meta=places_meta,
+                    prefetched_businesses=prefetched_businesses, prefetched_radius_m=prefetched_radius_m,
+                    places_meta=places_meta,
                 )
                 return census_tract, density, arch_diversity_data, area_type, place_ctx
             except Exception as e:
