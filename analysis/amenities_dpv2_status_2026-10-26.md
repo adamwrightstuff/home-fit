@@ -10,7 +10,7 @@ Branch: `amenities-v2-on-origin` (built on origin/main, not pushed). Evidence pe
 | P4 sourced weights | Open (judgment, ranges recorded) | 60/40, 50/25/25, tier weights, decay shape: all judgment. Grocery rule has a policy definition (USDA) |
 | P5 double counting | Open | Location and home score correlate 0.86 on one business list |
 | P6 sensitivity | Met (measured) | Window, anchor, split, weights, pin shift (200 m moves about 400 places by over 5) in the audit; pin range reported live |
-| P7 validation | Open | Walk Score pull not done (needs permission; not independent). Price check: median within-metro Spearman 0.03 vs home value, -0.21 vs income, a null result |
+| P7 validation | Open (no matched independent source; Walk Score ruled out as a target) | Walk Score pull not done (needs permission; not independent). Price check: median within-metro Spearman 0.03 vs home value, -0.21 vs income, a null result |
 | P8 all-places check | Met | Every change run on all 1,476 places; impacts in the audit and estimate files |
 | P9 fail loud | Met | 0 amenities no-data rows. 49 verified empties score 0.0 with a warning; control query on the same endpoint; failed Places fallback marks degraded |
 | P10 launch check | Met | Launch check PASS (gap +48.2 vs 20 required). Eight owner-approved pairs all pass (analysis/amenities_launch_pairs_2026-10-26.md); they were looked up before writing, so a check not a blind test |
@@ -45,3 +45,10 @@ Spearman 0.63, Pearson 0.59, mean gap (ours minus Walk Score) +2.4; excluding ou
 
 ## P7 correction (2026-10-26): the 54-place Walk Score comparison is not valid evidence
 The owner's screenshot of the Georgetown TX page reads "Georgetown has an average Walk Score of 23 with 47,400 residents" and lists Old Town District as its most walkable neighborhood. Town and neighborhood pages report an average over the whole area, while our score is for one pin, so the first lookups (Spearman 0.63) compare different things. Re-scoring at the OSM town-center pin did not change it (0.62), which is consistent with this. P7 stays open until Walk Scores are read at the pin coordinates: see analysis/amenities_walkscore_recheck_2026-10-26.csv (15 places, lookup links built from the pin latitude and longitude). Do not cite 0.63 as validation or as a failure.
+
+## Owner decision (2026-10-26): this is not a Walk Score
+The construct is access to a variety of daily-life businesses near home, not walkability. Consequences:
+- Walk Score is not the validation target for P7 and is not used as a pass or fail test. The 54-place and 15-place sheets are kept as reference only (analysis/amenities_walkscore_*). Differences from Walk Score (straight-line distance, no street-layout factor, counts and variety rewarded, a town-center term, parks and schools left to other pillars) are by design.
+- P2 construct sentence rewritten in the pillar doc. P1 frame evidence (Couture and Handbury: walking-time density and variety of restaurants and nightlife drive location choice, tier 1, young graduates) matches this construct better than it matched a walkability score.
+- P7 is open with no independent source matched to this construct. Evidence on file: no relationship with home values within metros (median Spearman 0.03), which neither supports nor contradicts. Candidate checks if wanted: Couture and Handbury-style revealed preference (where recent movers choose to live) or hand-built perceived-access ratings (15 or more places, Spearman 0.7 or higher as in the draft's rule for perceptual pillars).
+- Known risk kept visible: places with many businesses in car-oriented layouts score high because layout is not measured.
