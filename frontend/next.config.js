@@ -34,6 +34,10 @@ const CATALOG_DATA_FILES = [
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
+    // Keep the repo-level data/ folder (backups, working files) out of the function bundles.
+    outputFileTracingExcludes: {
+      '*': ['../data/**/*'],
+    },
     // Tell the file tracer to bundle the catalog JSONL files (copied into
     // frontend/data/ by the Vercel buildCommand before next build runs).
     outputFileTracingIncludes: {
