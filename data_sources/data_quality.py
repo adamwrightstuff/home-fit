@@ -883,22 +883,23 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
                      city: Optional[str] = None, location_input: Optional[str] = None,
                      business_count: Optional[int] = None,
                      built_coverage: Optional[float] = None,
-                     metro_distance_km: Optional[float] = None) -> str:
+                     metro_distance_km: Optional[float] = None,
+                     census_tract: Optional[Dict] = None) -> str:
     """
-    Detect area type using commercial-dominance vs. residential-density
-    morphological classification (see classify_morphology()).
+    Detect area type from the surrounding 1 km circle (see data_sources/surrounding_density.py):
+    people per square mile over the tracts in the circle, and people plus jobs per gross acre.
+    Measured from local tables, so the result does not depend on a Census call or on OSM completeness.
 
     Args:
-        lat, lon: Coordinates
-        density: Optional pre-fetched density (for efficiency)
-        city: unused (kept for call-site compatibility)
-        location_input: unused (kept for call-site compatibility)
-        business_count: Optional count of businesses within 1km
-        built_coverage: unused (kept for call-site compatibility)
-        metro_distance_km: unused (kept for call-site compatibility)
+        lat, lon: Coordinates (the inputs that matter)
+        census_tract: the pin's own tract (state_fips, county_fips, tract_fips), used only when no tract
+            center lies inside the circle, so a large rural tract is read as itself
+        density, city, location_input, business_count, built_coverage, metro_distance_km:
+            unused, kept for call-site compatibility. The tract density at the pin and the OSM
+            business count no longer decide the type (proposal 2026-10-27, Option A).
 
     Returns:
-        Base morphological type: 'urban_core', 'urban_residential', 'suburban', 'exurban', 'rural', 'unknown'
+        'urban_residential', 'suburban', 'exurban', 'rural', or 'unknown' when no tract is near enough
     """
     normalized_location = _normalize_location_key(location_input)
     
@@ -923,23 +924,19 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
             _write_area_type_diagnostic(diagnostic_record)
         return result
 
-    # Use new unified classification system
-    if density is None:
-        density = get_population_density(lat, lon)
-    
-    if metro_distance_km is None:
-        try:
-            from .regional_baselines import RegionalBaselineManager
-            baseline_mgr = RegionalBaselineManager()
-            metro_distance_km = baseline_mgr.get_distance_to_principal_city(lat, lon, city)
-        except Exception:
-            metro_distance_km = None
-    
-    # Use new continuous scoring system
-    base_type = classify_morphology(
-        density, built_coverage, business_count, metro_distance_km, city, location_input
-    )
-    
+    from .surrounding_density import surrounding_stats, classify_surrounding
+    geoid = None
+    if census_tract and all(census_tract.get(k) for k in ("state_fips", "county_fips", "tract_fips")):
+        geoid = f"{census_tract['state_fips']}{census_tract['county_fips']}{census_tract['tract_fips']}"
+    stats = surrounding_stats(lat, lon, tract_geoid=geoid)
+    base_type = classify_surrounding(stats)
+    if diagnostic_record is not None and stats is not None:
+        diagnostic_record.update({
+            "surrounding_people_density": round(stats.people_density, 1),
+            "activity_per_acre": round(stats.activity_per_acre, 2),
+            "density_method": stats.density_method,
+            "jobs_known": stats.jobs_known,
+        })
     return _finalize(base_type)
 
 

@@ -136,6 +136,7 @@ def resolve_area_type(
     metro_distance_km: Optional[float],
     location_scope: Optional[str] = None,
     include_chains: bool = True,
+    census_tract: Optional[Any] = None,
     detect: Optional[Callable[..., str]] = None,
     augment: Optional[Callable[..., Tuple[Dict, Dict]]] = None,
     completeness: Optional[Callable[..., float]] = None,
@@ -162,7 +163,7 @@ def resolve_area_type(
     raw_count = count_within(osm_businesses, CLASSIFICATION_RADIUS_M)
     provisional = detect(
         lat, lon, density=density, city=city, location_input=location_input,
-        business_count=raw_count, built_coverage=built_coverage, metro_distance_km=metro_distance_km,
+        business_count=raw_count, built_coverage=built_coverage, metro_distance_km=metro_distance_km, census_tract=census_tract,
     )
     if osm_businesses is None:
         return provisional, "osm_only", provisional, None, None, None
@@ -191,7 +192,7 @@ def resolve_area_type(
     final = detect(
         lat, lon, density=density, city=city, location_input=location_input,
         business_count=count_within(merged, CLASSIFICATION_RADIUS_M), built_coverage=built_coverage,
-        metro_distance_km=metro_distance_km,
+        metro_distance_km=metro_distance_km, census_tract=census_tract,
     )
     if final != provisional:
         logger.info("area_type settled after Places top-up: %s -> %s", provisional, final)

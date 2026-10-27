@@ -590,25 +590,6 @@ def _fetch_osm_businesses_for_classification(lat: float, lon: float) -> Optional
     return _osm.query_local_businesses(lat, lon, radius_m=PREFETCH_RADIUS_M)
 
 
-def _log_area_type_drift(area_type: str, density: Optional[float], amenities_details: Optional[Dict]) -> None:
-    """
-    Log-only. Re-runs classify_morphology with the amenities pillar's 1 km count and warns when it
-    disagrees with the area type settled before the pillars. It changes nothing.
-    """
-    if not amenities_details or area_type in (None, "unknown"):
-        return
-    try:
-        from data_sources.data_quality import classify_morphology
-        walk = (amenities_details.get("breakdown", {}) or {}).get("home_walkability", {}).get("businesses_within_1km")
-        if walk is None:
-            return
-        other = classify_morphology(density, None, walk, None, None, None)
-        if other and other != "unknown" and other != area_type:
-            logger.warning("area_type_drift: settled=%s amenities_count_says=%s (walkable count %s)", area_type, other, walk)
-    except Exception as e:
-        logger.debug(f"area_type drift check skipped: {e}")
-
-
 def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
     """Extract summary data from natural beauty details for display in UI."""
     summary = {}
@@ -1757,6 +1738,7 @@ def _compute_single_score_internal(
                 built_coverage=built_coverage,
                 metro_distance_km=metro_distance_km,
                 location_scope=location_scope,
+                census_tract=census_tract,
             )
         except Exception:
             area_type = "unknown"
@@ -2197,7 +2179,6 @@ def _compute_single_score_internal(
     # The area type was settled before any pillar ran (data_sources/place_context.py) and is final.
     # Log when the amenities pillar's own count would have put the place in another class, so a real
     # disagreement shows up in the logs instead of being silently re-scored.
-    _log_area_type_drift(area_type, density, amenities_details)
 
     air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
     transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
@@ -3562,6 +3543,7 @@ async def _stream_score_with_progress(
                     built_coverage=built_coverage,
                     metro_distance_km=metro_distance_km,
                     location_scope=location_scope,
+                    census_tract=census_tract,
                 )
                 place_ctx = PlaceContext(
                     lat=lat, lon=lon, city=city, area_type=area_type, density=density, census_tract=census_tract,
@@ -3878,8 +3860,7 @@ async def _stream_score_with_progress(
         active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (None, {"breakdown": {}, "summary": {}, "data_quality": {}})
 
-        # The area type was settled before any pillar ran and is final; log any disagreement.
-        _log_area_type_drift(area_type, density, amenities_details)
+        # The area type was settled before any pillar ran and is final.
 
         air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
         transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
