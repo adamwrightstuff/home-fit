@@ -524,7 +524,7 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_
         lat: Latitude
         lon: Longitude
         tract: Optional pre-fetched tract data (for efficiency)
-        area_type: Optional area classification; urban_core skips place-level (tract is more granular)
+        area_type: Accepted for call compatibility; no longer changes the geography choice
 
     Returns:
         {
@@ -549,13 +549,15 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_
 
     print("🏠 Fetching housing data from Census ACS...")
 
-    # For urban_core (city neighborhoods), tract is more granular than the whole city place.
-    # For suburbs, place-level gives true municipal data free of tract boundary bleed.
+    # Geography depends on place size only, not on the area type (the urban_core skip was removed
+    # 2026-10-27 with the class itself). Place-level gives true municipal data free of tract boundary
+    # bleed.
     # Housing unit ceiling: reject place-level data from large cities (e.g. City of Los Angeles
     # has ~1.4M occupied units — using city-wide median for a neighborhood is meaningless).
+    # TODO: 200,000 is unsourced (see analysis/audit_housing_d14_2026-10-27.md).
     _MAX_PLACE_OCCUPIED_UNITS = 200_000
 
-    place_geo = None if area_type == "urban_core" else get_place_fips_for_coordinates(lat, lon)
+    place_geo = get_place_fips_for_coordinates(lat, lon)
     if place_geo:
         geo_type = place_geo.get("geo_type", "incorporated_place")
         if geo_type == "county_subdivision":
@@ -1339,15 +1341,17 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None, are
     if not tract:
         return None
 
-    # For urban_core (city neighborhoods), tract is more granular than the whole city place.
-    # For suburbs, place-level gives true municipal data free of tract boundary bleed.
-    place_geo = None if area_type == "urban_core" else get_place_fips_for_coordinates(lat, lon)
+    # Geography depends on place size only, not on the area type (the urban_core skip was removed
+    # 2026-10-27 with the class itself). Place-level data gives true municipal data free of tract
+    # boundary bleed; the size ceiling below sends large cities to the tract.
+    place_geo = get_place_fips_for_coordinates(lat, lon)
     tract_for = f"tract:{tract['tract_fips']}"
     tract_in = f"state:{tract['state_fips']} county:{tract['county_fips']}"
 
     # Population ceiling: reject place/county-sub level diversity data from large cities
     # (e.g. "New York city" PLACE=51000 has 8M residents — meaningless for a neighborhood).
     # Tract data is always more granular and appropriate when the place population exceeds this.
+    # TODO: 200,000 is unsourced (decided with the housing ceiling in analysis/audit_housing_d14_2026-10-27.md).
     _MAX_PLACE_POP_25_PLUS = 200_000
 
     geo_attempts = []

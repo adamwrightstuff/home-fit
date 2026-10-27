@@ -256,12 +256,12 @@ def classify_morphology(
     location_input: Optional[str] = None
 ) -> str:
     """
-    Morphological classification driven by commercial dominance (urban_core)
-    vs. residential population density (everything else).
-
-    urban_core is defined by commercial/employment dominance, not by raw
-    density — a dense residential neighborhood is urban_residential even at
-    Manhattan-scale density. business_count must be businesses within 1km
+    Morphological classification from residential population density and the
+    business count within 1 km. 'urban_core' is no longer returned: its
+    definition is subjective and differs by city, and no published cutoff
+    exists (decision 2026-10-27, analysis/area_type_activity_density_proposal_2026-10-27.md).
+    Places the old commercial-dominance rule called urban_core are
+    urban_residential. business_count must be businesses within 1km
     (matches the live business_count signal and the catalog's
     businesses_within_walkable) — NOT a profile/area-type-dependent radius,
     which would make this circular.
@@ -275,7 +275,7 @@ def classify_morphology(
         location_input: unused (kept for call-site compatibility)
 
     Returns:
-        'urban_core', 'urban_residential', 'suburban', 'exurban', 'rural',
+        'urban_residential', 'suburban', 'exurban', 'rural',
         or 'unknown' when density is missing/zero or looks unreliable
         (e.g. a census tract with near-zero population but heavy commercial
         activity nearby — a "dead tract" point-sample artifact). Returning
@@ -293,10 +293,6 @@ def classify_morphology(
     if density < 2000 and walk >= 80:
         return "unknown"
 
-    ratio = walk / (density / 1000)
-
-    if ratio >= 100 and walk >= 100:
-        return "urban_core"
     if density >= 25000:
         return "urban_residential"
     if density >= 12000 and walk >= 100:
