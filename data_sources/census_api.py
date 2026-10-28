@@ -1022,10 +1022,7 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
         return None
 
 
-@cached(ttl_seconds=CACHE_TTL['census_data'])
-@safe_api_call("census", required=False)
-@handle_api_timeout(timeout_seconds=15)
-def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str, str]]:
+def _place_fips_lookup(lat: float, lon: float, strict: bool = False) -> Optional[Dict[str, str]]:
     """
     State FIPS and Census place FIPS for an Incorporated Place, CDP, or Consolidated City
     containing the point.
@@ -1047,6 +1044,8 @@ def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str,
         }
         response = _make_request_with_retry(GEOCODER_URL, params, timeout=10)
         if response is None:
+            if strict:
+                raise RuntimeError(f"Census place lookup failed for ({lat}, {lon})")
             return None
         data = response.json()
         geographies = (data.get("result") or {}).get("geographies") or {}
@@ -1092,8 +1091,18 @@ def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str,
 
         return None
     except Exception as e:
+        if strict:
+            raise RuntimeError(f"Census place lookup failed for ({lat}, {lon}): {e}") from e
         print(f"   ⚠️  Place lookup failed: {e}")
         return None
+
+
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=15)
+def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str, str]]:
+    """Place lookup that returns None on any failure (cached). See _place_fips_lookup for the strict form."""
+    return _place_fips_lookup(lat, lon)
 
 
 def _municipal_geo_params(state_fips: str, place_fips: Optional[str], geo: Optional[Dict[str, str]] = None):
@@ -1344,7 +1353,8 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None, are
     # Geography depends on place size only, not on the area type (the urban_core skip was removed
     # 2026-10-27 with the class itself). Place-level data gives true municipal data free of tract
     # boundary bleed; the size ceiling below sends large cities to the tract.
-    place_geo = get_place_fips_for_coordinates(lat, lon)
+    # Fail loudly (owner decision 2026-10-28): a failed place lookup is no data, not a silent fall back to the tract.
+    place_geo = _place_fips_lookup(lat, lon, strict=True)
     tract_for = f"tract:{tract['tract_fips']}"
     tract_in = f"state:{tract['state_fips']} county:{tract['county_fips']}"
 
@@ -1370,12 +1380,17 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None, are
     for geo_level, geo_for, geo_in in geo_attempts:
         result = _fetch_diversity_acs(geo_for, geo_in)
         if result is None:
+            if geo_level != "tract":
+                raise RuntimeError(f"Census diversity data failed for {geo_level} {geo_for} ({lat}, {lon})")
             continue
         edu = result.get("education_attainment") or {}
         pop = edu.get("population_25_plus") or 0
         if geo_level != "tract" and pop > _MAX_PLACE_POP_25_PLUS:
             continue
         result["geo_level"] = geo_level
+        result["total_population"] = sum(
+            v for k, v in (result.get("race_counts") or {}).items() if k not in ("B02001_009E", "B02001_010E")
+        )
         return result
     return None
 

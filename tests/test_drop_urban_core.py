@@ -56,8 +56,8 @@ def test_housing_geography_depends_on_place_size_not_on_area_type(monkeypatch, a
 @pytest.mark.parametrize("area_type", [None, "urban_core", "suburban"])
 @pytest.mark.parametrize("adults,expected", [(150_000, "place"), (200_000, "place"), (200_001, "tract")])
 def test_diversity_geography_depends_on_place_size_not_on_area_type(monkeypatch, area_type, adults, expected):
-    monkeypatch.setattr(census_api, "get_place_fips_for_coordinates",
-                        lambda lat, lon: {"geo_type": "incorporated_place", "place_fips": "51000", "state_fips": "36"})
+    monkeypatch.setattr(census_api, "_place_fips_lookup",
+                        lambda lat, lon, strict=False: {"geo_type": "incorporated_place", "place_fips": "51000", "state_fips": "36"})
 
     def fake(geo_for, geo_in):
         pop = adults if geo_for.startswith("place") else 4000

@@ -179,6 +179,7 @@ def get_diversity_score(
             density=ctx.density,
         ),
         "area_classification": {"area_type": area_type},
+        "measured_area": {"geo_level": (diversity_data or {}).get("geo_level"), "total_population": (diversity_data or {}).get("total_population")},
         "version": "v2_preference_optional",
     }
     if diversity_data:
