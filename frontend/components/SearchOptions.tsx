@@ -74,7 +74,7 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   housing_value: 'Medium',
   climate_risk: 'Medium',
   social_fabric: 'Medium',
-  diversity: 'Medium',
+  diversity: 'None', // a preference, not a weight (owner decision 2026-10-28)
   community_safety: 'Medium',
   political_lean: 'None',
   commute_time: 'None',
