@@ -329,9 +329,9 @@ export const PILLAR_META: Record<
   },
   diversity: {
     icon: '🌐',
-    name: 'Diversity',
+    name: 'Diversity (preference)',
     description:
-      'How evenly the population is distributed across race, income, and age, measured by demographic entropy at the Census tract level.',
+      'A personal preference, not a quality score: off by default and not counted in the total unless you weight it.',
   },
   community_safety: {
     icon: '🛡️',
@@ -433,7 +433,7 @@ export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
   social_fabric:
     'A strong social fabric means people know their neighbors, share civic spaces, and have places to gather that are not tied to spending money. Stable residency and civic third places—like libraries, community centers, and town halls—are linked to higher trust, informal support, and long-term wellbeing.',
   diversity:
-    'Neighborhood diversity in race, income, and age reflects exposure to different life experiences and can support vibrant daily life. This score uses Census distributions (not architectural variety).',
+    'Diversity is a personal preference, not a quality score. It is off by default and does not count toward the total unless you choose to weight it. Research on whether more mixed neighborhoods are better is mixed, so we make no claim either way.',
   community_safety:
     'Feeling safe at home and in your neighborhood affects daily wellbeing, children\'s freedom to play outside, and long-term quality of life. This score compares reported local crime rates nationally: 60 means safer than 60% of places Americans live.',
   political_lean:

@@ -39,12 +39,6 @@ const BUILT_DENSITY_CHIPS: Array<{ value: 'spread_out_residential' | 'walkable_r
   { value: 'dense_urban_living', label: 'Downtown living' },
 ]
 
-const DIVERSITY_PREFERENCE_CHIPS: Array<{ value: string | null; label: string }> = [
-  { value: null, label: 'Any' },
-  { value: 'race', label: 'Race & ethnicity' },
-  { value: 'income', label: 'Income' },
-  { value: 'age', label: 'Age' },
-]
 
 type Importance = 'Low' | 'Medium' | 'High'
 
@@ -1262,57 +1256,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       })}
                     </div>
                   )}
-                  {key === 'diversity' && onSearchOptionsChange && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Mix focus:</span>
-                      {DIVERSITY_PREFERENCE_CHIPS.map(({ value, label }) => {
-                        const pref = searchOptions.diversity_preference ?? []
-                        const isAny = value === null
-                        const hasAny = !pref.length
-                        const chipSelected = isAny ? hasAny : pref.includes(value as string)
-                        const handleClick = () => {
-                          if (isAny) {
-                            handleSearchOptionsChange({ ...searchOptions, diversity_preference: null })
-                            return
-                          }
-                          const current = [...pref]
-                          if (current.includes(value as string)) {
-                            const next = current.filter((v) => v !== value)
-                            handleSearchOptionsChange({
-                              ...searchOptions,
-                              diversity_preference: next.length ? next : null,
-                            })
-                          } else {
-                            handleSearchOptionsChange({
-                              ...searchOptions,
-                              diversity_preference: [...current, value as string],
-                            })
-                          }
-                        }
-                        return (
-                          <button
-                            key={label}
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleClick()
-                            }}
-                            style={{
-                              padding: '0.35rem 0.65rem',
-                              borderRadius: 8,
-                              fontSize: '0.85rem',
-                              fontWeight: chipSelected ? 600 : 400,
-                              background: chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
-                              color: chipSelected ? 'white' : 'var(--hf-text-secondary)',
-                              border: `1px solid ${chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {label}
-                          </button>
-                        )
-                      })}
-                    </div>
+                  {key === 'diversity' && (
+                    <span className="tr-muted" style={{ fontSize: '0.85rem' }}>
+                      Diversity is a personal preference, not a quality score. It is off by default and does not count toward the total unless you choose to weight it. Research on whether more mixed neighborhoods are better is mixed, so we make no claim either way.
+                    </span>
                   )}
                   {key === 'economic_opportunity' && onSearchOptionsChange && (
                     <div style={{ borderTop: '1px solid var(--hf-border)', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
