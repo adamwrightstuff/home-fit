@@ -741,14 +741,15 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     pillar_names = primary_pillars
     
     if tokens is None:
-        # Default equal distribution across primary pillars (100 tokens total).
-        base_pillars = list(primary_pillars)
+        # Default equal distribution across primary pillars (100 tokens total). Diversity is a preference, not a
+        # quality score (owner decision 2026-10-28): it carries weight 0 unless the user sets it.
+        default_pillars = [p for p in primary_pillars if p != "diversity"]
 
-        n = len(primary_pillars)
+        n = len(default_pillars)
         base = 100 // n
         extra = 100 - base * n
-        default_allocation: Dict[str, float] = {}
-        for i, pillar in enumerate(primary_pillars):
+        default_allocation: Dict[str, float] = {"diversity": 0.0}
+        for i, pillar in enumerate(default_pillars):
             default_allocation[pillar] = float(base + (1 if i < extra else 0))
 
         return default_allocation

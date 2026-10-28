@@ -86,3 +86,12 @@ removed). Catalog: 515 places lowered, headline mean -0.6, worst -28.2. Places w
   do not; for those the geography was identified by matching stored values to the Census cache (1,473 of 1,476 places).
 - **Data vintage.** ACS 2022 5-year, 2020 tracts. Small-area estimates carry sampling error that is not shown.
 - **Same-name places.** Catalog rewrites keyed by name collide for same-name places (nyc Ridgewood NJ and NY); use coordinates.
+
+## Diversity is a preference, not a quality score (changed 2026-10-28)
+Owner decision: no evidence supports "more diverse is better" (maximum entropy, equal thirds), and the cohesion evidence is
+mixed, so the blended entropy score no longer counts toward the total by default. The default weight is 0: `parse_token_allocation`
+gives diversity 0 when no tokens are set, and the catalog stores weight 0 with the other 12 pillar weights rescaled to sum to 100
+(total change mean -0.43, range -3.46 to +2.65, rank order Spearman 0.996). A user who sets a diversity priority still gets it
+weighted. The entropy score, breakdown and `raw_shares` stay in each record as data. Not done yet: the frontend pillar card and
+its race/income/age preference chips (still label diversity as a quality pillar), removing income from the pillar, replacing the
+age buckets with a life-stage match, and the neutral display of shares. No race-based filtering, ranking or matching.
