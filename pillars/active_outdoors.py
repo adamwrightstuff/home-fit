@@ -3,8 +3,11 @@ Active Outdoors Pillar
 Scores access to outdoor activities and recreation
 """
 
+import json
 import math
+import os
 import time
+from functools import lru_cache
 from typing import Dict, Tuple, Optional, List
 
 from data_sources import osm_api
@@ -23,6 +26,42 @@ from logging_config import get_logger
 
 # Initialize logger
 logger = get_logger(__name__)
+
+PARKS_BASELINE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "active_outdoors_parks_baseline.json"
+)
+
+
+@lru_cache(maxsize=1)
+def _load_parks_baseline() -> Optional[Dict]:
+    """The parks-per-density baseline (scripts/baselines/build_active_outdoors_parks_baseline.py), or None when the
+    file is missing, in which case the park term falls back to the area-type table."""
+    try:
+        with open(PARKS_BASELINE_PATH) as f:
+            doc = json.load(f)
+        if len(doc["knots"]) == len(doc["expected_parks"]) >= 2:
+            return doc
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return None
+
+
+def expected_parks_for_activity(activity_per_acre: Optional[float]) -> Optional[Tuple[float, float]]:
+    """(expected parks, radius in metres) for a place with this many people plus jobs per acre around it: the median
+    count of its density peers, log-log interpolated between knots and held at the ends. None when unavailable."""
+    doc = _load_parks_baseline()
+    if doc is None or activity_per_acre is None or activity_per_acre < 0:
+        return None
+    knots, values = doc["knots"], doc["expected_parks"]
+    a = max(float(activity_per_acre), float(knots[0]))
+    expected = float(values[-1])
+    for i in range(len(knots) - 1):
+        if a <= knots[i + 1]:
+            t = (math.log(a) - math.log(knots[i])) / (math.log(knots[i + 1]) - math.log(knots[i]))
+            expected = math.exp(math.log(values[i]) + t * (math.log(values[i + 1]) - math.log(values[i])))
+            break
+    return max(1.0, expected), float(doc["radius_m"])
+
 
 # Point budgets per component. They add to 110 (kept as the component scales), so the score is the points earned over the
 # budgets of the components that were read, scaled to 100: all three present means points x 100 / 110, which removes the
@@ -415,7 +454,10 @@ def get_active_outdoors_score_v2(
     expectations = get_contextual_expectations(scoring_area_type, "active_outdoors") or {}
 
     # 3) Component scores
-    daily_score = _score_daily_urban_outdoors_v2(parks, playgrounds, recreational_facilities, scoring_area_type, expectations)
+    daily_score = _score_daily_urban_outdoors_v2(
+        parks, playgrounds, recreational_facilities, scoring_area_type, expectations,
+        activity_per_acre=ctx.activity_per_acre,
+    )
     is_mountain_town = context_flags.get("is_mountain_town", False)
     # Vacation mountain trips: user declared this is a mountain destination, force mountain scoring
     # even when OSM trail data is sparse (Vail, Park City, Moab, Jackson all fail OSM detection)
@@ -547,7 +589,8 @@ def _sat_ratio_v2(x: float, target: float, max_score: float) -> float:
 
 
 def _score_daily_urban_outdoors_v2(
-    parks: list, playgrounds: list, recreational_facilities: list, area_type: str, expectations: Dict
+    parks: list, playgrounds: list, recreational_facilities: list, area_type: str, expectations: Dict,
+    activity_per_acre: Optional[float] = None,
 ) -> float:
     """
     Daily Urban Outdoors (0-35):
@@ -573,8 +616,16 @@ def _score_daily_urban_outdoors_v2(
     exp_play = max(1.0, exp_expectations.get("expected_playgrounds_within_1km", 2.0))
     exp_facilities = max(1.0, exp_expectations.get("expected_recreational_facilities_within_1km", 3.0))
 
-    # 1. Park count density (0-22)
-    s_count = _sat_ratio_v2(park_count, exp_park_count, 22.0)
+    # 1. Park count density (0-22). With the density factor, the count within the baseline radius is judged against
+    # the median of places at the same people-plus-jobs density (empirical peer median, not a published standard).
+    # Without it, the area-type table applies.
+    baseline = expected_parks_for_activity(activity_per_acre)
+    if baseline is not None:
+        exp_peers, radius_m = baseline
+        near_count = sum(1 for p in parks if p.get("distance_m", 1e9) <= radius_m)
+        s_count = _sat_ratio_v2(near_count, exp_peers, 22.0)
+    else:
+        s_count = _sat_ratio_v2(park_count, exp_park_count, 22.0)
 
     # 2. Nearest meaningful park proximity (0-8)
     #    Full score <=300m, decays to ~half at 800m, ~20% at 1500m.
