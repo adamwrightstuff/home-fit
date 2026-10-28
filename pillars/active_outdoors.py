@@ -46,6 +46,26 @@ def _load_parks_baseline() -> Optional[Dict]:
     return None
 
 
+TRAILS_SCALE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "active_outdoors_trails_scale.json"
+)
+
+
+@lru_cache(maxsize=1)
+def _load_trails_scale() -> Optional[Dict]:
+    """The single trail scale (scripts/baselines/build_active_outdoors_trails_scale.py), or None when the file is
+    missing, in which case wild adventure falls back to the area-type tables and the mountain-town rule."""
+    try:
+        with open(TRAILS_SCALE_PATH) as f:
+            doc = json.load(f)
+        for k in ("expected_trails_15km", "expected_trails_5km", "budget_trails_15km", "budget_trails_5km",
+                  "budget_camping", "camping_full_within_m", "camping_decay_per_m"):
+            float(doc[k])
+        return doc
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
 def _expected_for_activity(activity_per_acre: Optional[float], key: str) -> Optional[Tuple[float, float]]:
     """(expected weighted count, radius in metres) for a place with this many people plus jobs per acre around it: the
     median of its density peers, log-log interpolated between knots and held at the ends. None when unavailable."""
@@ -404,7 +424,8 @@ def get_active_outdoors_score_v2(
     # This ensures mountain town detection works correctly for cities like Denver
     # that have legitimate high trail counts but get filtered for scoring purposes
     context_flags = _detect_special_contexts(area_type, hiking_trails_raw, swimming, canopy_pct_5km)
-    scoring_area_type = context_flags.get("effective_area_type", area_type)
+    # With the single trail scale there is no mountain-town branch, so no pillar-private override of the shared area type.
+    scoring_area_type = area_type if _load_trails_scale() is not None else context_flags.get("effective_area_type", area_type)
     is_desert_context = context_flags.get("is_desert_context", False)
     
     # DATA QUALITY: Filter out urban paths/cycle paths from hiking trails AFTER detection
@@ -419,7 +440,7 @@ def get_active_outdoors_score_v2(
     hiking_trails: List[Dict] = hiking_trails_raw
     if area_type in {"urban_core", "urban_residential", "urban_core_lowrise"}:
         # Skip filtering if detected as mountain town - legitimate high trail counts
-        if not is_mountain_town:
+        if not is_mountain_town or _load_trails_scale() is not None:
             hiking_trails = _filter_urban_paths_from_trails(hiking_trails, area_type)
 
     combined_data = {
@@ -715,6 +736,28 @@ def _score_wild_adventure_v2(
     trail_count = len(hiking_trails)
     near_trails = [t for t in hiking_trails if t.get("distance_m", 1e9) <= 5000]
     near_count = len(near_trails)
+
+    scale = _load_trails_scale()
+    if scale is not None:
+        # One scale for every place: no area type, no mountain-town rule, no fragmentation discount.
+        s_total = _sat_ratio_v2(trail_count, float(scale["expected_trails_15km"]), float(scale["budget_trails_15km"]))
+        s_near = _sat_ratio_v2(near_count, float(scale["expected_trails_5km"]), float(scale["budget_trails_5km"]))
+        if camping:
+            d = min(c.get("distance_m", 1e9) for c in camping)
+            full = float(scale["camping_full_within_m"])
+            s_camp = float(scale["budget_camping"]) * (
+                1.0 if d <= full else math.exp(-float(scale["camping_decay_per_m"]) * (d - full))
+            )
+        else:
+            s_camp = 0.0
+        final_wild = max(0.0, min(50.0, s_total + s_near + s_camp))
+        logger.info(
+            f"[WILD ADVENTURE] absolute scale trails={trail_count} near={near_count} "
+            f"s_tot={s_total:.1f} s_near={s_near:.1f} s_camp={s_camp:.1f} -> {final_wild:.1f}/50",
+            extra={"pillar_name": "active_outdoors_v2", "trail_count": trail_count, "near_count": near_count,
+                   "s_trails_total": s_total, "s_trails_near": s_near, "s_camp": s_camp, "final_wild": final_wild}
+        )
+        return final_wild
 
     baseline_context = get_baseline_context(
         area_type=area_type,

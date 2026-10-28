@@ -1,0 +1,12 @@
+{
+  "measure": "trail routes within 15 km and within 5 km of the pin",
+  "expected_trails_15km": 56.5,
+  "expected_trails_5km": 8.0,
+  "budget_trails_15km": 25.0,
+  "budget_trails_5km": 15.0,
+  "budget_camping": 10.0,
+  "camping_full_within_m": 25000,
+  "camping_decay_per_m": 5e-05,
+  "n_places": 1476,
+  "status": "expected values are catalog medians, not a published standard; budgets and camping limits unsourced"
+}
