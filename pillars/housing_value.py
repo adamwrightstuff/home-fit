@@ -102,6 +102,7 @@ def get_housing_value_score(lat: float, lon: float,
     # judgment needed — the neighborhood's own B25003 tenure split determines the weight.
     # Value efficiency is an ownership concept only, so it scales by owner share.
     # Fallback to pure owner or pure rent path when one data source is missing.
+    _efficiency_not_applicable = False
     owner_pct = (1.0 - renter_pct) if renter_pct is not None else None
     has_rent = median_gross_rent is not None and median_gross_rent > 0
     has_value = median_value is not None
@@ -124,7 +125,10 @@ def get_housing_value_score(lat: float, lon: float,
         # still needs a room count to be defined.
         affordability_score = _score_rent_affordability(median_gross_rent, median_income_for_affordability)
         space_score = _score_space(median_rooms)
-        efficiency_score = 0.0 if space_score is not None else None
+        # Value efficiency is not defined without an owner value: leave it out and rescale the rest to 100
+        # instead of scoring it 0 (owner decision 2026-10-28; was tracker D11's design choice). Not "degraded".
+        efficiency_score = None
+        _efficiency_not_applicable = True
         print(f"   ℹ️  Rent-only affordability (no owner value reported, rent=${int(median_gross_rent):,}/mo)")
     else:
         # Owner value only — pure owner path
@@ -141,7 +145,7 @@ def get_housing_value_score(lat: float, lon: float,
         "value_efficiency": (efficiency_score, 20.0),
     }
     _present = {k: v for k, v in _components.items() if v[0] is not None}
-    _missing = [k for k in _components if k not in _present]
+    _missing = [k for k in _components if k not in _present and not (k == "value_efficiency" and _efficiency_not_applicable)]
     if "local_affordability" not in _present or len(_present) < 2:
         raise RuntimeError(
             f"Housing value: not enough data to score for ({lat}, {lon}) (missing: {', '.join(_missing)})"

@@ -682,8 +682,11 @@ export function applyUserIncomeToScore(
   // Pooled catalog places (D14): space and value efficiency come from the pooled tracts, not the single-tract breakdown.
   const pool = hv.summary?.pooling
   const space = Number(pool?.space ?? bk.space ?? 0)
-  const valueEfficiency = Number(pool?.value_efficiency ?? bk.value_efficiency ?? 0)
-  const newTotal = Math.min(100, Math.max(0, newAffordability + space + valueEfficiency))
+  const effRaw = pool && 'value_efficiency' in pool ? pool.value_efficiency : bk.value_efficiency
+  // No owner value means value efficiency is left out and the rest is rescaled to 100 (not scored 0).
+  const newTotal = effRaw == null
+    ? Math.min(100, Math.max(0, (newAffordability + space) * (100 / 80)))
+    : Math.min(100, Math.max(0, newAffordability + space + Number(effRaw)))
 
   const patched: ScoreResponse = {
     ...data,
