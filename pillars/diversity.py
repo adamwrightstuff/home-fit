@@ -49,6 +49,9 @@ def parse_diversity_preference(raw: Optional[Any]) -> Optional[List[str]]:
 RACE_CATEGORY_COUNT = 7
 # Race and ethnicity term (owner decision 2026-10-28): ACS B03002, Hispanic origin plus seven non-Hispanic race groups.
 ETHNICITY_CATEGORY_COUNT = 8
+# Income term (owner decision 2026-10-28): ACS B19001 has 16 household income brackets; entropy is normalized by all 16,
+# not by the number of non-empty ones, so a bracket that is empty in a small area cannot swing the score.
+INCOME_BRACKET_COUNT = 16
 RACE_SUBSET_KEYS: Tuple[str, ...] = ("B02001_009E", "B02001_010E")
 
 
@@ -120,7 +123,7 @@ def get_diversity_score(
         if income_counts:
             n_inc = sum(1 for v in income_counts.values() if v > 0)
             if n_inc >= 2:
-                inc_e = _normalized_entropy(income_counts.values(), n_inc)
+                inc_e = _normalized_entropy(income_counts.values(), INCOME_BRACKET_COUNT)
                 components_present.append("income")
                 breakdown["income_entropy"] = round(inc_e, 1)
         youth = age_counts_dict.get("youth", 0)
