@@ -284,3 +284,6 @@ clustering algorithm almost did.
   is deliberately the honest, small, validated fix for the specific problem measured
   (urban_residential trail-count inflation) — not a claim that wild_adventure now measures
   real site counts everywhere.
+
+## Preferences flow (added 2026-10-28)
+There is no general flow for users to set preferences (life stage, political lean, and similar). The life-stage preference's backend scoring is shipped (diversity_preference = children, working_age, older; percentile among US tracts, tract-level places pool tracts within 1,400 m) and the catalog Life stage filter works and saves, but there is no working place for a user to set it in live search. A first attempt at a Preferences box on the place page (c621b77) was reverted: chips rendered unstyled, and it was unclear whether Run Score includes diversity when selected. A `Neighborhood life stage` section also exists in `SearchOptions.tsx` (the /search page) and is not reachable from the place page. Needs: decide one preferences flow for all preferences first, then wire life stage into it; confirm Run Score sends `diversity` and `diversity_preference`.
