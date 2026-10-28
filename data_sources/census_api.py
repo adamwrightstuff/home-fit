@@ -515,7 +515,8 @@ def _fetch_housing_acs(for_clause: str, in_clause: str) -> Optional[Dict]:
 @cached(ttl_seconds=CACHE_TTL['census_data'])
 @safe_api_call("census", required=False)
 @handle_api_timeout(timeout_seconds=20)
-def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_type: Optional[str] = None) -> Optional[Dict]:
+def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_type: Optional[str] = None,
+                     pooled: bool = False) -> Optional[Dict]:
     """
     Get housing value metrics from Census ACS 5-Year data.
     Uses place-level data for incorporated municipalities; falls back to Census tract.
@@ -574,6 +575,11 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_
                 result["geo_level"] = geo_type
                 return result
 
+    if pooled:  # a parameter, not an env read here, so it is part of the cache key
+        pooled_result = _pooled_tract_housing(lat, lon, tract)
+        if pooled_result:
+            return pooled_result
+
     result = _fetch_housing_acs(
         f"tract:{tract['tract_fips']}",
         f"state:{tract['state_fips']} county:{tract['county_fips']}",
@@ -581,6 +587,52 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_
     if result:
         result["geo_level"] = "tract"
     return result
+
+
+def _pooled_tract_housing(lat: float, lon: float, tract: Dict, ring_m: int = 700) -> Optional[Dict]:
+    """
+    Occupied-unit weighted pool of the housing data of the tracts under the pin and an 8-point ring at ring_m
+    (the same sampling as get_commute_time_stable). A tract with a suppressed income is skipped, so the neighbors
+    carry the score. Pooled values are weighted means of tract medians (an approximation of a pooled median).
+    Returns None when no tract has data. Audit: analysis/audit_housing_d14_2026-10-27.md (D14).
+    """
+    import math
+    pts = [(lat, lon)]
+    for ang in range(0, 360, 45):
+        pts.append((lat + ring_m / 111000.0 * math.cos(math.radians(ang)),
+                    lon + ring_m / (111000.0 * math.cos(math.radians(lat))) * math.sin(math.radians(ang))))
+    tracts = {(tract["state_fips"], tract["county_fips"], tract["tract_fips"]): tract}
+    for la, lo in pts:
+        t = get_census_tract(la, lo)
+        if t:
+            tracts.setdefault((t.get("state_fips"), t.get("county_fips"), t.get("tract_fips")), t)
+    rows = []
+    for (sf, cf, tf) in tracts:
+        if not all((sf, cf, tf)):
+            continue
+        r = _fetch_housing_acs(f"tract:{tf}", f"state:{sf} county:{cf}")
+        if r and r.get("median_household_income") and (r.get("total_occupied") or 0) > 0:
+            rows.append(r)
+    if not rows:
+        return None
+
+    def wmean(key):
+        pairs = [(r[key], r["total_occupied"]) for r in rows if r.get(key) is not None]
+        return sum(v * w for v, w in pairs) / sum(w for _, w in pairs) if pairs else None
+
+    occ = sum(r["total_occupied"] for r in rows)
+    ren = sum(r["renter_pct"] * r["total_occupied"] for r in rows if r.get("renter_pct") is not None)
+    out: Dict = {k: wmean(k) for k in ("median_home_value", "median_household_income", "median_rooms")}
+    for k in ("median_gross_rent", "median_monthly_housing_cost", "mean_household_income"):
+        v = wmean(k)
+        if v is not None:
+            out[k] = v
+    if any(r.get("renter_pct") is not None for r in rows):
+        out["renter_pct"] = ren / occ
+    out["total_occupied"] = occ
+    out["geo_level"] = "tract"
+    out["pooled_tracts"] = len(rows)
+    return out
 
 
 @cached(ttl_seconds=CACHE_TTL['census_data'])

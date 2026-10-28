@@ -44,7 +44,11 @@ def get_housing_value_score(lat: float, lon: float,
     area_type = data_quality.detect_area_type(lat, lon, density, city=city)
 
     # Get housing data from Census (pass pre-computed tract if available)
-    housing_data = census_api.get_housing_data(lat, lon, tract=census_tract, area_type=area_type)
+    # HOMEFIT_HOUSING_POOLED (default off): pool the tracts within 0.43 mile of the pin instead of the pin's single
+    # tract (audit D14). Passed as an argument so cached single-tract results are never served for it.
+    import os
+    pooled = os.getenv("HOMEFIT_HOUSING_POOLED", "").strip().lower() in ("1", "true", "yes")
+    housing_data = census_api.get_housing_data(lat, lon, tract=census_tract, area_type=area_type, pooled=pooled)
 
     if housing_data is None:
         # No median household income for the pin's tract (suppressed by the ACS) and the place-level data
