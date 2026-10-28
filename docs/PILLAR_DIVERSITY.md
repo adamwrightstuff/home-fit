@@ -36,3 +36,16 @@ identified by matching stored values to the Census cache (1,473 of 1,476 places)
 Entropy score with race (B02001, seven groups), then race plus Hispanic origin (B03002, eight groups), income over 16 brackets, age over three
 buckets; weight set to 0 and removed from the weight panel, cards and pillar list. Backups are in `data/backups_diversity_*` (untracked).
 Audit: `analysis/audit_diversity_d3_d5_2026-10-27.md`. Scripts: `scripts/catalog/` (identify, raw shares, age percentiles, weight zero).
+
+## DPv2 checks for the life-stage preference (2026-10-28)
+- **P6 sensitivity (500 m pin shift, 582 tract-level places, nearest-tract-center approximation).** One tract: median 2 to 4, 95th percentile
+  55 to 63 percentile points (30 to 41 percent of shifts over 10). Pooled over 0.44 mile: 95th percentile about 38. Pooled over 0.87 mile
+  (shipped, `AGE_POOL_RADIUS_M` = 1,400 m): median 1.5 to 3.6, 95th percentile 19 to 22, 13 to 19 percent over 10 points. Not under a
+  5-point gate; a percentile scale makes that gate unreachable, so the residual is disclosed. Place-level places (the other 890) do not pool.
+- **P8 all places.** 1,472 places carry `age_percentiles` (582 pooled, 890 own geography); Ybor City and the 3 no-data places are skipped.
+  Top-third filter pass rates: families with kids 29 percent, working-age adults 44 percent, older adults 25 percent.
+- **Live and catalog parity.** Both use the 101-point table; before pooling the live table and exact ranks differed by a mean 0.33 and a max 0.98
+  percentile points. The catalog now uses the live function itself.
+- **P10 launch check** (`scripts/qa/launch_check.py`): 1 FAIL (healthcare 40 percent at 100) and 21 WARN, unchanged from 2026-10-25; none involve diversity.
+- **P7 independent validation:** not applicable to the score (a direct Census share, not a proxy); the race and income entropy it replaced were never validated.
+- **P12 schedule:** re-run these checks when the ACS vintage or tract boundaries change, and at least once a year. Data is ACS 2022 5-year.
