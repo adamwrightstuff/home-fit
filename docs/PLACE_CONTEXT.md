@@ -21,6 +21,9 @@ Every pillar that depends on the area type or density (active outdoors, built en
 
 Four pillars used to ignore the type they were handed and re-detect it from density alone, without the business count: housing value, climate risk (for its data-quality step), healthcare (for its data-quality step) and transit (for its data-quality step). They now use the context's type. Housing value's Census lookup is area-type aware, so its score can move for places where the two types differed. Political lean and the shelved cost-of-living pillar do not use an area type.
 
+## The continuous factors (not just the category)
+`PlaceContext` also carries the measurements the area type is derived from: `people_density_1km` (people per square mile over the tracts in a 1 km circle), `activity_per_acre` (people plus jobs per gross acre), `jobs_1km`, `density_method` and `in_principal_city`. They come from the same call as the category (`surrounding_factors`, same inputs as `detect_area_type`), so the two always agree. The direction for scoring is to let pillars derive their expected values from these factors instead of from the category (see `analysis/active_outdoors_baseline_redesign_proposal_2026-10-27.md`); the category then stays as a coarse label for display and for "places like this". Nothing reads the factors yet, so this changes no score.
+
 ## Known limits
 - Direct calls without a context still derive per pillar (through the one resolver). The catalog batch scripts work this way; they are not changed here.
 - Built environment, natural beauty and transit keep their own fallback inside helper functions for direct callers; with a context those paths are not reached.

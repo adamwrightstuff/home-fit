@@ -52,6 +52,14 @@ class PlaceContext:
     prefetched_radius_m: Optional[int] = None
     prefetched_include_chains: bool = True
     places_meta: Optional[Mapping[str, Any]] = field(default=None, repr=False, compare=False)
+    # The continuous factors the area type is derived from (data_sources/surrounding_density.py, 1 km circle).
+    # Pillars that scale their expected values with density read these, not the category. None when the local
+    # tables cannot measure the place.
+    people_density_1km: Optional[float] = None   # people per square mile over the tracts in the circle
+    activity_per_acre: Optional[float] = None    # people plus jobs per gross acre
+    jobs_1km: Optional[float] = None             # workplace jobs in the circle (None: jobs grid does not cover it)
+    density_method: Optional[str] = None         # "disk", "pin_tract" or "nearest_tract"
+    in_principal_city: Optional[bool] = None     # inside a named principal city; None when unknown
 
     def businesses_for_radius(self, radius_m: float, include_chains: bool, vacation_mode: bool):
         """
@@ -100,6 +108,30 @@ def resolve_place_context(
         lat=lat, lon=lon, city=city, area_type=area_type, density=density,
         area_type_source="derived_by_pillar" if place_context is None else "unknown",
     )
+
+
+def surrounding_factors(lat: float, lon: float, census_tract: Optional[Any] = None) -> Dict[str, Any]:
+    """
+    The continuous factors for a place, as PlaceContext keyword arguments. Same inputs as detect_area_type, so the
+    area type and these factors always come from the same measurement.
+    """
+    from data_sources.surrounding_density import surrounding_stats
+    from data_sources.principal_city import principal_city_at
+    tract = census_tract if isinstance(census_tract, dict) else {}
+    geoid = None
+    if tract and all(tract.get(k) for k in ("state_fips", "county_fips", "tract_fips")):
+        geoid = f"{tract['state_fips']}{tract['county_fips']}{tract['tract_fips']}"
+    stats = surrounding_stats(lat, lon, tract_geoid=geoid)
+    in_pc = principal_city_at(lat, lon, tract.get("state_fips"))
+    if stats is None:
+        return {"in_principal_city": in_pc}
+    return {
+        "people_density_1km": stats.people_density,
+        "activity_per_acre": stats.activity_per_acre,
+        "jobs_1km": stats.jobs,
+        "density_method": stats.density_method,
+        "in_principal_city": in_pc,
+    }
 
 
 def _all_businesses(data: Optional[Mapping[str, List[Dict]]]) -> List[Dict]:

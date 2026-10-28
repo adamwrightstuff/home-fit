@@ -363,7 +363,7 @@ LOCATION_CACHE_MAX_BYTES = 256_000      # hard cap per entry (base64 text length
 # Keyed only by (lat, lon) so any request for the same location reuses expensive pre-pillar work.
 # Used only when only_pillars is None (full score).
 SHARED_PREPILLAR_CACHE_TTL_SECONDS = 12 * 3600  # 12 hours, match location cache
-SHARED_PREPILLAR_CACHE_SCHEMA = 2  # 2: area_type now settles after the Places top-up; entries written by schema 1 are ignored
+SHARED_PREPILLAR_CACHE_SCHEMA = 3  # 3: area_type is decided from the surrounding 1 km (people and jobs per acre, principal city); entries from schema 2 hold types from the density-at-the-pin rule and are ignored
 
 
 def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str, float]:
@@ -1843,8 +1843,9 @@ def _compute_single_score_internal(
             except Exception as e:
                 logger.debug(f"Shared pre-pillar cache write skipped/failed: {e}")
 
-    from data_sources.place_context import PlaceContext
+    from data_sources.place_context import PlaceContext, surrounding_factors
     place_ctx = PlaceContext(
+        **surrounding_factors(lat, lon, census_tract),
         lat=lat, lon=lon, city=city, area_type=area_type, density=density, census_tract=census_tract,
         metro_distance_km=metro_distance_km, area_type_source=area_type_source,
         provisional_area_type=provisional_area_type,
@@ -3533,7 +3534,7 @@ async def _stream_score_with_progress(
                 except Exception:
                     metro_distance_km = None
                 
-                from data_sources.place_context import PlaceContext, resolve_area_type
+                from data_sources.place_context import PlaceContext, resolve_area_type, surrounding_factors
                 area_type, area_type_source, provisional_area_type, prefetched_businesses, places_meta, prefetched_radius_m = resolve_area_type(
                     lat, lon,
                     city=city,
@@ -3546,6 +3547,7 @@ async def _stream_score_with_progress(
                     census_tract=census_tract,
                 )
                 place_ctx = PlaceContext(
+                    **surrounding_factors(lat, lon, census_tract),
                     lat=lat, lon=lon, city=city, area_type=area_type, density=density, census_tract=census_tract,
                     metro_distance_km=metro_distance_km, area_type_source=area_type_source,
                     provisional_area_type=provisional_area_type,
