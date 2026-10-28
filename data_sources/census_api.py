@@ -18,6 +18,8 @@ load_dotenv()
 
 CENSUS_API_KEY = os.getenv("CENSUS_API_KEY")
 CENSUS_BASE_URL = "https://api.census.gov/data"
+# One place to change the ACS 5-year vintage (the whole product is on 2022; see BACKLOG.md "ACS vintage refresh").
+ACS_YEAR = "2022"
 GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
 # 2020 Census tract boundaries.  ACS 2020+ estimates (incl. the 2022 ACS used here)
 # are tabulated on 2020 tracts; TIGERweb's tigerWMS_ACS2022 tract layer still serves
@@ -317,7 +319,7 @@ def get_population(tract: Dict) -> Optional[int]:
         Population count
     """
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         params = {
             "get": "B01001_001E,NAME",  # Total population
             "for": f"tract:{tract['tract_fips']}",
@@ -427,7 +429,7 @@ def get_tree_canopy(lat: float, lon: float, tract: Optional[Dict] = None) -> Opt
 def _fetch_housing_acs(for_clause: str, in_clause: str) -> Optional[Dict]:
     """Fetch and parse ACS 5-year housing data for the given Census geography."""
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         params = {
             "get": "B25077_001E,B19013_001E,B25018_001E,B19025_001E,B19001_001E,B25064_001E,B25003_001E,B25003_003E,B25105_001E,NAME",
             "for": for_clause,
@@ -603,7 +605,7 @@ def get_commute_time(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
     try:
         print("🚆 Fetching commute time from Census ACS profile...")
 
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5/profile"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5/profile"
         params = {
             "get": "DP03_0025E,NAME",  # Mean travel time to work
             "for": f"tract:{tract['tract_fips']}",
@@ -760,7 +762,7 @@ def get_transit_mode_share(lat: float, lon: float, tract: Optional[Dict] = None)
     if not tract:
         return None
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         params = {
             "get": "B08301_001E,B08301_010E",  # total workers, public-transit commuters
             "for": f"tract:{tract['tract_fips']}",
@@ -811,7 +813,7 @@ def get_year_built_data(lat: float, lon: float, tract: Optional[Dict] = None) ->
     try:
         print("🏛️ Fetching year built data from Census ACS...")
 
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         
         # Get year built variables + median
         variables = [
@@ -950,7 +952,7 @@ def _mobility_from_tract_row(
 
 def _fetch_mobility_tract_acs(tract: Dict, *, include_b07013: bool) -> Optional[Dict]:
     """Single ACS GET for tract mobility; include_b07013=False uses B07003 only (fallback path)."""
-    url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+    url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
     if include_b07013:
         get = "B07003_001E,B07003_004E,B07003_007E,B07013_001E,B07013_005E,B07013_006E,NAME"
     else:
@@ -1122,7 +1124,7 @@ def get_place_same_house_pct(state_fips: str, place_fips: Optional[str], geo: Op
     if not CENSUS_API_KEY or not state_fips or not (place_fips or is_cousub):
         return None
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         for_, in_ = _municipal_geo_params(state_fips, place_fips, geo)
         params = {
             "get": "B07003_001E,B07003_004E,NAME",
@@ -1183,7 +1185,7 @@ def get_tract_long_tenure_housing_pct(tract: Dict) -> Optional[float]:
     if not CENSUS_API_KEY or not tract:
         return None
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         params = {
             "get": (
                 "B25038_001E,B25038_002E,B25038_003E,B25038_004E,B25038_005E,B25038_006E,"
@@ -1219,7 +1221,7 @@ def get_place_long_tenure_housing_pct(state_fips: str, place_fips: Optional[str]
     if not CENSUS_API_KEY or not state_fips or not (place_fips or is_cousub):
         return None
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         for_, in_ = _municipal_geo_params(state_fips, place_fips, geo)
         params = {
             "get": (
@@ -1276,7 +1278,7 @@ def get_acs_b02001_total_for_tract(tract: Dict) -> Optional[int]:
     if not CENSUS_API_KEY:
         return None
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         params = {
             "get": "B02001_001E,NAME",
             "for": f"tract:{tract['tract_fips']}",
@@ -1398,10 +1400,10 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None, are
 def _fetch_diversity_acs(geo_for: str, geo_in: str) -> Optional[Dict]:
     """Run all diversity ACS queries for the given Census geography. Returns None on any failure."""
     try:
-        base_acs5 = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        base_acs5 = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         geo_for = geo_for
         geo_in = geo_in
-        base_acs5 = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        base_acs5 = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
 
         # ---- Race: B02001 (total + race categories) ----
         race_vars = [
@@ -1892,7 +1894,7 @@ def _acs_population_batch(state_fips: str, county_fips: str, tract_fips_list: Li
             "in": f"state:{state_fips} county:{county_fips}",
             "key": CENSUS_API_KEY,
         }
-        resp = _make_request_with_retry(f"{CENSUS_BASE_URL}/2022/acs/acs5", params, timeout=20)
+        resp = _make_request_with_retry(f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5", params, timeout=20)
         if resp is None:
             continue
         try:
