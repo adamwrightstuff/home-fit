@@ -22,7 +22,7 @@ interface PillarPriorities {
   diversity: PriorityLevel
   community_safety: PriorityLevel
   political_lean: PriorityLevel
-  /** Opt-in, catalog-explorer only -- not one of the 13 research-backed pillars (see CLAUDE.md).
+  /** Opt-in, catalog-explorer only -- not one of the 12 research-backed pillars (see CLAUDE.md).
    * Only affects HomeFit total when a work hub is selected; otherwise inert like political_lean. */
   commute_time?: PriorityLevel
   /** Opt-in, catalog-explorer only -- see lib/reweight.ts. Only affects HomeFit total once at

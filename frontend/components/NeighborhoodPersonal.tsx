@@ -98,7 +98,7 @@ export default function NeighborhoodPersonal({ score, workCommute }: { score: Sc
           <div className={showCommute ? 'border-t border-[var(--hf-border)]' : ''}>
             {row(
               'Social connection',
-              'Proximity to the people you added. A rough estimate, not one of the 13 research-backed pillars.',
+              'Proximity to the people you added. A rough estimate, not one of the 12 research-backed pillars.',
               typeof social.score === 'number' ? social.score : null
             )}
             {points.length > 0 && (

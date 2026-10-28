@@ -2,7 +2,7 @@
 
 We find your place.
 
-Trovamo is a neighborhood scoring and discovery platform. Enter any address or neighborhood and get a livability score across 13 pillars — from social fabric and natural beauty to school quality and climate risk.
+Trovamo is a neighborhood scoring and discovery platform. Enter any address or neighborhood and get a livability score across 12 pillars — from social fabric and natural beauty to school quality and climate risk.
 
 ## Stack
 

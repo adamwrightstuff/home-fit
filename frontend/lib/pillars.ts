@@ -23,7 +23,6 @@ export const PILLAR_ORDER: PillarKey[] = [
   'climate_risk',
   'active_outdoors',
   'natural_beauty',
-  'diversity',
   'social_fabric',
   'healthcare_access',
   'public_transit_access',
@@ -187,16 +186,16 @@ export const LONGEVITY_COPY = {
 export const HOMEFIT_COPY = {
   /** Full body for modal — Results, Saved, Public (13 active pillars). */
   full:
-    'A composite of all 13 pillars, weighted equally by default. Adjust weights to personalize.',
+    'A composite of all 12 pillars, weighted equally by default. Adjust weights to personalize.',
   /** Full body for modal — Explorer catalog (13 active pillars). */
   fullCatalog:
-    'A composite of all 13 pillars, weighted equally by default. Adjust weights to personalize.',
+    'A composite of all 12 pillars, weighted equally by default. Adjust weights to personalize.',
   /** Subtitle under "HomeFit Score" label. */
   subtitle:
     'How well this place meets your lifestyle needs based on your personalized preferences.',
   /** One-line tooltip for ? button. */
   tooltip:
-    'A composite of all 13 pillars, weighted equally by default. Adjust weights to personalize.',
+    'A composite of all 12 pillars, weighted equally by default. Adjust weights to personalize.',
   /** Callout in modal. */
   distinction:
     'HomeFit = right for you. Longevity = right for your health over time.',

@@ -50,7 +50,7 @@ function pageDescription(entry: NeighborhoodEntry): string {
   }
   const { catalog, score } = entry
   const total = typeof score.total_score === 'number' ? Math.round(score.total_score) : null
-  return `${catalog.name} scores${total != null ? ` ${total}` : ''} for livability across Trovamo's 13 pillars: schools, safety, transit, nature, and more.`
+  return `${catalog.name} scores${total != null ? ` ${total}` : ''} for livability across Trovamo's 12 pillars: schools, safety, transit, nature, and more.`
 }
 
 export async function generateMetadata({
@@ -196,7 +196,7 @@ export default async function NeighborhoodPage({
       {/* Pillar breakdown */}
       <section className="mb-8" aria-label="Pillar breakdown">
         <h2 className="mb-3 text-lg font-bold text-[var(--hf-text-primary)]">
-          The 13 pillars
+          The 12 pillars
         </h2>
         <div className="overflow-hidden rounded-2xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)]">
           {PILLAR_ORDER.map((key, i) => {
@@ -244,7 +244,7 @@ export default async function NeighborhoodPage({
           })}
         </div>
         <p className="mt-3 text-xs leading-relaxed text-[var(--hf-text-tertiary)]">
-          Scores are computed across 13 pillars with equal weights by default.{' '}
+          Scores are computed across 12 pillars with equal weights by default.{' '}
           <Link href="/quiz" className="font-semibold text-[var(--hf-primary-1)] hover:underline">
             Take the quiz
           </Link>{' '}
