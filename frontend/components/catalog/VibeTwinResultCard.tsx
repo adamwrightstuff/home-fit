@@ -5,7 +5,7 @@ import { VIBE_LABELS, type VibeKey } from '@/lib/vibeFeatures'
 import { inferCatalogMetro } from '@/lib/catalogMapTypes'
 import MetroDot from '@/components/catalog/MetroDot'
 
-const KEYS: VibeKey[] = ['scene', 'race', 'bach', 'dem', 'scap', 'gvi', 'water']
+const KEYS: VibeKey[] = ['scene', 'bach', 'dem', 'scap', 'gvi', 'water']
 
 interface VibeTwinResultCardProps {
   result: VibeTwinResult
