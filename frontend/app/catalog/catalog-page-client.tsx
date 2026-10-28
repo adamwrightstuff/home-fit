@@ -137,12 +137,25 @@ export default function CatalogPageClient({
     } catch { return [] }
   })
   // Life-stage filter (owner decision 2026-10-28): places in the top third of US tracts for the chosen age cohort (any chosen).
+  // One life-stage preference shared with live search: stored as homefit_search_options.diversity_preference, so changing it
+  // in the filter sheet or in the search options changes both (owner decision 2026-10-28).
   const [filterLifeStage, setFilterLifeStage] = useState<string[]>(() => {
     try {
-      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
-      return Array.isArray(f?.filterLifeStage) ? f.filterLifeStage : []
+      const o = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')
+      const v = Array.isArray(o?.diversity_preference) ? o.diversity_preference : Array.isArray(o?.filters?.filterLifeStage) ? o.filters.filterLifeStage : []
+      return v.filter((c: unknown) => ['children', 'working_age', 'older'].includes(c as string))
     } catch { return [] }
   })
+  useEffect(() => {
+    try {
+      const o = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')
+      const cur = JSON.stringify(Array.isArray(o.diversity_preference) ? o.diversity_preference : [])
+      if (cur === JSON.stringify(filterLifeStage)) return
+      const pr = { ...(o.priorities ?? {}) }
+      pr.diversity = filterLifeStage.length ? (pr.diversity && pr.diversity !== 'None' ? pr.diversity : 'Medium') : 'None'
+      localStorage.setItem('homefit_search_options', JSON.stringify({ ...o, diversity_preference: filterLifeStage.length ? filterLifeStage : null, priorities: pr }))
+    } catch { /* storage unavailable: the filter still works for this visit */ }
+  }, [filterLifeStage])
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
