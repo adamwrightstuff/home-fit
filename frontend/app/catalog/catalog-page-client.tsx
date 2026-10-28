@@ -137,7 +137,12 @@ export default function CatalogPageClient({
     } catch { return [] }
   })
   // Life-stage filter (owner decision 2026-10-28): places in the top third of US tracts for the chosen age cohort (any chosen).
-  const [filterLifeStage, setFilterLifeStage] = useState<string[]>([])
+  const [filterLifeStage, setFilterLifeStage] = useState<string[]>(() => {
+    try {
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
+      return Array.isArray(f?.filterLifeStage) ? f.filterLifeStage : []
+    } catch { return [] }
+  })
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
@@ -326,6 +331,7 @@ export default function CatalogPageClient({
           filterArchetypes,
           filterTrajectory,
           filterPoliticalLean,
+          filterLifeStage,
           filterNbTypes,
           filterAoTypes,
           filterHousingType,
@@ -415,6 +421,7 @@ export default function CatalogPageClient({
           if (Array.isArray(f.filterArchetypes)) setFilterArchetypes(f.filterArchetypes)
           if (typeof f.filterTrajectory === 'string') setFilterTrajectory(normalizeTrajectory(f.filterTrajectory) ?? 'all')
           if (Array.isArray(f.filterPoliticalLean)) setFilterPoliticalLean(f.filterPoliticalLean)
+          if (Array.isArray(f.filterLifeStage)) setFilterLifeStage(f.filterLifeStage)
           if (Array.isArray(f.filterNbTypes)) setFilterNbTypes(f.filterNbTypes)
           if (Array.isArray(f.filterAoTypes)) setFilterAoTypes(f.filterAoTypes)
           if (Array.isArray(f.filterHousingType)) setFilterHousingType(f.filterHousingType)
@@ -469,6 +476,7 @@ export default function CatalogPageClient({
             filterArchetypes,
             filterTrajectory,
             filterPoliticalLean,
+            filterLifeStage,
             filterNbTypes,
             filterAoTypes,
 

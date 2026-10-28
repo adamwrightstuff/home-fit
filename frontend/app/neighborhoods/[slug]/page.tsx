@@ -258,10 +258,18 @@ export default async function NeighborhoodPage({
           | { under_18?: number; age_18_64?: number; age_65_plus?: number }
           | undefined
         if (!age || typeof age.under_18 !== 'number') return null
+        // Largest-remainder rounding so the three whole-number shares always add to 100.
+        const raw = [age.under_18, age.age_18_64, age.age_65_plus].map((v) => (typeof v === 'number' ? v : 0))
+        const total = raw.reduce((a, b) => a + b, 0)
+        const scaled = total > 0 ? raw.map((v) => (v / total) * 100) : raw
+        const floors = scaled.map(Math.floor)
+        let left = 100 - floors.reduce((a, b) => a + b, 0)
+        const order = scaled.map((v, i) => [v - Math.floor(v), i] as const).sort((a, b) => b[0] - a[0])
+        for (const [, i] of order) { if (left <= 0) break; floors[i] += 1; left -= 1 }
         const rows: Array<[string, number | undefined]> = [
-          ['Under 18', age.under_18],
-          ['18 to 64', age.age_18_64],
-          ['65 and over', age.age_65_plus],
+          ['Under 18', floors[0]],
+          ['18 to 64', floors[1]],
+          ['65 and over', floors[2]],
         ]
         return (
           <section className="mb-8" aria-label="Who lives here">
@@ -272,7 +280,7 @@ export default async function NeighborhoodPage({
             <div className="grid grid-cols-3 gap-3">
               {rows.map(([label, v]) => (
                 <div key={label} className="rounded-2xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)] p-3 text-center">
-                  <div className="text-xl font-bold text-[var(--hf-text-primary)]">{typeof v === 'number' ? `${Math.round(v)}%` : 'n/a'}</div>
+                  <div className="text-xl font-bold text-[var(--hf-text-primary)]">{typeof v === 'number' ? `${v}%` : 'n/a'}</div>
                   <div className="text-xs text-[var(--hf-text-tertiary)]">{label}</div>
                 </div>
               ))}
