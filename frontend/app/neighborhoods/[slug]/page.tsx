@@ -252,6 +252,35 @@ export default async function NeighborhoodPage({
         </p>
       </section>
 
+      {/* Who lives here: neutral description, no score and no weight */}
+      {(() => {
+        const age = (score.livability_pillars as any)?.diversity?.raw_shares?.age as
+          | { under_18?: number; age_18_64?: number; age_65_plus?: number }
+          | undefined
+        if (!age || typeof age.under_18 !== 'number') return null
+        const rows: Array<[string, number | undefined]> = [
+          ['Under 18', age.under_18],
+          ['18 to 64', age.age_18_64],
+          ['65 and over', age.age_65_plus],
+        ]
+        return (
+          <section className="mb-8" aria-label="Who lives here">
+            <h2 className="mb-1 text-lg font-bold text-[var(--hf-text-primary)]">Who lives here</h2>
+            <p className="mb-3 text-xs leading-relaxed text-[var(--hf-text-tertiary)]">
+              Age mix of residents (Census ACS 2022). A description, not a score, and not counted in the total.
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              {rows.map(([label, v]) => (
+                <div key={label} className="rounded-2xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)] p-3 text-center">
+                  <div className="text-xl font-bold text-[var(--hf-text-primary)]">{typeof v === 'number' ? `${Math.round(v)}%` : 'n/a'}</div>
+                  <div className="text-xs text-[var(--hf-text-tertiary)]">{label}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )
+      })()}
+
       <NeighborhoodPersonal score={score} workCommute={work_commute} />
 
       {/* CTAs */}
