@@ -48,7 +48,6 @@ export const PILLAR_INDEX_MODES: { id: CatalogMapIndexMode; label: string }[] = 
   { id: 'economic_opportunity', label: 'Economic' },
   { id: 'quality_education', label: 'Education' },
   { id: 'community_safety', label: 'Safety' },
-  { id: 'diversity', label: 'Diversity' },
   { id: 'air_travel_access', label: 'Air travel' },
   { id: 'commute_time', label: 'Commute time' },
   { id: 'social_connection', label: 'Social proximity' },
