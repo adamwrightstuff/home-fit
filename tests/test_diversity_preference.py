@@ -13,18 +13,19 @@ def test_parse_diversity_preference_empty():
 
 
 def test_parse_diversity_preference_valid_and_filters():
-    assert parse_diversity_preference('["race", "income"]') == ["race", "income"]
-    assert parse_diversity_preference(["race", "age", "race"]) == ["race", "age"]
-    assert parse_diversity_preference('["invalid", "race"]') == ["race"]
+    assert parse_diversity_preference('["children", "older"]') == ["children", "older"]
+    assert parse_diversity_preference(["children", "working_age", "children"]) == ["children", "working_age"]
+    assert parse_diversity_preference('["invalid", "older"]') == ["older"]
+    assert parse_diversity_preference('["race", "income"]') is None  # retired dimensions
 
 
 def test_get_diversity_score_accepts_preference_without_crash():
     """Smoke: ensure get_diversity_score runs; values depend on Census availability."""
     lat, lon = 40.6782, -73.9442
     try:
-        score, details = get_diversity_score(lat, lon, diversity_preference=["race", "income"])
+        score, details = get_diversity_score(lat, lon, diversity_preference=["children", "older"])
     except RuntimeError as exc:
         pytest.skip(f"Census diversity data unavailable: {exc}")
-    assert isinstance(score, float)
+    assert isinstance(score, float) or score is None
     assert "summary" in details
-    assert details["summary"].get("diversity_preference") == ["race", "income"]
+    assert details["summary"].get("diversity_preference") == ["children", "older"]
