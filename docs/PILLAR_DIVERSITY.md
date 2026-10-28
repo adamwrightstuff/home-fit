@@ -55,3 +55,13 @@ The 2 broken records were repaired by `scripts/repair_diversity_and_weights.py` 
   not a real value — quarantine, don't relaunder.
 - Entropy rewards *evenness*, not the presence of any particular group — a uniformly
   single-group area scores low regardless of which group.
+
+## Race and Hispanic origin (changed 2026-10-28)
+The race term now uses ACS B03002: Hispanic or Latino (any race) plus the seven non-Hispanic race groups
+(white, Black, American Indian and Alaska Native, Asian, Native Hawaiian and Pacific Islander, some other race,
+two or more), eight groups, entropy normalized by ln 8. Hispanic origin was previously folded into "some other race".
+Catalog effect: headline mean -0.3, up to -15.6 and +7.1; larger drops where the Hispanic share is 30 percent or more
+(mean -3.3) and in LA, Miami and San Antonio. Geography fails loudly: a failed place lookup or place fetch is no data
+(2026-10-28), and `measured_area` stores the geography used and total population. Unsourced: the 200,000-adult ceiling.
+Open: income term still normalizes by non-empty brackets (fixed-16 test: headline mean -0.6), age term unsourced,
+tract-level pin-shift 95th percentile 13.4 points (pooled 700 m: 8.8), independent validation not done.
