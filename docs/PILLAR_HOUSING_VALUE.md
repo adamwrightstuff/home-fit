@@ -14,8 +14,14 @@ Expensive areas score *low* here (low affordability); that's by design.
   components out; affordability plus at least one other component is required, otherwise there is no score, and a
   partial score is marked degraded. Value efficiency is 0 by the formula where there is no owner-occupied value (a
   design choice, tracker D11).
-- Known weakness: city neighborhoods rest on a single tract, and adjacent tracts can differ by 20 to 40 points
-  (tracker D14).
+- Pooled tracts (D14, 2026-10-28): the 495 catalog places whose data came from one tract are scored on the
+  occupied-unit weighted pool of the tracts under the pin and an 8-point ring at 700 m (0.43 mile), the commute
+  lookup's sampling (`summary.pooling`; sub-scores in the breakdown stay single-tract). Live scoring does the same
+  with `HOMEFIT_HOUSING_POOLED=true` (default off). A 0.31 mile pin shift moved the single-tract score by a 95th
+  percentile of 25 points and the pooled score by 9; about half of the large neighbor gaps were within sampling
+  error. Median catalog change 4.4 points, 88 places over 10; ranks inside a metro reorder (Spearman 0.70). The
+  5-point pin-shift limit (borrowed from transit, a judgment) is not met. Open: Explorer income personalization
+  still rebuilds from single-tract inputs. Audit: `analysis/audit_housing_d14_2026-10-27.md` (local).
 
 ## Reading the score
 - Low housing_value = expensive / low affordability (Manhattan, Stamford). High = affordable.
