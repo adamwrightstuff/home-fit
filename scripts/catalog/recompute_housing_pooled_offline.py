@@ -67,6 +67,10 @@ def main():
             h["summary"]["pooling"] = {"radius_m": RADIUS, "rule": "pin plus 8 ring points", "weights": "occupied units",
                                        "tracts_in_pool": p.get(f"tracts_{RADIUS}"), "single_tract_score": h["score"],
                                        "breakdown_is_single_tract": True}
+            parts = p.get("parts_700") or {}
+            for k in ("median_home_value", "space", "value_efficiency"):   # inputs the Explorer income view rebuilds from
+                if parts.get(k) is not None:
+                    h["summary"]["pooling"][k] = round(parts[k], 1) if k != "median_home_value" else int(round(parts[k]))
             h["score"] = new
             h["contribution"] = round(new * (h.get("weight") or 0) / 100.0, 4)
             tb = (s.get("total_score_breakdown") or {}).get("housing_value")

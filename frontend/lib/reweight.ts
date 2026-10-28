@@ -673,14 +673,16 @@ export function applyUserIncomeToScore(
   if (actualMonthlyCost && actualMonthlyCost > 0) {
     newAffordability = scoreCostShareOfIncome((actualMonthlyCost * 12) / userIncome)
   } else {
-    const medianHomeValue = Number(hv.summary?.median_home_value ?? 0)
+    const medianHomeValue = Number(hv.summary?.pooling?.median_home_value ?? hv.summary?.median_home_value ?? 0)
     if (medianHomeValue <= 0) return data
     newAffordability = scoreAffordabilityRatio(medianHomeValue / userIncome)
   }
 
   const bk = hv.breakdown ?? {}
-  const space = Number(bk.space ?? 0)
-  const valueEfficiency = Number(bk.value_efficiency ?? 0)
+  // Pooled catalog places (D14): space and value efficiency come from the pooled tracts, not the single-tract breakdown.
+  const pool = hv.summary?.pooling
+  const space = Number(pool?.space ?? bk.space ?? 0)
+  const valueEfficiency = Number(pool?.value_efficiency ?? bk.value_efficiency ?? 0)
   const newTotal = Math.min(100, Math.max(0, newAffordability + space + valueEfficiency))
 
   const patched: ScoreResponse = {
