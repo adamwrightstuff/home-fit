@@ -47,6 +47,8 @@ def parse_diversity_preference(raw: Optional[Any]) -> Optional[List[str]]:
 
 # ACS B02001: six single-race groups plus "two or more races" (_008). _009 and _010 split _008.
 RACE_CATEGORY_COUNT = 7
+# Race and ethnicity term (owner decision 2026-10-28): ACS B03002, Hispanic origin plus seven non-Hispanic race groups.
+ETHNICITY_CATEGORY_COUNT = 8
 RACE_SUBSET_KEYS: Tuple[str, ...] = ("B02001_009E", "B02001_010E")
 
 
@@ -104,17 +106,15 @@ def get_diversity_score(
     components_present: list[str] = []
     breakdown: Dict = {}
     if diversity_data:
-        race_counts = diversity_data.get("race_counts") or {}
+        ethnicity_counts = diversity_data.get("ethnicity_counts") or {}
         income_counts = diversity_data.get("income_counts") or {}
         age_counts_dict = diversity_data.get("age_counts") or {}
-        if race_counts:
-            # B02001_009 and _010 are the two parts of _008 (two or more races); keep _008 only so
-            # multiracial residents are counted once. Entropy is normalized by the fixed seven groups
-            # (six single-race groups plus two or more), so tiny groups appearing or not cannot swing it.
-            race_values = [v for k, v in race_counts.items() if k not in RACE_SUBSET_KEYS]
-            n_race = sum(1 for v in race_values if v > 0)
-            if n_race >= 2:
-                race_e = _normalized_entropy(race_values, RACE_CATEGORY_COUNT)
+        if ethnicity_counts:
+            # B03002: Hispanic or Latino (any race) plus the seven non-Hispanic race groups, so Hispanic origin is
+            # counted once and not folded into "some other race". Entropy is normalized by the fixed eight groups.
+            eth_values = list(ethnicity_counts.values())
+            if sum(1 for v in eth_values if v > 0) >= 2:
+                race_e = _normalized_entropy(eth_values, ETHNICITY_CATEGORY_COUNT)
                 components_present.append("race")
                 breakdown["race_entropy"] = round(race_e, 1)
         if income_counts:

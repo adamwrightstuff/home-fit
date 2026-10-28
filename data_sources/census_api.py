@@ -1441,6 +1441,23 @@ def _fetch_diversity_acs(geo_for: str, geo_in: str) -> Optional[Dict]:
                 v = 0
             race_counts[var] = v
 
+        # ---- Race and Hispanic origin: B03002 (Hispanic, plus seven non-Hispanic race groups) ----
+        eth_vars = ["B03002_003E", "B03002_004E", "B03002_005E", "B03002_006E", "B03002_007E", "B03002_008E", "B03002_009E", "B03002_012E"]
+        resp_eth = _make_request_with_retry(
+            base_acs5, {"get": ",".join(eth_vars), "for": geo_for, "in": geo_in, "key": CENSUS_API_KEY}, timeout=15, max_retries=3
+        )
+        if resp_eth is None:
+            return None
+        data_eth = resp_eth.json()
+        if len(data_eth) < 2:
+            return None
+        ethnicity_counts: Dict[str, int] = {}
+        for i, var in enumerate(eth_vars):
+            try:
+                ethnicity_counts[var] = int(data_eth[1][i]) if data_eth[1][i] else 0
+            except (ValueError, TypeError):
+                ethnicity_counts[var] = 0
+
         # ---- Income: B19001 (total + 16 income brackets) ----
         income_vars = [
             "B19001_001E",  # Total
@@ -1605,6 +1622,7 @@ def _fetch_diversity_acs(geo_for: str, geo_in: str) -> Optional[Dict]:
 
         return {
             "race_counts": race_counts,
+            "ethnicity_counts": ethnicity_counts,
             "income_counts": income_counts,
             "age_counts": age_counts,
             "education_attainment": education_attainment,
