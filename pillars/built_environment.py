@@ -480,10 +480,13 @@ def calculate_built_environment(lat: float,
                            precomputed_arch_diversity: Optional[Dict] = None,
                            density: Optional[float] = None,
                            form_context: Optional[str] = None,
-                           built_density_preference: Optional[str] = None) -> Dict:
+                           built_density_preference: Optional[str] = None,
+                           place_context=None) -> Dict:
     """
     Compute built environment components prior to normalization.
     """
+    if place_context is not None:
+        area_type, density = place_context.area_type, place_context.density
     arch_score, arch_details = _score_architectural_diversity(
         lat,
         lon,
@@ -590,7 +593,8 @@ def calculate_built_environment(lat: float,
         "enhancers": enhancers_data or {},
     }
     quality_metrics = assess_pillar_data_quality(
-        "built_environment", combined_data, lat, lon, effective_area_type or area_type or "suburban"
+        "built_environment", combined_data, lat, lon, effective_area_type or area_type or "suburban",
+        density=density,
     )
 
     return {
@@ -615,7 +619,8 @@ def get_built_environment_score(lat: float,
                            location_name: Optional[str] = None,
                            test_overrides: Optional[Dict[str, float]] = None,
                            enhancers_data: Optional[Dict] = None,
-                           disable_enhancers: bool = False) -> Tuple[float, Dict]:
+                           disable_enhancers: bool = False,
+                           place_context=None) -> Tuple[float, Dict]:
     """
     Public entry point for the built environment pillar.
     """
@@ -628,7 +633,8 @@ def get_built_environment_score(lat: float,
         location_name=location_name,
         test_overrides=test_overrides,
         enhancers_data=enhancers_data,
-        disable_enhancers=disable_enhancers
+        disable_enhancers=disable_enhancers,
+        place_context=place_context,
     )
 
     return result["score"], result["details"]

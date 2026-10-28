@@ -48,6 +48,8 @@ interface FilterSheetProps {
   onFilterTrajectoryChange: (v: 'all' | 'Up-and-Coming' | 'Stable' | 'Declining') => void
   filterPoliticalLean: string[]
   onFilterPoliticalLeanChange: (v: string[]) => void
+  filterLifeStage: string[]
+  onFilterLifeStageChange: (v: string[]) => void
   filterHousingType: string[]
   onFilterHousingTypeChange: (v: string[]) => void
   filterTenure: string[]
@@ -103,6 +105,8 @@ export default function FilterSheet({
   onFilterTrajectoryChange,
   filterPoliticalLean,
   onFilterPoliticalLeanChange,
+  filterLifeStage,
+  onFilterLifeStageChange,
   filterHousingType,
   onFilterHousingTypeChange,
   filterTenure,
@@ -143,6 +147,7 @@ export default function FilterSheet({
     (filterArchetypes.length > 0 ? 1 : 0) +
     (filterTrajectory !== 'all' ? 1 : 0) +
     (filterPoliticalLean.length > 0 ? 1 : 0) +
+    (filterLifeStage.length > 0 ? 1 : 0) +
     (filterHousingType.length > 0 ? 1 : 0) +
     (filterTenure.length > 0 ? 1 : 0) +
     (filterLocalScene !== 'all' ? 1 : 0) +
@@ -157,6 +162,7 @@ export default function FilterSheet({
     onFilterArchetypesChange([])
     onFilterTrajectoryChange('all')
     onFilterPoliticalLeanChange([])
+    onFilterLifeStageChange([])
     onFilterHousingTypeChange([])
     onFilterTenureChange([])
     onFilterLocalSceneChange('all')
@@ -416,6 +422,23 @@ export default function FilterSheet({
                   )
                 )
               })}
+            </div>
+          </div>
+
+          {/* Life stage */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Life stage</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {chip(filterLifeStage.length === 0, 'All', () => onFilterLifeStageChange([]))}
+              {([['children', 'More families with kids'], ['working_age', 'More working-age adults'], ['older', 'More older adults']] as const).map(([val, label]) =>
+                chip(
+                  filterLifeStage.includes(val),
+                  label,
+                  () => onFilterLifeStageChange(
+                    filterLifeStage.includes(val) ? filterLifeStage.filter((v) => v !== val) : [...filterLifeStage, val]
+                  )
+                )
+              )}
             </div>
           </div>
 

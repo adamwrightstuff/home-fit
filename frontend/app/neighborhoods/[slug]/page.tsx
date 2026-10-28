@@ -50,7 +50,7 @@ function pageDescription(entry: NeighborhoodEntry): string {
   }
   const { catalog, score } = entry
   const total = typeof score.total_score === 'number' ? Math.round(score.total_score) : null
-  return `${catalog.name} scores${total != null ? ` ${total}` : ''} for livability across Trovamo's 13 pillars: schools, safety, transit, nature, and more.`
+  return `${catalog.name} scores${total != null ? ` ${total}` : ''} for livability across Trovamo's 12 pillars: schools, safety, transit, nature, and more.`
 }
 
 export async function generateMetadata({
@@ -196,7 +196,7 @@ export default async function NeighborhoodPage({
       {/* Pillar breakdown */}
       <section className="mb-8" aria-label="Pillar breakdown">
         <h2 className="mb-3 text-lg font-bold text-[var(--hf-text-primary)]">
-          The 13 pillars
+          The 12 pillars
         </h2>
         <div className="overflow-hidden rounded-2xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)]">
           {PILLAR_ORDER.map((key, i) => {
@@ -244,13 +244,50 @@ export default async function NeighborhoodPage({
           })}
         </div>
         <p className="mt-3 text-xs leading-relaxed text-[var(--hf-text-tertiary)]">
-          Scores are computed across 13 pillars with equal weights by default.{' '}
+          Scores are computed across 12 pillars with equal weights by default.{' '}
           <Link href="/quiz" className="font-semibold text-[var(--hf-primary-1)] hover:underline">
             Take the quiz
           </Link>{' '}
           to re-weight them around what matters most to you.
         </p>
       </section>
+
+      {/* Who lives here: neutral description, no score and no weight */}
+      {(() => {
+        const age = (score.livability_pillars as any)?.diversity?.raw_shares?.age as
+          | { under_18?: number; age_18_64?: number; age_65_plus?: number }
+          | undefined
+        if (!age || typeof age.under_18 !== 'number') return null
+        // Largest-remainder rounding so the three whole-number shares always add to 100.
+        const raw = [age.under_18, age.age_18_64, age.age_65_plus].map((v) => (typeof v === 'number' ? v : 0))
+        const total = raw.reduce((a, b) => a + b, 0)
+        const scaled = total > 0 ? raw.map((v) => (v / total) * 100) : raw
+        const floors = scaled.map(Math.floor)
+        let left = 100 - floors.reduce((a, b) => a + b, 0)
+        const order = scaled.map((v, i) => [v - Math.floor(v), i] as const).sort((a, b) => b[0] - a[0])
+        for (const [, i] of order) { if (left <= 0) break; floors[i] += 1; left -= 1 }
+        const rows: Array<[string, number | undefined]> = [
+          ['Under 18', floors[0]],
+          ['18 to 64', floors[1]],
+          ['65 and over', floors[2]],
+        ]
+        return (
+          <section className="mb-8" aria-label="Who lives here">
+            <h2 className="mb-1 text-lg font-bold text-[var(--hf-text-primary)]">Who lives here</h2>
+            <p className="mb-3 text-xs leading-relaxed text-[var(--hf-text-tertiary)]">
+              Age mix of residents (Census ACS 2022). A description, not a score, and not counted in the total.
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              {rows.map(([label, v]) => (
+                <div key={label} className="rounded-2xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)] p-3 text-center">
+                  <div className="text-xl font-bold text-[var(--hf-text-primary)]">{typeof v === 'number' ? `${v}%` : 'n/a'}</div>
+                  <div className="text-xs text-[var(--hf-text-tertiary)]">{label}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )
+      })()}
 
       <NeighborhoodPersonal score={score} workCommute={work_commute} />
 

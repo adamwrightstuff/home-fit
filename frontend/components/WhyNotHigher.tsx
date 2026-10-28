@@ -143,10 +143,6 @@ function narrativeLeadIsWeak(key: PillarKey, pillar: Record<string, unknown>): b
       const raw = getPillarValue(pillar, 'breakdown.raw_score')
       return typeof raw === 'number' && raw <= 30
     }
-    case 'diversity': {
-      const score = getPillarValue(pillar, 'summary.diversity_entropy_score')
-      return typeof score === 'number' && score <= 35
-    }
     default:
       return false
   }

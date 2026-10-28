@@ -39,7 +39,7 @@ export default function HeroBand() {
           Find neighborhoods that fit how you want to live.
         </h2>
         <p style={{ fontSize: 13, color: '#6b7280', margin: '4px 0 0' }}>
-          Scores across 13 pillars — outdoor access, natural beauty, schools, transit, and more.
+          Scores across 12 pillars — outdoor access, natural beauty, schools, transit, and more.
         </p>
       </div>
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>

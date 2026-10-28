@@ -141,7 +141,7 @@ export default function SearchPage() {
                 Live scoring
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--hf-text-secondary)' }}>
-                20–40 sec · all 13 pillars in real time
+                20–40 sec · all 12 pillars in real time
               </span>
             </div>
             <div style={{ borderTop: '1px solid var(--hf-border)', marginTop: '0.75rem', paddingTop: '0.75rem', textAlign: 'center' }}>

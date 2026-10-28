@@ -1,0 +1,280 @@
+"""The area type is settled once, before any pillar runs, and the Places top-up is paid for once."""
+
+import pathlib
+
+import pytest
+
+from data_sources import place_context as pc
+from data_sources.place_context import PlaceContext, resolve_area_type
+
+
+def _biz(n, dist=300.0):
+    return [{"name": f"b{i}", "distance_m": dist, "lat": 0.0, "lon": 0.0} for i in range(n)]
+
+
+def _lists(tier1=0, far=0):
+    return {"tier1_daily": _biz(tier1), "tier2_social": _biz(far, dist=1300.0), "tier3_culture": [], "tier4_services": []}
+
+
+def _detect_by_count(lat, lon, *, business_count, **_):
+    # stand-in for classify_morphology: more businesses means a denser class
+    return "urban_residential" if business_count >= 40 else "suburban"
+
+
+def _no_completeness(lat, lon, base, area_type, density=None):
+    return 0.1
+
+
+def test_osm_only_when_places_adds_nothing():
+    calls = []
+
+    def augment(base, lat, lon, radius, chains, completeness, **kw):
+        calls.append((radius, kw.get("area_type")))
+        return base, {"used": False, "reason": "completeness_above_threshold"}
+
+    area, source, prov, merged, meta, radius = resolve_area_type(
+        1.0, 2.0, city="X", location_input="X", density=3000.0, osm_businesses=_lists(tier1=10),
+        built_coverage=None, metro_distance_km=None,
+        detect=_detect_by_count, augment=augment, completeness=_no_completeness, radius_for=lambda a, sc: 1500,
+    )
+    assert (area, source, prov, radius) == ("suburban", "osm_only", "suburban", 1500)
+    assert calls == [(1500.0, "suburban")]  # budgeted on the provisional type, one call
+    assert merged is not None and meta["used"] is False
+
+
+def test_places_topup_can_settle_a_denser_type_and_provisional_is_recorded():
+    def augment(base, lat, lon, radius, chains, completeness, **kw):
+        out = {k: list(v) for k, v in base.items()}
+        out["tier1_daily"] += _biz(45)
+        return out, {"used": True, "mapped_added": 45}
+
+    area, source, prov, merged, meta, radius = resolve_area_type(
+        1.0, 2.0, city=None, location_input=None, density=9000.0, osm_businesses=_lists(tier1=5),
+        built_coverage=None, metro_distance_km=None,
+        detect=_detect_by_count, augment=augment, completeness=_no_completeness, radius_for=lambda a, sc: 1500,
+    )
+    assert prov == "suburban"
+    assert area == "urban_residential"
+    assert source == "osm_plus_places"
+    assert len(merged["tier1_daily"]) == 50
+
+
+def test_count_for_classification_ignores_businesses_beyond_one_km():
+    seen = []
+
+    def detect(lat, lon, *, business_count, **_):
+        seen.append(business_count)
+        return "suburban"
+
+    resolve_area_type(
+        1.0, 2.0, city=None, location_input=None, density=1000.0,
+        osm_businesses=_lists(tier1=7, far=30),  # 30 more sit at 1,300 m
+        built_coverage=None, metro_distance_km=None, detect=detect,
+        augment=lambda base, *a, **k: (base, {"used": False}), completeness=_no_completeness,
+        radius_for=lambda a, sc: 1500,
+    )
+    assert seen == [7]
+
+
+def test_failed_osm_read_means_no_topup_and_nothing_handed_to_amenities():
+    def augment(*a, **k):
+        raise AssertionError("must not pay for a Places call when the OSM read failed")
+
+    area, source, prov, merged, meta, radius = resolve_area_type(
+        1.0, 2.0, city=None, location_input=None, density=500.0, osm_businesses=None,
+        built_coverage=None, metro_distance_km=None, detect=_detect_by_count, augment=augment,
+        radius_for=lambda a, sc: 1500,
+    )
+    assert merged is None and meta is None and source == "osm_only"
+
+
+def test_places_failure_falls_back_to_osm_list():
+    def augment(*a, **k):
+        raise RuntimeError("quota")
+
+    area, source, prov, merged, meta, radius = resolve_area_type(
+        1.0, 2.0, city=None, location_input=None, density=500.0, osm_businesses=_lists(tier1=3),
+        built_coverage=None, metro_distance_km=None, detect=_detect_by_count, augment=augment,
+        completeness=_no_completeness, radius_for=lambda a, sc: 1500,
+    )
+    assert source == "osm_only" and len(merged["tier1_daily"]) == 3
+    assert meta["used"] is False and "quota" in meta["error"]
+
+
+def _ctx(businesses, radius=1500):
+    return PlaceContext(lat=1.0, lon=2.0, city=None, area_type="suburban", density=1000.0,
+                        prefetched_businesses=businesses, prefetched_radius_m=radius)
+
+
+def test_topup_runs_at_the_radius_the_amenities_pillar_would_use_and_the_base_is_trimmed_to_it():
+    seen = {}
+
+    def augment(base, lat, lon, radius, chains, completeness, **kw):
+        seen["radius"] = radius
+        seen["base_count"] = sum(len(v) for v in base.values())
+        return base, {"used": False}
+
+    area, source, prov, merged, meta, radius = resolve_area_type(
+        1.0, 2.0, city=None, location_input=None, density=3000.0,
+        osm_businesses=_lists(tier1=6, far=5),  # 5 more sit at 1,300 m, outside a 1,200 m query
+        built_coverage=None, metro_distance_km=None, detect=_detect_by_count, augment=augment,
+        completeness=_no_completeness, radius_for=lambda a, sc: 1200,
+    )
+    assert seen == {"radius": 1200.0, "base_count": 6}
+    assert radius == 1200
+
+
+def test_radius_wider_than_the_osm_read_hands_nothing_to_amenities():
+    def augment(*a, **k):
+        raise AssertionError("no top-up when the OSM read does not cover the pillar's radius")
+
+    area, source, prov, merged, meta, radius = resolve_area_type(
+        1.0, 2.0, city=None, location_input=None, density=3000.0, osm_businesses=_lists(tier1=6),
+        built_coverage=None, metro_distance_km=None, detect=_detect_by_count, augment=augment,
+        completeness=_no_completeness, radius_for=lambda a, sc: 2000,
+    )
+    assert merged is None and radius is None
+
+
+def test_prefetched_list_stands_in_only_at_exactly_its_own_radius():
+    lists = {"tier1_daily": _biz(2), "tier2_social": [], "tier3_culture": [], "tier4_services": []}
+    assert len(_ctx(lists, 1200).businesses_for_radius(1200, True, False)["tier1_daily"]) == 2
+    assert _ctx(lists, 1500).businesses_for_radius(1200, True, False) is None
+    assert _ctx(lists, 1200).businesses_for_radius(1500, True, False) is None
+
+
+@pytest.mark.parametrize("chains,vacation", [(False, False), (True, True)])
+def test_prefetched_list_does_not_stand_in_when_the_query_would_differ(chains, vacation):
+    lists = {"tier1_daily": _biz(2), "tier2_social": [], "tier3_culture": [], "tier4_services": []}
+    assert _ctx(lists).businesses_for_radius(1500, chains, vacation) is None
+
+
+def test_no_prefetched_list_means_the_pillar_reads_for_itself():
+    assert _ctx(None).businesses_for_radius(1500, True, False) is None
+
+
+def test_context_is_frozen():
+    with pytest.raises(Exception):
+        _ctx(None).area_type = "rural"
+
+
+def test_amenities_reuses_the_list_and_skips_its_own_places_call(monkeypatch):
+    from pillars import neighborhood_amenities as na
+
+    lists = {"tier1_daily": _biz(8, 200.0), "tier2_social": _biz(4, 400.0), "tier3_culture": _biz(2, 600.0), "tier4_services": _biz(3, 700.0)}
+    for k, items in lists.items():
+        for i, b in enumerate(items):
+            b.update({"type": "cafe", "name": f"{k}{i}", "lat": 0.0, "lon": 0.0})
+    ctx = PlaceContext(lat=1.0, lon=2.0, city=None, area_type="suburban", density=3000.0,
+                       prefetched_businesses=lists, prefetched_radius_m=1500,
+                       places_meta={"used": True, "mapped_added": 4})
+
+    def no_osm(*a, **k):
+        raise AssertionError("amenities must not re-read OSM when the context supplies the list")
+
+    seen = {}
+
+    def spy_augment(data, lat, lon, radius, chains, completeness, **kw):
+        seen.update(kw)
+        return data, {"used": False, "reason": "already_augmented"}
+
+    monkeypatch.setattr(na.osm_api, "query_local_businesses", no_osm)
+    monkeypatch.setattr(na, "maybe_augment_business_data_with_places", spy_augment)
+    try:
+        na.get_neighborhood_amenities_score(1.0, 2.0, area_type="suburban", density=3000.0, place_context=ctx)
+    except Exception:
+        pass  # scoring internals are covered elsewhere; this test is about the data hand-off
+    assert seen.get("places_already_augmented") is True
+
+
+def test_main_no_longer_overwrites_the_area_type_after_the_pillars():
+    src = (pathlib.Path(__file__).resolve().parents[1] / "main.py").read_text()
+    assert "_reclassify_area_type_post_pillars" not in src
+    assert "_corrected_area_type" not in src
+    assert src.count("'place_context': place_ctx") >= 2
+
+
+def test_completeness_uses_the_density_it_was_given_and_does_not_refetch(monkeypatch):
+    from data_sources import data_quality as dq
+
+    def boom(lat, lon):
+        raise AssertionError("must not re-fetch density when the caller supplied it")
+
+    monkeypatch.setattr(dq, "get_population_density", boom)
+    # 37,000 people per sq mi gives the urban expectations even though the area type string is not 'urban_core'
+    exp = dq.data_quality_manager.get_expected_minimums(1.0, 2.0, "urban_residential", density=37000.0)
+    assert exp["business_count"] == 50
+    score = pc._default_completeness(1.0, 2.0, _lists(tier1=10), "urban_residential", 37000.0)
+    assert score < 0.6  # thin against an urban expectation, so the Places top-up is triggered
+
+
+def test_expected_minimums_without_density_still_fetches_it(monkeypatch):
+    from data_sources import data_quality as dq
+    monkeypatch.setattr(dq, "get_population_density", lambda lat, lon: 37000.0)
+    assert dq.data_quality_manager.get_expected_minimums(1.0, 2.0, "urban_residential")["business_count"] == 50
+
+
+# ---- every pillar takes the one context ----
+
+def test_resolver_returns_the_context_untouched_and_ignores_conflicting_arguments(monkeypatch):
+    from data_sources import census_api
+    monkeypatch.setattr(census_api, "get_population_density", lambda *a: (_ for _ in ()).throw(AssertionError("no fetch")))
+    ctx = PlaceContext(lat=1.0, lon=2.0, city=None, area_type="urban_residential", density=9000.0)
+    got = pc.resolve_place_context(1.0, 2.0, place_context=ctx, area_type="rural", density=5.0)
+    assert got is ctx
+
+
+def test_resolver_without_context_derives_once_and_marks_the_source(monkeypatch):
+    from data_sources import census_api, data_quality
+    monkeypatch.setattr(census_api, "get_population_density", lambda *a: 4200.0)
+    monkeypatch.setattr(data_quality, "detect_area_type", lambda *a, **k: "suburban")
+    got = pc.resolve_place_context(1.0, 2.0)
+    assert (got.area_type, got.density, got.area_type_source) == ("suburban", 4200.0, "derived_by_pillar")
+
+
+def test_resolver_pays_for_no_density_call_when_the_caller_supplies_the_type(monkeypatch):
+    from data_sources import census_api
+    monkeypatch.setattr(census_api, "get_population_density", lambda *a: (_ for _ in ()).throw(AssertionError("no fetch")))
+    got = pc.resolve_place_context(1.0, 2.0, area_type="rural")
+    assert got.area_type == "rural" and got.density is None
+
+
+PILLAR_ENTRY_POINTS = [
+    ("pillars.active_outdoors", "get_active_outdoors_score_v2"),
+    ("pillars.built_environment", "calculate_built_environment"),
+    ("pillars.natural_beauty", "calculate_natural_beauty"),
+    ("pillars.neighborhood_amenities", "get_neighborhood_amenities_score"),
+    ("pillars.air_travel_access", "get_air_travel_score"),
+    ("pillars.public_transit_access", "get_public_transit_score"),
+    ("pillars.healthcare_access", "get_healthcare_access_score"),
+    ("pillars.economic_opportunity", "get_economic_opportunity_score"),
+    ("pillars.housing_value", "get_housing_value_score"),
+    ("pillars.climate_risk", "get_climate_risk_score"),
+    ("pillars.social_fabric", "get_social_fabric_score"),
+    ("pillars.diversity", "get_diversity_score"),
+    ("pillars.community_safety", "get_community_safety_score"),
+    ("pillars.schools", "get_school_data"),
+]
+
+
+@pytest.mark.parametrize("module,func", PILLAR_ENTRY_POINTS)
+def test_every_area_type_pillar_accepts_the_place_context(module, func):
+    import importlib
+    import inspect
+    fn = getattr(importlib.import_module(module), func)
+    assert "place_context" in inspect.signature(fn).parameters
+
+
+def test_main_hands_the_context_to_every_area_type_pillar():
+    import re
+    src = (pathlib.Path(__file__).resolve().parents[1] / "main.py").read_text()
+    for _, func in PILLAR_ENTRY_POINTS:
+        for m in re.finditer(r"\('[a-z_]+', (?:[a-z_]+\.)?" + func + r", \{\n(.*?)\n\s+\}\)", src, re.S):
+            assert "'place_context': place_ctx" in m.group(1), func
+
+
+def test_healthcare_survives_an_unknown_density_from_the_context():
+    import inspect
+    from pillars import healthcare_access as ha
+    src = inspect.getsource(ha.get_healthcare_access_score)
+    assert "(pop_density or 0.0)" in src  # unknown density must not raise in the radius-normalising step

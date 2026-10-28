@@ -697,7 +697,7 @@ _S2401_MGMT_LEGAL_HEALTH_INDICES = (1, 5, 7)
 
 def _fetch_s2401_occupation_shares(tract: Optional[Dict[str, Any]]) -> Optional[Dict[str, float]]:
     """Fetch S2401 at tract level. Returns white_collar_pct and management_legal_healthcare_pct (Management+Legal+Healthcare)."""
-    from data_sources.census_api import CENSUS_API_KEY, CENSUS_BASE_URL, _make_request_with_retry
+    from data_sources.census_api import ACS_YEAR, CENSUS_API_KEY, CENSUS_BASE_URL, _make_request_with_retry
     if not tract or not CENSUS_API_KEY:
         return None
     state_fips = tract.get("state_fips")
@@ -705,7 +705,7 @@ def _fetch_s2401_occupation_shares(tract: Optional[Dict[str, Any]]) -> Optional[
     tract_fips = tract.get("tract_fips")
     if not all([state_fips, county_fips, tract_fips]):
         return None
-    url = f"{CENSUS_BASE_URL}/2022/acs/acs5/subject"
+    url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5/subject"
     params = {
         "get": ",".join(_S2401_VARS),
         "for": f"tract:{tract_fips}",

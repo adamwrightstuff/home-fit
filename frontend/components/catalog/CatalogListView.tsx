@@ -207,7 +207,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
               <th className="py-2 px-1 font-semibold" colSpan={1} title={activePillarMeta?.label}>{activePillarMeta?.label ?? 'Pillar'}</th>
             ) : (
               <th className="py-2 px-1 font-semibold">
-                <abbr title="HomeFit score — weighted composite of all 13 pillars (0–100)" style={{ textDecoration: 'underline dotted', textUnderlineOffset: '2px', cursor: 'help' }}>Score</abbr>
+                <abbr title="HomeFit score — weighted composite of all 12 pillars (0–100)" style={{ textDecoration: 'underline dotted', textUnderlineOffset: '2px', cursor: 'help' }}>Score</abbr>
                 {avgScore != null && (
                   <span className="ml-1.5 font-normal text-[0.6rem] text-[var(--hf-text-tertiary)]">avg {avgScore}</span>
                 )}

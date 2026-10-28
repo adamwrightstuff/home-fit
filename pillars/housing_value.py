@@ -6,6 +6,7 @@ Scores housing value based on local affordability, space, and cost efficiency
 from typing import Dict, Tuple, Optional
 from data_sources import census_api, data_quality
 from data_sources.zillow_home_values import get_home_value, CENSUS_CAP
+from data_sources.place_context import resolve_place_context
 
 
 def get_housing_value_score(lat: float, lon: float,
@@ -14,7 +15,9 @@ def get_housing_value_score(lat: float, lon: float,
                            city: Optional[str] = None,
                            zip_code: Optional[str] = None,
                            use_national_income_for_affordability: bool = False,
-                           user_household_income: Optional[int] = None) -> Tuple[float, Dict]:
+                           user_household_income: Optional[int] = None,
+                           area_type: Optional[str] = None,
+                           place_context=None) -> Tuple[float, Dict]:
     """
     Calculate housing value score (0-100) based on affordability and space.
 
@@ -39,9 +42,8 @@ def get_housing_value_score(lat: float, lon: float,
     """
     print(f"🏠 Analyzing housing value...")
 
-    if density is None:
-        density = census_api.get_population_density(lat, lon) or 0.0
-    area_type = data_quality.detect_area_type(lat, lon, density, city=city)
+    ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, density=density, city=city, need_density=True)
+    area_type, density = ctx.area_type, ctx.density
 
     # Get housing data from Census (pass pre-computed tract if available)
     # HOMEFIT_HOUSING_POOLED (default off): pool the tracts within 0.43 mile of the pin instead of the pin's single
@@ -152,14 +154,7 @@ def get_housing_value_score(lat: float, lon: float,
         'total_score': total_score
     }
     
-    # Use pre-computed density if provided, otherwise fetch
-    if density is None:
-        density = census_api.get_population_density(lat, lon) or 0.0
-    
-    # Detect actual area type for data quality assessment
-    # Use provided city if available for better classification
-    area_type = data_quality.detect_area_type(lat, lon, density, city=city)
-    quality_metrics = data_quality.assess_pillar_data_quality('housing_value', combined_data, lat, lon, area_type)
+    quality_metrics = data_quality.assess_pillar_data_quality('housing_value', combined_data, lat, lon, area_type, density=density)
     if _missing:
         quality_metrics["degraded"] = True
         quality_metrics["degraded_reasons"] = list(quality_metrics.get("degraded_reasons") or []) + [

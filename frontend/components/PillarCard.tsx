@@ -85,14 +85,6 @@ const BUILT_DENSITY_CHIPS: Array<{
   { value: 'dense_urban_living', label: 'Downtown' },
 ]
 
-/** Demographic mix dimensions for Diversity pillar (headline = mean of selected, or all available if Any). */
-const DIVERSITY_PREFERENCE_CHIPS: Array<{ value: string | null; label: string }> = [
-  { value: null, label: 'Any' },
-  { value: 'race', label: 'Race & ethnicity' },
-  { value: 'income', label: 'Income' },
-  { value: 'age', label: 'Age' },
-]
-
 function isRecord(value: unknown): value is Record<string, any> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -231,7 +223,7 @@ const METRIC_EXPLAINERS: Record<string, string> = {
   'social_fabric:Modeled voter turnout (tract)': 'Estimated participation rate used for engagement (0–100% shown).',
   'diversity:Mix dimensions scored': 'Which Census mix dimensions (race, income, age) had data for this tract.',
   'diversity:Self-employed (tract %)': 'Share of workers who are self-employed in this tract (Census).',
-  'diversity:Race & ethnicity spread': 'Normalized entropy across race groups—higher means a more even mix.',
+  'diversity:Race & ethnicity spread': 'How residents are spread across Census race and ethnicity groups. A descriptive measure, not a quality score.',
   'community_safety:Violent crime (per 1k)': 'Murder, rape, robbery, and aggravated assault per 1,000 residents in the last full year—after any commuter-denominator adjustment.',
   'community_safety:Property crime (per 1k)': 'Burglary, theft, and vehicle theft per 1,000 residents in the last full year.',
   'community_safety:Violent slot (0–100)': 'Share of places Americans live with more violent crime than here (60 = safer than 60%).',
@@ -780,69 +772,11 @@ export default function PillarCard({
                 </div>
               )
             })()}
-            {pillar_key === 'diversity' && (() => {
-              const fromProps = diversityPreference && diversityPreference.length > 0 ? diversityPreference : null
-              const fromPillar = Array.isArray((pillar as any)?.summary?.diversity_preference) && (pillar as any).summary.diversity_preference.length > 0
-                ? ((pillar as any).summary.diversity_preference as string[])
-                : null
-              const displayPreference = fromProps ?? fromPillar
-              const pref = displayPreference ?? []
-              const canChange = Boolean(onDiversityPreferenceChange)
-              return (
-                <div style={{ marginBottom: canChange ? '0.85rem' : '0.5rem' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>Mix focus:</span>
-                  {canChange ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
-                      {DIVERSITY_PREFERENCE_CHIPS.map(({ value, label }) => {
-                        const isAny = value === null
-                        const hasAny = !pref.length
-                        const chipSelected = isAny ? hasAny : pref.includes(value as string)
-                        const handleClick = () => {
-                          if (isAny) {
-                            onDiversityPreferenceChange!(null)
-                            return
-                          }
-                          const current = [...pref]
-                          if (current.includes(value as string)) {
-                            const next = current.filter((v) => v !== value)
-                            onDiversityPreferenceChange!(next.length ? next : null)
-                          } else {
-                            onDiversityPreferenceChange!([...current, value as string])
-                          }
-                        }
-                        return (
-                          <button
-                            key={label}
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleClick() }}
-                            disabled={rescoring}
-                            style={{
-                              padding: '0.35rem 0.65rem',
-                              borderRadius: 8,
-                              fontSize: '0.85rem',
-                              fontWeight: chipSelected ? 600 : 400,
-                              background: chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
-                              color: chipSelected ? 'white' : 'var(--hf-text-secondary)',
-                              border: `1px solid ${chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
-                              cursor: rescoring ? 'not-allowed' : 'pointer',
-                              opacity: rescoring ? 0.7 : 1,
-                            }}
-                          >
-                            {label}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    displayPreference && displayPreference.length > 0 ? (
-                      <>{' '}{displayPreference.join(', ')}</>
-                    ) : (
-                      <span className="tr-muted"> All available dimensions</span>
-                    )
-                  )}
-                </div>
-              )
-            })()}
+            {pillar_key === 'diversity' && (
+              <div style={{ marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--hf-text-secondary)' }}>
+                Diversity is a personal preference, not a quality score. It is off by default and does not count toward the total unless you choose to weight it. Research on whether more mixed neighborhoods are better is mixed, so we make no claim either way.
+              </div>
+            )}
             {pillar_key === 'neighborhood_amenities' && onIncludeChainsChange ? (
               <div style={{ marginBottom: '0.85rem' }}>
                 <label

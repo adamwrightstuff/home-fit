@@ -18,6 +18,8 @@ load_dotenv()
 
 CENSUS_API_KEY = os.getenv("CENSUS_API_KEY")
 CENSUS_BASE_URL = "https://api.census.gov/data"
+# One place to change the ACS 5-year vintage (the whole product is on 2022; see BACKLOG.md "ACS vintage refresh").
+ACS_YEAR = "2022"
 GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
 # 2020 Census tract boundaries.  ACS 2020+ estimates (incl. the 2022 ACS used here)
 # are tabulated on 2020 tracts; TIGERweb's tigerWMS_ACS2022 tract layer still serves
@@ -317,7 +319,7 @@ def get_population(tract: Dict) -> Optional[int]:
         Population count
     """
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         params = {
             "get": "B01001_001E,NAME",  # Total population
             "for": f"tract:{tract['tract_fips']}",
@@ -427,7 +429,7 @@ def get_tree_canopy(lat: float, lon: float, tract: Optional[Dict] = None) -> Opt
 def _fetch_housing_acs(for_clause: str, in_clause: str) -> Optional[Dict]:
     """Fetch and parse ACS 5-year housing data for the given Census geography."""
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         params = {
             "get": "B25077_001E,B19013_001E,B25018_001E,B19025_001E,B19001_001E,B25064_001E,B25003_001E,B25003_003E,B25105_001E,NAME",
             "for": for_clause,
@@ -525,7 +527,7 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_
         lat: Latitude
         lon: Longitude
         tract: Optional pre-fetched tract data (for efficiency)
-        area_type: Optional area classification; urban_core skips place-level (tract is more granular)
+        area_type: Accepted for call compatibility; no longer changes the geography choice
 
     Returns:
         {
@@ -550,13 +552,15 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_
 
     print("🏠 Fetching housing data from Census ACS...")
 
-    # For urban_core (city neighborhoods), tract is more granular than the whole city place.
-    # For suburbs, place-level gives true municipal data free of tract boundary bleed.
+    # Geography depends on place size only, not on the area type (the urban_core skip was removed
+    # 2026-10-27 with the class itself). Place-level gives true municipal data free of tract boundary
+    # bleed.
     # Housing unit ceiling: reject place-level data from large cities (e.g. City of Los Angeles
     # has ~1.4M occupied units — using city-wide median for a neighborhood is meaningless).
+    # TODO: 200,000 is unsourced (see analysis/audit_housing_d14_2026-10-27.md).
     _MAX_PLACE_OCCUPIED_UNITS = 200_000
 
-    place_geo = None if area_type == "urban_core" else get_place_fips_for_coordinates(lat, lon)
+    place_geo = get_place_fips_for_coordinates(lat, lon)
     if place_geo:
         geo_type = place_geo.get("geo_type", "incorporated_place")
         if geo_type == "county_subdivision":
@@ -653,7 +657,7 @@ def get_commute_time(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
     try:
         print("🚆 Fetching commute time from Census ACS profile...")
 
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5/profile"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5/profile"
         params = {
             "get": "DP03_0025E,NAME",  # Mean travel time to work
             "for": f"tract:{tract['tract_fips']}",
@@ -810,7 +814,7 @@ def get_transit_mode_share(lat: float, lon: float, tract: Optional[Dict] = None)
     if not tract:
         return None
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         params = {
             "get": "B08301_001E,B08301_010E",  # total workers, public-transit commuters
             "for": f"tract:{tract['tract_fips']}",
@@ -861,7 +865,7 @@ def get_year_built_data(lat: float, lon: float, tract: Optional[Dict] = None) ->
     try:
         print("🏛️ Fetching year built data from Census ACS...")
 
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         
         # Get year built variables + median
         variables = [
@@ -1000,7 +1004,7 @@ def _mobility_from_tract_row(
 
 def _fetch_mobility_tract_acs(tract: Dict, *, include_b07013: bool) -> Optional[Dict]:
     """Single ACS GET for tract mobility; include_b07013=False uses B07003 only (fallback path)."""
-    url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+    url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
     if include_b07013:
         get = "B07003_001E,B07003_004E,B07003_007E,B07013_001E,B07013_005E,B07013_006E,NAME"
     else:
@@ -1072,10 +1076,7 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
         return None
 
 
-@cached(ttl_seconds=CACHE_TTL['census_data'])
-@safe_api_call("census", required=False)
-@handle_api_timeout(timeout_seconds=15)
-def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str, str]]:
+def _place_fips_lookup(lat: float, lon: float, strict: bool = False) -> Optional[Dict[str, str]]:
     """
     State FIPS and Census place FIPS for an Incorporated Place, CDP, or Consolidated City
     containing the point.
@@ -1097,6 +1098,8 @@ def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str,
         }
         response = _make_request_with_retry(GEOCODER_URL, params, timeout=10)
         if response is None:
+            if strict:
+                raise RuntimeError(f"Census place lookup failed for ({lat}, {lon})")
             return None
         data = response.json()
         geographies = (data.get("result") or {}).get("geographies") or {}
@@ -1142,8 +1145,18 @@ def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str,
 
         return None
     except Exception as e:
+        if strict:
+            raise RuntimeError(f"Census place lookup failed for ({lat}, {lon}): {e}") from e
         print(f"   ⚠️  Place lookup failed: {e}")
         return None
+
+
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=15)
+def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str, str]]:
+    """Place lookup that returns None on any failure (cached). See _place_fips_lookup for the strict form."""
+    return _place_fips_lookup(lat, lon)
 
 
 def _municipal_geo_params(state_fips: str, place_fips: Optional[str], geo: Optional[Dict[str, str]] = None):
@@ -1163,7 +1176,7 @@ def get_place_same_house_pct(state_fips: str, place_fips: Optional[str], geo: Op
     if not CENSUS_API_KEY or not state_fips or not (place_fips or is_cousub):
         return None
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         for_, in_ = _municipal_geo_params(state_fips, place_fips, geo)
         params = {
             "get": "B07003_001E,B07003_004E,NAME",
@@ -1224,7 +1237,7 @@ def get_tract_long_tenure_housing_pct(tract: Dict) -> Optional[float]:
     if not CENSUS_API_KEY or not tract:
         return None
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         params = {
             "get": (
                 "B25038_001E,B25038_002E,B25038_003E,B25038_004E,B25038_005E,B25038_006E,"
@@ -1260,7 +1273,7 @@ def get_place_long_tenure_housing_pct(state_fips: str, place_fips: Optional[str]
     if not CENSUS_API_KEY or not state_fips or not (place_fips or is_cousub):
         return None
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         for_, in_ = _municipal_geo_params(state_fips, place_fips, geo)
         params = {
             "get": (
@@ -1317,7 +1330,7 @@ def get_acs_b02001_total_for_tract(tract: Dict) -> Optional[int]:
     if not CENSUS_API_KEY:
         return None
     try:
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         params = {
             "get": "B02001_001E,NAME",
             "for": f"tract:{tract['tract_fips']}",
@@ -1391,15 +1404,18 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None, are
     if not tract:
         return None
 
-    # For urban_core (city neighborhoods), tract is more granular than the whole city place.
-    # For suburbs, place-level gives true municipal data free of tract boundary bleed.
-    place_geo = None if area_type == "urban_core" else get_place_fips_for_coordinates(lat, lon)
+    # Geography depends on place size only, not on the area type (the urban_core skip was removed
+    # 2026-10-27 with the class itself). Place-level data gives true municipal data free of tract
+    # boundary bleed; the size ceiling below sends large cities to the tract.
+    # Fail loudly (owner decision 2026-10-28): a failed place lookup is no data, not a silent fall back to the tract.
+    place_geo = _place_fips_lookup(lat, lon, strict=True)
     tract_for = f"tract:{tract['tract_fips']}"
     tract_in = f"state:{tract['state_fips']} county:{tract['county_fips']}"
 
     # Population ceiling: reject place/county-sub level diversity data from large cities
     # (e.g. "New York city" PLACE=51000 has 8M residents — meaningless for a neighborhood).
     # Tract data is always more granular and appropriate when the place population exceeds this.
+    # TODO: 200,000 is unsourced (decided with the housing ceiling in analysis/audit_housing_d14_2026-10-27.md).
     _MAX_PLACE_POP_25_PLUS = 200_000
 
     geo_attempts = []
@@ -1418,12 +1434,17 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None, are
     for geo_level, geo_for, geo_in in geo_attempts:
         result = _fetch_diversity_acs(geo_for, geo_in)
         if result is None:
+            if geo_level != "tract":
+                raise RuntimeError(f"Census diversity data failed for {geo_level} {geo_for} ({lat}, {lon})")
             continue
         edu = result.get("education_attainment") or {}
         pop = edu.get("population_25_plus") or 0
         if geo_level != "tract" and pop > _MAX_PLACE_POP_25_PLUS:
             continue
         result["geo_level"] = geo_level
+        result["total_population"] = sum(
+            v for k, v in (result.get("race_counts") or {}).items() if k not in ("B02001_009E", "B02001_010E")
+        )
         return result
     return None
 
@@ -1431,10 +1452,10 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None, are
 def _fetch_diversity_acs(geo_for: str, geo_in: str) -> Optional[Dict]:
     """Run all diversity ACS queries for the given Census geography. Returns None on any failure."""
     try:
-        base_acs5 = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        base_acs5 = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         geo_for = geo_for
         geo_in = geo_in
-        base_acs5 = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        base_acs5 = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
 
         # ---- Race: B02001 (total + race categories) ----
         race_vars = [
@@ -1473,6 +1494,23 @@ def _fetch_diversity_acs(geo_for: str, geo_in: str) -> Optional[Dict]:
             except (ValueError, TypeError):
                 v = 0
             race_counts[var] = v
+
+        # ---- Race and Hispanic origin: B03002 (Hispanic, plus seven non-Hispanic race groups) ----
+        eth_vars = ["B03002_003E", "B03002_004E", "B03002_005E", "B03002_006E", "B03002_007E", "B03002_008E", "B03002_009E", "B03002_012E"]
+        resp_eth = _make_request_with_retry(
+            base_acs5, {"get": ",".join(eth_vars), "for": geo_for, "in": geo_in, "key": CENSUS_API_KEY}, timeout=15, max_retries=3
+        )
+        if resp_eth is None:
+            return None
+        data_eth = resp_eth.json()
+        if len(data_eth) < 2:
+            return None
+        ethnicity_counts: Dict[str, int] = {}
+        for i, var in enumerate(eth_vars):
+            try:
+                ethnicity_counts[var] = int(data_eth[1][i]) if data_eth[1][i] else 0
+            except (ValueError, TypeError):
+                ethnicity_counts[var] = 0
 
         # ---- Income: B19001 (total + 16 income brackets) ----
         income_vars = [
@@ -1638,6 +1676,7 @@ def _fetch_diversity_acs(geo_for: str, geo_in: str) -> Optional[Dict]:
 
         return {
             "race_counts": race_counts,
+            "ethnicity_counts": ethnicity_counts,
             "income_counts": income_counts,
             "age_counts": age_counts,
             "education_attainment": education_attainment,
@@ -1907,7 +1946,7 @@ def _acs_population_batch(state_fips: str, county_fips: str, tract_fips_list: Li
             "in": f"state:{state_fips} county:{county_fips}",
             "key": CENSUS_API_KEY,
         }
-        resp = _make_request_with_retry(f"{CENSUS_BASE_URL}/2022/acs/acs5", params, timeout=20)
+        resp = _make_request_with_retry(f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5", params, timeout=20)
         if resp is None:
             continue
         try:
@@ -1975,6 +2014,7 @@ def estimate_community_safety_disk_population(
             dens = float(p0) / float(la0)
     if dens <= 0:
         dens = 3000.0
+        meta["population_denominator_density_assumed"] = True
     disk_sq_mi = math.pi * (radius_m / 1609.34) ** 2
     legacy = max(500, int(dens * disk_sq_mi))
     meta["population_denominator_legacy_estimate"] = legacy
@@ -2089,6 +2129,7 @@ def estimate_community_safety_disk_population(
 
     weighted = 0.0
     missing = 0
+    zero_pop = 0
     filled: Dict[str, int] = {}
     for gid, frac in overlap_by_geoid.items():
         pop = pop_by_geoid.get(gid)
@@ -2099,8 +2140,11 @@ def estimate_community_safety_disk_population(
             )
             if pop is not None:
                 filled[how] = filled.get(how, 0) + 1
-        if pop is None or pop <= 0:
-            missing += 1
+        if pop is None:
+            missing += 1  # no population row at all
+            continue
+        if pop <= 0:
+            zero_pop += 1  # a real zero (park, water, industrial land): valid, not missing
             continue
         weighted += float(pop) * float(frac)
 
@@ -2121,10 +2165,13 @@ def estimate_community_safety_disk_population(
         areal_int = min(blended, legacy)
 
     final_pop = max(500, areal_int)
+    if final_pop != areal_int:
+        meta["population_denominator_floor_applied"] = True
     meta["population_denominator_method"] = "areal_acs_tracts_in_disk"
     meta["population_denominator_tracts_overlapping"] = len(overlap_by_geoid)
     meta["population_denominator_weighted_estimate"] = int(round(weighted))
-    meta["population_denominator_missing_tract_pops"] = missing
+    meta["population_denominator_missing_tract_pops"] = missing  # tracts with no population row
+    meta["population_denominator_zero_pop_tracts"] = zero_pop
     if filled:
         meta["population_denominator_tracts_filled"] = filled
     return final_pop, meta

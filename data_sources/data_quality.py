@@ -256,12 +256,12 @@ def classify_morphology(
     location_input: Optional[str] = None
 ) -> str:
     """
-    Morphological classification driven by commercial dominance (urban_core)
-    vs. residential population density (everything else).
-
-    urban_core is defined by commercial/employment dominance, not by raw
-    density — a dense residential neighborhood is urban_residential even at
-    Manhattan-scale density. business_count must be businesses within 1km
+    Morphological classification from residential population density and the
+    business count within 1 km. 'urban_core' is no longer returned: its
+    definition is subjective and differs by city, and no published cutoff
+    exists (decision 2026-10-27, analysis/area_type_activity_density_proposal_2026-10-27.md).
+    Places the old commercial-dominance rule called urban_core are
+    urban_residential. business_count must be businesses within 1km
     (matches the live business_count signal and the catalog's
     businesses_within_walkable) — NOT a profile/area-type-dependent radius,
     which would make this circular.
@@ -275,7 +275,7 @@ def classify_morphology(
         location_input: unused (kept for call-site compatibility)
 
     Returns:
-        'urban_core', 'urban_residential', 'suburban', 'exurban', 'rural',
+        'urban_residential', 'suburban', 'exurban', 'rural',
         or 'unknown' when density is missing/zero or looks unreliable
         (e.g. a census tract with near-zero population but heavy commercial
         activity nearby — a "dead tract" point-sample artifact). Returning
@@ -293,10 +293,6 @@ def classify_morphology(
     if density < 2000 and walk >= 80:
         return "unknown"
 
-    ratio = walk / (density / 1000)
-
-    if ratio >= 100 and walk >= 100:
-        return "urban_core"
     if density >= 25000:
         return "urban_residential"
     if density >= 12000 and walk >= 100:
@@ -887,22 +883,23 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
                      city: Optional[str] = None, location_input: Optional[str] = None,
                      business_count: Optional[int] = None,
                      built_coverage: Optional[float] = None,
-                     metro_distance_km: Optional[float] = None) -> str:
+                     metro_distance_km: Optional[float] = None,
+                     census_tract: Optional[Dict] = None) -> str:
     """
-    Detect area type using commercial-dominance vs. residential-density
-    morphological classification (see classify_morphology()).
+    Detect area type from the surrounding 1 km circle (see data_sources/surrounding_density.py):
+    people per square mile over the tracts in the circle, and people plus jobs per gross acre.
+    Measured from local tables, so the result does not depend on a Census call or on OSM completeness.
 
     Args:
-        lat, lon: Coordinates
-        density: Optional pre-fetched density (for efficiency)
-        city: unused (kept for call-site compatibility)
-        location_input: unused (kept for call-site compatibility)
-        business_count: Optional count of businesses within 1km
-        built_coverage: unused (kept for call-site compatibility)
-        metro_distance_km: unused (kept for call-site compatibility)
+        lat, lon: Coordinates (the inputs that matter)
+        census_tract: the pin's own tract (state_fips, county_fips, tract_fips), used only when no tract
+            center lies inside the circle, so a large rural tract is read as itself
+        density, city, location_input, business_count, built_coverage, metro_distance_km:
+            unused, kept for call-site compatibility. The tract density at the pin and the OSM
+            business count no longer decide the type (proposal 2026-10-27, Option A).
 
     Returns:
-        Base morphological type: 'urban_core', 'urban_residential', 'suburban', 'exurban', 'rural', 'unknown'
+        'urban_residential', 'suburban', 'exurban', 'rural', or 'unknown' when no tract is near enough
     """
     normalized_location = _normalize_location_key(location_input)
     
@@ -927,23 +924,22 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
             _write_area_type_diagnostic(diagnostic_record)
         return result
 
-    # Use new unified classification system
-    if density is None:
-        density = get_population_density(lat, lon)
-    
-    if metro_distance_km is None:
-        try:
-            from .regional_baselines import RegionalBaselineManager
-            baseline_mgr = RegionalBaselineManager()
-            metro_distance_km = baseline_mgr.get_distance_to_principal_city(lat, lon, city)
-        except Exception:
-            metro_distance_km = None
-    
-    # Use new continuous scoring system
-    base_type = classify_morphology(
-        density, built_coverage, business_count, metro_distance_km, city, location_input
-    )
-    
+    from .surrounding_density import surrounding_stats, classify_surrounding
+    geoid = None
+    if census_tract and all(census_tract.get(k) for k in ("state_fips", "county_fips", "tract_fips")):
+        geoid = f"{census_tract['state_fips']}{census_tract['county_fips']}{census_tract['tract_fips']}"
+    stats = surrounding_stats(lat, lon, tract_geoid=geoid)
+    from .principal_city import principal_city_at
+    in_pc = principal_city_at(lat, lon, (census_tract or {}).get("state_fips"))
+    base_type = classify_surrounding(stats, in_pc)
+    if diagnostic_record is not None and stats is not None:
+        diagnostic_record.update({
+            "surrounding_people_density": round(stats.people_density, 1),
+            "activity_per_acre": round(stats.activity_per_acre, 2),
+            "density_method": stats.density_method,
+            "jobs_known": stats.jobs_known,
+            "in_principal_city": in_pc,
+        })
     return _finalize(base_type)
 
 
@@ -1584,7 +1580,7 @@ class DataQualityManager:
                 return tier
         return 'very_poor'
     
-    def get_expected_minimums(self, lat: float, lon: float, area_type: str) -> Dict:
+    def get_expected_minimums(self, lat: float, lon: float, area_type: str, density: Optional[float] = None) -> Dict:
         """
         Get expected minimum data counts based on area type and density.
         
@@ -1595,8 +1591,10 @@ class DataQualityManager:
         Returns:
             Dictionary of expected minimums
         """
-        # Get population density for more precise expectations
-        density = get_population_density(lat, lon)
+        # Get population density for more precise expectations. Callers that already hold the density pass it
+        # in, so a Census timeout here cannot silently turn the expectations into the rural ones.
+        if density is None:
+            density = get_population_density(lat, lon)
         
         if area_type == 'urban_core' or (density and density > 10000):
             return {
@@ -1740,6 +1738,7 @@ def assess_pillar_data_quality(
     area_type: str,
     *,
     fallback_used: bool = False,
+    density: Optional[float] = None,
 ) -> Dict:
     """
     Assess data quality for a pillar and return quality metrics.
@@ -1750,11 +1749,12 @@ def assess_pillar_data_quality(
         lat, lon: Coordinates
         area_type: Area classification
         fallback_used: When True, apply extra confidence discount (imputed / weak evidence)
+        density: Place density from the shared context; when None the expected minimums fetch their own
 
     Returns:
         Dictionary with quality metrics
     """
-    expected_minimums = data_quality_manager.get_expected_minimums(lat, lon, area_type)
+    expected_minimums = data_quality_manager.get_expected_minimums(lat, lon, area_type, density=density)
     completeness, quality_tier = data_quality_manager.assess_data_completeness(
         pillar_name, data, expected_minimums
     )

@@ -22,7 +22,7 @@ interface PillarPriorities {
   diversity: PriorityLevel
   community_safety: PriorityLevel
   political_lean: PriorityLevel
-  /** Opt-in, catalog-explorer only -- not one of the 13 research-backed pillars (see CLAUDE.md).
+  /** Opt-in, catalog-explorer only -- not one of the 12 research-backed pillars (see CLAUDE.md).
    * Only affects HomeFit total when a work hub is selected; otherwise inert like political_lean. */
   commute_time?: PriorityLevel
   /** Opt-in, catalog-explorer only -- see lib/reweight.ts. Only affects HomeFit total once at
@@ -61,6 +61,13 @@ interface SearchOptionsProps {
 
 const PRIORITY_LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
 
+/** Life-stage preference (owner decision 2026-10-28): which kind of neighborhood the user wants, matched on Census age mix. */
+const LIFE_STAGE_CHOICES: Array<{ value: string; label: string }> = [
+  { value: 'children', label: 'More families with kids' },
+  { value: 'working_age', label: 'More working-age adults' },
+  { value: 'older', label: 'More older adults' },
+]
+
 const DEFAULT_PRIORITIES: PillarPriorities = {
   active_outdoors: 'Medium',
   natural_beauty: 'Medium',
@@ -74,7 +81,7 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   housing_value: 'Medium',
   climate_risk: 'Medium',
   social_fabric: 'Medium',
-  diversity: 'Medium',
+  diversity: 'None', // a preference, not a weight (owner decision 2026-10-28)
   community_safety: 'Medium',
   political_lean: 'None',
   commute_time: 'None',
@@ -573,6 +580,62 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
             </div>
           </div>
           )}
+
+          <div style={{ marginTop: '1.5rem' }}>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Neighborhood life stage (optional preference)
+              </h4>
+            </div>
+            <p className="tr-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
+              Pick the kind of neighborhood you would like. This only changes your own score and is off unless you choose. It is a preference, not a measure of quality.
+            </p>
+            <div className="tr-panel" style={{ padding: '1rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {LIFE_STAGE_CHOICES.map(({ value, label }) => {
+                  const chosen = options.diversity_preference ?? []
+                  const selected = chosen.includes(value)
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => {
+                        const next = selected ? chosen.filter((v) => v !== value) : [...chosen, value]
+                        const current = options.priorities.diversity
+                        onChange({
+                          ...options,
+                          diversity_preference: next.length ? next : null,
+                          priorities: { ...options.priorities, diversity: next.length ? (current === 'None' ? 'Medium' : current) : 'None' },
+                        })
+                      }}
+                      className={`priority-btn ${selected ? 'active' : ''}`}
+                      style={{ padding: '0.6rem 0.9rem' }}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+              {options.diversity_preference?.length ? (
+                <div style={{ marginTop: '1rem' }}>
+                  <span className="tr-muted" style={{ fontSize: '0.9rem', marginRight: '0.5rem' }}>How much this counts:</span>
+                  {(['Low', 'Medium', 'High'] as PriorityLevel[]).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => onChange({ ...options, priorities: { ...options.priorities, diversity: level } })}
+                      className={`priority-btn ${options.priorities.diversity === level ? 'active' : ''}`}
+                      style={{ padding: '0.4rem 0.8rem', marginRight: '0.4rem' }}
+                    >
+                      {level}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
 
           {options.priorities.housing_value !== 'None' && (
           <div style={{ marginTop: '1.5rem' }}>

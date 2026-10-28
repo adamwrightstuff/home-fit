@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Tuple
 
-# The 13 scored pillars, in frontend display order.
+# The 12 scored pillars, in frontend display order.
 SCORED_PILLARS: Tuple[str, ...] = (
     "quality_education",
     "neighborhood_amenities",
@@ -17,7 +17,6 @@ SCORED_PILLARS: Tuple[str, ...] = (
     "climate_risk",
     "active_outdoors",
     "natural_beauty",
-    "diversity",
     "social_fabric",
     "healthcare_access",
     "public_transit_access",
@@ -30,6 +29,8 @@ SCORED_PILLARS: Tuple[str, ...] = (
 FILTER_PILLARS: Tuple[str, ...] = (
     "built_environment",
     "political_lean",
+    # Diversity is a preference, not a quality score (owner decision 2026-10-28): weight 0 unless the user sets it.
+    "diversity",
 )
 
 # Every key the agent accepts a priority for.

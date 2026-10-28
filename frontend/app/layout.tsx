@@ -4,7 +4,7 @@ import ClientLayout from '@/components/ClientLayout'
 
 export const metadata: Metadata = {
   title: 'Trovamo — We find your place.',
-  description: 'Score any neighborhood against what matters most to you. Trovamo measures 13 pillars of livability to help you find where you actually belong.',
+  description: 'Score any neighborhood against what matters most to you. Trovamo measures 12 pillars of livability to help you find where you actually belong.',
   openGraph: {
     title: 'Trovamo — We find your place.',
     description: 'Score any neighborhood against what matters most to you.',

@@ -629,12 +629,15 @@ def get_school_data(
     place_name: Optional[str] = None,
     early_ed_override: Optional[Dict] = None,
     early_ed_unknown: bool = False,
+    place_context=None,
 ) -> Tuple[Optional[float], Dict[str, List[Dict]], Dict]:
     """
     Education score (0-100), schools by level, breakdown. `early_ed_override` reuses stored early-education access
     (offline re-scores) instead of querying OpenStreetMap again. Uses the zoned model when the point has
     Census district data; otherwise the legacy radius model (places outside the boundary files).
     """
+    if place_context is not None:
+        area_type = place_context.area_type
     print("📚 Fetching school data (zoned model)...")
     cands = schools_api.get_zone_candidates(lat, lon, state, area_type, place_name) if (lat is not None and state) else None
     if not cands:

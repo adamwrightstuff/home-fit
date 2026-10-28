@@ -494,7 +494,8 @@ def get_healthcare_access_score(lat: float, lon: float,
                                 location_scope: Optional[str] = None,
                                 city: Optional[str] = None,
                                 density: Optional[float] = None,
-                                vacation_mode: bool = False) -> Tuple[float, Dict]:
+                                vacation_mode: bool = False,
+                                place_context=None) -> Tuple[float, Dict]:
     """
     Calculate healthcare access score (0-100).
 
@@ -523,17 +524,9 @@ def get_healthcare_access_score(lat: float, lon: float,
 
     # Use provided area_type if available (already computed in main.py)
     # Only detect if not provided to avoid redundant API calls
-    from data_sources import census_api
-    # Use pre-computed density if provided, otherwise fetch it
-    if density is None:
-        pop_density = census_api.get_population_density(lat, lon) or 0.0
-    else:
-        pop_density = density
-    
-    if area_type is None:
-        from data_sources import data_quality as dq
-        detected_area_type = dq.detect_area_type(lat, lon, pop_density)
-        area_type = detected_area_type
+    from data_sources.place_context import resolve_place_context
+    ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, density=density, city=city, need_density=True)
+    area_type, pop_density = ctx.area_type, ctx.density
 
     # Contextual expectations (research-backed where available)
     expectations = get_contextual_expectations(area_type, 'healthcare_access') or {}
@@ -650,7 +643,7 @@ def get_healthcare_access_score(lat: float, lon: float,
 
     # Population density (proxy) for normalization (per 10k)
     # pop_density already computed
-    denom = max(1.0, (pop_density / 10000.0))
+    denom = max(1.0, ((pop_density or 0.0) / 10000.0))
 
     # 1) Hospital access (0-35 points) - DATA-BACKED RATIO-BASED + DISTANCE-BASED SCORING
     # Combine count-based (ratio to expected) and distance-based (proximity) scoring
@@ -801,9 +794,7 @@ def get_healthcare_access_score(lat: float, lon: float,
         'total_score': total_score
     }
     
-    # Detect actual area type for data quality assessment
-    area_type_dq = data_quality.detect_area_type(lat, lon, pop_density)
-    quality_metrics = data_quality.assess_pillar_data_quality('healthcare_access', combined_data, lat, lon, area_type_dq)
+    quality_metrics = data_quality.assess_pillar_data_quality('healthcare_access', combined_data, lat, lon, area_type, density=pop_density)
     
     # OSM failed but Google Places supplied facilities: the data is real but thinner, so flag it.
     if query_failed:

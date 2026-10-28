@@ -590,6 +590,7 @@ def get_public_transit_score(
     location_scope: Optional[str] = None,
     city: Optional[str] = None,
     density: Optional[float] = None,  # Pre-computed density to avoid redundant API calls
+    place_context=None,
 ) -> Tuple[float, Dict]:
     """
     Calculate public transit access score (0-100).
@@ -602,6 +603,8 @@ def get_public_transit_score(
     Returns:
         (total_score, detailed_breakdown)
     """
+    if place_context is not None:
+        area_type, density = place_context.area_type, place_context.density
     logger.info("🚇 Analyzing public transit access...", extra={
         "pillar_name": "public_transit_access",
         "lat": lat,
@@ -991,10 +994,10 @@ def get_public_transit_score(
     # Detect actual area type for data quality assessment
     # Use pre-computed density if available to avoid redundant API calls
     from data_sources import census_api  # Import outside conditional - used later for commute_time
-    if density is None:
+    if density is None and place_context is None:
         density = census_api.get_population_density(lat, lon)
-    area_type_dq = data_quality.detect_area_type(lat, lon, density)
-    quality_metrics = data_quality.assess_pillar_data_quality('public_transit_access', combined_data, lat, lon, area_type_dq)
+    area_type_dq = area_type or data_quality.detect_area_type(lat, lon, density)
+    quality_metrics = data_quality.assess_pillar_data_quality('public_transit_access', combined_data, lat, lon, area_type_dq, density=density)
 
     # Commute time weighting (ACS mean travel time to work). Default: single-pin lookup
     # (fast, 1 API call) for the live scorer's per-request latency budget. Set

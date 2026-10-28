@@ -52,7 +52,7 @@ export default function TwinFinderPanel({
         <div className="max-w-xs space-y-1.5">
           <p className="text-sm font-semibold text-[var(--hf-text-primary)]">Find your neighborhood&apos;s twin</p>
           <p className="text-xs text-[var(--hf-text-secondary)]">
-            Pick any neighborhood and HomeFit compares it across 13 pillars to surface its closest match in a different metro — same character, different city.
+            Pick any neighborhood and HomeFit compares it across 12 pillars to surface its closest match in a different metro — same character, different city.
           </p>
         </div>
       </div>

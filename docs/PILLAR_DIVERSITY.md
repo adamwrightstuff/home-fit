@@ -1,57 +1,51 @@
-# Pillar Deep-Dive: Diversity
+# Diversity: a preference, not a pillar
 
-How `pillars/diversity.py` scores a location (`get_diversity_score`).
+Status 2026-10-28 (owner decisions). Diversity is no longer a scored pillar. It is an opt-in life-stage preference plus a
+neutral description. `pillar_registry.py` lists it under `FILTER_PILLARS`, not `SCORED_PILLARS` (12 scored pillars).
 
-## What it measures
-How **mixed/even** a tract's population is across three dimensions, via normalized (Shannon)
-entropy — a perfectly even split scores high, a dominated-by-one-group split scores low.
+## Why
+No evidence supports "more diverse is better" (maximum entropy, equal thirds). The age term and equal weights had no source, income
+overlapped with class and housing cost, and cohesion evidence is mixed. The old entropy headline (mean of race, income and age
+entropy) is retired. Nothing filters, ranks, scores or displays by race or income.
 
-| dimension | source (Census tract, ACS) | included when |
-|---|---|---|
-| race | `race_counts` (B02001) | ≥2 race categories present |
-| income | `income_counts` | ≥2 income bins present |
-| age | youth / prime / seniors buckets | any present |
+## What it does now
+- **Life-stage preference.** `diversity_preference` is a list of `children`, `working_age`, `older`. A place scores the percentile of
+  its share of that age cohort among US tracts (`data/age_share_percentiles.json`, ACS 2022, tracts with 500+ residents), averaged over the
+  chosen cohorts. No preference means no score and no contribution (default weight 0, `parse_token_allocation`). The weight is the user's
+  (None, Low, Medium, High; choosing a cohort sets Medium).
+- **One setting.** The catalog "Life stage" filter and the search options use the same saved value
+  (`homefit_search_options.diversity_preference`). The catalog filter keeps places in the top third of US tracts (percentile 67 or more)
+  for any chosen cohort.
+- **Neutral description.** Neighborhood pages show the age mix (under 18, 18 to 64, 65 and over) with no score.
+- **Data kept.** Each catalog record keeps `diversity.raw_shares` (race and Hispanic origin, 16 income brackets, age, geography, total
+  population), `diversity.age_percentiles`, the legacy entropy fields, and the education and self-employment values status signal reads.
 
-```
-dimension_score = normalized_entropy(counts) → 0–100
-diversity_score = mean(available dimension scores)
-```
+## Geography
+Place data unless the place has more than 200,000 adults (unsourced), then the tract. A failed place lookup or fetch is no data, not a
+silent fall back to the tract (2026-10-28). Each live record stores `measured_area` (geography and total population). Catalog geography was
+identified by matching stored values to the Census cache (1,473 of 1,476 places).
 
-**Race (changed 2026-10-24):** B02001 `_009` and `_010` are the two parts of `_008` (two or more
-races), so they are dropped to avoid counting multiracial residents twice, and race entropy is
-normalized by the fixed seven groups (six single-race groups plus two or more) instead of the number
-of non-empty groups. Income and age still normalize by non-empty bins/buckets. Catalog values were
-rewritten offline by `scripts/catalog/recompute_diversity_race_offline.py` (old values backed up).
+## Known limits
+- Age percentiles are tract-level, so pin sensitivity applies (the retired entropy headline moved a median 1.7 points and a 95th percentile of
+  13.4 for a 500 m pin shift at tract-level places; pooling tracts within 0.44 mile cut that to 8.8 but is not shipped).
+- The 200,000 ceiling is unsourced. ACS 2022 5-year estimates carry sampling error that is not shown.
+- Catalog rewrites keyed by place name collide for same-name places (nyc Ridgewood NJ and NY); key by coordinates.
+- The top-third filter cutoff is a product choice, not a sourced number.
 
-## Preference (optional)
-`diversity_preference` (subset of race / income / age) averages **only** the selected
-dimensions instead of all available. `version: v2_preference_optional`.
+## History (retired)
+Entropy score with race (B02001, seven groups), then race plus Hispanic origin (B03002, eight groups), income over 16 brackets, age over three
+buckets; weight set to 0 and removed from the weight panel, cards and pillar list. Backups are in `data/backups_diversity_*` (untracked).
+Audit: `analysis/audit_diversity_d3_d5_2026-10-27.md`. Scripts: `scripts/catalog/` (identify, raw shares, age percentiles, weight zero).
 
-## Geography & the fabricated-0 bug ⚠️
-Data comes from the **tract** (`census_api.get_diversity_data` keyed on the resolved tract).
-When the tract lookup fails, the fallback can resolve to a **zero-population
-`county_subdivision`** → all race/income/age counts are 0 → no dimension qualifies → the score
-defaults to **0.0** (an impossible "0% diverse").
-
-- Confirmed persistent for **Southport** (marked no-data: score=None, weight 0).
-- **Maspeth** was a *transient* 0 — retrying resolved it to 72.5. Retry distinguishes
-  transient from persistent.
-- Likely affects other small villages/CDPs not in this catalog.
-- **Proper fix (open):** harden the fallback chain (tract → block group → place → county) so it
-  never returns a zero-pop geography and never emits a fabricated 0. See PILLAR_DATA_QUALITY
-  and the pillar-coverage-gaps memory.
-
-## Also feeds Status Signal
-The pillar surfaces `education_attainment` and `self_employed_pct` (from the same ACS pull)
-for `status_signal` — these are separate from the diversity score itself.
-
-## Catalog
-The 2 broken records were repaired by `scripts/repair_diversity_and_weights.py` (Maspeth →
-72.5; Southport → no-data), which **also renormalizes every place's weights to sum to 100**
-(it fixed the education-enable weight bug at the same time). See CATALOG_RESCORE_RUNBOOK.
-
-## Gotchas
-- A diversity score of exactly **0 with confidence 0** is almost always the fabricated-0 bug,
-  not a real value — quarantine, don't relaunder.
-- Entropy rewards *evenness*, not the presence of any particular group — a uniformly
-  single-group area scores low regardless of which group.
+## DPv2 checks for the life-stage preference (2026-10-28)
+- **P6 sensitivity (500 m pin shift, 582 tract-level places, nearest-tract-center approximation).** One tract: median 2 to 4, 95th percentile
+  55 to 63 percentile points (30 to 41 percent of shifts over 10). Pooled over 0.44 mile: 95th percentile about 38. Pooled over 0.87 mile
+  (shipped, `AGE_POOL_RADIUS_M` = 1,400 m): median 1.5 to 3.6, 95th percentile 19 to 22, 13 to 19 percent over 10 points. Not under a
+  5-point gate; a percentile scale makes that gate unreachable, so the residual is disclosed. Place-level places (the other 890) do not pool.
+- **P8 all places.** 1,472 places carry `age_percentiles` (582 pooled, 890 own geography); Ybor City and the 3 no-data places are skipped.
+  Top-third filter pass rates: families with kids 29 percent, working-age adults 44 percent, older adults 25 percent.
+- **Live and catalog parity.** Both use the 101-point table; before pooling the live table and exact ranks differed by a mean 0.33 and a max 0.98
+  percentile points. The catalog now uses the live function itself.
+- **P10 launch check** (`scripts/qa/launch_check.py`): 1 FAIL (healthcare 40 percent at 100) and 21 WARN, unchanged from 2026-10-25; none involve diversity.
+- **P7 independent validation:** not applicable to the score (a direct Census share, not a proxy); the race and income entropy it replaced were never validated.
+- **P12 schedule:** re-run these checks when the ACS vintage or tract boundaries change, and at least once a year. Data is ACS 2022 5-year.

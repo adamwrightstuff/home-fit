@@ -78,7 +78,7 @@ export const INDEX_COPY: Record<string, InfoCopy> = {
   homefit: {
     title: 'HomeFit Score',
     body: 'The big picture: how well a neighborhood fits the things that matter most to everyday life. It brings 13 dimensions of livability into one score, from schools and safety to transit, nature, space, and local amenities.',
-    detail: 'A weighted composite of 13 research-backed livability pillars using neighborhood-level data from sources including the Census, schools data, transit and mobility data, environmental datasets, and other public records.',
+    detail: 'A weighted composite of 12 research-backed livability pillars using neighborhood-level data from sources including the Census, schools data, transit and mobility data, environmental datasets, and other public records.',
   },
   longevity: {
     title: 'Longevity',

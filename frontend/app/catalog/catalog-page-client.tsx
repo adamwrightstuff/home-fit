@@ -90,6 +90,14 @@ function sortPlaces(
   return out
 }
 
+/** Life-stage filter: a place matches a cohort when its share is in the top third of US tracts (percentile 67 or more). */
+const LIFE_STAGE_TOP_PERCENTILE = 67
+function lifeStageMatches(p: any, selected: string[]): boolean {
+  const pcts = p?.score?.livability_pillars?.diversity?.age_percentiles
+  if (!pcts) return false
+  return selected.some((c) => typeof pcts[c] === 'number' && pcts[c] >= LIFE_STAGE_TOP_PERCENTILE)
+}
+
 export default function CatalogPageClient({
   initialMetroFilter = 'all',
 }: {
@@ -128,6 +136,26 @@ export default function CatalogPageClient({
       return Array.isArray(f?.filterPoliticalLean) ? f.filterPoliticalLean : []
     } catch { return [] }
   })
+  // Life-stage filter (owner decision 2026-10-28): places in the top third of US tracts for the chosen age cohort (any chosen).
+  // One life-stage preference shared with live search: stored as homefit_search_options.diversity_preference, so changing it
+  // in the filter sheet or in the search options changes both (owner decision 2026-10-28).
+  const [filterLifeStage, setFilterLifeStage] = useState<string[]>(() => {
+    try {
+      const o = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')
+      const v = Array.isArray(o?.diversity_preference) ? o.diversity_preference : Array.isArray(o?.filters?.filterLifeStage) ? o.filters.filterLifeStage : []
+      return v.filter((c: unknown) => ['children', 'working_age', 'older'].includes(c as string))
+    } catch { return [] }
+  })
+  useEffect(() => {
+    try {
+      const o = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')
+      const cur = JSON.stringify(Array.isArray(o.diversity_preference) ? o.diversity_preference : [])
+      if (cur === JSON.stringify(filterLifeStage)) return
+      const pr = { ...(o.priorities ?? {}) }
+      pr.diversity = filterLifeStage.length ? (pr.diversity && pr.diversity !== 'None' ? pr.diversity : 'Medium') : 'None'
+      localStorage.setItem('homefit_search_options', JSON.stringify({ ...o, diversity_preference: filterLifeStage.length ? filterLifeStage : null, priorities: pr }))
+    } catch { /* storage unavailable: the filter still works for this visit */ }
+  }, [filterLifeStage])
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
@@ -316,6 +344,7 @@ export default function CatalogPageClient({
           filterArchetypes,
           filterTrajectory,
           filterPoliticalLean,
+          filterLifeStage,
           filterNbTypes,
           filterAoTypes,
           filterHousingType,
@@ -330,7 +359,7 @@ export default function CatalogPageClient({
         },
       }))
     } catch { /* ignore */ }
-  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
+  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
 
   useEffect(() => {
     const ac = new AbortController()
@@ -405,6 +434,7 @@ export default function CatalogPageClient({
           if (Array.isArray(f.filterArchetypes)) setFilterArchetypes(f.filterArchetypes)
           if (typeof f.filterTrajectory === 'string') setFilterTrajectory(normalizeTrajectory(f.filterTrajectory) ?? 'all')
           if (Array.isArray(f.filterPoliticalLean)) setFilterPoliticalLean(f.filterPoliticalLean)
+          if (Array.isArray(f.filterLifeStage)) setFilterLifeStage(f.filterLifeStage)
           if (Array.isArray(f.filterNbTypes)) setFilterNbTypes(f.filterNbTypes)
           if (Array.isArray(f.filterAoTypes)) setFilterAoTypes(f.filterAoTypes)
           if (Array.isArray(f.filterHousingType)) setFilterHousingType(f.filterHousingType)
@@ -459,6 +489,7 @@ export default function CatalogPageClient({
             filterArchetypes,
             filterTrajectory,
             filterPoliticalLean,
+            filterLifeStage,
             filterNbTypes,
             filterAoTypes,
 
@@ -475,7 +506,7 @@ export default function CatalogPageClient({
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
+  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -639,6 +670,7 @@ export default function CatalogPageClient({
         const tr = normalizeTrajectory(p.score.status_signal_breakdown?.trajectory)
         if (tr && tr !== filterTrajectory) return false
       }
+      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage)) return false
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         if (typeof lean !== 'number') return false
@@ -709,6 +741,7 @@ export default function CatalogPageClient({
     filterArchetypes,
     filterTrajectory,
     filterPoliticalLean,
+    filterLifeStage,
     filterSchoolType,
     filterLocalScene,
     filterAura,
@@ -795,7 +828,7 @@ export default function CatalogPageClient({
   // showing the count before mount made the Filters badge differ between server and client HTML.
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
+  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
   // Places blocked by regular filters — always shown in "Show excluded"
   const metroFilterExcluded = useMemo(() => {
     const filteredSet = new Set(filteredPlaces)
@@ -854,6 +887,7 @@ export default function CatalogPageClient({
           if (!passesAny) r.push('Tenure')
         }
       }
+      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage)) r.push('Life stage')
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         if (typeof lean === 'number') {
@@ -924,6 +958,7 @@ export default function CatalogPageClient({
         const tr = normalizeTrajectory(p.score.status_signal_breakdown?.trajectory)
         if (tr && tr !== filterTrajectory) r.push('Trajectory')
       }
+      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage)) r.push('Life stage')
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         const matchesAny = typeof lean === 'number' && filterPoliticalLean.some((pref) => {
@@ -988,7 +1023,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
@@ -1947,6 +1982,8 @@ export default function CatalogPageClient({
         onFilterTrajectoryChange={setFilterTrajectory}
         filterPoliticalLean={filterPoliticalLean}
         onFilterPoliticalLeanChange={setFilterPoliticalLean}
+        filterLifeStage={filterLifeStage}
+        onFilterLifeStageChange={setFilterLifeStage}
         filterHousingType={filterHousingType}
         onFilterHousingTypeChange={setFilterHousingType}
         filterTenure={filterTenure}

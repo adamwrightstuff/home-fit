@@ -3,7 +3,7 @@ import CatalogPageClient from './catalog-page-client'
 
 export const metadata = {
   title: 'Explore neighborhoods — Trovamo',
-  description: 'Browse and compare neighborhoods by livability score across 13 pillars.',
+  description: 'Browse and compare neighborhoods by livability score across 12 pillars.',
 }
 
 export default function CatalogPage() {

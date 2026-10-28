@@ -176,7 +176,7 @@ export type CatalogStandoutChip = {
 
 /**
  * social_connection is a synthetic, client-side pillar (see lib/reweight.ts) -- not in
- * PILLAR_ORDER/PILLAR_META since it's not one of the 13 research-backed pillars, but it should
+ * PILLAR_ORDER/PILLAR_META since it's not one of the 12 research-backed pillars, but it should
  * still be eligible for a standout chip once it's actually weighted (someone's been added).
  */
 const EXTRA_STANDOUT_PILLAR_NAMES: Record<string, string> = {

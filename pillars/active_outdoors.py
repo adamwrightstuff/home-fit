@@ -3,14 +3,18 @@ Active Outdoors Pillar
 Scores access to outdoor activities and recreation
 """
 
+import json
 import math
+import os
 import time
+from functools import lru_cache
 from typing import Dict, Tuple, Optional, List
 
 from data_sources import osm_api
 from data_sources.osm_api import coerce_green_spaces_response, coerce_nature_features_response
 from data_sources.utils import haversine_distance
 from data_sources.data_quality import assess_pillar_data_quality, get_baseline_context
+from data_sources.place_context import resolve_place_context
 from data_sources.gee_api import get_tree_canopy_gee
 from data_sources.regional_baselines import (
     get_area_classification,
@@ -22,6 +26,79 @@ from logging_config import get_logger
 
 # Initialize logger
 logger = get_logger(__name__)
+
+PARKS_BASELINE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "active_outdoors_parks_baseline.json"
+)
+
+
+@lru_cache(maxsize=1)
+def _load_parks_baseline() -> Optional[Dict]:
+    """The parks-per-density baseline (scripts/baselines/build_active_outdoors_parks_baseline.py), or None when the
+    file is missing, in which case the park term falls back to the area-type table."""
+    try:
+        with open(PARKS_BASELINE_PATH) as f:
+            doc = json.load(f)
+        if len(doc["knots"]) == len(doc["expected_parks"]) >= 2:
+            return doc
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return None
+
+
+TRAILS_SCALE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "active_outdoors_trails_scale.json"
+)
+
+
+@lru_cache(maxsize=1)
+def _load_trails_scale() -> Optional[Dict]:
+    """The single trail scale (scripts/baselines/build_active_outdoors_trails_scale.py), or None when the file is
+    missing, in which case wild adventure falls back to the area-type tables and the mountain-town rule."""
+    try:
+        with open(TRAILS_SCALE_PATH) as f:
+            doc = json.load(f)
+        for k in ("expected_trails_15km", "expected_trails_5km", "budget_trails_15km", "budget_trails_5km",
+                  "budget_camping", "camping_full_within_m", "camping_decay_per_m"):
+            float(doc[k])
+        return doc
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def _expected_for_activity(activity_per_acre: Optional[float], key: str) -> Optional[Tuple[float, float]]:
+    """(expected weighted count, radius in metres) for a place with this many people plus jobs per acre around it: the
+    median of its density peers, log-log interpolated between knots and held at the ends. None when unavailable."""
+    doc = _load_parks_baseline()
+    if doc is None or activity_per_acre is None or activity_per_acre < 0 or key not in doc:
+        return None
+    knots, values = doc["knots"], [max(float(v), 0.01) for v in doc[key]]
+    if len(values) != len(knots):
+        return None
+    a = max(float(activity_per_acre), float(knots[0]))
+    expected = values[-1]
+    for i in range(len(knots) - 1):
+        if a <= knots[i + 1]:
+            t = (math.log(a) - math.log(knots[i])) / (math.log(knots[i + 1]) - math.log(knots[i]))
+            expected = math.exp(math.log(values[i]) + t * (math.log(values[i + 1]) - math.log(values[i])))
+            break
+    return max(1.0, expected), float(doc["radius_m"])
+
+
+def expected_parks_for_activity(activity_per_acre: Optional[float]) -> Optional[Tuple[float, float]]:
+    return _expected_for_activity(activity_per_acre, "expected_parks")
+
+
+def expected_playgrounds_for_activity(activity_per_acre: Optional[float]) -> Optional[Tuple[float, float]]:
+    return _expected_for_activity(activity_per_acre, "expected_playgrounds")
+
+
+def weighted_park_count(parks: list, radius_m: float) -> float:
+    """Parks within radius_m, each weighted exp(-decay * distance): no hard edge, a park at 1.6 km counts a fraction of
+    one at 300 m. The decay is the baseline file's (the same one the nearest-park term uses)."""
+    decay = float((_load_parks_baseline() or {}).get("decay_per_m", 0.0012))
+    return sum(math.exp(-decay * p["distance_m"]) for p in parks if p.get("distance_m", 1e9) <= radius_m)
+
 
 # Point budgets per component. They add to 110 (kept as the component scales), so the score is the points earned over the
 # budgets of the components that were read, scaled to 100: all three present means points x 100 / 110, which removes the
@@ -107,6 +184,7 @@ def get_active_outdoors_score_v2(
     location_scope: Optional[str] = None,
     precomputed_tree_canopy_5km: Optional[float] = None,
     trip_type: Optional[str] = None,
+    place_context=None,
 ) -> Tuple[float, Dict]:
     """
     Compute Active Outdoors v2 (0–100).
@@ -130,11 +208,8 @@ def get_active_outdoors_score_v2(
 
     # 1) Area classification and radius profile
     # Use provided area_type from main.py for consistency, or fallback to detect_area_type()
-    if area_type is None:
-        # Fallback: compute area type if not provided (use same method as main.py)
-        from data_sources import data_quality, census_api
-        density = census_api.get_population_density(lat, lon) or 0.0
-        area_type = data_quality.detect_area_type(lat, lon, density=density, city=city)
+    ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, city=city)
+    area_type = ctx.area_type
     
     # Get metadata for area_classification field (still need metro_name)
     _, metro_name, area_metadata = get_area_classification(lat, lon, city=city)
@@ -179,10 +254,15 @@ def get_active_outdoors_score_v2(
         }
     )
     
+    # The density-peer park term counts parks out to the baseline radius, which can be wider than this type's local radius.
+    # Read to the wider one and keep the full list for that term only; every other term sees the local-radius lists.
+    _peer_baseline = expected_parks_for_activity(ctx.activity_per_acre)
+    park_query_radius = max(local_radius, int(_peer_baseline[1])) if _peer_baseline else local_radius
+
     def _fetch_parks():
         """Fetch local parks, playgrounds, and recreational facilities."""
         result = coerce_green_spaces_response(
-            osm_api.query_green_spaces(lat, lon, radius_m=local_radius)
+            osm_api.query_green_spaces(lat, lon, radius_m=park_query_radius)
         )
         # Debug metadata (no PII): helps distinguish live vs stale-cache vs empty results.
         try:
@@ -265,9 +345,12 @@ def get_active_outdoors_score_v2(
     canopy_pct_5km = _fetch_canopy()
     
     # Extract data from results
-    parks: List[Dict] = local.get("parks", []) or []
-    playgrounds: List[Dict] = local.get("playgrounds", []) or []
-    recreational_facilities: List[Dict] = local.get("recreational_facilities", []) or []
+    parks_wide: List[Dict] = local.get("parks", []) or []
+    _in_local = lambda items: [x for x in items if x.get("distance_m", 0) <= local_radius]
+    parks: List[Dict] = _in_local(parks_wide)
+    playgrounds_wide: List[Dict] = local.get("playgrounds", []) or []
+    playgrounds: List[Dict] = _in_local(playgrounds_wide)
+    recreational_facilities: List[Dict] = _in_local(local.get("recreational_facilities", []) or [])
     
     # DIAGNOSTIC: Log parks query result
     if not parks and local:
@@ -341,7 +424,8 @@ def get_active_outdoors_score_v2(
     # This ensures mountain town detection works correctly for cities like Denver
     # that have legitimate high trail counts but get filtered for scoring purposes
     context_flags = _detect_special_contexts(area_type, hiking_trails_raw, swimming, canopy_pct_5km)
-    scoring_area_type = context_flags.get("effective_area_type", area_type)
+    # With the single trail scale there is no mountain-town branch, so no pillar-private override of the shared area type.
+    scoring_area_type = area_type if _load_trails_scale() is not None else context_flags.get("effective_area_type", area_type)
     is_desert_context = context_flags.get("is_desert_context", False)
     
     # DATA QUALITY: Filter out urban paths/cycle paths from hiking trails AFTER detection
@@ -356,7 +440,7 @@ def get_active_outdoors_score_v2(
     hiking_trails: List[Dict] = hiking_trails_raw
     if area_type in {"urban_core", "urban_residential", "urban_core_lowrise"}:
         # Skip filtering if detected as mountain town - legitimate high trail counts
-        if not is_mountain_town:
+        if not is_mountain_town or _load_trails_scale() is not None:
             hiking_trails = _filter_urban_paths_from_trails(hiking_trails, area_type)
 
     combined_data = {
@@ -368,7 +452,7 @@ def get_active_outdoors_score_v2(
         "tree_canopy_pct_5km": canopy_pct_5km,
     }
     dq = assess_pillar_data_quality(
-        "active_outdoors_v2", combined_data, lat, lon, area_type
+        "active_outdoors_v2", combined_data, lat, lon, area_type, density=ctx.density
     )
     conf_notes = _active_outdoors_confidence_notes(
         dq, parks, playgrounds, hiking_trails, swimming, camping
@@ -416,7 +500,10 @@ def get_active_outdoors_score_v2(
     expectations = get_contextual_expectations(scoring_area_type, "active_outdoors") or {}
 
     # 3) Component scores
-    daily_score = _score_daily_urban_outdoors_v2(parks, playgrounds, recreational_facilities, scoring_area_type, expectations)
+    daily_score = _score_daily_urban_outdoors_v2(
+        parks, playgrounds, recreational_facilities, scoring_area_type, expectations,
+        activity_per_acre=ctx.activity_per_acre, parks_for_count=parks_wide, playgrounds_for_count=playgrounds_wide,
+    )
     is_mountain_town = context_flags.get("is_mountain_town", False)
     # Vacation mountain trips: user declared this is a mountain destination, force mountain scoring
     # even when OSM trail data is sparse (Vail, Park City, Moab, Jackson all fail OSM detection)
@@ -548,7 +635,10 @@ def _sat_ratio_v2(x: float, target: float, max_score: float) -> float:
 
 
 def _score_daily_urban_outdoors_v2(
-    parks: list, playgrounds: list, recreational_facilities: list, area_type: str, expectations: Dict
+    parks: list, playgrounds: list, recreational_facilities: list, area_type: str, expectations: Dict,
+    activity_per_acre: Optional[float] = None,
+    parks_for_count: Optional[list] = None,
+    playgrounds_for_count: Optional[list] = None,
 ) -> float:
     """
     Daily Urban Outdoors (0-35):
@@ -574,8 +664,16 @@ def _score_daily_urban_outdoors_v2(
     exp_play = max(1.0, exp_expectations.get("expected_playgrounds_within_1km", 2.0))
     exp_facilities = max(1.0, exp_expectations.get("expected_recreational_facilities_within_1km", 3.0))
 
-    # 1. Park count density (0-22)
-    s_count = _sat_ratio_v2(park_count, exp_park_count, 22.0)
+    # 1. Park count density (0-22). With the density factor, the count within the baseline radius is judged against
+    # the median of places at the same people-plus-jobs density (empirical peer median, not a published standard).
+    # Without it, the area-type table applies.
+    baseline = expected_parks_for_activity(activity_per_acre)
+    if baseline is not None:
+        exp_peers, radius_m = baseline
+        weighted = weighted_park_count(parks_for_count if parks_for_count is not None else parks, radius_m)
+        s_count = _sat_ratio_v2(weighted, exp_peers, 22.0)
+    else:
+        s_count = _sat_ratio_v2(park_count, exp_park_count, 22.0)
 
     # 2. Nearest meaningful park proximity (0-8)
     #    Full score <=300m, decays to ~half at 800m, ~20% at 1500m.
@@ -592,7 +690,15 @@ def _score_daily_urban_outdoors_v2(
         s_nearest = 0.0
 
     # 3. Playgrounds (0-5)
-    s_play = _sat_ratio_v2(playground_count, exp_play, 5.0)
+    play_baseline = expected_playgrounds_for_activity(activity_per_acre)
+    if play_baseline is not None:
+        exp_play_peers, play_radius_m = play_baseline
+        weighted_play = weighted_park_count(
+            playgrounds_for_count if playgrounds_for_count is not None else playgrounds, play_radius_m
+        )
+        s_play = _sat_ratio_v2(weighted_play, exp_play_peers, 5.0)
+    else:
+        s_play = _sat_ratio_v2(playground_count, exp_play, 5.0)
 
     # 4. Recreational facilities (0-3)
     s_facilities = _sat_ratio_v2(facility_count, exp_facilities, 3.0)
@@ -630,6 +736,28 @@ def _score_wild_adventure_v2(
     trail_count = len(hiking_trails)
     near_trails = [t for t in hiking_trails if t.get("distance_m", 1e9) <= 5000]
     near_count = len(near_trails)
+
+    scale = _load_trails_scale()
+    if scale is not None:
+        # One scale for every place: no area type, no mountain-town rule, no fragmentation discount.
+        s_total = _sat_ratio_v2(trail_count, float(scale["expected_trails_15km"]), float(scale["budget_trails_15km"]))
+        s_near = _sat_ratio_v2(near_count, float(scale["expected_trails_5km"]), float(scale["budget_trails_5km"]))
+        if camping:
+            d = min(c.get("distance_m", 1e9) for c in camping)
+            full = float(scale["camping_full_within_m"])
+            s_camp = float(scale["budget_camping"]) * (
+                1.0 if d <= full else math.exp(-float(scale["camping_decay_per_m"]) * (d - full))
+            )
+        else:
+            s_camp = 0.0
+        final_wild = max(0.0, min(50.0, s_total + s_near + s_camp))
+        logger.info(
+            f"[WILD ADVENTURE] absolute scale trails={trail_count} near={near_count} "
+            f"s_tot={s_total:.1f} s_near={s_near:.1f} s_camp={s_camp:.1f} -> {final_wild:.1f}/50",
+            extra={"pillar_name": "active_outdoors_v2", "trail_count": trail_count, "near_count": near_count,
+                   "s_trails_total": s_total, "s_trails_near": s_near, "s_camp": s_camp, "final_wild": final_wild}
+        )
+        return final_wild
 
     baseline_context = get_baseline_context(
         area_type=area_type,
@@ -1190,8 +1318,9 @@ def get_active_outdoors_score(
     city: Optional[str] = None,
     area_type: Optional[str] = None,
     location_scope: Optional[str] = None,
+    place_context=None,
 ) -> Tuple[float, Dict]:
     """Backward-compatible alias; legacy v1 implementation removed — delegates to v2."""
     return get_active_outdoors_score_v2(
-        lat, lon, city=city, area_type=area_type, location_scope=location_scope
+        lat, lon, city=city, area_type=area_type, location_scope=location_scope, place_context=place_context
     )

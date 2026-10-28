@@ -363,7 +363,7 @@ LOCATION_CACHE_MAX_BYTES = 256_000      # hard cap per entry (base64 text length
 # Keyed only by (lat, lon) so any request for the same location reuses expensive pre-pillar work.
 # Used only when only_pillars is None (full score).
 SHARED_PREPILLAR_CACHE_TTL_SECONDS = 12 * 3600  # 12 hours, match location cache
-SHARED_PREPILLAR_CACHE_SCHEMA = 1
+SHARED_PREPILLAR_CACHE_SCHEMA = 3  # 3: area_type is decided from the surrounding 1 km (people and jobs per acre, principal city); entries from schema 2 hold types from the density-at-the-pin rule and are ignored
 
 
 def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str, float]:
@@ -579,53 +579,15 @@ def _apply_v9_to_natural(natural_calc: Dict, natural_score: float, natural_detai
     return final_score, natural_details
 
 
-def _fetch_business_count_for_classification(lat: float, lon: float, radius_m: float = 1000) -> int:
+def _fetch_osm_businesses_for_classification(lat: float, lon: float) -> Optional[Dict]:
     """
-    Raw OSM business count for the pre-pillar area_type estimate (classify_morphology).
-    Deliberately does NOT run the Places-fallback augmentation — that's a real, uncached
-    Google Places network call, and the neighborhood_amenities pillar already makes one
-    of those independently for its own (area-type-dependent-radius) business count. Doing
-    it again here would double the live Places cost on every request with thin OSM data.
-
-    Instead, this just benefits from query_local_businesses' own retry/stale-cache
-    fallback (see the 35s timeout on the caller's future.result()) and accepts that this
-    pre-pillar estimate can undercount commercial-dominant areas when OSM is degraded.
-    _reclassify_area_type_post_pillars() below corrects the canonical area_type afterward
-    using the pillar's own (possibly Places-augmented) count.
+    Raw OSM business lists for the one-time area type decision (see data_sources/place_context.py).
+    One read at PREFETCH_RADIUS_M covers the 1 km classification count and the widest amenities query.
+    Returns None when the read failed. Does NOT call Google Places; resolve_area_type does that once.
     """
     from data_sources import osm_api as _osm
-
-    business_data = _osm.query_local_businesses(lat, lon, radius_m=radius_m)
-    if business_data is None:
-        return 0
-    all_businesses = (business_data.get("tier1_daily", []) + business_data.get("tier2_social", []) +
-                       business_data.get("tier3_culture", []) + business_data.get("tier4_services", []))
-    return len(all_businesses)
-
-
-def _reclassify_area_type_post_pillars(
-    area_type: str, density: Optional[float], amenities_details: Optional[Dict]
-) -> str:
-    """
-    Re-run classify_morphology using the neighborhood_amenities pillar's own business
-    count (computed after Places-fallback augmentation, if any) instead of the rougher
-    pre-pillar estimate. Pillars that already ran used the pre-pillar area_type for their
-    own radius profiles (acceptable — same tradeoff as the existing per-pillar
-    baseline_contexts divergence); this only corrects the canonical
-    data_quality_summary.area_classification reported in the final response.
-    """
-    if not amenities_details:
-        return area_type
-    try:
-        from data_sources.data_quality import classify_morphology
-        walk = (amenities_details.get("breakdown", {}) or {}).get("home_walkability", {}).get("businesses_within_1km")
-        if walk is None:
-            return area_type
-        corrected = classify_morphology(density, None, walk, None, None, None)
-        return corrected or area_type
-    except Exception as e:
-        logger.warning(f"area_type reclassification after pillars failed (non-fatal): {e}")
-        return area_type
+    from data_sources.place_context import PREFETCH_RADIUS_M
+    return _osm.query_local_businesses(lat, lon, radius_m=PREFETCH_RADIUS_M)
 
 
 def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
@@ -779,14 +741,15 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     pillar_names = primary_pillars
     
     if tokens is None:
-        # Default equal distribution across primary pillars (100 tokens total).
-        base_pillars = list(primary_pillars)
+        # Default equal distribution across primary pillars (100 tokens total). Diversity is a preference, not a
+        # quality score (owner decision 2026-10-28): it carries weight 0 unless the user sets it.
+        default_pillars = [p for p in primary_pillars if p != "diversity"]
 
-        n = len(primary_pillars)
+        n = len(default_pillars)
         base = 100 // n
         extra = 100 - base * n
-        default_allocation: Dict[str, float] = {}
-        for i, pillar in enumerate(primary_pillars):
+        default_allocation: Dict[str, float] = {"diversity": 0.0}
+        for i, pillar in enumerate(default_pillars):
             default_allocation[pillar] = float(base + (1 if i < extra else 0))
 
         return default_allocation
@@ -1637,6 +1600,12 @@ def _compute_single_score_internal(
     area_type = "unknown"
     tree_canopy_5km = None
     form_context = None
+    area_type_source = "unknown"
+    provisional_area_type = None
+    prefetched_businesses = None
+    prefetched_radius_m = None
+    places_meta = None
+    metro_distance_km = None
 
     def _include_pillar(name: str) -> bool:
         if only_pillars is None:
@@ -1658,6 +1627,7 @@ def _compute_single_score_internal(
         density = None if _d_cached is None else float(_d_cached)
         arch_diversity_data = shared_blob.get("arch_diversity_data")
         area_type = str(shared_blob.get("area_type", "unknown"))
+        area_type_source = "cache"
         tree_canopy_5km = shared_blob.get("tree_canopy_5km")
         if tree_canopy_5km is not None:
             tree_canopy_5km = float(tree_canopy_5km)
@@ -1691,14 +1661,14 @@ def _compute_single_score_internal(
                     logger.warning(f"Density lookup failed (non-fatal): {e}")
                     return None
 
-            def _fetch_business_count():
+            def _fetch_osm_businesses():
                 if only_pillars is not None and "neighborhood_amenities" not in only_pillars:
-                    return 0
+                    return None
                 try:
-                    return _fetch_business_count_for_classification(lat, lon)
+                    return _fetch_osm_businesses_for_classification(lat, lon)
                 except Exception as e:
-                    logger.warning(f"Business count query failed (non-fatal): {e}")
-                    return 0
+                    logger.warning(f"Business read failed (non-fatal): {e}")
+                    return None
 
             def _fetch_built_coverage():
                 try:
@@ -1722,7 +1692,7 @@ def _compute_single_score_internal(
             with ThreadPoolExecutor(max_workers=6) as executor:
                 future_census_tract = executor.submit(_fetch_census_tract)
                 future_density = executor.submit(_fetch_density, None)
-                future_business_count = executor.submit(_fetch_business_count)
+                future_osm_businesses = executor.submit(_fetch_osm_businesses)
                 future_metro_distance = executor.submit(_fetch_metro_distance)
 
                 need_built_coverage = _need_arch_diversity_for_area_type(only_pillars)
@@ -1742,10 +1712,10 @@ def _compute_single_score_internal(
                     logger.warning("density timed out in shared compute — skipping")
                     density = None
                 try:
-                    business_count = future_business_count.result(timeout=35)
+                    osm_businesses = future_osm_businesses.result(timeout=35)
                 except Exception:
-                    logger.warning("business_count timed out in shared compute — defaulting to 0")
-                    business_count = 0
+                    logger.warning("business read timed out in shared compute — classifying from density alone")
+                    osm_businesses = None
                 try:
                     metro_distance_km = future_metro_distance.result(timeout=8)
                 except Exception:
@@ -1759,14 +1729,17 @@ def _compute_single_score_internal(
 
             built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
 
-            area_type = _dq.detect_area_type(
+            from data_sources.place_context import resolve_area_type
+            area_type, area_type_source, provisional_area_type, prefetched_businesses, places_meta, prefetched_radius_m = resolve_area_type(
                 lat, lon,
-                density=density,
                 city=city,
                 location_input=location,
-                business_count=business_count,
+                density=density,
+                osm_businesses=osm_businesses,
                 built_coverage=built_coverage,
-                metro_distance_km=metro_distance_km
+                metro_distance_km=metro_distance_km,
+                location_scope=location_scope,
+                census_tract=census_tract,
             )
         except Exception:
             area_type = "unknown"
@@ -1871,6 +1844,16 @@ def _compute_single_score_internal(
             except Exception as e:
                 logger.debug(f"Shared pre-pillar cache write skipped/failed: {e}")
 
+    from data_sources.place_context import PlaceContext, surrounding_factors
+    place_ctx = PlaceContext(
+        **surrounding_factors(lat, lon, census_tract),
+        lat=lat, lon=lon, city=city, area_type=area_type, density=density, census_tract=census_tract,
+        metro_distance_km=metro_distance_km, area_type_source=area_type_source,
+        provisional_area_type=provisional_area_type,
+        prefetched_businesses=prefetched_businesses, prefetched_radius_m=prefetched_radius_m,
+        places_meta=places_meta,
+    )
+
     # Step 2: Calculate all pillar scores in parallel
     logger.debug("Calculating pillar scores in parallel...")
     t_pillars = time.perf_counter()
@@ -1901,6 +1884,7 @@ def _compute_single_score_internal(
     if _include_pillar('active_outdoors'):
         pillar_tasks.append(
             ('active_outdoors', get_active_outdoors_score_v2, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope,
                 'precomputed_tree_canopy_5km': tree_canopy_5km,
@@ -1910,6 +1894,7 @@ def _compute_single_score_internal(
     if need_built_environment:
         pillar_tasks.append(
             ('built_environment', built_environment.calculate_built_environment, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
                 'test_overrides': beauty_overrides if beauty_overrides else None,
@@ -1922,6 +1907,7 @@ def _compute_single_score_internal(
     if need_natural_beauty:
         pillar_tasks.append(
             ('natural_beauty', natural_beauty.calculate_natural_beauty, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
                 'overrides': beauty_overrides if beauty_overrides else None,
@@ -1935,13 +1921,15 @@ def _compute_single_score_internal(
         pillar_tasks.append(
             ('neighborhood_amenities', get_neighborhood_amenities_score, {
                 'lat': lat, 'lon': lon, 'include_chains': include_chains,
-                'location_scope': location_scope, 'area_type': area_type,
-                'density': density, 'vacation_mode': is_vacation_mode,
+                'location_scope': location_scope, 'area_type': place_ctx.area_type,
+                'density': place_ctx.density, 'vacation_mode': is_vacation_mode,
+                'place_context': place_ctx,
             })
         )
     if _include_pillar('air_travel_access'):
         pillar_tasks.append(
             ('air_travel_access', get_air_travel_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'density': density
             })
@@ -1949,6 +1937,7 @@ def _compute_single_score_internal(
     if _include_pillar('public_transit_access'):
         pillar_tasks.append(
             ('public_transit_access', get_public_transit_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 
                 'city': city, 'density': density
             })
@@ -1956,6 +1945,7 @@ def _compute_single_score_internal(
     if _include_pillar('healthcare_access'):
         pillar_tasks.append(
             ('healthcare_access', get_healthcare_access_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 'city': city,
                 'density': density, 'vacation_mode': is_vacation_mode,
             })
@@ -1963,6 +1953,7 @@ def _compute_single_score_internal(
     if _include_pillar('economic_opportunity'):
         pillar_tasks.append(
             ('economic_opportunity', get_economic_opportunity_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'state': state, 'area_type': area_type,
                 'census_tract': census_tract,
                 'job_categories': job_categories,
@@ -1973,6 +1964,7 @@ def _compute_single_score_internal(
         _remote_only = len(_selected_jobcats) == 1 and _selected_jobcats[0] == "remote_flexible"
         pillar_tasks.append(
             ('housing_value', get_housing_value_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city,
                 'zip_code': zip_code,
                 'use_national_income_for_affordability': _remote_only,
@@ -1983,12 +1975,14 @@ def _compute_single_score_internal(
     if _include_pillar('climate_risk'):
         pillar_tasks.append(
             ('climate_risk', get_climate_risk_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
             })
         )
     if _include_pillar('social_fabric'):
         pillar_tasks.append(
             ('social_fabric', get_social_fabric_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
                 'zip_code': zip_code,
             })
@@ -1996,6 +1990,7 @@ def _compute_single_score_internal(
     if _include_pillar('diversity'):
         pillar_tasks.append(
             ('diversity', get_diversity_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
                 'diversity_preference': diversity_preference,
             })
@@ -2011,6 +2006,7 @@ def _compute_single_score_internal(
         )
         pillar_tasks.append(
             ('community_safety', get_community_safety_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'city': city, 'state': state, 'zip_code': zip_code,
                 'population': _pop_est,
@@ -2021,6 +2017,7 @@ def _compute_single_score_internal(
     if use_school_scoring and _include_pillar('quality_education'):
         pillar_tasks.append(
             ('quality_education', get_school_data, {
+                'place_context': place_ctx,
                 'zip_code': zip_code, 'state': state, 'city': city,
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'place_name': _place_name_from_location(location)
@@ -2181,28 +2178,9 @@ def _compute_single_score_internal(
     active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
     amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (None, {"breakdown": {}, "summary": {}, "data_quality": {}})
 
-    # active_outdoors ran on the pre-pillar area_type estimate (OSM-only business count),
-    # but the canonical area_type is corrected post-pillar using the amenities pillar's own
-    # (possibly Places-augmented) count. active_outdoors expectations swing sharply by
-    # area_type (e.g. expected_parks_within_1km: 8 for urban_core vs 380 for
-    # urban_residential), so a stale pre-pillar classification can score it under the wrong
-    # curve entirely. Re-run it (reusing already-fetched canopy data, no extra GEE/OSM calls
-    # for canopy) only when the post-pillar reclassification actually disagrees.
-    _corrected_area_type = _reclassify_area_type_post_pillars(area_type, density, amenities_details)
-    if _corrected_area_type and _corrected_area_type != area_type and _corrected_area_type != "unknown":
-        try:
-            active_outdoors_score, active_outdoors_details = get_active_outdoors_score_v2(
-                lat, lon, city=city, area_type=_corrected_area_type,
-                location_scope=location_scope,
-                precomputed_tree_canopy_5km=tree_canopy_5km,
-                trip_type=trip_type if is_vacation_mode else None,
-            )
-            logger.info(
-                f"active_outdoors re-scored after area_type correction: {area_type} -> {_corrected_area_type}"
-            )
-        except Exception as e:
-            logger.warning(f"active_outdoors re-score after area_type correction failed (non-fatal): {e}")
-        area_type = _corrected_area_type
+    # The area type was settled before any pillar ran (data_sources/place_context.py) and is final.
+    # Log when the amenities pillar's own count would have put the place in another class, so a real
+    # disagreement shows up in the logs instead of being silently re-scored.
 
     air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
     transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
@@ -2399,7 +2377,7 @@ def _compute_single_score_internal(
         + (housing_score * token_allocation["housing_value"] / 100)
         + (climate_risk_score * token_allocation["climate_risk"] / 100)
         + (social_fabric_score * token_allocation["social_fabric"] / 100)
-        + (diversity_score * token_allocation["diversity"] / 100)
+        + ((diversity_score or 0.0) * token_allocation["diversity"] / 100)
         + ((community_safety_score or 0.0) * token_allocation.get("community_safety", 0.0) / 100)
         + ((political_lean_score or 0.0) * token_allocation.get("political_lean", 0.0) / 100)
     )
@@ -2587,7 +2565,7 @@ def _compute_single_score_internal(
             "score": diversity_score,
             "weight": token_allocation["diversity"],
             "importance_level": priority_levels.get("diversity") if priority_levels else None,
-            "contribution": round(diversity_score * token_allocation["diversity"] / 100, 2),
+            "contribution": round((diversity_score or 0.0) * token_allocation["diversity"] / 100, 2),
             "breakdown": diversity_details.get("breakdown", {}),
             "summary": diversity_details.get("summary", {}),
             "confidence": diversity_details.get("data_quality", {}).get("confidence", 0),
@@ -2607,6 +2585,7 @@ def _compute_single_score_internal(
             "data_quality": {
                 "degraded": community_safety_score is None or bool(community_safety_details.get("degraded_reasons")),
                 "degraded_reasons": community_safety_details.get("degraded_reasons") or [],
+                "data_warnings": community_safety_details.get("data_warnings") or [],
                 "data_available": community_safety_details.get("data_available", False),
                 "source": community_safety_details.get("source"),
             },
@@ -2662,7 +2641,7 @@ def _compute_single_score_internal(
         "overall_confidence": _calculate_overall_confidence(livability_pillars),
         "data_quality_summary": _calculate_data_quality_summary(
             livability_pillars,
-            area_type=_reclassify_area_type_post_pillars(area_type, density, livability_pillars.get("neighborhood_amenities")),
+            area_type=area_type,
             form_context=form_context,
         ),
         "metadata": {
@@ -3528,18 +3507,12 @@ async def _stream_score_with_progress(
                 census_tract = _ca.get_census_tract(lat, lon)
                 density = _ca.get_population_density(lat, lon, tract=census_tract)
                 
-                business_count = 0
+                osm_businesses = None
                 if only_pillars is None or "neighborhood_amenities" in only_pillars:
                     try:
-                        business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
-                        if business_data:
-                            all_businesses = (business_data.get("tier1_daily", []) +
-                                            business_data.get("tier2_social", []) +
-                                            business_data.get("tier3_culture", []) +
-                                            business_data.get("tier4_services", []))
-                            business_count = len(all_businesses)
+                        osm_businesses = _fetch_osm_businesses_for_classification(lat, lon)
                     except Exception:
-                        pass
+                        osm_businesses = None
 
                 arch_diversity_data = None
                 if _need_arch_diversity_for_area_type(only_pillars):
@@ -3562,23 +3535,33 @@ async def _stream_score_with_progress(
                 except Exception:
                     metro_distance_km = None
                 
-                area_type = _dq.detect_area_type(
+                from data_sources.place_context import PlaceContext, resolve_area_type, surrounding_factors
+                area_type, area_type_source, provisional_area_type, prefetched_businesses, places_meta, prefetched_radius_m = resolve_area_type(
                     lat, lon,
-                    density=density,
                     city=city,
                     location_input=location,
-                    business_count=business_count,
+                    density=density,
+                    osm_businesses=osm_businesses,
                     built_coverage=built_coverage,
-                    metro_distance_km=metro_distance_km
+                    metro_distance_km=metro_distance_km,
+                    location_scope=location_scope,
+                    census_tract=census_tract,
                 )
-                
-                return census_tract, density, arch_diversity_data, area_type
+                place_ctx = PlaceContext(
+                    **surrounding_factors(lat, lon, census_tract),
+                    lat=lat, lon=lon, city=city, area_type=area_type, density=density, census_tract=census_tract,
+                    metro_distance_km=metro_distance_km, area_type_source=area_type_source,
+                    provisional_area_type=provisional_area_type,
+                    prefetched_businesses=prefetched_businesses, prefetched_radius_m=prefetched_radius_m,
+                    places_meta=places_meta,
+                )
+                return census_tract, density, arch_diversity_data, area_type, place_ctx
             except Exception as e:
                 logger.warning(f"Shared data preparation failed: {e}")
-                return None, None, None, "unknown"
+                return None, None, None, "unknown", None
         
         t_prepare_shared = time.perf_counter()
-        census_tract, density, arch_diversity_data, area_type = await loop.run_in_executor(None, prepare_shared_data)
+        census_tract, density, arch_diversity_data, area_type, place_ctx = await loop.run_in_executor(None, prepare_shared_data)
         _log_place_timing("shared_data_compute", t_prepare_shared)
 
         # Tree canopy (5km) no longer pre-fetched — each pillar fetches in its own parallel batch.
@@ -3642,6 +3625,7 @@ async def _stream_score_with_progress(
         pillar_tasks = []
         pillar_tasks.append(
             ('active_outdoors', get_active_outdoors_score_v2, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope,
                 'precomputed_tree_canopy_5km': tree_canopy_5km
@@ -3649,6 +3633,7 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('built_environment', built_environment.calculate_built_environment, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
                 'test_overrides': None,
@@ -3660,6 +3645,7 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('natural_beauty', natural_beauty.calculate_natural_beauty, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
                 'overrides': None,
@@ -3672,17 +3658,19 @@ async def _stream_score_with_progress(
             ('neighborhood_amenities', get_neighborhood_amenities_score, {
                 'lat': lat, 'lon': lon, 'include_chains': include_chains,
                 'location_scope': location_scope, 'area_type': area_type,
-                'density': density
+                'density': density, 'place_context': place_ctx
             })
         )
         pillar_tasks.append(
             ('air_travel_access', get_air_travel_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'density': density
             })
         )
         pillar_tasks.append(
             ('public_transit_access', get_public_transit_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'location_scope': location_scope,
                 'city': city, 'density': density
@@ -3690,6 +3678,7 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('healthcare_access', get_healthcare_access_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'location_scope': location_scope,
                 'city': city, 'density': density
@@ -3697,6 +3686,7 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('economic_opportunity', get_economic_opportunity_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'state': state, 'area_type': area_type,
                 'census_tract': census_tract,
                 'job_categories': job_categories,
@@ -3706,6 +3696,7 @@ async def _stream_score_with_progress(
         _remote_only = len(_selected_jobcats) == 1 and _selected_jobcats[0] == "remote_flexible"
         pillar_tasks.append(
             ('housing_value', get_housing_value_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'census_tract': census_tract,
                 'density': density, 'city': city,
                 'zip_code': zip_code,
@@ -3715,17 +3706,20 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('climate_risk', get_climate_risk_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
             })
         )
         pillar_tasks.append(
             ('social_fabric', get_social_fabric_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
                 'zip_code': zip_code,
             })
         )
         pillar_tasks.append(
             ('diversity', get_diversity_score, {
+                'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
                 'diversity_preference': diversity_preference,
             })
@@ -3739,6 +3733,7 @@ async def _stream_score_with_progress(
         if use_school_scoring:
             pillar_tasks.append(
                 ('quality_education', get_school_data, {
+                    'place_context': place_ctx,
                     'zip_code': zip_code, 'state': state, 'city': city,
                     'lat': lat, 'lon': lon, 'area_type': area_type,
                     'place_name': _place_name_from_location(location)
@@ -3868,23 +3863,7 @@ async def _stream_score_with_progress(
         active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (None, {"breakdown": {}, "summary": {}, "data_quality": {}})
 
-        # See _compute_single_score_internal: active_outdoors ran on the pre-pillar area_type
-        # estimate; re-score it if the post-pillar reclassification (using the amenities
-        # pillar's own business count) disagrees.
-        _corrected_area_type = _reclassify_area_type_post_pillars(area_type, density, amenities_details)
-        if _corrected_area_type and _corrected_area_type != area_type and _corrected_area_type != "unknown":
-            try:
-                active_outdoors_score, active_outdoors_details = get_active_outdoors_score_v2(
-                    lat, lon, city=city, area_type=_corrected_area_type,
-                    location_scope=location_scope,
-                    precomputed_tree_canopy_5km=tree_canopy_5km,
-                )
-                logger.info(
-                    f"active_outdoors re-scored after area_type correction: {area_type} -> {_corrected_area_type}"
-                )
-            except Exception as e:
-                logger.warning(f"active_outdoors re-score after area_type correction failed (non-fatal): {e}")
-            area_type = _corrected_area_type
+        # The area type was settled before any pillar ran and is final.
 
         air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
         transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
@@ -4136,7 +4115,7 @@ async def _stream_score_with_progress(
             + (housing_score * token_allocation["housing_value"] / 100)
             + (climate_risk_score * token_allocation["climate_risk"] / 100)
             + (social_fabric_score * token_allocation["social_fabric"] / 100)
-            + (diversity_score * token_allocation["diversity"] / 100)
+            + ((diversity_score or 0.0) * token_allocation["diversity"] / 100)
             + ((community_safety_score or 0.0) * token_allocation.get("community_safety", 0.0) / 100)
             + ((political_lean_score or 0.0) * token_allocation.get("political_lean", 0.0) / 100)
         )
@@ -4315,7 +4294,7 @@ async def _stream_score_with_progress(
                 "score": diversity_score,
                 "weight": token_allocation["diversity"],
                 "importance_level": priority_levels.get("diversity") if priority_levels else None,
-                "contribution": round(diversity_score * token_allocation["diversity"] / 100, 2),
+                "contribution": round((diversity_score or 0.0) * token_allocation["diversity"] / 100, 2),
                 "breakdown": diversity_details.get("breakdown", {}),
                 "summary": diversity_details.get("summary", {}),
                 "confidence": diversity_details.get("data_quality", {}).get("confidence", 0),
@@ -4335,6 +4314,7 @@ async def _stream_score_with_progress(
                 "data_quality": {
                     "degraded": community_safety_score is None or bool(community_safety_details.get("degraded_reasons")),
                 "degraded_reasons": community_safety_details.get("degraded_reasons") or [],
+                "data_warnings": community_safety_details.get("data_warnings") or [],
                     "data_available": community_safety_details.get("data_available", False),
                     "source": community_safety_details.get("source"),
                 },
@@ -4383,7 +4363,7 @@ async def _stream_score_with_progress(
             "overall_confidence": _calculate_overall_confidence(livability_pillars),
             "data_quality_summary": _calculate_data_quality_summary(
                 livability_pillars,
-                area_type=_reclassify_area_type_post_pillars(area_type, density, livability_pillars.get("neighborhood_amenities")),
+                area_type=area_type,
                 form_context=form_context,
             ),
             "metadata": {
