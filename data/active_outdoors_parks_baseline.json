@@ -48,5 +48,38 @@
   ],
   "n_places": 931,
   "status": "empirical peer median, not a published standard; fit on 11 states with a private Overpass server",
-  "window_places": 100
+  "window_places": 100,
+  "expected_playgrounds": [
+    0.6,
+    1.2,
+    2.2,
+    2.7,
+    3.1,
+    4.7,
+    7.3,
+    8.9
+  ],
+  "split_half_playgrounds": [
+    [
+      0.6,
+      1.1,
+      2.2,
+      2.5,
+      4.0,
+      4.7,
+      6.5,
+      8.9
+    ],
+    [
+      0.6,
+      1.2,
+      2.3,
+      3.0,
+      3.0,
+      4.6,
+      7.8,
+      8.7
+    ]
+  ],
+  "n_places_playgrounds": 931
 }

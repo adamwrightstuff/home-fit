@@ -43,6 +43,10 @@ def fit(rows, knots=KNOTS, window=WINDOW):
     return out
 
 
+def weighted(items) -> float:
+    return round(sum(math.exp(-DECAY_PER_M * x["distance_m"]) for x in items if x["distance_m"] <= RADIUS_M), 3)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--places", required=True)
@@ -51,17 +55,21 @@ def main() -> None:
     args = ap.parse_args()
 
     parks = json.load(open(args.parks))
-    rows = []
+    park_rows, play_rows = [], []
     for p in json.load(open(args.places)):
         r = parks.get(f"{p['name']}|{p['state']}")
         if p.get("act") is None or not r or r.get("outcome") != "overpass_ok":
             continue
-        rows.append((float(p["act"]), round(sum(math.exp(-DECAY_PER_M * x["distance_m"]) for x in r["parks"] if x["distance_m"] <= RADIUS_M), 3)))
+        park_rows.append((float(p["act"]), weighted(r["parks"])))
+        if "playgrounds" in r:
+            play_rows.append((float(p["act"]), weighted(r["playgrounds"])))
 
+    rows = park_rows
     values = fit(rows)
     # Split-half check: same fit on two interleaved halves, so the stability is recorded with the data.
     ordered = sorted(rows)
     halves = [fit(ordered[0::2], window=WINDOW // 2), fit(ordered[1::2], window=WINDOW // 2)]
+    play_ordered = sorted(play_rows)
     doc = {
         "measure": "sum over parks within radius_m of exp(-decay_per_m * distance_m); median of catalog places at similar activity per acre",
         "decay_per_m": DECAY_PER_M,
@@ -74,6 +82,10 @@ def main() -> None:
         "n_places": len(rows),
         "status": "empirical peer median, not a published standard; fit on 11 states with a private Overpass server",
         "window_places": WINDOW,
+        # Same measure for playgrounds (0 to 5 point term): weighted count within radius_m, same knots and decay.
+        "expected_playgrounds": fit(play_rows),
+        "split_half_playgrounds": [fit(play_ordered[0::2], window=WINDOW // 2), fit(play_ordered[1::2], window=WINDOW // 2)],
+        "n_places_playgrounds": len(play_rows),
     }
     with open(args.out, "w") as f:
         json.dump(doc, f, indent=2)

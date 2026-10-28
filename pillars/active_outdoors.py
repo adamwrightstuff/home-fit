@@ -46,21 +46,31 @@ def _load_parks_baseline() -> Optional[Dict]:
     return None
 
 
-def expected_parks_for_activity(activity_per_acre: Optional[float]) -> Optional[Tuple[float, float]]:
-    """(expected weighted park count, radius in metres) for a place with this many people plus jobs per acre around it:
-    the median of its density peers, log-log interpolated between knots and held at the ends. None when unavailable."""
+def _expected_for_activity(activity_per_acre: Optional[float], key: str) -> Optional[Tuple[float, float]]:
+    """(expected weighted count, radius in metres) for a place with this many people plus jobs per acre around it: the
+    median of its density peers, log-log interpolated between knots and held at the ends. None when unavailable."""
     doc = _load_parks_baseline()
-    if doc is None or activity_per_acre is None or activity_per_acre < 0:
+    if doc is None or activity_per_acre is None or activity_per_acre < 0 or key not in doc:
         return None
-    knots, values = doc["knots"], doc["expected_parks"]
+    knots, values = doc["knots"], [max(float(v), 0.01) for v in doc[key]]
+    if len(values) != len(knots):
+        return None
     a = max(float(activity_per_acre), float(knots[0]))
-    expected = float(values[-1])
+    expected = values[-1]
     for i in range(len(knots) - 1):
         if a <= knots[i + 1]:
             t = (math.log(a) - math.log(knots[i])) / (math.log(knots[i + 1]) - math.log(knots[i]))
             expected = math.exp(math.log(values[i]) + t * (math.log(values[i + 1]) - math.log(values[i])))
             break
     return max(1.0, expected), float(doc["radius_m"])
+
+
+def expected_parks_for_activity(activity_per_acre: Optional[float]) -> Optional[Tuple[float, float]]:
+    return _expected_for_activity(activity_per_acre, "expected_parks")
+
+
+def expected_playgrounds_for_activity(activity_per_acre: Optional[float]) -> Optional[Tuple[float, float]]:
+    return _expected_for_activity(activity_per_acre, "expected_playgrounds")
 
 
 def weighted_park_count(parks: list, radius_m: float) -> float:
@@ -318,7 +328,8 @@ def get_active_outdoors_score_v2(
     parks_wide: List[Dict] = local.get("parks", []) or []
     _in_local = lambda items: [x for x in items if x.get("distance_m", 0) <= local_radius]
     parks: List[Dict] = _in_local(parks_wide)
-    playgrounds: List[Dict] = _in_local(local.get("playgrounds", []) or [])
+    playgrounds_wide: List[Dict] = local.get("playgrounds", []) or []
+    playgrounds: List[Dict] = _in_local(playgrounds_wide)
     recreational_facilities: List[Dict] = _in_local(local.get("recreational_facilities", []) or [])
     
     # DIAGNOSTIC: Log parks query result
@@ -470,7 +481,7 @@ def get_active_outdoors_score_v2(
     # 3) Component scores
     daily_score = _score_daily_urban_outdoors_v2(
         parks, playgrounds, recreational_facilities, scoring_area_type, expectations,
-        activity_per_acre=ctx.activity_per_acre, parks_for_count=parks_wide,
+        activity_per_acre=ctx.activity_per_acre, parks_for_count=parks_wide, playgrounds_for_count=playgrounds_wide,
     )
     is_mountain_town = context_flags.get("is_mountain_town", False)
     # Vacation mountain trips: user declared this is a mountain destination, force mountain scoring
@@ -606,6 +617,7 @@ def _score_daily_urban_outdoors_v2(
     parks: list, playgrounds: list, recreational_facilities: list, area_type: str, expectations: Dict,
     activity_per_acre: Optional[float] = None,
     parks_for_count: Optional[list] = None,
+    playgrounds_for_count: Optional[list] = None,
 ) -> float:
     """
     Daily Urban Outdoors (0-35):
@@ -657,7 +669,15 @@ def _score_daily_urban_outdoors_v2(
         s_nearest = 0.0
 
     # 3. Playgrounds (0-5)
-    s_play = _sat_ratio_v2(playground_count, exp_play, 5.0)
+    play_baseline = expected_playgrounds_for_activity(activity_per_acre)
+    if play_baseline is not None:
+        exp_play_peers, play_radius_m = play_baseline
+        weighted_play = weighted_park_count(
+            playgrounds_for_count if playgrounds_for_count is not None else playgrounds, play_radius_m
+        )
+        s_play = _sat_ratio_v2(weighted_play, exp_play_peers, 5.0)
+    else:
+        s_play = _sat_ratio_v2(playground_count, exp_play, 5.0)
 
     # 4. Recreational facilities (0-3)
     s_facilities = _sat_ratio_v2(facility_count, exp_facilities, 3.0)

@@ -71,3 +71,34 @@ def test_falls_back_to_table_without_factor():
     table = ao._score_daily_urban_outdoors_v2(parks, [], [], "suburban", exp)
     assert table == pytest.approx(ao._score_daily_urban_outdoors_v2(parks, [], [], "suburban", exp, activity_per_acre=None))
     assert _term(parks, "suburban", exp, 25) > table
+
+
+def test_playground_baseline_loaded_monotone_and_floored():
+    doc = ao._load_parks_baseline()
+    assert len(doc["expected_playgrounds"]) == len(doc["knots"])
+    vals = [ao.expected_playgrounds_for_activity(x)[0] for x in (1, 5, 10, 25, 100, 300)]
+    assert vals == sorted(vals)
+    assert min(vals) >= 1.0
+    assert ao.expected_playgrounds_for_activity(None) is None
+
+
+def _play_term(local, wide, act):
+    # one park at 300 m keeps the count term equal across calls; compare through the playground difference only
+    return ao._score_daily_urban_outdoors_v2(
+        _parks(1), local, [], "suburban", {"expected_playgrounds_within_1km": 4},
+        activity_per_acre=act, playgrounds_for_count=wide,
+    )
+
+
+def test_playground_term_decays_and_uses_wider_list():
+    near = [{"distance_m": 300.0}] * 3
+    far = [{"distance_m": 1700.0}] * 3
+    assert _play_term(near, near, 25) > _play_term(far, far, 25)
+    assert _play_term([], near + far, 25) > _play_term([], near, 25) - 1e-9
+
+
+def test_playground_term_ignores_area_type_when_factor_given():
+    pl = [{"distance_m": 400.0}] * 2
+    a = ao._score_daily_urban_outdoors_v2(_parks(1), pl, [], "exurban", {"expected_playgrounds_within_1km": 0}, activity_per_acre=25)
+    b = ao._score_daily_urban_outdoors_v2(_parks(1), pl, [], "urban_residential", {"expected_playgrounds_within_1km": 10}, activity_per_acre=25)
+    assert a == pytest.approx(b)
