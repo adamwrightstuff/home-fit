@@ -4,7 +4,6 @@ const COASTAL_TYPES = new Set(['ocean', 'bay', 'river', 'lake'])
 
 export const VIBE_WEIGHTS = {
   scene: 2.0,
-  race:  1.5,
   bach:  2.0,
   dem:   0.75,
   scap:  1.5,
@@ -16,7 +15,6 @@ export type VibeKey = keyof typeof VIBE_WEIGHTS
 
 export const VIBE_LABELS: Record<VibeKey, string> = {
   scene: 'Local scene',
-  race:  'Diversity',
   bach:  'Education',
   dem:   'Politics',
   scap:  'Social capital',
@@ -69,7 +67,6 @@ export function extractVibeFeatures(place: CatalogMapPlace): VibeFeatures {
     str(pillars, 'diversity', 'area_classification', 'area_type')
 
   const scene = num(score, 'local_scene_score')
-  const race  = num(pillars, 'diversity', 'breakdown', 'race_entropy')
   const bach  = num(pillars, 'diversity', 'education_attainment', 'bachelor_pct')
   const dem   = num(pillars, 'political_lean', 'breakdown', 'dem_pct_2024')
   const scap  = num(pillars, 'social_fabric', 'breakdown', 'social_capital')
@@ -91,8 +88,8 @@ export function extractVibeFeatures(place: CatalogMapPlace): VibeFeatures {
     areaType,
     waterBucket,
     waterType,
-    norm: { scene: n(scene), race: n(race), bach: n(bach), dem: n(dem), scap: n(scap), gvi: n(gvi), water: n(water) },
-    raw:  { scene, race, bach, dem, scap, gvi, water },
+    norm: { scene: n(scene), bach: n(bach), dem: n(dem), scap: n(scap), gvi: n(gvi), water: n(water) },
+    raw:  { scene, bach, dem, scap, gvi, water },
   }
 }
 
