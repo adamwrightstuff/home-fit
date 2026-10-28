@@ -15,8 +15,8 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-# Optional request weighting: which Census mix dimensions to emphasize (default: average all available).
-VALID_DIVERSITY_PREFERENCE: Tuple[str, ...] = ("race", "income", "age")
+# Life-stage preference (owner decision 2026-10-28): which age cohorts the user wants more of. No preference means no score.
+VALID_DIVERSITY_PREFERENCE: Tuple[str, ...] = ("children", "working_age", "older")
 
 
 def parse_diversity_preference(raw: Optional[Any]) -> Optional[List[str]]:
@@ -78,6 +78,27 @@ def _normalized_entropy(counts: Iterable[int], n_categories: int) -> float:
     return max(0.0, min(100.0, (h / h_max) * 100.0))
 
 
+_AGE_TABLE: Optional[Dict[str, List[float]]] = None
+
+
+def _age_percentile(cohort: str, share: float) -> Optional[float]:
+    """Percentile (0 to 100) of a cohort share among US tracts, from data/age_share_percentiles.json."""
+    global _AGE_TABLE
+    if _AGE_TABLE is None:
+        import os
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "age_share_percentiles.json")
+        try:
+            with open(path, encoding="utf-8") as fh:
+                _AGE_TABLE = json.load(fh)["percentile_points"]
+        except Exception:
+            _AGE_TABLE = {}
+    pts = _AGE_TABLE.get(cohort)
+    if not pts:
+        return None
+    import bisect
+    return 100.0 * bisect.bisect_right(pts, share) / len(pts)
+
+
 def get_diversity_score(
     lat: float,
     lon: float,
@@ -86,7 +107,7 @@ def get_diversity_score(
     city: Optional[str] = None,
     diversity_preference: Optional[List[str]] = None,
     place_context=None,
-) -> Tuple[float, Dict]:
+) -> Tuple[Optional[float], Dict]:
     """
     Returns (score_0_100, details) with education_attainment / self_employed_pct for Status Signal.
 
@@ -99,76 +120,33 @@ def get_diversity_score(
 
     diversity_data = census_api.get_diversity_data(lat, lon, tract=tract, area_type=area_type)
     if not diversity_data:
-        # No Census tract data at all (common for small villages/unincorporated areas) is a
-        # genuine absence of information, not a measured "zero diversity" — raising here
-        # routes through main.py's existing pillar-failure path (status='failed'), which is
-        # honestly excluded from the headline total, instead of silently reporting a
-        # fabricated 0/100 that drags the score down as if diversity were confidently measured.
+        # No Census data at all is a genuine absence of information, not a measured zero: raising routes through
+        # main.py's pillar-failure path, which is excluded from the headline.
         raise RuntimeError(f"No Census diversity data available for ({lat}, {lon})")
-    diversity_score: Optional[float] = None
-    components_present: list[str] = []
+    age = diversity_data.get("age_counts") or {}
+    youth, prime, seniors = age.get("youth", 0), age.get("prime", 0), age.get("seniors", 0)
+    total_age = youth + prime + seniors
     breakdown: Dict = {}
-    if diversity_data:
-        ethnicity_counts = diversity_data.get("ethnicity_counts") or {}
-        income_counts = diversity_data.get("income_counts") or {}
-        age_counts_dict = diversity_data.get("age_counts") or {}
-        if ethnicity_counts:
-            # B03002: Hispanic or Latino (any race) plus the seven non-Hispanic race groups, so Hispanic origin is
-            # counted once and not folded into "some other race". Entropy is normalized by the fixed eight groups.
-            eth_values = list(ethnicity_counts.values())
-            if sum(1 for v in eth_values if v > 0) >= 2:
-                race_e = _normalized_entropy(eth_values, ETHNICITY_CATEGORY_COUNT)
-                components_present.append("race")
-                breakdown["race_entropy"] = round(race_e, 1)
-        if income_counts:
-            n_inc = sum(1 for v in income_counts.values() if v > 0)
-            if n_inc >= 2:
-                inc_e = _normalized_entropy(income_counts.values(), INCOME_BRACKET_COUNT)
-                components_present.append("income")
-                breakdown["income_entropy"] = round(inc_e, 1)
-        youth = age_counts_dict.get("youth", 0)
-        prime = age_counts_dict.get("prime", 0)
-        seniors = age_counts_dict.get("seniors", 0)
-        if youth + prime + seniors > 0:
-            age_e = _normalized_entropy([youth, prime, seniors], 3)
-            components_present.append("age")
-            breakdown["age_entropy"] = round(age_e, 1)
-
-        by_dim: Dict[str, float] = {}
-        if "race" in components_present and breakdown.get("race_entropy") is not None:
-            by_dim["race"] = float(breakdown["race_entropy"])
-        if "income" in components_present and breakdown.get("income_entropy") is not None:
-            by_dim["income"] = float(breakdown["income_entropy"])
-        if "age" in components_present and breakdown.get("age_entropy") is not None:
-            by_dim["age"] = float(breakdown["age_entropy"])
-
-        pref = parse_diversity_preference(diversity_preference)
-        if by_dim:
-            if pref:
-                selected_vals = [by_dim[k] for k in pref if k in by_dim]
-                if selected_vals:
-                    diversity_score = sum(selected_vals) / len(selected_vals)
-                else:
-                    diversity_score = 0.0
-            else:
-                diversity_score = sum(by_dim.values()) / len(by_dim)
-
-    if diversity_score is None:
-        diversity_score = 0.0
-
-    score = max(0.0, min(100.0, round(float(diversity_score), 1)))
+    pref = parse_diversity_preference(diversity_preference)
+    score: Optional[float] = None
+    if total_age > 0:
+        shares = {"children": youth / total_age * 100.0, "working_age": prime / total_age * 100.0, "older": seniors / total_age * 100.0}
+        pcts = {k: _age_percentile(k, v) for k, v in shares.items()}
+        breakdown["age_shares"] = {k: round(v, 1) for k, v in shares.items()}
+        breakdown["age_percentiles"] = {k: round(v, 1) for k, v in pcts.items() if v is not None}
+        picked = [pcts[k] for k in (pref or []) if pcts.get(k) is not None]
+        if picked:
+            score = round(max(0.0, min(100.0, sum(picked) / len(picked))), 1)
     breakdown["diversity_score"] = score
+    components_present = [k for k, v in (("race", diversity_data.get("ethnicity_counts")), ("income", diversity_data.get("income_counts")), ("age", age)) if v]
 
     pref_parsed = parse_diversity_preference(diversity_preference)
     details: Dict = {
         "breakdown": breakdown,
         "summary": {
-            "diversity_entropy_score": score,
             "components_included": components_present,
             "diversity_preference": pref_parsed,
-            "diversity_score_mode": (
-                "selected_dimensions" if pref_parsed else "all_dimensions_available"
-            ),
+            "diversity_score_mode": "life_stage_preference" if score is not None else "no_preference",
         },
         "data_quality": data_quality.assess_pillar_data_quality(
             "diversity",
@@ -183,7 +161,7 @@ def get_diversity_score(
         ),
         "area_classification": {"area_type": area_type},
         "measured_area": {"geo_level": (diversity_data or {}).get("geo_level"), "total_population": (diversity_data or {}).get("total_population")},
-        "version": "v2_preference_optional",
+        "version": "v3_life_stage_preference",
     }
     if diversity_data:
         if diversity_data.get("education_attainment") is not None:
@@ -191,5 +169,5 @@ def get_diversity_score(
         if diversity_data.get("self_employed_pct") is not None:
             details["self_employed_pct"] = diversity_data["self_employed_pct"]
 
-    logger.info("Diversity Score: %s/100", score)
+    logger.info("Diversity preference score: %s", score)
     return score, details

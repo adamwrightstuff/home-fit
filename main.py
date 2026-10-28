@@ -2377,7 +2377,7 @@ def _compute_single_score_internal(
         + (housing_score * token_allocation["housing_value"] / 100)
         + (climate_risk_score * token_allocation["climate_risk"] / 100)
         + (social_fabric_score * token_allocation["social_fabric"] / 100)
-        + (diversity_score * token_allocation["diversity"] / 100)
+        + ((diversity_score or 0.0) * token_allocation["diversity"] / 100)
         + ((community_safety_score or 0.0) * token_allocation.get("community_safety", 0.0) / 100)
         + ((political_lean_score or 0.0) * token_allocation.get("political_lean", 0.0) / 100)
     )
@@ -2565,7 +2565,7 @@ def _compute_single_score_internal(
             "score": diversity_score,
             "weight": token_allocation["diversity"],
             "importance_level": priority_levels.get("diversity") if priority_levels else None,
-            "contribution": round(diversity_score * token_allocation["diversity"] / 100, 2),
+            "contribution": round((diversity_score or 0.0) * token_allocation["diversity"] / 100, 2),
             "breakdown": diversity_details.get("breakdown", {}),
             "summary": diversity_details.get("summary", {}),
             "confidence": diversity_details.get("data_quality", {}).get("confidence", 0),
@@ -4115,7 +4115,7 @@ async def _stream_score_with_progress(
             + (housing_score * token_allocation["housing_value"] / 100)
             + (climate_risk_score * token_allocation["climate_risk"] / 100)
             + (social_fabric_score * token_allocation["social_fabric"] / 100)
-            + (diversity_score * token_allocation["diversity"] / 100)
+            + ((diversity_score or 0.0) * token_allocation["diversity"] / 100)
             + ((community_safety_score or 0.0) * token_allocation.get("community_safety", 0.0) / 100)
             + ((political_lean_score or 0.0) * token_allocation.get("political_lean", 0.0) / 100)
         )
@@ -4294,7 +4294,7 @@ async def _stream_score_with_progress(
                 "score": diversity_score,
                 "weight": token_allocation["diversity"],
                 "importance_level": priority_levels.get("diversity") if priority_levels else None,
-                "contribution": round(diversity_score * token_allocation["diversity"] / 100, 2),
+                "contribution": round((diversity_score or 0.0) * token_allocation["diversity"] / 100, 2),
                 "breakdown": diversity_details.get("breakdown", {}),
                 "summary": diversity_details.get("summary", {}),
                 "confidence": diversity_details.get("data_quality", {}).get("confidence", 0),
