@@ -79,6 +79,51 @@ def _normalized_entropy(counts: Iterable[int], n_categories: int) -> float:
 
 
 _AGE_TABLE: Optional[Dict[str, List[float]]] = None
+_TRACT_AGE_COUNTS: Optional[Dict[str, Tuple[int, int, int]]] = None
+# Tract-level places pool the age counts of every tract whose center is within this radius (plus the place's own tract), because a
+# single tract moved a median 2 to 4 and a 95th percentile of about 60 percentile points under a 500 m pin shift (pooled: about 20).
+AGE_POOL_RADIUS_M = 1400
+
+
+def _tract_age_counts() -> Dict[str, Tuple[int, int, int]]:
+    global _TRACT_AGE_COUNTS
+    if _TRACT_AGE_COUNTS is None:
+        import os
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "tract_age_counts.parquet")
+        try:
+            import pyarrow.parquet as pq
+            t = pq.read_table(path).to_pydict()
+            _TRACT_AGE_COUNTS = {g: (y, p, s) for g, y, p, s in zip(t["geoid"], t["youth"], t["prime"], t["seniors"])}
+        except Exception:
+            _TRACT_AGE_COUNTS = {}
+    return _TRACT_AGE_COUNTS
+
+
+def pooled_age_counts(lat: float, lon: float, own_geoid: Optional[str] = None, radius_m: float = AGE_POOL_RADIUS_M):
+    """(youth, prime, seniors, n_tracts) summed over tracts within radius_m of the pin plus the pin's own tract, or None."""
+    counts = _tract_age_counts()
+    if not counts:
+        return None
+    import math
+    import numpy as np
+    from data_sources import surrounding_density as sd
+    lats, lons, _pop, _land = sd._load_tracts()
+    geoids = list(sd._geoid_index.keys())
+    p, q = math.radians(lat), math.radians(lon)
+    la, lo = np.radians(lats), np.radians(lons)
+    a = np.sin((la - p) / 2) ** 2 + np.cos(la) * math.cos(p) * np.sin((lo - q) / 2) ** 2
+    d = 2 * 6371000 * np.arcsin(np.sqrt(a))
+    ids = {geoids[i] for i in np.where(d <= radius_m)[0]}
+    if own_geoid:
+        ids.add(own_geoid)
+    tot, n = [0, 0, 0], 0
+    for g in ids:
+        c = counts.get(g)
+        if c:
+            tot = [tot[0] + c[0], tot[1] + c[1], tot[2] + c[2]]
+            n += 1
+    return (tot[0], tot[1], tot[2], n) if sum(tot) > 0 else None
+
 
 
 def _age_percentile(cohort: str, share: float) -> Optional[float]:
@@ -125,8 +170,17 @@ def get_diversity_score(
         raise RuntimeError(f"No Census diversity data available for ({lat}, {lon})")
     age = diversity_data.get("age_counts") or {}
     youth, prime, seniors = age.get("youth", 0), age.get("prime", 0), age.get("seniors", 0)
-    total_age = youth + prime + seniors
     breakdown: Dict = {}
+    pooled_note = None
+    if diversity_data.get("geo_level") == "tract":
+        own = (tract or {}).get("geoid") if isinstance(tract, dict) else None
+        pooled = pooled_age_counts(lat, lon, own)
+        if pooled:
+            youth, prime, seniors = pooled[0], pooled[1], pooled[2]
+            breakdown["age_pooled_tracts"] = pooled[3]
+        else:
+            pooled_note = "age_pooling_unavailable: single tract used"
+    total_age = youth + prime + seniors
     pref = parse_diversity_preference(diversity_preference)
     score: Optional[float] = None
     if total_age > 0:
@@ -163,6 +217,9 @@ def get_diversity_score(
         "measured_area": {"geo_level": (diversity_data or {}).get("geo_level"), "total_population": (diversity_data or {}).get("total_population")},
         "version": "v3_life_stage_preference",
     }
+    if pooled_note:
+        details["data_quality"]["degraded"] = True
+        details["data_quality"]["degraded_reasons"] = list(details["data_quality"].get("degraded_reasons") or []) + [pooled_note]
     if diversity_data:
         if diversity_data.get("education_attainment") is not None:
             details["education_attainment"] = diversity_data["education_attainment"]
