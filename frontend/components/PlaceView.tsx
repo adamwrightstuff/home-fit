@@ -743,6 +743,66 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         </button>
       </div>
 
+      {/* Preferences: optional, off by default. Life stage matches the catalog filter and the search options (one saved value). */}
+      <div className="tr-panel" style={{ padding: '1rem', marginBottom: '1rem' }}>
+        <div className="tr-label" style={{ marginBottom: '0.25rem' }}>Preferences (optional)</div>
+        <div className="tr-muted" style={{ fontSize: '0.9rem', marginBottom: '0.75rem' }}>
+          Neighborhood life stage. This only changes your own score and is off unless you choose. It is a preference, not a measure of quality.
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {([['children', 'More families with kids'], ['working_age', 'More working-age adults'], ['older', 'More older adults']] as const).map(([value, label]) => {
+            const chosen = searchOptions.diversity_preference ?? []
+            const selected = chosen.includes(value)
+            return (
+              <button
+                key={value}
+                type="button"
+                className={`priority-btn ${selected ? 'active' : ''}`}
+                style={{ padding: '0.5rem 0.8rem' }}
+                onClick={() => {
+                  const next = selected ? chosen.filter((v) => v !== value) : [...chosen, value]
+                  const current = (selectedPriorities.diversity as string | undefined) && selectedPriorities.diversity !== ('None' as Importance) ? selectedPriorities.diversity : 'Medium'
+                  const level = (next.length ? current : 'None') as Importance
+                  onSearchOptionsChange?.({
+                    ...searchOptions,
+                    diversity_preference: next.length ? next : null,
+                    priorities: { ...searchOptions.priorities, diversity: level as never },
+                  })
+                  setSelectedPillars((prev) => {
+                    const n = new Set(prev)
+                    if (next.length) n.add('diversity')
+                    else n.delete('diversity')
+                    return n
+                  })
+                  setSelectedPriorities((pr) => ({ ...pr, diversity: level }))
+                }}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+        {searchOptions.diversity_preference?.length ? (
+          <div style={{ marginTop: '0.75rem' }}>
+            <span className="tr-muted" style={{ fontSize: '0.9rem', marginRight: '0.5rem' }}>How much this counts:</span>
+            {(['Low', 'Medium', 'High'] as const).map((level) => (
+              <button
+                key={level}
+                type="button"
+                className={`priority-btn ${selectedPriorities.diversity === level ? 'active' : ''}`}
+                style={{ padding: '0.35rem 0.7rem', marginRight: '0.4rem' }}
+                onClick={() => {
+                  onSearchOptionsChange?.({ ...searchOptions, priorities: { ...searchOptions.priorities, diversity: level as never } })
+                  setSelectedPriorities((pr) => ({ ...pr, diversity: level as Importance }))
+                }}
+              >
+                {level}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
       {/* Map */}
       <div
         style={{
