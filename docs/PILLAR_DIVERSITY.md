@@ -65,3 +65,24 @@ Catalog effect: headline mean -0.3, up to -15.6 and +7.1; larger drops where the
 (2026-10-28), and `measured_area` stores the geography used and total population. Unsourced: the 200,000-adult ceiling.
 Open: income term still normalizes by non-empty brackets (fixed-16 test: headline mean -0.6), age term unsourced,
 tract-level pin-shift 95th percentile 13.4 points (pooled 700 m: 8.8), independent validation not done.
+
+## Income term (changed 2026-10-28)
+Income entropy is normalized by all 16 B19001 brackets, not by the number of non-empty ones (the same cliff the race fix
+removed). Catalog: 515 places lowered, headline mean -0.6, worst -28.2. Places with all 16 brackets occupied are unchanged.
+
+## Known limits (disclosure, 2026-10-28)
+- **Pin sensitivity.** For the 588 places that use tract data, moving the pin 500 m changes the headline by a median 1.7 points
+  and a 95th percentile of 13.4 (27 percent of shifts over 5 points). Pooling the raw counts of tracts within 0.44 mile cut the
+  95th percentile to 8.8 (16 percent over 5), which is better but still over the 5-point gate, so pooling is not shipped.
+  The shifted-pin tract was approximated by the nearest tract center, so these are indicative.
+- **Size ceiling.** Places with more than 200,000 adults use the tract. The number is unsourced; 54 of 885 place-level places sit
+  between 100,000 and 200,000 adults and would switch to tract data if it were lowered to 100,000.
+- **Age term.** Three buckets (under 18, 18 to 64, 65 and over), maximum at equal thirds, which no real place reaches (a typical
+  US mix scores about 85). No published source supports the cutpoints as a diversity target. It carries one third of the headline.
+- **Equal weights.** The headline is the plain mean of race, income and age; no source for equal thirds.
+- **No independent validation.** No independent offline measure of place-level diversity exists; the race term has not been
+  validated against one. Entropy and the Census Bureau's Simpson-type index are two ways of measuring the same groups.
+- **Measured area.** Each record stores `measured_area` (geography used and total population) for new scores. Older catalog rows
+  do not; for those the geography was identified by matching stored values to the Census cache (1,473 of 1,476 places).
+- **Data vintage.** ACS 2022 5-year, 2020 tracts. Small-area estimates carry sampling error that is not shown.
+- **Same-name places.** Catalog rewrites keyed by name collide for same-name places (nyc Ridgewood NJ and NY); use coordinates.
