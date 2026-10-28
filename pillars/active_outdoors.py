@@ -47,8 +47,8 @@ def _load_parks_baseline() -> Optional[Dict]:
 
 
 def expected_parks_for_activity(activity_per_acre: Optional[float]) -> Optional[Tuple[float, float]]:
-    """(expected parks, radius in metres) for a place with this many people plus jobs per acre around it: the median
-    count of its density peers, log-log interpolated between knots and held at the ends. None when unavailable."""
+    """(expected weighted park count, radius in metres) for a place with this many people plus jobs per acre around it:
+    the median of its density peers, log-log interpolated between knots and held at the ends. None when unavailable."""
     doc = _load_parks_baseline()
     if doc is None or activity_per_acre is None or activity_per_acre < 0:
         return None
@@ -61,6 +61,13 @@ def expected_parks_for_activity(activity_per_acre: Optional[float]) -> Optional[
             expected = math.exp(math.log(values[i]) + t * (math.log(values[i + 1]) - math.log(values[i])))
             break
     return max(1.0, expected), float(doc["radius_m"])
+
+
+def weighted_park_count(parks: list, radius_m: float) -> float:
+    """Parks within radius_m, each weighted exp(-decay * distance): no hard edge, a park at 1.6 km counts a fraction of
+    one at 300 m. The decay is the baseline file's (the same one the nearest-park term uses)."""
+    decay = float((_load_parks_baseline() or {}).get("decay_per_m", 0.0012))
+    return sum(math.exp(-decay * p["distance_m"]) for p in parks if p.get("distance_m", 1e9) <= radius_m)
 
 
 # Point budgets per component. They add to 110 (kept as the component scales), so the score is the points earned over the
@@ -217,10 +224,15 @@ def get_active_outdoors_score_v2(
         }
     )
     
+    # The density-peer park term counts parks out to the baseline radius, which can be wider than this type's local radius.
+    # Read to the wider one and keep the full list for that term only; every other term sees the local-radius lists.
+    _peer_baseline = expected_parks_for_activity(ctx.activity_per_acre)
+    park_query_radius = max(local_radius, int(_peer_baseline[1])) if _peer_baseline else local_radius
+
     def _fetch_parks():
         """Fetch local parks, playgrounds, and recreational facilities."""
         result = coerce_green_spaces_response(
-            osm_api.query_green_spaces(lat, lon, radius_m=local_radius)
+            osm_api.query_green_spaces(lat, lon, radius_m=park_query_radius)
         )
         # Debug metadata (no PII): helps distinguish live vs stale-cache vs empty results.
         try:
@@ -303,9 +315,11 @@ def get_active_outdoors_score_v2(
     canopy_pct_5km = _fetch_canopy()
     
     # Extract data from results
-    parks: List[Dict] = local.get("parks", []) or []
-    playgrounds: List[Dict] = local.get("playgrounds", []) or []
-    recreational_facilities: List[Dict] = local.get("recreational_facilities", []) or []
+    parks_wide: List[Dict] = local.get("parks", []) or []
+    _in_local = lambda items: [x for x in items if x.get("distance_m", 0) <= local_radius]
+    parks: List[Dict] = _in_local(parks_wide)
+    playgrounds: List[Dict] = _in_local(local.get("playgrounds", []) or [])
+    recreational_facilities: List[Dict] = _in_local(local.get("recreational_facilities", []) or [])
     
     # DIAGNOSTIC: Log parks query result
     if not parks and local:
@@ -456,7 +470,7 @@ def get_active_outdoors_score_v2(
     # 3) Component scores
     daily_score = _score_daily_urban_outdoors_v2(
         parks, playgrounds, recreational_facilities, scoring_area_type, expectations,
-        activity_per_acre=ctx.activity_per_acre,
+        activity_per_acre=ctx.activity_per_acre, parks_for_count=parks_wide,
     )
     is_mountain_town = context_flags.get("is_mountain_town", False)
     # Vacation mountain trips: user declared this is a mountain destination, force mountain scoring
@@ -591,6 +605,7 @@ def _sat_ratio_v2(x: float, target: float, max_score: float) -> float:
 def _score_daily_urban_outdoors_v2(
     parks: list, playgrounds: list, recreational_facilities: list, area_type: str, expectations: Dict,
     activity_per_acre: Optional[float] = None,
+    parks_for_count: Optional[list] = None,
 ) -> float:
     """
     Daily Urban Outdoors (0-35):
@@ -622,8 +637,8 @@ def _score_daily_urban_outdoors_v2(
     baseline = expected_parks_for_activity(activity_per_acre)
     if baseline is not None:
         exp_peers, radius_m = baseline
-        near_count = sum(1 for p in parks if p.get("distance_m", 1e9) <= radius_m)
-        s_count = _sat_ratio_v2(near_count, exp_peers, 22.0)
+        weighted = weighted_park_count(parks_for_count if parks_for_count is not None else parks, radius_m)
+        s_count = _sat_ratio_v2(weighted, exp_peers, 22.0)
     else:
         s_count = _sat_ratio_v2(park_count, exp_park_count, 22.0)
 

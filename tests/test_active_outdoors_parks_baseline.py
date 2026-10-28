@@ -15,7 +15,7 @@ def test_baseline_reproduces_knots():
     for k, v in zip(doc["knots"], doc["expected_parks"]):
         exp, radius = ao.expected_parks_for_activity(k)
         assert exp == pytest.approx(max(1.0, v), rel=1e-6)
-        assert radius == 1000.0
+        assert radius == 2000.0
 
 
 def test_baseline_monotone_and_held_at_ends():
@@ -32,36 +32,42 @@ def test_unavailable_when_factor_missing():
     assert ao.expected_parks_for_activity(-1) is None
 
 
-def test_median_place_scores_one_minus_inverse_e():
-    exp, _ = ao.expected_parks_for_activity(25)
-    n = round(exp)
-    score = ao._sat_ratio_v2(n, exp, 22.0)
-    assert score == pytest.approx(22.0 * (1 - math.exp(-n / exp)))
-    assert score == pytest.approx(13.9, abs=1.5)
+def test_weighted_count_has_no_hard_edge():
+    just_in = ao.weighted_park_count([{"distance_m": 998.0}], 2000.0)
+    just_out = ao.weighted_park_count([{"distance_m": 1002.0}], 2000.0)
+    assert just_in == pytest.approx(just_out, rel=0.01)
 
 
-def _count_term(parks, area_type, expectations, act):
-    # nearest/playground/facility terms are zero with no area, playgrounds or facilities
+def test_weighted_count_decays_with_distance_and_stops_at_radius():
+    near = ao.weighted_park_count([{"distance_m": 300.0}], 2000.0)
+    far = ao.weighted_park_count([{"distance_m": 1600.0}], 2000.0)
+    assert near == pytest.approx(math.exp(-0.0012 * 300.0))
+    assert far < near / 3
+    assert ao.weighted_park_count([{"distance_m": 2100.0}], 2000.0) == 0.0
+
+
+def _term(parks, area_type, expectations, act):
     return ao._score_daily_urban_outdoors_v2(parks, [], [], area_type, expectations, activity_per_acre=act)
 
 
 def test_term_ignores_area_type_when_factor_given():
     parks = _parks(10)
-    a = _count_term(parks, "exurban", {"expected_parks_within_1km": 1}, 25)
-    b = _count_term(parks, "urban_residential", {"expected_parks_within_1km": 90}, 25)
+    a = _term(parks, "exurban", {"expected_parks_within_1km": 1}, 25)
+    b = _term(parks, "urban_residential", {"expected_parks_within_1km": 90}, 25)
     assert a == pytest.approx(b)
 
 
-def test_only_parks_inside_baseline_radius_count():
-    near = _count_term(_parks(8), "suburban", {}, 25)
-    padded = _count_term(_parks(8, n_beyond=30), "suburban", {}, 25)
-    assert near == pytest.approx(padded)
+def test_parks_for_count_supplies_the_wider_list():
+    local_only = _parks(3)
+    wide = local_only + _parks(0, n_beyond=20)
+    narrow = ao._score_daily_urban_outdoors_v2(local_only, [], [], "suburban", {}, activity_per_acre=25)
+    wider = ao._score_daily_urban_outdoors_v2(local_only, [], [], "suburban", {}, activity_per_acre=25, parks_for_count=wide)
+    assert wider > narrow
 
 
 def test_falls_back_to_table_without_factor():
     parks = _parks(10)
-    table = ao._score_daily_urban_outdoors_v2(parks, [], [], "suburban", {"expected_parks_within_1km": 64})
-    assert table == pytest.approx(ao._score_daily_urban_outdoors_v2(
-        parks, [], [], "suburban", {"expected_parks_within_1km": 64}, activity_per_acre=None))
-    with_factor = _count_term(parks, "suburban", {"expected_parks_within_1km": 64}, 25)
-    assert with_factor > table
+    exp = {"expected_parks_within_1km": 64}
+    table = ao._score_daily_urban_outdoors_v2(parks, [], [], "suburban", exp)
+    assert table == pytest.approx(ao._score_daily_urban_outdoors_v2(parks, [], [], "suburban", exp, activity_per_acre=None))
+    assert _term(parks, "suburban", exp, 25) > table

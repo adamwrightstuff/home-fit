@@ -1,5 +1,5 @@
 """
-Build data/active_outdoors_parks_baseline.json: the expected number of parks within 1,000 m of a pin,
+Build data/active_outdoors_parks_baseline.json: the expected distance-weighted park count within 2,000 m of a pin,
 as a function of people plus jobs per gross acre in the 1 km around it (PlaceContext.activity_per_acre).
 
 The value is an empirical peer median from one version of the pillar's park query, not a published
@@ -9,19 +9,22 @@ standard. Rolling median over places sorted by activity, evaluated at fixed knot
 Inputs (not in the repo):
   --places  JSON list of {"name", "state", "act"}   act = activity per acre
   --parks   JSON {"<name>|<state>": {"outcome": "overpass_ok", "parks": [{"distance_m": ...}, ...]}}
-            one park query per place at 2,000 m or more, all from the same query version
+            one park query per place at 2,000 m or more (distances beyond RADIUS_M are ignored), all from the same query version
 
 Usage:
   PYTHONPATH=. python3 scripts/baselines/build_active_outdoors_parks_baseline.py --places P --parks Q
 """
 import argparse
 import json
+import math
 import os
 import statistics
 
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                    "data", "active_outdoors_parks_baseline.json")
-RADIUS_M = 1000
+RADIUS_M = 2000
+# Same decay the pillar uses for its nearest-park term (8 * exp(-0.0012 * metres)); one constant, not a new tunable.
+DECAY_PER_M = 0.0012
 KNOTS = [2, 5, 10, 15, 25, 45, 100, 200]
 WINDOW = 100  # places in the rolling median, centered on the knot
 
@@ -53,14 +56,15 @@ def main() -> None:
         r = parks.get(f"{p['name']}|{p['state']}")
         if p.get("act") is None or not r or r.get("outcome") != "overpass_ok":
             continue
-        rows.append((float(p["act"]), sum(1 for x in r["parks"] if x["distance_m"] <= RADIUS_M)))
+        rows.append((float(p["act"]), round(sum(math.exp(-DECAY_PER_M * x["distance_m"]) for x in r["parks"] if x["distance_m"] <= RADIUS_M), 3)))
 
     values = fit(rows)
     # Split-half check: same fit on two interleaved halves, so the stability is recorded with the data.
     ordered = sorted(rows)
     halves = [fit(ordered[0::2], window=WINDOW // 2), fit(ordered[1::2], window=WINDOW // 2)]
     doc = {
-        "measure": "parks within radius_m of the pin, median of catalog places at similar activity per acre",
+        "measure": "sum over parks within radius_m of exp(-decay_per_m * distance_m); median of catalog places at similar activity per acre",
+        "decay_per_m": DECAY_PER_M,
         "radius_m": RADIUS_M,
         "x": "people plus jobs per gross acre in the 1 km around the pin",
         "interpolation": "log-log between knots; below the first knot and above the last, hold the end value",
