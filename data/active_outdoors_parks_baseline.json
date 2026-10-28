@@ -1,0 +1,51 @@
+{
+  "measure": "parks within radius_m of the pin, median of catalog places at similar activity per acre",
+  "radius_m": 1000,
+  "x": "people plus jobs per gross acre in the 1 km around the pin",
+  "interpolation": "log-log between knots; below the first knot and above the last, hold the end value",
+  "knots": [
+    2,
+    5,
+    10,
+    15,
+    25,
+    45,
+    100,
+    200
+  ],
+  "expected_parks": [
+    2.0,
+    5.0,
+    7.0,
+    8.5,
+    9.0,
+    16.5,
+    37.0,
+    47.5
+  ],
+  "split_half": [
+    [
+      2.0,
+      5.0,
+      7.0,
+      7.5,
+      12.5,
+      17.0,
+      35.0,
+      45.5
+    ],
+    [
+      2.0,
+      5.0,
+      7.0,
+      9.0,
+      9.0,
+      16.0,
+      37.5,
+      50.0
+    ]
+  ],
+  "n_places": 931,
+  "status": "empirical peer median, not a published standard; fit on 11 states with a private Overpass server",
+  "window_places": 100
+}
