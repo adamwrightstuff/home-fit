@@ -41,3 +41,50 @@ differentiate much within an urban core. See PILLAR_DATA_QUALITY.
 - High scores cluster at the ceiling in cities — don't expect healthcare to separate dense
   neighborhoods. It differentiates mainly in suburban/exurban/rural areas where distance bites.
 - It's an *access* pillar (can you reach care), not a *quality* pillar (how good the care is).
+
+---
+
+## DPv2 spec sheet and audit (2026-10-29)
+
+```
+Pillar: healthcare_access
+Construct (one sentence): Access to care near the pin: how close the nearest hospital, emergency room and pharmacy are,
+  and how many clinics and doctors there are per resident within 10 km.
+Reference frame: fixed standard for distance (published drive-time and pharmacy-desert thresholds); catalog-median scale for
+  the per-resident clinic and doctor supply (descriptive, not an external standard).
+  Evidence for the frame: tier 1 for distance anchors (emergency department access study, 2009; pharmacy desert thresholds,
+  2024 national study). Supply scale: none yet (TODO).
+Measurement area: pin + one 10 km radius for every place (no area type).
+  Reason: matches the OpenStreetMap read; facilities and residents are counted in the same disk. A drive-time catchment would
+  be better (TODO).
+Inputs and data sources (with vintage): OpenStreetMap hospitals, urgent care, clinics, doctors, pharmacies (private Overpass
+  read, fresh 2026-10-28); residents within 10 km from the 2020 tract tables (density x disk area, carried on the place
+  context as people_10km); NPI registry for specialty counts when tags are absent (live only).
+Parameters:
+  hospital distance curve | 15 x exp(-km / 15), floor 14% | unsourced; close to published points under an assumed speed | unknown | not run
+  clinics+doctors per 1,000 residents | 0.0747 (catalog median) | descriptive, TODO benchmark | not set | not run
+  pharmacy distance | full to 0.5 mile, half at 1 mile, 5% at 10 miles | anchors published, shape is judgment | not set | not run
+  emergency distance | same curve as hospital distance, 10 points | as above | unknown | not run
+  point budgets 35/25/15/10/15 | inherited | unsourced | unknown | not run
+Shared inputs with other pillars: none known.
+Pin-shift sensitivity: NOT RUN (needs live reads at shifted pins).
+Independent validation source and result: NOT RUN. Candidates: federal health professional shortage area designations,
+  CMS hospital locations.
+All-places check (date, n, summary): 2026-10-29, n=1,462. Mean 72.7, median 77.7, 10th to 90th percentile 44 to 96.
+  By area type (10th / median / 90th): urban residential 77 / 88 / 99; suburban 55 / 79 / 96; exurban 41 / 66 / 92;
+  rural 11 / 42 / 79. Only 1.8 percent score 99.9 or more and 1.0 percent score 10 or less, so no floor or ceiling clumping.
+Fail-loud conditions: a failed OpenStreetMap read raises (no data); Places recovery is flagged degraded; residents
+  unmeasurable leaves the capacity part out and scales over the rest; no pharmacy near mapped clinics or hospitals leaves
+  pharmacies out (6 places) and flags it.
+Launch check pairs: should differ: Park Slope 96.9 vs Magnolia TX 23.5 (pass); Midtown 95.4 vs Galt CA 4.4 (pass).
+  Should be similar: Park Slope 96.9 and Brooklyn Heights 96.5 (pass); Palo Alto 96.6 and Park Slope 96.9 (pass).
+Known data limits: OpenStreetMap tagging gaps (16 places show no facility of any kind within 10 km, including towns such
+  as Galt, CA, and are scored as real zeros, which may be a gap, not an absence); facilities are counted, not providers or
+  capacity; straight-line distance, not drive time; specialty tags are sparse so specialized care mostly measures tagging;
+  hospital count is not scored (decided 2026-10-28).
+Last re-validated: 2026-10-29 (all-places and launch pairs only).
+```
+
+Open audit findings: (1) pin-shift sensitivity and independent validation are not run; (2) every curve parameter except the
+pharmacy anchors lacks a source and a plausible range; (3) the 16 nothing-mapped places should be reviewed under principle 9
+(a believable wrong number is worse than a null); (4) the supply scale and hospital curve need published benchmarks.

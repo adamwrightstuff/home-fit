@@ -125,3 +125,22 @@ def test_hospital_count_does_not_change_the_score_only_distance_does(monkeypatch
     assert bd1["breakdown"]["hospital_access"] == bd9["breakdown"]["hospital_access"]
     # only the small bonus for extra hospitals differs
     assert 0 <= s9 - s1 <= 5.0
+
+
+def test_pillar_reads_residents_from_the_place_context(monkeypatch):
+    import pillars.healthcare_access as hc
+    from data_sources.place_context import PlaceContext
+
+    def boom(*a, **k):
+        raise AssertionError("pillar recomputed residents although the context carries them")
+
+    data = {
+        "hospitals": [{"name": "H", "distance_km": 2.0, "tags": {"emergency": "yes"}}],
+        "urgent_care": [], "clinics": [{"name": "C", "distance_km": 1.0}], "pharmacies": [{"name": "P", "distance_km": 0.4}],
+        "doctors": [], "_query_failed": False,
+    }
+    monkeypatch.setattr(hc, "_get_osm_healthcare", lambda *a, **k: dict(data))
+    monkeypatch.setattr(hc, "people_within", boom)
+    ctx = PlaceContext(lat=40.7, lon=-74.0, city=None, area_type="suburban", density=4000.0, people_10km=250000.0)
+    score, bd = hc.get_healthcare_access_score(40.7, -74.0, place_context=ctx)
+    assert score > 0 and bd["breakdown"]["primary_care"] is not None

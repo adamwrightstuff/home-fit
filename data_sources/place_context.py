@@ -60,6 +60,7 @@ class PlaceContext:
     jobs_1km: Optional[float] = None             # workplace jobs in the circle (None: jobs grid does not cover it)
     density_method: Optional[str] = None         # "disk", "pin_tract" or "nearest_tract"
     in_principal_city: Optional[bool] = None     # inside a named principal city; None when unknown
+    people_10km: Optional[float] = None          # residents within 10 km (density x disk area); healthcare compares facilities to it
 
     def businesses_for_radius(self, radius_m: float, include_chains: bool, vacation_mode: bool):
         """
@@ -115,7 +116,7 @@ def surrounding_factors(lat: float, lon: float, census_tract: Optional[Any] = No
     The continuous factors for a place, as PlaceContext keyword arguments. Same inputs as detect_area_type, so the
     area type and these factors always come from the same measurement.
     """
-    from data_sources.surrounding_density import surrounding_stats
+    from data_sources.surrounding_density import surrounding_stats, people_within
     from data_sources.principal_city import principal_city_at
     tract = census_tract if isinstance(census_tract, dict) else {}
     geoid = None
@@ -123,14 +124,16 @@ def surrounding_factors(lat: float, lon: float, census_tract: Optional[Any] = No
         geoid = f"{tract['state_fips']}{tract['county_fips']}{tract['tract_fips']}"
     stats = surrounding_stats(lat, lon, tract_geoid=geoid)
     in_pc = principal_city_at(lat, lon, tract.get("state_fips"))
+    people_10km = people_within(lat, lon, 10000)
     if stats is None:
-        return {"in_principal_city": in_pc}
+        return {"in_principal_city": in_pc, "people_10km": people_10km}
     return {
         "people_density_1km": stats.people_density,
         "activity_per_acre": stats.activity_per_acre,
         "jobs_1km": stats.jobs,
         "density_method": stats.density_method,
         "in_principal_city": in_pc,
+        "people_10km": people_10km,
     }
 
 

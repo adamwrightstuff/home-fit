@@ -214,13 +214,9 @@ def _load_supply_scale() -> Optional[Dict]:
 
 
 def people_within(lat: float, lon: float, radius_m: int = HEALTHCARE_RADIUS_M) -> Optional[float]:
-    """Residents within the radius, estimated as density x disk area from the local tract tables. None when unmeasurable."""
-    from data_sources.surrounding_density import surrounding_stats
-    stats = surrounding_stats(lat, lon, radius_m=int(radius_m))
-    if stats is None or not stats.people_density:
-        return None
-    sq_mi = math.pi * (radius_m / 1609.344) ** 2
-    return float(stats.people_density) * sq_mi
+    """Residents within the radius (local tract tables). The place context carries this for live requests; catalog scripts call it."""
+    from data_sources.surrounding_density import people_within as _people_within
+    return _people_within(lat, lon, radius_m)
 
 
 def capacity_score(count: int, residents: Optional[float], expected_per_unit: float, unit: float, max_score: float) -> Optional[float]:
@@ -610,7 +606,7 @@ def get_healthcare_access_score(lat: float, lon: float,
     # One radius and one scale for every place: no area type or density table. Capacity parts compare the facilities
     # within the radius to the residents within it (catalog-median supply per resident, data/healthcare_supply_scale.json).
     fac_radius_m = pharm_radius_m = HEALTHCARE_RADIUS_M
-    residents = people_within(lat, lon, HEALTHCARE_RADIUS_M)
+    residents = ctx.people_10km if getattr(ctx, "people_10km", None) is not None else people_within(lat, lon, HEALTHCARE_RADIUS_M)
     supply_scale = _load_supply_scale() or {}
     exp_prim_per_1000 = float(supply_scale.get("expected_clinics_doctors_per_1000") or 0.0)
     print(f"   🔧 Healthcare: radius={HEALTHCARE_RADIUS_M}m, residents within radius={'unknown' if residents is None else round(residents)}")
