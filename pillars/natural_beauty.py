@@ -73,6 +73,18 @@ ENABLE_NATURAL_BEAUTY_V9 = True
 # Version stamp written to details.scoring_formula when V9 mode is on. v10 = two-part score (streets + scenery,
 # 2026-10); v9 was the six-component OWA. The flag name is kept for compatibility.
 NATURAL_BEAUTY_SCORING_FORMULA = "v10"
+# Water scored by the best type within reach instead of the OSM query's nearest-body rule (P6 pin-shift and P7
+# face-validity findings, 2026-10-29).  Off until the catalog is re-read; breakdown always carries
+# water_score_best_type so the effect can be measured with the flag off.
+# Known limits of this pillar, returned in data_quality.data_limits on every response (design principles v2, P11).
+# Detail and evidence: docs/PILLAR_NATURAL_BEAUTY.md.
+NATURAL_BEAUTY_DATA_LIMITS = (
+    "Street greenery comes from satellite imagery and runs higher than street-view studies; green view and canopy are scored against unsourced regional medians, so scores in arid regions depend on that choice.",
+    "Water is scored from the nearest OpenStreetMap water body of the best-matching type; tidal straits such as the East River can count as ocean, and the type can change with small pin moves (pin shift can exceed 5 points at 500 m).",
+    "Beauty validation is partial: no human rating data covers deserts or the final blend, and component tests (Place Pulse photos 2007 to 2012, ScenicOrNot Britain only) correlate 0.3 to 0.7.",
+    "Pillar confidence reflects whether inputs were present, not their quality; check degraded and degraded_reasons.",
+)
+NB_WATER_BEST_TYPE = os.getenv("NB_WATER_BEST_TYPE", "0") == "1"
 
 # Personalization: weight profiles from "What kind of natural scenery matters most to you?" quiz.
 ENABLE_NATURAL_BEAUTY_PREFERENCE = True
@@ -2754,6 +2766,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "viewshed": natural_context_components.get("viewshed", 0),
             "water_proximity_available": bool(water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None),
             "water_proximity_nearest_km": water_proximity_data.get("nearest_distance_km") if water_proximity_data else None,
+            "water_by_type": _water_by_type(water_proximity_data),
             "relief_m": relief,
             "landcover_available": bool(landcover_metrics),
             "topography_available": bool(topography_metrics)
@@ -4176,6 +4189,49 @@ def _v9_score_water(dist_km: Optional[float], water_type: Optional[str],
     return max(3.0, max_score * math.exp(-decay * dist_km))
 
 
+def _water_by_type(water_proximity_data: Optional[Dict]) -> Optional[Dict[str, float]]:
+    """Nearest distance (km) per water type from the OSM feature list: {"ocean": d, "lake": d, "river": d}.
+    Same admission rules as the nearest-body pick (lakes need area >= 0.02 km2 or <= 0.8 km, streams <= 0.5 km),
+    so a pond or ditch never counts.  None when there is no feature list.  Only the 20 nearest features are
+    returned by the OSM query, so a type beyond them is not seen."""
+    feats = (water_proximity_data or {}).get("water_features")
+    if not isinstance(feats, list):
+        return None
+    best: Dict[str, float] = {}
+    for f in feats:
+        d, t = f.get("distance_km"), str(f.get("type") or "").lower()
+        if not isinstance(d, (int, float)):
+            continue
+        if t in ("ocean", "bay", "coastline", "coast"):
+            k = "ocean"
+        elif t in ("lake", "reservoir"):
+            if not (float(f.get("area_km2") or 0.0) >= 0.02 or d <= 0.8):
+                continue
+            k = "lake"
+        elif t == "river":
+            k = "river"
+        elif t == "stream":
+            if d > 0.5:
+                continue
+            k = "river"
+        else:
+            continue
+        best[k] = min(best.get(k, 1e9), float(d))
+    return best or None
+
+
+def _v9_score_water_best_type(by_type: Optional[Dict[str, float]]) -> Optional[tuple]:
+    """Best water score over every type within reach, as (score, type, km): each type is scored by the usual
+    curve at its own nearest distance and the highest wins.  Replaces the hand-built rule in the OSM query
+    (ocean within 4 km wins unless a major river sits within twice that distance), whose switch flips a
+    place between river and ocean when the pin moves a few hundred meters."""
+    if not by_type:
+        return None
+    scored = [(_v9_score_water(d, t, "measured"), t, d) for t, d in by_type.items()]
+    scored = [x for x in scored if x[0] is not None]
+    return max(scored, key=lambda x: x[0]) if scored else None
+
+
 def _v9_score_canopy(canopy_pct: float) -> float:
     """Canopy % → 0-100. Diminishing returns above 45%."""
     if not canopy_pct or canopy_pct <= 0:
@@ -4546,6 +4602,10 @@ def _apply_v9_formula(
 
     gvi_score = _v9_score_gvi(gvi_normalized) if gvi_normalized is not None else None
     water_score = _v9_score_water(water_dist_km, water_type, water_status)
+    _best = _v9_score_water_best_type(dbg.get("water_by_type")) if water_status == "measured" else None
+    water_score_best_type = round(_best[0], 2) if _best else None
+    if _best and NB_WATER_BEST_TYPE:
+        water_score, water_type, water_dist_km = _best
     canopy_score = _v9_score_canopy(canopy_normalized) if canopy_normalized is not None else None
     topo_score = _v9_score_topo(float(topo_raw)) if topo_raw is not None else None
     if water_score is None:
@@ -4582,6 +4642,7 @@ def _apply_v9_formula(
         "missing_parts": None,
         "degraded_reasons": degraded_reasons or None,
         "water_status": water_status,
+        "water_score_best_type": water_score_best_type,
         "streets_score": parts["streets"],
         "scenery_score": parts["scenery"],
         "blend_raw": parts["blend"],

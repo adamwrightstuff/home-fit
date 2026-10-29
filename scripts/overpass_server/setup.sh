@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Build a private Overpass server for the 11 states HomeFit scores. Run ON the rented server, as root.
+# Build a private Overpass server for the 14 states HomeFit scores. Run ON the rented server, as root.
 # Untested end to end: check each step's output the first time. See docs/PRIVATE_OVERPASS.md.
 set -euo pipefail
 
 WORK=/srv/overpass
-STATES=(new-york new-jersey connecticut california washington texas illinois indiana pennsylvania delaware maryland)
+STATES=(new-york new-jersey connecticut california washington texas illinois indiana pennsylvania delaware maryland colorado arizona nevada)
 BASE=https://download.geofabrik.de/north-america/us
 
 apt-get update
