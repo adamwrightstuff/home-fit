@@ -144,3 +144,24 @@ def test_pillar_reads_residents_from_the_place_context(monkeypatch):
     ctx = PlaceContext(lat=40.7, lon=-74.0, city=None, area_type="suburban", density=4000.0, people_10km=250000.0)
     score, bd = hc.get_healthcare_access_score(40.7, -74.0, place_context=ctx)
     assert score > 0 and bd["breakdown"]["primary_care"] is not None
+
+
+def _empty_read(monkeypatch):
+    import pillars.healthcare_access as hc
+    empty = {"hospitals": [], "urgent_care": [], "clinics": [], "pharmacies": [], "doctors": [], "_query_failed": False}
+    monkeypatch.setattr(hc, "_get_osm_healthcare", lambda *a, **k: dict(empty))
+    return hc
+
+
+def test_empty_read_next_to_a_known_hospital_is_a_failed_read_not_a_zero(monkeypatch):
+    import pytest
+    hc = _empty_read(monkeypatch)
+    # Mass General Hospital, Boston: the major hospital database lists it, so an all-empty read here cannot be real
+    with pytest.raises(RuntimeError, match="known hospital"):
+        hc.get_healthcare_access_score(42.3631, -71.0686, area_type="urban_residential", density=20000.0)
+
+
+def test_empty_read_with_no_known_hospital_nearby_stays_a_real_zero(monkeypatch):
+    hc = _empty_read(monkeypatch)
+    score, bd = hc.get_healthcare_access_score(40.0, -105.5, area_type="rural", density=50.0)  # remote Colorado, no listed hospital within 10 km
+    assert bd["breakdown"]["pharmacies"] == 0.0 and score < 10

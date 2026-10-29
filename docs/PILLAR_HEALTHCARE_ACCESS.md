@@ -113,3 +113,14 @@ Last re-validated: 2026-10-29 (all-places, launch pairs, pin-shift, independent 
 Open audit findings: (1) independent validation ran on a subset only (668 of 1,476 places for distance), shortage-area check is inconclusive, pharmacy distance is unvalidated; (2) every curve parameter except the
 pharmacy anchors lacks a source and a plausible range; (3) the nothing-mapped places are resolved (real absences); the open issue is an empty read being accepted as a real zero
 (see the Spring Branch outlier), which a hospital-database cross-check could catch; (4) the supply scale and hospital curve need published benchmarks.
+
+### Follow-up after the audit (2026-10-29)
+- Empty-read guard: an OpenStreetMap read with nothing in it is treated as a failed read (raised, retried) when the major hospital
+  database lists a hospital within 10 km; with no listed hospital nearby it stays a real zero. Prompted by the Spring Branch, TX
+  pin-shift outlier (79.4 to 4.4). Tests in `tests/test_healthcare_pharmacy_distance.py`.
+- The two OpenStreetMap gap candidates from validation (checked from stored data, 2026-10-29): Agoura Hills, CA and Bainbridge
+  Island, WA have no hospital in their 10 km OpenStreetMap read, and the major hospital database (major medical centers only)
+  lists none nearby either (nearest 30.6 km and 14.3 km), so their hospital access (2.1 and 5.8 of 35) and emergency (1.4 and 3.9
+  of 10) parts are scored from far hospitals while the independent list (HIFLD) places a hospital at 4.98 km and 9.02 km. Their
+  scores (57.2 and 59.6) are understated on these parts. The guard does not fire (the reads are not empty). Fixing it means
+  using a fuller hospital list as the fallback (for example HIFLD), a change that needs a decision and a download.

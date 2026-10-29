@@ -621,6 +621,8 @@ def get_healthcare_access_score(lat: float, lon: float,
     clinics = healthcare_facilities.get("clinics", [])
     doctors = healthcare_facilities.get("doctors", [])
     query_failed = healthcare_facilities.get("_query_failed", False)
+    # An OpenStreetMap answer with nothing in it at all (taken before the hospital database is merged in below)
+    osm_read_empty = not (hospitals or urgent_care or pharmacies or clinics or doctors)
     
     # FALLBACK: Use MAJOR_HOSPITALS database if OSM query failed or returned no hospitals
     # This ensures we have hospital data even when OSM is unavailable (rate limits, timeouts, etc.)
@@ -659,6 +661,16 @@ def get_healthcare_access_score(lat: float, lon: float,
     ) > 0
     if query_failed and not places_recovered:
         raise RuntimeError("healthcare facility read failed (Overpass); no data until it is retried")
+
+    # An empty answer is not trusted as "no facilities" when the major hospital database lists a hospital inside the search
+    # radius: a 1 km pin shift once turned a score of 79 into 4 this way. Treat it as a failed read (retried), not a zero.
+    if osm_read_empty and not query_failed and not places_recovered:
+        known_near = _get_fallback_hospitals(lat, lon, max_distance_km=HEALTHCARE_RADIUS_M / 1000.0)
+        if known_near:
+            raise RuntimeError(
+                "healthcare facility read came back empty but a known hospital is within "
+                f"{HEALTHCARE_RADIUS_M // 1000} km ({known_near[0].get('name')}); treated as a failed read, retried later"
+            )
 
     # Log warning if no data found (could indicate OSM failure)
     if not hospitals and not urgent_care and not pharmacies and not clinics and not doctors:
