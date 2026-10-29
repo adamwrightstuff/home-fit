@@ -186,5 +186,19 @@ Mean 39.25 before and after by construction. 670 of 1,476 places move more than 
 - Ferry (route type 4) is not counted anywhere in the pillar. Astoria has two ferry routes within 1,200 m.
 - Route type 2 includes intercity rail such as Amtrak.
 - The summary route counts stored on each row are still the old-radius counts; the area scoring is in `area_sample` on the pillar.
-- The pin-shift test (P6) is not done as such; the nine-point average reduces pin sensitivity but does not measure it.
+- Radius sensitivity is not measured: counts exist only at 800 m and 1,200 m, so a different radius needs a re-fetch. A pin-shift test is not the right check for an area average.
 - Open: the live pillar needs 18 Transitland calls per request instead of about 2, so it needs a latency test, caching and a timeout fallback before it ships.
+
+### Sensitivity (P6), area-average model, catalog mean 39.3
+Offline from the saved sample points (`scripts/catalog/sensitivity_transit_area.py`), one parameter at a time at anchor 44.42. Per-place change in transit points (median / 95th percentile / max) and change in the catalog mean:
+
+| Parameter across its range | Per-place change | Catalog mean |
+|---|---|---|
+| Commuter rail weight 2 to 4 | 1.3 to 1.4 / 5.2 to 6.6 / 8.4 | -2.2 to +1.8 |
+| Light rail weight 1 to 3 | 0.0 / 2.5 to 3.0 / 13.7 | -0.4 to +0.3 |
+| Subway weight 2 to 4 | 0.0 / 2.6 to 3.2 / 7.2 | -0.4 to +0.3 |
+| Bus weight 0.5 to 1.0 | 2.2 to 3.0 / 5.6 to 6.6 / 8.8 | -2.3 to +2.9 |
+| Commuter drive credit cut at 4.93 mi (75th percentile) instead of 6.2 mi | 0.0 / 3.7 / 14.6 | -0.5 |
+| No commuter drive credit | 0.0 / 19.2 / 33.1 | -4.1 |
+
+The bus and commuter rail weights move the catalog mean most among the weights (about 2 to 3 points). The drive credit leaves the median place unchanged but moves the 95th percentile place by 19 points when removed.
