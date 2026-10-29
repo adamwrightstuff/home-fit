@@ -17,7 +17,7 @@ def _routes(n_sub=0, n_com=0, n_light=0, n_bus=0):
 
 
 def _supply(w):
-    return 0.0 if w <= 0 else 100.0 * min(1.0, math.log(1.0 + w) / math.log(121.0))
+    return 0.0 if w <= 0 else 100.0 * min(1.0, math.log(1.0 + w) / math.log(1.0 + pt.AREA_ANCHOR))
 
 
 @pytest.fixture(autouse=True)
@@ -31,9 +31,17 @@ def _offline(monkeypatch):
     monkeypatch.setattr(census_api, "get_commute_time_stable", lambda *a, **k: 39.0)
 
 
-def _score(routes, area_type="exurban"):
+def _counts(routes):
+    by = {t: sum(1 for r in routes if r["route_type"] == t) for t in (0, 1, 2, 3)}
+    return {"subway": by[1], "commuter_rail": by[2], "light_rail": by[0], "bus": by[3]}
+
+
+def _score(routes, area_type="exurban", nearest_rail_m=None, counts_at=None):
     import unittest.mock as m
-    with m.patch.object(pt, "_get_nearby_routes", lambda *a, **k: routes):
+    c = _counts(routes)
+    with m.patch.object(pt, "_get_nearby_routes", lambda *a, **k: routes), \
+            m.patch.object(pt, "_route_counts_at", counts_at or (lambda *a, **k: c)), \
+            m.patch.object(pt, "_nearest_commuter_rail_m", lambda *a, **k: nearest_rail_m):
         return pt.get_public_transit_score(41.0, -73.7, area_type=area_type, density=1200.0)
 
 
@@ -82,3 +90,24 @@ def test_commuter_rail_town_scores_well_above_bus_only_town_with_same_route_coun
     town, _ = _score(_routes(n_com=2, n_bus=2))
     bus_only, _ = _score(_routes(n_bus=4))
     assert town > bus_only + 15
+
+
+def test_score_is_the_average_over_the_nine_sample_points():
+    full, _ = _score(_routes(n_sub=2))
+    seen = []
+
+    def one_point(lat, lon, radius):
+        seen.append((lat, lon))
+        return _counts(_routes(n_sub=2)) if len(set(seen)) == 1 else _counts([])
+
+    partial, bd = _score(_routes(n_sub=2), counts_at=one_point)
+    assert partial == pytest.approx(full / 9, abs=0.1)
+    assert bd["area_sample"]["points"] == 9
+
+
+def test_commuter_rail_beyond_walking_earns_a_drive_credit_that_falls_with_distance():
+    none = lambda *a, **k: _counts([])
+    near, _ = _score(_routes(n_bus=1), nearest_rail_m=2000, counts_at=none)
+    far, _ = _score(_routes(n_bus=1), nearest_rail_m=7000, counts_at=none)
+    gone, _ = _score(_routes(n_bus=1), nearest_rail_m=10000, counts_at=none)
+    assert near > far > gone == 0.0
