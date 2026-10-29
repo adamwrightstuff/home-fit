@@ -74,8 +74,26 @@ Pin-shift sensitivity (2026-10-29, 60 places, 15 per area type, shifts north, ea
   with a 1 km shift north, which cannot be real (a 1 km move cannot remove every facility within 10 km); it looks like a
   transient partial read recorded as empty, and it alone drives the rural 95th percentile of 62. Excluding it, the largest
   change is 16.4 (Steiner Ranch, TX). Finding: an all-empty read is accepted as a real zero (principle 9 risk).
-Independent validation source and result: NOT RUN. Candidates: federal health professional shortage area designations,
-  CMS hospital locations.
+Independent validation source and result (2026-10-29, run by Muse; no scoring changed, no API key used; pass criteria locked
+  before results; subset only, see below):
+  Subset: 668 places matched for distance, 416 for stored scores, 49 counties. The fresh read has 1,474 places; 806 had no
+  coordinates or stored score in the snapshot Muse used, so the full catalog was NOT validated. A rerun on the full catalog is open.
+  1. Nearest hospital vs HIFLD hospitals (open facilities): n=656, Spearman 0.923, median absolute difference 0.03 km. PASS (>= 0.7).
+  2. Nearest emergency-room hospital vs CMS Emergency Services flag joined to HIFLD, or HIFLD acute/critical-access/children types:
+     n=652, Spearman 0.916. PASS. CMS flag alone: Spearman 0.613, FAIL, because the name join is incomplete, so the ER result
+     depends on the proxy definition. Places off by more than 5 km are listed in Muse's write-up (a Texas cluster where OSM is
+     much nearer than HIFLD, and a few reverse cases such as Chester PA and Livermore CA). Two OSM gap candidates among 12 places
+     with no OSM hospital: Agoura Hills CA and Bainbridge Island WA.
+  3. Primary care capacity vs County Health Rankings 2025 primary care physicians per 100,000: 49 counties, Spearman 0.437
+     (p = 0.002). PASS (>= 0.3), moderate as expected (facilities versus physicians; partly a density effect).
+  4. Federal primary care shortage areas (HRSA geographic and high-needs geographic, designated): only 1 place inside (Bainbridge
+     Island WA, 63.3 vs 79.1 mean outside). Nominal PASS, effectively INCONCLUSIVE (n = 1); not usable as evidence.
+  5. Road distance to the nearest ER hospital (OSRM demo server, free-flow, 100/100 routes): road/straight-line median 1.27 to
+     1.45 by area type (urban residential 1.45, suburban 1.33, exurban 1.34, urban core 1.45, rural 1.27), no strong gradient.
+     Median drive times 4 to 12 minutes. Sourced conversion: straight-line x about 1.3 to 1.45. The "rural" sample is exurban
+     CT/NY/CA, not remote rural, so do not adopt per-type factors from it. This fills the straight-line-to-road TODO.
+  Not validated: pharmacy distance (no free national pharmacy list found). The hospital distance curve itself (decay 15 km)
+  is still unsourced; the road factor now lets the published 30 and 60 minute anchors be mapped to distance (to be done).
 All-places check (date, n, summary): 2026-10-29, n=1,462. Mean 72.7, median 77.7, 10th to 90th percentile 44 to 96.
   By area type (10th / median / 90th): urban residential 77 / 88 / 99; suburban 55 / 79 / 96; exurban 41 / 66 / 92;
   rural 11 / 42 / 79. Only 1.8 percent score 99.9 or more and 1.0 percent score 10 or less, so no floor or ceiling clumping.
@@ -89,9 +107,9 @@ Known data limits: 16 places show no facility of any kind within 10 km. Re-read 
   nothing within 20 km, so these are real rural absences, not map gaps; the real-zero scoring stands; facilities are counted, not providers or
   capacity; straight-line distance, not drive time; specialty tags are sparse so specialized care mostly measures tagging;
   hospital count is not scored (decided 2026-10-28).
-Last re-validated: 2026-10-29 (all-places and launch pairs only).
+Last re-validated: 2026-10-29 (all-places, launch pairs, pin-shift, independent validation on a subset).
 ```
 
-Open audit findings: (1) independent validation is not run (pin-shift is done, see above); (2) every curve parameter except the
+Open audit findings: (1) independent validation ran on a subset only (668 of 1,476 places for distance), shortage-area check is inconclusive, pharmacy distance is unvalidated; (2) every curve parameter except the
 pharmacy anchors lacks a source and a plausible range; (3) the nothing-mapped places are resolved (real absences); the open issue is an empty read being accepted as a real zero
 (see the Spring Branch outlier), which a hospital-database cross-check could catch; (4) the supply scale and hospital curve need published benchmarks.
