@@ -67,7 +67,13 @@ Parameters:
   emergency distance | same curve as hospital distance, 10 points | as above | unknown | not run
   point budgets 35/25/15/10/15 | inherited | unsourced | unknown | not run
 Shared inputs with other pillars: none known.
-Pin-shift sensitivity: NOT RUN (needs live reads at shifted pins).
+Pin-shift sensitivity (2026-10-29, 60 places, 15 per area type, shifts north, east, south, west, 480 fresh reads):
+  500 m shift: median score change 0.9, 95th percentile 5.5. 1,000 m shift: median 1.9, 95th percentile 11.4.
+  By area type (median / 95th, both distances): urban residential 1.0 / 5.5; suburban 1.5 / 6.2; exurban 1.6 / 9.3.
+  4.2 percent of shifted reads move the score by more than 10. One outlier: Spring Branch, TX (rural) fell from 79.4 to 4.4
+  with a 1 km shift north, which cannot be real (a 1 km move cannot remove every facility within 10 km); it looks like a
+  transient partial read recorded as empty, and it alone drives the rural 95th percentile of 62. Excluding it, the largest
+  change is 16.4 (Steiner Ranch, TX). Finding: an all-empty read is accepted as a real zero (principle 9 risk).
 Independent validation source and result: NOT RUN. Candidates: federal health professional shortage area designations,
   CMS hospital locations.
 All-places check (date, n, summary): 2026-10-29, n=1,462. Mean 72.7, median 77.7, 10th to 90th percentile 44 to 96.
@@ -78,13 +84,14 @@ Fail-loud conditions: a failed OpenStreetMap read raises (no data); Places recov
   pharmacies out (6 places) and flags it.
 Launch check pairs: should differ: Park Slope 96.9 vs Magnolia TX 23.5 (pass); Midtown 95.4 vs Galt CA 4.4 (pass).
   Should be similar: Park Slope 96.9 and Brooklyn Heights 96.5 (pass); Palo Alto 96.6 and Park Slope 96.9 (pass).
-Known data limits: OpenStreetMap tagging gaps (16 places show no facility of any kind within 10 km, including towns such
-  as Galt, CA, and are scored as real zeros, which may be a gap, not an absence); facilities are counted, not providers or
+Known data limits: 16 places show no facility of any kind within 10 km. Re-read at 20 km (2026-10-29), 8 of the 11 checked
+  have hospitals 11 to 19 km away (Galt, CA 14 km, Elmendorf, TX 15 km), and Esparto, Georgetown and Comfort have almost
+  nothing within 20 km, so these are real rural absences, not map gaps; the real-zero scoring stands; facilities are counted, not providers or
   capacity; straight-line distance, not drive time; specialty tags are sparse so specialized care mostly measures tagging;
   hospital count is not scored (decided 2026-10-28).
 Last re-validated: 2026-10-29 (all-places and launch pairs only).
 ```
 
-Open audit findings: (1) pin-shift sensitivity and independent validation are not run; (2) every curve parameter except the
-pharmacy anchors lacks a source and a plausible range; (3) the 16 nothing-mapped places should be reviewed under principle 9
-(a believable wrong number is worse than a null); (4) the supply scale and hospital curve need published benchmarks.
+Open audit findings: (1) independent validation is not run (pin-shift is done, see above); (2) every curve parameter except the
+pharmacy anchors lacks a source and a plausible range; (3) the nothing-mapped places are resolved (real absences); the open issue is an empty read being accepted as a real zero
+(see the Spring Branch outlier), which a hospital-database cross-check could catch; (4) the supply scale and hospital curve need published benchmarks.
