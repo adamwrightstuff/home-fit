@@ -107,12 +107,10 @@ Reference frame: mixed. Terrain and water are an absolute national scale. Green 
 Measurement area: pin + radius, per input (green view 1.2 km, canopy 0.4/1/2 km weighted 0.5/0.35/0.15,
   terrain 5 km, water nearest body within 15 km).
   Reason: perceptual, so a viewing area, not a walk-time. The radii are carried over from earlier versions; no
-  recorded source for any of them (P3 open). Area type reaches the score only here: the primary canopy read radius
-  is 800 m (urban residential/historic), 1,000 m (urban core, or neighborhood scope) or 2,000 m (suburban,
-  exurban, rural) via `radius_profiles`, and an urban-core place with low canopy widens to 2 to 3 km. That is a
-  step at category boundaries; everything else in the score (curves, regional baselines by region box, terrain,
-  water, blend) uses no area type. To retire area type, replace the step with a continuous place-context
-  factor or one fixed radius, tested as a P3/P6 change. Canopy radius is a minor driver (swapping to a single radius moves
+  recorded source for any of them (P3 open). Area type no longer affects this pillar (2026-10-30): green view is
+  read at one radius, 800 m, for every place (a neighborhood-scope request still caps at 1,000 m), chosen from the
+  Place Pulse radius test and the pin-shift test (see the sign-off section). It used to be 800 m (urban residential),
+  1,000 m (urban core) or 1,200 m (everything else), and the urban-core canopy widening is retired. Canopy radius is a minor driver (swapping to a single radius moves
   scores 0.8 to 1.6 points on average, p95 2.5 to 4.9).
 Inputs and data sources (with vintage): GEE canopy (both sources flagged deprecated by Google), GEE green view
   (semantic GVI, NDVI fallback), terrain relief from elevation data, OSM water features (Overpass), NYC tree
@@ -155,9 +153,12 @@ Pin-shift sensitivity: RUN 2026-10-28 (live, 12 places across area types, shifte
   reproduce; 28 older-shape from stored per-dimension scores), composites recomputed. Mean +0.34, range -13.8
   (Hollywood) to +36.3, 18 places moved more than 10; degraded flags for these cleared (health check: 0 degraded
   in NYC, SF, Philadelphia, Seattle; LA keeps 1, San Fernando no data). Backups in
-  `data/backups_nb_water_reread_2026-10-29/` and `..._sync_2026-10-29/`. 53 places in Denver, Phoenix and Las Vegas
-  stay water-unavailable: the private server lacks CO, AZ and NV and returns an empty result there, which would
-  score as "no water", so they must not be read through it. Offline proxy: neighbouring catalog places in
+  `data/backups_nb_water_reread_2026-10-29/` and `..._sync_2026-10-29/`. CORRECTION 2026-10-30: the 53
+  Denver, Phoenix and Las Vegas places once listed here as still water-unavailable were a label artifact, not a
+  failed read: they carry stored water readings and scores, and only the status label said unavailable (rows scored
+  before the field existed). Labels were repaired (1,062 rows) and no place now lacks a water score, so no
+  Overpass server expansion is needed. Never read a state the private server lacks: it returns an empty result that
+  scores as "no water". Offline proxy: neighbouring catalog places in
   the same metro differ by a median 5.4 points within 0.5 mi (n=50) and 8.7 within 1.5 mi (n=795); this includes
   real differences between places, so it is an upper bound.
 Independent validation source and result: partial, none at the 0.7 gate. Streets vs Place Pulse r 0.37;
@@ -262,9 +263,8 @@ Signed off WITH A LIMITATION, not closed:
   continuity, so it inherits whatever the old score got wrong and fixes the catalog mean and spread by
   construction.
 
-Known debt (P3): the area-type step in the canopy radius (800, 1,000 or 2,000 m) is a discontinuity at category
-boundaries. If area type is retired it must be replaced with a continuous function of density or canopy, not
-dropped, or scores will cliff at the old boundaries.
+Resolved 2026-10-30 (was known debt): the area-type step in the green view radius is gone. One 800 m radius is used for
+every place, so there is no cliff at category boundaries and no area-type or place-context dependence in this pillar.
 
 P7 face-validity kit built 2026-10-29 (`scripts/qa/natural_beauty_face_validity.py`, offline): 24 places drawn by
 metro and area type (never by score; 6 arid places oversampled), 60 pairs at least 12 points apart (23 pair an arid
@@ -286,6 +286,21 @@ or flat terrain) are the one pattern both raters reject. Across both raters 86 o
 No human rater is available and the owner accepts LLM raters as the validation for this pillar (2026-10-29), so P7 is accepted as an LLM face-validity screen, not a human validation, and is a
 stated limit of this pillar: the blend and deserts are validated only by this AI screen and the component tests
 above (Place Pulse 0.37, ScenicOrNot 0.41, USDA 0.66 and 0.30), none at the 0.7 gate.
+
+Green view radius test (2026-10-29, `scripts/qa/place_pulse_gvi_radius.py`, live GEE): 208 Place Pulse US street
+scenes, green view read at each radius and correlated (Spearman) with human beauty scores. Pooled / mean within-city:
+400 m 0.494 / 0.334, 800 m 0.462 / 0.255, 1,200 m 0.437 / 0.232, 2,000 m 0.457 / 0.208; 400 m beats 1,200 m by +0.055
+(95% interval +0.013 to +0.099). Pin-shift stability of green view, 100 of the points moved 250 m north,
+approximate pillar points at p95 (gate 5): 400 m 8.3 (fails), 800 m 4.4, 1,200 m 2.2. So the radius that tracks
+ratings best and still passes the gate is 800 m. Area type read green view at 800 m (urban residential), 1,000 m (urban
+core) and 1,200 m (all others, 1,270 catalog places); adopted 2026-10-30: 800 m for every place in the
+code and the catalog. Catalog re-read (`scripts/catalog/reread_natural_beauty_green_view.py`, GEE only, 1,383 places
+not already at 800 m, rescored from stored inputs): 1,381 changed, mean -1.0, median change 0.9, p95 9.6, range -36.5
+to +15.4, 64 moved more than 10; total scores mean -0.08 (range -3.05 to +1.29). The big movers are the visible-green
+floor rule (85% of the visible green fraction replaces green view when it is more than twice the measured value), a
+hard step that a radius change can flip: places where it switched on or off (59) moved +6.2 and -11.8 on average;
+places where it did not (983) moved 0.8 at the median. The floor is an unsourced judgment and a known cliff (it also
+feeds pin-shift sensitivity). Backups: `data/backups_nb_gvi800_2026-10-30/`.
 
 Not closed by this sign-off: P6 (fails the 5-point gate at 500 m, causes diagnosed above) and P7 (blend
 unvalidated). For P7 with no desert rating data, the proposed close is a face-validity test: pairwise rankings
