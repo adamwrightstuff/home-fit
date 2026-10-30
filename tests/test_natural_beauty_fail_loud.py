@@ -123,3 +123,53 @@ def test_main_records_degraded_reasons_in_data_quality():
     score, details = main._apply_v9_to_natural({"details": t}, 55.0, {}, 40.0, -75.0)
     dq = details["data_quality"]
     assert dq["degraded"] is True and any("water_read_unavailable" in r for r in dq["degraded_reasons"])
+
+
+def test_degraded_reason_survives_the_response_data_quality_summary():
+    import main
+    t = tree(water_read_status="unavailable")
+    t["natural_context"]["debug_breakdown"] = {}
+    score, details = main._apply_v9_to_natural({"details": t}, 55.0, {}, 40.0, -75.0)
+    pillars = {"natural_beauty": {"score": score, "details": details, "data_quality": details["data_quality"]}}
+    summary = main._calculate_data_quality_summary(pillars, "suburban")
+    dq = pillars["natural_beauty"]["data_quality"]
+    assert dq["degraded"] is True and any("water_read_unavailable" in r for r in dq["degraded_reasons"])
+    assert summary["degraded"] is True and "natural_beauty" in summary["per_pillar_degraded"]
+
+
+def test_complete_data_is_still_not_degraded_after_the_summary():
+    import main
+    score, details = main._apply_v9_to_natural({"details": tree()}, 55.0, {}, 40.0, -75.0)
+    pillars = {"natural_beauty": {"score": score, "details": details, "data_quality": details.get("data_quality") or {}}}
+    main._calculate_data_quality_summary(pillars, "suburban")
+    assert pillars["natural_beauty"]["data_quality"]["degraded"] is False
+
+
+def _feats(*items):
+    return {"water_features": [{"type": t, "distance_km": d, "area_km2": a} for t, d, a in items]}
+
+
+def test_water_by_type_takes_the_nearest_of_each_type_and_skips_ponds_and_far_streams():
+    by = NB._water_by_type(_feats(("river", 0.4, 0.0), ("bay", 1.0, 5.0), ("lake", 3.0, 0.001), ("stream", 2.0, 0.0), ("lake", 5.0, 1.0)))
+    assert by == {"river": 0.4, "ocean": 1.0, "lake": 5.0}
+
+
+def test_best_type_water_lets_a_bay_beat_a_nearer_river():
+    s, t, d = NB._v9_score_water_best_type({"river": 0.41, "ocean": 1.0})
+    assert t == "ocean" and s == pytest.approx(100 * 2.718281828 ** -0.2, abs=0.1) and d == 1.0
+    assert NB._v9_score_water_best_type(None) is None
+
+
+def test_best_type_is_reported_but_not_used_while_the_flag_is_off():
+    t = tree()
+    t["natural_context"]["debug_breakdown"] = {"water_proximity_type": "river", "water_proximity_nearest_km": 0.41,
+                                               "water_by_type": {"river": 0.41, "ocean": 1.0}}
+    score, b = run(t)
+    assert b["water_score_best_type"] > b["water_score"] and b["inputs"]["water_type"] == "river"
+
+
+def test_data_limits_are_returned_in_data_quality():
+    import main
+    score, details = main._apply_v9_to_natural({"details": tree()}, 55.0, {}, 40.0, -75.0)
+    lim = details["data_quality"]["data_limits"]
+    assert len(lim) == 4 and any("regional medians" in x for x in lim) and any("degraded_reasons" in x for x in lim)

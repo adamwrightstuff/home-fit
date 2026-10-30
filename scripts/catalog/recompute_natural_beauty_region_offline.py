@@ -48,7 +48,10 @@ def recompute_place(score: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     tree = details.get("tree_analysis") or {}
     if not (tree.get("natural_context") or {}).get("component_scores"):
         return None
-    new_score, new_v9 = NB._apply_v9_formula({}, tree, lat=coords["lat"], lon=coords["lon"])
+    try:
+        new_score, new_v9 = NB._apply_v9_formula({}, tree, lat=coords["lat"], lon=coords["lon"])
+    except NB.NaturalBeautyNoData:
+        return None  # a no-data place is the fail-loud script's to handle; leave it as stored
     before = nb["score"]
     nb["score"] = round(float(new_score), 2)
     details["score_v9"] = round(float(new_score), 2)

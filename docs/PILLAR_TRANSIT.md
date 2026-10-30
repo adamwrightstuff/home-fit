@@ -154,3 +154,51 @@ Known data limits: route counts do not see line quality or frequency (Harrison's
 Last re-validated: 2026-10-26
 Re-validation schedule: quarterly (next 2027-01-26), and whenever the Transitland source, a mode weight or the radius changes. Run: `PYTHONPATH=. python3 scripts/qa/launch_check.py`, `PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py --no-unversioned --pillar public_transit_access`, then re-run the transit-share and no-vehicle validation, and compare the live scorer with the catalog (docs/LIVE_SCORER_VS_EXPLORER.md, still manual).
 ```
+
+## Area-average supply score (catalog, changed 2026-10-28)
+Supersedes the search-radius row above for the catalog. The live pillar still uses the area-type radii (3, 2 and 1.5 km) at one pin until the live change ships, so catalog and live differ for now (see docs/LIVE_SCORER_VS_EXPLORER.md). Stored version tag: `transit_v3_area_average_2026-10-29` (the date in the tag is a typo for 2026-10-28; left as stored).
+
+### Method (`scripts/catalog/recompute_transit_v3_area_offline.py`)
+- **Measurement area.** Each place is scored at nine points: the pin and eight points on the edge of the 1 km disk used for area type. The point scores are averaged, so a neighborhood with several stations is measured as a neighborhood and not by how far its pin sits from one station.
+- **Walking radii.** Bus routes within 800 m; subway and light rail within 1,200 m. These sit inside the published walking ranges (about 524 to 990 m bus, 1,100 to 1,260 m rail) and replace the unsourced area-type radii.
+- **Weights.** Unchanged: subway 3, commuter rail 3, light rail 2, bus 0.7, log supply curve, stored schedule bonuses added, capped at 100.
+- **Commuter rail by car.** A point with no commuter rail route within 1,200 m earns 3 x a credit from the distance between the pin and the nearest commuter rail stop (GTFS route type 2, within 10 km): 1.0 within 1,200 m, falling linearly through 0.5 at 2.79 mi, 0.25 at 4.93 mi, to 0 at 6.2 mi. Source for the three distances: Vijayakumar, El-Geneidy and Patterson, TRR 2219 (2011), Montreal commuter rail, n=432 morning-peak park-and-ride drivers, network distance: median 2.79 mi, 75th percentile 4.93 mi, 85th percentile 6.20 mi. **Modeling choices, not in the paper:** the credit equals the share of observed drivers who traveled at least that far, the decay is smooth through those points, and it is cut to zero at 6.2 mi, which drops the 15 percent who traveled farther. The paper reports an observed distribution, not willingness, and observed trips also reflect parking supply and station spacing. Such a station counts as one route, a lower bound where it has several lines.
+- **Anchor 44.42 is a judgment, not a data finding.** Rank correlation with the validation measures is identical at anchors 30, 60 and 120, so the data cannot pick it. It was chosen after validation, by bisection, so the catalog mean transit score equals the previous mean (39.25), a continuity choice.
+
+### Validation (P7), 1,473 places
+Spearman, pooled / within-metro mean, against tract transit commute share (ACS B08301) and households with no vehicle (ACS B25044):
+
+| | Stored radii at one pin | New radii at one pin | Area average |
+|---|---|---|---|
+| Transit share | 0.700 / 0.534 | 0.733 / 0.539 | 0.740 / 0.551 |
+| No vehicle | 0.606 / 0.457 | 0.620 / 0.469 | 0.622 / 0.474 |
+
+### Catalog effect
+Mean 39.25 before and after by construction. 670 of 1,476 places move more than 5 points and 133 move more than 15. Total score changes by -3.85 to +2.80, 0.00 on average. Dense subway neighborhoods fall because the old 3 km radius counted lines nobody walks to (Astoria's stored nearest heavy rail was the E train): Astoria 91 to 72, Carroll Gardens 95 to 82.6. Commuter-rail towns barely move: Bronxville 51.3 to 48.7, Harrison 44.4 to 46.8, Greenwich CT 52 to 55, Hinsdale 28.9 to 36.3. Walk Score lists Astoria's Transit Score at 86 (walkscore.com); it is proprietary and was not used to tune anything.
+
+### What was tried and rejected
+- Sourced radii at one pin: validation roughly neutral, but dense places collapsed because a single pin can be 900 m from the nearest station (Astoria's pin is 943 m from the nearest subway stop).
+- Smooth distance fade per route at one pin: Astoria 38, Bronxville 34. Did not fix the level; the pin was the problem.
+- Refitting the anchor from transit share: no plateau (share keeps rising to the top bin), so the data does not identify an anchor.
+
+### Known limits
+- Route counts do not see frequency. Transitland returned no departures for New York bus stops on three dates, so frequency cannot be added uniformly; the stored schedule bonuses exist for few places.
+- Ferry (route type 4) is not counted anywhere in the pillar. Astoria has two ferry routes within 1,200 m.
+- Route type 2 includes intercity rail such as Amtrak.
+- The summary route counts stored on each row are still the old-radius counts; the area scoring is in `area_sample` on the pillar.
+- Radius sensitivity is not measured: counts exist only at 800 m and 1,200 m, so a different radius needs a re-fetch. A pin-shift test is not the right check for an area average.
+- Open: the live pillar needs 18 Transitland calls per request instead of about 2, so it needs a latency test, caching and a timeout fallback before it ships.
+
+### Sensitivity (P6), area-average model, catalog mean 39.3
+Offline from the saved sample points (`scripts/catalog/sensitivity_transit_area.py`), one parameter at a time at anchor 44.42. Per-place change in transit points (median / 95th percentile / max) and change in the catalog mean:
+
+| Parameter across its range | Per-place change | Catalog mean |
+|---|---|---|
+| Commuter rail weight 2 to 4 | 1.3 to 1.4 / 5.2 to 6.6 / 8.4 | -2.2 to +1.8 |
+| Light rail weight 1 to 3 | 0.0 / 2.5 to 3.0 / 13.7 | -0.4 to +0.3 |
+| Subway weight 2 to 4 | 0.0 / 2.6 to 3.2 / 7.2 | -0.4 to +0.3 |
+| Bus weight 0.5 to 1.0 | 2.2 to 3.0 / 5.6 to 6.6 / 8.8 | -2.3 to +2.9 |
+| Commuter drive credit cut at 4.93 mi (75th percentile) instead of 6.2 mi | 0.0 / 3.7 / 14.6 | -0.5 |
+| No commuter drive credit | 0.0 / 19.2 / 33.1 | -4.1 |
+
+The bus and commuter rail weights move the catalog mean most among the weights (about 2 to 3 points). The drive credit leaves the median place unchanged but moves the 95th percentile place by 19 points when removed.

@@ -224,6 +224,10 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
     for key in EXPECTED_BREAKDOWN.get(pillar, []):
         val = breakdown.get(key)
         if val is None:
+            # Healthcare leaves the pharmacy part out on purpose when hospitals or clinics are mapped but no pharmacy
+            # is (summary.pharmacies_unknown); that is a known data gap, not a scoring failure.
+            if pillar == "healthcare_access" and key == "pharmacies" and (data.get("summary") or {}).get("pharmacies_unknown"):
+                continue
             flags.append(f"missing:{key}")
 
     # Zero subcomponents — present but =0 when that signals data failure, not true zero

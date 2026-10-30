@@ -959,7 +959,9 @@ def get_public_transit_score(
     # urban top from the suburban floor: subway-rich neighborhoods reach ~95-100 while
     # commuter-only suburbs stay ~40-55, regardless of anchor. The model uses only
     # live-fetched GTFS route_type — no external benchmark dependency.
-    _ANCHOR = 120.0
+    # Anchor 44.42 is a judgment (docs/PILLAR_TRANSIT.md, area-average section): chosen after validation so the catalog
+    # mean stays at its previous 39.25. Rank correlation is the same at anchors 30, 60 and 120, so the data cannot pick it.
+    _ANCHOR = AREA_ANCHOR
     subway_count = len(subway_routes)
     commuter_count = len(commuter_rail_routes)
 
@@ -979,7 +981,10 @@ def get_public_transit_score(
         W_SUBWAY * subway_count + W_COMMUTER_RAIL * commuter_count + W_LIGHT_RAIL * light_count + W_BUS * bus_count
     )
     multimodal_bonus = 0.0
-    total_score = base_supply
+    # The score is the area average over nine points (pin plus eight on the edge of the 1 km area-type disk), not the pin
+    # alone; a failed read raises TransitReadError (no data), never a cheaper fallback score.
+    area_supply, area_sample = _area_supply(lat, lon)
+    total_score = area_supply
     # expected_* are retained above for diagnostics/back-compat but no longer gate the score.
 
     # Assess data quality
@@ -1221,6 +1226,7 @@ def get_public_transit_score(
         ),
         "data_quality": quality_metrics,
         "area_classification": {"area_type": effective_area_type, "density": density},
+        "area_sample": area_sample,
     }
     
     # Add commuter rail suburb bonuses to breakdown if applicable
@@ -2011,3 +2017,93 @@ def _empty_breakdown() -> Dict:
         "data_quality": {"degraded": False, "data_warnings": ["no_transit_routes_found"]}
     }
     
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Area average (DPv2 P3). Mirrors scripts/catalog/recompute_transit_v3_area_offline.py; keep the two in step.
+# Bus within 800 m; subway and light rail within 1,200 m (inside the published walking ranges). Commuter rail with no
+# route within 1,200 m of a point earns W_COMMUTER_RAIL x a drive credit from the nearest commuter rail stop within
+# 10 km: 1.0 within 1,200 m, linear through 0.5 at 2.79 mi, 0.25 at 4.93 mi, to 0 at 6.2 mi (Vijayakumar, El-Geneidy
+# and Patterson, TRR 2219, 2011, Montreal n=432 driving distances: median, 75th, 85th percentile). The decay and the
+# 6.2 mi cutoff are modeling choices, not findings of the paper.
+# ---------------------------------------------------------------------------------------------------------------------
+AREA_ANCHOR = 44.42
+AREA_EDGE_M = 1000.0
+AREA_BUS_M = 800
+AREA_RAIL_M = 1200
+_RAIL_CREDIT = [(1200, 1.0), (4490, 0.5), (7930, 0.25), (9980, 0.0)]
+
+
+def _rail_credit(d_m: float) -> float:
+    if d_m <= _RAIL_CREDIT[0][0]:
+        return 1.0
+    for (a, fa), (b, fb) in zip(_RAIL_CREDIT, _RAIL_CREDIT[1:]):
+        if d_m <= b:
+            return fa + (fb - fa) * (d_m - a) / (b - a)
+    return 0.0
+
+
+def _area_points(lat: float, lon: float) -> List[Tuple[float, float]]:
+    pts = [(lat, lon)]
+    for bearing in range(0, 360, 45):
+        r = math.radians(bearing)
+        pts.append((lat + AREA_EDGE_M * math.cos(r) / 111320.0,
+                    lon + AREA_EDGE_M * math.sin(r) / (111320.0 * math.cos(math.radians(lat)))))
+    return pts
+
+
+from data_sources.cache import cached as _cached  # noqa: E402
+
+
+@_cached(ttl_seconds=7 * 24 * 3600)
+def _route_counts_at(lat: float, lon: float, radius_m: int) -> Dict[str, int]:
+    """Unique routes by GTFS type within radius_m of a point. Cached by rounded point (about 11 m)."""
+    seen = {}
+    for r in _get_nearby_routes(lat, lon, radius_m=radius_m):
+        seen[r.get("route_id") or id(r)] = r.get("route_type")
+    return {"subway": sum(1 for v in seen.values() if v == 1), "commuter_rail": sum(1 for v in seen.values() if v == 2),
+            "light_rail": sum(1 for v in seen.values() if v == 0), "bus": sum(1 for v in seen.values() if v == 3)}
+
+
+@_cached(ttl_seconds=7 * 24 * 3600)
+def _nearest_commuter_rail_m(lat: float, lon: float) -> Optional[int]:
+    """Distance in metres to the nearest stop served by GTFS route type 2 within 10 km, or None when there is none."""
+    from data_sources.transitland_api import TRANSITLAND_BASE_URL
+    if not TRANSITLAND_API_KEY:
+        raise TransitReadError("TRANSITLAND_API_KEY is not set")
+    r = None
+    for _ in range(2):
+        try:
+            r = requests.get(f"{TRANSITLAND_BASE_URL}/rest/stops", params={
+                "lat": lat, "lon": lon, "radius": 10000, "served_by_route_type": 2, "limit": 100,
+                "apikey": TRANSITLAND_API_KEY}, timeout=30)
+        except requests.exceptions.RequestException:
+            continue
+        if r.status_code == 200:
+            break
+    if r is None or r.status_code != 200:
+        raise TransitReadError("Transitland commuter rail stop read failed")
+    ds = [haversine_meters(lat, lon, s["geometry"]["coordinates"][1], s["geometry"]["coordinates"][0])
+          for s in r.json().get("stops", []) if s.get("geometry")]
+    return round(min(ds)) if ds else None
+
+
+def _area_supply(lat: float, lon: float) -> Tuple[float, Dict]:
+    """Mean supply score over the nine sample points, and the sample detail stored on the pillar."""
+    from concurrent.futures import ThreadPoolExecutor
+    pts = [(round(a, 4), round(b, 4)) for a, b in _area_points(lat, lon)]
+    jobs = [(a, b, r) for a, b in pts for r in (AREA_BUS_M, AREA_RAIL_M)]
+    with ThreadPoolExecutor(10) as ex:
+        rail_f = ex.submit(_nearest_commuter_rail_m, round(lat, 4), round(lon, 4))
+        counts = list(ex.map(lambda j: _route_counts_at(*j), jobs))
+        nearest_m = rail_f.result()
+    point_scores, weights = [], []
+    for i in range(len(pts)):
+        bus, rail = counts[2 * i], counts[2 * i + 1]
+        commuter = W_COMMUTER_RAIL * rail["commuter_rail"] if rail["commuter_rail"] > 0 else (
+            0.0 if nearest_m is None else W_COMMUTER_RAIL * _rail_credit(nearest_m))
+        w = W_SUBWAY * rail["subway"] + W_LIGHT_RAIL * rail["light_rail"] + W_BUS * bus["bus"] + commuter
+        weights.append(w)
+        point_scores.append(0.0 if w <= 0 else 100.0 * min(1.0, math.log(1.0 + w) / math.log(1.0 + AREA_ANCHOR)))
+    score = sum(point_scores) / len(point_scores)
+    return score, {"points": len(pts), "mean_weighted_routes": round(sum(weights) / len(weights), 2),
+                   "anchor": AREA_ANCHOR, "nearest_commuter_rail_m": nearest_m}

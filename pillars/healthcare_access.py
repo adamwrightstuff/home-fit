@@ -23,7 +23,10 @@ These factors may affect actual healthcare access but are not included to mainta
 objective, scalable, and reproducible scoring aligned with design principles.
 """
 
+import json
 import math
+import os
+from functools import lru_cache
 from typing import Dict, Tuple, List, Optional
 from data_sources import osm_api, data_quality
 from data_sources.regional_baselines import get_contextual_expectations, get_area_classification
@@ -151,6 +154,78 @@ def _distance_to_hospital_score(distance_km: float, max_score: float = 35.0) -> 
     # Ensure minimum score for very far hospitals (better than nothing)
     min_score = max_score * 0.14  # 5pts out of 35pts
     return max(min_score, base_score)
+
+# Component budgets (points). The pillar score is points earned over the budgets of the components that could be
+# read, scaled to 100, plus the hospital bonus. All five present: sum of points, as before.
+HEALTHCARE_BUDGETS = {
+    "hospital_access": 35.0,
+    "primary_care": 25.0,
+    "specialized_care": 15.0,
+    "emergency_services": 10.0,
+    "pharmacies": 15.0,
+}
+
+_MILE_KM = 1.609344
+
+
+def _pharmacy_distance_fraction(distance_km: float) -> float:
+    """
+    Share of the pharmacy points earned at a given distance to the nearest pharmacy (one scale for every place).
+
+    Sourced anchors, from published pharmacy-desert definitions (2024 national tract study, https://pmc.ncbi.nlm.nih.gov/articles/PMC11034534/):
+    0.5 mile is the threshold for tracts where few residents own a car, 1 mile is the urban desert line, 10 miles is the
+    rural desert line. Full credit inside 0.5 mile; half credit at 1 mile; 5 percent at 10 miles. The shape between the
+    anchors is a design judgment (straight line from full to half, then exponential decay), not a published curve.
+    The studies measure road distance or drive time; this uses straight-line distance. TODO: source a road-distance factor.
+    """
+    mi = max(0.0, float(distance_km)) / _MILE_KM
+    if mi <= 0.5:
+        return 1.0
+    if mi <= 1.0:
+        return 1.0 - (mi - 0.5)
+    return 0.5 * math.exp(-math.log(10.0) * (mi - 1.0) / 9.0)
+
+
+def healthcare_total(parts: Dict[str, Optional[float]], hospital_bonus: float = 0.0,
+                     budgets: Optional[Dict[str, float]] = None) -> float:
+    """Pillar score from the component points (None = could not be read), scaled over the components present, plus the bonus."""
+    present = {k: v for k, v in parts.items() if v is not None}
+    if not present:
+        return 0.0
+    budgets = budgets or HEALTHCARE_BUDGETS
+    base = sum(present.values()) / sum(budgets[k] for k in present) * 100.0
+    return max(0.0, min(100.0, base + hospital_bonus))
+
+
+# One search radius for every place: the OpenStreetMap read is 10 km (see _get_osm_healthcare), and the capacity parts
+# compare facilities in that disk to the people living in it.
+HEALTHCARE_RADIUS_M = 10000
+
+
+@lru_cache(maxsize=1)
+def _load_supply_scale() -> Optional[Dict]:
+    """data/healthcare_supply_scale.json (catalog medians of facilities per resident); None when the file is missing."""
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "healthcare_supply_scale.json")
+    try:
+        with open(path) as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return None
+
+
+def people_within(lat: float, lon: float, radius_m: int = HEALTHCARE_RADIUS_M) -> Optional[float]:
+    """Residents within the radius (local tract tables). The place context carries this for live requests; catalog scripts call it."""
+    from data_sources.surrounding_density import people_within as _people_within
+    return _people_within(lat, lon, radius_m)
+
+
+def capacity_score(count: int, residents: Optional[float], expected_per_unit: float, unit: float, max_score: float) -> Optional[float]:
+    """Facilities per `unit` residents against the catalog-median supply, on the pillar's ratio curve. None when residents are unknown."""
+    if not residents or residents <= 0 or expected_per_unit <= 0:
+        return None
+    per_unit = count / residents * unit
+    return _ratio_score(per_unit / expected_per_unit, max_score) if count > 0 else 0.0
+
 
 # Comprehensive US hospitals database - major medical centers and regional hospitals
 # Covers all major metropolitan areas and many mid-size cities
@@ -499,15 +574,15 @@ def get_healthcare_access_score(lat: float, lon: float,
     """
     Calculate healthcare access score (0-100).
 
-    Scoring (follows design principles: smooth, distance-based, research-backed):
-    - Hospital Access (0-35): Distance-based scoring to nearest hospital
-      * Uses OSM data when available, falls back to MAJOR_HOSPITALS database
-      * Smooth distance curve: 5km=35pts, 10km=30pts, 15km=25pts, 25km=20pts, 40km=15pts, 60km=10pts, >60km=5pts
-    - Primary Care (0-25): Clinics and doctors within radius (expectations-aware)
-    - Specialized Care (0-15): Specialty services available
-    - Emergency Services (0-10): Emergency room capability
-    - Pharmacies (0-15): Pharmacies within radius (expectations-aware)
-    - Bonuses shown separately (cap at 100)
+    Scoring (design principles v2): one radius (10 km) and one scale for every place, no area type or density table.
+    - Hospital Access (15 points): distance to the nearest hospital (falls back to MAJOR_HOSPITALS up to 60 km). The
+      hospital count is not scored (a count is not capacity); the score is scaled over the components that are scored.
+    - Primary Care (0-25): clinics plus doctors per resident within the radius against the catalog-median supply
+    - Specialized Care (0-15): distinct specialty tags available (measures OpenStreetMap tagging; kept as is)
+    - Emergency Services (0-10): distance to the nearest hospital with an emergency room
+    - Pharmacies (0-15): distance to the nearest pharmacy (full credit within half a mile, half at one mile)
+    - A component that cannot be read (no pharmacy mapped near mapped clinics, residents unknown) is left out and the
+      score is scaled over the rest. Bonus for extra hospitals shown separately (cap at 100)
 
     Failure handling (design principles v2, P9):
     - A failed OSM read raises (the pillar shows no data and is retried); it is never scored as zero facilities and
@@ -528,17 +603,13 @@ def get_healthcare_access_score(lat: float, lon: float,
     ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, density=density, city=city, need_density=True)
     area_type, pop_density = ctx.area_type, ctx.density
 
-    # Contextual expectations (research-backed where available)
-    expectations = get_contextual_expectations(area_type, 'healthcare_access') or {}
-    exp_hosp = float(expectations.get('expected_hospitals_within_10km', 1) or 1)
-    exp_urgent = float(expectations.get('expected_urgent_care_within_5km', 1) or 1)
-    exp_pharm = float(expectations.get('expected_pharmacies_within_2km', 1) or 1)
-
-    # Radius profiles (meters) via centralized helper
-    rp = get_radius_profile('healthcare_access', area_type, location_scope)
-    fac_radius_m = int(rp.get('fac_radius_m', 10000))
-    pharm_radius_m = int(rp.get('pharm_radius_m', 3000))
-    print(f"   🔧 Radius profile (healthcare): area_type={area_type}, scope={location_scope}, facilities={fac_radius_m}m, pharmacies={pharm_radius_m}m")
+    # One radius and one scale for every place: no area type or density table. Capacity parts compare the facilities
+    # within the radius to the residents within it (catalog-median supply per resident, data/healthcare_supply_scale.json).
+    fac_radius_m = pharm_radius_m = HEALTHCARE_RADIUS_M
+    residents = ctx.people_10km if getattr(ctx, "people_10km", None) is not None else people_within(lat, lon, HEALTHCARE_RADIUS_M)
+    supply_scale = _load_supply_scale() or {}
+    exp_prim_per_1000 = float(supply_scale.get("expected_clinics_doctors_per_1000") or 0.0)
+    print(f"   🔧 Healthcare: radius={HEALTHCARE_RADIUS_M}m, residents within radius={'unknown' if residents is None else round(residents)}")
 
     # Query OSM for healthcare facilities (hospitals, clinics, doctors, pharmacies, urgent/emergency)
     print(f"   💊 Querying pharmacies and clinics...")
@@ -550,6 +621,8 @@ def get_healthcare_access_score(lat: float, lon: float,
     clinics = healthcare_facilities.get("clinics", [])
     doctors = healthcare_facilities.get("doctors", [])
     query_failed = healthcare_facilities.get("_query_failed", False)
+    # An OpenStreetMap answer with nothing in it at all (taken before the hospital database is merged in below)
+    osm_read_empty = not (hospitals or urgent_care or pharmacies or clinics or doctors)
     
     # FALLBACK: Use MAJOR_HOSPITALS database if OSM query failed or returned no hospitals
     # This ensures we have hospital data even when OSM is unavailable (rate limits, timeouts, etc.)
@@ -588,6 +661,16 @@ def get_healthcare_access_score(lat: float, lon: float,
     ) > 0
     if query_failed and not places_recovered:
         raise RuntimeError("healthcare facility read failed (Overpass); no data until it is retried")
+
+    # An empty answer is not trusted as "no facilities" when the major hospital database lists a hospital inside the search
+    # radius: a 1 km pin shift once turned a score of 79 into 4 this way. Treat it as a failed read (retried), not a zero.
+    if osm_read_empty and not query_failed and not places_recovered:
+        known_near = _get_fallback_hospitals(lat, lon, max_distance_km=HEALTHCARE_RADIUS_M / 1000.0)
+        if known_near:
+            raise RuntimeError(
+                "healthcare facility read came back empty but a known hospital is within "
+                f"{HEALTHCARE_RADIUS_M // 1000} km ({known_near[0].get('name')}); treated as a failed read, retried later"
+            )
 
     # Log warning if no data found (could indicate OSM failure)
     if not hospitals and not urgent_care and not pharmacies and not clinics and not doctors:
@@ -649,14 +732,12 @@ def get_healthcare_access_score(lat: float, lon: float,
     # Combine count-based (ratio to expected) and distance-based (proximity) scoring
     # This provides comprehensive scoring that follows design principles
     
-    # Count-based score (0-20 points): Ratio of hospitals to expected
+    # (the 20-point count part is left out, see below)
     hospital_count = len(hospitals)
-    expected_hospitals = max(1.0, exp_hosp)
-    if hospital_count > 0:
-        hospital_ratio = hospital_count / expected_hospitals
-        hospital_count_score = _ratio_score(hospital_ratio, max_score=20.0)
-    else:
-        hospital_count_score = 0.0
+    # Hospital count is not scored: a count says nothing about capacity (a city medical centre and a small hospital count
+    # the same), and hospitals per resident falls in the densest places where the hospitals are largest. Hospital access
+    # is the distance to the nearest hospital, and the score is scaled over the components that are scored.
+    hospital_count_score = None
     
     # Distance-based score (0-15 points): Proximity to nearest hospital
     # IMPORTANT: Use fallback hospitals for distance scoring even if they're beyond filter radius
@@ -685,7 +766,7 @@ def get_healthcare_access_score(lat: float, lon: float,
     hospital_distance_score = _distance_to_hospital_score(nearest_dist_km, max_score=15.0)
     
     # Total hospital score: count (0-20) + distance (0-15) = 0-35 points
-    hospital_score = hospital_count_score + hospital_distance_score
+    hospital_score = (hospital_count_score or 0.0) + hospital_distance_score
     hospital_score = min(35.0, hospital_score)
     
     # Bonus for additional hospitals beyond first (shown separately)
@@ -697,16 +778,9 @@ def get_healthcare_access_score(lat: float, lon: float,
     # 2) Primary care access (25 points) – DATA-BACKED RATIO-BASED SCORING
     # Use data-backed curve based on ratio of clinics+doctors to expected urgent care
     primary_count = len(clinics) + len(doctors)
-    target_primary = max(1.0, exp_urgent)
-    
-    if primary_count <= 0:
-        primary_score = 0.0
-    else:
-        primary_ratio = primary_count / target_primary
-        # Use data-backed curve for smooth, research-backed scoring
-        primary_score = _ratio_score(primary_ratio, max_score=25.0)
-    
-    primary_score = min(25.0, primary_score)
+    primary_score = capacity_score(primary_count, residents, exp_prim_per_1000, 1000.0, 25.0)
+    if primary_score is not None:
+        primary_score = min(25.0, primary_score)
 
     # 3) Specialized care (15 points) – DATA-BACKED COUNT-BASED SCORING
     # Count unique specialties and score using data-backed curve
@@ -745,44 +819,46 @@ def get_healthcare_access_score(lat: float, lon: float,
     
     specialty_score = min(15.0, specialty_score)
 
-    # 4) Emergency services (10 points) – DATA-BACKED RATIO-BASED SCORING
-    # Score based on ratio of hospitals with ER to expected hospitals
+    # 4) Emergency services (10 points): distance to the nearest hospital with an emergency room
     emergency_hospitals = [
         f for f in hospitals
         if (f.get('tags', {}).get('emergency') == 'yes') or (f.get('emergency') == 'yes')
     ]
     emergency_count = len(emergency_hospitals)
-    expected_emergency = max(1.0, exp_hosp)  # Expected hospitals should have ER
-    
-    if emergency_count <= 0:
-        emergency_score = 0.0
+    # Distance to the nearest emergency-room hospital on the hospital distance curve (one scale for every place).
+    # With none inside the radius, the nearest major hospital in the fallback database (up to 60 km) stands in.
+    er_distances = [f["distance_km"] for f in _with_numeric_distance(emergency_hospitals)]
+    if er_distances:
+        nearest_er_km = min(er_distances)
     else:
-        emergency_ratio = emergency_count / expected_emergency
-        # Use data-backed curve for smooth scoring
-        emergency_score = _ratio_score(emergency_ratio, max_score=10.0)
-    
-    emergency_score = min(10.0, emergency_score)
+        _, nearest_db_er = _score_hospitals(lat, lon)
+        nearest_er_km = nearest_db_er["distance_km"] if nearest_db_er else float("inf")
+    emergency_score = min(10.0, _distance_to_hospital_score(nearest_er_km, max_score=10.0))
 
-    # 5) Pharmacy access (15 points) – DATA-BACKED RATIO-BASED SCORING
-    # Use data-backed curve based on ratio of pharmacies to expected
-    pharm_count = len(pharmacies)
-    target_pharm = max(1.0, exp_pharm)
-    
-    if pharm_count <= 0:
+    # 5) Pharmacy access (15 points): distance to the nearest pharmacy on one scale for every place.
+    # No pharmacy inside the search radius where hospitals, clinics or doctors are mapped is treated as unknown
+    # (OpenStreetMap often lacks pharmacy tags there), so the component is left out and the score is scaled over the
+    # rest. When nothing at all is mapped in a successful read, the empty result stays a real zero.
+    numeric_pharmacies = _with_numeric_distance(pharmacies)
+    if numeric_pharmacies:
+        nearest_pharm_km = min(f["distance_km"] for f in numeric_pharmacies)
+        pharmacy_score: Optional[float] = 15.0 * _pharmacy_distance_fraction(nearest_pharm_km)
+    elif hospitals or urgent_care or clinics or doctors:
+        pharmacy_score = None
+    else:
         pharmacy_score = 0.0
-    else:
-        pharm_ratio = pharm_count / target_pharm
-        # Use data-backed curve for smooth, research-backed scoring
-        pharmacy_score = _ratio_score(pharm_ratio, max_score=15.0)
-    
-    pharmacy_score = min(15.0, pharmacy_score)
 
-    # Base total (without bonuses)
-    base_total = hospital_score + primary_score + specialty_score + emergency_score + pharmacy_score
-    
-    # Total with bonuses (cap at 100)
-    total_score = base_total + hospital_bonus
-    total_score = max(0.0, min(100.0, total_score))
+    parts = {
+        "hospital_access": hospital_score,
+        "primary_care": primary_score,
+        "specialized_care": specialty_score,
+        "emergency_services": emergency_score,
+        "pharmacies": pharmacy_score,
+    }
+    budgets = dict(HEALTHCARE_BUDGETS)
+    if hospital_count_score is None:
+        budgets["hospital_access"] = 15.0  # only the distance part is scored
+    total_score = healthcare_total(parts, hospital_bonus, budgets)
 
     # Assess data quality
     combined_data = {
@@ -861,10 +937,10 @@ def get_healthcare_access_score(lat: float, lon: float,
         "score": round(total_score, 1),
         "breakdown": {
             "hospital_access": round(hospital_score, 1),
-            "primary_care": round(primary_score, 1),
+            "primary_care": None if primary_score is None else round(primary_score, 1),
             "specialized_care": round(specialty_score, 1),
             "emergency_services": round(emergency_score, 1),
-            "pharmacies": round(pharmacy_score, 1)
+            "pharmacies": None if pharmacy_score is None else round(pharmacy_score, 1)
         },
         "bonuses": {
             "hospital_bonus": round(hospital_bonus, 1)  # Additional hospitals beyond first
@@ -882,16 +958,20 @@ def get_healthcare_access_score(lat: float, lon: float,
         breakdown["summary"]["hospital_count"] = len(hospitals)
     except Exception:
         pass
+    if pharmacy_score is None:
+        breakdown["summary"]["pharmacies_unknown"] = True
+    breakdown["summary"]["facility_radius_m"] = HEALTHCARE_RADIUS_M
+    breakdown["summary"]["residents_within_radius"] = None if residents is None else round(residents)
 
     # Log results
     print(f"✅ Healthcare Access Score: {total_score:.0f}/100")
     print(f"   🏥 Hospital Access: {hospital_score:.0f}/35 ({len(hospitals)} hospitals)")
     if hospital_bonus > 0:
         print(f"      + Hospital Bonus: {hospital_bonus:.0f} (additional hospitals)")
-    print(f"   🩺 Primary Care: {primary_score:.0f}/25 (clinics={len(clinics)}, doctors={len(doctors)})")
+    print(f"   🩺 Primary Care: {'unknown' if primary_score is None else f'{primary_score:.0f}'}/25 (clinics={len(clinics)}, doctors={len(doctors)})")
     print(f"   🧠 Specialized Care: {specialty_score:.0f}/15 (specialties={len(specialties)})")
     print(f"   🚨 Emergency Services: {emergency_score:.0f}/10 (emergency_hospitals={len(emergency_hospitals)})")
-    print(f"   💊 Pharmacies: {pharmacy_score:.0f}/15 ({len(pharmacies)} nearby)")
+    print(f"   💊 Pharmacies: {'unknown (none in radius)' if pharmacy_score is None else f'{pharmacy_score:.0f}/15'} ({len(pharmacies)} nearby)")
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown

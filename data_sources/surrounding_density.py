@@ -219,3 +219,11 @@ def classify_surrounding(stats: Optional[SurroundingStats], in_principal_city: O
     if stats.people_density >= EXURBAN_PEOPLE_PER_SQMI:
         return "exurban"
     return "rural"
+
+
+def people_within(lat: float, lon: float, radius_m: int) -> Optional[float]:
+    """Residents within the radius: people per square mile over the tracts in the disk times the disk area. None when unmeasurable."""
+    stats = surrounding_stats(lat, lon, radius_m=int(radius_m))
+    if stats is None or not stats.people_density:
+        return None
+    return float(stats.people_density) * math.pi * (radius_m / 1609.344) ** 2

@@ -1,0 +1,7 @@
+{
+  "radius_m": 10000,
+  "expected_clinics_doctors_per_1000": 0.0747,
+  "n_places": 1460,
+  "status": "DESCRIPTIVE: catalog medians of a fresh 10 km read, not an external standard. TODO: source a published benchmark.",
+  "source_fresh_read": "healthcare_fresh.json"
+}

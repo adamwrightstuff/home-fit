@@ -571,6 +571,10 @@ def _apply_v9_to_natural(natural_calc: Dict, natural_score: float, natural_detai
             dq["degraded"] = True
             dq["degraded_reasons"] = list(dq.get("degraded_reasons") or []) + [f"natural_beauty: {r}" for r in reasons]
             natural_details["data_quality"] = dq
+        dq = natural_details.get("data_quality")
+        dq = dq if isinstance(dq, dict) else {}
+        dq["data_limits"] = list(natural_beauty.NATURAL_BEAUTY_DATA_LIMITS)
+        natural_details["data_quality"] = dq
         final_score = v9_score if natural_beauty.ENABLE_NATURAL_BEAUTY_V9 else natural_score
     except natural_beauty.NaturalBeautyNoData:
         raise  # no data is a failure, not a reason to fall back to the old V7 score
@@ -5404,15 +5408,20 @@ def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_c
         # Collect degraded signals (stale cache / rate limiting) from the pillar payload.
         try:
             sig = _collect_degraded_signals(pillar_data)
+            dq = pillar_data.get("data_quality") or {}
+            if not isinstance(dq, dict):
+                dq = {}
+            # Reasons the pillar itself recorded (fail-loud degraded flags) must survive; this pass only
+            # adds the stale-cache and rate-limit signals it can see in the payload.
+            own = [r for r in (dq.get("degraded_reasons") or []) if isinstance(r, str)]
+            merged = own + [r for r in (sig.get("reasons") or []) if r not in own]
+            sig = {**sig, "degraded": bool(sig.get("degraded")) or bool(merged), "reasons": merged}
             if sig.get("degraded"):
                 per_pillar_degraded[pillar_name] = sig
                 degraded_reasons.update(sig.get("reasons", []))
                 degraded_warnings.update(sig.get("warnings", []))
             # Also attach to pillar payload so the UI can render warnings without
             # having to read the top-level data_quality_summary.
-            dq = pillar_data.get("data_quality") or {}
-            if not isinstance(dq, dict):
-                dq = {}
             dq["degraded"] = bool(sig.get("degraded"))
             dq["degraded_reasons"] = sig.get("reasons", []) or []
             dq["data_warnings"] = sig.get("warnings", []) or []

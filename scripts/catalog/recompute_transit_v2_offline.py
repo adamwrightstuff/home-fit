@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 """
+SUPERSEDED by recompute_transit_v3_area_offline.py (area average, 2026-10-28). Running this would overwrite the v3
+scores with scores from the old area-type-radius route counts, so it refuses to run without --allow-superseded.
+
 Offline: recompute public_transit_access for every catalog row under the supply-only model.
 
 Removed from the score (2026-10-26): the legacy suburban layer, the ridership-weighted commuter floor, the 5% commute
@@ -66,9 +69,12 @@ def recompute(score: dict):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true")
+    ap.add_argument("--allow-superseded", action="store_true")
     ap.add_argument("--backup-dir")
     ap.add_argument("--glob", default=str(ROOT / "data" / "*_metro_place_catalog_scores_merged.composites_recomputed.jsonl"))
     a = ap.parse_args()
+    if not a.allow_superseded:
+        sys.exit("superseded by recompute_transit_v3_area_offline.py; pass --allow-superseded to run anyway")
     if a.write and not a.backup_dir:
         sys.exit("--write requires --backup-dir")
     n, dS, dT = 0, [], []
