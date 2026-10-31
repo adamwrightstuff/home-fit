@@ -35,6 +35,8 @@ Expensive areas score *low* here (low affordability); that's by design.
 
 ## DPv2 spec sheet (2026-10-30)
 
+**Status: DPv2 certified 2026-10-30, with recorded judgments (owner accepted the pin-swing gate). Weights, point steps and efficiency thresholds are labeled judgments with sensitivity, not sourced values. Re-validate by 2027-04-30.**
+
 - **Construct:** how affordable and roomy a home is for the area's own typical income (price or rent against income, rooms, rooms per dollar), not desirability. Expensive places score low by design.
 - **Reference frame:** fixed standards. Evidence tier 1 for the anchors only: HUD cost burden at 30% and severe at 50% of income, Demographia price-to-income "affordable" at 3.0 and bands at 4.0 and 5.0. All point values between anchors are judgment (research 2026-10-30, Muse; quotes not independently verified).
 - **Measurement area:** tract-level places use the occupied-unit weighted pool of tracts under the pin and an 8-point ring at 0.43 mile (700 m); place-level places use town data. 0.43 mile is a judgment; published anchors are 0.31 mile (pedestrian neighborhood) and 0.5 mile (transit catchment).
