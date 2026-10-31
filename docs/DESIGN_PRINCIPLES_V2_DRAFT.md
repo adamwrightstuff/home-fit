@@ -30,6 +30,16 @@ v2 keeps v1 principles 1 to 6 (research-backed, objective, scalable, transparent
 11. **Disclose data limits.** Record coverage, vintage, and sampling bias per pillar (FBI agency sample, OSM sparsity in rural areas). Surface them as confidence in the API response.
 12. **Re-validate on a schedule.** When a source changes or quarterly, whichever is first. Includes checking the live scorer against the catalog (see `docs/LIVE_SCORER_VS_EXPLORER.md`).
 
+### E. Use the shared place context
+
+Added 2026-10-31 from the active outdoors and healthcare conversions. The place context (`data_sources/place_context.py`) holds the facts about a location that every pillar must agree on.
+
+13. **One context per request, built once, never changed by a pillar.** It is built before any pillar runs and holds coordinates, the area type, density and the continuous factors (people density, people plus jobs per acre, jobs, principal-city membership, residents within 10 km). A pillar reads it through `resolve_place_context` and never re-derives these facts. Catalog and test callers that pass no context get the same numbers from the same helper functions, so live and catalog scores cannot drift apart.
+14. **The area-type label is a summary for display and metadata, not a scoring input.** Expected values, radii and thresholds must not key on the label. A pillar that judges against fixed standards uses an absolute scale. A pillar that judges against similar places uses a baseline fitted on a continuous factor (people plus jobs per acre), rebuilt by a script in `scripts/baselines/` with a split-half check and an unsourced-number TODO. Any remaining use of the label needs a stated reason in the spec sheet.
+15. **A new shared place fact goes into the context, not into a pillar.** It is computed from local tables with no network call, carries its method (disk, pin tract, nearest tract), and is None when it cannot be measured.
+16. **A fact that cannot be measured is never replaced by a neutral number.** The pillar leaves the dependent component out and scales over the rest, or marks itself degraded or no data (principle 9). The audit counts these places.
+17. **Changing what the context holds invalidates stored context.** Bump the shared pre-pillar cache schema in the same commit, add the field to the context tests, and recompute the catalog from the same helper so stored and live values agree.
+
 ## Part 2: Pillar spec sheet (one per pillar)
 
 Copy this block into each pillar's doc and fill every field. "Unknown" is an allowed answer and becomes an audit finding.
@@ -41,6 +51,7 @@ Reference frame: fixed standard | national norm | area-type norm | metro norm
   Evidence for the frame (tier 1 published study | tier 2 revealed-preference proxy | tier 3 survey):
 Measurement area: pin + radius | walk-time | tract | place | other
   Reason:
+Place context inputs used (fields) and remaining area-type uses (with reason):
 Inputs and data sources (with vintage):
 Parameters:
   name | value | source | plausible range | sensitivity result
