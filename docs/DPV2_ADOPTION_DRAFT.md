@@ -34,3 +34,13 @@ Healthcare: Level 2 in progress, not signed off (validation covered 668 of 1,476
 ## 5. Re-validation (principle 12)
 
 Proposed: the owner owns it. Every pillar is re-validated quarterly, or sooner when its data source changes. The re-validation is the Level 2 checks rerun and the spec sheet's "Last re-validated" date updated. A scheduled reminder can be set up once the owner agrees to the cadence.
+
+## 6. Infrastructure the checks depend on: the private Overpass server (proposed)
+
+Several pillars read OpenStreetMap (active outdoors, healthcare, natural beauty, neighborhood amenities, the early-education bonus), and the public Overpass servers refuse scripted traffic. The Level 2 checks for those pillars (pin-shift, any fresh fixed-radius read, re-validation) need the private server.
+
+- What it is: a rented Hetzner server running Overpass with the 18 states HomeFit scores (NY NJ CT CA WA TX IL IN PA DE MD, plus AZ CO FL GA MA NC NV on a second database). Reached only through an SSH tunnel; the address is kept in the owner's notes, not in the repo. Build and runbook: `docs/PRIVATE_OVERPASS.md`, `scripts/overpass_server/`.
+- Cost: billed hourly while it exists, including when powered off. Pausing means snapshot, then delete; a snapshot is under $1 a month. Rebuilding from the snapshot takes minutes; a fresh build took about 5 hours.
+- Rule: a session may open the tunnel or run reads only when the owner asks, or when a signed-off step needs data that is not stored. Verifying stored data against fresh reads is not a reason (stored OpenStreetMap data has proven current).
+- Planning: each pillar's audit lists whether it needs fresh reads before the server is brought up, so the server is up once for a batch of pillars and then snapshotted and deleted. Owner decides when it is deleted.
+- Re-validation (section 5) includes bringing the server up from the snapshot when a pillar's check needs fresh reads, and recording the date in the spec sheet.
