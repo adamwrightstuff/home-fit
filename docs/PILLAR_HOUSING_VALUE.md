@@ -18,7 +18,7 @@ Expensive areas score *low* here (low affordability); that's by design.
   occupied-unit weighted pool of the tracts under the pin and an 8-point ring at 700 m (0.43 mile), the commute
   lookup's sampling (`summary.pooling`; sub-scores in the breakdown stay single-tract). Live scoring does the same
   with `HOMEFIT_HOUSING_POOLED=true` (default off). A 0.31 mile pin shift moved the single-tract score by a 95th
-  percentile of 25 points and the pooled score by 9; about half of the large neighbor gaps were within sampling
+  percentile of 27 points and the pooled score by 12 (100 places, real geocoder, 800 shifts; median 3.8 and 1.6); about half of the large neighbor gaps were within sampling
   error. Median catalog change 4.4 points, 88 places over 10; ranks inside a metro reorder (Spearman 0.70). The
   5-point pin-shift limit (borrowed from transit, a judgment) is not met. Open: Explorer income personalization
   still rebuilds from single-tract inputs. Audit: `analysis/audit_housing_d14_2026-10-27.md` (local).
