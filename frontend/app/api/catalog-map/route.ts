@@ -8,6 +8,10 @@ import { CATALOG_METROS, isCatalogMetro, type CatalogMetro } from '@/lib/catalog
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
+// Catalog data only changes on deploy, and Vercel's CDN cache is per deployment,
+// so a long shared cache keeps repeat visits off the origin.
+const CACHE_HEADERS = { 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800' }
+
 export type CatalogMapMetro = CatalogMetro
 
 /** Single canonical file per metro (composites live inside each row's `score`). */
@@ -124,10 +128,13 @@ export async function GET(request: Request) {
     const loaded = CATALOG_METROS.map((m) => [m, loadMetroFile(m, climateIndex)] as const)
     const places: CatalogMapPlaceWithMetro[] = loaded.flatMap(([, rows]) => rows)
     const sources = loaded.filter(([, rows]) => rows.length).map(([m]) => m).join('+') || 'missing'
-    return NextResponse.json({
-      places,
-      source: sources === 'missing' ? 'missing' : `all:${sources}`,
-    } satisfies CatalogMapApiResponse & { detail?: string })
+    return NextResponse.json(
+      {
+        places,
+        source: sources === 'missing' ? 'missing' : `all:${sources}`,
+      } satisfies CatalogMapApiResponse & { detail?: string },
+      sources === 'missing' ? undefined : { headers: CACHE_HEADERS }
+    )
   }
 
   if (!isCatalogMetro(raw)) {
@@ -149,5 +156,5 @@ export async function GET(request: Request) {
 
   const places = loadMetroFile(metro, climateIndex)
 
-  return NextResponse.json({ places, source: path.basename(filePath) } satisfies CatalogMapApiResponse)
+  return NextResponse.json({ places, source: path.basename(filePath) } satisfies CatalogMapApiResponse, { headers: CACHE_HEADERS })
 }
