@@ -1109,6 +1109,26 @@ export default function CatalogPageClient({
 
   const fitKey = `${catalogMode}-${twinQueryKey ?? 'nq'}-${filterMetro}-${twinCrossMetro}-${twinPillarList.join(',')}`
 
+  // The list payload is slimmed; fetch a place's full detail once when it is selected and swap it in.
+  const detailFetched = useRef(new Set<string>())
+  useEffect(() => {
+    if (!selectedKey || detailFetched.current.has(selectedKey)) return
+    const listed = places.find((p) => catalogRowKey(p.catalog) === selectedKey)
+    if (!listed) return
+    detailFetched.current.add(selectedKey)
+    fetch(`/api/catalog-map?metro=${listed.metro}&key=${encodeURIComponent(selectedKey)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { place?: CatalogMapPlaceWithMetro } | null) => {
+        const full = j?.place
+        if (!full) {
+          detailFetched.current.delete(selectedKey)
+          return
+        }
+        setPlaces((prev) => prev.map((p) => (catalogRowKey(p.catalog) === selectedKey ? { ...p, score: full.score } : p)))
+      })
+      .catch(() => detailFetched.current.delete(selectedKey))
+  }, [selectedKey, places])
+
   const selectedPlace = useMemo(() => {
     const fromGated = findPlaceByKey(gatedPlaces, selectedKey)
     if (fromGated) return fromGated

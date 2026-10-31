@@ -36,8 +36,12 @@ async function loadRowForId(id: string): Promise<SavedScoreRow> {
   const res = await fetch('/api/catalog-map?metro=all')
   if (!res.ok) throw new Error(`Catalog load failed (${res.status})`)
   const json = (await res.json()) as { places?: CatalogMapPlaceWithMetro[] }
-  const place = (json.places ?? []).find((p) => catalogRowKey(p.catalog) === id)
-  if (!place) throw new Error(`Catalog place not found: ${id}`)
+  const listed = (json.places ?? []).find((p) => catalogRowKey(p.catalog) === id)
+  if (!listed) throw new Error(`Catalog place not found: ${id}`)
+  // The list payload is slimmed; the comparison needs the full per-pillar detail.
+  const detailRes = await fetch(`/api/catalog-map?metro=${listed.metro}&key=${encodeURIComponent(id)}`)
+  if (!detailRes.ok) throw new Error(`Catalog place load failed (${detailRes.status})`)
+  const place = ((await detailRes.json()) as { place: CatalogMapPlaceWithMetro }).place
   const name = place.catalog.name + (place.catalog.county_borough ? `, ${place.catalog.county_borough}` : '')
   return {
     id,

@@ -3,6 +3,8 @@ import fs from 'fs'
 import path from 'path'
 import type { CatalogMapApiResponse, CatalogMapPlace, CatalogMapPlaceWithMetro, ClimateIndicators } from '@/lib/catalogMapTypes'
 import type { ScoreResponse } from '@/types/api'
+import { slimPlace } from '@/lib/catalogSlim'
+import { catalogRowKey } from '@/lib/catalogMapTypes'
 import { CATALOG_METROS, isCatalogMetro, type CatalogMetro } from '@/lib/catalogMetros'
 
 export const dynamic = 'force-dynamic'
@@ -124,9 +126,18 @@ export async function GET(request: Request) {
 
   const climateIndex = loadClimateIndex()
 
+  // Full (unslimmed) detail for one place; the list payload below drops per-pillar detail.
+  const key = searchParams.get('key')
+  if (key) {
+    if (!isCatalogMetro(raw)) return NextResponse.json({ error: 'key needs a single metro' }, { status: 400 })
+    const place = loadMetroFile(raw as CatalogMapMetro, climateIndex).find((p) => catalogRowKey(p.catalog) === key)
+    if (!place) return NextResponse.json({ error: 'Place not found' }, { status: 404 })
+    return NextResponse.json({ place }, { headers: CACHE_HEADERS })
+  }
+
   if (raw === 'all') {
     const loaded = CATALOG_METROS.map((m) => [m, loadMetroFile(m, climateIndex)] as const)
-    const places: CatalogMapPlaceWithMetro[] = loaded.flatMap(([, rows]) => rows)
+    const places: CatalogMapPlaceWithMetro[] = loaded.flatMap(([, rows]) => rows.map(slimPlace))
     const sources = loaded.filter(([, rows]) => rows.length).map(([m]) => m).join('+') || 'missing'
     return NextResponse.json(
       {
@@ -154,7 +165,7 @@ export async function GET(request: Request) {
     } satisfies CatalogMapApiResponse & { detail?: string })
   }
 
-  const places = loadMetroFile(metro, climateIndex)
+  const places = loadMetroFile(metro, climateIndex).map(slimPlace)
 
   return NextResponse.json({ places, source: path.basename(filePath) } satisfies CatalogMapApiResponse, { headers: CACHE_HEADERS })
 }
