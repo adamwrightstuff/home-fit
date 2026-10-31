@@ -182,8 +182,20 @@ Today's score is already a fixed curve over rates (2024 breakpoints), so it is a
 
 ### Options for scoring
 
-A. No scoring change. Record every judgment with its range, fix the stale docs and the trend comment, run the Level 2 checks on today's scores. Reaches Level 2 at the lowest cost, but leaves G3 open.
+A. No scoring change (approved 2026-10-31, with the crime-type read above). Record every judgment with its range, fix the stale docs and the trend comment, run the Level 2 checks on today's scores. Reaches Level 2 at the lowest cost, but leaves G3 open.
 B. A, plus remove the trend modifier (G5). Removes an unsourced parameter; mean 1.14 point shift, rank unchanged (0.998). Costs a rescoring of 1,420 composites and drops confidence in nothing.
 C. A, plus a harm-weighted violent index by crime type (G3). Most defensible construct, but needs per-type counts we do not store and a data pull, and it changes scores by an unknown amount.
 
 Recommendation: A now, and ask for one small data read to size G3 (per-offense counts for about 50 agencies from FBI CDE, no key beyond the one already in use). Decide B and C after seeing that size. Trend removal (B) is cheap but also not urgent: it is a listed TODO that Level 2 allows.
+
+### Crime-type read result (2026-10-31, owner-approved FBI CDE read)
+
+Data: FBI CDE summarized/agency, calendar 2024, seven Part I offenses, 50 agencies (20 large cities, 15 cities, 15 county sheriffs, random with a fixed seed from the saved national-scale samples). 47 had all four violent offenses for 12 months. Offense counts sum to the stored violent total within 3 (median 0). Raw rows: `analysis/safety_crime_type_sample_2026-10-31.jsonl`. About 350 requests, no downloads.
+
+Test: rank the 47 agencies by violent offenses per 1,000 residents (what the slot uses) and by cost-weighted violent harm per 1,000 (McCollister costs as recorded in the harm-weights file). Ranks are within this sample, not population weighted, so this sizes the effect and is not a score.
+- Rank correlation 0.833. Without murder it is 0.965, so almost all of the disagreement is murder.
+- Median rank shift 4.3 percentile points, 90th percentile 27, max 67. 19 of 47 move more than 10 points, 7 more than 20.
+- Murder is the median 31 percent of an agency's violent harm (0 to 97 percent); 19 of 47 agencies recorded no homicide in the year.
+- The big movers are small places where one to three homicides swing the harm rank: Hancock County MS (0.6 violent per 1,000, 3 homicides) goes from rank 4 to 72; Lawrence County MO (1 homicide) 20 to 59. Large cities move for real reasons: Richmond VA (56 homicides) 61 to 89.
+
+Reading: the violent slot does ignore crime type, and the choice matters. But a cost-weighted index is dominated by homicide counts that are tiny and noisy in the small agencies that make up most of the catalog, so option C as stated would trade a known blind spot for year-to-year noise in about 40 percent of places. This sample is too small to fit a fix and not population weighted. Conclusion: no scoring change; record it as a disclosed limit (the violent slot counts offenses equally) and treat any type weighting as a future option only with several years of pooled homicide counts.

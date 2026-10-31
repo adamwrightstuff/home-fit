@@ -272,7 +272,7 @@ def _trend_delta(trend_pct: Optional[float]) -> float:
     """
     if trend_pct is None:
         return 0.0
-    # Normalise: ±30% change = ±3 pts; cap at ±100% → ±5 pts
+    # Linear: ±30% change = ±1.5 pts; the ±5 pt cap is reached at ±100%
     delta = -(trend_pct / 100.0) * _TREND_CAP_PTS
     return round(max(-_TREND_CAP_PTS, min(_TREND_CAP_PTS, delta)), 2)
 
