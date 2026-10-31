@@ -177,6 +177,10 @@ Known data limits (returned in `data_quality.data_limits` on every live response
   completeness measure (flat 89 for all 1,235 new-shape places) and does not drop for degraded places; the
   degraded flag and `degraded_reasons` in `data_quality` are the disclosure (owner decision 2026-10-27, capping
   would need an unsourced number). Do not read confidence as a measure of natural beauty data quality.
+  RELABELED 2026-10-31 (owner decision): the pillar card now calls it "Data completeness" and shows "Not recorded" when
+  there is no value (240 places: the 238 older-shape NYC and LA rows plus Glendale and Pelham Bay, whose stored 0 was a
+  leftover with full inputs present; San Fernando keeps 0, it has no data). The "Low confidence, rescore" notice now needs
+  a numeric value below 50, so empty values no longer trigger it. Backup `data/backups_nb_confidence_2026-10-31/`.
 Last re-validated: 2026-10-28 first scheduled pass (see Re-validation below): natural beauty tests pass,
   TS mirror matches, health check on all 21 metros clean except 238 older-shape NYC/LA places rated "poor"
   quality tier (no stored confidence, known) and 192 degraded (known water flags), launch check shows 0 natural
@@ -218,7 +222,7 @@ citation. Ranges are what the existing sensitivity runs covered, not evidence-de
 | Global references (`_V9_GVI_GLOBAL_REF`, `_V9_CANOPY_GLOBAL_REF`) | 20 % green view, 24 % canopy | none ("national urban median") | not tested | |
 | Region boxes and California polygon | 12 hand-drawn boxes plus an outline | none (geometry choice; fixed for Las Vegas 2026-10-22) | not tested | A region boundary change moves places across baselines |
 | Street-tree boost | min(20, log1p(count / 500) x 8) percentage points of green view, capped at 50 % | none (judgment) | not tested | Adds up to 20 points of green view in 94 places |
-| Visible-green-fraction floor | 0.85 x visible green fraction, applied when more than 2x green view and above 5 % | none (judgment) | not tested | Fires in 379 places (26%) |
+| Visible-green-fraction floor | 0.85 x visible green fraction, applied when more than 2x green view and above 5 % | none (judgment) | tested 2026-10-31 against Place Pulse (see below): inconclusive | Fires in 307 of 1,396 reproducible places (22%); removing it lowers those by 23 points on average (p95 40) and the catalog mean from 64.6 to 59.4 |
 | Percentile scale | 101-point quantile table mapping the blend onto the old V9 distribution | calibration to the previous score, not evidence | rebuild only on a material catalog change | Fixes catalog mean (64.6) and SD (18.9) by construction; a new place is scored against this catalog's distribution |
 | Water none-within-15 km floor | 3.0 | the curve's own floor | not tested | Applies when the read succeeded and found nothing |
 
@@ -302,6 +306,37 @@ hard step that a radius change can flip: places where it switched on or off (59)
 places where it did not (983) moved 0.8 at the median. The floor is an unsourced judgment and a known cliff (it also
 feeds pin-shift sensitivity). Backups: `data/backups_nb_gvi800_2026-10-30/`.
 
+Visible-green floor test (2026-10-31, `scripts/qa/place_pulse_gvi_radius.py vgf` and `floorreport`, live GEE then offline):
+211 Place Pulse points, green view and visible green fraction at 800 m, Spearman against human beauty scores. No floor
+0.467 pooled / 0.267 within city; current hard floor 0.500 / 0.259; smooth blend (ramp from 1x to 2x, no new constant)
+0.498 / 0.241. Hard minus none +0.031 (95% interval -0.027 to +0.091), so the pooled gain is not distinguishable from
+zero and within-city agreement is slightly lower. The floor fires on only 30 points (14%); on those 30, agreement
+falls from 0.371 to 0.307. Offline removal estimate on 1,396 places whose stored score reproduces: active in 307
+(22%; Denver 57 of 62, Phoenix 45 of 64, Dallas 40, Sacramento 35, San Antonio 33, SF 45), mean change among them
+-23.4, p95 -40.5, catalog natural beauty mean 64.6 to 59.4. 79 older NYC rows did not reproduce offline and were left
+out. DECISION (owner, 2026-10-31): keep the floor as a recorded unsourced judgment; the test neither supports nor
+refutes it, and the 30 touched points are too few to speak for dry-climate places. Revisit with Place Pulse points
+from arid cities. No scoring or catalog change.
+
+Water classification, open-coast test (2026-10-31, `scripts/qa/natural_beauty_openness_pilot.py`, private Overpass, no score
+change): measured the width of water across from the nearest coastline. Midtown East 0.3 km, Maspeth 0.1, Washington
+Heights 1.7, Brooklyn Heights 3.3, Southport (Long Island Sound) 7.8, Santa Monica, Culver City and Bel Air open (over
+30 km). Straits and open coast separate, but any cutoff (5 or 10 km decides the Sound) is an unsourced judgment, small piers
+and islands corrupt the reading (Midtown 0.0 km), and SF Bay and Puget Sound were not tested. A beach-based test was
+also checked: OSM beaches sit near Brooklyn Heights (Pier 4 Beach, 0.4 km), Midtown (Gansevoort, 2.9 km) and Southport but
+not near Midtown East, Washington Heights or Maspeth, so it would measure OSM mapping as much as water. DECISION (owner,
+2026-10-31): stop here. Distinguishing real beach from coastline has been tried repeatedly; the East River coastline tag
+stays a documented limit (500 m pin-shift defect at Midtown) and `NB_WATER_BEST_TYPE` stays off.
+
+Tree-lined street signal test (2026-10-31, `scripts/qa/place_pulse_street_canopy.py`, live GEE, Place Pulse only; BACKLOG.md
+item): NLCD canopy read over the whole circle versus along the street corridor (TIGER local and secondary roads buffered 10,
+20 or 30 m; the buffer is unsourced, so all three were tested), 211 points, Spearman against human beauty scores. Pooled /
+older dense cities (n=93): whole circle 400 m 0.524 / 0.448; street corridor 10 m 0.553 / 0.481, 20 m 0.548 / 0.476, 30 m
+0.543 / 0.466; at 1,000 m whole 0.503 / 0.447, street 10 m 0.529 / 0.494. Gain over the whole circle +0.019 to +0.029, 95%
+intervals touch zero (best: 10 m at 400 m, +0.000 to +0.060). The street reading correlates 0.858 with green view at 800 m,
+so it adds little new information. RESULT: no clear margin, nothing proposed, no scoring change. The corridor idea stays
+in BACKLOG.md as a possible separate "walking the street feels green" preference, not a change to the pillar score.
+
 Not closed by this sign-off: P6 (fails the 5-point gate at 500 m, causes diagnosed above) and P7 (blend
 unvalidated). For P7 with no desert rating data, the proposed close is a face-validity test: pairwise rankings
 of known places (for example a leafy suburb, Phoenix, a dense urban core) by a small expert or user panel, to
@@ -317,7 +352,7 @@ USDA, water vs USDA. Everything else above is a judgment call or a TODO. P4 stay
 
 ## Known gaps
 - Deserts have no human rating data (Phoenix, Las Vegas). Plan: an in-product photo-rating question.
-- No pin-shift test yet (green view reads 1.2 km, canopy 0.4 to 2 km, terrain 5 km, water nearest body within 15 km around the pin).
+- Pin-shift: passes at 250 m, fails at 500 m (water type flip, steep green view curve); see the spec sheet above.
 - Place Pulse photos are 2007 to 2012; ScenicOrNot is Britain only and almost all rural.
 - Both canopy sources in `gee_api.py` are flagged deprecated by Google Earth Engine.
 

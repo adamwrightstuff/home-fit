@@ -611,11 +611,11 @@ export default function PillarCard({
           </div>
         </div>
         <div>
-          <div className="tr-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Confidence</div>
+          <div className="tr-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>{pillar_key === 'natural_beauty' ? 'Data completeness' : 'Confidence'}</div>
           <div style={{ fontWeight: 800, color: isNone ? 'var(--hf-text-secondary)' : 'var(--hf-text-primary)', fontSize: '1rem', opacity: isNone ? 0.85 : 1 }}>
             {typeof pillar.confidence === 'number' && Number.isFinite(pillar.confidence)
               ? `${pillar.confidence.toFixed(0)}%`
-              : '—'}
+              : pillar_key === 'natural_beauty' ? 'Not recorded' : '—'}
           </div>
         </div>
       </div>
@@ -1010,7 +1010,7 @@ export default function PillarCard({
 
           {onRescorePillar ? (
             <div style={{ marginTop: '1.25rem' }}>
-              {pillar.confidence < 50 && (
+              {typeof pillar.confidence === 'number' && pillar.confidence < 50 && (
                 <div
                   role="status"
                   style={{

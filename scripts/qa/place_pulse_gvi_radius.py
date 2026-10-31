@@ -9,6 +9,8 @@ point and correlates each radius with the human "beauty" score (Spearman), poole
   shift:    cd /Users/adamwright/Dev/home-fit && PYTHONPATH=. python3 scripts/qa/place_pulse_gvi_radius.py shift 100 3 2>&1 | grep -E "^(M|DONE)"
   shiftreport: cd /Users/adamwright/Dev/home-fit && PYTHONPATH=. python3 scripts/qa/place_pulse_gvi_radius.py shiftreport 2>&1 | grep "^  "
   report:   cd /Users/adamwright/Dev/home-fit && PYTHONPATH=. python3 scripts/qa/place_pulse_gvi_radius.py report
+  vgf:      cd /Users/adamwright/Dev/home-fit && PYTHONPATH=. python3 scripts/qa/place_pulse_gvi_radius.py vgf 3 2>&1 | grep -E "^(M|DONE)"
+  floorreport: cd /Users/adamwright/Dev/home-fit && PYTHONPATH=. python3 scripts/qa/place_pulse_gvi_radius.py floorreport
 """
 import json, os, random, sys, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -23,6 +25,7 @@ RADII = (400, 800, 1200, 2000)
 SHIFT_OUT = ROOT / "analysis" / "place_pulse" / "gvi_radius_shift.jsonl"
 SHIFT_RADII = (400, 800, 1200)
 SHIFT_M = 250
+VGF_OUT = ROOT / "analysis" / "place_pulse" / "vgf_800.jsonl"
 
 
 def measure(n, threads):
@@ -51,6 +54,66 @@ def measure(n, threads):
             if k % 10 == 0 or k == len(todo):
                 print(f"M {k}/{len(todo)} done, {(time.time() - t0) / k:.1f}s per point", flush=True)
     print("DONE")
+
+
+def vgf(threads):
+    """Visible green fraction at 800 m for every photo point already in OUT (the floor rule's input).  LIVE (GEE only)."""
+    from dotenv import load_dotenv; load_dotenv(ROOT / ".env")
+    from data_sources.gee_api import get_urban_greenness_gee
+    imgs = pd.read_csv(CSV).drop_duplicates("img").set_index("img")
+    base = [json.loads(l) for l in open(OUT)]
+    done = {json.loads(l)["img"] for l in open(VGF_OUT)} if VGF_OUT.exists() else set()
+    todo = [b for b in base if b["img"] not in done and b.get("gvi_800") is not None]
+    print(f"M {len(done)} read, {len(todo)} to do", flush=True)
+
+    def work(b):
+        r = imgs.loc[b["img"]]
+        o = {"img": b["img"]}
+        try:
+            g = get_urban_greenness_gee(float(r.lat), float(r.lon), radius_m=800) or {}
+            o["vgf_800"] = g.get("visible_green_fraction")
+            o["gvi_800_recheck"] = g.get("semantic_gvi")
+        except Exception:
+            o["vgf_800"] = None
+        return o
+
+    t0 = time.time()
+    with ThreadPoolExecutor(threads) as ex, open(VGF_OUT, "a") as f:
+        for k, fu in enumerate(as_completed([ex.submit(work, b) for b in todo]), 1):
+            f.write(json.dumps(fu.result()) + "\n"); f.flush()
+            if k % 10 == 0 or k == len(todo):
+                print(f"M {k}/{len(todo)} done, {(time.time() - t0) / k:.1f}s per point", flush=True)
+    print("DONE")
+
+
+def floor_report():
+    """Agreement with human beauty scores for green view at 800 m under: no floor, the current hard floor
+    (0.85 x vgf replaces green view when more than 2x it and above 5), and a smooth blend that ramps from no change at
+    floor = 1x green view to full replacement at 2x (reuses the rule's own 1x/2x/0.85/5 numbers, no new constant)."""
+    import numpy as np
+    d = pd.DataFrame([json.loads(l) for l in open(OUT)]).merge(pd.DataFrame([json.loads(l) for l in open(VGF_OUT)]), on="img")
+    d = d.dropna(subset=["gvi_800", "vgf_800", "score"]).copy()
+    g, fl = d["gvi_800"].astype(float), 0.85 * d["vgf_800"].astype(float)
+    hard = np.where((fl > g * 2.0) & (fl > 5.0), np.minimum(50.0, fl), g)
+    t = np.clip(fl / g.replace(0, np.nan) - 1.0, 0, 1).fillna(1.0).where(fl > 5.0, 0.0)
+    smooth = g + t * (np.minimum(50.0, fl) - g)
+    d["none"], d["hard"], d["smooth"] = g, hard, smooth
+    touched = int((d["hard"] != d["none"]).sum())
+    print(f"n = {len(d)} points; hard floor fires on {touched} ({100 * touched / len(d):.0f}%); smooth blend changes {int((d['smooth'] != d['none']).sum())}")
+    rng = np.random.default_rng(3)
+    for c in ("none", "hard", "smooth"):
+        pooled = sp(d[c], d["score"])
+        within = d.groupby("city").apply(lambda x: sp(x[c], x["score"]) if len(x) >= 15 else float("nan"), include_groups=False)
+        print(f"  {c:6s}: pooled Spearman {pooled:.3f} | mean within-city {within.mean():.3f} ({within.notna().sum()} cities)")
+    for c in ("hard", "smooth"):
+        diffs = []
+        for _ in range(500):
+            x = d.sample(len(d), replace=True, random_state=int(rng.integers(1e9)))
+            diffs.append(sp(x[c], x["score"]) - sp(x["none"], x["score"]))
+        print(f"  {c} minus none: {np.mean(diffs):+.3f} (95% interval {np.percentile(diffs, 2.5):+.3f} to {np.percentile(diffs, 97.5):+.3f})")
+    if touched:
+        m = d[d["hard"] != d["none"]]
+        print(f"  on the {touched} touched points only: none {sp(m['none'], m['score']):.3f}, hard {sp(m['hard'], m['score']):.3f}")
 
 
 def sp(a, b):
@@ -135,6 +198,10 @@ if __name__ == "__main__":
         shift(int(sys.argv[2]), int(sys.argv[3]))
     elif sys.argv[1:2] == ["shiftreport"]:
         shift_report()
+    elif len(sys.argv) >= 3 and sys.argv[1] == "vgf":
+        vgf(int(sys.argv[2]))
+    elif sys.argv[1:2] == ["floorreport"]:
+        floor_report()
     elif sys.argv[1:2] == ["report"]:
         report()
     else:
