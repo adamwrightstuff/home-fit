@@ -84,6 +84,12 @@ NATURAL_BEAUTY_DATA_LIMITS = (
     "Beauty validation is partial: no human rating data covers deserts or the final blend, and component tests (Place Pulse photos 2007 to 2012, ScenicOrNot Britain only) correlate 0.3 to 0.7.",
     "Pillar confidence reflects whether inputs were present, not their quality; check degraded and degraded_reasons.",
 )
+# Greenery is read at one radius for every place (design principles v2, P3: no peer or area-type norm).  Green view
+# used to be read at 800 m (urban residential), 1,000 m (urban core) or 1,200 m (everything else); the weighted canopy
+# uses fixed 400, 1,000 and 2,000 m radii for all places.  800 m: of the radii tested against Place Pulse human ratings
+# (400, 800, 1,200, 2,000 m) 400 m tracked ratings best but failed the 250 m pin-shift gate, 800 m was best among those
+# that passed (docs/PILLAR_NATURAL_BEAUTY.md).  Area type no longer changes how greenery is read.
+NB_READ_RADIUS_M = 800
 NB_WATER_BEST_TYPE = os.getenv("NB_WATER_BEST_TYPE", "0") == "1"
 
 # Personalization: weight profiles from "What kind of natural scenery matters most to you?" quiz.
@@ -1672,7 +1678,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         area_type_key = (area_type or "").lower() or "unknown"
 
         radius_profile = get_radius_profile('natural_beauty', area_type, location_scope)
-        radius_m = int(radius_profile.get('tree_canopy_radius_m', 1000))
+        radius_m = 1000 if location_scope == 'neighborhood' else NB_READ_RADIUS_M  # scope still caps a neighborhood query; was int(radius_profile.get('tree_canopy_radius_m', 1000)), which varied by area type
         tree_radius_used = radius_m
         logger.debug("Radius profile (beauty): area_type=%s scope=%s tree_canopy_radius=%sm", area_type, location_scope, radius_m)
 
@@ -1687,7 +1693,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         if precomputed_tree_canopy_5km is not None and radius_m == 5000:
             gee_canopy = precomputed_tree_canopy_5km
             logger.debug("Using pre-computed tree canopy (5km): %.1f%%", gee_canopy)
-        elif area_type not in ('urban_core',):
+        elif True:  # one path for every place; the urban-core-only branch below is retired (area type no longer reads differently)
             # Non-urban-core fast path: fire all canopy radii + census + GVI in one batch.
             # No conditional fallbacks apply here, so we know the full fetch set upfront.
             _gvi_r_pre = min(1200, radius_m)
@@ -1746,7 +1752,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 logger.warning("GEE canopy lookup failed: %s, using None", gee_error)
                 gee_canopy = None
 
-        if location_scope != 'neighborhood' and gee_canopy is not None and gee_canopy < 25.0 and area_type == 'urban_core':
+        if False and location_scope != 'neighborhood' and gee_canopy is not None and gee_canopy < 25.0 and area_type == 'urban_core':  # retired
             try:
                 gee_canopy_larger = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
                 if gee_canopy_larger is not None and gee_canopy_larger > gee_canopy:
@@ -1762,7 +1768,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                             pass  # Fallback to 2km result
             except Exception:
                 pass  # Fallback to original gee_canopy
-        elif location_scope != 'neighborhood' and (gee_canopy is None or gee_canopy < 0.1) and area_type == 'urban_core':
+        elif False and location_scope != 'neighborhood' and (gee_canopy is None or gee_canopy < 0.1) and area_type == 'urban_core':  # retired
             try:
                 gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
                 if gee_canopy is not None and gee_canopy >= 0.1:
