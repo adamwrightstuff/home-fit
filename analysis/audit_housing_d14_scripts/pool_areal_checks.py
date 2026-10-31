@@ -246,6 +246,7 @@ print('   unscoreable pooled (None): ', {R: sum(r['pooled'][R] is None for r in 
 # ---- pin shift -----------------------------------------------------------------
 print('\n== B. Pin shift %d m (%.2f mi), 8 bearings, %d places; tract under shifted pin by the disk rule ==' % (SHIFT_M, SHIFT_M / 1609.3, len(P)))
 res = {'single': [], **{R: [] for R in RINGS}}
+pairs_ = {'single': [], **{R: [] for R in RINGS}}     # (metro, score at the pin, score at the shifted pin)
 by_at = collections.defaultdict(lambda: {'single': [], 700: []})
 for r in P:
     for b in range(8):
@@ -256,6 +257,8 @@ for r in P:
         s0 = sc(tract_inputs(T[g0]), r['adj'])
         if s0 is not None:
             res['single'].append(abs(s0 - r['base']))
+            pairs_['single'].append((r['metro'], r['base'], s0))
+            r.setdefault('sh_single', []).append(abs(s0 - r['base']))
             by_at[r['area_type']]['single'].append(abs(s0 - r['base']))
         for R in RINGS:
             g = ring_tracts(la2, lo2, R, r['near'], extra=(g0,))
@@ -263,6 +266,9 @@ for r in P:
             s1 = sc(p[0], r['adj']) if p else None
             if s1 is not None and r['pooled'][R] is not None:
                 res[R].append(abs(s1 - r['pooled'][R]))
+                pairs_[R].append((r['metro'], r['pooled'][R], s1))
+                if R == 700:
+                    r.setdefault('sh_700', []).append(abs(s1 - r['pooled'][R]))
                 if R == 700:
                     by_at[r['area_type']][700].append(abs(s1 - r['pooled'][R]))
 summarize('single tract', res['single'])
@@ -272,6 +278,11 @@ print('   by area type (stored label), 95th percentile single / pooled 700 m (n 
 for k, v in sorted(by_at.items(), key=lambda x: str(x[0])):
     if len(v['single']) >= 16:
         print('     %-18s %5.1f / %5.1f  (%d)' % (k, pct(v['single'], .95), pct(v[700], .95), len(v['single'])))
+print('   rank correlation, score at the pin vs at the shifted pin (all shifts / within-metro median):')
+for k in ('single', *RINGS):
+    d_ = pd.DataFrame(pairs_[k], columns=['metro', 'o', 's'])
+    per_ = [g['o'].rank().corr(g['s'].rank()) for _, g in d_.groupby('metro') if len(g) >= 40]
+    print('     %-8s %.3f / %.3f' % (k, d_['o'].rank().corr(d_['s'].rank()), st.median(per_)))
 print('   gate used in the transit audit: 95th percentile <= 5 points (judgment). Pass:', {
     'single': pct(res['single'], .95) <= 5, **{R: pct(res[R], .95) <= 5 for R in RINGS}})
 
@@ -347,6 +358,13 @@ print('   of those > 15: within 2 standard errors of each other (could be sampli
 print('   all pairs: z < 2 for %.0f%%' % (100 * sum(p[1] < 2 for p in pairs) / max(1, len(pairs))))
 
 # ---- rank correlation ----------------------------------------------------------
+print('\n== C2. Pin swing against sampling noise (math-backed gate) ==')
+print('   If two score readings differed only by Census sampling error, |difference| / (sqrt(2) x sd) would exceed 1.96')
+print('   in 5% of cases (normal, independent). Share of pin shifts above that is the excess swing; 5% means pure noise.')
+for key, sdk, lab in (('sh_single', 'sd_single', 'single tract'), ('sh_700', 'sd_pool700', 'pooled 0.43 mile')):
+    z = [d_ / (math.sqrt(2) * r[sdk]) for r in P if r.get(key) and r.get(sdk) for d_ in r[key]]
+    print('   %-17s shifts %d: share above 1.96 = %.1f%%; median |z| %.2f (pure noise: 0.67); 95th pct |z| %.2f (pure noise: 1.96)' % (
+        lab, len(z), 100 * sum(x > 1.96 for x in z) / len(z), st.median(z), pct(z, .95)))
 print('\n== D. Within-metro rank correlation, single tract vs pooled (Spearman) ==')
 df = pd.DataFrame([dict(metro=r['metro'], base=r['base'], **{'p%d' % R: r['pooled'][R] for R in RINGS}) for r in P])
 for R in RINGS:
