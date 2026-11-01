@@ -20,3 +20,11 @@ Needs a data read; ask the owner before any download or API call. Source we did 
 
 ## Output
 A short report in `analysis/` with each check, its numbers, pass or fail against the criteria above, and what was not verified. Do not edit the spec sheet; the owner enters results and sets the level.
+
+## Check 4 addendum (2026-11-01, owner chose precinct maps; criteria fixed before any data is read, pending owner approval of the downloads)
+
+Source: NYPD precinct crime statistics PDFs, 2024 annual column (murder, rape, robbery, felony assault), `nyc.gov/assets/nypd/downloads/pdf/crime_statistics/cs-en-us-<NNN>pct.pdf`, plus the NYPD precinct boundary file from NYC Open Data. NYC only, because 96 of the 369 circle places are there and it is the one city with a precinct publication that carries annual totals. Chicago, Philadelphia and others are not covered.
+What it tests: our circle method (600 to 2,000 m, people-present denominator, stored violent_per_1k) against a precinct-wide published tally. It does NOT test the incident records themselves: NYPD publishes both from the same record system. Say this in the spec sheet.
+Selection, before any precinct number is read: assign the 96 stored NYC places to precincts by point in polygon; keep one place per precinct; pick 15 to 20 precincts spread across the stored score range (by score quintile). Precinct residents come from the offline ACS tract tables (tract centroids inside the polygon).
+Pass, fixed: n at least 15 precincts; Spearman of the precinct's violent rate per 1,000 residents (four offenses, 2024) against our stored violent_per_1k for the matched place at least 0.7; median absolute rank difference under 20 percentile points. Fail otherwise. Report n, Spearman, the five largest rank gaps.
+Access: a scripted HEAD request to the NYPD PDF returned 403 on 2026-11-01. Do not work around the block (no header spoofing). If blocked, download through the owner's browser into an empty folder, or stop and report.
