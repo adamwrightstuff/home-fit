@@ -91,7 +91,7 @@ PILLAR_DATA_QUALITY.
 
 ```
 Pillar: community_safety
-Level: 1 candidate (not signed off). See the Level 2 plan at the end of this section.
+Level: 1 (Converted), signed off by the owner 2026-11-01 with the TODOs listed under "Level 2 results and proposed level". Level 2 not reached: independent validation not done.
 Construct (one sentence): Exposure to reported violent and property crime near the pin, expressed as the share of
   Americans who live somewhere with more of it. It measures reported risk, not felt safety and not cost to society.
 Reference frame: fixed standard, expressed on a national scale (one curve for every place, 2024 breakpoints, no area type).
@@ -209,3 +209,5 @@ Run by a separate agent, report in `analysis/safety_level2_report_2026-11-01.md`
 - Independent validation: NOT DONE. 4b (FBI agency rate vs circle mean, 10 agencies): Spearman 0.115, inconclusive by prior agreement. 4a (NYPD precinct tallies, 20 precincts chosen in advance) was not run: the figures are PDF downloads and the owner chose not to download anything. No other city publishes an annual district table that I could find.
 
 Proposed level: Level 1 (Converted). Level 2 is not reached because its independent validation did not run. Accepted TODOs to list at sign-off: independent validation (NYC precinct route ready if downloads are allowed later); crime-type weighting (left as disclosed limit); trend, 10,000-resident minimum, radii, work-week share and confidence values unsourced; mixed circle and agency areas; 56 places with no data; two NYC tract gaps; pin-shift not shown in the API. Last re-validated: 2026-11-01 (checks 1 to 3 only).
+
+Sign-off: Level 1, owner, 2026-11-01. Accepted TODOs: as listed above.
