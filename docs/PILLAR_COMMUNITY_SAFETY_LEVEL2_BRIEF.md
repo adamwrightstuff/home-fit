@@ -1,6 +1,6 @@
 # Community safety: Level 2 checks, brief for an independent agent (2026-10-31)
 
-Status: DRAFT. The owner has not approved running it. Pass criteria below are fixed before any result exists; do not edit them after seeing data. The runner must not be the session that built or audited the pillar.
+Status: APPROVED by the owner 2026-11-01. Pass criteria below are fixed before any result exists; do not edit them after seeing data. The runner must not be the session that built or audited the pillar.
 
 Scope: no scoring, catalog or code changes. Work in a new git worktree off origin/main. Read stored scores from `data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl` (`score.livability_pillars.community_safety`). Any download goes in its own empty folder, Python runs with `-I`. Say what data a step needs before any live call and ask. No em dashes.
 
