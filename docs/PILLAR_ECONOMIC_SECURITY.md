@@ -89,7 +89,11 @@ The pin-shift and weight tests below were run by the builder and are not the ind
 
 ```
 Pillar: economic_opportunity (public name: economic security)
-Level: 0, audit in progress (proposed after the steps below)
+Level: 1, signed off by the owner 2026-11-02 "yes for now". TODOs accepted: all unsourced numbers (blend, decay, cutoff,
+  component and sub-weights, growth floor, remote reweight, fallback thresholds); weak frame evidence; metro-level market
+  quality (Palo Alto and Greenwich); double-counted industry diversity left as is; opt-in overlay path's area-bucket use
+  (cell baselines not verified); gravity not on the place context. Level 2 in progress; brief:
+  `docs/ECONOMIC_SECURITY_LEVEL2_BRIEF.md`.
 Construct (one sentence): Opportunity: the size and quality of the job market a resident can reach by commuting,
   not the metro the place is filed under and not the residents' own outcomes.
 Reference frame: absolute (no peer norm). Job access is on a fixed log scale (0 at 10^2.5, 100 at 10^6.6 distance-decayed
@@ -136,8 +140,11 @@ Effective weights inside market quality (computed from the code): industry diver
   balance 0.10, wage 25th percentile 0.08, job growth 0.06, establishment entry 0.0525, wage 75th percentile 0.0375.
   Times 0.45, industry diversity alone is 13 percent of the final score. Unemployment rate is normalized but never used.
 Shared inputs with other pillars: status_signal reads white_collar_pct, which main.py injects into this pillar's breakdown;
-  happiness_index, the longevity index and total_score read the score. Wage and earnings overlap with status_signal and
-  housing_value NOT yet tested (Level 2 overlap check pending).
+  happiness_index, the longevity index and total_score read the score. Overlap test (builder run 2026-11-02, stored
+  catalog, 1,476 places, Spearman): status_signal 0.16 (within metro 0.22), so no double counting; housing_value -0.48
+  (within metro -0.50), a trade-off (job-rich places cost more), not a shared input; public transit 0.53 (job access alone
+  0.69), a shared driver (centrality), not a shared input; amenities 0.42, healthcare 0.50, air travel 0.42. Independent
+  rerun is V5 in the Level 2 brief.
 Pin-shift sensitivity (shift distance, median and p95 score change; builder run 2026-11-02, offline, 1,476 places, worst of
   four directions per place, job-access term only): 500 m: median 0.07, p95 0.12, max 0.38. 1 km: 0.15, 0.23, 0.55.
   2 km: 0.30, 0.47, 1.33. Not tested: a shift across a CBSA line, where the market-quality half changes (see gap 1).
