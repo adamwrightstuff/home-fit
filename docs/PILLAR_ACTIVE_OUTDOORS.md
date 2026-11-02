@@ -191,8 +191,11 @@ script `scripts/catalog/recompute_active_outdoors_water_nearest_offline.py`; no 
   composites.
 - Health check (active outdoors, all 21 files): the same 99 flagged places as before (93 conf_36, 6 conf_68); plausibility outliers
   41 before, 43 after (near the z cut-offs; not examined).
-- Step 4 (re-read Larkspur, Orinda, Woodside, Moapa Town): NOT DONE. It needs the private Overpass server (not reachable now: no
-  tunnel is listening, and the server address is kept in the owner's notes, not the repo). Needs: bring the server up from its
-  snapshot (billed hourly) or the address if it is running; one park read at 2,000 m for four places; then the daily term is
-  recomputed offline with the same method. These four stay at their stored values until then.
-
+- Step 4 (re-read of the four empty-park places, 2026-11-02, private server): Larkspur (73 parks within 1.2 miles), Orinda (17) and
+  Woodside (20) came back overpass_ok with parks, so their stored empty reads were failed reads recorded as zero. Recomputed offline
+  (`scripts/catalog/apply_active_outdoors_empty_park_reread.py`, new file `analysis/ao_reread_four/out/`): pillar score Larkspur
+  59.7 to 88.5, Orinda 54.2 to 72.9, Woodside 47.9 to 74.3; total score +2.4, +1.6, +2.2. These are LOWER BOUNDS by up to 3 daily
+  points: the facilities count is not in the stored read, so that term stays 0. Moapa Town NV came back overpass_empty again
+  (rural, 0 parks); it keeps its stored value and stays an unconfirmed real zero (the Nevada database was reached, but an empty
+  answer cannot be told from a missing-data answer, the same risk as healthcare's Spring Branch). Still open: the rule that an empty
+  read is a failure only in populated types (gap 9); these three were typed exurban or rural.
