@@ -169,3 +169,30 @@ Recommendation: B for steps 1, 3 and 4, and decide step 2 after you see the 140-
 Level 0 now. Level 1 is reachable under option B. Level 2 requires the brief's checks, run by another agent, with the criteria fixed beforehand. Level 3 is not reachable: every budget, base, decay and target is unsourced or a catalog median (listed above). Re-validation date proposed: 2027-02-02 (quarterly), or sooner if the OSM read or the baseline files change.
 
 Open TODOs accepted by the audit (nothing here is sourced): park baseline level, decay, radius, playground floor, all point budgets, nearest-park curve and 0.5 ha rule, trail targets and budgets, camping window and decay, water bases and decay, the 100/110 divisor, facilities term.
+
+### Option B steps 1, 3, 4: status (2026-11-02, owner approved 1, 3 and 4)
+
+Code (this branch, not pushed): the water area-type multipliers are removed; the nearest-park term reads the 2,000 m list for every
+place that has the density factor, and its comment is corrected. Two tests added; 66 active outdoors and water tests pass.
+Step 2 (camping window) is not started, awaiting the 140-place list decision.
+
+Catalog recompute, new files only (`analysis/ao_recompute_2026-11-02/`, composites in `analysis/ao_recompute_2026-11-02_composites/`;
+script `scripts/catalog/recompute_active_outdoors_water_nearest_offline.py`; no data file replaced; nothing live):
+- Pillar score: 469 of 1,476 places change, mean +0.23, max +2.1, 23 places by more than 1 point, 2 by more than 2. Nobody falls.
+  By area type (mean change): suburban +0.42, urban residential +0.13, exurban 0, rural 0.
+- Water: 463 places rise (mean +0.80 among those, max +1.8 waterfront points, 16 by more than 1). This is a LOWER BOUND: the stored
+  feature lists are not kept, so a second-best feature that would overtake the winner without its multiplier is not seen. The 36
+  places scored under the old mountain-town override are left unchanged (they never carried a multiplier).
+- Nearest park: 7 places change (mean +1.8 daily points, max +2.3); the 16 places with no fresh read keep their stored value.
+- Composites: total score changes in 465 places (max 0.18), happiness index in 254 (max 0.2), longevity index in 471 (max 1.73).
+  The 1.73 is one place, Pelham Bay NY, whose stored longevity contributions had no natural beauty entry; the recompute filled it in,
+  unrelated to this change (its active outdoors score is unchanged at 66.2).
+- Other pillars: field-by-field diff of the 21 files against the current files shows no change outside active outdoors and the
+  composites.
+- Health check (active outdoors, all 21 files): the same 99 flagged places as before (93 conf_36, 6 conf_68); plausibility outliers
+  41 before, 43 after (near the z cut-offs; not examined).
+- Step 4 (re-read Larkspur, Orinda, Woodside, Moapa Town): NOT DONE. It needs the private Overpass server (not reachable now: no
+  tunnel is listening, and the server address is kept in the owner's notes, not the repo). Needs: bring the server up from its
+  snapshot (billed hourly) or the address if it is running; one park read at 2,000 m for four places; then the daily term is
+  recomputed offline with the same method. These four stay at their stored values until then.
+

@@ -676,11 +676,16 @@ def _score_daily_urban_outdoors_v2(
         s_count = _sat_ratio_v2(park_count, exp_park_count, 22.0)
 
     # 2. Nearest meaningful park proximity (0-8)
-    #    Full score <=300m, decays to ~half at 800m, ~20% at 1500m.
+    #    8 * exp(-0.0012 * metres): 70% at 300m, 38% at 800m, 17% at 1500m. With the density factor every place is judged
+    #    on the same 2,000 m list as the park count; without it, on the area type's local radius.
     MIN_MEANINGFUL_HA = 0.5
+    if baseline is not None and parks_for_count is not None:
+        nearest_pool = [p for p in parks_for_count if p.get("distance_m", 1e9) <= radius_m]
+    else:
+        nearest_pool = parks
     meaningful_distances = [
         p.get("distance_m", 1e9)
-        for p in parks
+        for p in nearest_pool
         if (p.get("area_sqm") or 0.0) / 10_000.0 >= MIN_MEANINGFUL_HA
     ]
     if meaningful_distances:
@@ -971,13 +976,7 @@ def _score_water_lifestyle_v2(
             base = _WATERFRONT_BASE["swimming_area"]
 
         # Context downweights
-        if area_type in {"urban_core"} and t not in {"beach"}:
-            base *= 0.75
-        elif area_type in {"suburban", "urban_residential"}:
-            if t == "lake":
-                base *= 0.95
-            elif t not in {"beach", "bay"}:
-                base *= 0.9
+        # No area-type multipliers: they had no source (owner decision 2026-10-27 to drop them, applied 2026-11-02).
 
         if is_desert_context:
             if t not in {"beach", "lake"}:

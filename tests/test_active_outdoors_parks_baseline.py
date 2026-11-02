@@ -102,3 +102,17 @@ def test_playground_term_ignores_area_type_when_factor_given():
     a = ao._score_daily_urban_outdoors_v2(_parks(1), pl, [], "exurban", {"expected_playgrounds_within_1km": 0}, activity_per_acre=25)
     b = ao._score_daily_urban_outdoors_v2(_parks(1), pl, [], "urban_residential", {"expected_playgrounds_within_1km": 10}, activity_per_acre=25)
     assert a == pytest.approx(b)
+
+
+def test_nearest_park_uses_the_wide_list_when_factor_given():
+    wide = [{"distance_m": 1800.0, "area_sqm": 20_000.0}]
+    with_factor = ao._score_daily_urban_outdoors_v2([], [], [], "suburban", {}, activity_per_acre=25, parks_for_count=wide)
+    without = ao._score_daily_urban_outdoors_v2([], [], [], "suburban", {}, activity_per_acre=25)
+    assert with_factor - without >= 8.0 * math.exp(-0.0012 * 1800.0) - 1e-9
+
+
+def test_water_score_ignores_area_type():
+    feats = [{"type": "lake", "distance_m": 1000.0, "name": "x", "lat": 0.0, "lon": 0.0}]
+    scores = {t: ao._score_water_lifestyle_v2(feats, t)[0] for t in ("urban_core", "urban_residential", "suburban", "exurban", "rural")}
+    assert len({round(v, 6) for v in scores.values()}) == 1
+    assert scores["suburban"] == pytest.approx(17.0, abs=0.01)
