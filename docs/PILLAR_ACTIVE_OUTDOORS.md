@@ -199,3 +199,19 @@ script `scripts/catalog/recompute_active_outdoors_water_nearest_offline.py`; no 
   (rural, 0 parks); it keeps its stored value and stays an unconfirmed real zero (the Nevada database was reached, but an empty
   answer cannot be told from a missing-data answer, the same risk as healthcare's Spring Branch). Still open: the rule that an empty
   read is a failure only in populated types (gap 9); these three were typed exurban or rural.
+
+### Step 2 (camping window): one 25 km (15.5 miles) read for all, applied 2026-11-02 (owner chose the read over a 15 km cut)
+Code: the regional radius (water and camping) is now 25 km for every area type (`data_sources/radius_profiles.py`, tests updated);
+live scoring will therefore read 25 km for urban and suburban places too (a larger Overpass read and, where the Places supplement
+triggers, a larger Places search; cost and latency not measured).
+Read (private server, camping only, 965 places, all overpass_ok; script `analysis/ao_camping_25km/read.py`, not committed) and
+offline apply (`scripts/catalog/apply_active_outdoors_camping_25km.py`, new files in `analysis/ao_camping_25km/out/`):
+- 198 of 965 urban and suburban places had camping 9.3 to 15.5 miles away that the 15 km read could not see. All 198 had no camping
+  stored; each now earns the full 10 camping points, wild adventure +10.0, pillar +9.0 to +9.1. Nobody falls.
+- Largest groups: Chicago 36, LA 26, Miami 21, Dallas 20, NYC 18. Pillar mean over the catalog 66.0 to 67.3 (after all steps), max 98.7, none at 99.5 or above.
+- Composites: total score changes in 198 places (mean +0.10, max +0.83), happiness index 198 (max +0.8), longevity index 198 (mean +0.28, max +2.74).
+- No change outside active outdoors and the composites (field-by-field diff). Health check: same 99 flagged places.
+- Water was not re-read: the 25 km read also sees water 9.3 to 15.5 miles out, but with the 3 km decay that is worth under a point;
+  the stored water for these places is unchanged (catalog and live code differ slightly there; not measured).
+Gap 6 is closed in the catalog. The 4 places typed "unknown" were included in the read.
+

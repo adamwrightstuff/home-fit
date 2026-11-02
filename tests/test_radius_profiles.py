@@ -5,14 +5,14 @@ def test_active_outdoors_urban():
     rp = get_radius_profile('active_outdoors', 'urban_core', 'city')
     assert rp['local_radius_m'] == 800   # 10-minute walk
     assert rp['trail_radius_m'] == 15000
-    assert rp['regional_radius_m'] == 15000
+    assert rp['regional_radius_m'] == 25000
 
 
 def test_active_outdoors_suburban():
     rp = get_radius_profile('active_outdoors', 'suburban', 'city')
     assert rp['local_radius_m'] == 1500
     assert rp['trail_radius_m'] == 15000
-    assert rp['regional_radius_m'] == 15000
+    assert rp['regional_radius_m'] == 25000
 
 
 def test_active_outdoors_rural():

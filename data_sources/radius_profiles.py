@@ -49,19 +49,19 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
             return {
                 "local_radius_m": 800,      # Parks: 10-minute walk
                 "trail_radius_m": 15000,    # Trails: Align with expected-values window
-                "regional_radius_m": 15000  # Water/camping: Unchanged
+                "regional_radius_m": 25000  # Water/camping: one window for every area type (was 15 km for this type until 2026-11-02)
             }
         elif a == "urban_residential":
             return {
                 "local_radius_m": 1000,     # Parks: 12-minute walk (denser than suburban, less than car-oriented)
                 "trail_radius_m": 15000,    # Trails: Align with expected-values window
-                "regional_radius_m": 15000  # Water/camping: Unchanged
+                "regional_radius_m": 25000  # Water/camping: one window for every area type (was 15 km for this type until 2026-11-02)
             }
         elif a == "suburban":
             return {
                 "local_radius_m": 1500,     # Parks: Car-oriented access
                 "trail_radius_m": 15000,    # Trails: Align with expected-values window
-                "regional_radius_m": 15000  # Water/camping: Unchanged
+                "regional_radius_m": 25000  # Water/camping: one window for every area type (was 15 km for this type until 2026-11-02)
             }
         else:  # exurban, rural, unknown
             return {
