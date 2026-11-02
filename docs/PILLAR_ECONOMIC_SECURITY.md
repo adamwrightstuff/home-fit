@@ -148,8 +148,20 @@ Shared inputs with other pillars: status_signal reads white_collar_pct, which ma
 Pin-shift sensitivity (shift distance, median and p95 score change; builder run 2026-11-02, offline, 1,476 places, worst of
   four directions per place, job-access term only): 500 m: median 0.07, p95 0.12, max 0.38. 1 km: 0.15, 0.23, 0.55.
   2 km: 0.30, 0.47, 1.33. Not tested: a shift across a CBSA line, where the market-quality half changes (see gap 1).
-Independent validation source and result: none run yet. Candidate (unverified, from memory): EPA Smart Location Database
-  employment-accessibility fields by block group. Needs a download and permission. Brief and pass criteria to be fixed first.
+Independent validation source and result (2026-11-02, run by a separate Haiku agent from `docs/ECONOMIC_SECURITY_LEVEL2_BRIEF.md`;
+  criteria fixed before the comparison; full catalog, n=1,476, all matched to a block group): EPA Smart Location Database v3,
+  field D5AR (jobs within 45 minutes by car, time-decay weighted, network travel time; confirmed from the geodatabase
+  catalog), against our distance-decayed gravity. Spearman of log10 values 0.909 (need 0.80) PASS; within metro 0.930 (need
+  0.60) PASS; median per-metro Spearman 0.939 over 20 metros (need 0.60) PASS, lowest SF 0.716 and Denver 0.819; 33 places
+  (2.24 percent) differ by more than 30 percentile points (need at most 5 percent) PASS, 18 of them in the SF metro. Limits:
+  SLD is built from LODES jobs too, so this tests the travel-time method (network drive time against straight-line decay),
+  not the jobs data; D5AR is probably 2017-era jobs against our LODES 2022 (inferred, not confirmed); pin accuracy not
+  checked; the SF concentration of misses is not explained (a pass on the national cap does not catch a weak metro; a
+  per-metro floor is a criterion change for you to decide). This validates the job-access half only; market quality has no
+  independent validation (no outcome-matched source found). Files: `analysis/economic_level2_results_V1_2026-11-02.md`.
+Checks V2 to V5 rerun independently (same date, separate agent, `analysis/economic_level2_results_2026-11-02.md`): all-places
+  PASS; 1 km pin shift median 0.10, p95 0.20, max 0.70 (limits 1.0 and 3.0) PASS; launch pairs 6 of 7 PASS, Palo Alto vs
+  East Palo Alto FAIL as expected (7.6, open limit); overlap with status_signal 0.16 and housing_value -0.48 PASS.
 All-places check (date, n, summary): 2026-11-02, n=1,476. Score median 74.1, 5th to 95th percentile 62.3 to 83.2, range
   36.6 to 85.7. No place at 5 or below or at 95 or above; 2.1 percent of places have job access of 100. By area type (median,
   10th to 90th): urban core 82.4 (79.4 to 83.4, n=14); urban residential 80.8 (73.4 to 83.7); suburban 74.7 (68.4 to 80.5);
@@ -171,7 +183,10 @@ Known data limits: market quality is metro-level; private payroll jobs only for 
   LODES excludes some self-employed and federal jobs (stated from general knowledge, not checked here); straight-line, not
   road, distance; catalog market quality was stored earlier than a live recompute, so live and catalog can differ a few points
   (not re-measured).
-Last re-validated: never (this audit is the first).
+Last re-validated: 2026-11-02 (all-places, pin shift, launch pairs, overlap, independent validation of job access).
+Proposed level: 2, for owner sign-off (not yet signed). Accepted-TODO list to carry: Level 1 list above, plus market quality has
+  no independent validation, metro-line pin shift untested, Palo Alto pair open, SLD vintage gap, SF weak-metro agreement.
+  Not met for Level 3: the unsourced parameters.
 ```
 
 ### Audit gap table (no code changed)
