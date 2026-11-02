@@ -1,0 +1,199 @@
+city,place,state,metro,stored_daily,stored_total,osm_weighted,city_weighted,city_count_2km
+chicago,Albany Park,IL,chicago,24.1,68.5,13.3,3.509757030644782,15
+chicago,Andersonville,IL,chicago,23.4,71.2,23.6,5.685762810030097,21
+chicago,Avondale,IL,chicago,29.6,72.4,24.9,4.217736041882769,17
+chicago,Back of the Yards,IL,chicago,20.0,57.5,6.0,3.6509101785719325,14
+chicago,Beverly,IL,chicago,23.5,66.0,5.7,2.9753065534104572,10
+chicago,Bridgeport,IL,chicago,29.0,64.8,15.7,6.306570430496899,22
+chicago,Bronzeville,IL,chicago,32.6,81.7,27.3,4.972017331644425,22
+chicago,Bucktown,IL,chicago,32.1,88.5,36.1,6.546644906320587,26
+chicago,Chinatown,IL,chicago,29.1,66.6,31.1,5.221399365626828,22
+chicago,Edgewater,IL,chicago,25.2,83.0,25.8,6.38685796682209,22
+chicago,Edison Park,IL,chicago,24.7,81.5,7.9,2.6229766011304676,8
+chicago,Englewood,IL,chicago,29.6,74.1,12.0,3.491642325010126,15
+chicago,Garfield Park,IL,chicago,35.0,88.9,27.0,5.008104565845464,20
+chicago,Garfield Ridge,IL,chicago,16.3,70.2,2.8,1.5440959280152544,6
+chicago,Gold Coast,IL,chicago,26.1,71.9,46.3,4.89172901286709,16
+chicago,Hegewisch,IL,chicago,27.9,83.4,4.8,1.171870852338103,4
+chicago,Humboldt Park,IL,chicago,22.9,78.0,13.0,6.14440919807682,22
+chicago,Hyde Park,IL,chicago,33.1,90.2,35.5,6.6788228216165795,22
+chicago,Irving Park,IL,chicago,26.9,82.7,10.5,2.561211902856379,13
+chicago,Jefferson Park,IL,chicago,26.2,82.5,9.0,3.600468665391381,13
+chicago,Kenwood,IL,chicago,31.7,89.4,21.2,6.824875516276172,27
+chicago,Lakeview,IL,chicago,27.9,85.3,22.4,6.301821841228505,26
+chicago,Lincoln Park,IL,chicago,25.9,72.4,27.0,3.0616744667282068,15
+chicago,Lincoln Square,IL,chicago,25.9,83.4,20.0,4.306011893034638,16
+chicago,Little Village,IL,chicago,17.0,68.1,7.8,3.0645643712523363,11
+chicago,Logan Square,IL,chicago,31.7,74.6,27.4,4.890723621959226,23
+chicago,Mount Greenwood,IL,chicago,18.7,69.5,2.3,1.1150464461865588,3
+chicago,North Center,IL,chicago,25.0,82.3,20.2,4.656501248145801,23
+chicago,Norwood Park,IL,chicago,27.1,83.0,8.4,4.227247903586296,11
+chicago,Old Town,IL,chicago,31.0,76.4,47.8,5.2015885326949505,21
+chicago,Pilsen,IL,chicago,34.2,67.7,24.7,4.2060886535981785,18
+chicago,Portage Park,IL,chicago,21.6,76.4,5.7,2.4969556740898753,12
+chicago,Pullman,IL,chicago,25.4,78.9,6.9,3.6896979841434403,9
+chicago,Ravenswood,IL,chicago,25.7,84.4,17.9,4.718533309264162,23
+chicago,River North,IL,chicago,29.6,66.5,99.2,4.661180148345142,19
+chicago,Rogers Park,IL,chicago,22.9,80.5,14.5,7.248302479484413,30
+chicago,Roscoe Village,IL,chicago,28.7,86.4,21.5,4.840009987136802,22
+chicago,Sauganash,IL,chicago,30.4,86.8,15.8,2.4540907515824317,10
+chicago,South Loop,IL,chicago,31.7,68.7,77.7,6.439862577497403,17
+chicago,Streeterville,IL,chicago,28.8,66.1,80.7,5.2936139382877965,16
+chicago,The Loop,IL,chicago,29.4,66.8,128.1,3.797723476125732,20
+chicago,Ukrainian Village,IL,chicago,26.1,69.5,17.8,4.949104911877942,20
+chicago,Uptown,IL,chicago,30.2,87.2,40.5,5.863793588101842,18
+chicago,West Loop,IL,chicago,28.5,73.5,63.0,3.7826995398408667,14
+chicago,Wicker Park,IL,chicago,32.5,77.5,35.8,6.643470939819164,24
+chicago,Wrigleyville,IL,chicago,22.2,70.0,19.9,5.649618860305618,23
+la,Arts District,CA,la,15.8,43.5,9.2,3.164824986087689,14
+la,Atwater Village,CA,la,22.7,62.0,10.3,1.4894197213405809,7
+la,Bel Air,CA,la,23.1,71.5,8.7,0.0,0
+la,Boyle Heights,CA,la,10.8,38.1,2.6,2.6243187828232384,10
+la,Brentwood,CA,la,18.2,65.9,6.7,0.6631774768326641,3
+la,Canoga Park,CA,la,20.8,72.5,16.3,0.9661085609978606,3
+la,Chatsworth,CA,la,17.1,72.2,4.6,0.8680578100333098,4
+la,Chinatown LA,CA,la,14.8,55.5,15.4,3.4071013567782256,14
+la,Crenshaw,CA,la,11.1,52.4,1.5,0.8651591082577785,5
+la,Downtown LA,CA,la,15.5,49.5,21.0,3.032189830865906,11
+la,Eagle Rock,CA,la,16.0,56.5,3.1,1.5148329230813053,4
+la,East Hollywood,CA,la,9.3,38.9,5.8,2.286820828034639,10
+la,Echo Park,CA,la,13.3,43.7,6.0,2.661337414141292,14
+la,El Sereno,CA,la,14.5,59.5,2.6,2.4744897936172285,7
+la,Elysian Valley,CA,la,23.9,68.5,8.9,2.7235469146565583,12
+la,Encino,CA,la,17.3,72.6,5.3,4.8021257263636175,11
+la,Franklin Village,CA,la,11.1,61.8,7.1,2.2035212979995067,11
+la,Frogtown,CA,la,19.9,54.2,8.9,2.7235469146565583,12
+la,Glassell Park,CA,la,16.2,56.5,2.7,1.3428625583718552,4
+la,Granada Hills,CA,la,11.9,45.2,1.2,0.24406992287320656,1
+la,Hancock Park,CA,la,7.6,55.4,1.1,0.5806479956951911,4
+la,Highland Park,CA,la,19.3,64.6,3.9,3.204949337612365,14
+la,Hollywood Hills,CA,la,20.4,76.7,6.1,0.8834211086259325,5
+la,Hollywood,CA,la,11.0,60.1,8.8,3.0480449738120834,12
+la,Koreatown,CA,la,10.5,43.5,6.6,2.400054716241961,9
+la,Larchmont Village,CA,la,10.1,56.5,2.4,1.6320296793598086,6
+la,Leimert Park,CA,la,13.2,53.5,3.1,1.0815806379993678,2
+la,Little Tokyo,CA,la,18.7,58.5,24.0,4.230759196097298,15
+la,Los Feliz,CA,la,10.4,56.2,2.8,1.540899646120942,6
+la,Mar Vista,CA,la,12.7,45.3,5.5,0.6091389873828905,5
+la,Mid-City,CA,la,10.3,32.4,1.2,1.3210623065031357,8
+la,Miracle Mile,CA,la,9.3,47.8,6.0,0.49745210537500895,2
+la,Mount Washington,CA,la,19.3,72.2,4.7,3.1469002776572648,17
+la,North Hollywood,CA,la,14.2,54.5,1.8,1.147307642159017,6
+la,Pacific Palisades,CA,la,22.7,84.3,5.9,2.4192946226918717,8
+la,Palms,CA,la,12.9,60.7,7.8,1.222318883733122,5
+la,Pico-Robertson,CA,la,13.3,48.4,3.9,1.4550877941175497,6
+la,Playa Vista,CA,la,25.8,75.1,22.0,0.3307387954463648,1
+la,Playa del Rey,CA,la,26.6,78.1,13.6,1.668214874487446,5
+la,Porter Ranch,CA,la,26.2,66.9,8.3,1.995086986120591,9
+la,Reseda,CA,la,19.3,64.5,7.9,1.460691613420328,6
+la,San Pedro,CA,la,19.1,50.5,4.8,3.5901095458227275,15
+la,Sherman Oaks,CA,la,14.7,73.2,4.2,0.4327540162975464,2
+la,Silver Lake,CA,la,18.3,61.0,7.2,2.850204812713994,10
+la,Studio City,CA,la,19.4,76.1,4.8,1.2491493163820824,7
+la,Sunland-Tujunga,CA,la,13.8,59.2,2.9,2.1646972097525032,7
+la,Sylmar,CA,la,20.1,65.5,5.0,0.8484794548763721,3
+la,Tarzana,CA,la,23.5,77.2,8.4,0.684041278288922,2
+la,Van Nuys,CA,la,17.0,63.2,7.7,1.6271045363998293,5
+la,Venice,CA,la,26.6,84.0,35.9,5.066114284543333,14
+la,Watts,CA,la,19.1,34.9,10.6,2.8653057871848624,10
+la,West LA,CA,la,12.3,50.0,10.9,0.5582462607159409,3
+la,Westwood,CA,la,11.6,62.4,17.7,1.216618453796753,7
+la,Wilmington,CA,la,19.7,50.9,5.4,2.795397617244061,9
+la,Windsor Square,CA,la,6.1,54.0,2.1,1.5204804712504103,7
+la,Woodland Hills,CA,la,14.7,73.0,6.3,1.0735688546448001,4
+nyc,Astoria,NY,nyc,22.0,65.5,28.0,10.533028727316465,37
+nyc,Battery Park City,NY,nyc,33.1,83.9,120.8,9.110868874010093,35
+nyc,Bay Ridge,NY,nyc,14.1,55.2,13.3,6.402439581128951,24
+nyc,Bayside,NY,nyc,14.7,56.6,9.9,3.7555145779444463,15
+nyc,Bed-Stuy,NY,nyc,20.2,61.3,31.1,26.362683998287952,103
+nyc,Belmont,NY,nyc,19.7,60.5,39.2,20.525043927492362,80
+nyc,Bensonhurst,NY,nyc,9.0,51.0,6.2,3.95854614422135,15
+nyc,Boerum Hill,NY,nyc,22.9,72.2,54.4,19.000667336011603,87
+nyc,Borough Park,NY,nyc,7.2,51.0,6.3,2.5173771380932912,16
+nyc,Brighton Beach,NY,nyc,24.0,71.6,32.0,4.880830022219228,19
+nyc,Brooklyn Heights,NY,nyc,31.9,83.4,85.5,26.470329639812505,88
+nyc,Bushwick,NY,nyc,15.9,47.8,18.3,16.555594572179405,75
+nyc,Canarsie,NY,nyc,11.9,62.9,7.7,4.806006037293084,21
+nyc,Carnegie Hill,NY,nyc,24.7,76.3,38.9,11.133706812689802,52
+nyc,Carroll Gardens,NY,nyc,24.0,73.9,35.7,16.244088572861838,54
+nyc,Chelsea,NY,nyc,31.3,82.3,80.8,10.437037640493791,41
+nyc,Chinatown,NY,nyc,29.1,77.4,146.4,31.74087010078648,137
+nyc,City Island,NY,nyc,13.7,63.6,2.3,2.5184309098275133,5
+nyc,Clinton Hill,NY,nyc,23.7,72.5,47.4,21.57809189660301,84
+nyc,Cobble Hill,NY,nyc,28.6,80.3,50.7,18.763989685543592,81
+nyc,Coney Island,NY,nyc,24.1,64.7,14.7,9.185082438752923,24
+nyc,Crown Heights,NY,nyc,18.0,54.9,27.0,11.302517184486257,59
+nyc,DUMBO,NY,nyc,27.9,77.2,98.9,26.335333002285477,94
+nyc,Ditmas Park,NY,nyc,11.4,49.5,14.9,5.1116881229204365,23
+nyc,East Harlem,NY,nyc,29.3,80.0,59.8,29.160515580323718,100
+nyc,East New York,NY,nyc,17.1,63.8,16.8,26.045396879598247,84
+nyc,East Village,NY,nyc,35.0,85.9,106.1,42.667150577419896,118
+nyc,Elmhurst,NY,nyc,19.6,61.0,17.8,12.5985032109321,55
+nyc,Fieldston,NY,nyc,21.1,85.1,18.4,6.748135636190111,27
+nyc,Financial District,NY,nyc,27.0,75.5,128.7,12.877922880196888,55
+nyc,Flatbush,NY,nyc,12.8,53.8,9.2,4.331207898639696,18
+nyc,Flatiron,NY,nyc,25.0,71.8,85.4,16.01477680450759,82
+nyc,Flatlands,NY,nyc,9.8,54.2,7.6,5.200963566442553,21
+nyc,Flushing,NY,nyc,15.4,56.9,14.5,4.753620672298844,19
+nyc,Fordham,NY,nyc,16.2,72.5,35.7,18.551508464235248,75
+nyc,Forest Hills,NY,nyc,12.5,55.1,16.7,3.8563947959869935,17
+nyc,Fort Greene,NY,nyc,31.5,82.7,55.5,19.752331627200125,75
+nyc,Glendale,NY,nyc,8.0,50.2,8.0,3.9260846277508397,17
+nyc,Gowanus,NY,nyc,21.7,70.6,33.7,13.2000052482074,53
+nyc,Gramercy Park,NY,nyc,25.7,72.5,83.6,20.98512241785045,108
+nyc,Great Kills,NY,nyc,20.2,84.4,10.8,1.8831318867534956,8
+nyc,Greenpoint,NY,nyc,30.4,80.4,44.2,12.953810783548604,61
+nyc,Greenwich Village,NY,nyc,33.9,84.6,122.4,29.68062767715609,107
+nyc,Hamilton Heights,NY,nyc,25.3,77.3,35.5,22.19107346468166,85
+nyc,Harlem,NY,nyc,21.0,61.9,54.8,35.212705764913274,124
+nyc,Hell's Kitchen,NY,nyc,25.4,76.3,54.2,10.607557237026358,31
+nyc,Howard Beach,NY,nyc,20.1,71.5,6.0,3.735837716211337,18
+nyc,Hunts Point,NY,nyc,18.8,54.2,37.5,18.810025703906554,80
+nyc,Inwood,NY,nyc,22.7,78.8,22.7,8.80411045867513,40
+nyc,Jackson Heights,NY,nyc,17.3,55.5,24.0,12.788368427124196,53
+nyc,Jamaica,NY,nyc,19.9,70.3,11.6,6.404980999064444,24
+nyc,Kensington,NY,nyc,19.5,58.0,36.0,6.036268834577472,26
+nyc,Kew Gardens,NY,nyc,14.5,56.5,17.8,3.8017490607800775,15
+nyc,Kips Bay,NY,nyc,23.9,70.1,68.5,13.38149338446911,62
+nyc,Little Italy,NY,nyc,33.8,84.6,138.8,32.62537981229807,133
+nyc,Long Island City,NY,nyc,23.4,68.8,44.3,9.613842419329414,39
+nyc,Lower East Side,NY,nyc,28.0,75.8,105.6,36.57646394056974,137
+nyc,Manhattanville,NY,nyc,21.4,52.9,40.5,21.07229595215633,88
+nyc,Maspeth,NY,nyc,30.6,79.5,32.7,6.168671163653533,26
+nyc,Midtown East,NY,nyc,19.8,75.3,64.8,10.945798694779278,41
+nyc,Midtown,NY,nyc,22.1,78.6,60.7,9.753195607271305,45
+nyc,Morningside Heights,NY,nyc,22.4,63.0,49.0,17.470519994525695,72
+nyc,Morris Park,NY,nyc,19.1,69.5,17.5,6.522366227029309,36
+nyc,Mott Haven,NY,nyc,20.2,59.5,50.8,27.03458664941291,117
+nyc,Murray Hill,NY,nyc,28.6,80.1,67.8,12.09805014968981,49
+nyc,New Dorp,NY,nyc,22.6,85.4,14.2,2.125702673931967,11
+nyc,NoHo,NY,nyc,32.7,83.6,128.0,36.385885465585375,136
+nyc,Nolita,NY,nyc,33.8,84.5,135.7,35.43101009227053,136
+nyc,Ozone Park,NY,nyc,11.4,62.5,10.5,8.188249701140746,29
+nyc,Park Slope,NY,nyc,20.9,69.9,38.1,10.846307811753297,55
+nyc,Pelham Bay,NY,nyc,24.1,66.2,20.7,1.9075678859468594,9
+nyc,Prospect Heights,NY,nyc,22.3,69.5,44.5,14.043363138083127,56
+nyc,Red Hook,NY,nyc,23.2,72.9,25.1,9.199589654274565,32
+nyc,Rego Park,NY,nyc,11.2,53.7,15.2,7.17124632138401,31
+nyc,Richmond Hill,NY,nyc,15.9,65.5,6.6,3.4331255534175096,13
+nyc,Ridgewood,NY,nyc,9.2,51.1,7.5,5.578788175358038,21
+nyc,Riverdale,NY,nyc,18.9,79.2,18.7,8.469674348077245,28
+nyc,Rockaway Beach,NY,nyc,20.8,63.6,12.2,4.674593566106764,17
+nyc,Sheepshead Bay,NY,nyc,12.9,61.5,14.3,5.741898191147143,17
+nyc,SoHo,NY,nyc,28.3,77.1,131.1,27.468919882302103,109
+nyc,St. George,NY,nyc,23.9,82.1,19.2,5.365363776097139,16
+nyc,Stapleton,NY,nyc,24.3,79.8,17.2,5.148514842131536,23
+nyc,Sunnyside,NY,nyc,25.7,72.3,30.7,7.716072346518667,34
+nyc,Sunset Park,NY,nyc,19.8,64.7,48.6,5.320108758918636,20
+nyc,Tottenville,NY,nyc,21.6,84.6,7.9,1.4049985495278696,6
+nyc,Tremont,NY,nyc,20.7,53.5,36.8,36.47879784597278,133
+nyc,Tribeca,NY,nyc,25.3,74.4,142.8,17.628462832087468,70
+nyc,Turtle Bay,NY,nyc,23.0,69.8,70.3,12.33280367524491,41
+nyc,Upper East Side,NY,nyc,17.6,62.5,34.0,6.021108201529871,34
+nyc,Upper West Side,NY,nyc,26.5,73.5,42.4,8.35746293760739,30
+nyc,Washington Heights,NY,nyc,18.6,67.2,31.8,15.63505454753398,69
+nyc,West Village,NY,nyc,31.9,82.9,107.1,23.159855808610335,72
+nyc,Williamsburg,NY,nyc,24.2,71.1,60.0,31.760191290223247,96
+nyc,Windsor Terrace,NY,nyc,29.4,73.5,75.7,10.520637725288521,33
+nyc,Woodside,NY,nyc,17.8,54.5,34.6,11.531474474524849,39
+nyc,Yorkville,NY,nyc,25.1,76.2,36.0,9.573041640166526,42

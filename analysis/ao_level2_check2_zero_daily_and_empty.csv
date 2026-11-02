@@ -1,0 +1,6 @@
+metro,name,state,area,daily,total,local_outcome,daily_in_components_missing,degraded,degraded_reasons,flag
+denver,Perry Park,CO,rural,0.0,29.2,overpass_ok,False,False,,
+las_vegas,Moapa Town,NV,rural,0.0,24.4,overpass_empty,False,False,,c_FAIL
+sacramento,Georgetown,CA,rural,0.0,23.8,overpass_ok,False,False,,
+sacramento,Pollock Pines,CA,rural,0.0,26.8,overpass_ok,False,False,,
+san_antonio,Von Ormy,TX,rural,0.0,26.8,overpass_ok,False,False,,
