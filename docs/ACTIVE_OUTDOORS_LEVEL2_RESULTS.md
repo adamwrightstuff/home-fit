@@ -99,4 +99,4 @@ All thresholds in checks 1, 2(a,b), 3, 4a, 4b and 5 are unsourced (builder's cho
 Level 1. Level 2 would need checks 2(c), 3, 4b and 5 to pass; I did not recommend scoring changes.
 
 ## Files
-Downloaded files were deleted after use at the owner's request. Scripts were kept in the session scratch area, not in the repo.
+Downloaded files were deleted after use at the owner's request. The verifier scripts and raw read logs were temporary and have been deleted; the CSVs in `analysis/` hold the per-place results.
