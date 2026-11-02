@@ -208,7 +208,7 @@ Read (private server, camping only, 965 places, all overpass_ok; script `analysi
 offline apply (`scripts/catalog/apply_active_outdoors_camping_25km.py`, new files in `analysis/ao_camping_25km/out/`):
 - 198 of 965 urban and suburban places had camping 9.3 to 15.5 miles away that the 15 km read could not see. All 198 had no camping
   stored; each now earns the full 10 camping points, wild adventure +10.0, pillar +9.0 to +9.1. Nobody falls.
-- Largest groups: Chicago 36, LA 26, Miami 21, Dallas 20, NYC 18. Pillar mean over the catalog 66.0 to 67.3 (after all steps), max 98.7, none at 99.5 or above.
+- Largest groups: Chicago 36, LA 26, Miami 21, Dallas 20, NYC 18. Pillar mean over the catalog 67.3 after this step (65.8 before any 2026-11-02 change), max 98.7, none at 99.5 or above.
 - Composites: total score changes in 198 places (mean +0.10, max +0.83), happiness index 198 (max +0.8), longevity index 198 (mean +0.28, max +2.74).
 - No change outside active outdoors and the composites (field-by-field diff). Health check: same 99 flagged places.
 - Water was not re-read: the 25 km read also sees water 9.3 to 15.5 miles out, but with the 3 km decay that is worth under a point;
