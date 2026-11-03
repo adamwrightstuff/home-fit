@@ -184,7 +184,7 @@ Known data limits: market quality is metro-level; private payroll jobs only for 
   road, distance; catalog market quality was stored earlier than a live recompute, so live and catalog can differ a few points
   (not re-measured).
 Last re-validated: 2026-11-02 (all-places, pin shift, launch pairs, overlap, independent validation of job access).
-Proposed level: 2, for owner sign-off (not yet signed). Accepted-TODO list to carry: Level 1 list above, plus market quality has
+Level: 2, signed off by the owner 2026-11-02 "Sign off L2". Accepted-TODO list to carry: Level 1 list above, plus market quality has
   no independent validation, metro-line pin shift untested, Palo Alto pair open, SLD vintage gap, SF weak-metro agreement.
   Not met for Level 3: the unsourced parameters.
 ```
