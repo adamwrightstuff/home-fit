@@ -111,3 +111,44 @@ The check results above stand; nothing below changes a verdict, and no catalog, 
 - **Santa Clara CA (check 5, +14.1).** The stored area classification density is 2.3 people per square mile (wrong for a city of that size) and gives the label rural. The local density tables give 25.6 people plus jobs per acre, and the API labels it urban residential. Check 5's live run kept the stored label rural and scored 77.0 (83 trails, 42 parks); the API rescore scored 68.5 (30 trails after the urban cap, 12 parks). Same place, same data, 8.5 points apart by label.
 - **Size of the label mismatch.** 24 of 1,472 places with a density value are labeled rural or exurban at 25 or more people plus jobs per acre; 5 have a stored density under 100 per square mile and 10 or more per acre (Santa Clara CA, Clarksburg CA, Glendale NY, Maspeth NY, Pelham Bay NY).
 - **Not investigated:** why SF-metro trail counts are about 24 higher live than stored for Atherton and Santa Clara beyond data age; check 4b (trail and wild score vs protected land) and the check 3 pair 4 gap (Park Slope vs Brooklyn Heights).
+
+## Rerun 2026-11-03 (independent verifier)
+Checks 2 and 3 rerun on stored data only, after commits 5bb9b2f6 (label-based trail cap removed, pillar flags degraded on an empty park read) and fba4bc9e (8 rows refreshed, Moapa Town flagged degraded). Same brief, same thresholds and pairs, none changed. I did not build the pillar. Input: `data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl`, 1,476 places. No code, scoring or catalog file changed; no live call, no Overpass tunnel, no download. Checks 4b and 5 were not run (see below). Script is outside the repo (session scratchpad); CSVs are `analysis/ao_level2_rerun_*.csv`.
+
+| Check | Result | n |
+|---|---|---|
+| 2a total at or above 99.5 / at or below 10 | PASS (0 and 0) | 1,476 |
+| 2b component at cap | PASS (highest: water 14.09%) | 1,476 |
+| 2c empty park read has daily left out or pillar degraded | PASS (1 place, flagged degraded) | 1 |
+| 3 pair 1 Mill Valley over Katy | PASS, 83.7 vs 42.7 (41.0) | 1 |
+| 3 pair 2 Santa Monica over Sugar Land | PASS, 86.4 vs 55.2 (31.2) | 1 |
+| 3 pair 3 Lincoln Park over Katy | PASS, 72.4 vs 42.7 (29.7) | 1 |
+| 3 pair 4 Park Slope vs Brooklyn Heights | FAIL, 69.9 vs 83.4 (13.5, limit 8) | 1 |
+| 3 pair 5 Winnetka vs Evanston | PASS, 89.7 vs 83.2 (6.5) | 1 |
+| 3 launch pairs overall | FAIL (one miss) | 5 |
+| 3 cross-type test | FAIL (median 9.7, limit 5; share over 10 points 49.0%, limit 20%) | 1,273 pairs |
+
+### Check 2
+Mean / median / p10 / p90: daily 22.9 / 23.5 / 13.4 / 31.9; wild 33.6 / 34.2 / 18.9 / 48.2; water 17.6 / 17.0 / 12.6 / 25.0; total 67.3 / 69.1 / 47.1 / 85.1. Within 0.5 of cap: daily 1.76% (26), wild 5.96% (88), water 14.09% (208), total 0%. At or below 1: daily 0.47% (7), wild 0.20%, water 0.20%, total 0%. By stored area type, total median: urban residential 71.2 (n=200), suburban 71.5 (765), exurban 65.9 (363), rural 52.3 (145), unknown 78.2 (3). By density band (people plus jobs per acre, stored field): 0-5 58.1 (252), 5-10 67.6 (292), 10-25 70.2 (510), 25-100 71.4 (311), 100+ 71.8 (99), no density 75.9 (12). Per-group component table in `ao_level2_rerun_check2_distribution.csv`.
+- (c): the only `overpass_empty` local read is Moapa Town NV (rural). Daily is still 0.0 and `components_missing` is empty, but `data_quality.degraded` is now true with reason "active_outdoors_empty_park_read: daily term scored as zero". The criterion accepts "pillar flagged degraded", so PASS. It is the only degraded active_outdoors row in the file (1 of 1,476). Five places have daily 0: Moapa Town (empty read, degraded) and Perry Park CO, Georgetown CA, Pollock Pines CA, Von Ormy TX (read `overpass_ok`, 0 parks, not flagged). Per the brief those four are real zeros, not empty reads.
+- Caveat carried over: check 2 was not blind.
+
+### Check 3
+Names matched uniquely on `catalog.name` plus state. Deciding component: pairs 1 to 3 are decided by wild (47.4 vs 13.9; 47.4 vs 17.4; 33.7 vs 13.9). Pair 5 is decided by wild (47.9 vs 42.2).
+
+Pair 4 still fails, unchanged from the first run (69.9 vs 83.4). Park Slope: daily 20.9, wild 31.0, water 25.0. Brooklyn Heights: daily 31.9, wild 34.8, water 25.0. Of the 13.5 point gap, daily is 11.0 (deciding), wild 3.8, water 0. Neither row was among the refreshed ones.
+
+Cross-type test: within each metro, pairs with different stored area types and activity (people plus jobs per acre, stored `dpv2_recompute.activity_per_acre`) within 10% of the larger. Excluded: places with type `unknown` (3) and places with no stored activity density (12; the 8 refreshed rows Berwyn, Mar Vista, Glendale, Maspeth, Pelham Bay, Clarksburg, Atherton and Santa Clara lost that field when refreshed, plus Moapa Town, Larkspur, Orinda, Woodside which had none). Up to 15 places are excluded against 4 in the first run (the exact overlap between the two exclusions was not counted), so n is 1,273 pairs over 924 places, not 1,317 over 932. Median absolute total difference 9.7, share above 10 points 49.0%, 90th percentile 23.0. FAIL. The pairs overlap, so they are not independent. Because the eight refreshed rows are missing from the test, the result is not exactly comparable to the first run; the shift (median 9.9 to 9.7, share 49.4% to 49.0%) is small and no direction would reach the limits.
+
+### Checks not run
+- 4b (trails and wild vs PAD-US protected land within 9.3 miles): needs a download of PAD-US state geodatabases. The first run used PAD-US 4.0 because the 4.1 state files sit behind a ScienceBase login. It needs 18 zip files, about 1.37 GB in total (for example CA 131.7 MB, PA 127.3 MB, NY 77.2 MB, AZ 30.2 MB), each into its own new empty folder, scripts kept elsewhere and Python run with `-I`. The owner must approve the download again. Note the stored trail and wild fields changed for refreshed rows and by earlier offline recomputes, so the result could move, but a trail cap change alone is not expected to lift a 0.31 and 0.29 correlation to 0.4.
+- 5 (live scorer vs catalog, 20 places): needs live pillar calls on the owner's private Overpass servers (NY NJ CT CA WA TX IL IN PA DE MD server, plus the AZ CO FL GA MA NC NV server if a place falls there), no paid Google calls, tree canopy passed as 0 as before, and the same 20 places (seed 20261102, 5 per stored area type). The owner must approve opening the tunnel. Of the four places that failed before (Mar Vista, Atherton, Santa Clara, Berwyn), all four were refreshed in fba4bc9e, so a rerun is where the fix would show.
+
+### Proposed level
+Still Level 1. Checks 3 (pair 4 and the cross-type test), 4b and 5 are open or failing; check 2 now passes in full.
+
+### Follow-up 2026-11-03: cause of pair 4 and cross-type failures (builder, stored data)
+
+Pair 4: 31 old-format rows (5 LA, 26 NYC) came from a failed or empty original park read (parks_count 0), so their stored park area was near zero (Park Slope 1.6 ha beside Prospect Park). All 31 were re-read; the new daily terms were merged (Park Slope daily 20.9 to 25.4, total 69.9 to 74.0). The re-read also lifted wild by 15 to 20 points for about 20 inner NYC places because the removed trail cap lets every inner NYC place count 175 to 188 greenway route relations; those wild values were NOT merged (owner decision 2026-11-03: daily only). Pair 4 needs a verifier rerun.
+
+Cross-type test: places at the same density with the same area type differ by a median 8.5 points in total (n=2,754 pairs), with different types by 9.7 (n=1,273). The label adds about 1 point; the rest is real variation in trails, water and parks. The criterion as written cannot be met by a score that responds to geography. A replacement ("cross-type median no more than 2 points above same-type median") would apply to the next round only.
