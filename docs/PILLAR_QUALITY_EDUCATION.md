@@ -327,7 +327,7 @@ state snapshot, offline re-score, production bundle, Explorer labels, deal-break
 
 ## DPv2 spec sheet (2026-11-03)
 
-Level: proposed 1 (Converted), owner sign-off pending. Level 2 is held until the independent validation in
+Level: 1 (Converted), signed off by the owner 2026-11-03. Level 2 is held until the independent validation in
 `analysis/education_validation_brief_2026-11-03.md` is run by another agent against pass criteria fixed in that brief.
 Status per requirement: `analysis/education_dpv2_status_2026-11-03.md`. Everything below is from stored data on origin/main
 (86c66afe, 1,476 places), offline; no live API was called. Owner decisions of 2026-10-26 are tier 3 and are not reopened.
@@ -414,5 +414,8 @@ Known data limits: 2015-16 zone maps on 77.7% of zoned levels; Austin zones stal
   comparable only inside a state; the Texas and California disagreements in validation are undiagnosed.
 Last re-validated: 2026-11-03 (all-places, pin-shift, launch pairs, recomputed from stored data). Independent validation not
   re-run. Next dated check: 2027-01-26 (quarterly), or on the yearly snapshot refresh, a zone-map update or a new EDFacts release.
-Sign-off: none yet. Proposed: Level 1, date and accepted TODOs to be entered by the owner.
+Sign-off: Level 1 (Converted), owner, 2026-11-03. Accepted TODOs: education weight, level weights, base radii, nearest-3,
+  3 mi widening cap, 15 mi district-far fallback, choice pool average, hamlet 25%/50% rule, pin-flag cutoff. Accepted known
+  defect: radius profile keys on urban_core, classifier emits urban_residential (30 places, small effect). Level 2 open on
+  independent validation.
 ```
