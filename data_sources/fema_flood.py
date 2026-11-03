@@ -10,6 +10,9 @@ around one small area, so every other point found no polygon and was scored "min
 1,473 of 1,476 catalog places got 30/30 flood points (metro audit, 2026-10-22).  Zone X also has to be
 read by ZONE_SUBTY: "AREA OF MINIMAL FLOOD HAZARD" is full points, only the shaded 0.2% annual chance
 and levee-reduced X areas count as moderate.
+
+DPv2 (2026-11-03): the shaded-X (0.2% annual chance) tier keeps points in proportion to its annual chance relative to
+the 1% zone; zone D (flood hazard undetermined) and a point with no mapped polygon are no data, not a number (principle 16).
 """
 
 import json
@@ -43,6 +46,14 @@ FLOOD_RISK_ORDER = [
 # Max points for flood component (set by climate_risk pillar; used here for return value)
 FLOOD_MAX_PTS_DEFAULT = 30.0
 
+# Share of the flood points a place KEEPS in each zone. Floodway 0 and the SFHA 15% are judgments (docs/PILLAR_CLIMATE_RISK.md,
+# G5). The shaded-X share is derived from FEMA's definitions: the SFHA is the 1% annual-chance flood and shaded X the 0.2%
+# annual-chance flood, so shaded X loses 0.2 of what the SFHA loses. That points lost are proportional to annual chance is
+# itself an assumption. Zone D and an unmapped point have no share: they are no data.
+SFHA_RETAINED = 0.15
+ANNUAL_CHANCE_RATIO_X500_TO_SFHA = 0.2
+X500_RETAINED = round(1.0 - (1.0 - SFHA_RETAINED) * ANNUAL_CHANCE_RATIO_X500_TO_SFHA, 4)  # 0.83
+
 
 def _classify_zone(fld_zone: Optional[str], sfha_tf: Optional[str], zone_subty: Optional[str]) -> str:
     """Map FEMA FLD_ZONE / SFHA_TF / ZONE_SUBTY to a risk tier."""
@@ -61,18 +72,17 @@ def _classify_zone(fld_zone: Optional[str], sfha_tf: Optional[str], zone_subty: 
     return "minimal"       # unshaded X ("area of minimal flood hazard"), B, C
 
 
-def _flood_risk_to_points(risk_tier: str, max_pts: float) -> float:
-    """Convert risk tier to points (inverse risk: higher risk = fewer points)."""
+def _flood_risk_to_points(risk_tier: str, max_pts: float) -> Optional[float]:
+    """Convert risk tier to points (inverse risk: higher risk = fewer points). None when the tier cannot be measured."""
     if risk_tier == "floodway":
         return 0.0
     if risk_tier == "sfha":
-        return max_pts * 0.15   # 15% of max
+        return max_pts * SFHA_RETAINED
     if risk_tier == "x_500yr":
-        return max_pts * 0.55   # 55%
-    if risk_tier == "d":
-        return max_pts * 0.45   # 45%
-    # minimal or not in any zone
-    return max_pts
+        return max_pts * X500_RETAINED
+    if risk_tier in ("d", "unmapped"):
+        return None  # hazard undetermined or no map: no data, never a neutral number
+    return max_pts  # minimal
 
 
 def fetch_flood_features(lat: float, lon: float) -> Optional[List[Dict[str, Any]]]:
@@ -112,7 +122,7 @@ def flood_zone_from_features(features: Optional[List[Dict[str, Any]]], max_pts: 
     if features is None:
         return None
     if not features:
-        return {"in_flood_zone": False, "risk_tier": "minimal", "flood_zone_pts": max_pts,
+        return {"in_flood_zone": False, "risk_tier": "unmapped", "flood_zone_pts": None,
                 "fld_zone": None, "label": None, "sfha_tf": None}
     worst_tier, worst = "minimal", None
     for attrs in features:
@@ -120,10 +130,11 @@ def flood_zone_from_features(features: Optional[List[Dict[str, Any]]], max_pts: 
         if worst is None or FLOOD_RISK_ORDER.index(tier) < FLOOD_RISK_ORDER.index(worst_tier):
             worst_tier, worst = tier, attrs
     worst = worst or {}
+    pts = _flood_risk_to_points(worst_tier, max_pts)
     return {
         "in_flood_zone": True,
         "risk_tier": worst_tier,
-        "flood_zone_pts": round(_flood_risk_to_points(worst_tier, max_pts), 2),
+        "flood_zone_pts": None if pts is None else round(pts, 2),
         "fld_zone": worst.get("FLD_ZONE"),
         "label": worst.get("ZONE_SUBTY"),
         "sfha_tf": worst.get("SFHA_TF"),
@@ -131,9 +142,10 @@ def flood_zone_from_features(features: Optional[List[Dict[str, Any]]], max_pts: 
 
 
 # The cache key includes the function name.  Results cached by the old, near-empty endpoint ("minimal"
-# everywhere) are still on disk for up to 48 h, so the cached function has a new name (v2).
+# everywhere) are still on disk for up to 48 h, so the cached function has a new name. v3 (2026-11-03): shaded-X points
+# changed and zone D / unmapped became no data, so results cached under v2 must not be served.
 @cached(ttl_seconds=CACHE_TTL.get("census_data", 48 * 3600))
-def _get_fema_flood_zone_v2(lat: float, lon: float) -> Optional[Dict[str, Any]]:
+def _get_fema_flood_zone_v3(lat: float, lon: float) -> Optional[Dict[str, Any]]:
     return flood_zone_from_features(fetch_flood_features(lat, lon), FLOOD_MAX_PTS_DEFAULT)
 
 
@@ -142,8 +154,8 @@ def get_fema_flood_zone(lat: float, lon: float) -> Optional[Dict[str, Any]]:
     Query FEMA NFHL for flood zone(s) containing the point.
 
     Returns:
-        Dict with in_flood_zone, risk_tier (floodway | sfha | x_500yr | d | minimal), flood_zone_pts
-        (0 to max; inverse risk), fld_zone, label (ZONE_SUBTY), sfha_tf; or None on a request error
+        Dict with in_flood_zone, risk_tier (floodway | sfha | x_500yr | d | minimal | unmapped), flood_zone_pts
+        (0 to max; inverse risk; None for zone D and for a point with no mapped polygon), fld_zone, label (ZONE_SUBTY), sfha_tf; or None on a request error
         (caller treats that as no data).
     """
-    return _get_fema_flood_zone_v2(lat, lon)
+    return _get_fema_flood_zone_v3(lat, lon)

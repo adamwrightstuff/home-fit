@@ -54,7 +54,8 @@ AIR_MAX_PTS = 20.0
 PM25_BEST = 5.0
 PM25_WORST = 35.0
 
-# Flood (0-30 pts). From FEMA NFHL; floodway=0, SFHA=15%, X/D/minimal scaled. Neutral when missing.
+# Flood (0-30 pts). From FEMA NFHL; floodway=0, SFHA=15%, shaded X=83% (from the annual-chance definitions), minimal=100%.
+# Zone D, a point with no mapped polygon and a failed lookup are no data (data_sources/fema_flood.py).
 FLOOD_MAX_PTS = 30.0
 
 # Climate trend (0-25 pts). 30-year TerraClimate tmax trend; 0°C/decade = max, 0.5°C/decade = 0.
@@ -98,10 +99,14 @@ def get_climate_risk_score(
         (score_0_100, details) where details has breakdown, summary, data_quality.
         Score is inverse risk: 100 = very low risk, 0 = very high risk.
     """
+    # The shared place context supplies the census tract for PM2.5 (no second geocoder call). Catalog and test callers
+    # that pass no context get a derived one with no tract, and get_pm25 looks the tract up itself.
+    ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, density=density, city=city)
+
     # Fetch all four data sources in parallel (same requests, less wall time; no extra error risk).
     with ThreadPoolExecutor(max_workers=4) as executor:
         f_heat = executor.submit(get_heat_exposure_lst, lat, lon)
-        f_air = executor.submit(get_air_quality_pm25, lat, lon)
+        f_air = executor.submit(get_air_quality_pm25, lat, lon, census_tract=ctx.census_tract)
         f_flood = executor.submit(get_fema_flood_zone, lat, lon)
         f_trend = executor.submit(get_climate_trend_terraclimate, lat, lon)
         heat_data = f_heat.result()
@@ -162,11 +167,12 @@ def get_climate_risk_score(
     risk_tier = None
     fld_zone = None
     flood_label = None
-    if flood_data is not None and flood_data.get("flood_zone_pts") is not None:
-        flood_pts = round(min(FLOOD_MAX_PTS, max(0.0, float(flood_data["flood_zone_pts"]))), 2)
+    if flood_data is not None:
         risk_tier = flood_data.get("risk_tier")
         fld_zone = flood_data.get("fld_zone")
         flood_label = flood_data.get("label")
+        if flood_data.get("flood_zone_pts") is not None:
+            flood_pts = round(min(FLOOD_MAX_PTS, max(0.0, float(flood_data["flood_zone_pts"]))), 2)
 
     # Climate trend (0-25 pts). Warming = fewer pts; no data when the GEE trend is unavailable.
     trend_pts: Optional[float] = None
@@ -209,7 +215,6 @@ def get_climate_risk_score(
         "flood_pts": flood_pts,
         "trend_pts": trend_pts,
     }
-    ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, density=density, city=city)
     quality_metrics = assess_pillar_data_quality(
         "climate_risk", combined_data, lat, lon, ctx.area_type, density=ctx.density
     )
@@ -219,9 +224,10 @@ def get_climate_risk_score(
         ]
     if missing:
         quality_metrics["degraded"] = True
-        quality_metrics["degraded_reasons"] = list(quality_metrics.get("degraded_reasons") or []) + [
-            f"climate_risk_missing_components: {', '.join(missing)}"
-        ]
+        reasons = [f"climate_risk_missing_components: {', '.join(missing)}"]
+        if "flood" in missing and risk_tier in ("d", "unmapped"):
+            reasons.append("flood_zone_d_undetermined" if risk_tier == "d" else "flood_no_mapped_polygon")
+        quality_metrics["degraded_reasons"] = list(quality_metrics.get("degraded_reasons") or []) + reasons
 
     breakdown = {
         "heat_exposure_pts": heat_pts,
