@@ -38,3 +38,16 @@ Includes Brooklyn Heights, 12 more NYC neighborhoods, Jersey City, Hollywood, We
 ## Park Slope path names (repeat read, 2026-11-03; `analysis/ao_parkslope_park_path_names.json`)
 90 "(trails)" entries, 81 distinct names, none unnamed. 28 of 90 (31%) match greenway, cycleway, bike path, bridge path, promenade, esplanade, avenue or boulevard words (for example "Hudson River Greenway", "Manhattan Bridge Bike Path", "Flatbush Avenue", "Belt Parkway Bike Path"). Many of the other 62 are not trails either: golf courses (Marine Park Golf Course, Liberty National Golf Club), piers and beaches (Canarsie Pier, Midland Beach, Breezy Point Tip), a bridge (Bayonne Bridge), and the same park repeated ("Park (trails)" three times, "Jamaica Bay Greenway" three times).
 Effect on the 15 km trail term at the current scale (56.5, budget 25): 20 routes plus 90 path entries (110) scores 21.4 of 25; removing the 28 name matches (82) scores 19.1. So a name filter lowers Park Slope by about 2 points of trail term, and does not remove the saturation. The scale itself (a catalog median of this mixed count) is what makes any count above about 80 look near the maximum. TODO (unsourced): the word list, whether golf courses and piers should count, and the scale.
+
+## Scope of a clean-count rebuild (2026-11-03, plan only, nothing run)
+Goal: replace the mixed count with one that counts real hiking routes and distinct parks with trails, then refit the scale. All definitions below are TODO until the owner approves them.
+
+Candidate count (every piece unsourced): hiking routes (route=hiking minus cycle routes, as now); one entry per named park or reserve with paths, not per path, dropping golf courses, piers, beaches and street or bridge paths by name; boundaries only at or above a size cutoff, one per name, historic districts excluded. No area type input.
+
+Reads: the catalog stores only totals, so every place needs a fresh read: 1,476 places, 931 on the first server (NY NJ CT CA WA TX IL IN PA DE MD) and 545 on the second (AZ CO FL GA MA NC NV, which the owner would have to open). Measured rate of the full read function in this session: 21 places in 31 minutes, about 1.5 minutes per place, so about 37 hours one stream. A trimmed trail-only query is untested; a 5-place timing test would show whether it is much faster. Parallel tabs gave little speedup on 2026-11-03, so plan for the sequential figure unless the trimmed query is fast.
+
+Offline after the reads: refit the scale (median of the clean counts at 15 km and 5 km), recompute wild for all 1,476 places, recompute totals and composites from stored daily and water, health check, then an independent verifier rerun of checks 3, 4b and 5. Daily and water are not rescored.
+
+Risks: every wild score moves, so every launch comparison moves; the budgets (25 and 15) and camping limits stay unsourced; a new scale fitted to the same catalog is still relative, not a published standard.
+
+Decisions for the owner: approve the definition (or a simpler one), accept the read time or approve the 5-place timing test first, and open the second server for the 545 places.
