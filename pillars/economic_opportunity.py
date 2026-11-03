@@ -139,11 +139,10 @@ def _normalize(
     *,
     metric: str,
     value: Optional[float],
-    division: str,
-    area_bucket: str,
     invert: bool = False,
     used_fallback: Optional[List[str]] = None,
 ) -> Optional[float]:
+    # National baseline only (DPv2 principle 14): no division or area-type cell is read here.
     score = normalize_national_0_100(
         metric=metric,
         value=value,
@@ -155,6 +154,10 @@ def _normalize(
             used_fallback.append(metric)  # surfaced in the response; the hard-coded scale is not silent
         return fallback
     return score
+
+
+class EconomicDataUnavailable(RuntimeError):
+    """Required data is missing or unmeasurable. Raised so the pillar shows as no data and is retried (principle 9)."""
 
 
 def _job_access_with_status(lat: float, lon: float) -> Tuple[Optional[float], str]:
@@ -241,17 +244,9 @@ def get_economic_opportunity_score(
     division = get_division(state)
     bucket = _area_bucket(area_type)
 
-    # If we can't resolve geography, return 0 with low confidence but consistent shape.
+    # Unresolved geography is a failure, not a zero: the pillar shows as no data and is retried (principle 9).
     if geo is None:
-        combined_data = {"metrics_present": [], "raw": {}, "geo": None}
-        dq = assess_pillar_data_quality("economic_opportunity", combined_data, lat, lon, area_type or "suburban", density=density)
-        return 0.0, {
-            "score": 0.0,
-            "breakdown": {},
-            "summary": {"division": division, "area_bucket": bucket, "geo": None},
-            "data_quality": dq,
-            "area_classification": {"area_type": area_type},
-        }
+        raise EconomicDataUnavailable(f"economic_geography_unresolved: no county or metro for ({lat}, {lon})")
 
     effective_geo = geo
     year_now = CURRENT_ACS_YEAR
@@ -391,25 +386,27 @@ def get_economic_opportunity_score(
     # Normalize to 0-100 submetric scores
     sub_scores = {
         # Lower unemployment is better → invert
-        "unemployment_rate": _normalize(metric="unemployment_rate", value=unemp_rate, division=division, area_bucket=bucket, used_fallback=fallback_metrics, invert=True),
-        "emp_pop_ratio": _normalize(metric="emp_pop_ratio", value=emp_pop_ratio, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
-        "net_estab_entry_per_1k": _normalize(metric="net_estab_entry_per_1k", value=net_estab_entry_per_1k, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
-        "estabs_per_1k": _normalize(metric="estabs_per_1k", value=estabs_per_1k, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
+        "unemployment_rate": _normalize(metric="unemployment_rate", value=unemp_rate, used_fallback=fallback_metrics, invert=True),
+        "emp_pop_ratio": _normalize(metric="emp_pop_ratio", value=emp_pop_ratio, used_fallback=fallback_metrics),
+        "net_estab_entry_per_1k": _normalize(metric="net_estab_entry_per_1k", value=net_estab_entry_per_1k, used_fallback=fallback_metrics),
+        "estabs_per_1k": _normalize(metric="estabs_per_1k", value=estabs_per_1k, used_fallback=fallback_metrics),
         # Wage distribution (OEWS 25th/75th)
-        "wage_p25_annual": _normalize(metric="wage_p25_annual", value=wage_p25_annual, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
-        "wage_p75_annual": _normalize(metric="wage_p75_annual", value=wage_p75_annual, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
+        "wage_p25_annual": _normalize(metric="wage_p25_annual", value=wage_p25_annual, used_fallback=fallback_metrics),
+        "wage_p75_annual": _normalize(metric="wage_p75_annual", value=wage_p75_annual, used_fallback=fallback_metrics),
         # Demand-side (QCEW)
-        "qcew_employment_per_1k": _normalize(metric="qcew_employment_per_1k", value=qcew_employment_per_1k, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
-        "qcew_employment_growth_pct": _normalize(metric="qcew_employment_growth_pct", value=qcew_employment_growth_pct, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
+        "qcew_employment_per_1k": _normalize(metric="qcew_employment_per_1k", value=qcew_employment_per_1k, used_fallback=fallback_metrics),
+        "qcew_employment_growth_pct": _normalize(metric="qcew_employment_growth_pct", value=qcew_employment_growth_pct, used_fallback=fallback_metrics),
         # Scale (log10 absolute counts)
-        "log10_employment": _normalize(metric="log10_employment", value=log10_employment, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
-        "log10_establishments": _normalize(metric="log10_establishments", value=log10_establishments, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
+        "log10_employment": _normalize(metric="log10_employment", value=log10_employment, used_fallback=fallback_metrics),
+        "log10_establishments": _normalize(metric="log10_establishments", value=log10_establishments, used_fallback=fallback_metrics),
         # Lower HHI is better (more diversified) → invert
-        "industry_diversity": _normalize(metric="industry_hhi", value=industry_hhi, division=division, area_bucket=bucket, used_fallback=fallback_metrics, invert=True),
-        "anchored_balance": _normalize(metric="anchored_balance", value=anchored_balance, division=division, area_bucket=bucket, used_fallback=fallback_metrics),
+        "industry_diversity": _normalize(metric="industry_hhi", value=industry_hhi, used_fallback=fallback_metrics, invert=True),
+        "anchored_balance": _normalize(metric="anchored_balance", value=anchored_balance, used_fallback=fallback_metrics),
     }
 
     _mc = compute_market_components(sub_scores)
+    if not _mc["base_component_renorm"]:
+        raise EconomicDataUnavailable("economic_market_quality_unmeasurable: no market metric could be scored")
     density_score, density_renorm = _mc["density_score"], _mc["density_renorm"]
     mobility_score, mobility_renorm = _mc["mobility_score"], _mc["mobility_renorm"]
     ecosystem_score, ecosystem_renorm = _mc["ecosystem_score"], _mc["ecosystem_renorm"]
@@ -484,6 +481,9 @@ def get_economic_opportunity_score(
     # has no coverage.
     market_quality_score = final_score
     job_access_score_val, job_access_status = _job_access_with_status(lat, lon)
+    if job_access_status == "error":
+        # A broken grid read would silently change the construct to market quality alone (Greenwich 69 becomes 46).
+        raise EconomicDataUnavailable("economic_job_access_error: jobs grid read failed")
     if job_access_score_val is not None:
         final_score = round(0.55 * job_access_score_val + 0.45 * market_quality_score, 1)
     final_score = float(final_score or 0.0)
