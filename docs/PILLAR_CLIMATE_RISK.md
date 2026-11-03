@@ -97,8 +97,22 @@ Parameters:
 Shared inputs with other pillars: none read directly (grep of pillars, data_sources, main.py, scripts). Downstream only: the
   climate score feeds the happiness and longevity composites. Heat and trend correlate weakly (Spearman 0.27 across the catalog,
   0.16 within metro), so they do not double count much. Natural beauty doc records no overlap with climate.
-Pin-shift sensitivity (shift distance, median and p95 score change): NOT RUN. Plan in G4. PM2.5 may be testable offline from the
-  tract tables in surrounding_density (to verify); heat, flood and trend need fresh reads.
+Pin-shift sensitivity (shift distance, median and p95 score change): RUN 2026-11-03 by the owner with
+  `scripts/catalog/climate_pin_shift.py` (60 places, 12 per area type, seed 20261103; north, east, south, west at 500 m and 1,000 m;
+  fresh FEMA flood and GEE heat reads, 480 points; PM2.5 and trend NOT re-read, so their shift sensitivity is unmeasured).
+  4 flood reads failed (all Boca Raton) and are excluded; 476 scored. Output: `analysis/climate_pin_shift_2026-11-03/`.
+  500 m: median change 0.8, 95th percentile 24.2, 10.9% of shifts move the score by more than 10.
+  1,000 m: median 1.6, 95th percentile 22.5, 12.2% over 10.
+  By area type (median / 95th, 500 m): urban core 0.6 / 24.4; urban residential 0.6 / 2.6; suburban 0.8 / 23.5; exurban 1.1 / 26.7;
+  rural 1.0 / 24.7. At 1,000 m the urban residential 95th percentile is 30.6.
+  Cause (computed from the reads): flood. When the flood tier at the shifted point equals the tier at the pin (401 of 476 shifts),
+  the median change is 0.8, the 95th percentile 3.9 and no shift exceeds 10 (this isolates heat plus the unchanged parts). When the
+  tier differs (75 shifts), the median change is 20.6 and 73% exceed 10. 27 of the 60 places have at least one of their eight
+  shifted points in a different flood tier from the pin. Stored tier to shifted tier, most common changes: minimal to SFHA 19,
+  SFHA to minimal 12, shaded X to minimal 10, shaded X to SFHA 8.
+  Criteria fixed in advance (healthcare benchmark): median 2 or less at 500 m (PASS, 0.8), median 5 or less at 1,000 m (PASS, 1.6),
+  95th percentile 10 or less at 500 m (FAIL, 24.2). Level 2 pin-shift is therefore not met until the flood measurement changes.
+  Not claimed: that the unchanged-tier result covers PM2.5 and trend, which were held at their stored values.
 Independent validation source and result: NOT RUN. Candidates for the brief: PM2.5 against EPA monitor annual means (open
   data), heat against NOAA station summer maximum temperature, flood against FEMA county flood-zone area share. Pass criteria
   to be fixed before any result is seen.
@@ -167,4 +181,11 @@ Re-read of the five unmapped pins (2026-11-03, 20 FEMA point reads: 100 m north,
 
 Re-read at 1 km (2026-11-03, 20 more FEMA point reads, north, east, south, west of each pin): Chatham NJ, Morristown NJ and West Sacramento CA are empty in all four directions at 1 km, so the gap is larger than a pin edge (a block of the county with no polygon). Southport CT and Belvedere CA are mixed: Southport has zone VE to the north, minimal hazard to the west, empty east and south; Belvedere has minimal hazard north and west, zone VE south, empty east. Those two sit at a patchy coastal edge, where the empty cells are likely water or unpolygoned shore (not checked). Scoring unchanged; the five stay no data. Recommendation: keep no data, since neither class supports "minimal" and the nearby coastal polygons include high-hazard VE.
 
-Still not done (Level 2): pin-shift, independent validation brief, launch pairs. All need your go on the FEMA and GEE reads first.
+Flood disk pilot (2026-11-03, `scripts/catalog/climate_flood_disk_pilot.py`, output `analysis/climate_flood_disk_pilot_2026-11-03/`): the flood component scored as the average flood points over an 800 m disk around the pin (area-weighted by zone, mapped part only) instead of the single pin. One FEMA polygon query per place (60 places, 1,800 m radius, saved), then everything computed locally, including the eight shifted centres of the pin-shift test (shifted heat reads reused, air and trend as stored). A few extra requests were made because the service returned transient 500 errors on one place (Weddington NC); I retried and lowered the page size and generalized vertices by about 2 m for the last 43 queries. The first 17 were fetched without generalization.
+  500 m shift: median change 1.0, 95th percentile 5.4, 0.4% of shifts over 10 (pin measure: 0.8, 24.2, 10.9%). PASSES the fixed criteria (median 2 or less, 95th percentile 10 or less).
+  1,000 m shift: median 1.8, 95th percentile 9.7, 3.4% over 10 (pin measure: 1.6, 22.5, 12.2%). Urban core 95th percentile 11.2 at 1,000 m, the only group over 10.
+  At the pin, the disk score differs from the stored pin score by a median 0.5 and a 95th percentile 11.2; 14 of the 60 places differ by more than 5. No place lost its flood component and every disk was fully covered by mapped polygons (the sample holds no unmapped place, so the five unmapped places are untested).
+  The 800 m radius is a borrowed convention (not a flood-specific source). Radius sensitivity from the saved polygons, flood points at the pin: 400 m against 800 m differs by a median 0.3 and a 95th percentile 3.8 points (3 of 60 places over 5); 1,200 m against 800 m differs by a median 0.3 and a 95th percentile 2.8 (none over 5). Plausible range for the radius: unknown, tested 400 to 1,200.
+  Not yet shown: the result on the full catalog (the 60 places are a sample), independent validation of the flood measure, and the pin-shift of PM2.5 and trend. Nothing in scoring or the catalog has been changed by the pilot.
+
+Still not done (Level 2): independent validation brief, launch pairs, and the full-catalog disk measure. Previously listed: pin-shift, independent validation brief, launch pairs. All need your go on the FEMA and GEE reads first.
