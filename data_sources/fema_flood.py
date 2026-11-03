@@ -16,9 +16,12 @@ the 1% zone; zone D (flood hazard undetermined) and a point with no mapped polyg
 """
 
 import json
+import math
+import os
+import time
 import urllib.parse
 import urllib.request
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from data_sources.cache import cached, CACHE_TTL
 from logging_config import get_logger
@@ -149,13 +152,163 @@ def _get_fema_flood_zone_v3(lat: float, lon: float) -> Optional[Dict[str, Any]]:
     return flood_zone_from_features(fetch_flood_features(lat, lon), FLOOD_MAX_PTS_DEFAULT)
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Disk measure (DPv2, 2026-11-03): the flood points averaged over an 800 m disk around the pin, not read at the single pin.
+# A pin-shift test showed the pin lookup moves too much with small pin offsets (95th percentile 24 points at 500 m); the disk
+# measure passed (5.4). Area-weighted over the mapped part of the disk only; zone D and unmapped area are left out (no data).
+# Overlapping polygons are resolved worst tier first. The 800 m radius is a judgment, not a sourced value
+# (docs/PILLAR_CLIMATE_RISK.md). The catalog (scripts/catalog/climate_flood_disk_catalog.py) and the live pillar both use
+# these functions, so they cannot drift apart.
+# ---------------------------------------------------------------------------------------------------------------------
+FLOOD_DISK_RADIUS_M = 800.0
+FLOOD_DISK_METHOD = "disk_800m_mean"
+
+
+def flood_disk_enabled() -> bool:
+    """Live pillar switch. Off by default: HOMEFIT_FLOOD_DISK=true turns the disk measure on."""
+    return os.getenv("HOMEFIT_FLOOD_DISK", "false").strip().lower() in ("1", "true", "yes", "on")
+
+
+def circle_rings(lat: float, lon: float, meters: float, n: int = 64) -> List[List[List[float]]]:
+    dlat = meters / 111320.0
+    dlon = meters / (111320.0 * math.cos(math.radians(lat)))
+    ring = [[lon + dlon * math.cos(2 * math.pi * i / n), lat + dlat * math.sin(2 * math.pi * i / n)] for i in range(n)]
+    ring.append(ring[0])
+    return [ring]
+
+
+def fetch_flood_polygons(lat: float, lon: float, fetch_m: float, attempts: int = 4, timeout: float = 90, backoff: float = 5) -> List[Dict[str, Any]]:
+    """Every NFHL flood polygon (with geometry) within fetch_m of the pin. Raises RuntimeError when the service gives no answer.
+    The service sometimes answers a transient 500 or resets the connection; each failed attempt is retried after a pause."""
+    feats: List[Dict[str, Any]] = []
+    offset = 0
+    while True:
+        body = urllib.parse.urlencode({
+            "where": "1=1", "geometry": json.dumps({"rings": circle_rings(lat, lon, fetch_m), "spatialReference": {"wkid": 4326}}),
+            "geometryType": "esriGeometryPolygon", "inSR": "4326", "outSR": "4326", "spatialRel": "esriSpatialRelIntersects",
+            "returnGeometry": "true", "outFields": FEMA_OUT_FIELDS, "f": "json",
+            "maxAllowableOffset": 0.00002,  # about 2 m of vertex generalization: lighter answers, no visible effect on an 800 m disk
+            "resultOffset": offset, "resultRecordCount": 100,
+        }).encode()
+        data: Dict[str, Any] = {}
+        for attempt in range(max(1, attempts)):
+            try:
+                with urllib.request.urlopen(urllib.request.Request(FEMA_NFHL_QUERY_URL, data=body, method="POST"), timeout=timeout) as r:
+                    data = json.loads(r.read().decode())
+            except Exception as e:  # noqa: BLE001
+                data = {"error": str(e)}
+            if isinstance(data, dict) and "features" in data:
+                break
+            if attempt + 1 < attempts:
+                time.sleep(backoff * (attempt + 1))
+        if not isinstance(data, dict) or "features" not in data:
+            raise RuntimeError(f"FEMA answer without features: {str(data)[:200]}")
+        feats += data["features"]
+        if not data.get("exceededTransferLimit"):
+            return feats
+        offset += len(data["features"])
+
+
+def polygon_to_geom(feature: Dict[str, Any], lat0: float, lon0: float):
+    """Esri rings (lon, lat) to a shapely geometry in metres east/north of (lat0, lon0)."""
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+
+    kx = 111320.0 * math.cos(math.radians(lat0))
+    ky = 111320.0
+    ext, holes = [], []
+    for ring in (feature.get("geometry") or {}).get("rings") or []:
+        pts = [((x - lon0) * kx, (y - lat0) * ky) for x, y in ring]
+        if len(pts) < 4:
+            continue
+        area2 = sum(pts[i][0] * pts[i + 1][1] - pts[i + 1][0] * pts[i][1] for i in range(len(pts) - 1))
+        (ext if area2 < 0 else holes).append(Polygon(pts).buffer(0))  # Esri: clockwise rings are outer rings
+    if not ext:
+        return None
+    g = unary_union(ext)
+    return g.difference(unary_union(holes)) if holes else g
+
+
+def zones_from_polygons(feats: List[Dict[str, Any]], lat: float, lon: float) -> List[Tuple[str, Any]]:
+    """[(tier, geometry in metres around the pin)] for the polygons that have a usable geometry."""
+    zones = []
+    for f in feats:
+        at = f.get("attributes") or {}
+        g = polygon_to_geom(f, lat, lon)
+        if g is not None and not g.is_empty:
+            zones.append((_classify_zone(at.get("FLD_ZONE"), at.get("SFHA_TF"), at.get("ZONE_SUBTY")), g))
+    return zones
+
+
+def disk_flood_points(zones, cx: float, cy: float, radius_m: float = FLOOD_DISK_RADIUS_M, max_pts: float = FLOOD_MAX_PTS_DEFAULT):
+    """zones: [(tier, geometry)] in metres around the pin. Returns (mean points over the mapped area or None, mapped fraction, tier shares)."""
+    from shapely.geometry import Point
+    from shapely.ops import unary_union
+
+    disk = Point(cx, cy).buffer(radius_m, 64)
+    taken, shares = None, {}
+    for tier in FLOOD_RISK_ORDER:
+        gs = [g for t, g in zones if t == tier]
+        if not gs:
+            continue
+        part = unary_union(gs).intersection(disk)
+        if taken is not None:
+            part = part.difference(taken)
+        if part.is_empty:
+            continue
+        shares[tier] = part.area / disk.area
+        taken = part if taken is None else taken.union(part)
+    mapped = sum(shares.values())
+    scored = {t: s for t, s in shares.items() if _flood_risk_to_points(t, max_pts) is not None}
+    denom = sum(scored.values())
+    if denom <= 0:
+        return None, mapped, shares
+    return sum(_flood_risk_to_points(t, max_pts) * s for t, s in scored.items()) / denom, mapped, shares
+
+
+def flood_zone_from_disk(pts: Optional[float], mapped: float, shares: Dict[str, float]) -> Dict[str, Any]:
+    """The dict the climate pillar reads, for a disk result. risk_tier is the worst tier present in the disk ("unmapped" when
+    nothing is mapped, "d" when only zone D is); the points are the disk mean, None when no scored area is mapped."""
+    tier = next((t for t in FLOOD_RISK_ORDER if shares.get(t, 0) > 0), "unmapped")
+    return {
+        "in_flood_zone": tier in ("floodway", "sfha", "x_500yr"),
+        "risk_tier": tier,
+        "flood_zone_pts": None if pts is None else round(pts, 2),
+        "fld_zone": None, "label": None, "sfha_tf": None,
+        "method": FLOOD_DISK_METHOD,
+        "zone_shares": {t: round(s, 4) for t, s in shares.items()},
+        "mapped_fraction": round(mapped, 3),
+        "radius_m": FLOOD_DISK_RADIUS_M,
+    }
+
+
+@cached(ttl_seconds=CACHE_TTL.get("census_data", 48 * 3600))
+def _get_fema_flood_disk_v1(lat: float, lon: float) -> Optional[Dict[str, Any]]:
+    # One attempt with a 20 s timeout: a live request cannot wait for the catalog's 4 retries. None on failure, so a failed
+    # read is never served from the cache (the decorator treats a cached None as a miss) and the caller falls back to the pin lookup.
+    try:
+        feats = fetch_flood_polygons(lat, lon, FLOOD_DISK_RADIUS_M + 50, attempts=1, timeout=20)
+        pts, mapped, shares = disk_flood_points(zones_from_polygons(feats, lat, lon), 0.0, 0.0)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("FEMA NFHL disk query failed for (%s, %s): %s", lat, lon, e)
+        return None
+    return flood_zone_from_disk(pts, mapped, shares)
+
+
 def get_fema_flood_zone(lat: float, lon: float) -> Optional[Dict[str, Any]]:
     """
-    Query FEMA NFHL for flood zone(s) containing the point.
+    Query FEMA NFHL for the flood zone at the point, or (HOMEFIT_FLOOD_DISK on) the flood average over an 800 m disk.
 
     Returns:
         Dict with in_flood_zone, risk_tier (floodway | sfha | x_500yr | d | minimal | unmapped), flood_zone_pts
-        (0 to max; inverse risk; None for zone D and for a point with no mapped polygon), fld_zone, label (ZONE_SUBTY), sfha_tf; or None on a request error
-        (caller treats that as no data).
+        (0 to max; inverse risk; None for zone D and for a point with no mapped polygon), fld_zone, label (ZONE_SUBTY), sfha_tf;
+        the disk result adds method, zone_shares, mapped_fraction. None on a request error (caller treats that as no data).
+        When the disk read fails the pin lookup answers instead, with method "pin_fallback".
     """
+    if flood_disk_enabled():
+        disk = _get_fema_flood_disk_v1(lat, lon)
+        if disk is not None:
+            return disk
+        pin = _get_fema_flood_zone_v3(lat, lon)
+        return None if pin is None else {**pin, "method": "pin_fallback"}
     return _get_fema_flood_zone_v3(lat, lon)

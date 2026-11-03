@@ -29,92 +29,26 @@ import urllib.request
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 
-from shapely.geometry import Point, Polygon  # noqa: E402
-from shapely.ops import unary_union  # noqa: E402
+from data_sources import fema_flood as fema  # noqa: E402
+from data_sources.fema_flood import _classify_zone  # noqa: E402
 
-from data_sources.fema_flood import FEMA_NFHL_QUERY_URL, FLOOD_MAX_PTS_DEFAULT, _classify_zone, _flood_risk_to_points  # noqa: E402
-
-RADIUS_M = 800.0
+RADIUS_M = fema.FLOOD_DISK_RADIUS_M
 FETCH_M = 1800.0
-TIER_ORDER = ["floodway", "sfha", "x_500yr", "d", "minimal"]  # worst first
 MAX_PTS = {"heat": 25.0, "air": 20.0, "flood": 30.0, "trend": 25.0}
 DIRS = {"N": (1, 0), "E": (0, 1), "S": (-1, 0), "W": (0, -1)}
 
 
-def circle_rings(lat, lon, meters, n=64):
-    dlat = meters / 111320.0
-    dlon = meters / (111320.0 * math.cos(math.radians(lat)))
-    ring = [[lon + dlon * math.cos(2 * math.pi * i / n), lat + dlat * math.sin(2 * math.pi * i / n)] for i in range(n)]
-    ring.append(ring[0])
-    return [ring]
-
-
 def query(lat, lon, fetch_m=FETCH_M):
-    feats, offset = [], 0
-    while True:
-        body = urllib.parse.urlencode({
-            "where": "1=1", "geometry": json.dumps({"rings": circle_rings(lat, lon, fetch_m), "spatialReference": {"wkid": 4326}}),
-            "geometryType": "esriGeometryPolygon", "inSR": "4326", "outSR": "4326", "spatialRel": "esriSpatialRelIntersects",
-            "returnGeometry": "true", "outFields": "FLD_ZONE,ZONE_SUBTY,SFHA_TF", "f": "json",
-            "maxAllowableOffset": 0.00002,  # about 2 m of vertex generalization: lighter answers, no visible effect on an 800 m disk
-            "resultOffset": offset, "resultRecordCount": 100,
-        }).encode()
-        for attempt in range(4):  # the service sometimes answers a transient 500; retry with a pause, then fail loudly
-            try:
-                with urllib.request.urlopen(urllib.request.Request(FEMA_NFHL_QUERY_URL, data=body, method="POST"), timeout=90) as r:
-                    data = json.loads(r.read().decode())
-            except Exception as e:  # noqa: BLE001
-                data = {"error": str(e)}
-            if "features" in data:
-                break
-            time.sleep(5 * (attempt + 1))
-        if "features" not in data:
-            raise RuntimeError(f"FEMA answer without features: {str(data)[:200]}")
-        feats += data["features"]
-        if not data.get("exceededTransferLimit"):
-            return feats
-        offset += len(data["features"])
+    return fema.fetch_flood_polygons(lat, lon, fetch_m)
 
 
 def to_geom(feature, lat0, lon0):
-    """Esri rings (lon, lat) to a shapely geometry in metres east/north of (lat0, lon0)."""
-    kx = 111320.0 * math.cos(math.radians(lat0))
-    ky = 111320.0
-    ext, holes = [], []
-    for ring in (feature.get("geometry") or {}).get("rings") or []:
-        pts = [((x - lon0) * kx, (y - lat0) * ky) for x, y in ring]
-        if len(pts) < 4:
-            continue
-        area2 = sum(pts[i][0] * pts[i + 1][1] - pts[i + 1][0] * pts[i][1] for i in range(len(pts) - 1))
-        (ext if area2 < 0 else holes).append(Polygon(pts).buffer(0))  # Esri: clockwise rings are outer rings
-    if not ext:
-        return None
-    g = unary_union(ext)
-    return g.difference(unary_union(holes)) if holes else g
+    return fema.polygon_to_geom(feature, lat0, lon0)
 
 
 def disk_flood(zones, cx, cy):
     """zones: [(tier, geom)] in metres around the pin. Returns (mean points over mapped area or None, mapped fraction, tier shares)."""
-    disk = Point(cx, cy).buffer(RADIUS_M, 64)
-    taken, shares = None, {}
-    for tier in TIER_ORDER:
-        gs = [g for t, g in zones if t == tier]
-        if not gs:
-            continue
-        part = unary_union(gs).intersection(disk)
-        if taken is not None:
-            part = part.difference(taken)
-        if part.is_empty:
-            continue
-        shares[tier] = part.area / disk.area
-        taken = part if taken is None else taken.union(part)
-    mapped = sum(shares.values())
-    scored = {t: s for t, s in shares.items() if _flood_risk_to_points(t, FLOOD_MAX_PTS_DEFAULT) is not None}
-    denom = sum(scored.values())
-    if denom <= 0:
-        return None, mapped, shares
-    pts = sum(_flood_risk_to_points(t, FLOOD_MAX_PTS_DEFAULT) * s for t, s in scored.items()) / denom
-    return pts, mapped, shares
+    return fema.disk_flood_points(zones, cx, cy, RADIUS_M)
 
 
 def score_from(pts):

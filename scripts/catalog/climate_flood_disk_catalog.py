@@ -31,7 +31,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "scripts", "catalog"))
 
 import climate_flood_disk_pilot as pilot  # noqa: E402
-from data_sources.fema_flood import _classify_zone  # noqa: E402
+from data_sources.fema_flood import zones_from_polygons  # noqa: E402
 
 CATALOG_DIR = os.path.join(ROOT, "analysis", "climate_dpv2_2026-11-03")
 GLOB = "*_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
@@ -65,13 +65,7 @@ def fetch(a) -> int:
             failed += 1
             print(f"  FAILED {k}: {str(e)[:120]}", flush=True)
             continue
-        zones = []
-        for f in feats:
-            at = f.get("attributes") or {}
-            g = pilot.to_geom(f, lat, lon)
-            if g is not None and not g.is_empty:
-                zones.append((_classify_zone(at.get("FLD_ZONE"), at.get("SFHA_TF"), at.get("ZONE_SUBTY")), g))
-        pts, mapped, shares = pilot.disk_flood(zones, 0.0, 0.0)
+        pts, mapped, shares = pilot.disk_flood(zones_from_polygons(feats, lat, lon), 0.0, 0.0)
         done[k] = {"pts": None if pts is None else round(pts, 2), "mapped": round(mapped, 3),
                    "shares": {t: round(s, 4) for t, s in shares.items()}, "polygons": len(feats)}
         if i % 25 == 0 or i == len(todo):
