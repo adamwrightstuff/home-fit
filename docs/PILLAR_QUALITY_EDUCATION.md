@@ -392,6 +392,27 @@ Independent validation source and result: recorded as PARTIAL, not Level 2 evide
   percentiles come from the same state tests, so this checks aggregation fidelity, not an independent view of quality; it does
   not test whether the right schools were chosen. Three disagreements stay unexplained (Sausalito, Anna, Clarksburg). The rerun
   is the brief in `analysis/education_validation_brief_2026-11-03.md`.
+  INDEPENDENT RUN 2026-11-03 (separate agent, EDFacts 2018 via Urban Institute API, grade 99 all grades, read+math midpoint mean;
+  `scripts/catalog/validate_education_edfacts.py`, per-place `analysis/education_validation_edfacts2018_places.csv`, cells
+  `analysis/education_validation_edfacts2018_cells.csv`; bars fixed in the brief). No recent-year state file was approved, so the 2018 gap
+  is the main confound. Result against the fixed bars:
+  Test A FAIL: 54 of 54 state-level cells conclusive, 53 pass (98%, bar 80%), but NY high is 0.494 (bar: no cell below 0.50). Other
+    cell minimum 0.743 (IN high 0.749, TX elementary 0.742). Likely cause, not proven: NY high-school 2018 proficiency is saturated
+    (49% of NY rated high schools at 90 or above, Regents-style pass rates), so the proficiency side has little rank information.
+  Test B: 12 states with 30 or more matched places all at or above 0.70 (lowest FL 0.859, NY 0.886, highest MA 0.965); weighted mean
+    0.919 (bar 0.80). Coverage 1,449 of 1,472 scored places (98%); every state at or above 94% (NY 98% after mapping NYC DOE to its
+    geographic districts in the script). INCONCLUSIVE for the rule "every state": CT 13, NV 29, IN 6, DE 3, WA 5, MD 1 matched places,
+    below the 30 needed, so "validated" copy is not allowed on this evidence. 23 unmatched places (MA 5, IL 3, PA 3, FL 2, NJ 2, NY 3,
+    CA 2, GA, TX, CO 1 each) are listed in the CSV with matched=False.
+  Test C NOT RUN: needs manual district-finder reads, not approved. The seed-2026 sample (20 current zone map, 10 survey 2015-16,
+    10 nearest) is in `analysis/education_validation_testC_sample.csv` with the read column empty.
+  Test D UNEXPLAINED for all five, no recent-year source. Stored ratings vs 2018 proficiency: Sausalito King Academy rating 70.7 vs
+    proficiency 19.8 (the school is the zoned elementary and the nearest middle); Anna TX ratings 3, 27, 45 vs proficiency 54, 47, 56
+    (zones 2015-16, fast-growing district); Clarksburg CA Walnut Grove (district_far, 12.5 mi) 33 vs 54.5; New Braunfels TX high
+    school rating 79.6 vs proficiency 11.0 (looks like a 2018 source problem, unverified); EaDo TX ratings 62, 47, 40 vs
+    proficiency 42, 28, 26 (zones 2026-27, mild). Need a 2023-25 state file to close.
+  Verdict: Level 2 independent validation FAILED on the Test A floor and is INCONCLUSIVE on Test B state coverage, Test C and Test D.
+  Caveat: SchoolDigger percentiles come from the same state tests, so this checks aggregation and school matching, not independent quality.
 All-places check (date, n, summary): 2026-11-03, n=1,476 (1,472 scored, 4 no data). Mean 59.4, sd 25.9, 10th to 90th percentile
   21.3 to 92.9, 98 distinct rounded values, top single value 2.2%. By area type (n, 10th / median / 90th, share at 95 or above):
   urban residential 200, 16.7 / 57.7 / 79.6, 0.5%; suburban 765, 21.5 / 61.4 / 93.2, 6.5%; exurban 361, 21.5 / 65.0 / 93.9, 7.8%;
@@ -412,8 +433,8 @@ Known data limits: 2015-16 zone maps on 77.7% of zoned levels; Austin zones stal
   score as a district pool so every address gets nearly the same number; early-education data missing for 541 places in states
   the private server does not cover (0 points); ratings are one year (2025) with no earlier history in the snapshot; scores are
   comparable only inside a state; the Texas and California disagreements in validation are undiagnosed.
-Last re-validated: 2026-11-03 (all-places, pin-shift, launch pairs, recomputed from stored data). Independent validation not
-  re-run. Next dated check: 2027-01-26 (quarterly), or on the yearly snapshot refresh, a zone-map update or a new EDFacts release.
+Last re-validated: 2026-11-03 (all-places, pin-shift, launch pairs, recomputed from stored data). Independent validation run
+  2026-11-03 (see above): failed/inconclusive. Next dated check: 2027-01-26 (quarterly), or on the yearly snapshot refresh, a zone-map update or a new EDFacts release.
 Sign-off: Level 1 (Converted), owner, 2026-11-03. Accepted TODOs: education weight, level weights, base radii, nearest-3,
   3 mi widening cap, 15 mi district-far fallback, choice pool average, hamlet 25%/50% rule, pin-flag cutoff. Accepted known
   defect: radius profile keys on urban_core, classifier emits urban_residential (30 places, small effect). Level 2 open on
