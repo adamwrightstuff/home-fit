@@ -93,7 +93,7 @@ score a median 5.8 points (p95 42.9, 2026-10-25). Each place stores `breakdown.p
 0.5 mile shifts north, south, east and west) and a place whose largest change exceeds 15 points (owner judgment, no source;
 387 of 1,472 places) carries `data_warnings` "pin_sensitive" and `summary.pin_sensitive`. Build or refresh it with
 `scripts/catalog/compute_education_pin_sensitivity.py` (offline); re-run it after any `rescore_education_offline.py`, which drops it.
-Spec sheet: `analysis/education_spec_sheet_2026-10-26.md`. Unsourced parameters (radii, nearest-3, caps, pool average) are TODOs.
+Spec sheet: see "DPv2 spec sheet" at the end of this doc (supersedes `analysis/education_spec_sheet_2026-10-26.md`). Unsourced parameters (radii, nearest-3, caps, pool average) are TODOs.
 
 ## Data-limit flags (2026-10-26)
 `scripts/catalog/flag_education_data_limits.py` (offline, idempotent, scores unchanged) writes, from the stored levels:
@@ -322,3 +322,97 @@ state snapshot, offline re-score, production bundle, Explorer labels, deal-break
 7. **Snapshot refresh** once a year (about 112 calls, under $1) and rebuild the bundle when zone maps change.
 8. **Choice-school handling** (magnet/lottery seats) is only the charter list; magnets are not modeled.
 9. Housekeeping: fold the re-score recipe into `docs/METRO_EXPANSION_PLAYBOOK.md` and `docs/CATALOG_TOOLKIT.md`.
+
+---
+
+## DPv2 spec sheet (2026-11-03)
+
+Level: proposed 1 (Converted), owner sign-off pending. Level 2 is held until the independent validation in
+`analysis/education_validation_brief_2026-11-03.md` is run by another agent against pass criteria fixed in that brief.
+Status per requirement: `analysis/education_dpv2_status_2026-11-03.md`. Everything below is from stored data on origin/main
+(86c66afe, 1,476 places), offline; no live API was called. Owner decisions of 2026-10-26 are tier 3 and are not reopened.
+
+```
+Pillar: quality_education
+Construct (one sentence): Quality of the school a child at this address would be assigned to (zoned school, else the nearest
+  rated schools of the home district; lottery levels show the district pool average), measured by statewide test-score percentile.
+Reference frame: state norm (within-state percentile of test results). Not a fixed standard and not a national norm.
+  Evidence for the frame: tier 2 (revealed-preference proxy) plus owner decision (tier 3).
+    Tier 2: home prices move with standardized test-score rank, about 1 to 3 percent per standard deviation of school quality
+    (Collateral Analytics 2018 consensus figure; Machin 2011 review; Imberman and Lovenheim 2016 for test-score levels over
+    value-added, one city). Read from search summaries only. Black 1999 and Bayer, Ferreira and McMillan 2007 were not retrieved.
+    What the evidence does and does not support: it supports ranking by test-score level. It does not test whether the reference
+    group should be the state, the metro or the nation. State is used because the tests differ by state, so scores from different
+    states are not on one scale and a national frame cannot be computed from stored data.
+  Deviation from DPv2 Part 1: Part 1 defaults school proficiency to a fixed standard. This pillar uses a relative frame by owner
+    decision (2026-10-26). Consequence, disclosed: a 70 in one state is not the same school quality as a 70 in another
+    (place means run from CT 84.7 to DE 42.0 in the 2026-10-25 audit, partly which places are in the catalog).
+Measurement area: pin + Census district polygon + attendance-zone polygon; nearest 3 rated schools within a radius when no zone.
+  Reason: the assigned school is what a resident means by "my school". Radii apply only where no zone covers the point
+  (351 of 1,472 scored places have at least one nearest-school level).
+Place context inputs used (fields) and remaining area-type uses (with reason):
+  Reads place_context.area_type when a context is passed (pillars/schools.py get_school_data). Uses none of the density factors.
+  The catalog offline rescore reads the stored area type, not the context helper.
+  Remaining use of the label: the search radius for the nearest-school path (data_sources/radius_profiles.py, 1.5 / 2.0 / 3.0 mi).
+  Reason it stays: it does not move scores (radius x0.5 mean change 0.21, x2 mean 0.60, on the places that use it) and
+  nothing sourced replaces it. KNOWN DEFECT: the profile keys on "urban_core", but the classifier emits "urban_residential",
+  so urban residential places get the 3.0 mi radius, not the documented 1.5. Affects 30 places with a nearest level; same
+  small sensitivity. Not changed; proposed fix is in the status file.
+Inputs and data sources (with vintage): SchoolDigger statewide percentile snapshot (18 states in data/school_snapshot, first
+  fetched 2026-10-16, refresh yearly); Census TIGER school districts (2024); district zone maps (2018 to 2026-27); NCES 2015-16 attendance
+  survey as fallback; NYC middle-school directory; SF lottery rules. Early-education counts from OpenStreetMap (0 points).
+Parameters:
+  name | value | source | plausible range | sensitivity result
+  education weight | 7.69% (equal 1/13) | owner decision, no study gives a weight | 0 to 2 times (judgment) | weight 0 moves totals a mean 1.6 (max 4.9), approximate. TODO source
+  level weights elementary / middle / high | equal | judgment, research mixed | unknown | doubling one level: mean 2.5 (p95 7.3 to 7.9, max 16.0); elementary alone: mean 9.8 (p95 29.1). TODO source
+  radius ratio 2.1 / 3.2 / 3.6 mi | NHTS 2017 median school trip (PBIC brief), tier 1 | n/a | n/a | sourced
+  base radii 1.5 / 2.0 / 3.0 mi | judgment, no source | unknown | x0.5 mean 0.21 (4 places over 0.5); x2 mean 0.60 (52 places over 0.5). TODO source
+  nearest 3 schools | judgment | unknown | not tested. TODO
+  widening cap 3 mi | judgment | 2 to 5 mi tested | cap 2: mean 0.68; cap 4: 0.38; cap 5: 0.52 (364 places). TODO source
+  district-far fallback 15 mi | judgment | unknown | 31 levels use it; not tested. TODO
+  choice pool average | enrollment-weighted mean of rated district-run schools, at least 3 | judgment, no source | alternatives tested | unweighted mean mean change 3.15; median 1.30; weighted median 3.28 (max 10.9; 126 places). Owner kept the weighted mean. TODO source
+  hamlet rule 25% / 50% | judgment | unknown | not tested. TODO
+  pin-sensitivity flag cutoff 15 points | owner judgment | unknown | flags 387 of 1,472 places
+  early-education points | 0 | no source for a size | n/a | data only
+  2015-16 zone fallback | adopted on 90% agreement with current maps (128 of 143 checks) | tier 1 comparison, own test | n/a | 77.7% of zoned levels use it; about 10% of those zones may have changed
+Shared inputs with other pillars: none raw (SchoolDigger only; housing value has no school input). Spearman with other pillars
+  (1,472 places): community safety 0.48, natural beauty 0.44, diversity -0.42, social fabric 0.38, housing value 0.20, others
+  under 0.2: shared affluence, not shared inputs. Education feeds the longevity and happiness indices, not the headline total.
+Pin-shift sensitivity (shift distance, median and p95 score change): 0.5 mi, largest of four directions, 1,472 places,
+  recomputed 2026-11-03 from the stored per-place measurement: median 5.8, p90 31.9, p95 42.6, max 80.9; 53% move more than 5;
+  387 move more than 15. By area type (median / p95 / count over 15): urban residential 20.9 / 54.7 / 124 of 200; suburban 6.6 /
+  39.5 / 203 of 765; exurban 3.5 / 29.8 / 52 of 361; rural 0.0 / 15.9 / 8 of 143. The swing is not reduced; it is flagged on
+  the place (pin_sensitive). Largest in dense places, where a half mile crosses attendance zones and districts.
+Independent validation source and result: recorded as PARTIAL, not Level 2 evidence yet. Ran 2026-10-16 and 2026-10-26 against
+  EDFacts proficiency (Urban Institute API, 2018 data): school ratings vs proficiency, Spearman 0.66 to 0.92 within districts;
+  place score vs mean proficiency of the same schools, within state, 798 of 1,438 places with named schools (about 54%),
+  weighted mean 0.93 (all-grades version 0.94). Why it does not close Level 2: pass criteria were not fixed before the results
+  (no bar was set for education); coverage is a subset (DPv2 allows "validated" copy only on the full catalog); the place-level
+  script and its data were never committed, so it cannot be rerun offline; ratings are 2025 and proficiency 2018; SchoolDigger
+  percentiles come from the same state tests, so this checks aggregation fidelity, not an independent view of quality; it does
+  not test whether the right schools were chosen. Three disagreements stay unexplained (Sausalito, Anna, Clarksburg). The rerun
+  is the brief in `analysis/education_validation_brief_2026-11-03.md`.
+All-places check (date, n, summary): 2026-11-03, n=1,476 (1,472 scored, 4 no data). Mean 59.4, sd 25.9, 10th to 90th percentile
+  21.3 to 92.9, 98 distinct rounded values, top single value 2.2%. By area type (n, 10th / median / 90th, share at 95 or above):
+  urban residential 200, 16.7 / 57.7 / 79.6, 0.5%; suburban 765, 21.5 / 61.4 / 93.2, 6.5%; exurban 361, 21.5 / 65.0 / 93.9, 7.8%;
+  rural 143, 21.4 / 68.9 / 94.1, 9.8%; unlabeled 3. Floor: 0.7% at 5 or below. Ceiling: none at 100, 6.5% at 95 or above
+  (elite districts share a capped rating, so they do not separate from each other). Urban residential tops out near 80:
+  a result of its schools, not a cap. check_education.py passes for all metros (2026-10-26; not rerun here).
+Fail-loud conditions (what is rejected, what is flagged): no rated school at any level = no data, degraded (4 places); a level with
+  no rated school degrades the pillar (32); failed or uncovered early-education read = early_ed_missing (541), never a zero;
+  live scorer keeps a missing score as no data. Flagged on the place, not degraded: zone_map_2015_16 (1,023), no_zone_map (364),
+  pin_sensitive (387). Open small gap: places scored from 1 or 2 of 3 levels (32) are comparable only loosely with 3-level places.
+Launch check pairs (should differ / should be similar) and result: recomputed 2026-11-03, stored scores unchanged. Differ: Palo Alto
+  95.7 vs East Palo Alto 30.5, Great Neck 93.8 vs Hempstead 21.1, Brookline 93.6 vs Chelsea MA 14.8 (all pass, 20 or more apart).
+  Similar: Darien 97.6 vs Westport 96.5, Winnetka 97.3 vs Lake Forest 98.4, University Park 99.0 vs Highland Park TX 99.1 (all pass,
+  within 10). Mid-range similar pair Babylon 64.7 vs Tarrytown NY 49.4: FAIL (15.3 apart), because Babylon is scored from one
+  level. Owner decision 2026-10-26: keep, flagged, recorded as a known limit. Pairs were named after the scores were seen, so
+  this is a check, not a blind pre-registration. Thresholds are judgment.
+Known data limits: 2015-16 zone maps on 77.7% of zoned levels; Austin zones stale; lottery districts (SF, NYC middle and high)
+  score as a district pool so every address gets nearly the same number; early-education data missing for 541 places in states
+  the private server does not cover (0 points); ratings are one year (2025) with no earlier history in the snapshot; scores are
+  comparable only inside a state; the Texas and California disagreements in validation are undiagnosed.
+Last re-validated: 2026-11-03 (all-places, pin-shift, launch pairs, recomputed from stored data). Independent validation not
+  re-run. Next dated check: 2027-01-26 (quarterly), or on the yearly snapshot refresh, a zone-map update or a new EDFacts release.
+Sign-off: none yet. Proposed: Level 1, date and accepted TODOs to be entered by the owner.
+```
