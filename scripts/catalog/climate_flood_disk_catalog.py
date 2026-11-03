@@ -147,7 +147,11 @@ def main() -> int:
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--apply-dir")
     ap.add_argument("--sleep", type=float, default=0.5)
+    ap.add_argument("--catalog-dir", help="apply: folder of post-option-B files to start from (default: the 2026-11-03 recompute)")
     a = ap.parse_args()
+    global CATALOG_DIR
+    if a.catalog_dir:
+        CATALOG_DIR = os.path.abspath(a.catalog_dir)
     if a.step == "apply" and not a.apply_dir:
         sys.exit("apply needs --apply-dir")
     return fetch(a) if a.step == "fetch" else apply(a)
