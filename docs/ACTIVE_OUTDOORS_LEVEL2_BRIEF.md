@@ -8,6 +8,14 @@ Scope: `pillars/active_outdoors.py` as on origin/main 3841a87 and the catalog fi
 (1,476 places). Read only those files. Do not change scoring, code or any catalog file. Write results to
 `docs/ACTIVE_OUTDOORS_LEVEL2_RESULTS.md` and a CSV per check in `analysis/`.
 
+## Owner decisions (2026-11-02)
+
+Criteria approved as written: pin-shift median at most 3 and 95th percentile at most 10 at 500 m (5 / 15 at 1 km); city polygon
+Spearman at least 0.6 on the total and 0.3 on the daily part. Thresholds are still unsourced (the owner accepted the builder's
+choice); they are now fixed. Permissions given: download city park polygons and PAD-US (public data, each in its own empty
+folder, file names and sizes stated first); live Overpass reads on the owner's Hetzner server only, about 80 places, no paid
+Google calls. Other thresholds in this brief stand as written.
+
 ## Rules
 
 - Say what data a step needs before any live call, Overpass read or download, and ask the owner. Do not open the Overpass tunnel
