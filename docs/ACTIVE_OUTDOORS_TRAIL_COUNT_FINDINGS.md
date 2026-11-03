@@ -51,3 +51,7 @@ Offline after the reads: refit the scale (median of the clean counts at 15 km an
 Risks: every wild score moves, so every launch comparison moves; the budgets (25 and 15) and camping limits stay unsourced; a new scale fitted to the same catalog is still relative, not a published standard.
 
 Decisions for the owner: approve the definition (or a simpler one), accept the read time or approve the 5-place timing test first, and open the second server for the 545 places.
+
+## Correction and timing test (2026-11-03, 5 places, read-only, owner approved in chat)
+Correction: a "(trails)" entry is not one per path. `_query_trails_in_large_parks` makes one entry per large park-tagged feature (50 ha or more with at least 2 paths, at most 3 counted), named after the feature, so the greenway, cycleway and walkway names above are large features tagged as parks, and the same name can repeat. It also sends one extra Overpass request per large park, which is why the full read takes about 90 seconds.
+Timing of a trimmed read (hiking routes plus all parks and reserves with bounding boxes, no per-park path queries): Park Slope 4.5 s, Brooklyn Heights 4.6 s, Mar Vista 3.3 s, Berwyn 4.9 s, Wimberley 1.3 s. The route counts match the earlier full read exactly (20, 19, 1, 36). At about 4 seconds per place, 1,476 places is roughly 1.6 hours on one stream (about 1 hour for the 931 on the first server), instead of about 37 hours. Park size comes from the bounding box (an overestimate for long thin features), so a size cutoff would use that or a geometry read (TODO).
