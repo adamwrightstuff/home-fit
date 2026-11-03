@@ -428,20 +428,9 @@ def get_active_outdoors_score_v2(
     scoring_area_type = area_type if _load_trails_scale() is not None else context_flags.get("effective_area_type", area_type)
     is_desert_context = context_flags.get("is_desert_context", False)
     
-    # DATA QUALITY: Filter out urban paths/cycle paths from hiking trails AFTER detection
-    # Problem: OSM tags urban pathways and cycle paths as route=hiking when they're not actual hiking trails
-    # Example: Times Square has 100+ "hiking" routes that are actually urban paths/greenways
-    # Solution: Filter trails in dense urban cores based on characteristics
-    # This follows Public Transit pattern: prevent data quality issues from inflating scores
-    # NOTE: Filter AFTER mountain town detection so detection can use raw trail count
-    # IMPORTANT: Don't filter trails for detected mountain towns - they have legitimate high trail counts
-    # Denver: 36 trails is legitimate (mountain city), not OSM artifacts
-    is_mountain_town = context_flags.get("is_mountain_town", False)
+    # Trail counts are used as read for every area type. The urban-path cap that used to cut counts for urban
+    # types made the same trails score differently by label (Level 2 check 3 and check 5, 2026-11-02).
     hiking_trails: List[Dict] = hiking_trails_raw
-    if area_type in {"urban_core", "urban_residential", "urban_core_lowrise"}:
-        # Skip filtering if detected as mountain town - legitimate high trail counts
-        if not is_mountain_town or _load_trails_scale() is not None:
-            hiking_trails = _filter_urban_paths_from_trails(hiking_trails, area_type)
 
     combined_data = {
         "parks": parks,
@@ -536,6 +525,13 @@ def get_active_outdoors_score_v2(
         dq["degraded"] = True
         dq["degraded_reasons"] = list(dq.get("degraded_reasons") or []) + [
             f"active_outdoors_missing_components: {', '.join(components_missing)} (Overpass read failed)"
+        ]
+    if local_overpass_outcome == "overpass_empty" and "daily_urban_outdoors" not in components_missing:
+        # An empty park read is scored as a zero daily term. It may be a real zero (a rural pin with every park
+        # beyond the read radius) or a gap in the map; the score is unchanged and the pillar says it is thin.
+        dq["degraded"] = True
+        dq["degraded_reasons"] = list(dq.get("degraded_reasons") or []) + [
+            "active_outdoors_empty_park_read: daily term scored as zero"
         ]
     cap = places_ao_meta.get("osm_down_score_cap")
     if places_ao_meta.get("degraded_osm_substitute") and cap is not None:
@@ -1069,55 +1065,6 @@ def _score_water_lifestyle_v2(
                "waterfront_breakdown": waterfront_breakdown}
     )
     return final_water, waterfront_breakdown, best_feat_type, best_feat_dist_m
-
-
-def _filter_urban_paths_from_trails(hiking_trails: List[Dict], area_type: str) -> List[Dict]:
-    """
-    Filter out urban paths/cycle paths from hiking trails in dense urban cores.
-    
-    Problem: OSM tags urban pathways and cycle paths as route=hiking when they're not actual hiking trails.
-    Example: Times Square has 100+ "hiking" routes that are actually urban paths/greenways.
-    
-    Solution: In dense urban cores, filter trails based on:
-    1. If trail count is very high (>50), likely urban paths (OSM data quality issue)
-    2. Keep trails that are in protected areas (national parks, nature reserves) - these are legitimate
-    3. For remaining trails, apply aggressive filtering based on expectations
-    
-    This follows Public Transit pattern: prevent data quality issues from inflating scores.
-    """
-    if not hiking_trails:
-        return hiking_trails
-    
-    # Get expectations for filtering threshold
-    expectations = get_contextual_expectations(area_type, "active_outdoors") or {}
-    exp_trails = expectations.get("expected_trails_within_15km", 2.0)
-    
-    # In dense urban cores, if trail count is very high (>50), they're likely urban paths
-    # This is a data quality issue - OSM tags urban paths as hiking routes
-    # Filter down to a reasonable number based on expectations (3x expected max)
-    max_reasonable_trails = max(10, int(exp_trails * 3.0))
-    
-    if len(hiking_trails) > max_reasonable_trails:
-        # Too many trails - likely urban paths
-        # Keep only the closest trails (these are more likely to be legitimate)
-        # Sort by distance and keep the closest ones
-        sorted_trails = sorted(hiking_trails, key=lambda t: t.get("distance_m", float('inf')))
-        filtered_trails = sorted_trails[:max_reasonable_trails]
-        
-        logger.info(
-            f"🔍 [AO v2] Filtered urban paths: {len(hiking_trails)} → {len(filtered_trails)} trails "
-            f"(max_reasonable={max_reasonable_trails} for {area_type})",
-            extra={
-                "pillar_name": "active_outdoors_v2",
-                "area_type": area_type,
-                "original_trail_count": len(hiking_trails),
-                "filtered_trail_count": len(filtered_trails),
-                "max_reasonable_trails": max_reasonable_trails,
-            },
-        )
-        return filtered_trails
-    
-    return hiking_trails
 
 
 def _detect_special_contexts(
