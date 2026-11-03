@@ -152,3 +152,42 @@ Still Level 1. Checks 3 (pair 4 and the cross-type test), 4b and 5 are open or f
 Pair 4: 31 old-format rows (5 LA, 26 NYC) came from a failed or empty original park read (parks_count 0), so their stored park area was near zero (Park Slope 1.6 ha beside Prospect Park). All 31 were re-read; the new daily terms were merged (Park Slope daily 20.9 to 25.4, total 69.9 to 74.0). The re-read also lifted wild by 15 to 20 points for about 20 inner NYC places because the removed trail cap lets every inner NYC place count 175 to 188 greenway route relations; those wild values were NOT merged (owner decision 2026-11-03: daily only). Pair 4 needs a verifier rerun.
 
 Cross-type test: places at the same density with the same area type differ by a median 8.5 points in total (n=2,754 pairs), with different types by 9.7 (n=1,273). The label adds about 1 point; the rest is real variation in trails, water and parks. The criterion as written cannot be met by a score that responds to geography. A replacement ("cross-type median no more than 2 points above same-type median") would apply to the next round only.
+
+## Rerun 2 2026-11-03 (checks 4b, 5, pair 4) (independent verifier)
+Same brief, same thresholds, seed and sample; none changed. I did not build the pillar. Owner approved in chat: the PAD-US 4.0 state downloads for 4b and live reads for check 5 on the private Overpass server (no paid Google calls, tree canopy passed as 0, seed 20261102). No code, scoring or catalog file changed. Catalog input: `data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl` as committed at 31bd24a9 (1,476 places). CSVs: `analysis/ao_level2_rerun2_*.csv`.
+
+| Check | Result | n |
+|---|---|---|
+| 3 pair 4 Park Slope vs Brooklyn Heights | FAIL, 74.0 vs 83.4 (9.4, limit 8) | 1 pair |
+| 4b trail count within 9.3 miles vs protected area, Spearman | FAIL, 0.310 (need 0.4) | 1,476 |
+| 4b stored wild score vs protected area, Spearman | FAIL, 0.292 (need 0.4) | 1,476 |
+| 4b same, without Boston metro | FAIL, 0.284 and 0.264 | 1,395 |
+| 5 median absolute difference, daily / wild / water (limit 2 each) | PASS, 0.05 / 0.0 / 0.0 | 20 |
+| 5 no place differing by more than 10 in total | FAIL, 2 places over 10 (Excelsior CA +12.4, Windsor Terrace NY +14.5); 1 of them is the expected refreshed-row case, 1 is not | 20 |
+
+### Pair 4
+Stored totals: Park Slope 74.0 (daily 25.4, wild 31.0, water 25.0; daily refreshed 2026-11-03), Brooklyn Heights 83.4 (daily 31.9, wild 34.8, water 25.0; not refreshed). The gap fell from 13.5 to 9.4 but is still over 8. Of the 9.4, daily is 6.5, wild 3.8, water 0. The re-read daily term fixed most of the daily gap; the wild values for Park Slope were kept at capped-era values on purpose, so the gap could narrow further only if wild were merged (not tested, not proposed).
+
+### Check 4b
+Downloaded the 18 PAD-US 4.0 state geodatabase zips (AZ CA CO CT DE FL GA IL IN MA MD NC NJ NV NY PA TX WA) from ScienceBase item "PAD-US 4.0 State Downloads" (652d4f80d34e44db0e2ee45c), each into its own new empty folder outside the repo; 1.37 GB; every MD5 matched ScienceBase. Same method as the first run: combined fee/designation/easement/proclamation layer, union of all polygons (every public-access category) clipped to a 15 km (9.3 mile) circle, equal-area projection (EPSG:5070); invalid polygons repaired before clipping; Spearman computed with average ranks (no scipy available, so by hand with pandas ranks). Trail count is `summary.trails.count_total`, wild is the stored wild_adventure, both as they are now. Land in states not downloaded (SC, WI, NH, RI and others) is missing near those borders, as in the first run.
+- All places (n = 1,476): trails 0.310, wild 0.292. Without the Boston metro (n = 1,395): 0.284, 0.264. Open-access land only, not a criterion (n = 1,476): 0.299, 0.280.
+- First run was 0.310 and 0.290 (same numbers within rounding), so the refreshes and cap removal did not move this check. FAIL on both criteria, as before.
+- Downloads and unzipped copies were deleted after use.
+
+### Check 5
+20 places from `ao_level2_check5_live_vs_stored.csv` (seed 20261102, 5 per stored area type), live pillar `get_active_outdoors_score_v2` on the owner's private Overpass server (port 12345 holds all 20 states), fresh disk cache, tree canopy 0, stored area-type label held fixed (as in the first run), place context built with the repo's local density tables (`surrounding_factors`), compared with the stored rows as they are now. I called the pillar directly rather than through `/score`, because `/score` would relabel the area type (Santa Clara) and run all pillars; an API already answering on port 8000 belongs to the owner and was not used or stopped.
+- Method note: my first attempt called the pillar without a place context. That leaves the people-plus-jobs density empty, the density-peer park baseline is not used, and daily came out up to 22 points off (median 8.6). That was my method error, not a pillar finding; the table below is the corrected run, which matches the check 1 method.
+- Median absolute difference: daily 0.05, wild 0.0, water 0.0, total 0.1. PASS (limit 2 each).
+- Differences over 3 in total: Windsor Terrace NY +14.5, Excelsior CA +12.4, Monrovia CA +9.0, Chinatown IL +8.8, Woodland Hills CA +3.2. All others are within 0.6. The four places that failed the first run (Mar Vista, Atherton, Santa Clara, Berwyn) now differ by 0.0 in total, so the 2026-11-03 refreshes worked.
+- Expected, listed separately: Windsor Terrace is one of the 31 rows whose daily term was refreshed on 2026-11-03 and whose wild value was kept at the capped-era value. Stored trails 30, live 160, wild +15.9, daily 0.0. The live scorer has no trail cap now, so this difference is the intended consequence of the owner decision.
+- Not expected: Excelsior CA +12.4 (daily +5.2, wild +8.4). Evidence says data age: stored park area 0.4 ha beside 51.1 ha live (15 vs 16 parks), stored trails 46 vs 82 live, stored camping 3 vs 18. This row was not in the 31 refreshed.
+- Chinatown IL +8.8 (wild +9.8): stored trails exactly 30 (the old cap value), live 91; same cause as Windsor Terrace, a row scored while the cap existed and not refreshed. Under the 10 limit.
+- Monrovia CA +9.0 (wild +6.5, water +4.5): stored water features 6 vs 87 live, trails 44 vs 68, camping 12 vs 29, parks 34 vs 9: data age (an older, narrower read). Under the limit.
+- Woodland Hills CA +3.2: stored water features 43 vs 194 live, park count 104 vs 16: data age.
+- Verdict against the criterion as written: FAIL (Excelsior and Windsor Terrace over 10). If the refreshed-row case is excluded as the owner's intended outcome, one place (Excelsior, stale data) still exceeds 10, so the verdict does not change.
+
+### Proposed level
+Level 1. Open: check 3 pair 4 (9.4 against 8), check 3 cross-type test (not rerun here; last result median 9.7, share 49.0%), check 4b (0.31 and 0.29 against 0.4) and check 5 (one non-excused place over 10, caused by catalog rows older than the current code). Passing: check 1, check 2 in full, check 3 pairs 1 to 3 and 5, check 4a, and check 5 medians.
+
+### Files
+`analysis/ao_level2_rerun2_check3_pair4.csv`, `analysis/ao_level2_rerun2_check4b_protected_land.csv`, `analysis/ao_level2_rerun2_check5_live_vs_stored.csv`. Scripts and logs were kept in the session scratchpad, outside the repo.
