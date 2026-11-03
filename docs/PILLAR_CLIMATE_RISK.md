@@ -188,4 +188,17 @@ Flood disk pilot (2026-11-03, `scripts/catalog/climate_flood_disk_pilot.py`, out
   The 800 m radius is a borrowed convention (not a flood-specific source). Radius sensitivity from the saved polygons, flood points at the pin: 400 m against 800 m differs by a median 0.3 and a 95th percentile 3.8 points (3 of 60 places over 5); 1,200 m against 800 m differs by a median 0.3 and a 95th percentile 2.8 (none over 5). Plausible range for the radius: unknown, tested 400 to 1,200.
   Not yet shown: the result on the full catalog (the 60 places are a sample), independent validation of the flood measure, and the pin-shift of PM2.5 and trend. Nothing in scoring or the catalog has been changed by the pilot.
 
-Still not done (Level 2): independent validation brief, launch pairs, and the full-catalog disk measure. Previously listed: pin-shift, independent validation brief, launch pairs. All need your go on the FEMA and GEE reads first.
+## Level 2 status (2026-11-03): NOT reached
+
+Done: catalog on the 800 m disk flood measure (pushed, a0495673 on main); live lookup has the disk measure behind HOMEFIT_FLOOD_DISK (default off, latency on Railway not measured); brief written with criteria fixed first (docs/CLIMATE_RISK_LEVEL2_BRIEF.md); offline checks and the air check run by independent agents, full tables in analysis/climate_level2_results_2026-11-03.md.
+
+Passed: V2 score range, scaled-sum rule and no-data list; V4 Phoenix vs Seattle and Las Vegas vs Boston; V5 overlap (0.20 and 0.28 across places); V1b air against EPA monitors (n 1,304, Spearman 0.85, median difference 0.56 ug/m3; independent in processing, not wholly in data; 172 places have no monitor in range).
+
+Failed or open:
+- V2 component caps: 457 places (31%) at a cap, against a 5% limit. Owner decision 2026-11-03: the rule does not apply to a place with no flood hazard (full flood points are correct there). Heat and air caps stay counted. The criterion was not edited by the checker; this is the owner's recorded exemption, and the rerun against the exempted rule is not done.
+- V4 Galveston vs Katy: 60.2 vs 61.6, should differ by 8 or more. Flood separates them (4.5 vs 21.9); Galveston's heat reading (29.5 C) cancels it. The reading was not checked. Open limit.
+- Correction: the spec sheet's "5 places with no mapped polygon" is now 3 no-data places under the disk measure; Southport CT and Belvedere CA get flood points from the disk (Southport's rest on 10% of the disk).
+
+Not run: V1a heat (needs Earth Engine or PRISM), V1c flood (needs the National Risk Index county table), V3 disk pin-shift rerun (needs Earth Engine heat reads). Owner decision 2026-11-03: no Google spending, so heat and the pin-shift rerun are not run. The pilot pin-shift on 60 places (disk measure passes) is the builder's, not independent.
+
+Proposed level: Level 1 plus the independent air check; Level 2 needs V1a, V1c and V3 or an owner waiver of them.
