@@ -413,6 +413,24 @@ Independent validation source and result: recorded as PARTIAL, not Level 2 evide
     proficiency 42, 28, 26 (zones 2026-27, mild). Need a 2023-25 state file to close.
   Verdict: Level 2 independent validation FAILED on the Test A floor and is INCONCLUSIVE on Test B state coverage, Test C and Test D.
   Caveat: SchoolDigger percentiles come from the same state tests, so this checks aggregation and school matching, not independent quality.
+  RECENT-YEAR RERUN 2026-11-03 (2023-24, same fixed bars; the 2018 result above is kept). Official files, owner approved: NYSED
+    SRC2024.zip (data.nysed.gov, 354,144,686 bytes, Regents table "Annual Regents Exams", mdbtools export) and CDE CAASPP 2023-24 research
+    files sb_ca2024_1_csv_v1.zip (7.8 MB) and sb_ca2024entities_csv.zip (0.2 MB) from caaspp-elpac.ets.org (the CDE CAASPP site, run by
+    its contractor; the zip links need a session cookie from the file list page). No Texas file was found or approved. Script
+    `scripts/catalog/validate_education_recent.py`.
+  Test A, NY high school, recent year: PASS the floor. Spearman 0.968 on the 686 of 1,102 rated NY high schools whose name is unique
+    in both sources (no zip or NCES id in the Regents table, so the 38% not matched are unmatched by name rule, not tested). Tested-weighted
+    Regents percent proficient, 2024. The 2018 NY high 0.494 was therefore a saturated 2018 source, not a rating problem. Not a full
+    re-run of all cells: only NY high was rerun on the new source.
+  Test A, CA, extra (not a fixed-bar cell set, shown for scale): elementary 0.949 (4,875 matched), middle 0.966 (1,135), high 0.939 (1,383).
+  Test D with 2023-24 (CA only; TX Anna, New Braunfels, EaDo remain unexplained, no source): Clarksburg EXPLAINED: Walnut Grove Elem
+    rating 33 vs proficiency 19, Clarksburg Middle 9 vs 11, Delta High 50 vs 31, so ratings agree and the 2018 gap (54.5 and 44.5)
+    was the old source. Sausalito MOSTLY EXPLAINED: King Academy proficiency 19.8 (2018) is 41.4 in 2024 (ELA 42.4, math 40.4, 172 tested),
+    Tamalpais High 66.7 vs rating 95; residual: a rating of 70.7 for 41% proficient is near the 90th percentile of schools at that proficiency
+    (median rating 56), so the King Academy rating stays a possible rating issue; not resolved from these files.
+  Updated verdict: Test A floor now passes on a recent-year source for NY high, but the fixed-bar Test A result stays FAIL as run on
+    2018 (bars not edited); Test B states below 30 matched places, Test C and the three Texas Test D places are still open. Level 2 is
+    still not passed.
 All-places check (date, n, summary): 2026-11-03, n=1,476 (1,472 scored, 4 no data). Mean 59.4, sd 25.9, 10th to 90th percentile
   21.3 to 92.9, 98 distinct rounded values, top single value 2.2%. By area type (n, 10th / median / 90th, share at 95 or above):
   urban residential 200, 16.7 / 57.7 / 79.6, 0.5%; suburban 765, 21.5 / 61.4 / 93.2, 6.5%; exurban 361, 21.5 / 65.0 / 93.9, 7.8%;
