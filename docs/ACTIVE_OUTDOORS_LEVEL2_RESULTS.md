@@ -238,3 +238,22 @@ Level 1 on the criteria as written, because two items still fail: pair 5 (Winnet
 
 ### Files
 `analysis/ao_level2_rerun3_check2_distribution.csv`, `ao_level2_rerun3_check2_empty_and_zero_daily.csv`, `ao_level2_rerun3_check3_pairs.csv`, `ao_level2_rerun3_check3_crosstype_pairs.csv`, `ao_level2_rerun3_check4b_protected_land.csv`, `ao_level2_rerun3_check5_live_vs_stored.csv`.
+
+## Rerun 4 2026-11-04 (revised checks 3b and 3c, independent verifier)
+
+Stored data only: `data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl` (21 metros, 1,476 places). No live calls, no code, scoring, scale or catalog change. Criteria are those of "Revision 2026-11-04" in the brief, unchanged. Total is `active_outdoors.score`; pin is `score.coordinates`; stored area type is `active_outdoors.area_classification.area_type`; people plus jobs per acre is `dpv2_recompute.activity_per_acre`. Distances are haversine miles. Pairs are within one metro file and overlap (a place appears in many pairs), so they are not independent. Script is in the session scratchpad, not the repo.
+
+| Check | Result | n |
+|---|---|---|
+| 3b neighbours within 3 miles, median absolute total difference (limit 8) | PASS: median 4.0, p90 10.2, 18.9% of pairs above 8 | 2,912 pairs (all 1,476 places eligible) |
+| 3c label effect (limit 2) | PASS: different-type median 7.8 minus same-type median 7.7 = 0.1 | 1,273 different-type pairs, 2,754 same-type pairs |
+| Reference, not pass or fail: old pair 5 Winnetka vs Evanston | 84.9 vs 70.9, difference 14.0 (limit was 8), as in rerun 3 | 1 |
+| Reference, not pass or fail: old cross-type test | median 7.8 (limit was 5), 40.0% above 10 (limit was 20%), p90 20.9, as in rerun 3 | 1,273 pairs |
+
+3c exclusions: 3 places with type `unknown` and 12 with no stored `activity_per_acre` (15 places), leaving 1,461. Density pairing: activity within 10 percent of the larger value, same as the earlier cross-type test; the different-type group reproduces rerun 3 exactly (n 1,273, median 7.8, p90 20.9). Same-type pairs: 38.0% above 10 points; different-type 40.0%. The 3c effect is well inside the limit, so the stored area type label is not driving score differences.
+
+10 largest 3b pairs (miles, totals, difference): Idledale and Morrison CO (2.97, 59.5 vs 90.6, 31.1); Flatbush and Fort Greene NY (2.78, 66.4 vs 94.7, 28.3); Ridgewood and Williamsburg NY (2.69, 64.5 vs 92.3, 27.8); Downtown Las Vegas and North Las Vegas (2.41, 67.1 vs 40.2, 26.9); Flatbush and Gowanus (2.66, 66.4 vs 92.5, 26.1); Flatbush and Windsor Terrace (1.69, 66.4 vs 92.5, 26.1); Greenpoint and Ridgewood (2.65, 90.6 vs 64.5, 26.1); Ditmas Park and Gowanus (2.67, 66.5 vs 92.5, 26.0); Ditmas Park and Windsor Terrace (1.41, 66.5 vs 92.5, 26.0); Arcadia and Camelback East AZ (2.48, 76.5 vs 52.0, 24.5). Eight of the ten are Brooklyn, where nearby places differ by about 26 points; not examined further here.
+
+Conclusion: both revised checks pass (3b median 4.0 against 8; 3c 0.1 against 2). Checks 1, 2, 3 pairs 1 to 4, 4a, 4b and 5 are as in rerun 3 and were not rerun. On that basis the pillar meets "Level 2 against criteria revised after the first run": the revision came after the results were seen, so it is not a blind pass, and the thresholds 8 and 2 remain unsourced (TODO).
+
+Files: `analysis/ao_level2_rerun4_check3b_neighbour_pairs.csv`, `analysis/ao_level2_rerun4_check3c_density_pairs.csv`.
