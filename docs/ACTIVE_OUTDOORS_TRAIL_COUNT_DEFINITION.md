@@ -29,3 +29,12 @@ Compared with today, report: Spearman between clean trail count and PAD-US prote
 2. The size cutoff TODO ha (the data shows real wild land at 100 ha and above; nothing sourced).
 3. Open the second server for the 545 places in AZ CO FL GA MA NC NV.
 4. Confirm that a refit scale (still relative to the catalog) is acceptable until budgets are sourced.
+
+## Trial result on the 931 places read (2026-11-03; `analysis/ao_clean_count_trial.csv`; nothing merged)
+Approved definition applied offline to the raw read, with the unsourced size cutoff tried at 50, 100 and 500 ha. Scale refit on these 931 places only (the other 545 need the second server), camping term taken from stored values (it comes out between 0 and 10 for every place, so the stored wild splits cleanly).
+- The cutoff drives the result. Places moving more than 10 points in total: 118 (50 ha), 216 (100 ha), 365 (500 ha) of 931. Refit scale: 44 / 33 / 14 destinations per 15 km.
+- Pair 4 improves at every cutoff because the wild gap closes (Park Slope 84.9, Brooklyn Heights 92.7 at 50 ha, gap 7.8; 87.2 vs 93.9 at 100 ha, gap 6.7). The remaining gap is the daily part.
+- Inner NYC does not come down; it goes up: Financial District 81.1 to 92.7 (50 ha) or 94.9 (100 ha), Windsor Terrace 77.9 to 89.6 or 91.9, because the refit scale is lower and NYC still has 60 to 85 distinct named destinations within 9.3 miles. Under this definition that is a true count, so the "too many trails" result is now about the scale, not the data.
+- Lakeshore and western places fall, and by a lot, depending on the cutoff: Evanston 83.2 to 72.4 / 65.3 / 61.8, Winnetka 89.7 to 83.0 / 82.8 / 64.2, Mar Vista 75.1 to 61.6 / 64.7 / 67.9.
+- Launch pairs 1 to 3 still pass at every cutoff (Mill Valley about 84 vs Katy 33 to 39; Santa Monica 76 to 81 vs Sugar Land 49 to 52; Lincoln Park 67 to 73 vs Katy).
+- Not computed: the check 4b correlation (PAD-US files were deleted after the earlier run; the cutoff could be chosen by that correlation on the first-server places and checked on the second-server places, an empirical rather than target-based choice).
