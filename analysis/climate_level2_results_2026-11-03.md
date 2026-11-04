@@ -159,3 +159,32 @@ Outside value, fixed before any correlation was computed: flood-exposed share of
 **V1c-b result: FAIL.** n = 1,459 places in 127 distinct counties (same set as V1c). Spearman of stored flood points vs flood-exposed share = +0.104 (absolute 0.104, criterion at least 0.40; sign positive, expected negative, so direction is also wrong). One value per county (county mean of place flood points, 127 counties): Spearman = +0.033. The outside value takes 127 distinct values, range 0.012 to 0.630. Criterion not changed. This repeats the V1c outcome on a different outside value, but the exposure-area definition is unconfirmed, the source is county level and flood is local, so it tests direction only and does not show which side is wrong.
 
 Five largest disagreements (rank gap in percentile points, risk rank from low points vs risk rank from high exposed share): Bandera TX (Bandera): points 17.39, share 0.025, gap 94; Belvedere CA (Marin): 15.15, 0.074, gap 91; Lake Las Vegas NV (Clark): 19.08, 0.035, gap 91; Sausalito CA (Marin): 18.81, 0.074, gap 88; DC Ranch AZ (Maricopa): 13.18, 0.094, gap 88. Script: /private/tmp/claude-501/-Users-adamwright-Dev-home-fit/d4d1c066-399c-489a-ab49-94319960c0a2/scratchpad/v1cb.py. Network use: none.
+
+## V1a: heat points against PRISM 1991-2020 summer maximum temperature (independent checker)
+
+Outside value, fixed before any correlation was computed: PRISM JJA mean = average of the June, July and August 1991-2020 normals of monthly mean daily maximum temperature (30 arc-second grid, about 800 m, degrees C), sampled at the place's stored coordinates (score.coordinates lat/lon). Where the cell is nodata (-9999) in any of the three months, the nearest cell valid in all three within 2 km is used; otherwise the place is listed as unchecked. Places with no heat reading (breakdown.heat_exposure_pts missing or null) are unchecked and listed. Criteria from the brief, not changed: Spearman of heat points vs the PRISM value, absolute value at least 0.60 over all places with a heat reading; within-metro Spearman (metro mean removed from both variables; metro = the catalog file) at least 0.30. Expected sign is negative (higher heat points = cooler = safer). Places differing by more than 30 percentile points are reported.
+
+Limit from the brief: heat is satellite surface temperature (Landsat JJA 2022), PRISM is 30-year air temperature. These are different quantities over different periods, so the bar is moderate. Offline only; no network use.
+
+**V1a result: FAIL on both criteria.** n = 1,467 places with a heat reading and a PRISM value (1,476 total; 9 unchecked, listed below). Every sampled cell was valid, so the 2 km nearest-cell fallback was never used. Spearman of heat points vs PRISM JJA mean = -0.433 (absolute 0.433, criterion at least 0.60; sign negative as expected). Within-metro Spearman (metro mean removed from both variables, metro = catalog file, 21 metros) = -0.206 (absolute 0.206, criterion at least 0.30). Criteria not changed.
+
+Places more than 30 percentile points apart (heat risk rank from low points vs PRISM risk rank from high temperature, over the 1,467): 465 (31.7 percent), split 234 where heat points say riskier than PRISM and 231 the reverse. By metro the most are in LA (77), SF (64), Atlanta (50), San Antonio (34), Tampa (31).
+
+Ten largest disagreements:
+1. Von Ormy TX (san_antonio): heat pts 25.0, PRISM JJA 35.4 C, gap 90 percentile points
+2. Elmendorf TX (san_antonio): heat pts 25.0, PRISM JJA 35.3 C, gap 90 percentile points
+3. Sandy Oaks TX (san_antonio): heat pts 25.0, PRISM JJA 35.2 C, gap 90 percentile points
+4. La Vernia TX (san_antonio): heat pts 25.0, PRISM JJA 35.1 C, gap 90 percentile points
+5. Dignowity Hill TX (san_antonio): heat pts 25.0, PRISM JJA 34.8 C, gap 86 percentile points
+6. Olmos Park TX (san_antonio): heat pts 25.0, PRISM JJA 34.8 C, gap 86 percentile points
+7. Kirby TX (san_antonio): heat pts 25.0, PRISM JJA 34.8 C, gap 86 percentile points
+8. Southtown TX (san_antonio): heat pts 24.61, PRISM JJA 35.1 C, gap 85 percentile points
+9. Converse TX (san_antonio): heat pts 25.0, PRISM JJA 34.8 C, gap 85 percentile points
+10. Alamo Heights TX (san_antonio): heat pts 25.0, PRISM JJA 34.7 C, gap 84 percentile points
+All ten have heat points at 25.0 or just under, which is the top of the heat score, while PRISM puts them among the hottest air in the catalog (about 35 C). So the heat measure rates these San Antonio places as the coolest.
+
+Observations (descriptive, not new criteria). Heat points reach a ceiling of 25.0 for 93 places (heat points range 1.42 to 25.0, 942 distinct values), and those places are not cool by PRISM (mean 28.8 C vs 30.4 C for all places); 14 in SF, 13 in Atlanta, 13 in San Antonio, 12 in Tampa, 10 in NYC. Dropping them raises the pooled value only to -0.470 on 1,374 places, still below 0.60. Within-metro Spearman by metro is mixed: strongly negative (agreeing) in SF -0.72, Philadelphia -0.67, Denver -0.65, LA -0.64, Las Vegas -0.51, Phoenix -0.35, Sacramento -0.32, and wrong sign (positive) in NYC +0.34, Austin +0.36, San Antonio +0.30, Seattle +0.30 (n=5), Atlanta +0.23, Miami +0.22, Boston +0.18; near zero in Charlotte, Orlando, Tampa. I did not test why. A plausible cause given the brief's limit is that Landsat surface temperature within a metro tracks local land cover (pavement vs vegetation) while PRISM at 800 m is smooth, but that is untested, so this check cannot say whether the heat points or the comparison is the problem.
+
+Unchecked (9, no heat reading, so no heat points to test): Palm Beach FL, Clearwater Beach FL, Clearwater FL, Dunedin FL, Land O' Lakes FL, Oldsmar FL, Palm Harbor FL, Safety Harbor FL, Tarpon Springs FL. These are all Tampa or Palm Beach area places and may be the roughly 9 nonpositive or implausible LST places the earlier heat check flagged, but the catalog does not say why the reading is missing, so I could not confirm the match. No place with lst_score at or below 0 appears among the 1,467 checked.
+
+Limit stated in the brief: heat is satellite surface temperature (Landsat JJA 2022), PRISM is 30-year air temperature, different quantities and periods, so the bar is moderate; both criteria still fail. Script: /private/tmp/claude-501/-Users-adamwright-Dev-home-fit/d4d1c066-399c-489a-ab49-94319960c0a2/scratchpad/v1a.py. Network use: none.
