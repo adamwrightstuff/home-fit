@@ -57,3 +57,20 @@ Reading: no variant passes (b). The 2022 vintage correlates much more weakly wit
 ## Addendum: v19 (EC removed) check, same day
 
 After the owner's sign-off, EC was removed and the blend set to 0.48 / 0.26 / 0.13 / 0.13. Check only, no refit. Spearman with PLACES felt support (sign flipped), pre-EC blend vs v19: EMOTIONSPT 2023 n=856 0.225 vs 0.176; mixed-year union n=1,266 0.219 vs 0.177; ISOLATION 2022 n=1,019 0.134 vs 0.134. So removing EC did not raise the felt measure and lowers it slightly on the support question (the new blend gives participation less weight, and participation tracks support best). Recorded as is; weights stay a design judgment.
+
+## Addendum 2: ZIP-level PLACES (owner approved a third download)
+
+File: PLACES ZCTA data, 2025 release (data.cdc.gov qnzd-25i4, data year 2023), LONELINESS and EMOTIONSPT, crude prevalence, 12 MB, 24,234 ZIP areas. Each place is joined by its own ZIP (not county), sign flipped so higher is better. n = 855 of 1,476 places (58 percent; same state gaps as before, plus ZIPs missing from the file). Spearman with each Social Fabric version:
+
+| Measure | n | pre-EC | v18 (EC 0.20) | v19 (EC out) |
+|---|---|---|---|---|
+| Loneliness | 855 | 0.393 | 0.467 | 0.341 |
+| Lack of social/emotional support | 855 | 0.419 | 0.540 | 0.351 |
+| Partial on place median income, loneliness | 850 | 0.276 | 0.285 | 0.219 |
+| Partial on place median income, support | 850 | 0.283 | 0.335 | 0.204 |
+
+By area type (support measure): suburban 0.49 / 0.62 / 0.42, exurban 0.49 / 0.61 / 0.44, urban_residential 0.29 / 0.48 / 0.24 (pre-EC / v18 / v19). The same ordering holds for loneliness.
+
+Reading against criterion (b) (at least 0.20 and not lower than the pre-EC score): v18 passes on both measures; v19 clears 0.20 but is below pre-EC, so it fails the "not lower" rule. This reverses the county-level finding: at ZIP resolution economic connectedness raises the felt-support match, and removing it lowers it by about 0.1 to 0.2.
+
+Caveats: ZCTA values are model-based (survey responses modelled from census demographics), so part of any match with a score that tracks affluence is built in; the income-controlled partials stay at 0.20 to 0.34 but do not remove the demographic channel. Coverage is 58 percent, not the full catalog, so (c) is still not met. Places in the same ZIP share a value.
