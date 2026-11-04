@@ -188,3 +188,53 @@ Observations (descriptive, not new criteria). Heat points reach a ceiling of 25.
 Unchecked (9, no heat reading, so no heat points to test): Palm Beach FL, Clearwater Beach FL, Clearwater FL, Dunedin FL, Land O' Lakes FL, Oldsmar FL, Palm Harbor FL, Safety Harbor FL, Tarpon Springs FL. These are all Tampa or Palm Beach area places and may be the roughly 9 nonpositive or implausible LST places the earlier heat check flagged, but the catalog does not say why the reading is missing, so I could not confirm the match. No place with lst_score at or below 0 appears among the 1,467 checked.
 
 Limit stated in the brief: heat is satellite surface temperature (Landsat JJA 2022), PRISM is 30-year air temperature, different quantities and periods, so the bar is moderate; both criteria still fail. Script: /private/tmp/claude-501/-Users-adamwright-Dev-home-fit/d4d1c066-399c-489a-ab49-94319960c0a2/scratchpad/v1a.py. Network use: none.
+
+## V1a-b: Landsat surface temperature against MODIS land-surface temperature, same season (independent checker)
+
+Added after V1a failed. It does not replace V1a, whose result (FAIL, -0.433 pooled, -0.206 within-metro) stands unchanged; V1a compared satellite surface temperature with 30-year air temperature, a quantity mismatch, and this is a better-matched test.
+
+Outside value, fixed before any correlation was computed: for each place, the mean over all valid composites (value greater than 0) of the MOD11A2 (Terra) and MYD11A2 (Aqua) LST_Day_1km pixel containing the stored coordinates (score.coordinates lat/lon), Terra and Aqua averaged together, converted to Celsius as value x 0.02 - 273.15. Coordinates are reprojected from EPSG:4326 to the raster CRS (MODIS sinusoidal). If the pin's pixel has no valid composite, the nearest pixel with valid data within 2 km is used; otherwise the place is listed as unchecked. Source: analysis/climate_level2_modis_2026-11-03/*.tif, all files used as downloaded.
+
+Stored values compared: score.livability_pillars.climate_risk summary.local_lst_c (Landsat surface temperature, C; same quantity as MODIS, the primary comparison) and breakdown.heat_exposure_pts (continuity with V1a). Places with no heat reading (9 Florida places) and the 6 places screened out by the heat plausibility screen (heat points now none) are listed separately; local_lst_c is used for them where present, and results are reported with and without them.
+
+Criteria fixed before results (judgments, not sourced; same quantity so higher than the PRISM bars): Spearman of Landsat local_lst_c vs MODIS value at least 0.70 over all checked places; within-metro Spearman (metro mean removed from both variables; metro = catalog file) at least 0.50.
+
+Limits: MODIS is 1 km against a 500 m Landsat buffer; Terra overpasses about 10:30 and Aqua about 13:30 local time, Landsat about 10:30; 8-day composites are cloud-screened differently. The test checks whether the Landsat readings are sound, not whether the 30 to 60 C scoring scale is right.
+
+**File count.** 260 files on disk, not 270. The grid is complete with no duplicates: 10 tiles (h08v05, h09v04, h09v05, h09v06, h10v05, h10v06, h11v04, h11v05, h12v04, h12v05) x 13 eight-day composites (year-days 145, 153, ..., 241) x 2 satellites (MOD11A2 and MYD11A2) = 260, and every tile has exactly 26 files. Nothing is missing within that grid, so I cannot say what the extra 10 in the downloader's 270 count were; the files on disk are all that was used. Composite start days 145 to 241 are 25 May to 29 Aug (the last composite runs into early September), slightly wider than June to August; all were used as downloaded.
+
+**Coverage.** 1,476 places. 1,430 sampled at the pin's pixel, 33 by the nearest valid pixel within 2 km (nearest valid pixel 0.5 to 1.9 km away), 13 unchecked: Chinatown, East Village, Flatiron, Gramercy Park, Greenwich Village, Little Italy, Midtown East, Midtown, Murray Hill, NoHo, Nolita, SoHo and Turtle Bay (all Manhattan, NY). The MODIS tile has fill (no valid composite) in every composite for the pixels within about 2 km of those pins. Of the 1,463 with a MODIS value, 9 Florida places have no local_lst_c (listed in V1a) and 6 places have local_lst_c but no heat points (the heat plausibility screen: Clermont FL, New Port Richey FL, Alamo Heights TX, La Vernia TX, Terrell Hills TX, Von Ormy TX).
+
+**Result: PASS on both criteria.**
+
+| Comparison | n | Pooled Spearman | Within-metro Spearman |
+|---|---|---|---|
+| Landsat local_lst_c vs MODIS, all places with both (includes the 6 screened) | 1,454 | 0.761 | 0.567 |
+| Landsat local_lst_c vs MODIS, without the 6 screened places | 1,448 | 0.770 | 0.569 |
+| Heat points vs MODIS (V1a continuity; absolute values, sign negative as expected) | 1,448 | -0.770 | -0.574 |
+
+Criteria (not changed): pooled at least 0.70 (0.761 passes; 0.770 without the screened places), within-metro at least 0.50 (0.567 passes; 0.569). Heat points track local_lst_c almost exactly, so the heat score keeps what the Landsat reading says, which the same-quantity test supports as sound at the rank level.
+
+Within-metro Spearman by metro (n above 3): LA 0.94, SF 0.91, Sacramento 0.77, Boston 0.75, Philadelphia 0.75, Denver 0.74, Las Vegas 0.73, Chicago 0.70, Raleigh 0.66, Orlando 0.57, Charlotte 0.55, Houston 0.54, NYC 0.43, Tampa 0.42, Phoenix 0.38, Dallas 0.35, Austin 0.34, Miami 0.19, Atlanta 0.07, San Antonio -0.06. The metro-level agreement is weak in the humid Southeast and in San Antonio; I did not test why. Seattle has 5 places and is not meaningful.
+
+**Disagreements of more than 10 C.** Difference = Landsat minus MODIS over the 1,454 places: mean +2.3 C, median +3.1 C (Landsat is typically a little warmer, as expected for a 500 m reading near 10:30 against a Terra and Aqua mean at 1 km). Landsat reads more than 10 C below MODIS at 33 places and more than 10 C above at 13. The 15 largest differences (Landsat, MODIS, difference in C; stored heat points):
+
+1. Von Ormy, TX: 21.6, 42.9, -21.4 (screened, no heat points)
+2. La Vernia, TX: 22.4, 43.7, -21.3 (screened)
+3. Alamo Heights, TX: 20.7, 40.0, -19.2 (screened)
+4. New Port Richey, FL: 16.5, 35.5, -19.0 (screened)
+5. Kirby, TX: 26.1, 43.8, -17.8 (heat 25.0)
+6. Elmendorf, TX: 27.1, 43.8, -16.7 (heat 25.0)
+7. Terrell Hills, TX: 24.6, 40.8, -16.1 (screened)
+8. Olmos Park, TX: 25.0, 40.9, -16.0 (heat 25.0)
+9. Dignowity Hill, TX: 28.4, 44.3, -16.0 (heat 25.0)
+10. Edgewater, NJ: 19.9, 35.7, -15.8 (heat 25.0)
+11. Downtown St. Petersburg, FL: 22.0, 37.7, -15.7 (heat 25.0)
+12. Indian Springs, NV: 33.8, 48.5, -14.7 (heat 21.84)
+13. Kirkwood, GA: 21.1, 35.5, -14.4 (heat 25.0)
+14. Ballard, WA: 37.7, 23.9, +13.8 (heat 18.58)
+15. Selma, TX: 29.2, 43.0, -13.8 (heat 25.0)
+
+The sign convention: difference = Landsat minus MODIS, so negative means Landsat is cooler than MODIS. Almost all large gaps are Landsat too cool (14 of the 15; 9 are in the San Antonio metro), and 5 of the 15 are places the plausibility screen already removed. The other cases (San Antonio, Tampa, NYC and Atlanta) sit at the heat-points ceiling of 25.0, which means they score as the coolest end. This suggests Landsat cool readings (20 to 28 C where MODIS shows 35 to 44 C) may be partly unscreened bad readings of the kind V1a-era checking found in San Antonio (see the earlier LST finding); I have not inspected the Landsat scenes, so that is a pointer, not a finding. Ballard, WA is the largest warm case (Landsat 37.7 vs MODIS 23.9), a single-scene or industrial-surface reading is a possibility I did not test.
+
+Limits (as stated above): different footprint (500 m vs 1 km), different overpass times (Terra and Aqua averaged, Aqua about 3 hours after Landsat), different cloud screening and compositing, so a rank agreement of 0.76 is a soundness check of the Landsat readings and does not validate the 30 to 60 C scoring scale. Script: /private/tmp/claude-501/-Users-adamwright-Dev-home-fit/d4d1c066-399c-489a-ab49-94319960c0a2/scratchpad/v1ab_extract.py (sampling) and v1ab_stats.py (statistics) in the same folder. Network use: none. Not committed.
