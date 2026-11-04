@@ -73,3 +73,11 @@ Not done: live check that the code count matches the catalog counts (distance us
 The pins are 2.8 miles apart. Winnetka counts 39 destinations within 9.3 miles, Evanston 23; 20 are shared. The 19 only Winnetka counts are Lake County forest preserves 7.5 to 9.7 miles from its pin (Camp Pine Woods, Dam Number 1 Woods, Prairie Wolf and others), which fall just outside Evanston's circle: an edge-of-radius effect. That is worth 4.6 trail points.
 The larger part is the 3.1 mile term: Winnetka has 4 destinations within 3.1 miles (13.0 of 15 points on the refit scale of 2) and Evanston 0 (0 points). Of the 17.6 point wild gap, 13.0 comes from this step. Distances use the centre of the feature's bounding box, so a large preserve whose edge is near the pin can read as far away. Nearest-edge distance would be more accurate and needs bounding boxes, which the raw files did not keep, so it needs a re-read.
 Two small counting flaws were also seen: a named preserve and an unnamed outline of the same size at the same distance are counted twice (Cahokia Flatwoods), and a route and a preserve with the same name are counted twice (Fort Sheridan).
+
+### Test of nearest-edge distance on Winnetka and Evanston (re-read of 2 places, owner approved in chat)
+Trail points (0 to 40) on the refit scale, destinations within 9.3 miles / within 3.1 miles:
+| | Centre distance (as built) | Centre, duplicates removed | Nearest edge | Nearest edge, duplicates removed |
+|---|---|---|---|---|
+| Winnetka | 39 / 4 -> 33.0 | 38 / 4 -> 32.8 | 39 / 8 -> 34.8 | 38 / 8 -> 34.6 |
+| Evanston | 23 / 0 -> 15.4 | 23 / 0 -> 15.4 | 23 / 1 -> 21.3 | 23 / 1 -> 21.3 |
+Nearest-edge distance is the more accurate measure and narrows the wild gap from 17.6 to 13.3 points, but pair 5 would still miss: the total gap would be about 13.5 (limit 8). The remaining difference is real under the definition: 8 destinations within 3.1 miles of Winnetka against 1 for Evanston. Pair 5 was fixed before any result from general knowledge of the two towns; the data says Winnetka sits beside forest preserves and Evanston does not. Either count fails one pair: the old count fails pair 4 (gap 9.4 after the daily refresh) and passes pair 5; the new count passes pair 4 and fails pair 5. Level 2 check 3 needs all five.
