@@ -1686,6 +1686,41 @@ def get_climate_trend_terraclimate(
         return None
 
 
+@cached(ttl_seconds=CACHE_TTL.get('census_data', 48 * 3600))
+def get_jja_tmax_normal_terraclimate(
+    lat: float, lon: float, radius_m: int = 5000,
+    start_year: int = 1991, end_year: int = 2020,
+) -> Optional[Dict]:
+    """
+    Normal June-August mean daily maximum air temperature (TerraClimate tmmx, scale 0.1 -> C) over 1991-2020.
+    Reference for the heat plausibility screen (data_sources/heat_screen.py). None on any failure: the screen is then
+    skipped, it never blocks the heat or trend components.
+    """
+    if not GEE_AVAILABLE:
+        return None
+    try:
+        buffer = ee.Geometry.Point([lon, lat]).buffer(radius_m)
+        img = (ee.ImageCollection('IDAHO_EPSCOR/TERRACLIMATE')
+               .filterDate(f'{start_year}-01-01', f'{end_year}-12-31')
+               .filter(ee.Filter.calendarRange(6, 8, 'month'))
+               .select('tmmx')
+               .mean()
+               .multiply(0.1))
+        info = img.reduceRegion(reducer=ee.Reducer.mean(), geometry=buffer, scale=4000, maxPixels=1e9, bestEffort=True).getInfo()
+        if not info:
+            return None
+        val = info.get('tmmx')
+        if val is None and len(info) == 1:
+            val = next(iter(info.values()))
+        val = float(val)
+        if not -60.0 < val < 60.0:
+            return None
+        return {'jja_tmax_c': round(val, 2), 'source': 'IDAHO_EPSCOR/TERRACLIMATE', 'start_year': start_year, 'end_year': end_year}
+    except Exception as e:
+        print(f"   ⚠️  GEE JJA tmax normal error: {e}")
+        return None
+
+
 def authenticate_gee():
     """
     Authenticate with Google Earth Engine using your existing project.
