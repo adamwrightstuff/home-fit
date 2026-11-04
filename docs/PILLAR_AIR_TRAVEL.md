@@ -55,3 +55,47 @@ live-estimated minutes are marked `drive_minutes_source: estimated_from_distance
 from the BTS and FAA files named in its docstring. Catalog drive minutes are in `data/airport_drive_minutes_catalog.json`.
 Catalog rescore: `scripts/catalog/recompute_air_travel_coverage_offline.py` (offline), then
 `recompute_catalog_composites.py --no-census` for the total, happiness and longevity composites.
+
+---
+
+## DPv2 spec sheet and audit (2026-11-04, DRAFT for owner review; no scoring changed)
+
+Proposed level: Level 1 candidate, not signed off. Level 2 checks not yet run (pin-shift on routed times, independent validation, launch pairs rerun).
+
+### Evidence search (one standard search per topic, read from summaries only; full papers not read)
+- Airport choice in multi-airport regions (Los Angeles, Bay Area, Washington/Baltimore, Sao Paulo; Hess 2014 review): access time and flight frequency both significantly drive choice. Frequency shapes which airports are considered; access time dominates the final pick. Nonstop availability is a standard mixed-logit variable. Tier 1 for "service level and access time both matter". Source examples: https://eprints.whiterose.ac.uk/43626, https://www.economics.uci.edu/files/docs/colloqpapers/f06/VanDender.pdf
+- Accessibility measure literature: gravity (decay) versus cumulative-opportunities within a threshold; a Turkish airport study used a 2 h catchment gravity measure. No published decay rate for drive time to an airport found. https://findingspress.org/article/32444
+- Residential price evidence: only noise and proximity hedonics with conflicting signs (Atlanta 2008: farther sells for less after noise; New Zealand 2025: sign differs by city). Nothing pricing nonstop destinations or frequency. No migration study found. So tier 2 is empty.
+- Conclusion: direction (service reachable within a drive-time decay) is supported at tier 1 for the construct. The decay shape and the 60 minute plateau have no tier 1 or 2 source; they rest on a tier 3 survey (Ipsos/A4A 2018). Value of time cited at about $68 per hour (Warburg et al. 2006, via a review; unverified).
+
+### Spec sheet
+```
+Pillar: air_travel_access
+Construct (one sentence): Access to nonstop service: the share of national domestic boardings at destinations served nonstop from airports reachable by driving, discounted by drive time.
+Reference frame: fixed standard (adequacy on a national scale).
+  Evidence for the frame: construct tier 1 (airport-choice studies, summaries only); decay and plateau tier 3 (Ipsos/A4A survey); tier 2 none found.
+Measurement area: drive-time reach to airports up to 400 km straight line, credit decays after 60 min.
+  Reason: access pillar; airport choice studies use access time; the cutoff is a judgment (range 30 to 90 min).
+Place context inputs used (fields) and remaining area-type uses (with reason): pin coordinates only. Area type and density are read from the context for response metadata only; no scoring value keys on them. Live path still calls the Census density lookup when no context is passed, only to fill metadata (TODO: skip it).
+Inputs and data sources (with vintage): BTS T-100 segment 2023; FAA CY2023 enplanements; airports.json (99 hand-listed airports); OSRM free-flow routed minutes (catalog, built 2026-10-25); fitted line 10 + 0.95 x km (live).
+Parameters: see table above. Unsourced: plateau (judgment), 52 departures and 5 passengers cut-offs (definitions), 400 km candidate radius (credit below 6%).
+Shared inputs with other pillars: none.
+Pin-shift sensitivity: 500 m, median 0, max 0.6 (recorded 2026-10-25, fitted-line path); not rerun on routed times.
+Independent validation source and result: none yet. Candidate: BTS T-100 nonstop counts from the airports themselves cannot validate themselves; needs an outside source (see brief, step 5).
+All-places check (2026-11-04, stored values, n=1,476): mean 85.3, median 86.8; 280 places (19%) at 87; 7 at 95 or more; 1 at 20 or less; none at 0. By area type mean: urban_residential 86.8, suburban 85.8, exurban 85.4, rural 80.0.
+Fail-loud conditions: missing airport or coverage file raises (no data); no served airport within 400 km scores 0 (real); slow routed trips flagged (79 places).
+Launch check pairs: not rerun. Earlier result WARN (plateau clumping, urban over rural gap 5.2 to 7.7 against minimum 10).
+Known data limits: origin set is 99 airports, 30 of the top 100 by boardings are missing as origins (see audit). Domestic only. Frequency and fares not measured. Free-flow drive times. Ferries not modelled. Vacation catalog records (49) are on the old model.
+Last re-validated: never under DPv2.
+```
+
+### Audit gap table (stored data only; no API or download used)
+| # | Gap | Evidence | Recommended fix | Expected impact |
+|---|---|---|---|---|
+| 1 | Origin airport set is 99 hand-listed airports. 30 of the top 100 by boardings are missing: EWR, DCA, SJC, OAK, MCI, PIT, JAX, BDL, HPN, PSP, PIE, SFB and others. The origin set holds 84.2% of boardings. | `airports.json` vs boardings in `airport_nonstop_served_2023.json` | Add every commercial airport with coordinates and rebuild the served sets (needs BTS and FAA files, and OSRM times for new pairs) | Largest. Catalog places within 45 km straight line of a missing airport (my approximate coordinates, unverified): EWR 150 and HPN 121 (NYC), OAK 103 and SJC 35 (SF), PIE 44 (Tampa), SFB 31 (Orlando). Most already reach JFK, SFO or a similar hub, so likely a few points up, but not measurable offline |
+| 2 | Vacation catalog (49 records) is on the old model; Newport lists MVY, BOS, ACK and no PVD | stored record has no method field | Not a data gap: current code finds PVD for Newport (36.7 min, offline score 59.7 against stored 74). Recompute vacation records with current code | Newport 74 to about 59.7; Vail 65 to about 50.2 (my approximate pins) |
+| 3 | Plateau 60 min and decay are survey-based, not tier 1 or 2 | no published decay found | Keep, record range 30 to 90, report sensitivity (catalog mean 76 to 87) | None now |
+| 4 | Plateau clumping: 19% of places at 87 | stored scores | Accept as adequacy ceiling (like healthcare) or lower the plateau; owner decision | Spread only |
+| 5 | Live path calls the Census density lookup only for metadata | code | Skip it when no scoring use (principle 13) | None on score |
+| 6 | No independent validation, pin-shift on routed times not run | none | Level 2 brief | None |
+| 7 | Frequency not measured (literature says frequency shapes choice sets) | T-100 has departures | Optional second input; needs rebuild of the served file with departure weights | Unknown |
