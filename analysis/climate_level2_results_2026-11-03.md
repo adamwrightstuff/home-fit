@@ -121,3 +121,70 @@ Ten largest differences (tract minus monitor, ug/m3):
 Most of the large differences are at 6 to 13 miles from the monitor, where one monitor is standing in for a different airshed (three Sacramento places share one low monitor at 5.65). Only 2 of the 1,304 places differ by more than 3 ug/m3 (both Sacramento area); the median is small.
 
 Independence caveat (from the brief). The stored tract PM2.5 is the CDC/EPA downscaler surface, which is fused from these same regulatory monitors plus satellite and model data. V1b is therefore independent in processing but not wholly in the underlying data, and agreement is partly expected by construction. It checks that the join, units and scoring direction are right and that the surface has not drifted from the monitors; it does not prove the surface is right where there is no monitor. The 172 places with no monitor within 15 miles (mostly rural or exurban) are untested by this check. Not verified: choice of the 2012 annual-standard rows over other standards (values are the same measurement; I did not compare), and whether any monitor is a special-purpose or near-road site.
+
+## V1c: flood points against FEMA National Risk Index county flood loss (independent checker)
+
+Outside value, fixed before any correlation was computed: outside = max(IFLD_EALS, CFLD_EALS) for the place's county, the national expected-annual-loss score for the worse of inland (riverine) or coastal flooding. Counties with neither score present count as 0 (the number is reported below). Note on field names: the layer has no RFLD_* fields; NRI names riverine flooding "IFLD" (inland flooding), so IFLD_EALS is used in place of RFLD_EALS. This is a naming substitution only, same hazard. Criterion from the brief, not changed: absolute Spearman of breakdown.flood_zone_pts vs the outside value at least 0.40 at county level, over places with a flood score; expected sign negative (higher points = safer).
+
+Source and read. One public read, FEMA NRI Counties FeatureServer layer 0, returnGeometry=false, paged at 1,000 rows (4 pages, 3,232 county rows), saved raw in analysis/climate_level2_nri_2026-11-03/ (page0.json, page1000.json, page2000.json, page3000.json). The first request with a named outFields list was rejected by the service (400, no data returned), so the same query was repeated once with outFields=*; the layer was not read again after that. No other network use.
+
+Place to county join. The catalog stores no tract GEOID (the only geoid is a 7 digit place code), only county name (catalog.county_borough) and state abbreviation, so the join is by county name and state, done offline against the saved NRI file.
+Join results. Of 1,476 places, 4 have no flood score (excluded, per the criterion), 13 Fairfield County CT places cannot be joined (NRI's Connecticut rows are the 9 planning regions, not counties, and the catalog has no town to region key; excluded, listed as unchecked), and 1,459 are joined. Manhattan, Brooklyn and Staten Island were mapped to New York, Kings and Richmond counties NY. Six NRI names appear twice (a county and an independent city: Baltimore MD, St. Louis MO, Fairfax, Franklin, Richmond and Roanoke VA); no catalog place uses any of them, so the first row was used without effect. Every joined county had at least one of the two flood scores, so the number of counties counted as 0 is 0.
+
+**Result: FAIL.** n = 1,459 places in 127 distinct counties. Spearman of stored flood points vs max(IFLD_EALS, CFLD_EALS) = +0.103 (absolute 0.103, criterion at least 0.40; sign is positive, expected negative, so the direction is also wrong). Check with one value per county (county mean of place flood points, 127 counties): Spearman = -0.054, also far below 0.40. Criterion not changed. The outside value takes only 127 distinct values (one per county), ranging 46.0 to 100, and most catalog counties are large metro counties with scores in the 90s; flood points take 604 distinct values from 4.05 to 30.0.
+
+Limit stated in the brief. The outside source is county level and flood is local, so this tests direction only, and here it does not show agreement in direction. A likely reason (not tested): NRI expected annual loss scores are national percentiles of dollar loss, which rise with how much property and population a county holds, so nearly every large metro county scores in the 90s regardless of how much of its land is in a flood zone. That makes the outside value a weak proxy for hazard share in this catalog, but I did not test it, and this test cannot tell whether the flood points or the outside value is the problem.
+
+Ten places where flood points and the county rating disagree most (rank gap as a share of all 1,459 places, risk rank from low flood points vs risk rank from the outside value; the outside value is compressed near 100 so its ranks are mostly ties in a narrow band, which inflates gaps for high-risk places):
+1. Knights Landing CA (Yolo): flood pts 4.5, county inland 90.7, outside 90.7, gap 94 percentile points
+2. Clarksburg CA (Yolo): 4.5, 90.7, gap 94
+3. Bandera TX (Bandera): 17.39, outside 71.0, gap 93
+4. Smithfield NC (Johnston): 14.95, outside 88.0, gap 92
+5. Bastrop TX (Bastrop): 18.4, outside 86.2, gap 90
+6. Galveston TX (Galveston): 4.5, outside 93.7 (coastal 91.2), gap 89
+7. Dickinson TX (Galveston): 5.12, outside 93.7, gap 89
+8. Elkton MD (Cecil): 21.73, outside 67.2, gap 88
+9. Tottenville NY (Richmond): 18.22, outside 90.3, gap 88
+10. Castroville TX (Medina): 21.99, outside 71.7, gap 87
+Several of these (Galveston, Dickinson, Knights Landing, Clarksburg) have the lowest possible flood points and high county ratings, so they agree in direction; the gap is a rank artifact of the compressed outside value. Reading the list as disagreement is therefore misleading for those four; the real disagreements are the places with middling points in high-rated counties, such as Smithfield, Bandera and Bastrop.
+
+Not verified: whether flood points are right (this check cannot say); a hazard-share outside source (county share of land in the special flood hazard area, the brief's alternative) was not read and would be a better test of direction. Script: /private/tmp/claude-501/-Users-adamwright-Dev-home-fit/d4d1c066-399c-489a-ab49-94319960c0a2/scratchpad/v1c.py. Network use: the one NRI read above only.
+
+## V1c-b: flood points against NRI flood-exposed share of county (added after V1c failed)
+
+This test was added after V1c failed. It does not replace V1c, whose FAIL stands unchanged. Exposure-area definition unconfirmed (alias only; FEMA documentation not read). Because of that, a result here cannot count as a clean pass.
+
+Outside value, fixed before any correlation was computed: flood-exposed share of county = min(1, (IFLD_EXP_AREA + CFLD_EXP_AREA) / AREA), from the same saved NRI file (analysis/climate_level2_nri_2026-11-03/). Missing values count as 0. Units: all three fields are square miles (aliases "Inland Flooding - Exposure - Impacted Area (sq mi)", "Coastal Flooding - Exposure - Impacted Area (sq mi)", "Area (sq mi)"). What the file shows: for other hazards the exposure area equals the full county area, while inland flood is a partial subset; no county has inland plus coastal above county area; median share across 3,232 counties is 0.054. What it does not show: that the impacted area is the flood hazard zone (no description saved). Double-count caveat: 538 counties have both inland and coastal area above 0 and the two may overlap, so the sum can overstate the share (the cap at 1 is not reached by any county). Same places and joins as V1c. Criterion unchanged: absolute Spearman at least 0.40, expected sign negative. County-level exposure is still coarse for a local measure, so this tests direction only.
+
+**V1c-b result: FAIL.** n = 1,459 places in 127 distinct counties (same set as V1c). Spearman of stored flood points vs flood-exposed share = +0.104 (absolute 0.104, criterion at least 0.40; sign positive, expected negative, so direction is also wrong). One value per county (county mean of place flood points, 127 counties): Spearman = +0.033. The outside value takes 127 distinct values, range 0.012 to 0.630. Criterion not changed. This repeats the V1c outcome on a different outside value, but the exposure-area definition is unconfirmed, the source is county level and flood is local, so it tests direction only and does not show which side is wrong.
+
+Five largest disagreements (rank gap in percentile points, risk rank from low points vs risk rank from high exposed share): Bandera TX (Bandera): points 17.39, share 0.025, gap 94; Belvedere CA (Marin): 15.15, 0.074, gap 91; Lake Las Vegas NV (Clark): 19.08, 0.035, gap 91; Sausalito CA (Marin): 18.81, 0.074, gap 88; DC Ranch AZ (Maricopa): 13.18, 0.094, gap 88. Script: /private/tmp/claude-501/-Users-adamwright-Dev-home-fit/d4d1c066-399c-489a-ab49-94319960c0a2/scratchpad/v1cb.py. Network use: none.
+
+## V1a: heat points against PRISM 1991-2020 summer maximum temperature (independent checker)
+
+Outside value, fixed before any correlation was computed: PRISM JJA mean = average of the June, July and August 1991-2020 normals of monthly mean daily maximum temperature (30 arc-second grid, about 800 m, degrees C), sampled at the place's stored coordinates (score.coordinates lat/lon). Where the cell is nodata (-9999) in any of the three months, the nearest cell valid in all three within 2 km is used; otherwise the place is listed as unchecked. Places with no heat reading (breakdown.heat_exposure_pts missing or null) are unchecked and listed. Criteria from the brief, not changed: Spearman of heat points vs the PRISM value, absolute value at least 0.60 over all places with a heat reading; within-metro Spearman (metro mean removed from both variables; metro = the catalog file) at least 0.30. Expected sign is negative (higher heat points = cooler = safer). Places differing by more than 30 percentile points are reported.
+
+Limit from the brief: heat is satellite surface temperature (Landsat JJA 2022), PRISM is 30-year air temperature. These are different quantities over different periods, so the bar is moderate. Offline only; no network use.
+
+**V1a result: FAIL on both criteria.** n = 1,467 places with a heat reading and a PRISM value (1,476 total; 9 unchecked, listed below). Every sampled cell was valid, so the 2 km nearest-cell fallback was never used. Spearman of heat points vs PRISM JJA mean = -0.433 (absolute 0.433, criterion at least 0.60; sign negative as expected). Within-metro Spearman (metro mean removed from both variables, metro = catalog file, 21 metros) = -0.206 (absolute 0.206, criterion at least 0.30). Criteria not changed.
+
+Places more than 30 percentile points apart (heat risk rank from low points vs PRISM risk rank from high temperature, over the 1,467): 465 (31.7 percent), split 234 where heat points say riskier than PRISM and 231 the reverse. By metro the most are in LA (77), SF (64), Atlanta (50), San Antonio (34), Tampa (31).
+
+Ten largest disagreements:
+1. Von Ormy TX (san_antonio): heat pts 25.0, PRISM JJA 35.4 C, gap 90 percentile points
+2. Elmendorf TX (san_antonio): heat pts 25.0, PRISM JJA 35.3 C, gap 90 percentile points
+3. Sandy Oaks TX (san_antonio): heat pts 25.0, PRISM JJA 35.2 C, gap 90 percentile points
+4. La Vernia TX (san_antonio): heat pts 25.0, PRISM JJA 35.1 C, gap 90 percentile points
+5. Dignowity Hill TX (san_antonio): heat pts 25.0, PRISM JJA 34.8 C, gap 86 percentile points
+6. Olmos Park TX (san_antonio): heat pts 25.0, PRISM JJA 34.8 C, gap 86 percentile points
+7. Kirby TX (san_antonio): heat pts 25.0, PRISM JJA 34.8 C, gap 86 percentile points
+8. Southtown TX (san_antonio): heat pts 24.61, PRISM JJA 35.1 C, gap 85 percentile points
+9. Converse TX (san_antonio): heat pts 25.0, PRISM JJA 34.8 C, gap 85 percentile points
+10. Alamo Heights TX (san_antonio): heat pts 25.0, PRISM JJA 34.7 C, gap 84 percentile points
+All ten have heat points at 25.0 or just under, which is the top of the heat score, while PRISM puts them among the hottest air in the catalog (about 35 C). So the heat measure rates these San Antonio places as the coolest.
+
+Observations (descriptive, not new criteria). Heat points reach a ceiling of 25.0 for 93 places (heat points range 1.42 to 25.0, 942 distinct values), and those places are not cool by PRISM (mean 28.8 C vs 30.4 C for all places); 14 in SF, 13 in Atlanta, 13 in San Antonio, 12 in Tampa, 10 in NYC. Dropping them raises the pooled value only to -0.470 on 1,374 places, still below 0.60. Within-metro Spearman by metro is mixed: strongly negative (agreeing) in SF -0.72, Philadelphia -0.67, Denver -0.65, LA -0.64, Las Vegas -0.51, Phoenix -0.35, Sacramento -0.32, and wrong sign (positive) in NYC +0.34, Austin +0.36, San Antonio +0.30, Seattle +0.30 (n=5), Atlanta +0.23, Miami +0.22, Boston +0.18; near zero in Charlotte, Orlando, Tampa. I did not test why. A plausible cause given the brief's limit is that Landsat surface temperature within a metro tracks local land cover (pavement vs vegetation) while PRISM at 800 m is smooth, but that is untested, so this check cannot say whether the heat points or the comparison is the problem.
+
+Unchecked (9, no heat reading, so no heat points to test): Palm Beach FL, Clearwater Beach FL, Clearwater FL, Dunedin FL, Land O' Lakes FL, Oldsmar FL, Palm Harbor FL, Safety Harbor FL, Tarpon Springs FL. These are all Tampa or Palm Beach area places and may be the roughly 9 nonpositive or implausible LST places the earlier heat check flagged, but the catalog does not say why the reading is missing, so I could not confirm the match. No place with lst_score at or below 0 appears among the 1,467 checked.
+
+Limit stated in the brief: heat is satellite surface temperature (Landsat JJA 2022), PRISM is 30-year air temperature, different quantities and periods, so the bar is moderate; both criteria still fail. Script: /private/tmp/claude-501/-Users-adamwright-Dev-home-fit/d4d1c066-399c-489a-ab49-94319960c0a2/scratchpad/v1a.py. Network use: none.

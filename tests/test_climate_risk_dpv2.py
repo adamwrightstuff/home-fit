@@ -15,6 +15,7 @@ def _patch(monkeypatch, flood=FLOOD, air_fn=None):
     monkeypatch.setattr(cr, "get_air_quality_pm25", air_fn or (lambda *a, **k: AIR))
     monkeypatch.setattr(cr, "get_fema_flood_zone", lambda *a, **k: flood)
     monkeypatch.setattr(cr, "get_climate_trend_terraclimate", lambda *a, **k: TREND)
+    monkeypatch.setattr(cr, "get_jja_tmax_normal_terraclimate", lambda *a, **k: None)  # never read Earth Engine in a test
 
 
 @pytest.mark.parametrize("tier,reason", [("unmapped", "flood_no_mapped_polygon"), ("d", "flood_zone_d_undetermined")])
