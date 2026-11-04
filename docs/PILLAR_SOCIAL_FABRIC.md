@@ -48,7 +48,7 @@ loneliness in the CDC test and the baseline is dominated by outliers, so it is a
 Rescored offline by `scripts/catalog/recompute_social_fabric_failloud_offline.py`, then
 `recompute_catalog_composites.py --no-census` for longevity, happiness and aura.
 
-## DPv2 spec sheet (draft 2026-11-03, Level 0 until sign-off)
+## DPv2 spec sheet (Level 1, signed off 2026-11-04)
 
 ```
 Pillar: social_fabric
@@ -176,3 +176,11 @@ Goal: test whether the v18 score tracks outcomes it was not built from. Fix thes
 Level 1 (Converted) for sign-off, with these TODOs accepted: unsourced weights (range recorded), area-type bands still
 used by cohesion, IRS rate and civic tier with no stated reason, 189 places on a state-wide volunteering rate. Not Level 2:
 pin-shift and independent validation have not run, and two of three "should differ" launch pairs failed.
+
+### Sign-off
+
+Level 1 (Converted), signed off by the owner 2026-11-04. Accepted TODOs: unsourced weights (EC range 0.15 to 0.45 recorded);
+cohesion bands, IRS rate and civic tier still keyed on area type with no stated reason; 189 places on a state-wide
+volunteering rate; two failed "should differ" launch pairs (Dogpatch/Gary, Parker/Clarkston); pin-shift covers tract parts
+only; independent validation not run (brief above); new catalog files in `analysis/dpv2_social_fabric_ec_composites/` not yet
+copied over the live files; live `/score` not compared with the catalog. Last re-validated: 2026-11-03 (offline checks).
