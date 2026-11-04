@@ -38,3 +38,13 @@ Approved definition applied offline to the raw read, with the unsourced size cut
 - Lakeshore and western places fall, and by a lot, depending on the cutoff: Evanston 83.2 to 72.4 / 65.3 / 61.8, Winnetka 89.7 to 83.0 / 82.8 / 64.2, Mar Vista 75.1 to 61.6 / 64.7 / 67.9.
 - Launch pairs 1 to 3 still pass at every cutoff (Mill Valley about 84 vs Katy 33 to 39; Santa Monica 76 to 81 vs Sugar Land 49 to 52; Lincoln Park 67 to 73 vs Katy).
 - Not computed: the check 4b correlation (PAD-US files were deleted after the earlier run; the cutoff could be chosen by that correlation on the first-server places and checked on the second-server places, an empirical rather than target-based choice).
+
+## Cutoff versus PAD-US protected land (2026-11-03; `analysis/ao_clean_count_vs_padus.csv`)
+PAD-US 4.0 state files for the 11 first-server states (905 MB, MD5 verified, deleted afterwards). Protected land (every public-access category) within 15 km of each of the 931 places, in hectares, against the clean trail count and the resulting wild score. Spearman:
+| Measure | Old stored count | Clean, 50 ha | Clean, 100 ha | Clean, 500 ha |
+|---|---|---|---|---|
+| Trail count vs protected land (need 0.4) | 0.217 | 0.347 | 0.395 | 0.435 |
+| Wild score vs protected land (need 0.4) | 0.194 | 0.327 | 0.372 | 0.399 |
+| Trail count, without the NYC metro (n=738) | 0.283 | 0.390 | 0.452 | 0.508 |
+Reading: any clean count beats the old one on this yardstick, and the correlation rises with the cutoff. That rise is partly built in, because PAD-US measures large protected land, so a rule that counts only big features will track it better. It does not show that 500 ha is the right cutoff. At 500 ha the wild score reaches 0.399 (limit 0.4) on these 931 places only; the criterion covers all 1,476, and the 545 second-server places are unread. NYC totals stay at 92 to 95 at every cutoff, and 365 of 931 places move more than 10 points at 500 ha.
+Plan: read the 545 second-server places (trimmed read, about 40 minutes), fit the cutoff on the first-server places and judge it on the second-server places as a holdout, then decide.
