@@ -191,3 +191,50 @@ Level 1. Open: check 3 pair 4 (9.4 against 8), check 3 cross-type test (not reru
 
 ### Files
 `analysis/ao_level2_rerun2_check3_pair4.csv`, `analysis/ao_level2_rerun2_check4b_protected_land.csv`, `analysis/ao_level2_rerun2_check5_live_vs_stored.csv`. Scripts and logs were kept in the session scratchpad, outside the repo.
+
+## Rerun 3 2026-11-04 (independent verifier, after the clean trail count)
+Checks 2, 3, 4b and 5 rerun with the brief's criteria, pairs, sample and seed unchanged. I did not build the pillar. Catalog input: `data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl` as on branch commit b5248835 (1,476 places), not pushed. No code, scoring, scale or catalog file changed. CSVs: `analysis/ao_level2_rerun3_*.csv`. Scripts were kept in the session scratchpad, outside the repo.
+
+| Check | Result | n |
+|---|---|---|
+| 2a total at or above 99.5 / at or below 10 | PASS (0 and 0; range 17.9 to 98.1) | 1,476 |
+| 2b no component at cap for more than 15% | PASS (water 14.09%, wild 3.46%, daily 1.83%) | 1,476 |
+| 2c empty park read has daily left out or pillar degraded | PASS (Moapa Town NV flagged degraded) | 1 |
+| 3 pair 1 Mill Valley over Katy | PASS, 85.6 vs 35.8 (49.8) | 1 |
+| 3 pair 2 Santa Monica over Sugar Land | PASS, 80.6 vs 49.5 (31.1) | 1 |
+| 3 pair 3 Lincoln Park over Katy | PASS, 69.5 vs 35.8 (33.7) | 1 |
+| 3 pair 4 Park Slope vs Brooklyn Heights | PASS, 88.6 vs 95.3 (6.7, limit 8) | 1 |
+| 3 pair 5 Winnetka vs Evanston | FAIL (expected), 84.9 vs 70.9 (14.0, limit 8) | 1 |
+| 3 launch pairs overall | FAIL (one miss) | 5 |
+| 3 cross-type test | FAIL: median 7.8 (limit 5), share over 10 points 40.0% (limit 20%), p90 20.9 | 1,273 pairs over 924 places |
+| 4b trail count within 9.3 miles vs protected area, Spearman | PASS, 0.424 (need 0.4) | 1,476 |
+| 4b stored wild score vs protected area, Spearman | PASS, 0.455 (need 0.4) | 1,476 |
+| 4b same, without Boston metro | PASS, 0.412 and 0.442 | 1,395 |
+| 5 median absolute difference, daily / wild / water (limit 2) | PASS, 0.05 / 0.0 / 0.0 | 20 |
+| 5 no place over 10 in total | PASS, largest +4.7 (Excelsior CA) | 20 |
+| 5 live trail count equals stored count_total and count_within_5km | 20 of 20 identical, difference 0 on both | 20 |
+
+### Check 2
+Mean / median / p10 / p90: daily 23.0 / 23.7 / 13.5 / 32.0; wild 33.1 / 34.5 / 15.5 / 47.9; water 17.6 / 17.0 / 12.6 / 25.0; total 67.0 / 68.3 / 45.7 / 85.9. Within 0.5 of cap: daily 27 (1.83%), wild 51 (3.46%, was 5.96%), water 208 (14.09%), total 0. At or below 1: daily 7, wild 6, water 3, total 0. Total median by stored area type: urban residential 81.8 (n=200), suburban 69.5 (765), exurban 62.4 (363), rural 51.4 (145), unknown 73.0 (3). By people plus jobs per acre (stored field): 0-5 57.4 (252), 5-10 63.6 (292), 10-25 68.6 (510), 25-100 73.5 (311), 100+ 83.6 (99), no density 78.1 (12). Lowest total Mont Belvieu TX 17.9, highest Charlestown MA 98.1. The only `overpass_empty` local read is Moapa Town NV (rural): daily 0.0, `data_quality.degraded` true with reason "active_outdoors_empty_park_read". Five places have daily 0 (Moapa Town plus Perry Park CO, Georgetown CA, Pollock Pines CA, Von Ormy TX, read ok with 0 parks). Check 2 was not blind (carried over). Not run: area-type label swap.
+
+### Check 3
+Names matched uniquely on name plus state. Deciding component: pairs 1 to 3 wild (49.5 vs 6.3; 41.1 vs 11.1; 30.6 vs 6.3). Pair 4: daily 25.4 vs 31.9, wild 47.1 vs 47.9, water 25.0 both; the 6.7 gap is mostly daily (6.5). Pair 5 Winnetka vs Evanston: daily 30.8 vs 29.3, wild 42.6 vs 28.7, water 20.0 both; the 14.0 gap is wild, as the builder's documents explain (Winnetka sits beside forest preserves, 8 destinations within 3.1 miles against 1). One miss fails the launch pairs.
+Cross-type test: same method as rerun 1 (within a metro, different stored area type, people plus jobs per acre within 10% of the larger; places with type `unknown` or no stored density excluded, 15 places). n = 1,273 pairs over 924 places; median 7.8, share above 10 points 40.0%, p90 20.9. FAIL on both limits, though both moved a long way from rerun 1 (9.7 and 49.0%). Reference, not a criterion: same-type pairs at the same density (n = 2,754) have median 7.7 and 38.1% above 10, so the label adds about 0.1 point; the spread comes from real geography. Pairs overlap, so they are not independent.
+
+### Check 4b
+Downloaded the same 18 PAD-US 4.0 state geodatabase zips (AZ CA CO CT DE FL GA IL IN MA MD NC NJ NV NY PA TX WA) from ScienceBase item 652d4f80d34e44db0e2ee45c, 1,371,336,242 bytes (1.37 GB), each into its own new folder outside the repo, every MD5 matched ScienceBase. Method as before: combined fee/designation/easement/proclamation layer, union of polygons of every public-access category clipped to a 15 km (9.3 mile) circle around the catalog pin, equal-area projection (EPSG:5070), invalid polygons repaired, Spearman by average ranks. Python read the files with `-I`. Trail count is `summary.trails.count_total`, wild is the stored wild_adventure, both as they are now.
+- All places (n = 1,476): trails 0.424, wild 0.455. Without Boston (n = 1,395): 0.412, 0.442. Open or restricted access only, not a criterion: 0.478, 0.497. All pass (limit 0.4), up from 0.310 and 0.292.
+- Caveats: land in states not downloaded (SC, WI, NH, RI and others) is missing near those borders; the 100 ha cutoff counts only large features, which tracks a large-protected-land layer by construction (the builder's own note); and the cutoff was chosen partly on this correlation, so the pass is not fully independent. Downloads and unzipped copies were deleted.
+
+### Check 5
+The 20 places of the earlier runs (seed 20261102, 5 per stored area type), live `get_active_outdoors_score_v2` called directly, OVERPASS_URL on the private server (port 12345 holds all 20: NY IL CA TX; port 12346 not needed; status checked before the run), the module's public fallback endpoints removed so no read could leave the tunnel, fresh disk cache, tree canopy 0, stored area-type label held fixed, place context from `surrounding_factors` and the stored density (as in rerun 2). No paid Google calls. All 20 reads returned ok on local, trail and regional.
+- Median absolute difference: daily 0.05, wild 0.0, water 0.0, total 0.05. PASS (limit 2).
+- No place over 10 in total. Largest: Excelsior CA +4.7 (daily +5.2), Woodland Hills CA +3.1 (daily +1.8, water +1.6), Monrovia CA +3.1 (water +4.5, daily -1.1). All others within 0.5. PASS.
+- Trail counts: live equals stored for all 20 places, on both count_total and count_within_5km (difference 0 in every row). This confirms the live function and the catalog counts agree on these 20 (the catalog counts were built from the same function over saved reads, so the test is of the read, not an independent count).
+- Data age, not code: Excelsior's daily gap is the parks read (the row was not among those refreshed on 2026-11-03; rerun 2 found stored park area 0.4 ha against 51.1 ha live). Monrovia and Woodland Hills differences sit in water and daily and match the earlier finding of an older, narrower stored water and park read. The trail term itself shows no difference anywhere.
+
+### Proposed level
+Level 1 on the criteria as written, because two items still fail: pair 5 (Winnetka vs Evanston, 14.0 against 8, expected) and the cross-type test (median 7.8 against 5, 40.0% against 20%). Checks 1 (not rerun, earlier PASS), 2 in full, pairs 1 to 4, 4a (not rerun, earlier PASS), 4b and 5 all pass. Level 2 needs an owner decision on pair 5 (the pair was fixed before any result) and on the cross-type criterion, which the builder has already argued cannot be met by a score that follows geography (same-type pairs differ by 7.7). I do not recommend changing either; those are the owner's. Open unsourced parameters: all brief thresholds, the 100 ha cutoff, the name word list, the point budgets 25, 15, 10, and the refit scale (24 per 9.3 miles, 4.0 per 3.1 miles).
+
+### Files
+`analysis/ao_level2_rerun3_check2_distribution.csv`, `ao_level2_rerun3_check2_empty_and_zero_daily.csv`, `ao_level2_rerun3_check3_pairs.csv`, `ao_level2_rerun3_check3_crosstype_pairs.csv`, `ao_level2_rerun3_check4b_protected_land.csv`, `ao_level2_rerun3_check5_live_vs_stored.csv`.
