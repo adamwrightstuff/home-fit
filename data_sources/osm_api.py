@@ -841,6 +841,111 @@ def query_nature_features(
             return _nature_skeleton(_classify_overpass_exception(e))
 
 
+# --- Trail destinations (clean trail count, owner-approved 2026-11-03; see docs/ACTIVE_OUTDOORS_TRAIL_COUNT_DEFINITION.md) ---
+# A destination is one of: a hiking route (cycle routes excluded), or one named park, nature reserve or protected area of
+# at least TRAIL_DESTINATION_MIN_HA (bounding box), counted once per name. Street, bike, golf, pier, beach and bridge
+# features are dropped by name, historic districts by tag or name. No area type input.
+TRAIL_DESTINATION_MIN_HA = 100.0  # TODO unsourced: chosen by correlation with PAD-US protected land (2026-11-03)
+_TRAIL_NAME_EXCLUDE = re.compile(
+    r"golf|country club|\bclub\b|pier\b|beach|bridge|greenway|cycle|bike|bicycle|walkway|promenade|esplanade|"
+    r"avenue|boulevard|parkway|\bdrive\b|\broad\b|\bstreet\b|\bpath\b|\btrail\b",  # TODO unsourced word list
+    re.I,
+)
+_TRAIL_HISTORIC = re.compile(r"historic|district", re.I)
+_CYCLE_NETWORKS = {"icn", "ncn", "rcn", "lcn"}
+
+
+def _bbox_center_and_ha(bounds: Optional[Dict[str, float]]) -> Tuple[Optional[float], Optional[float], float]:
+    if not bounds:
+        return None, None, 0.0
+    lat_c = (bounds["minlat"] + bounds["maxlat"]) / 2.0
+    lon_c = (bounds["minlon"] + bounds["maxlon"]) / 2.0
+    ha = (
+        (bounds["maxlat"] - bounds["minlat"]) * 111.32
+        * (bounds["maxlon"] - bounds["minlon"]) * 111.32 * math.cos(math.radians(lat_c)) * 100.0
+    )
+    return lat_c, lon_c, ha
+
+
+def build_trail_destinations(elements: List[Dict], lat: float, lon: float,
+                             min_ha: float = TRAIL_DESTINATION_MIN_HA) -> List[Dict]:
+    """Distinct trail destinations from Overpass elements read with `out tags bb`.
+
+    Returns [{"type": "hiking_route" | "trail_area", "name", "distance_m"}], distance from the bounding-box centre.
+    """
+    seen = set()
+    out: List[Dict] = []
+    for e in elements:
+        tags = e.get("tags") or {}
+        c_lat, c_lon, ha = _bbox_center_and_ha(e.get("bounds"))
+        dist = round(haversine_distance(lat, lon, c_lat, c_lon)) if c_lat is not None else None
+        name = tags.get("name")
+        if tags.get("route") == "hiking":
+            if (tags.get("bicycle") or "").lower() in ("yes", "designated", "official"):
+                continue
+            if (tags.get("network") or "").lower() in _CYCLE_NETWORKS:
+                continue
+            key = ("route", e.get("id"))
+            kind = "hiking_route"
+        else:
+            if ha < min_ha:
+                continue
+            if tags.get("historic") or tags.get("heritage") or (name and _TRAIL_HISTORIC.search(name)):
+                continue
+            if tags.get("leisure") == "park" and not tags.get("boundary") and name and _TRAIL_NAME_EXCLUDE.search(name):
+                continue
+            key = ("name", name) if name else ("id", e.get("id"))
+            kind = "trail_area"
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"type": kind, "name": name, "distance_m": dist if dist is not None else 1e9})
+    return out
+
+
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
+@safe_api_call("osm", required=False)
+@handle_api_timeout(timeout_seconds=40)
+def query_trail_destinations(lat: float, lon: float, radius_m: int = 15000) -> Optional[Dict]:
+    """One Overpass read of hiking routes, parks, nature reserves and protected areas around the pin, reduced to
+    distinct trail destinations. Returns {"hiking": [...], "_overpass_outcome": ...}."""
+    query = (
+        f"[out:json][timeout:{_overpass_timeout(35)}];("
+        f'relation["route"="hiking"](around:{radius_m},{lat},{lon});'
+        f'nwr["leisure"~"^(park|nature_reserve)$"](around:{radius_m},{lat},{lon});'
+        f'nwr["boundary"~"^(protected_area|national_park)$"](around:{radius_m},{lat},{lon});'
+        ");out tags bb;"
+    )
+    _key = f"query_trail_destinations:{lat:.5f}:{lon:.5f}:{int(radius_m)}"
+    with _overpass_rlock_for(_key):
+        try:
+            def _do_request():
+                r = requests.post(
+                    get_overpass_url(),
+                    data={"data": query},
+                    timeout=_overpass_timeout(45),
+                    headers={"User-Agent": "HomeFit/1.0"},
+                )
+                if r.status_code != 200:
+                    raise RuntimeError(f"Overpass status={r.status_code}")
+                return r
+
+            resp = _retry_overpass(_do_request, query_type="nature_features")
+            if resp is None or resp.status_code != 200:
+                return _nature_skeleton(OVERPASS_OUTCOME_ERROR)
+            data = _safe_overpass_json(resp, context="trail destinations query")
+            if data is None:
+                return _nature_skeleton(OVERPASS_OUTCOME_ERROR)
+            elements = data.get("elements", [])
+            return {
+                "hiking": build_trail_destinations(elements, lat, lon),
+                "_overpass_outcome": OVERPASS_OUTCOME_EMPTY if not elements else OVERPASS_OUTCOME_OK,
+            }
+        except Exception as e:
+            logger.error(f"OSM trail destinations query error: {e}", exc_info=True)
+            return _nature_skeleton(_classify_overpass_exception(e))
+
+
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=25)

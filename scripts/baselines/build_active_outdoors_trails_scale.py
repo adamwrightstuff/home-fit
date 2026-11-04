@@ -1,8 +1,8 @@
 """
 Build data/active_outdoors_trails_scale.json: the one scale the wild adventure trail terms use for every place.
 
-Expected values are catalog medians (trails within 15 km and within 5 km of the pin) over places whose trail read was
-clean, so the scale is "relative to the places we score", not a published standard. The point budgets, the camping
+Expected values are catalog medians (distinct trail destinations within 15 km and within 5 km of the pin, as counted by
+osm_api.build_trail_destinations) over places whose trail read was clean, so the scale is "relative to the places we score", not a published standard. The point budgets, the camping
 distance limit and its decay are NOT sourced (TODO: ground them in research or revealed-preference data).
 
 Usage:
@@ -40,7 +40,7 @@ def main() -> None:
                 near.append(n)
 
     doc = {
-        "measure": "trail routes within 15 km and within 5 km of the pin",
+        "measure": "distinct trail destinations within 15 km and within 5 km of the pin (osm_api.build_trail_destinations)",
         "expected_trails_15km": statistics.median(total),
         "expected_trails_5km": statistics.median(near),
         "budget_trails_15km": 25.0,   # TODO unsourced
@@ -49,6 +49,7 @@ def main() -> None:
         "camping_full_within_m": 25000,   # TODO unsourced
         "camping_decay_per_m": 0.00005,   # TODO unsourced
         "n_places": len(total),
+        "min_area_ha": 100,   # TODO unsourced (osm_api.TRAIL_DESTINATION_MIN_HA)
         "status": "expected values are catalog medians, not a published standard; budgets and camping limits unsourced",
     }
     with open(args.out, "w") as f:
