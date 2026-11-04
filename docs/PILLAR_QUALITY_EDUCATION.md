@@ -327,8 +327,8 @@ state snapshot, offline re-score, production bundle, Explorer labels, deal-break
 
 ## DPv2 spec sheet (2026-11-03)
 
-Level: 1 (Converted), signed off by the owner 2026-11-03. Level 2 is held until the independent validation in
-`analysis/education_validation_brief_2026-11-03.md` is run by another agent against pass criteria fixed in that brief.
+Level: 2 (Verified), signed off by the owner 2026-11-03 (Level 1 earlier the same day), with the gaps recorded in the sign-off line. The independent
+validation in `analysis/education_validation_brief_2026-11-03.md` was run by another agent against criteria fixed in that brief.
 Status per requirement: `analysis/education_dpv2_status_2026-11-03.md`. Everything below is from stored data on origin/main
 (86c66afe, 1,476 places), offline; no live API was called. Owner decisions of 2026-10-26 are tier 3 and are not reopened.
 
@@ -482,6 +482,12 @@ Last re-validated: 2026-11-03 (all-places, pin-shift, launch pairs, recomputed f
   2026-11-03 (see above): failed/inconclusive. Next dated check: 2027-01-26 (quarterly), or on the yearly snapshot refresh, a zone-map update or a new EDFacts release.
 Sign-off: Level 1 (Converted), owner, 2026-11-03. Accepted TODOs: education weight, level weights, base radii, nearest-3,
   3 mi widening cap, 15 mi district-far fallback, choice pool average, hamlet 25%/50% rule, pin-flag cutoff. Accepted known
-  defect: radius profile keys on urban_core, classifier emits urban_residential (30 places, small effect). Level 2 open on
-  independent validation.
+  defect: radius profile keys on urban_core, classifier emits urban_residential (30 places, small effect).
+Sign-off: Level 2 (Verified), owner, 2026-11-03, with written reasons for what the independent validation did not cover. The fixed-bar
+  Test A on EDFacts 2018 failed on NY high (0.494); the 2023-24 rerun on official state files passes in CA, TX and NY high (NY elementary
+  and middle not rerun). Test B was conclusive in 12 states; CT, NV, IN, DE, WA and MD have fewer than 30 matched places and cannot be
+  tested. Test C: zone-map 94.7% pass, 2015-16 fallback inconclusive (4 of 9 readable), nearest 1 of 3 (no bar). Test D: Anna TX and
+  King Academy (Sausalito CA) ratings go to SchoolDigger as possible rating issues. SchoolDigger percentiles come from the same state
+  tests, so this checks aggregation and matching, not independent quality. "Validated" copy NOT allowed (full-catalog standard not met).
+  Accepted: the small-state and unreadable-finder gaps, the Test A bar as run. Next dated check as above.
 ```
