@@ -439,10 +439,25 @@ Independent validation source and result: recorded as PARTIAL, not Level 2 evide
     schools at 41-47% meets have a rating of 5 or below; median rating at that proficiency 44), Slayter Creek Middle 27 vs 36.8,
     Anna High 45 vs 63.2; the other Anna elementary schools are mixed (Rattan 19.8 vs 58, Harlow 35.6 vs 50, Rosamond-Sherley 46.5 vs 29).
     Not a data-file problem, since the zoned schools match. Anna's score of 25.1 stands on those ratings.
+  TEST C RUN 2026-11-03 (district-finder reads supplied by the owner from an outside browsing agent; 39 of the 40 sampled places came
+    back, Waller TX is missing; reads in `analysis/education_validation_testC_reads.csv`; match labels set by this agent; not re-checked
+    by a second reader). Bar: at least 85% for zone-map levels and for 2015-16 levels; nearest has no bar.
+    Zone-map stratum: 18 of 19 readable match (94.7%, PASS; City Island unreadable, a tool crash; counting it as a miss 18 of 20 = 90%,
+    still pass). One miss: Wicker Park IL, stored Pulaski International vs CPS tool Burr. Caveat: Venice and Hollywood Hills carry a
+    2018 map in the catalog, so the "current zone map" stratum includes two 2018 maps; both matched. Stapleton counted a match (stored
+    school is one of three schools in a shared zone).
+    2015-16 stratum: 4 of 4 readable match (Gold Canyon, Kirkland, Emeryville, Highland Village) but only 4 of 9 returned places could
+    be read (Allen, Sandy Oaks, Menlo Park, San Gabriel, Downtown Las Vegas unreadable: no finder, login wall, or image-only map), and
+    Emeryville is a single-elementary district, not a finder read. INCONCLUSIVE: passes on the readable reads, fails if unreadable counted as
+    misses (4 of 9 = 44%); the 85% bar cannot be judged on this coverage.
+    Nearest stratum (no bar): 1 of 3 readable match (Braintree match; Germantown stored Kelly vs finder Mastery Charter at Wister;
+    McKinney stored Caldwell vs Finch). Excluded as lottery or no single zoned school: West Roxbury MA (stored Mozart is on the list of 16
+    eligible schools), Sleepy Hollow NY (Princeton Plan), Fruitvale CA (OUSD lottery). Unreadable: Granite Bay, Stafford, Pennsauken, Bristol.
   Updated verdict: on 2023-24, Test A passes in every cell run (CA, TX all levels; NY high only; NY elementary and middle not
     rerun), but the fixed-bar Test A result stays FAIL as run on 2018 (bars not edited). Test D: Clarksburg, Sausalito (mostly),
-    New Braunfels and EaDo explained; Anna and the King Academy rating are reported to the owner. Test B small-state coverage (CT, NV, IN,
-    DE, WA, MD under 30 matched places) and Test C (not run) are open. Level 2 is still not passed.
+    New Braunfels and EaDo explained; Anna and the King Academy rating are reported to the owner. Test C: zone-map PASS (94.7%), 2015-16
+    INCONCLUSIVE (4 of 9 readable), nearest 1 of 3 (no bar). Test B small-state coverage (CT, NV, IN, DE, WA, MD under 30 matched
+    places) is open, so Level 2 is still not passed.
 All-places check (date, n, summary): 2026-11-03, n=1,476 (1,472 scored, 4 no data). Mean 59.4, sd 25.9, 10th to 90th percentile
   21.3 to 92.9, 98 distinct rounded values, top single value 2.2%. By area type (n, 10th / median / 90th, share at 95 or above):
   urban residential 200, 16.7 / 57.7 / 79.6, 0.5%; suburban 765, 21.5 / 61.4 / 93.2, 6.5%; exurban 361, 21.5 / 65.0 / 93.9, 7.8%;
