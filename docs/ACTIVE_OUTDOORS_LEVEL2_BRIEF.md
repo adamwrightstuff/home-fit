@@ -114,3 +114,10 @@ and 4 empty park reads scored as zero. The builder did not run checks 1, 3, 4 or
 
 For each check: what was run, n, the numbers, pass or fail against the criteria above, and anything surprising. End with a
 proposed Level (1, 2) for the owner and a list of unsourced parameters still open. Do not recommend scoring changes; list findings.
+
+## Revision 2026-11-04 (owner ruling, made after rerun 3 results were read; not blind)
+Replaces check 3 pair 5 and the cross-type test. Both old criteria stay on record as failed in rerun 3 (pair 5: 84.9 vs 70.9; cross-type: median 7.8, 40.0% above 10). The pass wording for the pillar is "Level 2 against criteria revised after the first run": the revision came after the results were seen, so it is not a blind pass. Thresholds below were fixed before any new number was computed, and are unsourced (TODO).
+- Check 3 pair 5 is retired (a hand-picked pair from general knowledge; the data shows the two towns differ). Check 3 pairs 1 to 4 stand as written.
+- New check 3b, neighbours: for every pair of catalog places in the same metro whose pins are within 3 miles of each other, the absolute difference in total score. Pass: median at most 8 points. Report n, median, 90th percentile and the 10 largest pairs. TODO: the 8 is the old "similar" threshold, unsourced.
+- New check 3c, label effect: among pairs in the same metro whose people plus jobs per acre differ by at most 10 percent, the median absolute total difference for pairs of different stored area type minus the median for pairs of the same stored area type. Pass: at most 2 points. Report n for both groups. TODO: the 2 is unsourced.
+Both use stored data only (no live calls, no downloads, no code or catalog change). A verifier who did not build the pillar runs them.
