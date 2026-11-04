@@ -184,3 +184,21 @@ cohesion bands, IRS rate and civic tier still keyed on area type with no stated 
 volunteering rate; two failed "should differ" launch pairs (Dogpatch/Gary, Parker/Clarkston); pin-shift covers tract parts
 only; independent validation not run (brief above); new catalog files in `analysis/dpv2_social_fabric_ec_composites/` not yet
 copied over the live files; live `/score` not compared with the catalog. Last re-validated: 2026-11-03 (offline checks).
+
+### v19 sign-off: economic connectedness removed from the blend (owner, 2026-11-04)
+
+Construct: Social Fabric means felt connection and satisfaction in a place, not upward mobility. Economic connectedness
+(EC, Chetty 2022) is no longer in the score. It is still computed and stored (`breakdown.economic_connectedness`,
+`summary.economic_connectedness_raw`) as a separate measure, Economic Mixing / Bridging, not yet surfaced.
+Blend: participation 0.48, cohesion (neighbor bonds) 0.26, rootedness 0.13, civic 0.13 (EC's 0.20 went to cohesion and
+rootedness/civic, not to participation). These are design judgments, not fitted to any outcome.
+
+Independent validation (run 2026-11-04, `analysis/social_fabric_dpv2_level2_validation_2026-11-04.md`): (a) Atlas mobility
+PASS for v18 (0.426 vs 0.298, n=1,410), no longer a criterion for this pillar. (b) CDC PLACES felt support FAIL for v18 on every
+variant (0.05 to 0.21; best coverage 1,266 of 1,476 places, no PA, CO, OR) and (c) not met. No US trust or belonging benchmark
+with full coverage exists. Check after removing EC (v19, not used to refit weights): lack of social and emotional support,
+sign flipped, Spearman 0.177 (n=856, 2023 file) and 0.177 (mixed-year union, n=1,266) vs 0.225 and 0.219 for the pre-EC blend; isolation 2022 0.134 (unchanged, n=1,019). EC removal did
+not help the felt measure and slightly lowers it against the pre-EC blend on the support measure; accepted because the
+weights are a design choice and (b) is an unstable yardstick. Catalog recomputed offline into
+`analysis/dpv2_social_fabric_noec_composites/` (not yet copied over the live `data/` files). Score change vs v18: median 3.3
+points, p95 10.2, max 18.7. Reopen if a felt-support benchmark with full coverage or mover-reported outcomes appear.

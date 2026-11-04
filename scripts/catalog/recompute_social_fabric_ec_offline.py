@@ -49,8 +49,7 @@ def recompute(score: dict):
     s["economic_connectedness_raw"] = ec_raw
     s["weights_used"] = {k: round(v, 4) for k, v in weights.items()}
     cm = dict(s.get("components_missing") or {})
-    if ec_score is None:
-        cm["economic_connectedness"] = "atlas_zip_not_found"
+    cm.pop("economic_connectedness", None)  # EC is a separate stored measure now, not a blend component
     s["components_missing"] = cm
     sf["breakdown"], sf["summary"] = b, s
     sf["score"] = new

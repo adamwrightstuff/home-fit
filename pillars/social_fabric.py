@@ -1,14 +1,14 @@
 """
 Social Fabric pillar (current model v16b weights, fail-loud blend since 2026-10-24).
 
-score = blend of five components, each 0-100 (v18, DPv2: economic connectedness added at 0.20, others x0.80), base weights
-    economic_connectedness 0.20  Atlas ec_zip on a national scale (the Chetty 2022 predictor of upward mobility)
-    participation 0.60   engagement: IRS BMF organizations per 1k and volunteering (50/50), then 65/35 with the
+score = blend of four components, each 0-100 (v19, DPv2 sign-off 2026-11-04), base weights. Economic connectedness
+(Atlas ec_zip, Chetty 2022) is still computed and returned as a separate measure but is NOT in the score.
+    participation 0.48   engagement: IRS BMF organizations per 1k and volunteering (50/50), then 65/35 with the
                          Social Capital Atlas civic-organization rate (community_participation + social_capital_cohesion)
-    cohesion      0.20   Social Capital Atlas clustering and support, peer-normalized by area type
-    rootedness    0.10   residential stability: 0.8 x B25038 long-tenure + 0.2 x B07003 same-house, blended 0.7 tract /
+    cohesion      0.26   Social Capital Atlas clustering and support, peer-normalized by area type
+    rootedness    0.13   residential stability: 0.8 x B25038 long-tenure + 0.2 x B07003 same-house, blended 0.7 tract /
                          0.3 place, scored against regional bands (above-85% penalty suppressed when home values >= $350k)
-    civic         0.10   OSM/Places civic gathering nodes, peer-normalized by area type (radius 600 / 1200 / 3000 m by density)
+    civic         0.13   OSM/Places civic gathering nodes, peer-normalized by area type (radius 600 / 1200 / 3000 m by density)
 A component that cannot be measured is left out and the remaining weights are scaled proportionally (see
 blend_social_fabric); the pillar is then marked degraded with the reason. Nothing is scored as zero because it is
 missing. Civic nodes found to be zero are treated as "no civic data" and also left out (disclosed in the summary).
@@ -517,7 +517,7 @@ def get_social_fabric_score(
     channel_a_source = "atlas_cohesion" if cohesion_score is not None else "none"
     channel_a = cohesion_score if cohesion_score is not None else None
 
-    # Base weights participation 0.60 / cohesion 0.20 / rootedness 0.10 / civic 0.10 (judgment call, see module
+    # Base weights participation 0.48 / cohesion 0.26 / rootedness 0.13 / civic 0.13 (judgment call, see module
     # docstring). A missing component is left out and the rest scaled proportionally; never scored as zero.
     civic_osm_status = civic.get("osm_source_status") or civic.get("source_status")
     sf_missing_reasons: Dict[str, str] = {}
@@ -525,8 +525,6 @@ def get_social_fabric_score(
         sf_missing_reasons["participation"] = "engagement_unavailable"
     if cohesion_score is None:
         sf_missing_reasons["cohesion"] = "atlas_zip_not_found"
-    if ec_score is None:
-        sf_missing_reasons["economic_connectedness"] = "atlas_zip_not_found"
     if stability_pct is None:
         sf_missing_reasons["rootedness"] = "no_tract_or_place_mobility_data"
     if civic_score <= 0:

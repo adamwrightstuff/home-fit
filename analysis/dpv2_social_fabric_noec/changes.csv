@@ -1,0 +1,1477 @@
+metro,name,state,area_type,old,new,ec_score,ec_raw,zip
+atlanta,Acworth,GA,exurban,48.6,48.1,56.6,0.95506001,30101
+atlanta,Alpharetta,GA,exurban,52.8,51.2,67.6,1.07526,30009
+atlanta,Ansley Park,GA,suburban,47.2,47.0,71.2,1.11489,30309
+atlanta,Austell,GA,exurban,41.4,43.0,29.2,0.65540999,30106
+atlanta,Avondale Estates,GA,suburban,57.0,53.2,38.4,0.75612003,30002
+atlanta,Brookhaven,GA,suburban,45.9,46.8,41.5,0.78920001,30319
+atlanta,Buckhead,GA,suburban,49.4,49.4,67.3,1.07199,30305
+atlanta,Buford,GA,exurban,38.1,40.0,59.0,0.98164999,30519
+atlanta,Cabbagetown,GA,suburban,47.9,45.9,49.6,0.87809998,30312
+atlanta,Candler Park,GA,suburban,52.1,49.5,69.1,1.0917799,30307
+atlanta,Canton,GA,exurban,47.4,47.1,50.0,0.88234001,30114
+atlanta,Cartersville,GA,exurban,54.2,55.7,35.0,0.71859998,30120
+atlanta,Chamblee,GA,exurban,40.9,40.8,25.9,0.61882001,30341
+atlanta,Clarkston,GA,suburban,52.5,53.8,19.9,0.55397999,30021
+atlanta,College Park,GA,exurban,47.5,45.3,24.1,0.59956002,30337
+atlanta,Conyers,GA,rural,46.4,44.4,24.4,0.60290998,30012
+atlanta,Covington,GA,rural,51.4,52.2,26.5,0.62532997,30014
+atlanta,Cumming,GA,exurban,52.0,51.7,63.4,1.02879,30040
+atlanta,Dacula,GA,rural,42.4,41.9,54.5,0.93171,30019
+atlanta,Dallas,GA,exurban,52.4,51.8,56.0,0.94865,30132
+atlanta,Decatur,GA,suburban,62.3,58.8,58.4,0.97470999,30030
+atlanta,Doraville,GA,exurban,37.3,36.6,14.6,0.49557999,30340
+atlanta,Douglasville,GA,exurban,52.7,52.4,31.6,0.68142003,30134
+atlanta,Downtown Atlanta,GA,suburban,49.7,48.8,66.6,1.06384,30308
+atlanta,Duluth,GA,suburban,38.1,38.8,,,30095
+atlanta,Dunwoody,GA,exurban,50.2,55.6,,,31146
+atlanta,East Atlanta,GA,suburban,48.7,46.7,48.7,0.86874002,30316
+atlanta,East Point,GA,exurban,46.3,46.1,27.0,0.63103998,30344
+atlanta,Emerson,GA,rural,51.7,49.2,42.4,0.79922998,30137
+atlanta,Fairburn,GA,exurban,42.0,43.4,32.0,0.68610001,30213
+atlanta,Fayetteville,GA,rural,50.3,48.0,47.7,0.85750002,30214
+atlanta,Grant Park,GA,suburban,48.0,46.0,49.6,0.87809998,30312
+atlanta,Hampton,GA,rural,35.9,36.1,28.1,0.64289999,30228
+atlanta,Hiram,GA,exurban,43.8,43.0,45.0,0.82783002,30141
+atlanta,Holly Springs,GA,exurban,44.2,44.3,65.1,1.04822,30115
+atlanta,Inman Park,GA,suburban,50.7,47.7,69.1,1.0917799,30307
+atlanta,Johns Creek,GA,exurban,50.6,51.4,68.8,1.08812,30022
+atlanta,Jonesboro,GA,exurban,43.1,42.1,22.0,0.57617998,30236
+atlanta,Kennesaw,GA,suburban,56.3,57.4,53.9,0.92519999,30144
+atlanta,Kirkwood,GA,suburban,47.8,44.0,60.2,0.99449003,30317
+atlanta,Lawrenceville,GA,exurban,36.0,37.6,43.3,0.80975997,30045
+atlanta,Lilburn,GA,exurban,51.0,51.2,32.5,0.69112003,30047
+atlanta,Lindbergh,GA,suburban,37.9,37.8,55.1,0.93839997,30324
+atlanta,Lithonia,GA,rural,38.5,37.5,26.6,0.62717003,30058
+atlanta,Mableton,GA,exurban,44.2,43.7,27.8,0.63988,30126
+atlanta,Marietta,GA,exurban,52.5,51.8,32.3,0.68902999,30060
+atlanta,McDonough,GA,exurban,51.6,52.1,33.2,0.69867003,30253
+atlanta,Midtown Atlanta,GA,urban_residential,41.1,43.1,,,30361
+atlanta,Milton,GA,exurban,44.1,44.6,68.2,1.08184,30004
+atlanta,Morningside-Lenox Park,GA,suburban,47.3,48.0,81.6,1.2286,30306
+atlanta,Newnan,GA,rural,48.2,48.8,34.9,0.71700001,30263
+atlanta,Norcross,GA,suburban,51.7,51.2,19.7,0.55102003,30071
+atlanta,Old Fourth Ward,GA,suburban,48.9,48.0,66.6,1.06384,30308
+atlanta,Palmetto,GA,rural,39.9,39.9,31.2,0.6767,30268
+atlanta,Peachtree City,GA,exurban,54.4,54.5,65.2,1.0491199,30269
+atlanta,Peachtree Corners,GA,exurban,43.4,43.0,44.4,0.82195002,30092
+atlanta,Pine Lake,GA,suburban,31.8,29.9,,,30072
+atlanta,Powder Springs,GA,exurban,50.9,50.9,41.5,0.78970999,30127
+atlanta,Reynoldstown,GA,suburban,48.4,46.4,48.7,0.86874002,30316
+atlanta,Riverdale,GA,exurban,41.2,40.7,19.4,0.54800999,30274
+atlanta,Roswell,GA,exurban,50.3,48.1,57.9,0.96863002,30075
+atlanta,Sandy Springs,GA,exurban,42.9,41.9,59.1,0.98193997,30328
+atlanta,Senoia,GA,rural,45.5,44.8,56.6,0.95525002,30276
+atlanta,Smyrna,GA,suburban,46.0,45.9,43.6,0.81228,30080
+atlanta,Snellville,GA,exurban,54.3,53.4,41.5,0.78986001,30078
+atlanta,Stockbridge,GA,exurban,37.9,36.0,26.8,0.62935001,30281
+atlanta,Stone Mountain,GA,suburban,44.8,47.0,33.7,0.70420998,30087
+atlanta,Suwanee,GA,exurban,56.0,56.7,68.3,1.08325,30024
+atlanta,Tucker,GA,exurban,50.4,49.0,24.9,0.60824001,30084
+atlanta,Tyrone,GA,rural,50.7,48.5,59.1,0.98214,30290
+atlanta,Union City,GA,exurban,35.0,36.7,25.1,0.61050999,30291
+atlanta,Vinings,GA,exurban,43.4,43.5,54.4,0.93032998,30339
+atlanta,Virginia-Highland,GA,suburban,46.3,46.7,81.6,1.2286,30306
+atlanta,West End,GA,suburban,51.2,48.4,37.1,0.74125999,30310
+atlanta,Westside,GA,exurban,40.1,39.9,38.4,0.75541002,30318
+atlanta,Woodstock,GA,exurban,52.3,51.4,66.0,1.0580699,30188
+austin,Allandale,TX,suburban,46.3,44.1,74.6,1.15203,78731
+austin,Anderson Mill,TX,suburban,49.1,47.8,73.9,1.14398,78750
+austin,Barton Hills,TX,suburban,43.7,41.5,63.3,1.02837,78704
+austin,Bastrop,TX,rural,50.1,48.8,42.6,0.80204999,78602
+austin,Bee Cave,TX,exurban,39.8,39.8,,,78738
+austin,Bouldin Creek,TX,suburban,43.7,41.5,63.3,1.02837,78704
+austin,Brentwood,TX,suburban,50.6,47.1,85.1,1.267,78756
+austin,Bryker Woods,TX,suburban,54.9,52.6,85.1,1.267,78756
+austin,Buda,TX,rural,35.6,34.8,49.9,0.88182002,78610
+austin,Cedar Park,TX,exurban,43.9,42.4,65.5,1.05231,78613
+austin,Cherrywood,TX,suburban,56.9,52.1,62.5,1.01903,78722
+austin,Circle C Ranch,TX,exurban,45.5,44.6,97.1,1.39821,78739
+austin,Clarksville,TX,suburban,51.8,49.9,82.3,1.2363,78703
+austin,Crestview,TX,suburban,50.4,45.9,53.7,0.92307001,78757
+austin,Dove Springs,TX,suburban,33.8,34.9,30.3,0.66772002,78744
+austin,Downtown Austin,TX,urban_residential,49.8,46.5,61.8,1.01228,78701
+austin,Dripping Springs,TX,rural,43.7,45.3,,,
+austin,East Austin,TX,suburban,50.5,46.7,52.7,0.91171002,78702
+austin,Elgin,TX,rural,39.6,40.0,25.5,0.61457002,78621
+austin,Georgetown,TX,exurban,47.9,46.7,55.8,0.94654,78626
+austin,Highland,TX,suburban,46.7,43.2,28.4,0.64670002,78752
+austin,Hutto,TX,suburban,41.5,42.2,56.8,0.95744002,78634
+austin,Hyde Park,TX,suburban,45.4,44.4,79.2,1.20205,78751
+austin,Jollyville,TX,suburban,35.2,35.4,73.0,1.1337,78729
+austin,Kyle,TX,rural,33.0,33.6,40.4,0.77727002,78640
+austin,Lago Vista,TX,exurban,61.1,61.9,68.8,1.08796,78645
+austin,Lakeway,TX,exurban,54.8,53.9,64.7,1.04298,78734
+austin,Leander,TX,suburban,41.4,41.5,70.1,1.1029299,78641
+austin,Liberty Hill,TX,rural,36.4,35.7,65.6,1.05305,78642
+austin,Lockhart,TX,exurban,60.4,62.5,38.3,0.75492001,78644
+austin,Manchaca,TX,exurban,47.0,43.5,70.0,1.1019,78652
+austin,Manor,TX,rural,32.3,32.8,32.6,0.69256997,78653
+austin,Montopolis,TX,suburban,34.7,34.7,32.0,0.68537998,78741
+austin,Mueller,TX,suburban,39.9,37.3,35.4,0.72349,78723
+austin,North Loop,TX,suburban,45.6,44.6,79.2,1.20205,78751
+austin,Northwest Hills,TX,exurban,46.9,44.6,74.6,1.15203,78731
+austin,Oak Hill,TX,exurban,37.1,35.4,79.5,1.20517,78749
+austin,Old West Austin,TX,suburban,54.7,53.6,82.3,1.2363,78703
+austin,Pflugerville,TX,suburban,43.8,46.0,47.2,0.85171998,78660
+austin,Riverside,TX,suburban,54.4,51.7,52.7,0.91171002,78702
+austin,Rollingwood,TX,exurban,58.5,57.2,87.4,1.29158,78746
+austin,Rosedale,TX,suburban,51.3,48.0,85.1,1.267,78756
+austin,Round Rock,TX,exurban,42.7,40.2,59.4,0.98508,78664
+austin,San Marcos,TX,suburban,58.3,60.2,46.7,0.84647,78666
+austin,South Congress,TX,suburban,43.7,41.5,63.3,1.02837,78704
+austin,South Lamar,TX,suburban,46.4,45.0,63.3,1.02837,78704
+austin,Southpark Meadows,TX,suburban,34.6,33.8,61.1,1.0044399,78748
+austin,St. Johns,TX,suburban,47.1,43.8,28.4,0.64670002,78752
+austin,Steiner Ranch,TX,exurban,42.8,42.2,87.2,1.28944,78732
+austin,Sunset Valley,TX,exurban,42.8,44.1,,,78715
+austin,Tarrytown,TX,suburban,53.9,52.6,82.3,1.2363,78703
+austin,Taylor,TX,suburban,60.4,62.8,52.4,0.90850002,76574
+austin,Travis Heights,TX,suburban,46.6,45.2,63.3,1.02837,78704
+austin,Wells Branch,TX,suburban,33.3,33.6,47.4,0.85470998,78728
+austin,Westlake Hills,TX,rural,52.9,50.4,87.4,1.29158,78746
+austin,Wimberley,TX,rural,64.0,63.1,67.5,1.0744801,78676
+austin,Windsor Park,TX,suburban,43.5,42.0,35.4,0.72349,78723
+austin,Zilker,TX,suburban,43.7,41.5,63.3,1.02837,78704
+boston,Acton,MA,exurban,67.7,66.9,88.0,1.29844,01720
+boston,Allston,MA,urban_residential,52.4,53.6,62.3,1.01764,02134
+boston,Andover,MA,suburban,66.2,67.3,71.6,1.11921,01810
+boston,Arlington,MA,suburban,53.5,54.7,,,02174
+boston,Back Bay,MA,urban_residential,57.4,57.1,73.3,1.13798,02116
+boston,Beacon Hill,MA,urban_residential,57.8,58.3,68.3,1.08328,02114
+boston,Bedford,MA,exurban,71.2,73.7,84.8,1.26328,01730
+boston,Belmont,MA,suburban,64.4,65.0,100.0,1.46196,02478
+boston,Beverly,MA,suburban,64.8,67.1,77.4,1.1828099,01915
+boston,Braintree,MA,exurban,67.4,72.2,80.0,1.21076,02184
+boston,Brighton,MA,suburban,42.8,45.1,69.4,1.0945801,02135
+boston,Brookline,MA,suburban,58.3,56.8,98.3,1.41064,02445
+boston,Burlington,MA,exurban,68.5,73.0,87.1,1.28854,01803
+boston,Cambridge,MA,urban_residential,63.3,63.4,100.0,1.43837,02139
+boston,Canton,MA,suburban,56.4,57.7,76.9,1.17742,02021
+boston,Carlisle,MA,rural,63.2,61.3,,,01741
+boston,Charlestown,MA,urban_residential,46.8,47.2,64.1,1.03705,02129
+boston,Chelsea,MA,urban_residential,39.0,41.6,20.6,0.56124997,02150
+boston,Cohasset,MA,exurban,65.9,67.1,,,02025
+boston,Concord,MA,rural,62.4,61.8,94.6,1.3709,01742
+boston,Dedham,MA,exurban,55.8,56.9,76.6,1.17365,02026
+boston,Dorchester,MA,urban_residential,41.1,37.3,,,02212
+boston,Dover,MA,rural,56.8,56.4,,,02030
+boston,Downtown Boston,MA,urban_residential,56.3,55.2,,,02110
+boston,Duxbury,MA,rural,56.0,55.2,100.0,1.45883,02332
+boston,East Boston,MA,urban_residential,42.5,46.5,34.2,0.70993,02128
+boston,Everett,MA,suburban,47.4,51.3,51.5,0.89897001,02149
+boston,Fenway,MA,urban_residential,59.2,58.8,92.7,1.3498501,02215
+boston,Framingham,MA,suburban,53.9,56.9,41.4,0.78874999,01702
+boston,Hamilton,MA,rural,60.3,64.2,,,01936
+boston,Hingham,MA,exurban,70.6,68.7,97.6,1.40376,02043
+boston,Hopkinton,MA,exurban,66.6,67.3,98.2,1.4094501,01748
+boston,Jamaica Plain,MA,suburban,49.8,48.1,56.4,0.95318002,02130
+boston,Lexington,MA,exurban,62.7,63.4,95.3,1.37813,02421
+boston,Lincoln,MA,rural,53.7,49.8,,,01773
+boston,Lynnfield,MA,exurban,62.2,64.0,97.8,1.40536,01940
+boston,Lynn,MA,suburban,41.0,45.1,30.0,0.66346002,01902
+boston,Malden,MA,suburban,50.2,52.0,71.5,1.11814,02148
+boston,Manchester,MA,rural,58.1,55.6,,,01944
+boston,Marblehead,MA,suburban,68.7,70.9,91.9,1.34096,01945
+boston,Marshfield,MA,exurban,62.7,64.0,88.8,1.30725,02050
+boston,Medfield,MA,exurban,69.3,71.8,100.0,1.50012,02052
+boston,Medford,MA,exurban,63.3,66.6,80.3,1.2139601,02155
+boston,Melrose,MA,suburban,65.6,69.4,91.3,1.33434,02176
+boston,Milton,MA,exurban,48.8,51.0,40.2,0.77552003,02126
+boston,Mission Hill,MA,urban_residential,55.3,55.3,57.5,0.96517003,02120
+boston,Natick,MA,exurban,58.8,59.9,88.4,1.30256,01760
+boston,Needham,MA,exurban,59.6,60.3,100.0,1.43296,02492
+boston,Newton,MA,suburban,68.4,68.8,,,02461
+boston,North Andover,MA,suburban,56.5,57.8,68.6,1.08608,01845
+boston,North End,MA,urban_residential,41.5,44.6,89.4,1.31391,02113
+boston,Norwood,MA,exurban,56.5,59.5,67.6,1.07524,02062
+boston,Quincy,MA,suburban,55.6,57.5,85.3,1.26849,02170
+boston,Reading,MA,exurban,63.1,67.1,99.0,1.4191099,01867
+boston,Revere,MA,suburban,38.6,41.2,38.0,0.75107998,02151
+boston,Roslindale,MA,suburban,34.5,31.8,49.2,0.87371999,02131
+boston,Salem,MA,urban_residential,61.7,63.4,60.4,0.99684,01970
+boston,Scituate,MA,rural,57.4,54.7,100.0,1.49784,02066
+boston,Seaport District,MA,exurban,47.7,48.0,69.5,1.0963,02210
+boston,Sharon,MA,exurban,61.7,62.6,100.0,1.43331,02067
+boston,Sherborn,MA,rural,56.8,53.8,,,01770
+boston,Somerville,MA,urban_residential,57.6,56.8,90.0,1.31999,02143
+boston,South Boston,MA,urban_residential,39.2,42.9,69.8,1.09942,02127
+boston,South End,MA,urban_residential,50.9,52.9,55.7,0.94537002,02118
+boston,Stoneham,MA,suburban,58.6,61.3,88.0,1.29817,02180
+boston,Sudbury,MA,exurban,71.6,69.8,97.1,1.39762,01776
+boston,Swampscott,MA,suburban,62.6,63.7,75.0,1.15657,01907
+boston,Wakefield,MA,exurban,66.0,69.6,85.5,1.27044,01880
+boston,Walpole,MA,rural,55.0,54.5,87.5,1.29259,02081
+boston,Waltham,MA,exurban,56.7,59.3,68.1,1.0810601,02451
+boston,Watertown,MA,suburban,54.3,55.6,86.4,1.28099,02472
+boston,Wayland,MA,rural,56.9,55.6,100.0,1.46231,01778
+boston,Wellesley,MA,suburban,54.7,56.3,,,02181
+boston,Wenham,MA,rural,58.6,54.9,,,01984
+boston,West Roxbury,MA,suburban,47.6,48.8,69.7,1.0983599,02132
+boston,Weston,MA,rural,53.3,51.9,,,02493
+boston,Westwood,MA,exurban,55.8,58.1,94.6,1.37025,02090
+boston,Weymouth,MA,suburban,53.7,56.6,72.1,1.1240799,02189
+boston,Winchester,MA,suburban,62.7,63.5,96.3,1.38915,01890
+boston,Winthrop,MA,suburban,52.3,54.1,66.3,1.06101,02152
+boston,Woburn,MA,suburban,59.4,62.6,76.8,1.17597,01801
+charlotte,Ballantyne,NC,exurban,37.5,37.6,65.2,1.0492899,28277
+charlotte,Belmont,NC,exurban,47.9,48.7,48.4,0.86477,28012
+charlotte,Concord,NC,exurban,51.9,52.6,39.8,0.77124,28025
+charlotte,Cornelius,NC,suburban,50.8,48.9,58.9,0.98034,28031
+charlotte,Cotswold,NC,suburban,40.1,39.7,44.6,0.82318002,28211
+charlotte,Davidson,NC,exurban,52.9,50.4,52.0,0.90458,28036
+charlotte,Denver,NC,rural,44.0,42.4,59.4,0.98506999,28037
+charlotte,Dilworth,NC,suburban,48.0,51.2,63.8,1.03363,28203
+charlotte,Eastover,NC,suburban,45.4,46.9,,,28274
+charlotte,Elizabeth,NC,suburban,49.9,49.5,61.9,1.01274,28204
+charlotte,Gastonia,NC,exurban,40.9,40.1,11.6,0.46285,28052
+charlotte,Harrisburg,NC,exurban,51.0,51.3,56.7,0.95550001,28075
+charlotte,Huntersville,NC,exurban,41.4,41.3,,,28087
+charlotte,Indian Trail,NC,exurban,44.7,45.2,54.0,0.92629999,28079
+charlotte,Kannapolis,NC,exurban,49.3,52.0,33.4,0.70068997,28081
+charlotte,Lincolnton,NC,exurban,53.3,55.7,29.4,0.65697998,28092
+charlotte,Marvin,NC,exurban,44.4,45.5,,,29117
+charlotte,Matthews,NC,exurban,47.4,46.6,44.9,0.82713997,28105
+charlotte,Midland,NC,rural,33.7,33.8,45.6,0.83482999,28107
+charlotte,Mineral Springs,NC,rural,43.2,42.2,64.2,1.03755,28173
+charlotte,Mint Hill,NC,rural,34.5,35.2,28.9,0.65197998,28227
+charlotte,Monroe,NC,exurban,44.7,48.6,34.3,0.71140999,28110
+charlotte,Montford,NC,suburban,45.8,47.0,,,
+charlotte,Mooresville,NC,exurban,54.9,55.0,54.3,0.92921001,28115
+charlotte,Mount Holly,NC,exurban,41.3,42.7,41.7,0.79159999,28120
+charlotte,Myers Park,NC,suburban,43.9,44.8,,,28274
+charlotte,NoDa,NC,suburban,40.6,40.5,40.1,0.77447999,28206
+charlotte,Pineville,NC,exurban,40.2,39.2,39.8,0.77126002,28134
+charlotte,Plaza Midwood,NC,suburban,43.1,43.2,31.2,0.67690998,28205
+charlotte,Salisbury,NC,suburban,58.7,60.8,20.5,0.55962998,28144
+charlotte,South End,NC,suburban,47.1,50.0,63.8,1.03363,28203
+charlotte,SouthPark,NC,exurban,44.3,45.4,,,28287
+charlotte,Stallings,NC,exurban,44.7,46.0,,,28014
+charlotte,Stanley,NC,rural,39.0,39.9,38.5,0.75689,28164
+charlotte,Statesville,NC,exurban,48.2,50.9,,,28687
+charlotte,Steele Creek,NC,exurban,29.0,30.7,34.6,0.71393001,28273
+charlotte,University City,NC,suburban,39.1,41.6,33.2,0.69933999,28262
+charlotte,Uptown Charlotte,NC,suburban,45.0,46.4,,,28281
+charlotte,Waxhaw,NC,exurban,46.9,45.9,64.2,1.03755,28173
+charlotte,Weddington,NC,rural,34.1,33.4,56.2,0.95020002,28104
+charlotte,Wesley Chapel,NC,exurban,45.7,49.9,34.3,0.71140999,28110
+chicago,Albany Park,IL,urban_residential,50.8,48.6,39.2,0.76436001,60625
+chicago,Andersonville,IL,urban_residential,63.7,59.7,62.6,1.0209301,60640
+chicago,Arlington Heights,IL,suburban,54.5,56.5,63.9,1.0352499,60005
+chicago,Aurora,IL,suburban,49.4,51.6,21.2,0.56761003,60505
+chicago,Avondale,IL,urban_residential,40.3,37.8,47.6,0.85672998,60618
+chicago,Back of the Yards,IL,urban_residential,34.8,35.2,20.1,0.55572999,60609
+chicago,Barrington,IL,rural,57.5,57.0,84.8,1.26319,60010
+chicago,Batavia,IL,suburban,73.5,72.4,71.9,1.1219,60510
+chicago,Berwyn,IL,urban_residential,31.6,32.9,35.2,0.72105998,60402
+chicago,Beverly,IL,suburban,50.9,53.9,50.8,0.89160001,60805
+chicago,Bolingbrook,IL,suburban,47.8,50.6,45.9,0.83807999,60440
+chicago,Bridgeport,IL,urban_residential,48.9,48.3,37.6,0.74733001,60608
+chicago,Bronzeville,IL,suburban,42.1,41.5,31.0,0.67443001,60653
+chicago,Bucktown,IL,urban_residential,48.8,48.9,60.6,0.99848002,60622
+chicago,Chesterton,IN,rural,61.7,60.6,59.1,0.98180997,46304
+chicago,Chinatown,IL,urban_residential,55.5,55.8,51.8,0.90284997,60616
+chicago,Cicero,IL,suburban,28.6,32.6,20.2,0.55676001,60804
+chicago,Crown Point,IN,suburban,58.0,60.3,66.8,1.066,46307
+chicago,Crystal Lake,IL,exurban,64.4,65.2,64.8,1.04454,60014
+chicago,Deerfield,IL,suburban,72.5,73.7,82.4,1.23744,60015
+chicago,Downers Grove,IL,suburban,61.8,61.2,82.1,1.23351,60515
+chicago,Edgewater,IL,urban_residential,60.5,57.9,62.1,1.01467,60660
+chicago,Edison Park,IL,suburban,50.3,47.1,77.6,1.1844,60631
+chicago,Elgin,IL,suburban,54.2,55.9,26.7,0.62797999,60120
+chicago,Elmhurst,IL,suburban,58.9,59.1,68.9,1.0893101,60126
+chicago,Englewood,IL,suburban,34.7,36.4,16.3,0.51420999,60621
+chicago,Evanston,IL,suburban,39.8,41.6,,,60208
+chicago,Evergreen Park,IL,suburban,50.1,52.9,50.8,0.89160001,60805
+chicago,Forest Park,IL,suburban,54.8,53.2,50.2,0.88485998,60130
+chicago,Frankfort,IL,exurban,57.6,58.5,81.7,1.22975,60423
+chicago,Garfield Park,IL,suburban,36.3,38.3,16.8,0.51950997,60624
+chicago,Garfield Ridge,IL,suburban,31.5,33.8,41.4,0.78877002,60638
+chicago,Gary,IN,exurban,47.4,50.7,34.7,0.71491998,46410
+chicago,Geneva,IL,exurban,68.1,67.4,88.5,1.30424,60134
+chicago,Glen Ellyn,IL,suburban,58.2,57.5,67.9,1.07819,60137
+chicago,Glencoe,IL,exurban,64.9,62.9,78.6,1.19533,60022
+chicago,Glenview,IL,suburban,57.9,59.2,73.2,1.1360101,60025
+chicago,Gold Coast,IL,urban_residential,53.0,55.8,68.6,1.08639,60610
+chicago,Hammond,IN,suburban,40.9,41.1,21.1,0.56616998,46320
+chicago,Hegewisch,IL,exurban,35.1,37.6,32.6,0.69218999,60633
+chicago,Highland Park,IL,exurban,64.6,63.3,61.5,1.0079401,60035
+chicago,Hinsdale,IL,exurban,53.8,53.2,80.3,1.21369,60521
+chicago,Homewood,IL,exurban,55.0,54.0,52.7,0.91194999,60430
+chicago,Humboldt Park,IL,suburban,31.2,33.0,19.1,0.54429001,60651
+chicago,Hyde Park,IL,suburban,53.0,51.4,43.5,0.81132001,60615
+chicago,Irving Park,IL,suburban,42.6,42.2,37.2,0.74256998,60641
+chicago,Jefferson Park,IL,suburban,46.2,44.7,55.6,0.94392002,60630
+chicago,Joliet,IL,suburban,54.1,56.6,25.6,0.61576998,60432
+chicago,Kenwood,IL,suburban,49.2,46.5,43.5,0.81132001,60615
+chicago,La Grange,IL,suburban,60.7,60.1,56.8,0.95719999,60525
+chicago,Lake Forest,IL,exurban,68.1,67.1,86.6,1.28256,60045
+chicago,Lake Zurich,IL,exurban,56.5,56.9,80.5,1.21605,60047
+chicago,Lakeview,IL,urban_residential,45.9,47.7,59.5,0.98641002,60657
+chicago,Libertyville,IL,exurban,65.0,65.1,72.7,1.13053,60048
+chicago,Lincoln Park,IL,urban_residential,49.7,52.7,60.8,1.0007401,60614
+chicago,Lincoln Square,IL,urban_residential,52.5,50.9,39.2,0.76436001,60625
+chicago,Lisle,IL,suburban,51.3,51.5,79.4,1.20393,60532
+chicago,Little Village,IL,suburban,35.2,37.5,18.1,0.53349,60623
+chicago,Logan Square,IL,urban_residential,54.8,53.2,50.5,0.88761002,60647
+chicago,Lombard,IL,suburban,54.1,55.2,70.3,1.10516,60148
+chicago,Mount Greenwood,IL,suburban,51.5,53.8,76.9,1.17642,60655
+chicago,Munster,IN,suburban,70.2,70.0,66.3,1.0606,46321
+chicago,Naperville,IL,suburban,63.6,63.4,82.3,1.23588,60540
+chicago,North Center,IL,urban_residential,46.9,46.3,47.6,0.85672998,60618
+chicago,Northbrook,IL,suburban,71.2,72.9,73.7,1.14217,60062
+chicago,Norwood Park,IL,suburban,57.6,56.6,77.6,1.1844,60631
+chicago,Oak Brook,IL,rural,58.2,56.6,74.3,1.14882,60523
+chicago,Oak Park,IL,suburban,67.9,63.9,60.4,0.99677002,60302
+chicago,Old Town,IL,urban_residential,54.5,57.8,68.6,1.08639,60610
+chicago,Orland Park,IL,suburban,54.3,56.0,71.9,1.12195,60462
+chicago,Palatine,IL,suburban,60.0,60.2,73.0,1.1346101,60067
+chicago,Park Ridge,IL,suburban,69.1,71.4,83.9,1.25396,60068
+chicago,Pilsen,IL,urban_residential,50.0,49.8,37.6,0.74733001,60608
+chicago,Plainfield,IL,exurban,55.2,54.6,65.5,1.0516599,60544
+chicago,Portage Park,IL,suburban,34.7,31.9,37.2,0.74256998,60641
+chicago,Pullman,IL,suburban,37.7,39.5,25.0,0.60948002,60628
+chicago,Ravenswood,IL,urban_residential,62.3,57.9,62.6,1.0209301,60640
+chicago,River Forest,IL,suburban,72.9,70.0,69.9,1.10007,60305
+chicago,River North,IL,urban_residential,55.4,55.8,81.5,1.2270499,60654
+chicago,Riverside,IL,suburban,67.8,65.7,55.0,0.93687999,60546
+chicago,Rogers Park,IL,suburban,53.7,50.7,44.1,0.81858999,60645
+chicago,Roscoe Village,IL,urban_residential,44.3,42.9,47.6,0.85672998,60618
+chicago,Sauganash,IL,suburban,59.8,63.6,67.5,1.0742199,60712
+chicago,Schaumburg,IL,suburban,38.5,41.4,67.1,1.06972,60194
+chicago,Skokie,IL,suburban,57.6,58.8,61.5,1.00836,60077
+chicago,South Loop,IL,urban_residential,54.2,52.3,77.0,1.1777,60605
+chicago,St. Charles,IL,suburban,63.2,62.3,72.1,1.1240799,60174
+chicago,Streeterville,IL,urban_residential,52.0,53.2,69.0,1.09067,60611
+chicago,The Loop,IL,urban_residential,57.0,56.0,62.3,1.01756,60604
+chicago,Tinley Park,IL,exurban,51.1,53.5,69.9,1.10078,60477
+chicago,Ukrainian Village,IL,urban_residential,48.9,49.0,60.6,0.99848002,60622
+chicago,Uptown,IL,urban_residential,63.8,59.9,62.6,1.0209301,60640
+chicago,Valparaiso,IN,exurban,67.1,65.8,59.6,0.98729002,46383
+chicago,Waukegan,IL,exurban,42.2,45.2,17.4,0.52645999,60085
+chicago,West Loop,IL,urban_residential,54.9,53.6,67.1,1.06993,60607
+chicago,Western Springs,IL,suburban,67.4,66.0,94.4,1.36821,60558
+chicago,Wheaton,IL,suburban,63.1,62.4,78.2,1.1914901,60187
+chicago,Wicker Park,IL,urban_residential,48.8,48.9,60.6,0.99848002,60622
+chicago,Wilmette,IL,suburban,73.7,73.2,,,60208
+chicago,Winnetka,IL,suburban,63.1,62.9,58.0,0.96977001,60093
+chicago,Woodstock,IL,suburban,69.5,70.1,56.7,0.95547003,60098
+chicago,Wrigleyville,IL,urban_residential,55.0,54.2,84.1,1.25512,60613
+chicago,Yorkville,IL,rural,48.7,46.8,68.6,1.08597,60560
+dallas,Addison,TX,exurban,32.6,34.0,48.3,0.86374003,75001
+dallas,Allen,TX,exurban,51.0,48.5,82.7,1.24041,75013
+dallas,Anna,TX,exurban,36.8,35.5,61.3,1.00618,75409
+dallas,Argyle,TX,rural,39.3,36.8,79.7,1.20755,76226
+dallas,Arlington Heights,TX,exurban,47.5,47.0,48.4,0.86495,76107
+dallas,Arlington,TX,suburban,43.1,44.6,,,76004
+dallas,Bedford,TX,suburban,51.0,50.0,58.6,0.97627997,76021
+dallas,Benbrook,TX,exurban,43.8,44.3,60.5,0.99708998,76126
+dallas,Berkeley Place,TX,exurban,38.9,37.9,21.4,0.56964999,76110
+dallas,Bishop Arts District,TX,suburban,41.2,40.5,30.6,0.67025,75208
+dallas,Burleson,TX,exurban,47.7,48.2,58.3,0.97360998,76028
+dallas,Carrollton,TX,suburban,47.0,46.6,33.3,0.70033002,75006
+dallas,Casa Linda,TX,suburban,48.7,46.2,39.9,0.77244002,75218
+dallas,Cedar Hill,TX,rural,44.1,43.8,39.6,0.76910001,75104
+dallas,Celina,TX,rural,42.0,39.9,77.2,1.18002,75009
+dallas,Colleyville,TX,exurban,58.5,55.9,81.2,1.22394,76034
+dallas,Coppell,TX,exurban,52.5,52.6,68.9,1.08962,75019
+dallas,Corinth,TX,suburban,38.3,37.8,67.3,1.07173,76210
+dallas,Cultural District,TX,exurban,49.3,49.3,48.4,0.86495,76107
+dallas,DeSoto,TX,exurban,47.1,47.2,33.0,0.69696999,75115
+dallas,Deep Ellum,TX,suburban,51.3,48.8,52.4,0.90902001,75226
+dallas,Denton,TX,suburban,63.5,62.9,76.6,1.17353,76201
+dallas,Design District,TX,rural,47.2,44.1,50.7,0.89028001,75207
+dallas,Downtown Dallas,TX,urban_residential,53.4,52.0,58.1,0.97128999,75201
+dallas,Downtown Fort Worth,TX,suburban,53.3,51.5,51.0,0.89401001,76102
+dallas,Duncanville,TX,suburban,46.0,45.2,25.8,0.61746001,75116
+dallas,Euless,TX,suburban,45.2,46.6,55.4,0.94194001,76039
+dallas,Fairmount,TX,suburban,45.0,45.3,21.4,0.56964999,76110
+dallas,Fairview,TX,exurban,43.4,45.0,,,75609
+dallas,Farmers Branch,TX,suburban,46.3,46.9,37.7,0.74834001,75234
+dallas,Flower Mound,TX,suburban,54.1,53.0,69.7,1.09779,75028
+dallas,Forney,TX,exurban,36.2,38.1,46.3,0.84272999,75126
+dallas,Frisco,TX,exurban,47.6,45.9,65.4,1.0513,75034
+dallas,Garland,TX,suburban,48.7,49.6,32.1,0.68660003,75040
+dallas,Grand Prairie,TX,exurban,40.5,38.9,20.7,0.56242001,75050
+dallas,Grapevine,TX,exurban,47.4,46.4,57.7,0.96714002,76051
+dallas,Heath,TX,rural,36.2,35.1,49.6,0.87805998,75032
+dallas,Highland Park,TX,exurban,56.2,57.1,79.3,1.2031,75205
+dallas,Highland Village,TX,rural,48.1,48.3,71.9,1.12264,77027
+dallas,Hurst,TX,suburban,46.6,47.0,41.9,0.79427999,76053
+dallas,Irving,TX,suburban,35.5,36.8,16.7,0.51822001,75061
+dallas,Keller,TX,suburban,53.9,51.1,83.6,1.25011,76248
+dallas,Kessler Park,TX,suburban,38.8,38.2,,,75260
+dallas,Knox-Henderson,TX,suburban,41.8,43.8,70.9,1.11176,75206
+dallas,Lake Highlands,TX,suburban,38.7,38.3,25.4,0.61308002,75243
+dallas,Lakewood,TX,suburban,38.9,39.1,50.5,0.88801003,75214
+dallas,Lancaster,TX,suburban,40.4,40.9,27.4,0.63573003,75146
+dallas,Lewisville,TX,exurban,44.8,42.7,50.6,0.88932002,75057
+dallas,Little Elm,TX,suburban,38.0,37.1,63.3,1.0276,75068
+dallas,Lower Greenville,TX,suburban,40.5,42.2,70.9,1.11176,75206
+dallas,Lucas,TX,rural,36.6,35.3,69.4,1.09489,75002
+dallas,Mansfield,TX,exurban,45.5,45.6,50.7,0.89064002,76063
+dallas,McKinney,TX,suburban,57.2,57.0,58.8,0.97839999,75069
+dallas,Melissa,TX,rural,35.1,33.7,75.2,1.15864,75454
+dallas,Mesquite,TX,exurban,40.2,41.0,25.8,0.61783999,75149
+dallas,Midlothian,TX,rural,42.2,41.4,61.7,1.01079,76065
+dallas,Murphy,TX,exurban,55.8,58.0,83.2,1.24536,75094
+dallas,Near Southside,TX,suburban,48.2,47.9,25.4,0.61375999,76104
+dallas,North Richland Hills,TX,exurban,42.2,41.4,50.3,0.8858,76180
+dallas,Oak Cliff,TX,suburban,39.9,38.6,16.2,0.51289999,75203
+dallas,Oak Lawn,TX,suburban,43.4,42.1,54.1,0.92698002,75219
+dallas,Plano,TX,exurban,46.5,43.7,61.4,1.00714,75075
+dallas,Preston Hollow,TX,exurban,48.5,45.4,67.1,1.0695699,75225
+dallas,Prosper,TX,exurban,49.9,47.3,93.7,1.3607399,75078
+dallas,Richardson,TX,suburban,51.2,50.1,48.1,0.86144,75081
+dallas,Ridglea,TX,exurban,29.7,29.0,30.9,0.6735,76116
+dallas,Roanoke,TX,exurban,38.2,37.9,65.4,1.05059,76262
+dallas,Rockwall,TX,exurban,53.2,51.9,65.9,1.0570101,75087
+dallas,Rowlett,TX,exurban,44.7,42.8,54.6,0.93339998,75088
+dallas,Southlake,TX,unknown,63.7,63.0,79.0,1.20006,76092
+dallas,The Cedars,TX,suburban,31.6,32.6,23.4,0.59202999,75150
+dallas,The Colony,TX,exurban,40.7,42.4,67.9,1.07876,75056
+dallas,Trophy Club,TX,exurban,39.8,39.9,65.4,1.05059,76262
+dallas,University Park,TX,suburban,56.0,55.2,79.3,1.2031,75205
+dallas,Uptown,TX,suburban,35.7,37.2,57.8,0.96832001,75204
+dallas,Victory Park,TX,suburban,45.1,41.4,53.0,0.91583002,75202
+dallas,Waxahachie,TX,suburban,56.7,58.0,50.8,0.89094001,75165
+dallas,Weatherford,TX,exurban,56.8,56.1,55.3,0.94119,76086
+dallas,West 7th,TX,exurban,52.5,49.8,51.0,0.89401001,76102
+dallas,Westlake,TX,exurban,47.9,50.5,65.4,1.05059,76262
+dallas,Wylie,TX,exurban,43.8,44.1,64.0,1.03562,75098
+denver,Arvada,CO,suburban,50.7,48.6,64.7,1.0434,80002
+denver,Aspen Park,CO,exurban,53.9,51.0,89.0,1.30889,80433
+denver,Aurora,CO,suburban,37.3,37.3,26.5,0.62515002,80010
+denver,Baker,CO,exurban,57.5,57.1,,,80279
+denver,Bennett,CO,rural,36.7,36.1,54.7,0.93414003,80102
+denver,Berkeley,CO,suburban,36.5,37.1,71.8,1.12141,80211
+denver,Bow Mar,CO,suburban,38.1,40.3,78.8,1.1972899,80123
+denver,Brighton,CO,suburban,45.2,46.6,50.0,0.88297999,80601
+denver,Broomfield,CO,suburban,44.7,42.5,74.2,1.14686,80020
+denver,Capitol Hill,CO,urban_residential,55.5,53.5,82.2,1.23441,80203
+denver,Castle Rock,CO,exurban,52.2,50.5,89.8,1.31803,80104
+denver,Centennial,CO,suburban,47.8,46.9,71.9,1.12275,80112
+denver,Cherry Creek,CO,suburban,41.4,39.9,83.1,1.24489,80206
+denver,Cherry Hills Village,CO,exurban,45.9,47.6,68.2,1.08158,80113
+denver,City Park,CO,suburban,42.6,41.4,83.1,1.24489,80206
+denver,Columbine,CO,suburban,44.5,48.1,91.0,1.33137,80128
+denver,Commerce City,CO,exurban,31.5,32.5,55.7,0.94550002,80640
+denver,Congress Park,CO,suburban,35.5,32.3,83.1,1.24489,80206
+denver,Dakota Ridge,CO,suburban,45.6,45.0,93.2,1.3549,80127
+denver,Downtown Denver,CO,urban_residential,56.8,55.8,80.8,1.21937,80202
+denver,Edgewater,CO,suburban,38.8,37.8,53.8,0.92398,80214
+denver,Elizabeth,CO,rural,49.8,47.8,77.7,1.18613,80107
+denver,Englewood,CO,exurban,44.7,42.4,54.5,0.93171,80110
+denver,Evergreen,CO,rural,66.0,69.3,,,80437
+denver,Five Points,CO,urban_residential,49.6,47.4,60.8,1.00026,80205
+denver,Foxfield,CO,exurban,25.6,23.8,75.2,1.1580499,80016
+denver,Franktown,CO,suburban,51.9,47.2,89.3,1.3124501,80116
+denver,Genesee,CO,rural,45.3,41.0,76.8,1.17554,80401
+denver,Glendale,CO,suburban,51.0,49.9,63.3,1.02865,80246
+denver,Golden,CO,exurban,51.2,48.3,76.8,1.17554,80401
+denver,Greenwood Village,CO,exurban,53.0,53.3,71.0,1.11224,80121
+denver,Highlands Ranch,CO,exurban,43.8,42.3,96.7,1.39297,80129
+denver,Highland,CO,suburban,36.5,37.1,71.8,1.12141,80211
+denver,Hilltop,CO,exurban,44.1,41.9,41.7,0.79198998,80216
+denver,Idledale,CO,rural,65.3,68.1,,,80453
+denver,Indian Hills,CO,rural,54.7,51.3,,,80454
+denver,Ken Caryl,CO,exurban,44.8,44.5,93.2,1.3549,80127
+denver,Lakewood,CO,exurban,48.6,46.1,56.9,0.95796001,80226
+denver,Littleton,CO,suburban,57.4,57.1,,,80201
+denver,LoDo,CO,urban_residential,56.9,56.0,80.8,1.21937,80202
+denver,Lone Tree,CO,exurban,40.2,39.4,91.0,1.33058,80124
+denver,Lowry,CO,suburban,39.0,35.7,64.1,1.03728,80230
+denver,Montclair,CO,suburban,42.4,40.1,57.7,0.96671999,80220
+denver,Morrison,CO,rural,43.5,43.5,89.5,1.31516,80465
+denver,Northglenn,CO,suburban,28.8,28.9,55.6,0.94414997,80233
+denver,Observatory Park,CO,suburban,57.6,57.3,,,80208
+denver,Park Hill,CO,suburban,35.2,35.4,36.0,0.72977,80219
+denver,Parker,CO,exurban,36.1,36.6,94.7,1.37133,80134
+denver,Perry Park,CO,rural,53.1,51.0,68.5,1.08464,80118
+denver,Platt Park,CO,suburban,49.3,47.6,84.7,1.26252,80210
+denver,RiNo,CO,suburban,46.0,43.9,41.7,0.79198998,80216
+denver,Roxborough Park,CO,exurban,42.0,42.8,95.8,1.38307,80125
+denver,Sedalia,CO,rural,43.2,37.6,69.0,1.09059,80135
+denver,Sheridan,CO,suburban,46.0,43.6,54.5,0.93171,80110
+denver,Sloans Lake,CO,suburban,36.9,36.4,66.5,1.06293,80212
+denver,Stapleton,CO,exurban,40.2,39.6,76.0,1.16739,80238
+denver,Sunnyside,CO,suburban,36.7,37.3,71.8,1.12141,80211
+denver,Thornton,CO,suburban,29.3,29.5,40.5,0.77851999,80229
+denver,Uptown,CO,urban_residential,57.6,57.1,,,80274
+denver,Washington Park,CO,suburban,42.6,42.7,92.7,1.35018,80209
+denver,Westminster,CO,suburban,32.9,31.4,42.7,0.80249,80030
+denver,Wheat Ridge,CO,suburban,40.8,38.5,61.3,1.00673,80033
+houston,Alief,TX,suburban,34.2,34.7,37.8,0.74918002,77082
+houston,Alvin,TX,exurban,44.2,45.5,43.2,0.80791003,77511
+houston,Angleton,TX,suburban,56.8,59.3,49.3,0.87550998,77515
+houston,Atascocita,TX,suburban,39.8,42.4,54.6,0.93327999,77346
+houston,Baytown,TX,suburban,44.0,44.6,29.9,0.66302001,77520
+houston,Bellaire,TX,suburban,63.9,64.2,61.4,1.00687,77401
+houston,Bunker Hill Village,TX,exurban,45.1,41.6,54.4,0.93098003,77024
+houston,Cinco Ranch,TX,suburban,34.4,32.3,,,25826
+houston,Clear Lake,TX,suburban,37.6,37.4,51.5,0.89858001,77062
+houston,Conroe,TX,exurban,48.8,48.3,28.5,0.64784002,77301
+houston,Deer Park,TX,suburban,46.6,47.1,49.1,0.87281001,77536
+houston,Dickinson,TX,exurban,45.8,47.6,42.0,0.79541999,77539
+houston,Downtown Houston,TX,suburban,50.2,47.6,38.3,0.75436997,77002
+houston,EaDo,TX,exurban,44.8,42.5,47.4,0.85420001,77003
+houston,Energy Corridor,TX,suburban,40.7,38.5,56.4,0.95252001,77079
+houston,Friendswood,TX,exurban,47.6,49.1,73.8,1.14308,77546
+houston,Fulshear,TX,rural,46.7,44.0,76.7,1.17422,77441
+houston,Galveston,TX,suburban,65.5,66.4,40.6,0.78017998,77550
+houston,Garden Oaks,TX,suburban,43.3,41.3,41.6,0.79049999,77018
+houston,Hedwig Village,TX,exurban,52.2,50.8,54.4,0.93098003,77024
+houston,Humble,TX,exurban,34.0,35.1,32.6,0.6925,77396
+houston,Hunters Creek Village,TX,exurban,58.9,59.5,54.4,0.93098003,77024
+houston,Jersey Village,TX,exurban,37.2,38.3,30.1,0.66531998,77040
+houston,Katy,TX,exurban,35.6,35.5,64.5,1.04111,77494
+houston,Kemah,TX,exurban,44.6,40.7,65.4,1.051,77565
+houston,Kingwood,TX,exurban,54.3,52.3,76.3,1.16993,77345
+houston,La Porte,TX,rural,36.9,37.3,49.0,0.87187999,77571
+houston,Lake Jackson,TX,exurban,47.2,47.7,57.0,0.9587,77566
+houston,League City,TX,exurban,46.1,47.0,59.9,0.99135,77573
+houston,Magnolia,TX,rural,43.3,44.7,,,77353
+houston,Manvel,TX,rural,32.3,31.5,57.5,0.96468002,77578
+houston,Meadows Place,TX,suburban,47.1,46.6,43.9,0.81585002,77477
+houston,Medical Center,TX,exurban,40.2,41.2,65.5,1.0527101,77030
+houston,Memorial,TX,exurban,39.1,39.6,67.7,1.07645,77007
+houston,Meyerland,TX,suburban,37.3,36.3,27.8,0.63945001,77096
+houston,Midtown,TX,suburban,44.3,45.8,,,77001
+houston,Mission Bend,TX,suburban,43.4,44.8,34.5,0.71267003,77083
+houston,Missouri City,TX,exurban,50.6,52.3,40.7,0.78084999,77489
+houston,Mont Belvieu,TX,rural,36.4,35.0,,,77580
+houston,Montgomery,TX,rural,44.0,41.5,71.4,1.11667,77356
+houston,Montrose,TX,suburban,48.2,46.0,73.9,1.1443599,77006
+houston,Museum District,TX,suburban,50.8,47.7,49.5,0.87671,77004
+houston,Oak Forest,TX,suburban,37.7,36.1,18.4,0.53749001,77092
+houston,Oak Ridge North,TX,rural,39.5,40.3,58.9,0.97991002,77385
+houston,Pasadena,TX,suburban,33.9,34.5,17.4,0.52653998,77506
+houston,Pearland,TX,exurban,51.9,50.5,49.2,0.87445998,77581
+houston,Piney Point Village,TX,exurban,59.2,59.7,54.4,0.93098003,77024
+houston,Rice Military,TX,suburban,37.9,38.0,67.7,1.07645,77007
+houston,Richmond,TX,exurban,43.4,45.0,,,44769
+houston,River Oaks,TX,exurban,45.1,43.7,65.3,1.04971,77019
+houston,Rosenberg,TX,exurban,47.7,49.9,41.0,0.78389001,77471
+houston,Seabrook,TX,exurban,40.5,39.4,64.2,1.03848,77586
+houston,Sharpstown,TX,suburban,27.9,28.0,5.3,0.39387,77036
+houston,Shenandoah,TX,exurban,51.4,48.3,62.9,1.02428,77381
+houston,Sienna,TX,suburban,30.1,30.9,39.8,0.77130002,77583
+houston,Southside Place,TX,suburban,52.8,50.9,71.0,1.11234,77005
+houston,Spring Branch,TX,suburban,41.5,40.1,35.7,0.72601002,77043
+houston,Spring Valley Village,TX,suburban,43.6,45.8,22.7,0.58412999,77055
+houston,Spring,TX,exurban,43.2,42.2,41.4,0.78816998,77373
+houston,Stafford,TX,exurban,47.7,47.7,43.9,0.81585002,77477
+houston,Sugar Land,TX,exurban,57.7,56.8,60.2,0.99394,77478
+houston,Texas City,TX,suburban,55.6,56.6,33.8,0.7051,77590
+houston,The Heights,TX,suburban,39.9,39.5,65.1,1.0473,77008
+houston,The Woodlands,TX,suburban,51.9,49.0,62.9,1.02428,77381
+houston,Third Ward,TX,suburban,54.7,52.7,49.5,0.87671,77004
+houston,Tomball,TX,exurban,42.3,41.0,54.4,0.93094999,77375
+houston,Upper Kirby,TX,suburban,44.0,45.4,,,77046
+houston,Uptown Galleria,TX,suburban,48.9,47.5,59.9,0.99141002,77056
+houston,Waller,TX,rural,39.9,38.0,36.8,0.73875999,77484
+houston,Washington Avenue,TX,suburban,38.1,38.3,67.7,1.07645,77007
+houston,Webster,TX,exurban,39.3,39.4,46.4,0.84364998,77598
+houston,West University Place,TX,suburban,56.4,55.6,71.0,1.11234,77005
+houston,Westchase,TX,suburban,34.7,33.9,30.5,0.66885,77042
+houston,Willis,TX,exurban,45.5,48.0,,,77305
+la,Agoura Hills,CA,suburban,59.0,62.1,85.4,1.26946,91301
+la,Alhambra,CA,urban_residential,51.9,56.9,,,91802
+la,Altadena,CA,suburban,46.1,47.9,48.2,0.86338001,91001
+la,Arcadia,CA,exurban,48.5,51.5,,,91066
+la,Arts District,CA,exurban,53.0,51.8,47.2,0.85220999,90013
+la,Atwater Village,CA,suburban,51.3,50.5,62.8,1.0229501,90039
+la,Bel Air,CA,rural,57.0,62.8,,,90095
+la,Belmont Shore,CA,suburban,46.8,44.2,82.1,1.23362,90803
+la,Beverly Hills,CA,suburban,54.3,58.6,56.3,0.95187998,90210
+la,Boyle Heights,CA,suburban,45.7,47.8,22.3,0.57968003,90033
+la,Brentwood,CA,suburban,50.3,54.5,,,90073
+la,Burbank,CA,unknown,50.6,48.4,56.6,0.95445001,91502
+la,Calabasas,CA,exurban,47.4,45.8,75.0,1.15635,91302
+la,Canoga Park,CA,suburban,46.3,49.1,32.9,0.69599003,91303
+la,Cerritos,CA,suburban,49.9,53.8,50.4,0.88757998,90715
+la,Chatsworth,CA,suburban,43.7,44.3,60.2,0.99418998,91311
+la,Chinatown LA,CA,suburban,52.9,57.8,,,90086
+la,Compton,CA,suburban,48.1,50.6,18.7,0.54000002,90220
+la,Crenshaw,CA,exurban,39.2,43.6,24.1,0.59943002,90303
+la,Culver City,CA,urban_residential,52.1,52.9,59.7,0.98846,90232
+la,Downey,CA,suburban,50.7,55.1,30.9,0.67387003,90805
+la,Downtown LA,CA,urban_residential,49.6,49.3,47.2,0.85220999,90013
+la,Eagle Rock,CA,suburban,51.2,51.5,67.5,1.07356,90041
+la,East Hollywood,CA,suburban,45.9,45.8,29.4,0.65767998,90029
+la,East Los Angeles,CA,suburban,51.3,56.0,20.1,0.55545998,90022
+la,Echo Park,CA,suburban,51.1,51.2,38.1,0.75291002,90026
+la,El Monte,CA,suburban,37.2,41.1,26.1,0.62158,91732
+la,El Segundo,CA,suburban,57.4,61.1,68.2,1.0821199,90245
+la,El Sereno,CA,suburban,45.7,46.8,36.5,0.73528999,90032
+la,Elysian Valley,CA,suburban,46.1,48.9,,,90851
+la,Encino,CA,suburban,46.5,48.4,74.9,1.1548899,91436
+la,Franklin Village,CA,exurban,44.6,43.5,62.4,1.01788,90027
+la,Frogtown,CA,suburban,46.1,48.9,,,90851
+la,Gardena,CA,suburban,44.4,46.7,35.0,0.71876001,90247
+la,Glassell Park,CA,suburban,47.1,47.5,41.0,0.78452998,90065
+la,Glendale,CA,suburban,52.9,51.0,,,91210
+la,Granada Hills,CA,suburban,49.2,51.6,63.5,1.02994,91344
+la,Hancock Park,CA,suburban,45.8,45.8,40.7,0.78079998,90038
+la,Hawthorne,CA,suburban,38.5,40.3,29.0,0.65331,90250
+la,Hermosa Beach,CA,suburban,52.9,54.0,96.2,1.38755,90254
+la,Hidden Hills,CA,exurban,50.7,53.8,75.0,1.15635,91302
+la,Highland Park,CA,suburban,49.3,48.9,44.2,0.81883001,90042
+la,Hollywood Hills,CA,exurban,43.6,40.5,81.7,1.22905,90068
+la,Hollywood,CA,urban_residential,44.4,43.2,60.0,0.99220002,90028
+la,Hyde Park,CA,suburban,43.4,44.3,30.0,0.66351998,90043
+la,Inglewood,CA,suburban,50.9,54.8,,,90306
+la,Koreatown,CA,urban_residential,52.6,57.6,55.3,0.94081998,90005
+la,La Cañada Flintridge,CA,exurban,62.2,65.1,77.1,1.17893,91011
+la,La Crescenta,CA,suburban,58.6,61.5,84.9,1.2647901,91214
+la,La Mirada,CA,suburban,45.7,47.5,50.6,0.88920999,90604
+la,Lakewood,CA,suburban,45.2,45.1,63.0,1.02476,90712
+la,Larchmont Village,CA,suburban,47.6,47.0,40.7,0.78079998,90038
+la,Leimert Park,CA,suburban,43.2,43.2,31.0,0.67466003,90008
+la,Little Tokyo,CA,urban_residential,48.1,48.2,47.2,0.85220999,90013
+la,Long Beach,CA,suburban,49.8,54.0,50.4,0.88704002,90802
+la,Los Feliz,CA,suburban,43.7,44.9,62.4,1.01788,90027
+la,Manhattan Beach,CA,suburban,53.4,55.7,85.0,1.2653,90266
+la,Mar Vista,CA,suburban,49.4,49.3,69.0,1.0907,90066
+la,Marina del Rey,CA,suburban,38.9,36.3,89.0,1.30963,90292
+la,Mid-City,CA,suburban,43.5,42.4,81.8,1.23062,90064
+la,Miracle Mile,CA,suburban,44.4,43.0,80.2,1.2131,90036
+la,Monrovia,CA,suburban,51.8,56.7,56.5,0.95393002,91016
+la,Montebello,CA,suburban,49.8,54.0,32.4,0.69046998,90640
+la,Monterey Park,CA,suburban,42.1,42.4,51.1,0.89438999,91754
+la,Mount Washington,CA,suburban,40.8,40.4,41.0,0.78452998,90065
+la,North Hollywood,CA,suburban,36.8,36.0,34.9,0.71727997,91606
+la,Pacific Palisades,CA,suburban,48.3,48.4,69.5,1.09594,90272
+la,Palms,CA,exurban,52.7,50.0,59.7,0.98846,90232
+la,Palos Verdes Estates,CA,suburban,55.5,56.0,81.3,1.22526,90274
+la,Pasadena,CA,suburban,37.6,35.2,,,91129
+la,Pico-Robertson,CA,suburban,56.4,58.0,81.5,1.22732,90035
+la,Playa Vista,CA,suburban,37.8,35.8,89.8,1.31829,90094
+la,Playa del Rey,CA,suburban,48.8,47.9,94.5,1.36901,90293
+la,Porter Ranch,CA,suburban,46.9,48.9,74.5,1.15084,91326
+la,Rancho Palos Verdes,CA,exurban,60.5,62.6,81.3,1.22526,90274
+la,Redondo Beach,CA,suburban,36.3,36.9,83.8,1.25244,90278
+la,Reseda,CA,suburban,44.9,46.5,39.0,0.76257002,91335
+la,Rolling Hills Estates,CA,exurban,53.4,57.2,81.3,1.22526,90274
+la,Rosemead,CA,suburban,58.9,65.0,46.5,0.84464002,91770
+la,San Fernando,CA,suburban,52.8,58.1,24.8,0.60689998,91340
+la,San Gabriel,CA,suburban,54.5,60.4,53.7,0.92295003,91776
+la,San Marino,CA,exurban,61.5,65.1,95.6,1.3812,91108
+la,San Pedro,CA,suburban,52.6,55.0,67.0,1.0687799,90732
+la,Santa Monica,CA,urban_residential,52.4,57.3,61.5,1.00793,90401
+la,Sherman Oaks,CA,suburban,42.6,43.3,80.1,1.21196,91403
+la,Signal Hill,CA,suburban,49.2,52.9,50.6,0.88931,90755
+la,Silver Lake,CA,suburban,50.7,50.6,38.1,0.75291002,90026
+la,Studio City,CA,suburban,44.2,43.0,86.0,1.2766,91604
+la,Sunland-Tujunga,CA,suburban,53.0,56.0,60.9,1.0022,91040
+la,Sylmar,CA,suburban,40.2,41.6,31.9,0.68519998,91342
+la,Tarzana,CA,suburban,50.2,52.3,65.0,1.04632,91356
+la,Temple City,CA,suburban,58.5,63.9,62.9,1.02349,91780
+la,Thousand Oaks,CA,suburban,48.8,52.5,70.8,1.1102999,91362
+la,Torrance,CA,suburban,56.0,61.9,72.7,1.13085,90503
+la,Van Nuys,CA,suburban,43.4,43.5,35.0,0.71832001,91411
+la,Venice,CA,suburban,48.9,48.0,73.5,1.13943,90291
+la,View Park,CA,suburban,44.5,44.9,44.2,0.81883001,90042
+la,Watts,CA,suburban,37.2,38.6,12.4,0.47132,90059
+la,West Hollywood,CA,urban_residential,41.8,42.5,81.8,1.23048,90046
+la,West LA,CA,suburban,46.1,42.5,64.1,1.03676,90067
+la,Westwood,CA,urban_residential,49.1,52.8,,,90095
+la,Whittier,CA,suburban,48.9,52.7,49.6,0.87786001,90601
+la,Wilmington,CA,suburban,40.8,41.2,,,90749
+la,Windsor Square,CA,suburban,43.2,40.4,55.3,0.94081998,90005
+la,Woodland Hills,CA,suburban,48.7,49.2,81.3,1.2246799,91364
+las_vegas,Aliante,NV,suburban,25.0,23.8,51.7,0.90108001,89084
+las_vegas,Anthem,NV,exurban,30.2,29.1,65.5,1.0526299,89052
+las_vegas,Arts District,NV,suburban,44.6,42.9,17.3,0.52508003,89106
+las_vegas,Blue Diamond,NV,rural,44.7,44.2,,,89004
+las_vegas,Boulder City,NV,suburban,65.6,65.6,60.1,0.99362999,89005
+las_vegas,Centennial Hills,NV,exurban,32.3,33.2,56.9,0.95837998,89149
+las_vegas,Downtown Las Vegas,NV,suburban,46.1,43.3,17.3,0.52484,89101
+las_vegas,Enterprise,NV,exurban,30.4,30.0,52.5,0.90967,89123
+las_vegas,Green Valley,NV,suburban,27.1,25.4,60.3,0.99515998,89074
+las_vegas,Henderson,NV,suburban,49.7,47.7,43.2,0.80861998,89015
+las_vegas,Indian Springs,NV,rural,37.1,36.9,,,89018
+las_vegas,Inspirada,NV,rural,33.8,32.1,,,89000
+las_vegas,Lake Las Vegas,NV,rural,33.8,31.9,,,89011
+las_vegas,Laughlin,NV,rural,34.4,33.2,,,86430
+las_vegas,MacDonald Highlands,NV,exurban,30.3,29.6,65.5,1.0519,89012
+las_vegas,Mesquite,NV,rural,54.4,55.7,37.8,0.74922001,89027
+las_vegas,Moapa Town,NV,rural,42.0,42.6,47.5,0.85576999,89040
+las_vegas,North Las Vegas,NV,suburban,35.6,34.7,7.6,0.41938001,89030
+las_vegas,Paradise,NV,exurban,43.3,44.9,,,89154
+las_vegas,Rhodes Ranch,NV,suburban,22.9,21.2,58.7,0.97788,89148
+las_vegas,Seven Hills,NV,suburban,30.5,28.9,65.5,1.0526299,89052
+las_vegas,Silverado Ranch,NV,exurban,29.6,29.1,52.5,0.90967,89123
+las_vegas,Southern Highlands,NV,exurban,22.7,20.8,65.3,1.0499099,89141
+las_vegas,Spring Valley,NV,suburban,30.0,29.9,49.6,0.87871999,89147
+las_vegas,Summerlin South,NV,exurban,44.3,41.7,71.3,1.11559,89135
+las_vegas,Summerlin,NV,suburban,48.2,44.8,67.1,1.06929,89134
+las_vegas,Sunrise Manor,NV,suburban,25.8,25.4,30.3,0.66715997,89156
+las_vegas,The Lakes,NV,suburban,39.8,40.7,,,89137
+las_vegas,Whitney,NV,suburban,24.4,23.9,29.3,0.65675998,89122
+las_vegas,Winchester,NV,suburban,32.1,32.0,26.1,0.62128001,89109
+miami,Aventura,FL,suburban,49.5,50.1,59.0,0.98093998,33180
+miami,Bal Harbour,FL,suburban,56.8,58.5,54.4,0.93116999,33154
+miami,Boca Raton,FL,suburban,49.9,48.0,54.8,0.93542999,33432
+miami,Boynton Beach,FL,suburban,51.7,51.2,23.3,0.59051001,33435
+miami,Brickell,FL,urban_residential,31.8,32.8,64.0,1.0360301,33131
+miami,Coconut Creek,FL,suburban,41.7,39.3,52.4,0.90851003,33066
+miami,Coconut Grove,FL,suburban,47.8,45.2,64.3,1.03861,33146
+miami,Cooper City,FL,suburban,56.6,57.4,65.7,1.05392,33328
+miami,Coral Gables,FL,suburban,50.8,49.2,64.3,1.03861,33146
+miami,Coral Springs,FL,suburban,44.7,43.3,42.9,0.80517,33065
+miami,Cutler Bay,FL,suburban,38.5,38.1,23.9,0.59705001,33189
+miami,Davie,FL,exurban,43.3,42.3,45.8,0.83634001,33314
+miami,Deerfield Beach,FL,suburban,35.1,36.0,48.1,0.86215001,33073
+miami,Delray Beach,FL,suburban,41.1,39.8,52.5,0.91030002,33483
+miami,Design District,FL,suburban,38.1,37.1,48.5,0.86607999,33137
+miami,Doral,FL,suburban,32.8,34.1,54.1,0.92699999,33178
+miami,Downtown Miami,FL,urban_residential,32.6,33.7,64.0,1.0360301,33131
+miami,Downtown West Palm Beach,FL,suburban,52.6,50.4,35.8,0.72691,33401
+miami,Edgewater,FL,suburban,35.0,33.2,48.5,0.86607999,33137
+miami,Flagler Village,FL,suburban,38.9,36.8,53.3,0.91823,33304
+miami,Fort Lauderdale,FL,suburban,48.4,45.6,60.8,1.00034,33301
+miami,Golden Beach,FL,suburban,32.3,31.0,49.8,0.87998998,33160
+miami,Hialeah,FL,suburban,31.0,29.1,2.5,0.36320999,33010
+miami,Hollywood,FL,suburban,43.4,41.0,40.9,0.78321999,33020
+miami,Homestead,FL,suburban,48.9,48.6,6.7,0.40943,33030
+miami,Juno Beach,FL,exurban,50.1,47.1,60.7,0.99921,33408
+miami,Jupiter,FL,suburban,57.1,58.5,44.0,0.81726003,33458
+miami,Kendall,FL,suburban,47.4,46.9,49.6,0.87779999,33156
+miami,Key Biscayne,FL,suburban,57.4,58.2,45.9,0.83815002,33149
+miami,Lake Worth Beach,FL,suburban,44.4,43.0,19.2,0.54618001,33460
+miami,Las Olas,FL,suburban,51.1,49.0,60.8,1.00034,33301
+miami,Lauderhill,FL,suburban,29.7,29.6,19.5,0.54936999,33313
+miami,Little Havana,FL,suburban,30.8,28.3,10.3,0.44859001,33135
+miami,Medley,FL,exurban,43.0,40.1,32.9,0.69593,33166
+miami,Miami Gardens,FL,suburban,35.6,37.2,15.3,0.50261998,33056
+miami,Mid-Beach,FL,suburban,41.2,39.3,47.9,0.85955,33140
+miami,Midtown Miami,FL,urban_residential,37.3,35.6,48.5,0.86607999,33137
+miami,Miramar,FL,suburban,39.4,41.5,25.3,0.61233002,33023
+miami,Morningside,FL,suburban,34.4,32.2,48.5,0.86607999,33137
+miami,North Beach,FL,suburban,34.9,34.4,44.7,0.82427001,33141
+miami,North Miami Beach,FL,suburban,41.1,41.5,24.8,0.60712999,33162
+miami,North Miami,FL,suburban,40.4,38.5,23.9,0.59745997,33161
+miami,Northwood,FL,suburban,34.3,35.4,,,33049
+miami,Palm Beach Gardens,FL,exurban,43.8,40.6,60.9,1.00166,33418
+miami,Palm Beach,FL,exurban,48.3,46.3,42.4,0.79966003,33480
+miami,Palmetto Bay,FL,exurban,30.0,29.9,23.5,0.59328002,33157
+miami,Parkland,FL,exurban,43.8,40.4,61.3,1.0059,33067
+miami,Pembroke Pines,FL,suburban,40.5,38.7,41.6,0.79031998,33025
+miami,Pinecrest,FL,exurban,47.8,47.9,49.6,0.87779999,33156
+miami,Plantation,FL,exurban,43.7,42.5,34.0,0.70754999,33317
+miami,Pompano Beach,FL,suburban,46.4,45.5,21.4,0.56998998,33060
+miami,Rio Vista,FL,suburban,41.9,39.3,50.4,0.88749999,33316
+miami,Royal Palm Beach,FL,suburban,38.9,38.7,38.7,0.75888002,33411
+miami,South Beach,FL,urban_residential,47.5,46.3,28.0,0.64251,33139
+miami,Southwest Ranches,FL,exurban,53.5,52.5,68.5,1.0855401,33330
+miami,Sunny Isles Beach,FL,suburban,37.6,38.1,49.8,0.87998998,33160
+miami,Sunrise,FL,suburban,37.0,34.6,45.2,0.83046001,33351
+miami,Surfside,FL,suburban,43.1,40.7,54.4,0.93116999,33154
+miami,Sweetwater,FL,suburban,39.4,38.2,26.1,0.62106001,33174
+miami,Tamarac,FL,suburban,28.4,26.2,46.5,0.84451002,33321
+miami,Tequesta,FL,exurban,55.2,53.6,65.6,1.05279,33469
+miami,The Hammocks,FL,suburban,33.8,34.9,,,33196
+miami,Upper East Side,FL,suburban,35.0,36.5,,,33101
+miami,Victoria Park,FL,suburban,49.7,47.2,60.8,1.00034,33301
+miami,Wellington,FL,suburban,44.6,45.1,49.8,0.88036001,33414
+miami,Weston,FL,exurban,43.7,44.8,84.7,1.2625999,33327
+miami,Wynwood,FL,suburban,40.9,40.7,9.0,0.43415001,33127
+nyc,Ardsley,NY,suburban,66.0,67.0,70.0,1.1015,10502
+nyc,Astoria,NY,urban_residential,52.5,53.9,50.8,0.89131999,11102
+nyc,Babylon,NY,suburban,61.6,64.3,93.3,1.35633,11702
+nyc,Battery Park City,NY,urban_residential,52.1,57.2,,,10281
+nyc,Bay Ridge,NY,urban_residential,55.7,57.5,57.6,0.96572,11209
+nyc,Bayside,NY,suburban,49.9,53.0,72.7,1.1304899,11361
+nyc,Bed-Stuy,NY,urban_residential,54.7,54.6,43.4,0.81022,11216
+nyc,Bedford,NY,rural,59.5,59.2,,,10506
+nyc,Bellmore,NY,suburban,63.2,67.8,86.4,1.28117,11710
+nyc,Belmont,NY,urban_residential,39.6,41.5,28.7,0.64950001,10458
+nyc,Bensonhurst,NY,urban_residential,51.8,56.0,42.2,0.79708999,11214
+nyc,Bloomfield,NJ,suburban,46.9,49.4,44.9,0.82730001,07003
+nyc,Boerum Hill,NY,urban_residential,45.8,47.7,46.1,0.83971,11217
+nyc,Borough Park,NY,urban_residential,41.1,42.2,33.5,0.70204002,11219
+nyc,Brighton Beach,NY,urban_residential,52.9,56.9,55.5,0.94300997,11235
+nyc,Bronxville,NY,suburban,50.7,53.1,66.2,1.0603,10708
+nyc,Brooklyn Heights,NY,urban_residential,46.8,49.0,49.8,0.88002002,11201
+nyc,Bushwick,NY,urban_residential,53.0,55.2,28.8,0.65065002,11237
+nyc,Canarsie,NY,urban_residential,40.6,44.1,38.6,0.75795001,11236
+nyc,Carnegie Hill,NY,urban_residential,54.7,56.7,70.0,1.1015,10128
+nyc,Carroll Gardens,NY,urban_residential,54.7,55.6,42.0,0.79536998,11231
+nyc,Cedarhurst,NY,suburban,59.0,64.5,55.0,0.93711001,11516
+nyc,Chappaqua,NY,exurban,54.1,59.9,77.1,1.17864,10514
+nyc,Chatham,NJ,suburban,49.7,51.1,99.3,1.42154,07928
+nyc,Chelsea,NY,urban_residential,52.1,57.2,61.9,1.01316,10011
+nyc,Chinatown,NY,urban_residential,50.3,53.3,63.0,1.02469,10013
+nyc,City Island,NY,suburban,51.1,53.3,65.9,1.05633,10464
+nyc,Clinton Hill,NY,urban_residential,51.2,51.8,40.7,0.78127998,11205
+nyc,Closter,NJ,exurban,61.0,67.1,80.5,1.21589,07624
+nyc,Cobble Hill,NY,urban_residential,49.8,50.5,49.8,0.88002002,11201
+nyc,Cold Spring Harbor,NY,exurban,62.9,64.6,,,11724
+nyc,Coney Island,NY,urban_residential,43.6,47.5,39.7,0.77038002,11224
+nyc,Cos Cob,CT,suburban,51.3,53.9,,,06807
+nyc,Cranford,NJ,suburban,66.5,70.1,82.4,1.2373,07016
+nyc,Cresskill,NJ,suburban,59.1,64.5,94.7,1.37182,07626
+nyc,Croton-on-Hudson,NY,exurban,66.3,67.9,57.9,0.96856999,10520
+nyc,Crown Heights,NY,urban_residential,47.0,47.7,40.8,0.78153998,11213
+nyc,DUMBO,NY,urban_residential,51.7,56.4,,,11242
+nyc,Darien,CT,rural,49.9,52.8,58.8,0.97864002,06820
+nyc,Demarest,NJ,exurban,65.5,69.6,,,07627
+nyc,Ditmas Park,NY,urban_residential,47.1,49.4,38.4,0.75531,11226
+nyc,Dobbs Ferry,NY,suburban,62.9,63.2,68.4,1.08438,10522
+nyc,East Harlem,NY,urban_residential,48.7,51.2,49.8,0.88010001,10029
+nyc,East New York,NY,urban_residential,37.9,39.2,30.2,0.66650999,11208
+nyc,East Village,NY,urban_residential,50.0,52.7,32.8,0.69476998,10003
+nyc,Eastchester,NY,suburban,34.9,36.7,50.5,0.88764,10475
+nyc,Edgewater,NJ,suburban,38.6,37.8,81.3,1.2253,07020
+nyc,Elmhurst,NY,urban_residential,49.6,53.7,30.5,0.66971999,11373
+nyc,Englewood,NJ,suburban,53.3,56.1,,,07361
+nyc,Fairfield,CT,suburban,56.9,57.3,70.1,1.1023099,06824
+nyc,Fieldston,NY,suburban,51.6,53.2,64.0,1.03534,10471
+nyc,Financial District,NY,urban_residential,50.6,54.3,,,10045
+nyc,Flatbush,NY,urban_residential,49.8,51.1,38.4,0.75531,11226
+nyc,Flatiron,NY,urban_residential,54.3,55.6,50.7,0.89003998,10010
+nyc,Flatlands,NY,suburban,46.3,48.7,51.1,0.8951,11234
+nyc,Floral Park,NY,suburban,58.8,63.7,75.3,1.1592799,11001
+nyc,Flushing,NY,suburban,43.8,43.9,52.6,0.91109997,11354
+nyc,Fordham,NY,suburban,39.7,41.6,28.7,0.64950001,10458
+nyc,Forest Hills,NY,urban_residential,51.4,54.9,72.0,1.12345,11375
+nyc,Fort Greene,NY,urban_residential,34.6,32.9,52.5,0.90987003,11238
+nyc,Fort Lee,NJ,suburban,52.3,56.6,80.4,1.2155,07024
+nyc,Freeport,NY,suburban,55.2,61.0,46.1,0.83960998,11520
+nyc,Garden City,NY,suburban,60.3,64.9,85.9,1.27547,11530
+nyc,Glen Ridge,NJ,suburban,66.4,69.1,,,07028
+nyc,Glen Rock,NJ,suburban,65.2,68.0,100.0,1.43462,07452
+nyc,Glendale,NY,rural,40.5,38.4,39.6,0.76883,11385
+nyc,Gowanus,NY,urban_residential,52.4,51.8,46.1,0.83971,11217
+nyc,Gramercy Park,NY,urban_residential,51.4,54.9,50.7,0.89003998,10010
+nyc,Great Kills,NY,suburban,52.3,55.5,80.8,1.22006,10308
+nyc,Great Neck,NY,suburban,60.8,67.2,88.3,1.30209,11023
+nyc,Greenpoint,NY,urban_residential,47.4,49.8,70.0,1.10111,11222
+nyc,Greenwich Village,NY,urban_residential,53.4,56.6,63.9,1.03418,10012
+nyc,Greenwich,CT,exurban,58.2,59.3,56.5,0.95367998,06830
+nyc,Hamilton Heights,NY,urban_residential,51.0,52.3,37.6,0.74668002,10031
+nyc,Harlem,NY,urban_residential,53.8,55.3,41.1,0.78485,10027
+nyc,Harrison,NY,exurban,62.8,68.0,74.2,1.14783,10528
+nyc,Hastings-on-Hudson,NY,suburban,69.6,71.2,68.1,1.08033,10706
+nyc,Hell's Kitchen,NY,urban_residential,50.5,52.2,57.6,0.96551001,10036
+nyc,Hempstead,NY,suburban,47.4,51.0,36.9,0.73903,11550
+nyc,Hewlett,NY,suburban,53.1,58.6,85.2,1.26783,11557
+nyc,Hoboken,NJ,urban_residential,60.7,64.8,76.8,1.17626,07030
+nyc,Howard Beach,NY,urban_residential,54.9,57.3,69.3,1.09349,11414
+nyc,Huntington,NY,suburban,59.5,61.1,73.2,1.13629,11743
+nyc,Hunts Point,NY,suburban,38.3,39.9,26.0,0.61975002,10474
+nyc,Inwood,NY,urban_residential,46.2,47.4,32.9,0.69578999,10034
+nyc,Irvington,NY,exurban,45.1,47.1,82.1,1.23409,10533
+nyc,Jackson Heights,NY,urban_residential,46.5,48.0,29.1,0.65446001,11372
+nyc,Jamaica,NY,urban_residential,45.2,47.8,35.8,0.72697002,11435
+nyc,Jersey City,NJ,urban_residential,48.5,48.4,70.2,1.10378,07302
+nyc,Katonah,NY,rural,40.6,40.9,72.9,1.1336,10536
+nyc,Kensington,NY,urban_residential,56.5,58.0,38.3,0.75493002,11218
+nyc,Kew Gardens,NY,urban_residential,44.2,44.7,53.5,0.92070001,11415
+nyc,Kips Bay,NY,urban_residential,56.8,61.2,65.5,1.0517499,10016
+nyc,Larchmont,NY,suburban,56.1,58.8,71.1,1.11366,10538
+nyc,Lawrence,NY,exurban,56.7,62.8,42.0,0.79465997,11559
+nyc,Leonia,NJ,suburban,60.3,66.3,72.9,1.13309,07605
+nyc,Little Italy,NY,urban_residential,49.1,51.8,63.0,1.02469,10013
+nyc,Long Beach,NY,suburban,59.3,64.1,86.5,1.2819,11561
+nyc,Long Island City,NY,urban_residential,46.8,47.1,,,11109
+nyc,Lower East Side,NY,urban_residential,55.3,58.6,48.2,0.86277997,10002
+nyc,Lynbrook,NY,suburban,62.3,66.9,79.8,1.20868,11563
+nyc,Madison,NJ,suburban,51.3,53.2,74.8,1.1537499,07940
+nyc,Malverne,NY,suburban,60.3,64.3,92.0,1.34165,11565
+nyc,Mamaroneck,NY,suburban,56.3,59.0,71.1,1.11366,10538
+nyc,Manhasset,NY,exurban,54.7,58.8,80.4,1.2148499,11030
+nyc,Manhattanville,NY,urban_residential,54.5,56.1,41.1,0.78485,10027
+nyc,Maplewood,NJ,suburban,67.4,65.5,50.3,0.88573998,07040
+nyc,Maspeth,NY,unknown,26.7,29.1,51.2,0.89591998,11378
+nyc,Merrick,NY,suburban,63.6,67.4,85.1,1.2668,11566
+nyc,Midtown East,NY,urban_residential,39.2,38.8,,,10152
+nyc,Midtown,NY,urban_core,71.0,73.0,,,10110
+nyc,Millburn,NJ,suburban,49.0,50.0,49.9,0.88115001,07041
+nyc,Mineola,NY,suburban,57.2,61.3,72.4,1.1277699,11501
+nyc,Montclair,NJ,suburban,64.6,64.2,53.5,0.92104,07042
+nyc,Morningside Heights,NY,urban_residential,50.3,54.6,,,10115
+nyc,Morris Park,NY,urban_residential,40.8,42.7,39.4,0.76635998,10469
+nyc,Morristown,NJ,suburban,48.4,49.3,,,07961
+nyc,Mott Haven,NY,urban_residential,42.7,45.4,27.0,0.63121998,10454
+nyc,Mount Kisco,NY,suburban,58.6,63.5,38.7,0.75923997,10549
+nyc,Mount Vernon,NY,urban_residential,47.4,50.6,39.3,0.76516998,10550
+nyc,Murray Hill,NY,urban_residential,56.5,60.8,65.5,1.0517499,10016
+nyc,New Canaan,CT,exurban,56.6,60.8,68.0,1.0790499,06840
+nyc,New Dorp,NY,urban_residential,57.0,61.3,68.6,1.08585,10306
+nyc,New Hyde Park,NY,suburban,58.5,64.2,93.6,1.35905,11040
+nyc,New Rochelle,NY,suburban,43.0,44.4,39.2,0.76472998,10801
+nyc,NoHo,NY,urban_residential,52.4,55.2,63.9,1.03418,10012
+nyc,Nolita,NY,urban_residential,51.3,53.9,63.9,1.03418,10012
+nyc,Norwalk,CT,suburban,56.1,58.5,40.1,0.77401,06855
+nyc,Nyack,NY,exurban,62.0,62.1,53.4,0.91949999,10960
+nyc,Oceanside,NY,suburban,65.4,70.5,86.5,1.28146,11572
+nyc,Old Greenwich,CT,suburban,54.0,56.8,,,06870
+nyc,Ossining,NY,suburban,58.3,62.9,27.9,0.64045,10562
+nyc,Ozone Park,NY,urban_residential,45.0,49.6,42.1,0.79574001,11417
+nyc,Park Slope,NY,urban_residential,44.4,45.9,63.5,1.03,11215
+nyc,Peekskill,NY,suburban,54.9,57.7,30.5,0.66895002,10566
+nyc,Pelham Bay,NY,rural,49.3,50.5,43.8,0.81462002,10461
+nyc,Pelham Manor,NY,suburban,53.1,56.9,68.3,1.08267,10803
+nyc,Pelham,NY,suburban,67.9,69.5,68.3,1.08267,10803
+nyc,Pleasantville,NY,suburban,66.1,69.0,69.7,1.09857,10570
+nyc,Port Chester,NY,suburban,53.1,59.5,32.2,0.68818998,10573
+nyc,Port Washington,NY,suburban,66.0,68.7,88.8,1.3070101,11050
+nyc,Prospect Heights,NY,urban_residential,54.3,53.2,52.5,0.90987003,11238
+nyc,Red Hook,NY,urban_residential,54.7,55.6,42.0,0.79536998,11231
+nyc,Rego Park,NY,urban_residential,53.6,57.1,69.1,1.0919501,11374
+nyc,Richmond Hill,NY,urban_residential,45.6,47.9,38.1,0.75212997,11418
+nyc,Ridgewood,NJ,suburban,64.1,64.7,,,07451
+nyc,Ridgewood,NY,urban_residential,36.2,38.0,39.6,0.76883,11385
+nyc,Riverdale,NY,suburban,48.8,49.7,64.0,1.03534,10471
+nyc,Riverside,CT,exurban,49.4,52.9,,,06878
+nyc,Rockaway Beach,NY,suburban,50.0,53.1,45.4,0.83240998,11693
+nyc,Rockville Centre,NY,suburban,66.6,69.8,80.7,1.21802,11570
+nyc,Roslyn,NY,exurban,47.1,49.9,70.2,1.10361,11576
+nyc,Rye,NY,suburban,57.3,58.9,70.8,1.10983,10580
+nyc,Scarsdale,NY,exurban,53.5,54.6,73.1,1.13528,10583
+nyc,Sheepshead Bay,NY,urban_residential,53.9,58.2,55.5,0.94300997,11235
+nyc,Short Hills,NJ,suburban,57.5,59.1,62.4,1.01831,07078
+nyc,Sleepy Hollow,NY,urban_residential,43.1,44.5,42.6,0.80180001,10591
+nyc,SoHo,NY,urban_residential,52.8,55.6,63.9,1.03418,10012
+nyc,South Orange,NJ,suburban,66.0,62.4,55.8,0.94637001,07079
+nyc,Southport,CT,unknown,52.0,49.6,,,06890
+nyc,St. George,NY,suburban,47.5,49.1,37.8,0.74927002,10301
+nyc,Stamford,CT,suburban,50.7,50.9,31.9,0.68484002,06902
+nyc,Stapleton,NY,suburban,49.0,51.0,37.8,0.74927002,10301
+nyc,Summit,NJ,suburban,50.5,52.2,46.1,0.84035999,07901
+nyc,Sunnyside,NY,urban_residential,51.4,53.7,50.0,0.88313001,11101
+nyc,Sunset Park,NY,urban_residential,44.5,46.0,24.9,0.60855001,11220
+nyc,Tarrytown,NY,suburban,57.3,61.1,42.6,0.80180001,10591
+nyc,Tenafly,NJ,exurban,61.2,65.8,82.8,1.24157,07670
+nyc,Tottenville,NY,suburban,56.6,60.4,75.9,1.16608,10307
+nyc,Tremont,NY,urban_residential,39.0,40.6,28.7,0.64950001,10458
+nyc,Tribeca,NY,urban_residential,49.2,51.7,52.1,0.90600002,10007
+nyc,Tuckahoe,NY,suburban,63.8,66.5,69.2,1.09235,10707
+nyc,Turtle Bay,NY,urban_residential,51.2,54.0,66.8,1.06655,10017
+nyc,Upper East Side,NY,urban_residential,51.8,54.0,81.2,1.22396,10028
+nyc,Upper West Side,NY,urban_residential,50.8,51.4,63.5,1.03049,10024
+nyc,Valley Stream,NY,suburban,54.3,59.4,70.8,1.11011,11580
+nyc,Washington Heights,NY,urban_residential,47.7,48.8,35.2,0.72114998,10032
+nyc,Weehawken,NJ,suburban,42.6,42.5,66.6,1.06455,07086
+nyc,West Orange,NJ,exurban,55.6,56.7,41.6,0.79051,07052
+nyc,West Village,NY,urban_residential,54.2,57.5,70.4,1.10579,10014
+nyc,Westfield,NJ,suburban,70.9,73.6,87.2,1.28958,07090
+nyc,Weston,CT,rural,61.3,59.5,,,06883
+nyc,Westport,CT,rural,49.7,50.8,62.3,1.01763,06880
+nyc,Westwood,NJ,suburban,66.1,70.3,82.2,1.23446,07642
+nyc,White Plains,NY,suburban,42.6,43.7,50.4,0.88735998,10601
+nyc,Williamsburg,NY,urban_residential,52.5,57.8,,,11249
+nyc,Wilton,CT,rural,53.7,54.5,77.5,1.18355,06897
+nyc,Windsor Terrace,NY,urban_residential,43.0,44.1,63.5,1.03,11215
+nyc,Woodmere,NY,suburban,59.7,65.2,74.9,1.1554199,11598
+nyc,Woodside,NY,urban_residential,53.5,56.6,43.6,0.81217003,11377
+nyc,Yonkers,NY,urban_residential,42.5,43.7,38.8,0.75993001,10701
+nyc,Yorktown Heights,NY,exurban,70.7,73.6,80.0,1.21066,10598
+nyc,Yorkville,NY,urban_residential,54.1,56.0,70.0,1.1015,10128
+orlando,Altamonte Springs,FL,suburban,38.6,37.9,41.7,0.79206997,32714
+orlando,Apopka,FL,suburban,50.5,50.9,29.9,0.66292,32703
+orlando,Audubon Park,FL,suburban,34.2,31.7,84.8,1.26326,32814
+orlando,Avalon Park,FL,suburban,31.3,30.2,56.0,0.94822001,32828
+orlando,Baldwin Park,FL,suburban,33.5,30.9,84.8,1.26326,32814
+orlando,Belle Isle,FL,exurban,39.6,40.1,38.5,0.75698,32812
+orlando,Casselberry,FL,exurban,43.1,42.7,48.8,0.86930001,32707
+orlando,Celebration,FL,exurban,34.1,35.3,,,34757
+orlando,Clermont,FL,suburban,35.3,36.9,,,32711
+orlando,College Park,FL,suburban,45.8,42.0,56.5,0.95328999,32804
+orlando,Conway,FL,suburban,35.3,34.0,38.5,0.75698,32812
+orlando,Downtown Orlando,FL,exurban,50.9,47.9,55.1,0.93836999,32801
+orlando,Dr. Phillips,FL,suburban,51.1,48.3,55.1,0.93836999,32801
+orlando,Edgewood,FL,suburban,43.4,42.5,18.0,0.5327,32809
+orlando,Eustis,FL,exurban,54.5,56.0,29.4,0.65695,32726
+orlando,Fruitland Park,FL,exurban,59.7,60.5,28.8,0.65051001,34731
+orlando,Groveland,FL,rural,45.8,45.5,39.0,0.76200002,34736
+orlando,Kissimmee,FL,suburban,41.0,39.2,31.6,0.68128002,34741
+orlando,Lady Lake,FL,exurban,47.1,48.1,32.8,0.69467998,32159
+orlando,Lake Eola Heights,FL,suburban,49.1,47.1,67.6,1.07556,32803
+orlando,Lake Mary,FL,exurban,44.3,43.0,56.9,0.95845997,32746
+orlando,Lake Nona,FL,rural,27.8,25.1,62.4,1.01835,32827
+orlando,Leesburg,FL,exurban,55.9,56.6,18.5,0.53793001,34748
+orlando,Longwood,FL,suburban,49.1,46.7,49.0,0.87177002,32750
+orlando,Maitland,FL,exurban,46.9,43.8,58.5,0.97514999,32751
+orlando,Mills 50,FL,suburban,48.2,46.1,67.6,1.07556,32803
+orlando,Minneola,FL,exurban,49.6,49.7,53.1,0.91657001,34711
+orlando,Montverde,FL,rural,51.7,48.4,51.0,0.89415002,34756
+orlando,Mount Dora,FL,exurban,49.1,49.4,34.9,0.71727997,32757
+orlando,Oakland,FL,exurban,38.7,38.8,56.5,0.95390999,34787
+orlando,Ocoee,FL,suburban,46.5,47.1,34.2,0.70932001,34761
+orlando,Oviedo,FL,exurban,49.3,48.8,58.9,0.98039001,32765
+orlando,Pine Hills,FL,suburban,34.8,35.5,11.6,0.46278,32808
+orlando,Sanford,FL,suburban,53.5,54.5,37.3,0.74414998,32771
+orlando,St. Cloud,FL,exurban,48.1,47.7,37.3,0.74428999,34769
+orlando,Tavares,FL,exurban,53.3,53.7,34.9,0.71775001,32778
+orlando,Thornton Park,FL,suburban,51.0,48.3,55.1,0.93836999,32801
+orlando,Union Park,FL,suburban,37.9,38.8,40.1,0.77389997,32825
+orlando,Waterford Lakes,FL,suburban,34.2,33.9,56.0,0.94822001,32828
+orlando,Windermere,FL,exurban,51.0,51.3,73.2,1.13591,34786
+orlando,Winter Garden,FL,suburban,43.3,44.2,56.5,0.95390999,34787
+orlando,Winter Park,FL,suburban,55.2,53.6,62.6,1.01995,32789
+orlando,Winter Springs,FL,suburban,41.2,39.9,55.2,0.93905002,32708
+philadelphia,Ambler,PA,suburban,60.2,61.0,75.3,1.15961,19002
+philadelphia,Ardmore,PA,suburban,56.4,54.3,78.4,1.19285,19003
+philadelphia,Bella Vista,PA,urban_residential,50.8,48.7,55.9,0.94704002,19147
+philadelphia,Blue Bell,PA,exurban,60.6,61.7,83.2,1.2459199,19422
+philadelphia,Brewerytown,PA,urban_residential,39.4,39.9,34.1,0.70839,19121
+philadelphia,Bristol,PA,exurban,48.0,49.9,54.9,0.93618,19007
+philadelphia,Bryn Mawr,PA,exurban,51.1,47.1,85.4,1.27039,19010
+philadelphia,Burlington,NJ,suburban,54.2,55.3,52.3,0.90801001,08016
+philadelphia,Camden,NJ,suburban,48.8,48.1,17.8,0.52996999,08102
+philadelphia,Cedar Park,PA,suburban,48.2,47.3,81.5,1.22675,19103
+philadelphia,Center City,PA,suburban,47.4,44.3,,,19110
+philadelphia,Cherry Hill,NJ,suburban,61.5,62.2,59.5,0.98637003,08002
+philadelphia,Chester,PA,suburban,48.2,53.2,20.1,0.55589998,19013
+philadelphia,Chestnut Hill,PA,suburban,62.3,61.2,65.6,1.0530699,19118
+philadelphia,Collegeville,PA,suburban,58.8,58.9,86.4,1.28052,19426
+philadelphia,Collingswood,NJ,suburban,60.0,59.3,78.7,1.1967,08108
+philadelphia,Conshohocken,PA,suburban,47.2,48.5,87.1,1.2883101,19428
+philadelphia,Downingtown,PA,suburban,60.7,60.3,80.4,1.2150199,19335
+philadelphia,Doylestown,PA,suburban,67.9,68.4,91.8,1.34,18901
+philadelphia,Drexel Hill,PA,suburban,43.9,45.0,62.8,1.02256,19026
+philadelphia,East Falls,PA,suburban,37.5,34.6,34.6,0.71463001,19144
+philadelphia,East Passyunk,PA,urban_residential,45.7,47.0,48.6,0.86729002,19145
+philadelphia,Elkins Park,PA,suburban,51.0,48.5,61.5,1.00807,19027
+philadelphia,Elkton,MD,exurban,42.1,40.4,,,21922
+philadelphia,Exton,PA,rural,43.7,40.0,88.1,1.29978,19341
+philadelphia,Fairmount,PA,urban_residential,53.2,52.6,70.8,1.1096801,19130
+philadelphia,Fishtown,PA,urban_residential,52.9,53.3,62.8,1.02262,19125
+philadelphia,Fitler Square,PA,urban_residential,42.9,44.5,55.8,0.94664001,19146
+philadelphia,Fox Chase,PA,suburban,26.8,27.1,36.7,0.73742002,19111
+philadelphia,Francisville,PA,urban_residential,57.7,58.6,70.8,1.1096801,19130
+philadelphia,Frankford,PA,suburban,22.4,23.6,22.3,0.57989001,19124
+philadelphia,Germantown,PA,suburban,38.2,35.6,34.6,0.71463001,19144
+philadelphia,Glassboro,NJ,exurban,60.1,61.5,52.0,0.90470999,08028
+philadelphia,Glenside,PA,suburban,58.6,58.7,77.3,1.18083,19038
+philadelphia,Graduate Hospital,PA,suburban,34.2,33.1,55.8,0.94664001,19146
+philadelphia,Haddonfield,NJ,exurban,57.9,56.8,91.8,1.3399301,08033
+philadelphia,Haverford,PA,exurban,52.5,49.7,78.4,1.19285,19003
+philadelphia,Havertown,PA,suburban,73.1,75.1,87.6,1.29405,19083
+philadelphia,Hockessin,DE,exurban,63.1,62.2,80.8,1.21972,19707
+philadelphia,Jenkintown,PA,suburban,60.4,59.3,75.9,1.16631,19046
+philadelphia,Kennett Square,PA,suburban,58.3,59.5,35.9,0.72855002,19348
+philadelphia,Kensington,PA,suburban,30.5,30.5,16.5,0.51593,19133
+philadelphia,King of Prussia,PA,exurban,52.6,52.0,68.9,1.08946,19406
+philadelphia,Kingsessing,PA,suburban,39.1,37.6,36.1,0.73043001,19143
+philadelphia,Langhorne,PA,exurban,48.8,49.3,74.3,1.14815,19047
+philadelphia,Lansdale,PA,suburban,56.1,56.4,74.3,1.1483001,19446
+philadelphia,Levittown,PA,suburban,42.4,46.3,58.0,0.97062999,19055
+philadelphia,Malvern,PA,exurban,54.1,53.0,67.9,1.0781,19355
+philadelphia,Manayunk,PA,suburban,47.7,44.7,,,19427
+philadelphia,Marlton,NJ,suburban,55.9,58.7,86.8,1.28468,08053
+philadelphia,Mayfair,PA,urban_residential,31.1,31.0,37.0,0.74032998,19136
+philadelphia,Medford,NJ,exurban,60.6,60.9,86.1,1.27721,08055
+philadelphia,Media,PA,suburban,58.7,57.5,78.9,1.19927,19063
+philadelphia,Moorestown,NJ,exurban,67.0,69.1,71.7,1.1197701,08057
+philadelphia,Mount Airy,PA,suburban,50.5,45.7,48.6,0.86760998,19119
+philadelphia,Mount Laurel,NJ,exurban,48.5,49.2,72.9,1.13282,08054
+philadelphia,Narberth,PA,suburban,57.6,54.5,100.0,1.43657,19072
+philadelphia,Newark,DE,suburban,54.6,52.9,63.4,1.02965,19711
+philadelphia,Newtown Square,PA,exurban,56.8,57.9,85.5,1.27141,19008
+philadelphia,Newtown,PA,suburban,59.1,58.9,92.2,1.3439,18940
+philadelphia,Norristown,PA,suburban,42.8,44.9,37.3,0.74365002,19401
+philadelphia,Northern Liberties,PA,urban_residential,46.3,45.9,54.3,0.92978001,19123
+philadelphia,Old City,PA,suburban,52.6,49.4,80.5,1.21583,19106
+philadelphia,Overbrook,PA,suburban,34.9,35.8,36.2,0.73185998,19151
+philadelphia,Packer Park,PA,suburban,45.0,46.6,48.6,0.86729002,19145
+philadelphia,Pennsauken,NJ,suburban,51.2,55.1,27.0,0.63066,08110
+philadelphia,Pennsport,PA,urban_residential,52.0,50.3,55.9,0.94704002,19147
+philadelphia,Phoenixville,PA,suburban,59.6,61.0,69.0,1.0901099,19460
+philadelphia,Point Breeze,PA,urban_residential,37.7,37.8,55.8,0.94664001,19146
+philadelphia,Port Richmond,PA,suburban,24.1,24.1,23.9,0.59737998,19134
+philadelphia,Powelton Village,PA,urban_residential,45.2,42.5,41.0,0.78399998,19104
+philadelphia,Queen Village,PA,urban_residential,56.0,55.7,55.9,0.94704002,19147
+philadelphia,Radnor,PA,unknown,60.2,60.8,88.0,1.29811,19087
+philadelphia,Rittenhouse Square,PA,urban_residential,45.5,42.9,41.0,0.78399998,19104
+philadelphia,Roxborough,PA,suburban,39.8,41.2,88.9,1.30811,19127
+philadelphia,Society Hill,PA,suburban,53.8,51.0,80.5,1.21583,19106
+philadelphia,Somerton,PA,suburban,38.6,42.0,61.6,1.01008,19116
+philadelphia,Spring Garden,PA,urban_residential,51.7,50.6,70.8,1.1096801,19130
+philadelphia,Spruce Hill,PA,urban_residential,50.1,49.5,81.5,1.22675,19103
+philadelphia,Strawberry Mansion,PA,suburban,35.8,35.7,34.1,0.70839,19121
+philadelphia,Swarthmore,PA,suburban,63.1,62.6,85.3,1.2689199,19081
+philadelphia,University City,PA,suburban,45.7,43.8,41.0,0.78399998,19104
+philadelphia,Upper Darby,PA,suburban,44.9,46.5,62.8,1.02256,19026
+philadelphia,Villanova,PA,exurban,64.8,65.8,92.8,1.35115,19085
+philadelphia,Voorhees,NJ,exurban,56.8,59.8,73.5,1.13981,08043
+philadelphia,Washington Square West,PA,urban_residential,49.0,46.6,,,19109
+philadelphia,Wayne,PA,suburban,56.8,56.1,88.0,1.29811,19087
+philadelphia,West Chester,PA,suburban,48.0,45.2,,,19383
+philadelphia,Wilmington,DE,suburban,47.5,46.6,25.7,0.61702001,19801
+philadelphia,Woodbury,NJ,suburban,53.3,55.1,54.4,0.93111002,08096
+philadelphia,Wynnefield,PA,suburban,36.2,35.7,36.2,0.7317,19131
+philadelphia,Yardley,PA,exurban,49.4,50.0,57.1,0.96056002,19067
+phoenix,Ahwatukee,AZ,exurban,33.8,32.4,69.4,1.09505,85048
+phoenix,Alhambra,AZ,suburban,32.3,31.3,21.4,0.56939,85015
+phoenix,Anthem,AZ,suburban,47.5,46.4,72.9,1.13272,85086
+phoenix,Apache Junction,AZ,exurban,49.2,51.0,,,85220
+phoenix,Arcadia,AZ,exurban,44.2,44.5,55.2,0.93910003,85018
+phoenix,Avondale,AZ,exurban,28.2,28.0,25.6,0.61596,85323
+phoenix,Biltmore,AZ,exurban,41.1,39.9,50.1,0.88382,85016
+phoenix,Buckeye,AZ,exurban,35.4,35.8,35.4,0.72281998,85326
+phoenix,Camelback East,AZ,suburban,42.8,42.1,55.2,0.93910003,85018
+phoenix,Carefree,AZ,rural,49.2,50.7,,,85377
+phoenix,Casa Grande,AZ,rural,37.1,37.9,28.0,0.64230001,85122
+phoenix,Cave Creek,AZ,rural,45.1,42.3,78.1,1.19024,85331
+phoenix,Chandler,AZ,suburban,47.9,46.9,46.5,0.84491003,85225
+phoenix,Coolidge,AZ,rural,37.1,38.2,17.7,0.52991998,85128
+phoenix,Coronado,AZ,exurban,36.8,36.2,27.5,0.63621998,85006
+phoenix,DC Ranch,AZ,exurban,37.8,35.1,76.6,1.1735899,85255
+phoenix,Deer Valley,AZ,suburban,30.7,28.6,51.4,0.89780003,85027
+phoenix,Desert Ridge,AZ,suburban,37.1,40.1,82.5,1.23815,85054
+phoenix,Downtown Chandler,AZ,suburban,48.6,47.8,46.5,0.84491003,85225
+phoenix,Downtown Gilbert,AZ,suburban,48.8,46.2,61.7,1.01112,85233
+phoenix,Downtown Mesa,AZ,exurban,47.6,44.9,36.2,0.73145998,85201
+phoenix,Downtown Phoenix,AZ,suburban,55.1,52.5,55.8,0.94575,85004
+phoenix,Downtown Tempe,AZ,suburban,50.4,49.9,52.3,0.90753001,85281
+phoenix,Eastmark,AZ,exurban,31.6,31.8,74.3,1.14877,85212
+phoenix,El Mirage,AZ,suburban,30.4,31.3,34.6,0.71408999,85335
+phoenix,Encanto,AZ,suburban,50.6,46.9,41.7,0.79141003,85003
+phoenix,Florence,AZ,rural,36.0,34.3,48.5,0.86646998,85132
+phoenix,Fountain Hills,AZ,suburban,60.9,60.9,74.9,1.15555,85268
+phoenix,Gainey Ranch,AZ,exurban,35.5,32.6,72.3,1.1265301,85258
+phoenix,Gilbert,AZ,suburban,39.0,39.1,66.2,1.0599101,85234
+phoenix,Glendale,AZ,suburban,32.1,28.5,12.9,0.47709,85301
+phoenix,Gold Canyon,AZ,rural,45.5,45.9,,,85218
+phoenix,Goodyear,AZ,exurban,34.1,33.3,51.2,0.89608997,85395
+phoenix,Laveen,AZ,exurban,29.9,30.5,28.8,0.65047002,85339
+phoenix,Litchfield Park,AZ,exurban,35.2,34.5,51.2,0.89547002,85340
+phoenix,Maricopa,AZ,suburban,34.5,34.3,37.6,0.74737,85139
+phoenix,McCormick Ranch,AZ,exurban,33.5,30.0,72.3,1.1265301,85258
+phoenix,Melrose District,AZ,suburban,42.5,39.7,49.8,0.88041002,85013
+phoenix,Mesa,AZ,exurban,47.6,44.9,36.2,0.73145998,85201
+phoenix,Midtown Phoenix,AZ,suburban,43.9,41.5,49.8,0.88041002,85013
+phoenix,Moon Valley,AZ,exurban,31.5,32.1,41.9,0.79391998,85023
+phoenix,New River,AZ,rural,42.2,41.3,68.3,1.08337,85087
+phoenix,North Mountain,AZ,exurban,42.7,40.8,39.4,0.76727003,85020
+phoenix,Old Town Scottsdale,AZ,urban_residential,57.0,57.1,62.8,1.02306,85251
+phoenix,Paradise Valley,AZ,rural,42.3,40.2,69.4,1.0944901,85253
+phoenix,Peoria,AZ,suburban,35.8,34.7,39.4,0.76725,85345
+phoenix,Pima Crossing,AZ,exurban,37.6,35.1,72.3,1.1265301,85258
+phoenix,Queen Creek,AZ,suburban,47.5,48.6,,,85240
+phoenix,Rio Verde,AZ,rural,31.6,31.2,58.5,0.97551,85263
+phoenix,Roosevelt Row,AZ,suburban,54.7,52.1,55.8,0.94575,85004
+phoenix,San Tan Valley,AZ,exurban,42.4,41.4,,,85243
+phoenix,Scottsdale,AZ,urban_residential,57.0,57.1,62.8,1.02306,85251
+phoenix,Sun City West,AZ,exurban,50.1,47.5,61.4,1.0071599,85375
+phoenix,Sun City,AZ,exurban,40.0,35.1,50.4,0.88652003,85351
+phoenix,Sun Lakes,AZ,exurban,37.5,37.2,65.8,1.05503,85248
+phoenix,Sunnyslope,AZ,suburban,42.8,40.4,39.4,0.76727003,85020
+phoenix,Surprise,AZ,exurban,43.7,41.4,50.8,0.89135998,85374
+phoenix,Tempe,AZ,suburban,50.4,49.9,52.3,0.90753001,85281
+phoenix,Tolleson,AZ,exurban,27.2,27.4,23.3,0.59078002,85353
+phoenix,Uptown Phoenix,AZ,suburban,45.4,43.3,49.8,0.88041002,85013
+phoenix,Verrado,AZ,suburban,28.8,28.1,56.8,0.95696002,85396
+phoenix,Wickenburg,AZ,rural,53.2,53.3,41.0,0.78434002,85390
+phoenix,Willo,AZ,suburban,51.4,47.8,41.7,0.79141003,85003
+phoenix,Youngtown,AZ,suburban,27.8,27.6,36.5,0.73519999,85363
+raleigh,Apex,NC,exurban,49.9,48.3,73.7,1.1416,27502
+raleigh,Archer Lodge,NC,exurban,43.3,44.0,,,27561
+raleigh,Benson,NC,rural,41.2,42.4,33.1,0.69739002,27504
+raleigh,Boylan Heights,NC,suburban,55.8,54.9,43.2,0.80883998,27603
+raleigh,Brier Creek,NC,exurban,38.4,38.9,58.7,0.97764999,27617
+raleigh,Cameron Village,NC,suburban,56.1,54.5,83.2,1.2453099,27605
+raleigh,Cary,NC,exurban,55.5,53.9,67.6,1.0746599,27513
+raleigh,Clayton,NC,exurban,51.9,52.8,47.4,0.8538,27520
+raleigh,Downtown Raleigh,NC,urban_residential,57.1,56.6,43.2,0.80883998,27603
+raleigh,Five Points,NC,suburban,53.2,51.5,75.1,1.1571,27608
+raleigh,Four Oaks,NC,rural,41.6,43.5,30.0,0.66351002,27524
+raleigh,Franklinton,NC,rural,35.8,38.6,41.2,0.78689998,27525
+raleigh,Fuquay-Varina,NC,exurban,50.4,51.4,59.1,0.98224002,27526
+raleigh,Garner,NC,exurban,44.5,44.8,41.0,0.78415,27529
+raleigh,Glenwood South,NC,suburban,56.4,54.9,83.2,1.2453099,27605
+raleigh,Hayes Barton,NC,suburban,54.7,53.4,75.1,1.1571,27608
+raleigh,Holly Springs,NC,suburban,41.0,41.5,67.5,1.07449,27540
+raleigh,Knightdale,NC,exurban,40.8,42.0,36.0,0.72942001,27545
+raleigh,Louisburg,NC,rural,45.1,45.7,31.2,0.67676002,27549
+raleigh,Midtown Raleigh,NC,exurban,38.2,37.4,41.2,0.78588998,27604
+raleigh,Morrisville,NC,suburban,34.4,31.5,,,27650
+raleigh,North Hills,NC,exurban,45.8,45.5,44.1,0.81827998,27609
+raleigh,Oakwood,NC,suburban,55.1,52.9,56.1,0.94907999,27601
+raleigh,Rolesville,NC,exurban,46.5,45.2,56.4,0.95292002,27571
+raleigh,Selma,NC,exurban,50.5,54.1,20.2,0.55682999,27576
+raleigh,Smithfield,NC,rural,43.7,43.6,26.1,0.62102002,27577
+raleigh,Wake Forest,NC,exurban,41.7,41.7,,,25787
+raleigh,Wakefield,NC,suburban,37.7,35.8,59.4,0.98517001,27614
+raleigh,Wendell,NC,rural,34.5,32.8,36.6,0.73610002,27591
+raleigh,Youngsville,NC,rural,31.4,31.9,51.8,0.90267998,27596
+raleigh,Zebulon,NC,exurban,46.3,48.6,38.0,0.75189,27597
+sacramento,Alkali Flat,CA,suburban,59.2,55.2,69.9,1.10034,95814
+sacramento,Antelope,CA,suburban,31.9,32.6,34.1,0.70867002,95842
+sacramento,Arden-Arcade,CA,suburban,47.0,46.3,42.8,0.8039,95825
+sacramento,Auburn,CA,exurban,57.7,56.8,61.0,1.00287,95603
+sacramento,Boulevard Park,CA,suburban,56.2,52.5,66.4,1.06155,95811
+sacramento,Cameron Park,CA,suburban,56.4,55.1,67.5,1.07423,95682
+sacramento,Carmichael,CA,suburban,46.3,46.4,50.1,0.88372999,95608
+sacramento,Citrus Heights,CA,suburban,50.0,51.4,48.2,0.86258,95610
+sacramento,Clarksburg,CA,rural,46.4,43.1,,,95612
+sacramento,Colfax,CA,rural,47.8,45.7,64.3,1.03891,95713
+sacramento,Curtis Park,CA,suburban,54.9,51.3,56.5,0.95323998,95818
+sacramento,Davis,CA,suburban,64.4,64.0,81.2,1.22351,95616
+sacramento,Diamond Springs,CA,rural,47.5,42.2,52.4,0.90864998,95619
+sacramento,Downtown Sacramento,CA,urban_residential,66.4,61.7,69.9,1.10034,95814
+sacramento,East Sacramento,CA,suburban,51.8,49.2,79.2,1.20254,95819
+sacramento,El Dorado Hills,CA,exurban,51.6,51.0,86.3,1.27935,95762
+sacramento,Elk Grove,CA,suburban,54.1,54.9,57.5,0.96446002,95624
+sacramento,Elmhurst,CA,suburban,51.5,48.7,79.2,1.20254,95819
+sacramento,Esparto,CA,rural,50.4,49.3,32.3,0.68889999,95627
+sacramento,Fair Oaks,CA,exurban,46.9,45.2,62.8,1.02264,95628
+sacramento,Florin,CA,suburban,36.3,37.4,35.3,0.72171003,95828
+sacramento,Folsom,CA,suburban,46.5,49.2,,,95671
+sacramento,Foothill Farms,CA,suburban,36.4,35.1,,,95741
+sacramento,Galt,CA,suburban,58.9,63.3,43.4,0.81048,95632
+sacramento,Georgetown,CA,rural,60.6,58.5,55.1,0.93848002,95667
+sacramento,Gold River,CA,exurban,43.1,44.1,40.7,0.78061998,95670
+sacramento,Granite Bay,CA,exurban,57.6,57.5,85.6,1.27193,95746
+sacramento,Greenhaven,CA,suburban,38.1,39.1,53.6,0.92258,95831
+sacramento,Knights Landing,CA,rural,37.7,37.1,,,95645
+sacramento,La Riviera,CA,exurban,38.5,36.5,52.0,0.90404999,95826
+sacramento,Land Park,CA,suburban,55.8,52.5,56.5,0.95323998,95818
+sacramento,Lincoln,CA,suburban,49.3,50.5,62.1,1.01452,95648
+sacramento,Loomis,CA,exurban,56.1,54.8,75.4,1.16032,95650
+sacramento,McKinley Park,CA,suburban,55.9,54.0,76.4,1.17194,95816
+sacramento,Meadow Vista,CA,rural,47.6,44.1,77.2,1.18072,95722
+sacramento,Midtown Sacramento,CA,urban_residential,55.8,53.9,76.4,1.17194,95816
+sacramento,Natomas,CA,suburban,37.9,37.7,32.0,0.68627,95605
+sacramento,Newcastle,CA,rural,46.6,42.9,76.2,1.16958,95658
+sacramento,North Highlands,CA,exurban,42.2,42.0,29.9,0.66332,95660
+sacramento,Oak Park,CA,suburban,53.8,52.0,63.7,1.03248,95817
+sacramento,Orangevale,CA,suburban,46.8,44.4,65.6,1.05363,95662
+sacramento,Parkway,CA,suburban,34.0,34.9,29.2,0.65543997,95823
+sacramento,Penryn,CA,rural,51.3,49.7,,,95663
+sacramento,Placerville,CA,rural,56.9,54.4,55.1,0.93848002,95667
+sacramento,Pocket,CA,suburban,33.0,32.5,53.6,0.92258,95831
+sacramento,Pollock Pines,CA,rural,46.2,43.4,54.7,0.93445998,95726
+sacramento,Rancho Cordova,CA,suburban,41.1,39.3,52.0,0.90404999,95826
+sacramento,Rancho Murieta,CA,rural,46.2,45.8,70.2,1.10365,95683
+sacramento,Rio Linda,CA,suburban,45.0,46.6,34.2,0.70955998,95673
+sacramento,Rocklin,CA,exurban,49.6,46.7,70.6,1.10762,95677
+sacramento,Rosemont,CA,suburban,44.3,43.4,52.0,0.90404999,95826
+sacramento,Roseville,CA,suburban,57.2,56.8,61.8,1.0112,95678
+sacramento,Shingle Springs,CA,rural,42.9,39.4,67.5,1.07423,95682
+sacramento,Tahoe Park,CA,suburban,38.9,37.1,36.4,0.73442,95820
+sacramento,Vineyard,CA,exurban,34.7,34.9,54.1,0.92737001,95829
+sacramento,West Sacramento,CA,suburban,54.4,55.9,42.2,0.79693002,95691
+sacramento,Winters,CA,rural,49.8,51.3,,,95964
+sacramento,Woodland,CA,exurban,48.7,52.6,36.3,0.73303998,95776
+san_antonio,Alamo Heights,TX,suburban,48.4,48.5,55.0,0.93699998,78209
+san_antonio,Balcones Heights,TX,suburban,34.5,33.5,20.5,0.56024998,78201
+san_antonio,Bandera,TX,rural,64.1,61.9,50.0,0.88243997,78003
+san_antonio,Beacon Hill,TX,suburban,38.5,38.8,20.5,0.56024998,78201
+san_antonio,Boerne,TX,exurban,52.7,51.6,67.0,1.06818,78006
+san_antonio,Bulverde,TX,rural,51.1,50.8,72.9,1.13332,78163
+san_antonio,Canyon Lake,TX,rural,46.8,42.7,56.0,0.94822001,78133
+san_antonio,Castle Hills,TX,exurban,41.7,41.9,28.6,0.64813,78213
+san_antonio,Castroville,TX,rural,40.6,39.1,46.7,0.8466,78009
+san_antonio,China Grove,TX,rural,39.6,37.3,43.2,0.80783999,78263
+san_antonio,Cibolo,TX,exurban,41.5,42.3,,,
+san_antonio,Comfort,TX,rural,44.1,44.6,,,70813
+san_antonio,Converse,TX,suburban,25.4,24.4,42.8,0.80440003,78109
+san_antonio,Cross Mountain,TX,exurban,30.4,28.9,73.7,1.14188,78255
+san_antonio,Dignowity Hill,TX,exurban,38.9,37.1,16.4,0.51555002,78202
+san_antonio,Downtown San Antonio,TX,exurban,47.6,44.5,36.2,0.73187,78205
+san_antonio,Elmendorf,TX,rural,30.0,30.7,24.8,0.60667002,78112
+san_antonio,Fair Oaks Ranch,TX,rural,36.2,36.8,77.6,1.18506,78015
+san_antonio,Floresville,TX,rural,44.3,45.4,41.0,0.78395998,78114
+san_antonio,Garden Ridge,TX,rural,42.6,39.4,67.1,1.06951,78266
+san_antonio,Government Hill,TX,suburban,40.7,37.4,24.3,0.60140002,78208
+san_antonio,Helotes,TX,exurban,46.7,45.8,72.0,1.12358,78023
+san_antonio,Hollywood Park,TX,exurban,35.8,34.4,57.0,0.95968002,78232
+san_antonio,King William,TX,exurban,47.3,44.5,36.2,0.73187,78205
+san_antonio,Kirby,TX,suburban,35.8,35.9,22.3,0.58016998,78219
+san_antonio,La Vernia,TX,rural,43.0,41.8,61.5,1.00826,78121
+san_antonio,Leon Valley,TX,suburban,34.9,33.4,32.2,0.68830001,78238
+san_antonio,Live Oak,TX,suburban,34.7,34.5,40.9,0.78297001,78233
+san_antonio,Lytle,TX,rural,37.2,37.8,29.4,0.65736002,78052
+san_antonio,Marion,TX,rural,56.1,55.2,38.2,0.75365001,75657
+san_antonio,Medical Center,TX,exurban,38.5,38.8,38.8,0.76020998,78229
+san_antonio,Monte Vista,TX,suburban,48.9,46.3,37.2,0.74302,78212
+san_antonio,New Braunfels,TX,exurban,51.9,53.0,57.3,0.96197999,78130
+san_antonio,Olmos Park,TX,suburban,48.2,45.4,37.2,0.74302,78212
+san_antonio,Pleasanton,TX,rural,44.6,46.1,38.9,0.76082999,78064
+san_antonio,Sandy Oaks,TX,rural,28.5,28.7,24.8,0.60667002,78112
+san_antonio,Schertz,TX,exurban,41.2,40.2,55.8,0.94562,78154
+san_antonio,Seguin,TX,exurban,54.3,55.8,33.7,0.70449001,78155
+san_antonio,Selma,TX,exurban,35.5,32.7,55.8,0.94562,78154
+san_antonio,Shavano Park,TX,exurban,40.6,39.8,52.1,0.90556997,78231
+san_antonio,Southtown,TX,exurban,39.4,38.2,30.3,0.667,78204
+san_antonio,Spring Branch,TX,rural,39.3,35.5,62.8,1.02224,78070
+san_antonio,Stone Oak,TX,exurban,29.8,28.5,67.9,1.07833,78259
+san_antonio,Terrell Hills,TX,exurban,41.0,39.4,55.0,0.93699998,78209
+san_antonio,Timberwood Park,TX,exurban,25.6,24.3,69.7,1.09842,78260
+san_antonio,Tobin Hill,TX,suburban,48.4,46.3,64.3,1.03882,78215
+san_antonio,Universal City,TX,suburban,41.9,38.9,47.9,0.85984999,78148
+san_antonio,Von Ormy,TX,rural,26.9,27.2,25.6,0.61552,78073
+san_antonio,Windcrest,TX,suburban,36.3,36.9,31.3,0.67807001,78239
+seattle,Bainbridge Island,WA,exurban,64.1,62.1,88.3,1.3013099,98110
+seattle,Ballard,WA,urban_residential,45.7,41.1,97.7,1.40466,98107
+seattle,Edmonds,WA,exurban,55.9,53.1,100.0,1.45582,98020
+seattle,Kirkland,WA,suburban,49.0,46.5,97.8,1.40512,98033
+seattle,Mercer Island,WA,suburban,61.4,62.2,99.5,1.42378,98040
+sf,Alameda,CA,rural,42.6,42.2,77.7,1.18568,94501
+sf,Alamo Square,CA,urban_residential,46.4,45.5,100.0,1.5801001,94117
+sf,Alamo,CA,exurban,49.2,46.6,96.4,1.38993,94507
+sf,Albany,CA,suburban,43.2,44.6,62.0,1.0144399,94710
+sf,Almaden Valley,CA,suburban,52.4,55.1,100.0,1.59632,95120
+sf,Atherton,CA,exurban,62.5,63.5,100.0,1.44288,94027
+sf,Bayview,CA,suburban,49.1,50.2,78.7,1.19709,94124
+sf,Belmont,CA,suburban,47.0,45.7,100.0,1.44839,94002
+sf,Belvedere,CA,suburban,54.7,51.9,79.7,1.20733,94920
+sf,Bernal Heights,CA,suburban,41.4,42.1,90.2,1.32209,94110
+sf,Burlingame,CA,exurban,53.1,53.0,96.1,1.3868999,94010
+sf,Campbell,CA,suburban,36.3,34.4,100.0,1.4437799,95008
+sf,Castro Valley,CA,suburban,48.2,52.5,,,94546
+sf,Chinatown,CA,urban_residential,48.5,52.7,97.9,1.40685,94108
+sf,Cole Valley,CA,urban_residential,46.3,45.5,100.0,1.5801001,94117
+sf,Concord,CA,suburban,35.9,33.9,36.6,0.73580998,94520
+sf,Corte Madera,CA,suburban,52.0,48.1,67.1,1.06978,94925
+sf,Cow Hollow,CA,urban_residential,49.4,50.8,100.0,1.61054,94123
+sf,Cupertino,CA,suburban,64.4,67.1,100.0,1.58811,95014
+sf,Daly City,CA,suburban,46.9,49.8,75.7,1.16389,94014
+sf,Danville,CA,rural,48.9,44.1,100.0,1.45892,94526
+sf,Diamond Heights,CA,suburban,39.3,36.7,100.0,1.56388,94131
+sf,Dogpatch,CA,suburban,39.9,40.0,100.0,1.44788,94158
+sf,Dublin,CA,suburban,43.5,43.9,92.3,1.34577,94568
+sf,East Palo Alto,CA,suburban,50.8,55.3,100.0,1.6970201,94301
+sf,El Cerrito,CA,suburban,41.0,38.3,69.2,1.09262,94530
+sf,Elmwood,CA,suburban,58.4,55.7,99.3,1.42222,94705
+sf,Emeryville,CA,suburban,47.6,45.3,63.0,1.0243599,94608
+sf,Evergreen,CA,exurban,54.0,59.6,,,95137
+sf,Excelsior,CA,urban_residential,48.1,49.5,78.2,1.19129,94112
+sf,Fairfax,CA,exurban,63.2,58.8,72.1,1.12466,94930
+sf,Financial District,CA,suburban,49.9,44.8,98.9,1.41729,94111
+sf,Forest Hill,CA,suburban,48.3,47.5,100.0,1.59229,94127
+sf,Foster City,CA,suburban,35.9,33.7,,,94405
+sf,Fremont,CA,suburban,35.5,33.5,85.6,1.27174,94536
+sf,Fruitvale,CA,suburban,41.1,42.8,47.3,0.85286999,94601
+sf,Glen Park,CA,suburban,44.0,45.7,78.2,1.19129,94112
+sf,Glenview,CA,suburban,40.5,40.1,57.7,0.96688998,94602
+sf,Grand Lake,CA,suburban,53.5,46.9,82.4,1.23694,94610
+sf,Haight-Ashbury,CA,urban_residential,46.6,49.3,,,94177
+sf,Half Moon Bay,CA,rural,60.9,60.8,73.5,1.13954,94019
+sf,Hayes Valley,CA,urban_residential,45.6,47.5,73.1,1.1348701,94102
+sf,Hayward,CA,suburban,44.8,46.9,,,25426
+sf,Hillsborough,CA,exurban,49.2,53.4,96.1,1.3868999,94010
+sf,Inner Richmond,CA,urban_residential,50.0,49.0,100.0,1.56196,94118
+sf,Inner Sunset,CA,urban_residential,47.9,48.9,100.0,1.61168,94122
+sf,Jack London Square,CA,urban_residential,55.0,52.1,53.6,0.9217,94607
+sf,Kensington,CA,suburban,58.3,55.3,100.0,1.4368,94707
+sf,Kentfield,CA,exurban,47.6,46.5,64.5,1.04151,94904
+sf,Lafayette,CA,suburban,44.2,46.0,90.1,1.32152,94549
+sf,Larkspur,CA,exurban,49.8,45.2,82.8,1.24121,94939
+sf,Livermore,CA,suburban,40.8,41.5,87.7,1.2951,94550
+sf,Los Altos Hills,CA,exurban,59.9,59.3,100.0,1.64271,94022
+sf,Los Altos,CA,suburban,47.8,51.2,100.0,1.64271,94022
+sf,Los Gatos,CA,suburban,46.0,48.5,100.0,1.534,95032
+sf,Lower Haight,CA,urban_residential,44.6,46.4,,,94143
+sf,Marina District,CA,urban_residential,44.1,43.7,100.0,1.61054,94123
+sf,Martinez,CA,suburban,53.8,54.0,68.7,1.0869401,94553
+sf,Menlo Park,CA,suburban,53.8,52.8,86.3,1.27938,94025
+sf,Mill Valley,CA,exurban,47.9,51.3,80.0,1.21029,94941
+sf,Millbrae,CA,suburban,52.3,53.7,97.1,1.39798,94030
+sf,Milpitas,CA,suburban,47.2,47.8,99.9,1.42883,95035
+sf,Mission Bay,CA,suburban,36.9,36.4,100.0,1.44788,94158
+sf,Mission District,CA,suburban,44.0,43.5,100.0,1.51194,94107
+sf,Montclair,CA,exurban,52.4,49.0,86.2,1.27894,94611
+sf,Moraga,CA,exurban,44.8,46.9,,,94575
+sf,Mountain View,CA,suburban,43.9,45.5,,,94039
+sf,Newark,CA,suburban,42.2,43.2,76.4,1.17143,94560
+sf,Nob Hill,CA,urban_residential,53.2,52.8,82.9,1.24211,94109
+sf,Noe Valley,CA,urban_residential,45.4,47.5,100.0,1.61735,94114
+sf,North Beach,CA,urban_residential,55.0,54.5,100.0,1.4679,94133
+sf,North Berkeley,CA,urban_residential,53.4,50.2,69.6,1.0971299,94702
+sf,Novato,CA,suburban,51.9,57.0,50.2,0.88494998,94945
+sf,Orinda,CA,exurban,52.4,48.8,92.7,1.34962,94563
+sf,Outer Richmond,CA,urban_residential,44.2,43.7,100.0,1.5731699,94121
+sf,Outer Sunset,CA,suburban,51.4,56.1,,,94166
+sf,Pacific Heights,CA,urban_residential,51.1,52.8,100.0,1.48309,94115
+sf,Pacifica,CA,exurban,60.1,63.0,96.0,1.38626,94044
+sf,Palo Alto,CA,suburban,46.6,49.1,100.0,1.6970201,94301
+sf,Piedmont,CA,suburban,47.1,41.8,86.2,1.27894,94611
+sf,Pleasant Hill,CA,suburban,50.5,48.8,79.4,1.20424,94523
+sf,Pleasanton,CA,exurban,45.3,47.3,100.0,1.44295,94566
+sf,Portola Valley,CA,rural,57.2,55.5,,,94028
+sf,Potrero Hill,CA,urban_residential,43.6,42.4,100.0,1.51194,94107
+sf,Presidio Heights,CA,suburban,46.1,44.2,100.0,1.56196,94118
+sf,Redwood City,CA,suburban,35.4,33.2,91.0,1.3307199,94062
+sf,Richmond,CA,suburban,51.8,56.8,24.6,0.60462999,94801
+sf,Rockridge,CA,suburban,45.6,47.9,,,94168
+sf,Rose Garden,CA,suburban,46.2,47.1,82.1,1.23406,95126
+sf,Ross,CA,exurban,42.2,42.6,,,94957
+sf,Russian Hill,CA,urban_residential,48.4,51.8,,,90214
+sf,San Anselmo,CA,suburban,57.1,54.0,68.9,1.08957,94960
+sf,San Bruno,CA,suburban,56.2,60.0,77.1,1.17878,94066
+sf,San Carlos,CA,suburban,51.2,50.9,95.2,1.37712,94070
+sf,San Leandro,CA,suburban,48.6,52.2,51.1,0.89464998,94577
+sf,San Mateo,CA,rural,43.9,44.1,73.4,1.13894,94401
+sf,San Rafael,CA,suburban,40.3,40.4,,,94902
+sf,San Ramon,CA,suburban,52.4,51.4,92.1,1.34332,94583
+sf,Santa Clara,CA,exurban,45.0,46.5,,,95015
+sf,Saratoga,CA,exurban,71.0,74.4,100.0,1.59934,95070
+sf,Sausalito,CA,suburban,52.3,48.2,68.0,1.07956,94965
+sf,SoMa,CA,urban_residential,49.3,47.1,93.2,1.35501,94103
+sf,South San Francisco,CA,exurban,52.9,57.6,,,94083
+sf,Sunnyvale,CA,suburban,36.3,34.5,100.0,1.59701,94087
+sf,Temescal,CA,suburban,51.5,47.8,70.9,1.1113,94609
+sf,The Castro,CA,suburban,50.3,46.9,100.0,1.61735,94114
+sf,Tiburon,CA,exurban,56.1,53.5,79.7,1.20733,94920
+sf,Union City,CA,suburban,46.2,48.9,,,94857
+sf,Visitacion Valley,CA,urban_residential,49.6,51.6,69.8,1.0987,94134
+sf,Walnut Creek,CA,urban_residential,43.6,45.2,80.3,1.21413,94596
+sf,West Portal,CA,suburban,48.4,47.7,100.0,1.59229,94127
+sf,Willow Glen,CA,suburban,45.3,44.2,88.9,1.3078099,95125
+sf,Woodside,CA,rural,51.5,51.0,91.0,1.3307199,94062
+tampa,Apollo Beach,FL,exurban,32.8,31.0,53.2,0.91736001,33572
+tampa,Brandon,FL,suburban,41.4,40.1,37.7,0.74782997,33511
+tampa,Brooksville,FL,exurban,58.2,58.6,28.8,0.65030998,34601
+tampa,Carrollwood,FL,exurban,40.0,38.8,47.8,0.85913998,33618
+tampa,Channelside,FL,suburban,44.7,42.7,16.9,0.52095002,33605
+tampa,Citrus Park,FL,suburban,30.1,27.9,39.7,0.76969999,33625
+tampa,Clearwater Beach,FL,exurban,48.6,46.7,42.4,0.79992002,33767
+tampa,Clearwater,FL,suburban,51.6,52.0,26.0,0.61997002,33755
+tampa,Crescent Lake,FL,suburban,45.2,43.6,66.9,1.06745,33704
+tampa,Dade City,FL,exurban,57.8,58.7,27.1,0.63182002,33525
+tampa,Davis Islands,FL,suburban,52.3,50.6,69.8,1.0994999,33606
+tampa,Downtown St. Petersburg,FL,urban_residential,56.2,54.1,48.9,0.87049001,33701
+tampa,Downtown Tampa,FL,suburban,38.4,40.5,,,33601
+tampa,Dunedin,FL,suburban,52.1,50.5,57.5,0.96493,34698
+tampa,Gulfport,FL,suburban,50.5,47.4,51.3,0.89704001,33707
+tampa,Harbour Island,FL,suburban,34.2,35.2,,,33601
+tampa,Hyde Park,FL,suburban,53.8,52.7,69.8,1.0994999,33606
+tampa,Land O' Lakes,FL,exurban,46.1,44.4,59.7,0.98857999,34639
+tampa,Largo,FL,suburban,40.4,40.2,36.2,0.73123002,33771
+tampa,Lutz,FL,exurban,54.1,53.7,40.7,0.78057998,33549
+tampa,New Port Richey,FL,suburban,49.8,47.5,31.9,0.68427002,34652
+tampa,New Tampa,FL,suburban,34.3,35.1,54.9,0.93581003,33647
+tampa,Odessa,FL,exurban,37.5,36.7,66.5,1.0628099,33556
+tampa,Old Northeast,FL,suburban,46.3,45.1,66.9,1.06745,33704
+tampa,Oldsmar,FL,exurban,44.4,43.3,56.7,0.95582998,34677
+tampa,Palm Harbor,FL,suburban,56.6,55.4,63.9,1.03475,34683
+tampa,Palma Ceia,FL,suburban,46.3,45.5,76.3,1.17,33629
+tampa,Pinellas Park,FL,suburban,42.8,42.6,29.4,0.65728998,33781
+tampa,Plant City,FL,exurban,45.4,45.6,14.9,0.49871001,33563
+tampa,Riverview,FL,suburban,35.8,37.6,,,33568
+tampa,Ruskin,FL,exurban,32.3,31.9,24.0,0.59783,33570
+tampa,Safety Harbor,FL,suburban,57.7,56.1,58.6,0.97687,34695
+tampa,Seminole Heights,FL,suburban,43.5,41.2,31.6,0.68131,33603
+tampa,Seminole,FL,suburban,50.9,49.2,51.3,0.89661002,33772
+tampa,Snell Isle,FL,suburban,39.3,36.0,66.9,1.06745,33704
+tampa,South Tampa,FL,rural,42.8,40.9,16.9,0.52095002,33605
+tampa,Spring Hill,FL,suburban,38.6,40.1,41.1,0.78561002,34609
+tampa,St. Pete Beach,FL,suburban,51.1,48.5,55.7,0.94475001,33706
+tampa,St. Petersburg,FL,suburban,54.2,51.5,48.9,0.87049001,33701
+tampa,Sulphur Springs,FL,suburban,32.2,29.6,15.6,0.50685,33604
+tampa,Tampa Palms,FL,rural,25.5,23.6,54.9,0.93581003,33647
+tampa,Tarpon Springs,FL,exurban,55.3,54.6,47.3,0.85364997,34689
+tampa,Temple Terrace,FL,suburban,36.6,34.0,24.3,0.60118002,33617
+tampa,Town 'n' Country,FL,suburban,31.0,31.1,22.3,0.57997,33615
+tampa,Treasure Island,FL,exurban,47.9,44.3,55.7,0.94475001,33706
+tampa,Valrico,FL,suburban,31.2,31.2,,,33587
+tampa,Wesley Chapel,FL,exurban,34.0,33.7,60.4,0.99621999,33543
+tampa,Westshore,FL,suburban,47.7,45.4,62.5,1.01959,33609
+tampa,Ybor City,FL,suburban,46.9,45.5,16.9,0.52095002,33605
+tampa,Zephyrhills,FL,suburban,53.1,53.6,28.6,0.64867002,33542
