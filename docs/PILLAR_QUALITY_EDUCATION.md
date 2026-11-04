@@ -428,9 +428,21 @@ Independent validation source and result: recorded as PARTIAL, not Level 2 evide
     was the old source. Sausalito MOSTLY EXPLAINED: King Academy proficiency 19.8 (2018) is 41.4 in 2024 (ELA 42.4, math 40.4, 172 tested),
     Tamalpais High 66.7 vs rating 95; residual: a rating of 70.7 for 41% proficient is near the 90th percentile of schools at that proficiency
     (median rating 56), so the King Academy rating stays a possible rating issue; not resolved from these files.
-  Updated verdict: Test A floor now passes on a recent-year source for NY high, but the fixed-bar Test A result stays FAIL as run on
-    2018 (bars not edited); Test B states below 30 matched places, Test C and the three Texas Test D places are still open. Level 2 is
-    still not passed.
+  TEXAS 2023-24 (added same day; owner approved): TEA TAPR advanced download, campus level, from rptsvr1.tea.texas.gov (REF 1.2 MB,
+    STAAR1 39 MB, STAAR2 31 MB; official TEA form output, no login), Meets Grade Level rate, all students. Test A by level, TX:
+    elementary 0.863 (3,926 matched of 4,292 rated), middle 0.906 (1,397 of 1,530), high 0.908 (1,513 of 1,749), all above 0.70.
+    Matching is district name plus fuzzy campus name (ratio 0.80 or more, unique best), so unmatched schools are untested.
+    Test D, TX: New Braunfels EXPLAINED (high school rating 79.6 vs 69.2 meets in 2024; the 2018 value 11.0 was a 2018 source artifact;
+    elementary 77 vs 55, middle 80 vs 56, ratings run above proficiency but rank consistently). EaDo EXPLAINED (Lantrip 62 vs 57,
+    Navarro 47 vs 27, Wheatley 40 vs 33: ratings agree within the state-percentile scale). Anna NOT EXPLAINED, report to owner as a
+    possible rating error: Joe K Bryant Elementary rating 3.4 vs 44.0% meets (44th percentile of TX elementary schools; only 0.3% of
+    schools at 41-47% meets have a rating of 5 or below; median rating at that proficiency 44), Slayter Creek Middle 27 vs 36.8,
+    Anna High 45 vs 63.2; the other Anna elementary schools are mixed (Rattan 19.8 vs 58, Harlow 35.6 vs 50, Rosamond-Sherley 46.5 vs 29).
+    Not a data-file problem, since the zoned schools match. Anna's score of 25.1 stands on those ratings.
+  Updated verdict: on 2023-24, Test A passes in every cell run (CA, TX all levels; NY high only; NY elementary and middle not
+    rerun), but the fixed-bar Test A result stays FAIL as run on 2018 (bars not edited). Test D: Clarksburg, Sausalito (mostly),
+    New Braunfels and EaDo explained; Anna and the King Academy rating are reported to the owner. Test B small-state coverage (CT, NV, IN,
+    DE, WA, MD under 30 matched places) and Test C (not run) are open. Level 2 is still not passed.
 All-places check (date, n, summary): 2026-11-03, n=1,476 (1,472 scored, 4 no data). Mean 59.4, sd 25.9, 10th to 90th percentile
   21.3 to 92.9, 98 distinct rounded values, top single value 2.2%. By area type (n, 10th / median / 90th, share at 95 or above):
   urban residential 200, 16.7 / 57.7 / 79.6, 0.5%; suburban 765, 21.5 / 61.4 / 93.2, 6.5%; exurban 361, 21.5 / 65.0 / 93.9, 7.8%;
