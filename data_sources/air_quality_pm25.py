@@ -78,9 +78,14 @@ def get_pm25_for_point(geoid: Optional[str], lat: float, lon: float) -> Optional
             "match": "nearest_centroid", "match_km": round(best[0], 2)}
 
 
-def get_pm25(lat: float, lon: float) -> Optional[Dict]:
-    """PM2.5 for the tract containing (lat, lon); None when the tract or its value is unavailable."""
-    from data_sources.census_api import get_census_tract
+def get_pm25(lat: float, lon: float, census_tract: Optional[Dict] = None) -> Optional[Dict]:
+    """
+    PM2.5 for the tract containing (lat, lon); None when the tract or its value is unavailable.
+    census_tract is the tract from the shared place context; without it (catalog and test callers) the tract is looked up.
+    """
+    tract = census_tract if isinstance(census_tract, dict) and census_tract.get("geoid") else None
+    if tract is None:
+        from data_sources.census_api import get_census_tract
 
-    tract = get_census_tract(lat, lon)
+        tract = get_census_tract(lat, lon)
     return get_pm25_for_point((tract or {}).get("geoid"), lat, lon)

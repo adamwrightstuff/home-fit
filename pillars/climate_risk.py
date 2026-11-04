@@ -14,8 +14,10 @@ from typing import Dict, Tuple, Optional
 from data_sources.gee_api import (
     get_heat_exposure_lst,
     get_climate_trend_terraclimate,
+    get_jja_tmax_normal_terraclimate,
     GEE_AVAILABLE,
 )
+from data_sources.heat_screen import HEAT_MAX_BELOW_AIR_C, lst_implausible_vs_air
 from data_sources.air_quality_pm25 import get_pm25 as get_air_quality_pm25
 from data_sources.fema_flood import get_fema_flood_zone
 from data_sources.data_quality import assess_pillar_data_quality
@@ -54,7 +56,8 @@ AIR_MAX_PTS = 20.0
 PM25_BEST = 5.0
 PM25_WORST = 35.0
 
-# Flood (0-30 pts). From FEMA NFHL; floodway=0, SFHA=15%, X/D/minimal scaled. Neutral when missing.
+# Flood (0-30 pts). From FEMA NFHL; floodway=0, SFHA=15%, shaded X=83% (from the annual-chance definitions), minimal=100%.
+# Zone D, a point with no mapped polygon and a failed lookup are no data (data_sources/fema_flood.py).
 FLOOD_MAX_PTS = 30.0
 
 # Climate trend (0-25 pts). 30-year TerraClimate tmax trend; 0°C/decade = max, 0.5°C/decade = 0.
@@ -98,16 +101,22 @@ def get_climate_risk_score(
         (score_0_100, details) where details has breakdown, summary, data_quality.
         Score is inverse risk: 100 = very low risk, 0 = very high risk.
     """
+    # The shared place context supplies the census tract for PM2.5 (no second geocoder call). Catalog and test callers
+    # that pass no context get a derived one with no tract, and get_pm25 looks the tract up itself.
+    ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, density=density, city=city)
+
     # Fetch all four data sources in parallel (same requests, less wall time; no extra error risk).
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        f_air_ref = executor.submit(get_jja_tmax_normal_terraclimate, lat, lon)
         f_heat = executor.submit(get_heat_exposure_lst, lat, lon)
-        f_air = executor.submit(get_air_quality_pm25, lat, lon)
+        f_air = executor.submit(get_air_quality_pm25, lat, lon, census_tract=ctx.census_tract)
         f_flood = executor.submit(get_fema_flood_zone, lat, lon)
         f_trend = executor.submit(get_climate_trend_terraclimate, lat, lon)
         heat_data = f_heat.result()
         air_data = f_air.result()
         flood_data = f_flood.result()
         trend_data = f_trend.result()
+        air_ref_data = f_air_ref.result()
 
     # Fail loudly: a component that cannot be measured is None (no data), never a neutral or invented
     # value. The score is built from the components that are present, scaled to their maximum points, and
@@ -141,8 +150,16 @@ def get_climate_risk_score(
             local_lst_rejected = local_lst
             local_lst = None
         elif local_lst is not None and land_fraction >= HEAT_MIN_LAND_FRACTION:
-            heat_status = "ok"
-            heat_pts = heat_points(local_lst)
+            air_ref = (air_ref_data or {}).get("jja_tmax_c")
+            if lst_implausible_vs_air(local_lst, air_ref):
+                # Far cooler than the normal summer air temperature: a cloud or shadow reading, not a cool place.
+                logger.warning("Climate risk: land-surface temperature %.1f C is more than %.0f C below the %.1f C summer air normal at (%s, %s); heat is no data",
+                               local_lst, HEAT_MAX_BELOW_AIR_C, float(air_ref), lat, lon)
+                heat_status = "implausible_vs_air_temperature"
+                local_lst_rejected = local_lst
+            else:
+                heat_status = "ok"
+                heat_pts = heat_points(local_lst)
 
     # Air quality (0-20 pts). Annual mean PM2.5 (ug/m3) for the tract; no data when the tract has no value.
     air_pts: Optional[float] = None
@@ -162,11 +179,12 @@ def get_climate_risk_score(
     risk_tier = None
     fld_zone = None
     flood_label = None
-    if flood_data is not None and flood_data.get("flood_zone_pts") is not None:
-        flood_pts = round(min(FLOOD_MAX_PTS, max(0.0, float(flood_data["flood_zone_pts"]))), 2)
+    if flood_data is not None:
         risk_tier = flood_data.get("risk_tier")
         fld_zone = flood_data.get("fld_zone")
         flood_label = flood_data.get("label")
+        if flood_data.get("flood_zone_pts") is not None:
+            flood_pts = round(min(FLOOD_MAX_PTS, max(0.0, float(flood_data["flood_zone_pts"]))), 2)
 
     # Climate trend (0-25 pts). Warming = fewer pts; no data when the GEE trend is unavailable.
     trend_pts: Optional[float] = None
@@ -209,7 +227,6 @@ def get_climate_risk_score(
         "flood_pts": flood_pts,
         "trend_pts": trend_pts,
     }
-    ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, density=density, city=city)
     quality_metrics = assess_pillar_data_quality(
         "climate_risk", combined_data, lat, lon, ctx.area_type, density=ctx.density
     )
@@ -219,9 +236,12 @@ def get_climate_risk_score(
         ]
     if missing:
         quality_metrics["degraded"] = True
-        quality_metrics["degraded_reasons"] = list(quality_metrics.get("degraded_reasons") or []) + [
-            f"climate_risk_missing_components: {', '.join(missing)}"
-        ]
+        reasons = [f"climate_risk_missing_components: {', '.join(missing)}"]
+        if "flood" in missing and risk_tier in ("d", "unmapped"):
+            reasons.append("flood_zone_d_undetermined" if risk_tier == "d" else "flood_no_mapped_polygon")
+        if heat_status == "implausible_vs_air_temperature":
+            reasons.append("heat_reading_implausible_vs_air_temperature")
+        quality_metrics["degraded_reasons"] = list(quality_metrics.get("degraded_reasons") or []) + reasons
 
     breakdown = {
         "heat_exposure_pts": heat_pts,
@@ -238,6 +258,7 @@ def get_climate_risk_score(
         "land_pixel_fraction": heat_data.get("land_pixel_fraction") if heat_data else None,
         "heat_status": heat_status,
         "local_lst_rejected_c": local_lst_rejected,
+        "air_tmax_jja_normal_c": (air_ref_data or {}).get("jja_tmax_c"),
         "pm25_ugm3": round(pm25, 2) if pm25 is not None else None,
         "pm25_years": air_data.get("years") if air_data else None,
         "pm25_source": air_data.get("source") if air_data else None,
@@ -247,6 +268,9 @@ def get_climate_risk_score(
         "flood_risk_tier": risk_tier,
         "fld_zone": fld_zone,
         "flood_label": flood_label,
+        "flood_method": (flood_data or {}).get("method", "pin"),
+        "flood_zone_shares": (flood_data or {}).get("zone_shares"),
+        "flood_mapped_fraction": (flood_data or {}).get("mapped_fraction"),
         "climate_trend_score": trend_score_0_100,
         "trend_c_per_decade": trend_c_per_decade,
         "data_available": bool(present),

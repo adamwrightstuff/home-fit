@@ -14,6 +14,7 @@ def _run(monkeypatch, heat=HEAT, air=AIR, flood=FLOOD, trend=TREND):
     monkeypatch.setattr(cr, "get_air_quality_pm25", lambda *a, **k: air)
     monkeypatch.setattr(cr, "get_fema_flood_zone", lambda *a, **k: flood)
     monkeypatch.setattr(cr, "get_climate_trend_terraclimate", lambda *a, **k: trend)
+    monkeypatch.setattr(cr, "get_jja_tmax_normal_terraclimate", lambda *a, **k: None)  # never read Earth Engine in a test
     return cr.get_climate_risk_score(40.0, -74.0, area_type="suburban", density=3000.0)
 
 
