@@ -48,3 +48,18 @@ PAD-US 4.0 state files for the 11 first-server states (905 MB, MD5 verified, del
 | Trail count, without the NYC metro (n=738) | 0.283 | 0.390 | 0.452 | 0.508 |
 Reading: any clean count beats the old one on this yardstick, and the correlation rises with the cutoff. That rise is partly built in, because PAD-US measures large protected land, so a rule that counts only big features will track it better. It does not show that 500 ha is the right cutoff. At 500 ha the wild score reaches 0.399 (limit 0.4) on these 931 places only; the criterion covers all 1,476, and the 545 second-server places are unread. NYC totals stay at 92 to 95 at every cutoff, and 365 of 931 places move more than 10 points at 500 ha.
 Plan: read the 545 second-server places (trimmed read, about 40 minutes), fit the cutoff on the first-server places and judge it on the second-server places as a holdout, then decide.
+
+## Holdout and pooled result (2026-11-03; `analysis/ao_clean_count_pooled.csv`, `ao_clean_count_vs_padus.csv`)
+Second server read: 545 places (AZ CO FL GA MA NC NV), all with data. PAD-US 4.0 files for those 7 states (466 MB, MD5 verified, deleted afterwards). Spearman with protected land within 15 km:
+| Set | Old count / old wild | Clean 50 ha, count / wild | Clean 100 ha, count / wild |
+|---|---|---|---|
+| Fit, first server (n=931) | 0.217 / 0.194 | 0.347 / 0.325 | 0.395 / 0.375 |
+| Holdout, second server (n=545) | 0.390 / 0.372 | 0.409 / 0.343 | 0.487 / 0.405 |
+| Pooled, all (n=1,476) | 0.310 / 0.292 | 0.370 / 0.338 | 0.425 / 0.383 |
+| Pooled without Boston (n=1,395) | 0.284 / 0.264 | 0.351 / 0.313 | 0.412 / 0.364 |
+- 500 ha is unusable with a median-based scale: the pooled median 5 km count is 0, which breaks the 5 km term. Dropped.
+- At 100 ha the holdout confirms the fit direction (count 0.487, wild 0.405). Pooled, the count criterion (0.4) passes and the wild criterion (0.4) misses by 0.017 (0.383); without Boston both are lower on wild (0.364). The wild score also carries a camping term of up to 10 points that has nothing to do with protected land.
+- Places moving more than 10 points in total: 174 of 1,476 (50 ha), 274 (100 ha).
+- Inner NYC still ends at 92 to 95 total at 50 and 100 ha (a true count of 60 to 85 named destinations, scored against a lower refit scale). Pair 4 passes (gap 6.7 at 100 ha, from the first-server trial).
+- The cutoff of 100 ha is chosen on the correlation only and has no independent source (TODO). Using the correlation as both the guide and the pass test is partly circular; the holdout is the only part that is not.
+- Merging also needs the live scorer to use the same count (the trimmed read, about 4 seconds instead of about 90), the refit scale file, and a code change in the pillar and osm_api; none of that is done.
