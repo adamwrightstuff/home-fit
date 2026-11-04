@@ -148,7 +148,7 @@ proportions). Catalog recomputed into `analysis/dpv2_social_fabric_ec_composites
 | Overlap with status_signal | Spearman at most 0.60 | PASS: 0.46 (0.30 before EC) |
 | Launch pairs, similar | gap at most 6 | PASS: Sunnyvale/Campbell 0.0; Potrero Hill/Dogpatch 3.0 |
 | Launch pairs, differ | gap at least 10 | PASS: Mission District 55.2 vs Homestead 40.5 (14.7). FAIL: Dogpatch 51.9 vs Gary 44.9 (7.0); Parker 47.8 vs Clarkston 46.0 (1.8) |
-| Pin-shift | median at most 3, p95 at most 10 at 400 m | NOT RUN (needs fresh Census lookups; awaiting owner yes) |
+| Pin-shift | median at most 3, p95 at most 10 at 400 m | PASS for the tract-based parts only: 60 places, 4 directions. Per-place mean change median 0.18, p95 1.53; worst direction median 0.53, p95 2.63, max 7.2 (Visitacion Valley CA). Highest in urban_residential (median 1.5), near zero in rural. Not covered: ZIP-based Atlas inputs (EC, cohesion, volunteering, about 70% of weight) and civic nodes, held fixed because ZIP and Overpass lookups were not authorized. A shift across a ZIP line would move the score more |
 | Independent validation | see brief | NOT RUN |
 
 The two failed pairs are reported, not re-chosen. At 20% weight a large EC gap is diluted by participation and
