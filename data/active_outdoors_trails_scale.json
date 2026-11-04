@@ -1,7 +1,7 @@
 {
-  "measure": "distinct trail destinations within 15 km and within 5 km of the pin: hiking routes (cycle routes excluded) plus named parks, nature reserves and protected areas of at least 100 ha (bounding box), once per name; see docs/ACTIVE_OUTDOORS_TRAIL_COUNT_DEFINITION.md",
+  "measure": "distinct trail destinations within 15 km and within 5 km of the pin (distance to the nearest edge of the feature box): hiking routes (cycle routes excluded) plus named parks, nature reserves and protected areas of at least 100 ha (bounding box), once per name; see docs/ACTIVE_OUTDOORS_TRAIL_COUNT_DEFINITION.md",
   "expected_trails_15km": 24.0,
-  "expected_trails_5km": 2.0,
+  "expected_trails_5km": 4.0,
   "budget_trails_15km": 25.0,
   "budget_trails_5km": 15.0,
   "budget_camping": 10.0,
