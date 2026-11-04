@@ -217,3 +217,18 @@ points, p95 10.2, max 18.7. Reopen if a felt-support benchmark with full coverag
 | Independent validation | see brief | FAIL for felt support (b), coverage unmet (c); see v19 sign-off above |
 
 The written differ rule checks size only. In v19 the Dogpatch/Gary and Parker/Clarkston gaps pass on size but run the other way from the Mission/Homestead direction the earlier run used (the denser, wealthier place scores lower), and Mission/Homestead now fails on size. No expected direction was recorded for these pairs.
+
+
+### v18 restored as final (owner, 2026-11-04, after the ZIP-level check)
+
+The v19 change (EC out of the blend) is reversed. The ZIP-level CDC PLACES test (`analysis/social_fabric_dpv2_level2_validation_2026-11-04.md`,
+addendum 2: 855 places) showed v18 matches felt connection best (Spearman with loneliness 0.467, with lack of support 0.540,
+against 0.393 and 0.419 for the pre-EC blend and 0.341 and 0.351 for v19), and still leads after controlling for income
+(0.285 and 0.335 against 0.219 and 0.204 for v19). Final blend: economic connectedness 0.20, participation 0.48, cohesion 0.16,
+rootedness 0.08, civic 0.08. EC stays stored as its own field as well. The v19 sections above are kept as the record of the
+decision path and are superseded by this one.
+
+Level 2 status: signed off by the owner with recorded gaps (not a clean pass): the felt-support test passes only on the ZIP
+file, modeled data, 58 percent of places, with PA, CO and OR in neither CDC release; the county-level test failed; two of three
+"should differ" launch pairs failed under v18 (Dogpatch/Gary, Parker/Clarkston); pin-shift covers tract parts only; weights are
+design judgments; the mobility test (Atlas) passed but is not this pillar's goal.

@@ -5,18 +5,16 @@ from __future__ import annotations
 from typing import Dict, Optional, Tuple
 
 
-# DPv2 (2026-11-04, owner sign-off): Social Fabric means felt connection and satisfaction, not upward mobility.
-# Economic connectedness (Chetty 2022) is removed from the blend and kept as a separate stored measure
-# (Economic Mixing / Bridging). Its 0.20 went to cohesion and rootedness/civic, the parts closest to felt support, not to
-# participation (a plain renormalization would have made participation 0.60).
-# Participation 0.48, cohesion ("neighbor bonds") 0.26, rootedness 0.13 + civic 0.13 (together 0.26).
-# These are design judgments, not estimates fitted to any outcome. Validation against CDC PLACES felt support FAILED
-# (docs/PILLAR_SOCIAL_FABRIC.md); do not present them as validated.
+# DPv2 (2026-11-03, owner-approved): economic connectedness (Chetty et al. 2022, the Atlas input that predicts upward
+# mobility) takes 0.20; the four earlier components keep their proportions (0.60/0.20/0.10/0.10 x 0.80).
+# The 0.20 is a judgment call with plausible range 0.15 to 0.45, not a sourced value (docs/PILLAR_SOCIAL_FABRIC.md).
+EC_WEIGHT = 0.20
 SF_BASE_WEIGHTS = {
-    "participation": 0.48,
-    "cohesion": 0.26,
-    "rootedness": 0.13,
-    "civic": 0.13,
+    "participation": round(0.60 * (1 - EC_WEIGHT), 4),
+    "cohesion": round(0.20 * (1 - EC_WEIGHT), 4),
+    "rootedness": round(0.10 * (1 - EC_WEIGHT), 4),
+    "civic": round(0.10 * (1 - EC_WEIGHT), 4),
+    "economic_connectedness": EC_WEIGHT,
 }
 
 
@@ -34,8 +32,8 @@ def blend_social_fabric(
     Raises when participation is missing or fewer than two components are present (no score).
     Shared by the live pillar, the F15 correction in composite_indices and the offline catalog recompute.
     """
-    # economic_connectedness is accepted for old callers and ignored: it is a separate measure, not in the blend.
-    values = {"participation": participation, "cohesion": cohesion, "rootedness": rootedness, "civic": civic}
+    values = {"participation": participation, "cohesion": cohesion, "rootedness": rootedness, "civic": civic,
+              "economic_connectedness": economic_connectedness}
     present = {k: float(v) for k, v in values.items() if v is not None}
     missing = [k for k in SF_BASE_WEIGHTS if k not in present]
     if "participation" not in present or len(present) < 2:
