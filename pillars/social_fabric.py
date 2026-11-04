@@ -1,7 +1,8 @@
 """
 Social Fabric pillar (current model v16b weights, fail-loud blend since 2026-10-24).
 
-score = blend of four components, each 0-100, with base weights
+score = blend of five components, each 0-100 (v18, DPv2: economic connectedness added at 0.20, others x0.80), base weights
+    economic_connectedness 0.20  Atlas ec_zip on a national scale (the Chetty 2022 predictor of upward mobility)
     participation 0.60   engagement: IRS BMF organizations per 1k and volunteering (50/50), then 65/35 with the
                          Social Capital Atlas civic-organization rate (community_participation + social_capital_cohesion)
     cohesion      0.20   Social Capital Atlas clustering and support, peer-normalized by area type
@@ -507,6 +508,9 @@ def get_social_fabric_score(
     # ------------------------------------------------------------------
     cohesion_score, cohesion_diag = social_capital_cohesion.get_cohesion_score(zip_code, area_type)
 
+    # Economic connectedness (Chetty et al. 2022): national scale, no area-type norm. None when the ZIP is not in the Atlas.
+    ec_score, ec_raw = social_capital_cohesion.get_ec_score(zip_code)
+
     # Retained for summary diagnostics only — not in composite.
     channel_b = _infra_density_score(civic_effective, civic_radius_m)
 
@@ -521,6 +525,8 @@ def get_social_fabric_score(
         sf_missing_reasons["participation"] = "engagement_unavailable"
     if cohesion_score is None:
         sf_missing_reasons["cohesion"] = "atlas_zip_not_found"
+    if ec_score is None:
+        sf_missing_reasons["economic_connectedness"] = "atlas_zip_not_found"
     if stability_pct is None:
         sf_missing_reasons["rootedness"] = "no_tract_or_place_mobility_data"
     if civic_score <= 0:
@@ -530,6 +536,7 @@ def get_social_fabric_score(
         cohesion=cohesion_score,
         rootedness=stability_score if stability_pct is not None else None,
         civic=civic_score if civic_score > 0 else None,
+        economic_connectedness=ec_score,
     )
 
     source_status: Dict[str, str] = {}
@@ -659,6 +666,7 @@ def get_social_fabric_score(
         "participation": round(e, 1) if e is not None else None,
         "social_capital": cohesion_score,
         "peer_civic": round(civic_score, 1) if civic_score else None,
+        "economic_connectedness": ec_score,
         "rootedness": round(rooted_pct, 1) if rooted_pct is not None else None,
     }
 
@@ -687,6 +695,7 @@ def get_social_fabric_score(
         "orgs_per_1k": orgs_per_1k,
         "voter_turnout_rate": round(turnout_rate, 4) if turnout_rate is not None else None,
         "cohesion_score": cohesion_score,
+        "economic_connectedness_raw": ec_raw,
         "cohesion_clustering": cohesion_diag.get("clustering"),
         "cohesion_support_ratio": cohesion_diag.get("support_ratio"),
         "cohesion_clustering_score": cohesion_diag.get("clustering_score"),
@@ -716,7 +725,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v17_sf_failloud_blend",
+        "version": "v18_sf_ec_blend",
     }
 
     logger.info(
