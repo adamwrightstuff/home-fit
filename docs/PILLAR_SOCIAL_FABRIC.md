@@ -202,3 +202,18 @@ not help the felt measure and slightly lowers it against the pre-EC blend on the
 weights are a design choice and (b) is an unstable yardstick. Catalog recomputed offline into
 `analysis/dpv2_social_fabric_noec_composites/` (not yet copied over the live `data/` files). Score change vs v18: median 3.3
 points, p95 10.2, max 18.7. Reopen if a felt-support benchmark with full coverage or mover-reported outcomes appear.
+
+#### Level 2 checks rerun on v19 (2026-11-04, `analysis/dpv2_social_fabric_noec_composites/`, n=1,476, offline)
+
+| Check | Criterion | v19 result |
+|---|---|---|
+| Floor and ceiling | at most 2% at or below 5 or at or above 95 | PASS: 0 and 0 (range 20.8 to 75.1) |
+| Spread by area type | SD at least 6 where n is 30 or more | PASS: suburban 10.2, exurban 10.0, rural 9.1, urban_residential 6.5 |
+| Overlap with status_signal | Spearman at most 0.60 | PASS: 0.235 (n=1,470) |
+| Launch pairs, similar | gap at most 6 | PASS: Sunnyvale/Campbell 0.1; Potrero Hill/Dogpatch 2.4 |
+| Launch pairs, differ | gap at least 10 | FAIL: Mission District 43.5 vs Homestead 48.6 (5.1). PASS on size only: Dogpatch 40.0 vs Gary 50.7 (10.7); Parker 36.6 vs Clarkston 53.8 (17.2) |
+| Weight perturbation | EC 0.15/0.45 no longer applies | Substitute, not a fixed criterion: participation weight +-0.10 (rest rescaled) moves scores a median 1.3, p95 3.8; rootedness reconstructed from stored score (+-0.5) |
+| Pin-shift | tract parts only | Not rerun; v18 result stands for tract parts, ZIP-based inputs never tested |
+| Independent validation | see brief | FAIL for felt support (b), coverage unmet (c); see v19 sign-off above |
+
+The written differ rule checks size only. In v19 the Dogpatch/Gary and Parker/Clarkston gaps pass on size but run the other way from the Mission/Homestead direction the earlier run used (the denser, wealthier place scores lower), and Mission/Homestead now fails on size. No expected direction was recorded for these pairs.
