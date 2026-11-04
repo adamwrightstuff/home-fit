@@ -330,7 +330,7 @@ state snapshot, offline re-score, production bundle, Explorer labels, deal-break
 Level: 2 (Verified), signed off by the owner 2026-11-03 (Level 1 earlier the same day), with the gaps recorded in the sign-off line. The independent
 validation in `analysis/education_validation_brief_2026-11-03.md` was run by another agent against criteria fixed in that brief.
 Status per requirement: `analysis/education_dpv2_status_2026-11-03.md`. Everything below is from stored data on origin/main
-(86c66afe, 1,476 places), offline; no live API was called. Owner decisions of 2026-10-26 are tier 3 and are not reopened.
+(86c66afe, 1,476 places), offline, except the independent validation, which used the EDFacts API (2018) and official state files (CA, TX 2023-24) with owner approval. Owner decisions of 2026-10-26 are tier 3 and are not reopened.
 
 ```
 Pillar: quality_education
@@ -457,7 +457,7 @@ Independent validation source and result: recorded as PARTIAL, not Level 2 evide
     rerun), but the fixed-bar Test A result stays FAIL as run on 2018 (bars not edited). Test D: Clarksburg, Sausalito (mostly),
     New Braunfels and EaDo explained; Anna and the King Academy rating are reported to the owner. Test C: zone-map PASS (94.7%), 2015-16
     INCONCLUSIVE (4 of 9 readable), nearest 1 of 3 (no bar). Test B small-state coverage (CT, NV, IN, DE, WA, MD under 30 matched
-    places) is open, so Level 2 is still not passed.
+    places) is open, so the independent validation did not pass in full; the owner signed Level 2 with these gaps accepted (sign-off line below).
 All-places check (date, n, summary): 2026-11-03, n=1,476 (1,472 scored, 4 no data). Mean 59.4, sd 25.9, 10th to 90th percentile
   21.3 to 92.9, 98 distinct rounded values, top single value 2.2%. By area type (n, 10th / median / 90th, share at 95 or above):
   urban residential 200, 16.7 / 57.7 / 79.6, 0.5%; suburban 765, 21.5 / 61.4 / 93.2, 6.5%; exurban 361, 21.5 / 65.0 / 93.9, 7.8%;
@@ -479,7 +479,8 @@ Known data limits: 2015-16 zone maps on 77.7% of zoned levels; Austin zones stal
   the private server does not cover (0 points); ratings are one year (2025) with no earlier history in the snapshot; scores are
   comparable only inside a state; the Texas and California disagreements in validation are undiagnosed.
 Last re-validated: 2026-11-03 (all-places, pin-shift, launch pairs, recomputed from stored data). Independent validation run
-  2026-11-03 (see above): failed/inconclusive. Next dated check: 2027-01-26 (quarterly), or on the yearly snapshot refresh, a zone-map update or a new EDFacts release.
+  2026-11-03 (see above): fixed-bar Test A failed on 2018 data (NY high) and passes on 2023-24 state files; Test B small states and
+  the 2015-16 stratum of Test C inconclusive; Level 2 signed off by the owner with these gaps accepted. Next dated check: 2027-01-26 (quarterly), or on the yearly snapshot refresh, a zone-map update or a new EDFacts release.
 Sign-off: Level 1 (Converted), owner, 2026-11-03. Accepted TODOs: education weight, level weights, base radii, nearest-3,
   3 mi widening cap, 15 mi district-far fallback, choice pool average, hamlet 25%/50% rule, pin-flag cutoff. Accepted known
   defect: radius profile keys on urban_core, classifier emits urban_residential (30 places, small effect).

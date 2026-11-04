@@ -310,9 +310,9 @@ def get_active_outdoors_score_v2(
         return result or {}
     
     def _fetch_trails():
-        """Fetch hiking trails within trail radius."""
+        """Fetch distinct trail destinations (hiking routes and large named parks and reserves) within trail radius."""
         return coerce_nature_features_response(
-            osm_api.query_nature_features(lat, lon, radius_m=trail_radius)
+            osm_api.query_trail_destinations(lat, lon, radius_m=trail_radius)
         )
 
     def _fetch_regional():

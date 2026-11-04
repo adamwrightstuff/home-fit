@@ -1,0 +1,21 @@
+place,state,area,all,hiking_route,park_trail,nature_reserve,protected_area,other,routes_only,trailpts_all,trailpts_real,trailpts_routes_only,stored_wild
+Windsor Terrace,NY,urban_residential,160,26,86,32,16,0,26,36.9,33.6,16.2,31.0
+Berwyn,IL,suburban,151,36,29,72,8,6,36,38.0,24.1,13.5,48.0
+Chinatown,IL,urban_residential,91,7,24,50,1,9,7,34.0,19.3,4.7,24.2
+Excelsior,CA,urban_residential,82,23,32,6,15,6,23,31.8,27.2,16.3,33.4
+Mar Vista,CA,urban_residential,212,1,22,178,11,0,1,35.1,16.3,0.4,45.1
+Sauganash,IL,suburban,167,7,43,105,3,9,7,38.1,24.2,4.7,48.1
+Deer Park,TX,suburban,32,4,21,7,0,0,4,12.6,10.7,1.7,12.6
+Daly City,CA,suburban,75,22,30,7,10,6,22,30.4,25.7,9.8,40.4
+Woodland Hills,CA,suburban,295,2,29,234,28,2,2,39.7,15.2,0.9,49.5
+Monrovia,CA,suburban,68,18,23,27,0,0,18,27.0,17.6,6.8,30.5
+Bunker Hill Village,TX,exurban,49,0,45,3,1,0,0,14.5,13.7,0.0,24.5
+Atherton,CA,exurban,79,5,27,40,7,0,5,27.6,19.6,3.9,37.6
+Crystal Lake,IL,exurban,202,15,50,66,0,71,15,38.8,29.1,13.7,48.8
+Castle Hills,TX,exurban,78,5,67,2,4,0,5,29.4,28.7,8.0,39.4
+Rowlett,TX,exurban,35,0,34,1,0,0,0,17.4,17.2,0.0,27.4
+Celina,TX,rural,9,0,9,0,0,0,0,3.7,3.7,0.0,13.7
+Newcastle,CA,rural,39,2,18,9,10,0,2,12.5,7.5,0.9,22.5
+Wimberley,TX,rural,5,0,4,1,0,0,0,5.4,5.0,0.0,15.4
+Santa Clara,CA,urban_residential,83,4,45,23,11,0,4,28.0,21.5,1.7,38.0
+Bulverde,TX,rural,11,0,10,1,0,0,0,4.4,4.1,0.0,14.4

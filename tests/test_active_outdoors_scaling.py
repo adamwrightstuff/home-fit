@@ -38,12 +38,8 @@ def _run(monkeypatch, trail_outcome):
               [{"name": f"t{i}", "distance_m": 2000 + i * 100, "length_km": 3.0} for i in range(40)]}
     regional = {**ok, "swimming": [{"name": "lake", "distance_m": 4000, "type": "lake"}], "camping": []}
     monkeypatch.setattr(ao.osm_api, "query_green_spaces", lambda *a, **k: parks)
-    calls = {"n": 0}
-
-    def nature(*a, **k):
-        calls["n"] += 1
-        return trails if calls["n"] == 1 else regional
-    monkeypatch.setattr(ao.osm_api, "query_nature_features", nature)
+    monkeypatch.setattr(ao.osm_api, "query_trail_destinations", lambda *a, **k: trails)
+    monkeypatch.setattr(ao.osm_api, "query_nature_features", lambda *a, **k: regional)
     monkeypatch.setattr(ao, "get_tree_canopy_gee", lambda *a, **k: 20.0)
     monkeypatch.setattr(ao, "_OVERPASS_STAGGER_S", 0.0)
     return ao.get_active_outdoors_score_v2(40.0, -74.0, city="X", area_type="suburban", precomputed_tree_canopy_5km=20.0)

@@ -1,0 +1,6 @@
+metro,name,state,area,act,total,daily,wild,water,park_out,missing,degraded,dreasons
+las_vegas,Moapa Town,NV,rural,,25.5,0.0,12.9,15.1,overpass_empty,0,True,active_outdoors_empty_park_read: daily term scored as zero
+denver,Perry Park,CO,rural,0.09867588320390933,41.5,0.0,28.7,17.0,overpass_ok,0,False,
+sacramento,Georgetown,CA,rural,0.3012025561823823,34.9,0.0,28.4,10.0,overpass_ok,0,False,
+sacramento,Pollock Pines,CA,rural,0.6845477445750764,30.2,0.0,16.2,17.0,overpass_ok,0,False,
+san_antonio,Von Ormy,TX,rural,0.2705196190346317,27.2,0.0,12.9,17.0,overpass_ok,0,False,
