@@ -155,7 +155,7 @@ Not in the index, and rightly so: healthcare access (64% low confidence, 45% fal
 
 - An outside analysis claimed commute is a "massive" and "reliable" destroyer of life satisfaction; the careful panels and meta-analysis do not support that.
 - It also rated amenities "high impact" and safety the "strongest predictor"; the first has no wellbeing study behind it and the second was not verified as a ranking, though our catalog data does rank safety first.
-- Social Connection ("Social proximity") and Commute Time are personal, client-side scores (closeness to people the user knows; time to the user's workplace), not scores of the place, and are excluded from the general index.
+- Social Connection ("Social proximity") and Commute Time are personal, client-side scores (closeness to people the user knows; time to the user's workplace), not scores of the place. The personal versions are excluded from the general index. The index keeps a 5% commute term that uses the place's area-average commute (owner decision 2026-11-05).
 - Economic Security pillar measures reachable jobs and market quality, not residents' income or job security.
 
 ## 3b. Outside proposal reviewed (five-pillar index, weights 35/30/20/15)

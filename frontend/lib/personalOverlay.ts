@@ -5,14 +5,15 @@ import {
   withCommuteTimePillar,
   withSocialConnectionPillar,
 } from '@/lib/reweight'
-import { commuteToZone, findWorkZone, haversineMiles, minutesForMode, type WorkCommute } from '@/lib/workZones'
+import { commuteToZone, findWorkZone, haversineMiles, minutesForMode, noRouteToZone, type WorkCommute } from '@/lib/workZones'
 import type { UserProfile } from '@/lib/userProfile'
+import { estimateHubDriveMinutes } from '@/lib/commuteTime'
 
 /**
  * Hubs only have precomputed routing for catalog places. For an arbitrary searched address the
- * commute is a straight-line + area-type-speed estimate, which is only meaningful inside the
- * hub's own metro; farther out the adjustment is skipped and the area-average commute stands.
- * Round placeholder, not a fitted value.
+ * commute is a distance-only drive estimate (see HUB_DRIVE_ESTIMATE in commuteTime.ts, fitted on
+ * stored drive times), only meaningful inside the hub's own metro; farther out the adjustment is
+ * skipped and the area-average commute stands. The 75 mile cutoff is a round number, not fitted.
  */
 export const MAX_HUB_ESTIMATE_MILES = 75
 
@@ -24,7 +25,6 @@ export const MAX_HUB_ESTIMATE_MILES = 75
 export function estimateHubCommuteMinutes(
   lat: number,
   lon: number,
-  areaType: string | null | undefined,
   zoneId: string | null | undefined,
   mode: UserProfile['commute_mode'] | undefined
 ): number | null {
@@ -32,7 +32,7 @@ export function estimateHubCommuteMinutes(
   if (!zone || zone.transitOnly) return null
   if (mode === 'transit' || mode === 'active') return null
   if (haversineMiles(lat, lon, zone.lat, zone.lon) > MAX_HUB_ESTIMATE_MILES) return null
-  return estimatedDriveMinutes(lat, lon, zone.lat, zone.lon, areaType)
+  return estimateHubDriveMinutes(haversineMiles(lat, lon, zone.lat, zone.lon))
 }
 
 /**
@@ -67,9 +67,10 @@ export function applyProfileToScore(
   const routed = zone && opts.workCommute ? commuteToZone(opts.workCommute, zone) : null
   const commuteMinutes = routed
     ? minutesForMode(routed, zone!, profile.commute_mode)
-    : estimateHubCommuteMinutes(lat, lon, areaType, profile.work_zone_id, profile.commute_mode)
-  if (commuteMinutes !== null && profile.office_days !== 0) {
-    out = withCommuteTimePillar(out, commuteMinutes, profile.office_days)
+    : estimateHubCommuteMinutes(lat, lon, profile.work_zone_id, profile.commute_mode)
+  const noRoute = !!(zone && opts.workCommute) && noRouteToZone(opts.workCommute, zone, profile.commute_mode)
+  if ((commuteMinutes !== null || noRoute) && profile.office_days !== 0) {
+    out = withCommuteTimePillar(out, commuteMinutes, profile.office_days, noRoute, !routed && commuteMinutes !== null)
   }
 
   if (profile.people?.length) {

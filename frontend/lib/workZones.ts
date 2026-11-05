@@ -1,5 +1,6 @@
 import zonesByMetro from './workZones.json'
 import type { CatalogMetro } from './catalogMetros'
+import { isNoRoute, summarizeRoute } from './commuteTime'
 
 export type WorkZoneMetro = CatalogMetro
 
@@ -52,20 +53,23 @@ export function snapToWorkZone(lat: number, lon: number, zones: WorkZone[] = WOR
 
 /**
  * Commute to a zone: both modes for display, plus the minutes the commute filter uses
- * (transit only for transitOnly hubs, otherwise the faster mode). Null when nothing is precomputed.
+ * (transit only for transitOnly hubs, otherwise the faster mode). Null only when the place has no
+ * stored entry for the hub; an entry with no usable time returns filterMinutes null (a real "no route").
  */
 export function commuteToZone(
   commute: WorkCommute | null | undefined,
   zone: WorkZone,
 ): { filterMinutes: number | null; transit: number | null; drive: number | null } | null {
-  const c = commute?.[zone.id]
-  if (!c) return null
-  const transit = typeof c.transit === 'number' ? c.transit : null
-  const drive = typeof c.drive === 'number' ? c.drive : null
-  if (transit === null && drive === null) return null
-  const candidates = zone.transitOnly ? [transit] : [transit, drive]
-  const usable = candidates.filter((m): m is number => m !== null)
-  return { filterMinutes: usable.length ? Math.min(...usable) : null, transit, drive }
+  return summarizeRoute(commute?.[zone.id], !!zone.transitOnly)
+}
+
+/** True when the place was routed to this hub but has no time in the user's chosen mode. */
+export function noRouteToZone(
+  commute: WorkCommute | null | undefined,
+  zone: WorkZone,
+  mode: 'auto' | 'transit' | 'active' | null | undefined,
+): boolean {
+  return isNoRoute(commute?.[zone.id], !!zone.transitOnly, mode)
 }
 
 /**
