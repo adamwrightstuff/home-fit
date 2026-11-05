@@ -223,11 +223,11 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     degradedMessage: 'Limited data: some transit data sources were unavailable.',
   },
   air_travel_access: {
-    topLine: 'Access to major airports from this location.',
+    topLine: 'How much of where Americans fly you can reach nonstop from airports within driving range.',
     metrics: [
-      { label: 'Nearest airport', path: 'primary_airport.name', format: 'text' },
-      { label: 'Distance', path: 'summary.nearest_airport_km', format: 'distance' },
-      { label: 'Airports within range', path: 'summary.airport_count', format: 'count', suffix: ' airports' },
+      { label: 'Main airport', path: 'primary_airport.name', format: 'text' },
+      { label: 'Drive time', path: 'primary_airport.drive_minutes', format: 'count', suffix: ' min' },
+      { label: 'Nonstop reach', path: 'summary.nonstop_coverage_pct', format: 'percent', max: 100 },
     ],
     degradedMessage: 'Limited data: airport data unavailable.',
   },

@@ -295,7 +295,7 @@ export const PILLAR_META: Record<
   air_travel_access: {
     icon: '✈️',
     name: 'Air Travel Access',
-    description: 'Drive time and tier quality of reachable airports. Scores how quickly you can get to a large or medium hub from your doorstep.',
+    description: 'How much of where Americans fly you can reach nonstop from airports within driving range. Farther airports count less beyond about an hour.',
   },
   economic_opportunity: {
     icon: '📈',
