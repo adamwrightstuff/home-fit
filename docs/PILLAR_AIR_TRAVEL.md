@@ -121,3 +121,5 @@ Open items and TODOs for sign-off: (a) independent validation; (b) urban over ru
 Proposed sign-off: Level 1 now, with TODOs (a) to (h) accepted. Level 2 after the validation brief passes and the owner accepts or overrules criterion 3's urban-rural gap.
 
 Sign-off: Level 1, owner, 2026-11-04. Accepted TODOs: (a) to (h) above. Level 2 pending the validation brief.
+
+Owner decision 2026-11-04: all-places criterion 3 (urban residential minus rural mean >= 10) is accepted as an explained failure. Reason: air travel is an adequacy pillar on a fixed national standard (like healthcare); 7.0 reflects that most places reach a major hub, not a defect. It is recorded here, not relaxed in the criteria above.
