@@ -247,6 +247,33 @@ Sources: [Elliott et al. 2020 research note](https://bluehealth2020.eu/publicati
 [eye-level greenness visibility (VGVI)](https://repositorioslatinoamericanos.uchile.cl/handle/2250/3505050).
 None of the papers was opened; confirm the figures in them before quoting externally.
 
+### Sourcing pass 2 (2026-11-04, outside research tool, papers it reports opening; I have not re-read them)
+
+Verdicts: **supported** = a published value agrees; **shape only** = direction or form agrees, no number to lift; **no source** = nothing found in an opened paper. Check each figure in the paper before quoting externally.
+
+| Parameter | Evidence found | Verdict |
+|---|---|---|
+| Green view curve (5/15/25/40/50 %) | Wu et al. 2025, Land 14:979 (Place Pulse 2.0, 110,988 images, 56 cities): vegetation ratio is the largest feature (36.3% of the model), gains slow above 0.4 and dip near 0.5, suggested optimum 20 to 40%. Ren and Zhuang 2026, Buildings 16:3357 (one rural Chinese village, 523 images): saturation at 0.153 | Shape only. The two saturation points disagree (15% vs 40%), so the curve cannot be lifted from one study |
+| Canopy curve (5/15/25/40/60 %) | Jiang et al. 2015, Landscape and Urban Planning 139:16 (121 US Midwest streets, 320 raters): power-law, steep when barren, smaller but still positive gains above the threshold; at least 20% aerial cover (41% panoramic) for moderate preference. No split by land use or region found | Shape only. Does not support a hard flat top at 60% |
+| Terrain curve | Seresinhe et al. 2017 (ScenicOrNot, 217,000 images): valley, coast, mountain rate highest. Chang Chien et al. 2020 and Chen et al. 2026: ruggedness positive but not top-ranked; land cover and naturalness rank higher | Shape only. No relief-to-score numbers |
+| Water ordering ocean > lake > river | Peng et al. 2023 (8 Chinese cities, no coast): lakes and main river raise prices, small rivers inconsistent. Benson et al. 1998 (Bellingham): ocean views add 8 to 60% | Shape only |
+| Water maxima 100/70/40, decay 20/30/35 % per km | Peng: lake price falls 2.1 to 8.0% per km, main river 3.6 to 9.9% per km. Bourassa et al. 2004 (via Auckland paper): coastal view premium 59% at the coast vs 18% at 1 km, authors flag the distance specification as questionable | No source. Price studies find slower lake and river decay than the 30 and 35% per km used here, though they are prices, not beauty scores |
+| Blend 50/50, within-part 0.7/0.3 | Wu: greenery dominates within street views; Chen: land cover and naturalness dominate within landscape models. Nothing splits overall ratings into streets vs scenery | No source |
+| Green view radius 800 m, canopy radius 400 m | Donaldson 2013, Census SEHSD paper: edge of community is 520 to 1,060 m from home. Lu et al. 2018 (Hong Kong): eye-level greenness tested at 400 and 800 m buffers, 5 and 10 minute walks | Supported as neighborhood-scale buffers (walking and community studies, not beauty judgment) |
+| Canopy radii 1,000/2,000 m, terrain 5 km, water 15 km | Nothing found | No source |
+| Desert lower than green or water landscapes | Han 2007 (Taiwan students): desert last of six biomes, about 1.9 points below tundra and conifer on a 1 to 9 style scale. Zheng et al. 2025 (China students): desert lowest, 1.86 vs 3.18 for waterscape. Martin et al. 2003 (Phoenix, 944 homeowners): even Phoenix residents prefer an oasis landscape over pure desert; Arizona natives were the least desert-preferring group (16%) | Supported in direction by outside samples (not US desert residents, except Martin which shows preference shares). No published desert penalty amount |
+
+What this means: the shapes are mostly real, almost every exact number is still a judgment, and the one outside finding on deserts points the opposite way from the regional medians. Owner decision 2026-11-04: keep the regional medians (deserts stay; they are judged beautiful and the outside samples are students and survey takers, not US desert residents), recorded as an unsourced judgment. The strongest open concern is the water decay constants, which published price studies do not support. No score or parameter was changed.
+
+Water decay test (2026-11-04, offline, all 1,475 scorable places recomputed from stored inputs, stored scores reproduce): the
+published price studies find slower lake and river decay than the 30 and 35 percent per km used. Version A (lake 5, river
+6.5 percent per km, ocean unchanged): 1,252 places rise, mean +4.4 among those (p95 9.8, max +13.1), 52 move more than 10,
+none fall; Orlando, Raleigh, Phoenix, Chicago, Sacramento rise 5 to 7 on average. Version B (lake and river halved): 1,247
+rise, mean +2.2, max +7.0, none over 10. Ocean places do not move. 1,261 of 1,475 places (85%) classify as river and only 4
+as lake, so a river decay change lifts nearly the whole catalog. DECISION (owner, 2026-11-04): leave water decay as a
+recorded unsourced judgment. The sources are price studies, not beauty ratings, and give a direction but no value.
+Revisit if user feedback says water-adjacent places are underrated. No scoring change.
+
 ### P3 and P4 sign-off (owner decision 2026-10-29): documented judgments, tiered
 
 Signed off as JUDGMENT (form is sourced, values are not; each has a recorded tested range, so low stakes):
