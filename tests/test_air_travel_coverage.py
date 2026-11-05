@@ -103,7 +103,8 @@ def test_get_air_travel_score_routed_and_estimated():
     routed = {"LGA": 10.0, "JFK": 25.0, "EWR": 38.0}
     s_routed, d_routed = air.get_air_travel_score(*astoria, area_type="urban_residential", density=30000.0, drive_minutes=routed)
     assert s_routed >= 80
-    assert d_routed["summary"]["drive_minutes_source"] == "routed"
+    # other airports in range (PHL, HPN, ...) have no supplied minutes, so they are estimated and the summary says so
+    assert d_routed["summary"]["drive_minutes_source"] == "routed_and_estimated"
     assert d_routed["primary_airport"]["code"] in {"LGA", "JFK", "EWR"}
     s_est, d_est = air.get_air_travel_score(*astoria, area_type="urban_residential", density=30000.0)
     assert d_est["summary"]["drive_minutes_source"] == "estimated_from_distance"
@@ -132,3 +133,35 @@ def test_build_script_service_definition():
     # monthly rows for one pair add up
     monthly = [{"ORIGIN": "AAA", "DEST": "BBB", "DEPARTURES_PERFORMED": "5", "PASSENGERS": "500"} for _ in range(12)]
     assert build.served_from_segments(monthly, boardings) == {"AAA": ["BBB"]}
+
+
+def test_origin_set_covers_top_airports_by_boardings():
+    """Regression for the 99-airport origin list: every top-100 airport by boardings with a US coordinate is an origin."""
+    import json
+    from pathlib import Path
+    static = Path(air._AIRPORTS_FILE).parent
+    served = json.loads((static / "airport_nonstop_served_2023.json").read_text())
+    ranked = sorted(served["boardings"], key=served["boardings"].get, reverse=True)[:100]
+    origins = {a["code"] for a in air._load_airports()}
+    missing = [c for c in ranked if c not in origins and c != "SJU"]
+    assert not missing, missing
+    for code in ("EWR", "DCA", "SJC", "OAK", "PVD", "PBI", "HPN", "BDL"):
+        assert served["served"].get(code), code
+
+
+def test_new_origin_uses_fitted_minutes_and_is_labelled():
+    score, bd, nearby = air.score_location(40.7357, -74.1724, {"JFK": 40.0})  # Newark
+    ewr = next(a for a in nearby if a["code"] == "EWR")
+    jfk = next(a for a in nearby if a["code"] == "JFK")
+    assert ewr["drive_minutes_source"] == "estimated_from_distance" and jfk["drive_minutes_source"] == "routed"
+    assert bd["summary"]["drive_minutes_source"] == "routed_and_estimated"
+    assert air.score_location(40.7357, -74.1724)[1]["summary"]["drive_minutes_source"] == "estimated_from_distance"
+
+
+def test_airport_additions_keep_existing_records_and_skip_missing_coordinates():
+    from scripts.baselines import add_airports_from_ourairports as add
+    row = lambda **k: {"iata_code": "", "iso_country": "US", "type": "small_airport", "scheduled_service": "yes", "latitude_deg": "41.0",
+                       "longitude_deg": "-72.0", "name": "X", "municipality": "Y", "iso_region": "US-NY", **k}
+    rows = [row(iata_code="AAA"), row(iata_code="BBB", latitude_deg=""), row(iata_code="CCC", iso_country="PR"), row(iata_code="OLD")]
+    recs, skipped = add.new_records(rows, {"AAA": 1, "BBB": 1, "CCC": 1, "OLD": 1}, {"OLD"})
+    assert [r["code"] for r in recs] == ["AAA"] and set(skipped) == {"BBB", "CCC"}

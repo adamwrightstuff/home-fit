@@ -9,6 +9,7 @@ delta method (2 decimals). Run recompute_catalog_composites.py --no-census on th
 
   PYTHONPATH=. python3 -I scripts/catalog/recompute_air_travel_coverage_offline.py                 # dry run
   PYTHONPATH=. python3 -I scripts/catalog/recompute_air_travel_coverage_offline.py --write --backup-dir <dir>
+  PYTHONPATH=. python3 -I scripts/catalog/recompute_air_travel_coverage_offline.py --out-dir <new dir>   # new files only
 """
 from __future__ import annotations
 
@@ -61,6 +62,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--backup-dir")
+    ap.add_argument("--out-dir", help="write recomputed copies of the catalog files here (new files only; the inputs are not modified)")
     ap.add_argument("--glob", default=str(ROOT / "data" / "*_metro_place_catalog_scores_merged.composites_recomputed.jsonl"))
     ap.add_argument("--routed", default=str(ROOT / "data" / "airport_drive_minutes_catalog.json"))
     a = ap.parse_args()
@@ -104,6 +106,11 @@ def main():
             cat = rec.get("catalog")
             old_vals[f"{metro}|{(cat or {}).get('name') if isinstance(cat, dict) else s.get('input')}"] = {"air_travel_access": snap, "total_score": old_total}
             out.append(json.dumps(rec, ensure_ascii=False))
+        if a.out_dir and old_vals:
+            od = Path(a.out_dir)
+            od.mkdir(parents=True, exist_ok=True)
+            (od / os.path.basename(path)).write_text("\n".join(out), encoding="utf-8")
+            (od / f"{metro}_old_air_travel_values.json").write_text(json.dumps(old_vals))
         if a.write and old_vals:
             if os.path.getmtime(path) != mtime:
                 sys.exit(f"{path} changed while running; aborting")

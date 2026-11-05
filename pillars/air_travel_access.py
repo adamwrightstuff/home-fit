@@ -153,10 +153,13 @@ def score_location(lat: float, lon: float, drive_minutes: Optional[Dict[str, flo
 
     routed = drive_minutes is not None
     minutes = {}
+    estimated = 0
     for a in nearby:
         m = drive_minutes.get(a["code"]) if routed else None
+        estimated += m is None
         minutes[a["code"]] = m if m is not None else estimate_drive_minutes(a["distance_km"])
         a["drive_minutes"] = round(minutes[a["code"]], 1)
+        a["drive_minutes_source"] = "routed" if m is not None else "estimated_from_distance"
 
     score, detail = coverage_score(minutes)
     score = round(score, 1)
@@ -185,7 +188,7 @@ def score_location(lat: float, lon: float, drive_minutes: Optional[Dict[str, flo
             "nearest_airport_km": nearest["distance_km"] if nearest else None,
             "nearest_airport_minutes": nearest["drive_minutes"] if nearest else None,
             "nonstop_coverage_pct": score,
-            "drive_minutes_source": "routed" if routed else "estimated_from_distance",
+            "drive_minutes_source": "estimated_from_distance" if not routed else "routed_and_estimated" if estimated else "routed",
         },
         "method": {
             "plateau_min": PLATEAU_MIN, "access_overhead_min": ACCESS_OVERHEAD_MIN, "min_per_km": MIN_PER_KM,
