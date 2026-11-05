@@ -120,3 +120,28 @@ def test_detect_area_type_passes_the_pin_tract_geoid(monkeypatch):
     monkeypatch.setattr(sd, "surrounding_stats", fake)
     data_quality.detect_area_type(1.0, 2.0, census_tract={"state_fips": "48", "county_fips": "243", "tract_fips": "950100"})
     assert seen["geoid"] == "48243950100"
+
+
+def test_weighted_density_ignores_empty_parkland_inside_the_circle(monkeypatch):
+    """A tract of parkland (nobody lives there) must not lower the density the average resident lives in."""
+    import numpy as np
+    from data_sources import surrounding_density as sd
+    lat, lon = 40.0, -74.0
+    tracts = (
+        np.array([lat, lat + 0.002, lat - 0.002]),
+        np.array([lon, lon, lon]),
+        np.array([6000.0, 0.0, 6000.0]),       # people
+        np.array([0.1, 1.0, 0.1]),             # land, square miles: the middle tract is a park
+    )
+    monkeypatch.setattr(sd, "_load_tracts", lambda: tracts)
+    gross = sd.people_density_in_disk(lat, lon, 1000)[0]
+    weighted = sd.weighted_people_density_in_disk(lat, lon, 1000)
+    assert abs(weighted - 60000.0) < 1.0           # both populated tracts are 60,000 per square mile
+    assert gross < weighted                        # the gross figure is diluted by the park tract
+
+
+def test_weighted_density_none_without_residents(monkeypatch):
+    import numpy as np
+    from data_sources import surrounding_density as sd
+    monkeypatch.setattr(sd, "_load_tracts", lambda: (np.array([40.0]), np.array([-74.0]), np.array([0.0]), np.array([1.0])))
+    assert sd.weighted_people_density_in_disk(40.0, -74.0, 1000) is None

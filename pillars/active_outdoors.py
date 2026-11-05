@@ -93,6 +93,18 @@ def expected_playgrounds_for_activity(activity_per_acre: Optional[float]) -> Opt
     return _expected_for_activity(activity_per_acre, "expected_playgrounds")
 
 
+def _is_path_entry(park: Dict) -> bool:
+    """A cycleway or footway the park query returned (type 'greenway_cycleway' or 'greenway_footway'), not a park."""
+    return str(park.get("type") or "").startswith("greenway_")
+
+
+def _baseline_activity(ctx) -> Optional[float]:
+    """Activity density the park baseline is read at: population-weighted (a park or cemetery in the circle does not
+    lower the bar), falling back to the gross measure the area type uses."""
+    w = getattr(ctx, "activity_weighted_per_acre", None)
+    return w if w is not None else ctx.activity_per_acre
+
+
 def weighted_park_count(parks: list, radius_m: float) -> float:
     """Parks within radius_m, each weighted exp(-decay * distance): no hard edge, a park at 1.6 km counts a fraction of
     one at 300 m. The decay is the baseline file's (the same one the nearest-park term uses)."""
@@ -256,7 +268,7 @@ def get_active_outdoors_score_v2(
     
     # The density-peer park term counts parks out to the baseline radius, which can be wider than this type's local radius.
     # Read to the wider one and keep the full list for that term only; every other term sees the local-radius lists.
-    _peer_baseline = expected_parks_for_activity(ctx.activity_per_acre)
+    _peer_baseline = expected_parks_for_activity(_baseline_activity(ctx))
     park_query_radius = max(local_radius, int(_peer_baseline[1])) if _peer_baseline else local_radius
 
     def _fetch_parks():
@@ -345,7 +357,9 @@ def get_active_outdoors_score_v2(
     canopy_pct_5km = _fetch_canopy()
     
     # Extract data from results
-    parks_wide: List[Dict] = local.get("parks", []) or []
+    # Recreational cycleways and footways come back from the park query as "greenway_*" entries. A path is cut into many
+    # OSM pieces and a cemetery or campus has dozens of them, so counting them as parks scores the pieces, not parks.
+    parks_wide: List[Dict] = [p for p in (local.get("parks", []) or []) if not _is_path_entry(p)]
     _in_local = lambda items: [x for x in items if x.get("distance_m", 0) <= local_radius]
     parks: List[Dict] = _in_local(parks_wide)
     playgrounds_wide: List[Dict] = local.get("playgrounds", []) or []
@@ -491,7 +505,7 @@ def get_active_outdoors_score_v2(
     # 3) Component scores
     daily_score = _score_daily_urban_outdoors_v2(
         parks, playgrounds, recreational_facilities, scoring_area_type, expectations,
-        activity_per_acre=ctx.activity_per_acre, parks_for_count=parks_wide, playgrounds_for_count=playgrounds_wide,
+        activity_per_acre=_baseline_activity(ctx), parks_for_count=parks_wide, playgrounds_for_count=playgrounds_wide,
     )
     is_mountain_town = context_flags.get("is_mountain_town", False)
     # Vacation mountain trips: user declared this is a mountain destination, force mountain scoring

@@ -29,8 +29,8 @@ def test_factors_come_from_the_same_measurement_as_the_area_type(monkeypatch):
     f = pc.surrounding_factors(41.9, -87.7, TRACT)
     people_10km = f.pop("people_10km")  # the same fake density over the 10 km disk: density x pi r^2 in square miles
     assert abs(people_10km - 9000.0 * 3.141592653589793 * (10000 / 1609.344) ** 2) < 1.0
-    assert f == {"people_density_1km": 9000.0, "activity_per_acre": 20.0, "jobs_1km": 500.0,
-                 "density_method": "disk", "in_principal_city": True}
+    assert f == {"people_density_1km": 9000.0, "activity_per_acre": 20.0, "activity_weighted_per_acre": None,
+                 "jobs_1km": 500.0, "density_method": "disk", "in_principal_city": True}
     assert seen["geoid"] == "17031010100"
     # the context's factors reproduce the category the classifier assigns from the same inputs
     ctx = pc.PlaceContext(lat=41.9, lon=-87.7, city=None, area_type="x", density=None, **f)

@@ -57,6 +57,7 @@ class PlaceContext:
     # tables cannot measure the place.
     people_density_1km: Optional[float] = None   # people per square mile over the tracts in the circle
     activity_per_acre: Optional[float] = None    # people plus jobs per gross acre
+    activity_weighted_per_acre: Optional[float] = None  # same with population-weighted people density (park baseline only)
     jobs_1km: Optional[float] = None             # workplace jobs in the circle (None: jobs grid does not cover it)
     density_method: Optional[str] = None         # "disk", "pin_tract" or "nearest_tract"
     in_principal_city: Optional[bool] = None     # inside a named principal city; None when unknown
@@ -130,6 +131,7 @@ def surrounding_factors(lat: float, lon: float, census_tract: Optional[Any] = No
     return {
         "people_density_1km": stats.people_density,
         "activity_per_acre": stats.activity_per_acre,
+        "activity_weighted_per_acre": stats.activity_weighted_per_acre,
         "jobs_1km": stats.jobs,
         "density_method": stats.density_method,
         "in_principal_city": in_pc,

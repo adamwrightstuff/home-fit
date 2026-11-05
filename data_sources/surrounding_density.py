@@ -53,6 +53,11 @@ class SurroundingStats:
     jobs: Optional[float]          # workplace jobs in the circle, None when the jobs grid does not cover the place
     activity_per_acre: float       # people plus jobs per gross acre (people only when jobs is None)
     radius_m: int = RADIUS_M
+    # Same, with people counted as population-weighted density: the density an average resident lives in, so a park,
+    # cemetery or water body inside the circle does not make the surroundings look sparse. Used by the active outdoors
+    # park baseline only; the area type is still decided by activity_per_acre. Equals activity_per_acre when the
+    # circle holds no tract center.
+    activity_weighted_per_acre: Optional[float] = None
 
     @property
     def jobs_known(self) -> bool:
@@ -119,6 +124,27 @@ def people_density_in_disk(lat: float, lon: float, radius_m: float = RADIUS_M, t
     return float(pop[i] / land[i]), 0, "nearest_tract"
 
 
+def weighted_people_density_in_disk(lat: float, lon: float, radius_m: float = RADIUS_M) -> Optional[float]:
+    """
+    Population-weighted people per square mile over the tracts whose center lies in the circle: each tract's own
+    density, weighted by its residents (sum of pop x pop / land, over sum of pop). None when no tract center is in
+    the circle or nobody lives in them.
+    """
+    import numpy as np
+    tlat, tlon, tpop, tland = _load_tracts()
+    m = (np.abs(tlat - lat) < 0.2) & (np.abs(tlon - lon) < 0.2)
+    if not m.any():
+        return None
+    dy = (tlat[m] - lat) * 110_540.0
+    dx = (tlon[m] - lon) * 111_320.0 * math.cos(math.radians(lat))
+    inside = np.hypot(dx, dy) <= radius_m
+    pop, land = tpop[m][inside], tland[m][inside]
+    ok = land > 0
+    if not ok.any() or pop[ok].sum() <= 0:
+        return None
+    return float((pop[ok] * (pop[ok] / land[ok])).sum() / pop[ok].sum())
+
+
 def jobs_in_disk(lat: float, lon: float, radius_m: float = RADIUS_M) -> Optional[float]:
     """Workplace jobs in the circle, or None when the jobs grid does not cover the place (not zero)."""
     import h3
@@ -167,7 +193,9 @@ def _stats_cached(lat4: float, lon4: float, radius_m: int, tract_geoid: Optional
     activity = density * SQ_MI_PER_ACRE + ((jobs or 0.0) / acres)
     if jobs is None:
         logger.warning("jobs grid does not cover (%.4f, %.4f): activity density uses people only", lat4, lon4)
-    return SurroundingStats(density, n, method, jobs, activity, radius_m)
+    weighted = weighted_people_density_in_disk(lat4, lon4, radius_m) if method == "disk" else None
+    activity_weighted = (weighted * SQ_MI_PER_ACRE + ((jobs or 0.0) / acres)) if weighted is not None else activity
+    return SurroundingStats(density, n, method, jobs, activity, radius_m, activity_weighted)
 
 
 def surrounding_stats(lat: float, lon: float, radius_m: int = RADIUS_M,

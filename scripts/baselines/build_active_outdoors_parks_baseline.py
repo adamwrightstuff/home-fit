@@ -1,6 +1,6 @@
 """
 Build data/active_outdoors_parks_baseline.json: the expected distance-weighted park count within 2,000 m of a pin,
-as a function of people plus jobs per gross acre in the 1 km around it (PlaceContext.activity_per_acre).
+as a function of population-weighted people plus jobs per acre in the 1 km around it (PlaceContext.activity_weighted_per_acre).
 
 The value is an empirical peer median from one version of the pillar's park query, not a published
 standard. Rolling median over places sorted by activity, evaluated at fixed knots, then made monotone
@@ -74,13 +74,13 @@ def main() -> None:
         "measure": "sum over parks within radius_m of exp(-decay_per_m * distance_m); median of catalog places at similar activity per acre",
         "decay_per_m": DECAY_PER_M,
         "radius_m": RADIUS_M,
-        "x": "people plus jobs per gross acre in the 1 km around the pin",
+        "x": "population-weighted people per acre plus jobs per gross acre in the 1 km around the pin (PlaceContext.activity_weighted_per_acre)",
         "interpolation": "log-log between knots; below the first knot and above the last, hold the end value",
         "knots": KNOTS,
         "expected_parks": values,
         "split_half": halves,
         "n_places": len(rows),
-        "status": "empirical peer median, not a published standard; fit on 11 states with a private Overpass server",
+        "status": "empirical peer median, not a published standard; fit on 11 states with a private Overpass server; cycleway and footway entries (types greenway_*) are not counted as parks",
         "window_places": WINDOW,
         # Same measure for playgrounds (0 to 5 point term): weighted count within radius_m, same knots and decay.
         "expected_playgrounds": fit(play_rows),

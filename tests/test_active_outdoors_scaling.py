@@ -58,3 +58,9 @@ def test_good_reads_score_the_scaled_total(monkeypatch):
     b = d["breakdown"]
     assert d["summary"]["components_missing"] == []
     assert score == pytest.approx((b["daily_urban_outdoors"] + b["wild_adventure"] + b["waterfront_lifestyle"]) * 100 / 110, abs=0.2)
+
+
+def test_path_entries_are_not_counted_as_parks():
+    from pillars.active_outdoors import _is_path_entry
+    assert _is_path_entry({"type": "greenway_cycleway"}) and _is_path_entry({"type": "greenway_footway"})
+    assert not _is_path_entry({"type": "park"}) and not _is_path_entry({"type": "garden"}) and not _is_path_entry({})
