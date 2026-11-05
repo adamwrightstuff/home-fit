@@ -53,7 +53,7 @@ degraded, and fewer than three of four components means the pillar fails.
 
 ## DPv2 spec sheet and audit (2026-11-02, audit only, nothing changed)
 
-Level: 0 until you sign off. Option B was approved 2026-11-03 and implemented (see "Change record" at the end); it is uncommitted and the recompute is in new files only.
+Level: 1 (Converted), accepted by the owner 2026-11-05. Level 2 not reached (see "Level 2 status" near the end). Option B was approved 2026-11-03 and implemented (see "Change record" at the end).
 Everything below was computed offline from the 1,476 stored catalog rows (`data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl`) and `data/fema_flood_zones_catalog.json`. No API, GEE or FEMA call was made for the numbers. Sources I did not open this session are marked "cited in code, not re-read".
 
 ```
@@ -210,3 +210,11 @@ PASSED, V1a-b heat against MODIS land surface temperature (independent agent, ru
 Not run: V3 disk pin-shift rerun (needs Earth Engine heat reads). Owner decision 2026-11-03: no Google spending, so the pin-shift rerun is not run. The pilot pin-shift on 60 places (disk measure passes) is the builder's, not independent; it shows the measure is steady, not that it is right.
 
 Proposed level: below Level 2. Level 1 plus the independent air check and the MODIS heat check. Flood is unvalidated (two independent fails), heat passes MODIS but has leftover bad cool readings in San Antonio that the screen misses, and the pin-shift rerun is not run. Level 2 needs a flood result that passes (or a better outside source, for example county share of land in the special flood hazard area, not tried), and V3 or an owner waiver.
+
+### Level 1 accepted by the owner (2026-11-05)
+
+Climate risk stays at Level 1 (Converted). Accepted gaps: flood is unvalidated (two independent checks failed, V1c and V1c-b);
+heat passes the MODIS check but San Antonio has leftover bad cool readings the plausibility screen misses; the disk pin-shift
+rerun was not run (owner decision 2026-11-03, no Google spending), and the pilot pin-shift on 60 places is the builder's own;
+the air zero point (35 ug/m3) and hazard weights are unsourced. Level 2 would need a flood result that passes or a better
+outside source (for example county share of land in the special flood hazard area, not tried), plus V3 or an owner waiver.
