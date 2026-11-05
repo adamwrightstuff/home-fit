@@ -50,6 +50,16 @@ def boardings_from_faa_xlsx(path: str) -> dict:
     return out
 
 
+def faa_boardings_by_iata(path: str, id_map_path=None) -> dict:
+    """FAA boardings keyed by IATA code (BTS uses IATA; the FAA file uses FAA location IDs for some airports)."""
+    boardings = boardings_from_faa_xlsx(path)
+    p = Path(id_map_path) if id_map_path else Path(__file__).resolve().parents[2] / "data_sources" / "static" / "faa_id_to_iata.json"
+    if not p.exists():
+        return boardings
+    mapping = json.loads(p.read_text())["map"]
+    return {mapping.get(code, code): n for code, n in boardings.items()}
+
+
 def served_from_segments(rows, boardings: dict) -> dict:
     """origin -> sorted destinations served nonstop under the definition above."""
     departures = collections.Counter()
@@ -73,7 +83,7 @@ def main():
     ap.add_argument("--airports", default=str(Path(__file__).resolve().parents[2] / "data_sources" / "static" / "airports.json"))
     ap.add_argument("--out", default=str(Path(__file__).resolve().parents[2] / "data_sources" / "static" / "airport_nonstop_served_2023.json"))
     a = ap.parse_args()
-    boardings = boardings_from_faa_xlsx(a.faa_xlsx)
+    boardings = faa_boardings_by_iata(a.faa_xlsx)
     with open(a.bts_csv, newline="") as f:
         served = served_from_segments(csv.DictReader(f), boardings)
     codes = {x["code"] for x in json.load(open(a.airports))["airports"]}

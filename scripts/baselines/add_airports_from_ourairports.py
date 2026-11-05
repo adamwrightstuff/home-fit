@@ -59,7 +59,7 @@ def main():
     ap.add_argument("--faa-xlsx", required=True)
     ap.add_argument("--airports", default=str(ROOT / "data_sources" / "static" / "airports.json"))
     a = ap.parse_args()
-    boardings = _build.boardings_from_faa_xlsx(a.faa_xlsx)
+    boardings = _build.faa_boardings_by_iata(a.faa_xlsx)
     doc = json.loads(Path(a.airports).read_text())
     existing = {x["code"] for x in doc["airports"]}
     with open(a.ourairports_csv, newline="", encoding="utf-8") as f:

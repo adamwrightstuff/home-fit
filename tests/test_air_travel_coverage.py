@@ -176,3 +176,25 @@ def test_airport_additions_keep_existing_records_and_skip_missing_coordinates():
     rows = [row(iata_code="AAA"), row(iata_code="BBB", latitude_deg=""), row(iata_code="CCC", iso_country="PR"), row(iata_code="OLD")]
     recs, skipped = add.new_records(rows, {"AAA": 1, "BBB": 1, "CCC": 1, "OLD": 1}, {"OLD"})
     assert [r["code"] for r in recs] == ["AAA"] and set(skipped) == {"BBB", "CCC"}
+
+
+def test_faa_ids_map_to_iata_and_big_airports_are_origins():
+    """FAA-file location IDs that differ from IATA (Mesa Gateway IWA to AZA) must not leave an airport unreachable."""
+    import json
+    from pathlib import Path
+    static = Path(air._AIRPORTS_FILE).parent
+    served = json.loads((static / "airport_nonstop_served_2023.json").read_text())
+    for faa_id in ("IWA", "GPI", "HXD", "JQF", "NYL", "SAW", "UNV"):
+        assert faa_id not in served["boardings"], faa_id
+    for iata in ("AZA", "FCA", "HHH", "USA", "YUM", "MQT", "SCE"):
+        assert iata in served["boardings"] and served["served"].get(iata), iata
+    assert "AZA" in {a["code"] for a in air._load_airports()}
+
+
+def test_id_map_ignores_ambiguous_and_already_iata_codes():
+    from scripts.baselines import build_faa_id_to_iata as b
+    row = lambda **k: {"iso_country": "US", "type": "small_airport", "local_code": "", "gps_code": "", "ident": "", "iata_code": "", **k}
+    rows = [row(local_code="ZZ1", iata_code="AAA"), row(local_code="ZZ2", iata_code="BBB"), row(gps_code="ZZ2", iata_code="CCC"),
+            row(local_code="DDD", iata_code="DDD"), row(local_code="ZZ3", iata_code="AAA", iso_country="FR")]
+    out, amb = b.id_map(rows, {"ZZ1", "ZZ2", "DDD", "ZZ3"})
+    assert out == {"ZZ1": "AAA"} and amb == ["ZZ2"]
