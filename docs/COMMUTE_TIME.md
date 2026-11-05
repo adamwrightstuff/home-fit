@@ -171,6 +171,9 @@ Results: other checks not yet run beyond what section 3 states. Proposed level: 
 3. Approve the Google call for SF and LA R5 comparison (about 200 element calls), or skip it.
 4. Citations still to verify from full text: Stutzer and Frey magnitude (the "+18 minutes, -0.09" figure in HAPPINESS_EVIDENCE_NOTES is UNVERIFIED by me; the PDF would not parse), Chatterjee 2020 mode ordering, van Ommeren and Fosgerau euro figure, Wardman multipliers, DOT 2016 guidance.
 
+## Change log
+2026-11-05: fix 3 implemented on branch commute-time-dpv2 (not pushed): a place routed to the hub but with no time in the user's chosen mode scores 0 (scaled by office days) and shows "No route to your work hub by your chosen mode", instead of dropping out. Also corrected: the explorer treated a stored no-route entry as "off zone". Curve unchanged. New pure module frontend/lib/commuteTime.ts, tests in tests/commute_time.test.mjs (7 pass), tsc clean. Card snap-distance note not done: the picker already shows it; place cards do not have the snapped distance available.
+
 ## Owner acceptances
 2026-11-05: owner accepted check 1 (places at 0 are real long trips) and the snap-error approach (show the snap distance and error band on the card, keep the 15 mile rule) as known limits, on condition that the work continues to Level 2. Level 2 is not yet reached: fix 3, the card disclosure, and check 4 for SF and LA are still open.
 

@@ -2,6 +2,7 @@ import type { ScoreResponse } from '@/types/api'
 import { PILLAR_ORDER, SCORE_BANDS, type PillarKey, computeHappinessIndex } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import { haversineMiles } from '@/lib/workZones'
+import { commutePillarScore, commuteTimeScore } from '@/lib/commuteTime'
 import { applyAoPreferences, applyWaterfrontPreference, type WaterfrontSubPreference } from '@/lib/aoPreference'
 import { applyNbPreferencesV9 } from '@/lib/nbPreference'
 
@@ -252,14 +253,7 @@ export function reweightScoreResponseFromPriorities(
  * <=15min, 80 at the 30min anchor, decaying to 0 at 90min. This is a placeholder curve, not
  * calibrated against research the way the real pillars' scoring functions are.
  */
-export function commuteTimeScore(minutes: number | null | undefined): number | null {
-  if (minutes === null || minutes === undefined || !Number.isFinite(minutes) || minutes < 0) return null
-  if (minutes <= 15) return 100
-  if (minutes <= 30) return 100 - (minutes - 15) * (20 / 15)
-  if (minutes <= 60) return 80 - (minutes - 30) * (30 / 30)
-  if (minutes <= 90) return 50 - (minutes - 60) * (50 / 30)
-  return 0
-}
+export { commuteTimeScore }
 
 /**
  * Injects a synthetic commute_time pillar into a catalog place's score so
@@ -272,7 +266,8 @@ export function commuteTimeScore(minutes: number | null | undefined): number | n
 export function withCommuteTimePillar(
   data: ScoreResponse,
   minutes: number | null | undefined,
-  officeDays?: number | null
+  officeDays?: number | null,
+  noRoute = false
 ): ScoreResponse {
   // Fully remote: commute doesn't touch daily life, so it drops out of the happiness index and
   // gets no pillar score (no numeric score means reweighting ignores it too).
@@ -287,12 +282,11 @@ export function withCommuteTimePillar(
     const hi = computeHappinessIndex((remote.livability_pillars as any) ?? {})
     return hi !== null ? { ...remote, happiness_index: hi } : remote
   }
-  const base = commuteTimeScore(minutes)
-  if (base === null) return data
-  // Exposure scales with days commuted: a placeholder linear blend toward a no-penalty score,
-  // pending the calibration against health outcomes.
+  // noRoute: the place was routed to the hub but has no time in the user's chosen mode. It scores
+  // worst (not dropped), so it cannot beat a place with a long commute (docs/COMMUTE_TIME.md, fix 3).
+  const score = commutePillarScore(minutes, officeDays, noRoute)
+  if (score === null) return data
   const days = typeof officeDays === 'number' ? Math.min(5, Math.max(1, officeDays)) : 5
-  const score = 100 - (100 - base) * (days / 5)
   const patched: ScoreResponse = {
     ...data,
     livability_pillars: {
@@ -302,7 +296,11 @@ export function withCommuteTimePillar(
         weight: 0,
         contribution: 0,
         importance_level: null,
-        breakdown: { minutes: Math.round((minutes as number) * 10) / 10, office_days: days },
+        breakdown: {
+          minutes: typeof minutes === 'number' ? Math.round(minutes * 10) / 10 : null,
+          office_days: days,
+          ...(typeof minutes === 'number' ? {} : { no_route: true }),
+        },
       },
     } as any,
   }

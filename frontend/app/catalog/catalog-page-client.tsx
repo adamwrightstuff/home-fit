@@ -18,7 +18,7 @@ import CatalogListView from '@/components/catalog/CatalogListView'
 import HeroBand from '@/components/catalog/HeroBand'
 import FilterSheet from '@/components/catalog/FilterSheet'
 import MetroPicker from '@/components/catalog/MetroPicker'
-import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, minutesForMode } from '@/lib/workZones'
+import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, minutesForMode, noRouteToZone } from '@/lib/workZones'
 import IndexInfoButton from '@/components/catalog/IndexInfoButton'
 import CompareTray from '@/components/catalog/CompareTray'
 import { DEFAULT_PRIORITIES, type PillarPriorities, type PriorityLevel } from '@/components/SearchOptions'
@@ -580,7 +580,12 @@ export default function CatalogPageClient({
             commute_text: formatZoneCommute(workZone, commute),
             // Optional commute_time pillar (see reweight.ts) -- only meaningful once a work hub is
             // picked, and only when this place has a usable precomputed time to it.
-            score: withCommuteTimePillar(adjusted.score, minutesForMode(commute, workZone, commuteMode), officeDays),
+            score: withCommuteTimePillar(
+              adjusted.score,
+              minutesForMode(commute, workZone, commuteMode),
+              officeDays,
+              noRouteToZone(p.work_commute, workZone, commuteMode)
+            ),
           }
         }
       }

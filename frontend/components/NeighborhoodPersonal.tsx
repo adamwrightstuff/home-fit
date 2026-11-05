@@ -34,7 +34,8 @@ export default function NeighborhoodPersonal({ score, workCommute }: { score: Sc
 
   const commuteMinutes = typeof commute?.breakdown?.minutes === 'number' ? commute.breakdown.minutes : null
   const commuteScore = typeof commute?.score === 'number' ? commute.score : null
-  const showCommute = commuteMinutes != null && commuteScore != null
+  const commuteNoRoute = commute?.breakdown?.no_route === true
+  const showCommute = (commuteMinutes != null || commuteNoRoute) && commuteScore != null
   const showSocial = social && typeof social.weight === 'number' && social.weight > 0
   if (!showCommute && !showSocial) return null
 
@@ -89,7 +90,7 @@ export default function NeighborhoodPersonal({ score, workCommute }: { score: Sc
         {showCommute &&
           row(
             'Commute',
-            `About ${Math.round(commuteMinutes!)} min one way${
+            `${commuteNoRoute ? 'No route to your work hub by your chosen mode' : `About ${Math.round(commuteMinutes!)} min one way`}${
               typeof commute.breakdown?.office_days === 'number' ? `, ${commute.breakdown.office_days} office days a week` : ''
             }`,
             commuteScore

@@ -5,7 +5,7 @@ import {
   withCommuteTimePillar,
   withSocialConnectionPillar,
 } from '@/lib/reweight'
-import { commuteToZone, findWorkZone, haversineMiles, minutesForMode, type WorkCommute } from '@/lib/workZones'
+import { commuteToZone, findWorkZone, haversineMiles, minutesForMode, noRouteToZone, type WorkCommute } from '@/lib/workZones'
 import type { UserProfile } from '@/lib/userProfile'
 
 /**
@@ -68,8 +68,9 @@ export function applyProfileToScore(
   const commuteMinutes = routed
     ? minutesForMode(routed, zone!, profile.commute_mode)
     : estimateHubCommuteMinutes(lat, lon, areaType, profile.work_zone_id, profile.commute_mode)
-  if (commuteMinutes !== null && profile.office_days !== 0) {
-    out = withCommuteTimePillar(out, commuteMinutes, profile.office_days)
+  const noRoute = !!(zone && opts.workCommute) && noRouteToZone(opts.workCommute, zone, profile.commute_mode)
+  if ((commuteMinutes !== null || noRoute) && profile.office_days !== 0) {
+    out = withCommuteTimePillar(out, commuteMinutes, profile.office_days, noRoute)
   }
 
   if (profile.people?.length) {
