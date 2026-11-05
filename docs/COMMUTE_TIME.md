@@ -153,7 +153,9 @@ Pass criteria, fixed before results:
 4. R5 versus Google: 80% of pairs within 10 min and absolute bias under 3 min per hub (NYC passes: 89% within 10, per-hub bias at most 3.3, White Plains 3.3 narrowly fails the bias line); SF and LA need fresh Google transit calls. I am asking before any API call: it would need Google Distance Matrix transit calls for a sample of about 100 SF and 100 LA place-hub pairs.
 5. Independent validation brief for another agent: compare 30 NYC rail-town times to Midtown East against published MTA and NJ Transit timetable trip times for a 7:30 to 8:45 arrival-aligned departure; pass if the median absolute difference is under 5 min and none exceeds 15 min. The validator must not see the R5 output until it has written down the timetable times.
 
-Results: not yet run beyond what section 3 states. Proposed level: stays 0 until fix 3 is approved and shipped and checks 2 and 5 are run.
+Launch pair result (2026-11-05, stored times, criteria unchanged from above): PASS. "Differ" 13 of 13 (smallest gap 22 min, Marina District vs Pleasanton). "Similar" 5 of 6 (83%); the miss is Pacific Heights 32 min vs Russian Hill 12 min to Financial District, a 20 min gap (stored values, not investigated). Hub pair Midtown East vs Midtown North median absolute difference 5.0 min over 191 places, exactly at the limit. Bronxville and Westfield were not blind.
+
+Results: other checks not yet run beyond what section 3 states. Proposed level: stays 0 until fix 3 is approved and shipped and checks 2 and 5 are run.
 
 ## 7. Open items for owner
 1. Approve fix 3 (no route in chosen mode scores 0 and is labeled).
