@@ -157,9 +157,9 @@ numbers, removed the same day, and not shipped. The luxury code stays in the rep
 
 Catalog recompute (offline, new files in `data/status_class_position/`, originals untouched, `scripts/catalog/recompute_status_class_position.py`):
 - Class re-derived from stored inputs matched the stored label for 1,476 of 1,476 places; the live function matched the recompute for 1,476 of 1,476 (checked on the earlier draft; rerun the check after review).
-- Class inversions: 71,034 of 615,211 pairs (11.5%) before, 0 of 613,755 after.
-- Spread, n=1,469: 10th 38.4, median 52.5, 90th 80.5. By area type (10th / median / 90th): exurban 43.0 / 56.1 / 88.2; suburban 37.1 / 51.3 / 80.0; rural 41.5 / 53.7 / 84.8; urban residential 30.1 / 50.4 / 76.8.
-- Ties (known limit, principle 10): 72 of 252 Affluent places tie at 80 (over the p90 income line, under the p90 home value line); 45 of 152 Elite places tie at 100 (income at the topcode). Nothing is at the floor.
+- Class inversions: 71,034 of 615,211 pairs (11.5%) before, 0 of 573,694 after pooling (section 9).
+- Spread after pooling, n=1,469: 10th 41.4, median 52.7, 90th 80.0 (before pooling 38.4 / 52.5 / 80.5). By area type (10th / median / 90th): exurban 43.0 / 56.1 / 88.2; suburban 37.1 / 51.3 / 80.0; rural 41.5 / 53.7 / 84.8; urban residential 30.1 / 50.4 / 76.8.
+- Ties (known limit, principle 10): after pooling 67 of 240 Affluent places tie at 80 (over the p90 income line, under the p90 home value line) and 35 of 138 Elite places tie at 100 (income at the topcode); all 6 Struggling places sit at exactly 20.0 (their income position is clipped). Nothing is at the floor.
 - Downtown Los Angeles has no income and carried the default label Struggling; it now has no class and no score (1 place). No score now for 7 places in total.
 - Examples: Beverly Hills 93.0 to 57.4, Greenwood Village 98.3 to 59.9, Kenwood 82.7 to 33.5, Odessa FL 72.4 to 81.8. Aura (status weight 0.15) moves 1.8 points on average, 8.7 at most.
 - Overlap with the composite (Spearman, before to after, earlier draft): economic_opportunity 0.16 to 0.08, diversity -0.57 to -0.43, quality_education 0.61 to 0.63, social_fabric 0.46 to 0.43.
@@ -185,11 +185,15 @@ Monthly housing cost is not in that pull, so pooled places keep their single-tra
 | 3 Similar pairs | Wicker Park 83.4 vs Bucktown 79.3 pass (was 85.7 vs 59.3); Park Slope 84.9 vs Carroll Gardens 59.7 fail (pooling moved Carroll Gardens from 81.8); Brookline 56.2 vs Newton 80.2 fail (both place-level, unaffected by pooling); 1 of 3, needed 2 | FAIL |
 | 4 Independent proxy (B19001 income bins are not in the pull, so the original statistic was not run) | Spearman with mean household income 0.877 and median gross rent 0.664 pass; median home value 0.581 (limit 0.60) fail; median home value by class Struggling 533k, Working 345k, Middle 428k, Affluent 697k, Elite 1.15M, not strictly rising | FAIL (proxy); original NOT RUN |
 
+Independent rerun (a separate agent session with its own code, same brief, 2026-11-04): checks 1 and 2 pass, check 3 fails, check 4 proxy fails on home value; original check 4 not run. Its 21 output files are byte-identical to the builder's.
+Pin-shift pooled: median 1.80, p95 14.05, class unchanged 82.4% (single-tract p95 27.32, 77.6%). Four tract-level places shift more than 20 points (Tribeca 24.5, Bryker Woods 24.5, SoHo 21.9, Candler Park 21.5). Pair scores, inversions (0 of 573,694),
+tie shares (largest 8.6%) and the Spearman values (0.877, 0.665, 0.581) match the builder's. Verdict matches on every check; small numeric differences come from the shift sampling (pin-shift) and rounding. Originals in `data/` unchanged (git diff empty).
+
 Reading: the ladder, the ordering and the geography problem are fixed (pin-shift passes; single-tract fails the same test). Remaining misses are about what a median income can say. Brookline (median
 $130,600) is Middle Class by metro rank while Newton is Elite; Palo Alto sits one 0.1-point short of a pair threshold I set; the 13-to-6 Struggling places are student and downtown tracts with high home
 values. These are properties of the construct (typical household income against a metro rank), not bugs; changing them means changing the label's definition, which is the owner's call (gap G5).
-Not run: B19001 share of households over $200,000 (needs data not in the repo); a rerun by someone other than the builder (the brief now needs no Census calls: the pull and centers table are in the archive folder).
+Not run: B19001 share of households over $200,000 (needs data not in the repo); true live-geocoder lookups at shifted pins (membership is the disk approximation).
 
-Level 1 (Converted) signed off. Level 2 proposal for owner decision (checks are run, three criteria still fail, rerun by another session still needed): Level 1 basis: spec sheet filled, frames declared with evidence tiers (Affluent and Elite frame: none), no shared place facts to take from the place context, remaining uses of the area-type label listed with reasons, no neutral value in the score.
+Level 1 (Converted) signed off. Level 2 proposal for owner decision (checks run and independently rerun; launch pairs and the home-value proxy still fail): Level 1 basis: spec sheet filled, frames declared with evidence tiers (Affluent and Elite frame: none), no shared place facts to take from the place context, remaining uses of the area-type label listed with reasons, no neutral value in the score.
 Accepted TODOs to list in the sign-off line: equal 20-point bands unsourced; Affluent and Elite cutoffs (20% and 10% shares) are product definitions; UAC thresholds unsourced; trajectory area-type gate; compute_wealth neutral z; cutoffs are tract-median percentiles compared with place medians; Level 2 run offline and not met (section 9).
 Sign-off: Level 1 (Converted), signed off by the owner (Adam Wright), 2026-11-04, with the TODOs listed above accepted.
