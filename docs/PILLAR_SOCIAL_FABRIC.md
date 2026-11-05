@@ -173,9 +173,8 @@ Goal: test whether the v18 score tracks outcomes it was not built from. Fix thes
 
 ### Proposed level
 
-Level 1 (Converted) for sign-off, with these TODOs accepted: unsourced weights (range recorded), area-type bands still
-used by cohesion, IRS rate and civic tier with no stated reason, 189 places on a state-wide volunteering rate. Not Level 2:
-pin-shift and independent validation have not run, and two of three "should differ" launch pairs failed.
+Superseded. This was the Level 1 proposal of 2026-11-04. The final status is Level 2, signed off by the owner with recorded
+gaps: see "v18 restored as final" at the end of this document.
 
 ### Sign-off
 

@@ -91,7 +91,7 @@ PILLAR_DATA_QUALITY.
 
 ```
 Pillar: community_safety
-Level: 1 (Converted), signed off by the owner 2026-11-01 with the TODOs listed under "Level 2 results and proposed level". Level 2 not reached: independent validation not done.
+Level: 2 (Verified), signed off by the owner 2026-11-04 with the independent validation waived (Level 1 signed 2026-11-01). The waiver and accepted gaps are recorded at the end of this document.
 Construct (one sentence): Exposure to reported violent and property crime near the pin, expressed as the share of
   Americans who live somewhere with more of it. It measures reported risk, not felt safety and not cost to society.
 Reference frame: fixed standard, expressed on a national scale (one curve for every place, 2024 breakpoints, no area type).
@@ -211,3 +211,15 @@ Run by a separate agent, report in `analysis/safety_level2_report_2026-11-01.md`
 Proposed level: Level 1 (Converted). Level 2 is not reached because its independent validation did not run. Accepted TODOs to list at sign-off: independent validation (NYC precinct route ready if downloads are allowed later); crime-type weighting (left as disclosed limit); trend, 10,000-resident minimum, radii, work-week share and confidence values unsourced; mixed circle and agency areas; 56 places with no data; two NYC tract gaps; pin-shift not shown in the API. Last re-validated: 2026-11-01 (checks 1 to 3 only).
 
 Sign-off: Level 1, owner, 2026-11-01. Accepted TODOs: as listed above.
+
+### Level 2 sign-off with validation waived (owner, 2026-11-04)
+
+Level 2 (Verified), signed off by the owner 2026-11-04. The independent validation was not run and is waived, not passed. The
+planned NYPD precinct check would only test small-area ranking inside one city (a few hundred of 1,476 places) and says
+nothing about the national scale the score is built on, so it would not have settled this. A real independent check needs a
+second national source compared across the full catalog (for example county violent crime rates from CDC data); none has been
+chosen or run. Accepted gaps: independent validation waived (FBI agency-rate comparison inconclusive, Spearman 0.115, n=10);
+crime-type weighting left as a disclosed limit; trend, 10,000-resident minimum, radii, work-week share and confidence values
+unsourced; mixed circle and agency areas; 56 places with no data; two NYC tract gaps; pin-shift not shown in the API and
+disclosure only (circle places median 13.7, p95 34.3 at 600 m). Launch pairs and the all-places check passed (2026-11-01).
+Last re-validated: 2026-11-01 (checks 1 to 3 only).
