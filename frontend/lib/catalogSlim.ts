@@ -9,6 +9,18 @@ const HEAVY_PILLAR_KEYS = ['breakdown', 'details', 'data_quality', 'v9_breakdown
 
 /** Heavy-key sub-paths the list-level code still needs, by pillar. */
 const KEEP_PATHS: Record<string, string[][]> = {
+  // Explorer reweighting (applyScenerySubPreferencesToScore) reads these; without them the list
+  // shows an unadjusted score and the on-click detail swap makes it jump.
+  active_outdoors: [
+    ['breakdown', 'daily_urban_outdoors'],
+    ['breakdown', 'wild_adventure'],
+    ['breakdown', 'waterfront_lifestyle'],
+    ['breakdown', 'waterfront_breakdown', 'ocean_beach'],
+    ['breakdown', 'waterfront_breakdown', 'lake_river'],
+    ['breakdown', 'waterfront_breakdown', 'bay_harbor'],
+    ['breakdown', 'waterfront_breakdown', 'waterfront_access'],
+  ],
+  housing_value: [['breakdown', 'space'], ['breakdown', 'value_efficiency']],
   political_lean: [['breakdown', 'lean_2024'], ['breakdown', 'dem_pct_2024']],
   social_fabric: [['breakdown', 'social_capital']],
   built_environment: [['breakdown', 'effective_area_type'], ['details', 'effective_area_type']],
