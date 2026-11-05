@@ -123,6 +123,8 @@ Job-weighted median error among jobs within 15 miles: transit about 11 min NYC, 
 | 11 | Office-days blend and snap limit unsourced | 4 | List as TODO with range unknown | None |
 | 12 | SF and LA R5 never compared with another source | 7 | Independent check in section 6 | n/a |
 
+Missing-data finding (2026-11-05): five places have no `work_commute` at all (NYC Maspeth, Southport; SF El Cerrito, Foster City, Los Altos Hills) although `r5_transit.csv` has non-null times for all five. Maspeth and Southport had it in the 2026-10-09 backup and lost it by 2026-10-16, when a `rescore_catalog_pillar` run rewrote their rows (the merge note starts `rescore_catalog_pillar_v1`). The three SF places show no `work_commute` in any backup I checked. Cause for SF is not proven. Fix 3 must score 0 only for a stored null on a place that has `work_commute`; the five are missing data and should be restored by rerunning the merge from the cached R5 output (offline, no API call). Genuine no-route places (Weston, Hidden Hills, far Marin hubs) have drive times 74 to 110 min; not checked against timetables.
+
 ## 5. Options (one recommendation)
 
 - A: Document only. Keep curve, list unsourced knots. Fix gaps 3, 4, 5 only.
