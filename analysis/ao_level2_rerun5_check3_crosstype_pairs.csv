@@ -1,0 +1,1274 @@
+metro,place_a,area_a,act_a,total_a,place_b,area_b,act_b,total_b,abs_total_diff
+san_antonio,Bandera,rural,1.73,53.7,Cross Mountain,exurban,1.66,35.8,17.9
+san_antonio,Beacon Hill,suburban,11.97,65.6,Stone Oak,exurban,11.86,45.1,20.5
+san_antonio,Boerne,exurban,7.6,45.2,Converse,suburban,7.54,51.1,5.9
+san_antonio,Boerne,exurban,7.6,45.2,Leon Valley,suburban,7.71,70.1,24.9
+san_antonio,Boerne,exurban,7.6,45.2,Universal City,suburban,7.57,63.3,18.1
+san_antonio,Boerne,exurban,7.6,45.2,Windcrest,suburban,8.16,64.5,19.3
+san_antonio,Castle Hills,exurban,5.97,65.3,Kirby,suburban,6.53,58.2,7.1
+san_antonio,China Grove,rural,1.57,38.5,Cross Mountain,exurban,1.66,35.8,2.7
+san_antonio,Converse,suburban,7.54,51.1,New Braunfels,exurban,8.04,53.0,1.9
+san_antonio,Converse,suburban,7.54,51.1,Terrell Hills,exurban,7.39,63.1,12.0
+san_antonio,Cross Mountain,exurban,1.66,35.8,Lytle,rural,1.71,49.5,13.7
+san_antonio,Dignowity Hill,exurban,8.52,77.4,Government Hill,suburban,8.62,72.3,5.1
+san_antonio,Dignowity Hill,exurban,8.52,77.4,Leon Valley,suburban,7.71,70.1,7.3
+san_antonio,Dignowity Hill,exurban,8.52,77.4,Live Oak,suburban,8.59,50.7,26.7
+san_antonio,Dignowity Hill,exurban,8.52,77.4,Windcrest,suburban,8.16,64.5,12.9
+san_antonio,Garden Ridge,rural,3.9,42.0,Helotes,exurban,4.15,52.5,10.5
+san_antonio,Garden Ridge,rural,3.9,42.0,Selma,exurban,3.64,58.1,16.1
+san_antonio,Government Hill,suburban,8.62,72.3,New Braunfels,exurban,8.04,53.0,19.3
+san_antonio,Kirby,suburban,6.53,58.2,Seguin,exurban,6.37,52.5,5.7
+san_antonio,Leon Valley,suburban,7.71,70.1,New Braunfels,exurban,8.04,53.0,17.1
+san_antonio,Leon Valley,suburban,7.71,70.1,Terrell Hills,exurban,7.39,63.1,7.0
+san_antonio,Live Oak,suburban,8.59,50.7,New Braunfels,exurban,8.04,53.0,2.3
+san_antonio,New Braunfels,exurban,8.04,53.0,Universal City,suburban,7.57,63.3,10.3
+san_antonio,New Braunfels,exurban,8.04,53.0,Windcrest,suburban,8.16,64.5,11.5
+san_antonio,Southtown,exurban,14.99,70.0,Spring Branch,rural,16.32,40.6,29.4
+san_antonio,Terrell Hills,exurban,7.39,63.1,Universal City,suburban,7.57,63.3,0.2
+san_antonio,Terrell Hills,exurban,7.39,63.1,Windcrest,suburban,8.16,64.5,1.4
+raleigh,Apex,exurban,6.65,70.0,Five Points,suburban,6.94,67.0,3.0
+raleigh,Apex,exurban,6.65,70.0,Morrisville,suburban,6.63,75.0,5.0
+raleigh,Brier Creek,exurban,7.37,63.2,Five Points,suburban,6.94,67.0,3.8
+raleigh,Brier Creek,exurban,7.37,63.2,Hayes Barton,suburban,7.7,66.0,2.8
+raleigh,Glenwood South,suburban,41.37,65.7,Midtown Raleigh,exurban,44.07,60.5,5.2
+raleigh,Holly Springs,suburban,8.25,53.8,North Hills,exurban,9.08,65.6,11.8
+raleigh,Knightdale,exurban,4.71,69.4,Wakefield,suburban,5.01,70.6,1.2
+raleigh,Wake Forest,exurban,5.09,60.6,Wakefield,suburban,5.01,70.6,10.0
+phoenix,Alhambra,suburban,14.68,45.2,Pima Crossing,exurban,15.39,57.3,12.1
+phoenix,Anthem,suburban,7.53,75.3,North Mountain,exurban,6.82,66.2,9.1
+phoenix,Apache Junction,exurban,10.64,53.5,Casa Grande,rural,11.39,49.3,4.2
+phoenix,Apache Junction,exurban,10.64,53.5,Deer Valley,suburban,9.75,51.4,2.1
+phoenix,Apache Junction,exurban,10.64,53.5,El Mirage,suburban,11.74,62.8,9.3
+phoenix,Avondale,exurban,13.14,54.3,Desert Ridge,suburban,13.33,62.5,8.2
+phoenix,Avondale,exurban,13.14,54.3,Downtown Gilbert,suburban,13.33,63.5,9.2
+phoenix,Avondale,exurban,13.14,54.3,Maricopa,suburban,12.94,37.7,16.6
+phoenix,Biltmore,exurban,25.61,53.2,Chandler,suburban,23.18,67.3,14.1
+phoenix,Biltmore,exurban,25.61,53.2,Glendale,suburban,23.87,49.8,3.4
+phoenix,Camelback East,suburban,16.31,52.4,Pima Crossing,exurban,15.39,57.3,4.9
+phoenix,Casa Grande,rural,11.39,49.3,El Mirage,suburban,11.74,62.8,13.5
+phoenix,Casa Grande,rural,11.39,49.3,Gainey Ranch,exurban,11.2,68.0,18.7
+phoenix,Chandler,suburban,23.18,67.3,Coronado,exurban,25.56,53.6,13.7
+phoenix,Chandler,suburban,23.18,67.3,Florence,rural,22.96,42.0,25.3
+phoenix,Coronado,exurban,25.56,53.6,Glendale,suburban,23.87,49.8,3.8
+phoenix,Downtown Chandler,suburban,17.68,65.9,McCormick Ranch,exurban,18.17,66.0,0.1
+phoenix,Downtown Mesa,exurban,26.36,61.8,Glendale,suburban,23.87,49.8,12.0
+phoenix,Downtown Mesa,exurban,26.36,61.8,Willo,suburban,28.6,60.8,1.0
+phoenix,El Mirage,suburban,11.74,62.8,Gainey Ranch,exurban,11.2,68.0,5.2
+phoenix,Florence,rural,22.96,42.0,Glendale,suburban,23.87,49.8,7.8
+phoenix,Florence,rural,22.96,42.0,Melrose District,suburban,21.62,53.1,11.1
+phoenix,Fountain Hills,suburban,7.56,55.7,North Mountain,exurban,6.82,66.2,10.5
+phoenix,Gilbert,suburban,15.13,65.0,Pima Crossing,exurban,15.39,57.3,7.7
+phoenix,Glendale,suburban,23.87,49.8,Mesa,exurban,26.36,61.8,12.0
+phoenix,Goodyear,exurban,5.27,65.8,Youngtown,suburban,5.3,62.4,3.4
+phoenix,Laveen,exurban,5.67,72.3,Youngtown,suburban,5.3,62.4,9.9
+phoenix,Litchfield Park,exurban,5.05,65.8,Youngtown,suburban,5.3,62.4,3.4
+phoenix,McCormick Ranch,exurban,18.17,66.0,Sunnyslope,suburban,17.93,63.2,2.8
+phoenix,McCormick Ranch,exurban,18.17,66.0,Uptown Phoenix,suburban,16.98,50.8,15.2
+phoenix,Mesa,exurban,26.36,61.8,Willo,suburban,28.6,60.8,1.0
+phoenix,Midtown Phoenix,suburban,33.41,50.6,Old Town Scottsdale,urban_residential,31.93,64.5,13.9
+phoenix,Midtown Phoenix,suburban,33.41,50.6,Scottsdale,urban_residential,32.02,64.5,13.9
+phoenix,Peoria,suburban,8.7,66.0,San Tan Valley,exurban,8.52,53.8,12.2
+phoenix,Peoria,suburban,8.7,66.0,Tolleson,exurban,8.61,46.8,19.2
+phoenix,Pima Crossing,exurban,15.39,57.3,Queen Creek,suburban,15.61,53.4,3.9
+phoenix,Pima Crossing,exurban,15.39,57.3,Uptown Phoenix,suburban,16.98,50.8,6.5
+phoenix,San Tan Valley,exurban,8.52,53.8,Verrado,suburban,9.35,60.7,6.9
+phoenix,Sun City,exurban,5.15,55.5,Youngtown,suburban,5.3,62.4,6.9
+phoenix,Sun Lakes,exurban,5.86,55.5,Youngtown,suburban,5.3,62.4,6.9
+phoenix,Tolleson,exurban,8.61,46.8,Verrado,suburban,9.35,60.7,13.9
+nyc,Ardsley,suburban,6.93,81.7,Darien,rural,6.81,75.2,6.5
+nyc,Ardsley,suburban,6.93,81.7,Katonah,rural,7.06,76.5,5.2
+nyc,Astoria,urban_residential,69.97,87.5,Richmond Hill,suburban,68.05,70.1,17.4
+nyc,Babylon,suburban,12.25,88.5,Fairfield,exurban,11.28,93.5,5.0
+nyc,Babylon,suburban,12.25,88.5,New Canaan,rural,12.22,79.8,8.7
+nyc,Bayside,urban_residential,39.88,77.1,Fieldston,suburban,38.65,91.5,14.4
+nyc,Bayside,urban_residential,39.88,77.1,Fort Lee,suburban,39.53,85.1,8.0
+nyc,Bayside,urban_residential,39.88,77.1,New Rochelle,suburban,43.37,84.3,7.2
+nyc,Bayside,urban_residential,39.88,77.1,St. George,suburban,40.77,89.5,12.4
+nyc,Bed-Stuy,urban_residential,116.88,87.3,Ridgewood,exurban,106.15,72.7,14.6
+nyc,Bellmore,suburban,15.67,79.9,Howard Beach,urban_residential,14.88,80.3,0.4
+nyc,Bellmore,suburban,15.67,79.9,Peekskill,exurban,14.9,81.8,1.9
+nyc,Bensonhurst,urban_residential,96.24,75.0,Ridgewood,exurban,106.15,72.7,2.3
+nyc,Bloomfield,suburban,19.21,82.3,Norwalk,exurban,20.64,86.8,4.5
+nyc,Bronxville,suburban,16.49,85.1,Howard Beach,urban_residential,14.88,80.3,4.8
+nyc,Bronxville,suburban,16.49,85.1,Peekskill,exurban,14.9,81.8,3.3
+nyc,Canarsie,urban_residential,67.7,82.1,Richmond Hill,suburban,68.05,70.1,12.0
+nyc,Canarsie,urban_residential,67.7,82.1,Weehawken,suburban,62.65,91.1,9.0
+nyc,Chappaqua,suburban,2.61,78.1,Wilton,rural,2.67,80.5,2.4
+nyc,Chatham,suburban,8.77,86.9,Westport,rural,9.4,92.5,5.6
+nyc,Clinton Hill,urban_residential,117.29,95.8,Ridgewood,exurban,106.15,72.7,23.1
+nyc,Closter,suburban,7.15,77.6,Darien,rural,6.81,75.2,2.4
+nyc,Closter,suburban,7.15,77.6,Katonah,rural,7.06,76.5,1.1
+nyc,Cold Spring Harbor,suburban,8.9,80.0,Westport,rural,9.4,92.5,12.5
+nyc,Coney Island,urban_residential,54.25,84.0,Edgewater,suburban,60.0,77.5,6.5
+nyc,Coney Island,urban_residential,54.25,84.0,Hempstead,suburban,50.23,69.5,14.5
+nyc,Coney Island,urban_residential,54.25,84.0,White Plains,suburban,56.43,81.0,3.0
+nyc,Cos Cob,suburban,7.63,74.2,Katonah,rural,7.06,76.5,2.3
+nyc,Cranford,suburban,13.53,86.4,Howard Beach,urban_residential,14.88,80.3,6.1
+nyc,Cranford,suburban,13.53,86.4,New Canaan,rural,12.22,79.8,6.6
+nyc,Cranford,suburban,13.53,86.4,Peekskill,exurban,14.9,81.8,4.6
+nyc,Cresskill,suburban,7.11,81.1,Darien,rural,6.81,75.2,5.9
+nyc,Cresskill,suburban,7.11,81.1,Katonah,rural,7.06,76.5,4.6
+nyc,Darien,rural,6.81,75.2,Riverside,suburban,6.69,85.8,10.6
+nyc,Dobbs Ferry,suburban,13.61,84.5,Howard Beach,urban_residential,14.88,80.3,4.2
+nyc,Dobbs Ferry,suburban,13.61,84.5,Peekskill,exurban,14.9,81.8,2.7
+nyc,East New York,urban_residential,71.26,90.2,Richmond Hill,suburban,68.05,70.1,20.1
+nyc,Edgewater,suburban,60.0,77.5,Flushing,urban_residential,57.44,74.5,3.0
+nyc,Edgewater,suburban,60.0,77.5,Jamaica,urban_residential,54.94,77.1,0.4
+nyc,Edgewater,suburban,60.0,77.5,Ozone Park,urban_residential,62.8,80.2,2.7
+nyc,Edgewater,suburban,60.0,77.5,Stamford,urban_residential,65.47,86.5,9.0
+nyc,Edgewater,suburban,60.0,77.5,Yonkers,urban_residential,62.75,75.3,2.2
+nyc,Elmhurst,urban_residential,114.56,77.5,Ridgewood,exurban,106.15,72.7,4.8
+nyc,Englewood,suburban,24.88,85.7,Great Kills,urban_residential,26.93,93.5,7.8
+nyc,Fairfield,exurban,11.28,93.5,Leonia,suburban,12.05,90.9,2.6
+nyc,Fairfield,exurban,11.28,93.5,Mamaroneck,suburban,10.69,92.3,1.2
+nyc,Fairfield,exurban,11.28,93.5,New Canaan,rural,12.22,79.8,13.7
+nyc,Fairfield,exurban,11.28,93.5,Old Greenwich,suburban,11.42,73.1,20.4
+nyc,Fairfield,exurban,11.28,93.5,Pelham Manor,suburban,10.85,88.6,4.9
+nyc,Fairfield,exurban,11.28,93.5,Pleasantville,suburban,11.87,77.5,16.0
+nyc,Fairfield,exurban,11.28,93.5,South Orange,suburban,10.68,88.6,4.9
+nyc,Fairfield,exurban,11.28,93.5,Westfield,suburban,11.56,84.8,8.7
+nyc,Fairfield,exurban,11.28,93.5,Westwood,suburban,11.55,80.3,13.2
+nyc,Fieldston,suburban,38.65,91.5,Red Hook,urban_residential,40.32,91.4,0.1
+nyc,Fieldston,suburban,38.65,91.5,Rockaway Beach,urban_residential,42.68,80.0,11.5
+nyc,Flatlands,urban_residential,68.17,81.1,Richmond Hill,suburban,68.05,70.1,11.0
+nyc,Flatlands,urban_residential,68.17,81.1,Weehawken,suburban,62.65,91.1,10.0
+nyc,Flushing,urban_residential,57.44,74.5,Weehawken,suburban,62.65,91.1,16.6
+nyc,Flushing,urban_residential,57.44,74.5,White Plains,suburban,56.43,81.0,6.5
+nyc,Fort Lee,suburban,39.53,85.1,Red Hook,urban_residential,40.32,91.4,6.3
+nyc,Fort Lee,suburban,39.53,85.1,Rockaway Beach,urban_residential,42.68,80.0,5.1
+nyc,Freeport,suburban,28.0,73.2,Great Kills,urban_residential,26.93,93.5,20.3
+nyc,Garden City,suburban,19.77,70.4,Norwalk,exurban,20.64,86.8,16.4
+nyc,Glen Ridge,suburban,21.19,85.8,Norwalk,exurban,20.64,86.8,1.0
+nyc,Glen Rock,suburban,8.97,82.3,Westport,rural,9.4,92.5,10.2
+nyc,Great Kills,urban_residential,26.93,93.5,Greenwich,suburban,24.8,80.7,12.8
+nyc,Great Kills,urban_residential,26.93,93.5,Mineola,suburban,28.77,63.8,29.7
+nyc,Great Kills,urban_residential,26.93,93.5,New Dorp,suburban,25.06,93.5,0.0
+nyc,Great Kills,urban_residential,26.93,93.5,New Hyde Park,suburban,24.33,66.9,26.6
+nyc,Great Kills,urban_residential,26.93,93.5,Pelham,suburban,24.65,84.2,9.3
+nyc,Great Kills,urban_residential,26.93,93.5,Sleepy Hollow,suburban,26.78,85.3,8.2
+nyc,Great Kills,urban_residential,26.93,93.5,Stapleton,suburban,28.59,96.2,2.7
+nyc,Great Kills,urban_residential,26.93,93.5,Summit,suburban,25.73,85.8,7.7
+nyc,Great Neck,suburban,15.25,83.4,Howard Beach,urban_residential,14.88,80.3,3.1
+nyc,Great Neck,suburban,15.25,83.4,Peekskill,exurban,14.9,81.8,1.6
+nyc,Greenpoint,urban_residential,73.26,92.5,Richmond Hill,suburban,68.05,70.1,22.4
+nyc,Harrison,suburban,15.69,85.0,Howard Beach,urban_residential,14.88,80.3,4.7
+nyc,Harrison,suburban,15.69,85.0,Peekskill,exurban,14.9,81.8,3.2
+nyc,Hastings-on-Hudson,suburban,8.57,92.5,Westport,rural,9.4,92.5,0.0
+nyc,Hempstead,suburban,50.23,69.5,Jamaica,urban_residential,54.94,77.1,7.6
+nyc,Hempstead,suburban,50.23,69.5,Mount Vernon,urban_residential,45.86,68.6,0.9
+nyc,Hempstead,suburban,50.23,69.5,Riverdale,urban_residential,52.28,86.9,17.4
+nyc,Hewlett,suburban,19.98,78.1,Norwalk,exurban,20.64,86.8,8.7
+nyc,Hoboken,urban_residential,101.08,94.6,Ridgewood,exurban,106.15,72.7,21.9
+nyc,Howard Beach,urban_residential,14.88,80.3,Malverne,suburban,13.63,73.6,6.7
+nyc,Howard Beach,urban_residential,14.88,80.3,Merrick,suburban,13.8,79.8,0.5
+nyc,Howard Beach,urban_residential,14.88,80.3,Millburn,suburban,13.56,80.5,0.2
+nyc,Howard Beach,urban_residential,14.88,80.3,Oceanside,suburban,14.95,66.9,13.4
+nyc,Howard Beach,urban_residential,14.88,80.3,Ossining,suburban,16.21,83.4,3.1
+nyc,Howard Beach,urban_residential,14.88,80.3,Peekskill,exurban,14.9,81.8,1.5
+nyc,Howard Beach,urban_residential,14.88,80.3,Short Hills,suburban,13.39,77.8,2.5
+nyc,Howard Beach,urban_residential,14.88,80.3,Tarrytown,suburban,16.19,86.1,5.8
+nyc,Howard Beach,urban_residential,14.88,80.3,Tottenville,suburban,14.35,90.1,9.8
+nyc,Huntington,suburban,13.09,81.3,New Canaan,rural,12.22,79.8,1.5
+nyc,Hunts Point,urban_residential,105.35,92.1,Ridgewood,exurban,106.15,72.7,19.4
+nyc,Jamaica,urban_residential,54.94,77.1,White Plains,suburban,56.43,81.0,3.9
+nyc,Jersey City,urban_residential,103.85,89.0,Ridgewood,exurban,106.15,72.7,16.3
+nyc,Katonah,rural,7.06,76.5,Riverside,suburban,6.69,85.8,9.3
+nyc,Kew Gardens,urban_residential,71.06,75.0,Richmond Hill,suburban,68.05,70.1,4.9
+nyc,Larchmont,suburban,13.19,97.2,New Canaan,rural,12.22,79.8,17.4
+nyc,Leonia,suburban,12.05,90.9,New Canaan,rural,12.22,79.8,11.1
+nyc,Long Beach,suburban,30.59,57.8,Windsor Terrace,urban_residential,32.49,82.1,24.3
+nyc,Madison,suburban,9.62,85.9,Westport,rural,9.4,92.5,6.6
+nyc,Malverne,suburban,13.63,73.6,Peekskill,exurban,14.9,81.8,8.2
+nyc,Manhasset,suburban,8.77,88.9,Westport,rural,9.4,92.5,3.6
+nyc,Maplewood,suburban,13.19,81.3,New Canaan,rural,12.22,79.8,1.5
+nyc,Merrick,suburban,13.8,79.8,Peekskill,exurban,14.9,81.8,2.0
+nyc,Midtown East,suburban,637.52,88.5,Murray Hill,urban_residential,594.29,89.4,0.9
+nyc,Millburn,suburban,13.56,80.5,New Canaan,rural,12.22,79.8,0.7
+nyc,Millburn,suburban,13.56,80.5,Peekskill,exurban,14.9,81.8,1.3
+nyc,Montclair,suburban,13.37,86.8,New Canaan,rural,12.22,79.8,7.0
+nyc,Morristown,suburban,22.26,89.2,Norwalk,exurban,20.64,86.8,2.4
+nyc,Mount Vernon,urban_residential,45.86,68.6,New Rochelle,suburban,43.37,84.3,15.7
+nyc,New Canaan,rural,12.22,79.8,Old Greenwich,suburban,11.42,73.1,6.7
+nyc,New Canaan,rural,12.22,79.8,Pleasantville,suburban,11.87,77.5,2.3
+nyc,New Canaan,rural,12.22,79.8,Port Washington,suburban,13.27,85.9,6.1
+nyc,New Canaan,rural,12.22,79.8,Short Hills,suburban,13.39,77.8,2.0
+nyc,New Canaan,rural,12.22,79.8,Tenafly,suburban,12.62,78.7,1.1
+nyc,New Canaan,rural,12.22,79.8,Westfield,suburban,11.56,84.8,5.0
+nyc,New Canaan,rural,12.22,79.8,Westwood,suburban,11.55,80.3,0.5
+nyc,New Rochelle,suburban,43.37,84.3,Red Hook,urban_residential,40.32,91.4,7.1
+nyc,New Rochelle,suburban,43.37,84.3,Rockaway Beach,urban_residential,42.68,80.0,4.3
+nyc,Norwalk,exurban,20.64,86.8,Nyack,suburban,19.04,79.1,7.7
+nyc,Norwalk,exurban,20.64,86.8,Port Chester,suburban,20.22,84.8,2.0
+nyc,Norwalk,exurban,20.64,86.8,Rockville Centre,suburban,22.83,71.9,14.9
+nyc,Norwalk,exurban,20.64,86.8,Tuckahoe,suburban,19.82,74.5,12.3
+nyc,Oceanside,suburban,14.95,66.9,Peekskill,exurban,14.9,81.8,14.9
+nyc,Ossining,suburban,16.21,83.4,Peekskill,exurban,14.9,81.8,1.6
+nyc,Ozone Park,urban_residential,62.8,80.2,Richmond Hill,suburban,68.05,70.1,10.1
+nyc,Ozone Park,urban_residential,62.8,80.2,Weehawken,suburban,62.65,91.1,10.9
+nyc,Peekskill,exurban,14.9,81.8,Tarrytown,suburban,16.19,86.1,4.3
+nyc,Peekskill,exurban,14.9,81.8,Tottenville,suburban,14.35,90.1,8.3
+nyc,Red Hook,urban_residential,40.32,91.4,St. George,suburban,40.77,89.5,1.9
+nyc,Rego Park,urban_residential,111.34,74.1,Ridgewood,exurban,106.15,72.7,1.4
+nyc,Richmond Hill,suburban,68.05,70.1,Stamford,urban_residential,65.47,86.5,16.4
+nyc,Richmond Hill,suburban,68.05,70.1,Yonkers,urban_residential,62.75,75.3,5.2
+nyc,Ridgewood,exurban,106.15,72.7,Upper West Side,urban_residential,111.75,81.2,8.5
+nyc,Ridgewood,exurban,106.15,72.7,Woodside,urban_residential,96.07,83.0,10.3
+nyc,Riverdale,urban_residential,52.28,86.9,White Plains,suburban,56.43,81.0,5.9
+nyc,Rockaway Beach,urban_residential,42.68,80.0,St. George,suburban,40.77,89.5,9.5
+nyc,Roslyn,suburban,8.82,83.6,Westport,rural,9.4,92.5,8.9
+nyc,Rye,suburban,8.51,85.0,Westport,rural,9.4,92.5,7.5
+nyc,Stamford,urban_residential,65.47,86.5,Weehawken,suburban,62.65,91.1,4.6
+nyc,Valley Stream,suburban,30.16,70.1,Windsor Terrace,urban_residential,32.49,82.1,12.0
+nyc,Weehawken,suburban,62.65,91.1,Yonkers,urban_residential,62.75,75.3,15.8
+tampa,Apollo Beach,exurban,3.57,65.5,Tampa Palms,rural,3.43,55.8,9.7
+tampa,Brandon,suburban,10.6,56.8,Clearwater Beach,exurban,10.43,69.4,12.6
+tampa,Brooksville,exurban,5.0,60.8,Snell Isle,suburban,5.17,64.9,4.1
+tampa,Carrollwood,exurban,5.99,59.3,Palm Harbor,suburban,6.37,73.8,14.5
+tampa,Carrollwood,exurban,5.99,59.3,Riverview,suburban,6.25,62.9,3.6
+tampa,Carrollwood,exurban,5.99,59.3,South Tampa,rural,5.81,59.0,0.3
+tampa,Carrollwood,exurban,5.99,59.3,Spring Hill,suburban,5.93,34.1,25.2
+tampa,Carrollwood,exurban,5.99,59.3,Zephyrhills,suburban,6.35,56.8,2.5
+tampa,Citrus Park,suburban,6.73,62.9,Dade City,exurban,6.94,52.5,10.4
+tampa,Clearwater Beach,exurban,10.43,69.4,Dunedin,suburban,9.47,71.5,2.1
+tampa,Clearwater Beach,exurban,10.43,69.4,New Port Richey,suburban,10.04,56.7,12.7
+tampa,Clearwater Beach,exurban,10.43,69.4,New Tampa,suburban,10.52,55.4,14.0
+tampa,Clearwater Beach,exurban,10.43,69.4,Seminole Heights,suburban,10.12,46.4,23.0
+tampa,Clearwater Beach,exurban,10.43,69.4,Town 'n' Country,suburban,9.8,51.0,18.4
+tampa,Dade City,exurban,6.94,52.5,Palm Harbor,suburban,6.37,73.8,21.3
+tampa,Dade City,exurban,6.94,52.5,Riverview,suburban,6.25,62.9,10.4
+tampa,Dade City,exurban,6.94,52.5,Temple Terrace,suburban,6.73,61.9,9.4
+tampa,Dade City,exurban,6.94,52.5,Valrico,suburban,7.16,42.5,10.0
+tampa,Dade City,exurban,6.94,52.5,Zephyrhills,suburban,6.35,56.8,4.3
+tampa,Land O' Lakes,exurban,3.52,48.5,Tampa Palms,rural,3.43,55.8,7.3
+tampa,Oldsmar,exurban,5.81,72.0,Palm Harbor,suburban,6.37,73.8,1.8
+tampa,Oldsmar,exurban,5.81,72.0,Riverview,suburban,6.25,62.9,9.1
+tampa,Oldsmar,exurban,5.81,72.0,South Tampa,rural,5.81,59.0,13.0
+tampa,Oldsmar,exurban,5.81,72.0,Spring Hill,suburban,5.93,34.1,37.9
+tampa,Oldsmar,exurban,5.81,72.0,Zephyrhills,suburban,6.35,56.8,15.2
+tampa,Palm Harbor,suburban,6.37,73.8,South Tampa,rural,5.81,59.0,14.8
+tampa,Palm Harbor,suburban,6.37,73.8,Tarpon Springs,exurban,5.82,70.2,3.6
+tampa,Palm Harbor,suburban,6.37,73.8,Treasure Island,exurban,6.04,62.4,11.4
+tampa,Plant City,exurban,5.46,54.1,Snell Isle,suburban,5.17,64.9,10.8
+tampa,Plant City,exurban,5.46,54.1,South Tampa,rural,5.81,59.0,4.9
+tampa,Plant City,exurban,5.46,54.1,Spring Hill,suburban,5.93,34.1,20.0
+tampa,Riverview,suburban,6.25,62.9,South Tampa,rural,5.81,59.0,3.9
+tampa,Riverview,suburban,6.25,62.9,Tarpon Springs,exurban,5.82,70.2,7.3
+tampa,Riverview,suburban,6.25,62.9,Treasure Island,exurban,6.04,62.4,0.5
+tampa,Ruskin,exurban,4.9,49.2,Snell Isle,suburban,5.17,64.9,15.7
+tampa,South Tampa,rural,5.81,59.0,Spring Hill,suburban,5.93,34.1,24.9
+tampa,South Tampa,rural,5.81,59.0,Tarpon Springs,exurban,5.82,70.2,11.2
+tampa,South Tampa,rural,5.81,59.0,Treasure Island,exurban,6.04,62.4,3.4
+tampa,South Tampa,rural,5.81,59.0,Zephyrhills,suburban,6.35,56.8,2.2
+tampa,Spring Hill,suburban,5.93,34.1,Tarpon Springs,exurban,5.82,70.2,36.1
+tampa,Spring Hill,suburban,5.93,34.1,Treasure Island,exurban,6.04,62.4,28.3
+tampa,Tampa Palms,rural,3.43,55.8,Wesley Chapel,exurban,3.18,51.3,4.5
+tampa,Tarpon Springs,exurban,5.82,70.2,Zephyrhills,suburban,6.35,56.8,13.4
+tampa,Treasure Island,exurban,6.04,62.4,Zephyrhills,suburban,6.35,56.8,5.6
+chicago,Albany Park,urban_residential,40.35,76.2,Bucktown,suburban,40.81,82.8,6.6
+chicago,Albany Park,urban_residential,40.35,76.2,Humboldt Park,suburban,37.98,73.5,2.7
+chicago,Albany Park,urban_residential,40.35,76.2,Lincoln Square,suburban,43.22,79.1,2.9
+chicago,Albany Park,urban_residential,40.35,76.2,North Center,suburban,42.2,76.9,0.7
+chicago,Albany Park,urban_residential,40.35,76.2,Ravenswood,suburban,43.53,80.1,3.9
+chicago,Andersonville,urban_residential,45.68,75.1,Hyde Park,suburban,46.84,87.4,12.3
+chicago,Andersonville,urban_residential,45.68,75.1,Lakeview,suburban,45.42,80.5,5.4
+chicago,Andersonville,urban_residential,45.68,75.1,Lincoln Square,suburban,43.22,79.1,4.0
+chicago,Andersonville,urban_residential,45.68,75.1,Little Village,suburban,50.71,64.6,10.5
+chicago,Andersonville,urban_residential,45.68,75.1,North Center,suburban,42.2,76.9,1.8
+chicago,Andersonville,urban_residential,45.68,75.1,Ravenswood,suburban,43.53,80.1,5.0
+chicago,Andersonville,urban_residential,45.68,75.1,Rogers Park,suburban,48.17,71.4,3.7
+chicago,Aurora,suburban,24.11,76.8,Pilsen,urban_residential,26.31,70.0,6.8
+chicago,Avondale,urban_residential,38.52,76.6,Bucktown,suburban,40.81,82.8,6.2
+chicago,Avondale,urban_residential,38.52,76.6,Humboldt Park,suburban,37.98,73.5,3.1
+chicago,Avondale,urban_residential,38.52,76.6,North Center,suburban,42.2,76.9,0.3
+chicago,Avondale,urban_residential,38.52,76.6,Roscoe Village,suburban,34.75,79.9,3.3
+chicago,Back of the Yards,urban_residential,30.8,68.1,Kenwood,suburban,30.26,83.5,15.4
+chicago,Barrington,rural,8.28,73.8,Deerfield,suburban,7.83,82.5,8.7
+chicago,Barrington,rural,8.28,73.8,Lisle,suburban,8.48,82.5,8.7
+chicago,Barrington,rural,8.28,73.8,Plainfield,exurban,7.89,69.6,4.2
+chicago,Barrington,rural,8.28,73.8,Riverside,suburban,8.33,89.7,15.9
+chicago,Barrington,rural,8.28,73.8,Winnetka,suburban,7.88,86.3,12.5
+chicago,Batavia,suburban,9.4,80.9,Highland Park,exurban,9.97,84.8,3.9
+chicago,Batavia,suburban,9.4,80.9,Valparaiso,exurban,10.37,58.3,22.6
+chicago,Bridgeport,urban_residential,32.63,69.0,Kenwood,suburban,30.26,83.5,14.5
+chicago,Bridgeport,urban_residential,32.63,69.0,Roscoe Village,suburban,34.75,79.9,10.9
+chicago,Bronzeville,suburban,25.91,75.1,Pilsen,urban_residential,26.31,70.0,5.1
+chicago,Bucktown,suburban,40.81,82.8,Logan Square,urban_residential,42.51,85.1,2.3
+chicago,Bucktown,suburban,40.81,82.8,Ukrainian Village,urban_residential,43.65,75.5,7.3
+chicago,Bucktown,suburban,40.81,82.8,Wicker Park,urban_residential,42.29,81.6,1.2
+chicago,Chesterton,rural,6.98,79.2,Crystal Lake,exurban,6.35,81.8,2.6
+chicago,Chesterton,rural,6.98,79.2,Lake Forest,exurban,7.03,76.9,2.3
+chicago,Chesterton,rural,6.98,79.2,Wilmette,suburban,7.29,77.5,1.7
+chicago,Chinatown,urban_residential,49.78,68.6,Hyde Park,suburban,46.84,87.4,18.8
+chicago,Chinatown,urban_residential,49.78,68.6,Lakeview,suburban,45.42,80.5,11.9
+chicago,Chinatown,urban_residential,49.78,68.6,Little Village,suburban,50.71,64.6,4.0
+chicago,Chinatown,urban_residential,49.78,68.6,Rogers Park,suburban,48.17,71.4,2.8
+chicago,Cicero,suburban,25.62,64.2,Pilsen,urban_residential,26.31,70.0,5.8
+chicago,Crown Point,suburban,11.42,59.2,Geneva,exurban,11.83,83.7,24.5
+chicago,Crown Point,suburban,11.42,59.2,Hinsdale,exurban,12.23,88.1,28.9
+chicago,Crown Point,suburban,11.42,59.2,Homewood,exurban,11.59,80.6,21.4
+chicago,Crown Point,suburban,11.42,59.2,Libertyville,exurban,11.56,76.7,17.5
+chicago,Crown Point,suburban,11.42,59.2,Tinley Park,exurban,10.68,79.3,20.1
+chicago,Crown Point,suburban,11.42,59.2,Valparaiso,exurban,10.37,58.3,0.9
+chicago,Deerfield,suburban,7.83,82.5,Plainfield,exurban,7.89,69.6,12.9
+chicago,Edison Park,suburban,19.39,81.3,Waukegan,exurban,19.82,77.0,4.3
+chicago,Elgin,suburban,25.71,84.6,Pilsen,urban_residential,26.31,70.0,14.6
+chicago,Elmhurst,suburban,18.28,77.2,Waukegan,exurban,19.82,77.0,0.2
+chicago,Forest Park,suburban,25.38,84.2,Pilsen,urban_residential,26.31,70.0,14.2
+chicago,Frankfort,exurban,3.29,84.5,Yorkville,rural,3.32,77.5,7.0
+chicago,Garfield Park,suburban,20.66,80.3,Waukegan,exurban,19.82,77.0,3.3
+chicago,Garfield Ridge,suburban,19.85,66.7,Waukegan,exurban,19.82,77.0,10.3
+chicago,Geneva,exurban,11.83,83.7,Glen Ellyn,suburban,11.31,73.8,9.9
+chicago,Geneva,exurban,11.83,83.7,Glenview,suburban,10.73,83.6,0.1
+chicago,Geneva,exurban,11.83,83.7,Hammond,suburban,13.14,77.9,5.8
+chicago,Geneva,exurban,11.83,83.7,Munster,suburban,12.71,77.5,6.2
+chicago,Geneva,exurban,11.83,83.7,Palatine,suburban,10.67,68.5,15.2
+chicago,Geneva,exurban,11.83,83.7,River Forest,suburban,13.11,85.1,1.4
+chicago,Geneva,exurban,11.83,83.7,Sauganash,suburban,11.86,79.5,4.2
+chicago,Geneva,exurban,11.83,83.7,Schaumburg,suburban,12.06,76.5,7.2
+chicago,Geneva,exurban,11.83,83.7,St. Charles,suburban,12.76,85.6,1.9
+chicago,Geneva,exurban,11.83,83.7,Western Springs,suburban,11.11,91.7,8.0
+chicago,Glen Ellyn,suburban,11.31,73.8,Hinsdale,exurban,12.23,88.1,14.3
+chicago,Glen Ellyn,suburban,11.31,73.8,Homewood,exurban,11.59,80.6,6.8
+chicago,Glen Ellyn,suburban,11.31,73.8,Libertyville,exurban,11.56,76.7,2.9
+chicago,Glen Ellyn,suburban,11.31,73.8,Tinley Park,exurban,10.68,79.3,5.5
+chicago,Glen Ellyn,suburban,11.31,73.8,Valparaiso,exurban,10.37,58.3,15.5
+chicago,Glenview,suburban,10.73,83.6,Highland Park,exurban,9.97,84.8,1.2
+chicago,Glenview,suburban,10.73,83.6,Homewood,exurban,11.59,80.6,3.0
+chicago,Glenview,suburban,10.73,83.6,Libertyville,exurban,11.56,76.7,6.9
+chicago,Glenview,suburban,10.73,83.6,Tinley Park,exurban,10.68,79.3,4.3
+chicago,Glenview,suburban,10.73,83.6,Valparaiso,exurban,10.37,58.3,25.3
+chicago,Hammond,suburban,13.14,77.9,Hinsdale,exurban,12.23,88.1,10.2
+chicago,Highland Park,exurban,9.97,84.8,Lombard,suburban,9.9,74.6,10.2
+chicago,Highland Park,exurban,9.97,84.8,Northbrook,suburban,10.19,81.6,3.2
+chicago,Highland Park,exurban,9.97,84.8,Orland Park,suburban,10.44,80.8,4.0
+chicago,Highland Park,exurban,9.97,84.8,Palatine,suburban,10.67,68.5,16.3
+chicago,Highland Park,exurban,9.97,84.8,Woodstock,suburban,9.36,71.7,13.1
+chicago,Hinsdale,exurban,12.23,88.1,Munster,suburban,12.71,77.5,10.6
+chicago,Hinsdale,exurban,12.23,88.1,River Forest,suburban,13.11,85.1,3.0
+chicago,Hinsdale,exurban,12.23,88.1,Sauganash,suburban,11.86,79.5,8.6
+chicago,Hinsdale,exurban,12.23,88.1,Schaumburg,suburban,12.06,76.5,11.6
+chicago,Hinsdale,exurban,12.23,88.1,St. Charles,suburban,12.76,85.6,2.5
+chicago,Hinsdale,exurban,12.23,88.1,Western Springs,suburban,11.11,91.7,3.6
+chicago,Homewood,exurban,11.59,80.6,Munster,suburban,12.71,77.5,3.1
+chicago,Homewood,exurban,11.59,80.6,Orland Park,suburban,10.44,80.8,0.2
+chicago,Homewood,exurban,11.59,80.6,Palatine,suburban,10.67,68.5,12.1
+chicago,Homewood,exurban,11.59,80.6,Sauganash,suburban,11.86,79.5,1.1
+chicago,Homewood,exurban,11.59,80.6,Schaumburg,suburban,12.06,76.5,4.1
+chicago,Homewood,exurban,11.59,80.6,St. Charles,suburban,12.76,85.6,5.0
+chicago,Homewood,exurban,11.59,80.6,Western Springs,suburban,11.11,91.7,11.1
+chicago,Hyde Park,suburban,46.84,87.4,Logan Square,urban_residential,42.51,85.1,2.3
+chicago,Hyde Park,suburban,46.84,87.4,Ukrainian Village,urban_residential,43.65,75.5,11.9
+chicago,Hyde Park,suburban,46.84,87.4,Wicker Park,urban_residential,42.29,81.6,5.8
+chicago,Irving Park,suburban,24.47,77.0,Pilsen,urban_residential,26.31,70.0,7.0
+chicago,Jefferson Park,suburban,26.69,79.0,Pilsen,urban_residential,26.31,70.0,9.0
+chicago,Lake Forest,exurban,7.03,76.9,Wilmette,suburban,7.29,77.5,0.6
+chicago,Lakeview,suburban,45.42,80.5,Logan Square,urban_residential,42.51,85.1,4.6
+chicago,Lakeview,suburban,45.42,80.5,Ukrainian Village,urban_residential,43.65,75.5,5.0
+chicago,Lakeview,suburban,45.42,80.5,Wicker Park,urban_residential,42.29,81.6,1.1
+chicago,Libertyville,exurban,11.56,76.7,Munster,suburban,12.71,77.5,0.8
+chicago,Libertyville,exurban,11.56,76.7,Orland Park,suburban,10.44,80.8,4.1
+chicago,Libertyville,exurban,11.56,76.7,Palatine,suburban,10.67,68.5,8.2
+chicago,Libertyville,exurban,11.56,76.7,Sauganash,suburban,11.86,79.5,2.8
+chicago,Libertyville,exurban,11.56,76.7,Schaumburg,suburban,12.06,76.5,0.2
+chicago,Libertyville,exurban,11.56,76.7,St. Charles,suburban,12.76,85.6,8.9
+chicago,Libertyville,exurban,11.56,76.7,Western Springs,suburban,11.11,91.7,15.0
+chicago,Lincoln Park,urban_residential,73.08,70.1,Uptown,suburban,73.33,79.3,9.2
+chicago,Lincoln Square,suburban,43.22,79.1,Logan Square,urban_residential,42.51,85.1,6.0
+chicago,Lincoln Square,suburban,43.22,79.1,Ukrainian Village,urban_residential,43.65,75.5,3.6
+chicago,Lincoln Square,suburban,43.22,79.1,Wicker Park,urban_residential,42.29,81.6,2.5
+chicago,Lisle,suburban,8.48,82.5,Plainfield,exurban,7.89,69.6,12.9
+chicago,Logan Square,urban_residential,42.51,85.1,North Center,suburban,42.2,76.9,8.2
+chicago,Logan Square,urban_residential,42.51,85.1,Ravenswood,suburban,43.53,80.1,5.0
+chicago,Lombard,suburban,9.9,74.6,Tinley Park,exurban,10.68,79.3,4.7
+chicago,Lombard,suburban,9.9,74.6,Valparaiso,exurban,10.37,58.3,16.3
+chicago,North Center,suburban,42.2,76.9,Ukrainian Village,urban_residential,43.65,75.5,1.4
+chicago,North Center,suburban,42.2,76.9,Wicker Park,urban_residential,42.29,81.6,4.7
+chicago,Northbrook,suburban,10.19,81.6,Tinley Park,exurban,10.68,79.3,2.3
+chicago,Northbrook,suburban,10.19,81.6,Valparaiso,exurban,10.37,58.3,23.3
+chicago,Oak Park,suburban,25.3,84.9,Pilsen,urban_residential,26.31,70.0,14.9
+chicago,Old Town,urban_residential,68.43,77.0,Uptown,suburban,73.33,79.3,2.3
+chicago,Orland Park,suburban,10.44,80.8,Tinley Park,exurban,10.68,79.3,1.5
+chicago,Orland Park,suburban,10.44,80.8,Valparaiso,exurban,10.37,58.3,22.5
+chicago,Palatine,suburban,10.67,68.5,Tinley Park,exurban,10.68,79.3,10.8
+chicago,Palatine,suburban,10.67,68.5,Valparaiso,exurban,10.37,58.3,10.2
+chicago,Pilsen,urban_residential,26.31,70.0,Portage Park,suburban,27.71,75.8,5.8
+chicago,Plainfield,exurban,7.89,69.6,Riverside,suburban,8.33,89.7,20.1
+chicago,Plainfield,exurban,7.89,69.6,Wilmette,suburban,7.29,77.5,7.9
+chicago,Plainfield,exurban,7.89,69.6,Winnetka,suburban,7.88,86.3,16.7
+chicago,Ravenswood,suburban,43.53,80.1,Ukrainian Village,urban_residential,43.65,75.5,4.6
+chicago,Ravenswood,suburban,43.53,80.1,Wicker Park,urban_residential,42.29,81.6,1.5
+chicago,Rogers Park,suburban,48.17,71.4,Ukrainian Village,urban_residential,43.65,75.5,4.1
+chicago,Sauganash,suburban,11.86,79.5,Tinley Park,exurban,10.68,79.3,0.2
+chicago,Skokie,suburban,21.38,84.0,Waukegan,exurban,19.82,77.0,7.0
+chicago,Tinley Park,exurban,10.68,79.3,Western Springs,suburban,11.11,91.7,12.4
+chicago,Valparaiso,exurban,10.37,58.3,Western Springs,suburban,11.11,91.7,33.4
+chicago,Valparaiso,exurban,10.37,58.3,Woodstock,suburban,9.36,71.7,13.4
+sf,Alameda,urban_residential,29.39,83.5,Albany,suburban,28.93,94.3,10.8
+sf,Alameda,urban_residential,29.39,83.5,Daly City,suburban,27.49,78.5,5.0
+sf,Alameda,urban_residential,29.39,83.5,Emeryville,suburban,28.1,92.8,9.3
+sf,Alameda,urban_residential,29.39,83.5,Fremont,suburban,28.88,76.9,6.6
+sf,Alameda,urban_residential,29.39,83.5,Fruitvale,suburban,30.1,81.4,2.1
+sf,Alameda,urban_residential,29.39,83.5,Glen Park,suburban,28.23,84.7,1.2
+sf,Alameda,urban_residential,29.39,83.5,Glenview,suburban,27.71,87.9,4.4
+sf,Alameda,urban_residential,29.39,83.5,Outer Sunset,suburban,30.28,83.5,0.0
+sf,Alameda,urban_residential,29.39,83.5,Richmond,suburban,29.05,83.8,0.3
+sf,Almaden Valley,suburban,11.46,81.6,Danville,rural,11.32,65.8,15.8
+sf,Almaden Valley,suburban,11.46,81.6,Los Gatos,urban_residential,12.51,80.5,1.1
+sf,Bayview,suburban,33.15,83.4,Outer Richmond,urban_residential,34.98,82.0,1.4
+sf,Belmont,suburban,15.6,86.3,Pleasanton,exurban,15.99,87.5,1.2
+sf,Belvedere,suburban,8.04,78.9,Mill Valley,exurban,8.13,88.9,10.0
+sf,Belvedere,suburban,8.04,78.9,Saratoga,exurban,8.44,74.7,4.2
+sf,Bernal Heights,urban_residential,44.01,86.5,Grand Lake,suburban,40.96,90.8,4.3
+sf,Burlingame,exurban,23.91,81.8,Concord,suburban,24.92,74.8,7.0
+sf,Burlingame,exurban,23.91,81.8,Diamond Heights,suburban,23.73,87.0,5.2
+sf,Burlingame,exurban,23.91,81.8,Dublin,suburban,22.32,75.0,6.8
+sf,Burlingame,exurban,23.91,81.8,East Palo Alto,suburban,25.57,72.9,8.9
+sf,Burlingame,exurban,23.91,81.8,Elmwood,suburban,25.72,92.0,10.2
+sf,Burlingame,exurban,23.91,81.8,Forest Hill,suburban,21.62,87.0,5.2
+sf,Burlingame,exurban,23.91,81.8,Menlo Park,suburban,22.29,81.4,0.4
+sf,Burlingame,exurban,23.91,81.8,Millbrae,suburban,23.0,76.5,5.3
+sf,Burlingame,exurban,23.91,81.8,Mountain View,suburban,24.52,80.1,1.7
+sf,Burlingame,exurban,23.91,81.8,Newark,suburban,23.54,67.5,14.3
+sf,Burlingame,exurban,23.91,81.8,Rockridge,suburban,25.83,87.1,5.3
+sf,Burlingame,exurban,23.91,81.8,San Leandro,suburban,26.0,71.3,10.5
+sf,Burlingame,exurban,23.91,81.8,Sunnyvale,suburban,22.12,69.9,11.9
+sf,Burlingame,exurban,23.91,81.8,Visitacion Valley,urban_residential,24.42,75.9,5.9
+sf,Burlingame,exurban,23.91,81.8,West Portal,suburban,24.13,89.5,7.7
+sf,Campbell,suburban,16.88,71.5,Pleasanton,exurban,15.99,87.5,16.0
+sf,Campbell,suburban,16.88,71.5,South San Francisco,exurban,17.76,75.1,3.6
+sf,Castro Valley,suburban,20.33,75.7,Hillsborough,exurban,20.78,77.8,2.1
+sf,Castro Valley,suburban,20.33,75.7,San Ramon,exurban,20.67,63.0,12.7
+sf,Chinatown,urban_residential,305.69,87.1,Financial District,suburban,336.73,85.7,1.4
+sf,Cole Valley,urban_residential,64.55,82.1,Mission Bay,suburban,65.03,91.8,9.7
+sf,Cole Valley,urban_residential,64.55,82.1,Pacific Heights,suburban,63.36,88.7,6.6
+sf,Cole Valley,urban_residential,64.55,82.1,Palo Alto,suburban,65.39,79.1,3.0
+sf,Concord,suburban,24.92,74.8,Visitacion Valley,urban_residential,24.42,75.9,1.1
+sf,Corte Madera,suburban,9.14,83.7,Montclair,exurban,10.01,81.0,2.7
+sf,Corte Madera,suburban,9.14,83.7,Saratoga,exurban,8.44,74.7,9.0
+sf,Cow Hollow,urban_residential,52.37,87.3,Marina District,suburban,49.86,88.6,1.3
+sf,Cow Hollow,urban_residential,52.37,87.3,Presidio Heights,suburban,53.62,86.4,0.9
+sf,Cow Hollow,urban_residential,52.37,87.3,The Castro,suburban,57.58,86.7,0.6
+sf,Cupertino,suburban,21.27,80.7,Hillsborough,exurban,20.78,77.8,2.9
+sf,Cupertino,suburban,21.27,80.7,San Ramon,exurban,20.67,63.0,17.7
+sf,Danville,rural,11.32,65.8,Kensington,suburban,11.2,85.7,19.9
+sf,Danville,rural,11.32,65.8,Lafayette,suburban,10.99,77.4,11.6
+sf,Danville,rural,11.32,65.8,Los Altos,suburban,11.48,76.0,10.2
+sf,Danville,rural,11.32,65.8,Los Gatos,urban_residential,12.51,80.5,14.7
+sf,Danville,rural,11.32,65.8,Martinez,suburban,10.77,85.6,19.8
+sf,Danville,rural,11.32,65.8,Piedmont,suburban,11.67,96.8,31.0
+sf,Danville,rural,11.32,65.8,Sausalito,suburban,10.98,92.5,26.7
+sf,Diamond Heights,suburban,23.73,87.0,Visitacion Valley,urban_residential,24.42,75.9,11.1
+sf,Dogpatch,suburban,32.89,94.2,Outer Richmond,urban_residential,34.98,82.0,12.2
+sf,Dublin,suburban,22.32,75.0,Hillsborough,exurban,20.78,77.8,2.8
+sf,Dublin,suburban,22.32,75.0,San Ramon,exurban,20.67,63.0,12.0
+sf,Dublin,suburban,22.32,75.0,Visitacion Valley,urban_residential,24.42,75.9,0.9
+sf,East Palo Alto,suburban,25.57,72.9,Visitacion Valley,urban_residential,24.42,75.9,3.0
+sf,El Cerrito,suburban,18.72,93.0,Hillsborough,exurban,20.78,77.8,15.2
+sf,El Cerrito,suburban,18.72,93.0,San Ramon,exurban,20.67,63.0,30.0
+sf,El Cerrito,suburban,18.72,93.0,South San Francisco,exurban,17.76,75.1,17.9
+sf,Elmwood,suburban,25.72,92.0,Visitacion Valley,urban_residential,24.42,75.9,16.1
+sf,Evergreen,suburban,14.81,73.0,Pleasanton,exurban,15.99,87.5,14.5
+sf,Excelsior,urban_residential,46.72,75.7,Marina District,suburban,49.86,88.6,12.9
+sf,Forest Hill,suburban,21.62,87.0,Hillsborough,exurban,20.78,77.8,9.2
+sf,Forest Hill,suburban,21.62,87.0,San Ramon,exurban,20.67,63.0,24.0
+sf,Foster City,suburban,33.87,85.4,Outer Richmond,urban_residential,34.98,82.0,3.4
+sf,Grand Lake,suburban,40.96,90.8,Walnut Creek,urban_residential,37.9,72.8,18.0
+sf,Haight-Ashbury,urban_residential,66.58,83.6,Mission Bay,suburban,65.03,91.8,8.2
+sf,Haight-Ashbury,urban_residential,66.58,83.6,Mission District,suburban,73.85,87.3,3.7
+sf,Haight-Ashbury,urban_residential,66.58,83.6,Pacific Heights,suburban,63.36,88.7,5.1
+sf,Haight-Ashbury,urban_residential,66.58,83.6,Palo Alto,suburban,65.39,79.1,4.5
+sf,Half Moon Bay,rural,6.24,80.1,Kentfield,exurban,5.94,78.2,1.9
+sf,Hayward,suburban,20.85,82.9,Hillsborough,exurban,20.78,77.8,5.1
+sf,Hayward,suburban,20.85,82.9,San Ramon,exurban,20.67,63.0,19.9
+sf,Hillsborough,exurban,20.78,77.8,Livermore,suburban,21.13,76.3,1.5
+sf,Hillsborough,exurban,20.78,77.8,Menlo Park,suburban,22.29,81.4,3.6
+sf,Hillsborough,exurban,20.78,77.8,Millbrae,suburban,23.0,76.5,1.3
+sf,Hillsborough,exurban,20.78,77.8,Milpitas,suburban,20.93,71.5,6.3
+sf,Hillsborough,exurban,20.78,77.8,San Bruno,suburban,21.43,72.0,5.8
+sf,Hillsborough,exurban,20.78,77.8,San Carlos,suburban,19.35,85.0,7.2
+sf,Hillsborough,exurban,20.78,77.8,Sunnyvale,suburban,22.12,69.9,7.9
+sf,Inner Richmond,urban_residential,50.51,88.8,Marina District,suburban,49.86,88.6,0.2
+sf,Inner Richmond,urban_residential,50.51,88.8,Presidio Heights,suburban,53.62,86.4,2.4
+sf,Inner Sunset,urban_residential,60.69,84.4,Mission Bay,suburban,65.03,91.8,7.4
+sf,Inner Sunset,urban_residential,60.69,84.4,Pacific Heights,suburban,63.36,88.7,4.3
+sf,Inner Sunset,urban_residential,60.69,84.4,Palo Alto,suburban,65.39,79.1,5.3
+sf,Inner Sunset,urban_residential,60.69,84.4,The Castro,suburban,57.58,86.7,2.3
+sf,Jack London Square,urban_residential,48.41,90.2,Marina District,suburban,49.86,88.6,1.6
+sf,Jack London Square,urban_residential,48.41,90.2,Presidio Heights,suburban,53.62,86.4,3.8
+sf,Lafayette,suburban,10.99,77.4,Montclair,exurban,10.01,81.0,3.6
+sf,Livermore,suburban,21.13,76.3,San Ramon,exurban,20.67,63.0,13.3
+sf,Los Altos,suburban,11.48,76.0,Los Gatos,urban_residential,12.51,80.5,4.5
+sf,Los Gatos,urban_residential,12.51,80.5,Novato,suburban,13.26,70.5,10.0
+sf,Los Gatos,urban_residential,12.51,80.5,Piedmont,suburban,11.67,96.8,16.3
+sf,Los Gatos,urban_residential,12.51,80.5,Pleasant Hill,suburban,13.86,78.8,1.7
+sf,Marina District,suburban,49.86,88.6,Noe Valley,urban_residential,48.02,85.3,3.3
+sf,Martinez,suburban,10.77,85.6,Montclair,exurban,10.01,81.0,4.6
+sf,Menlo Park,suburban,22.29,81.4,San Ramon,exurban,20.67,63.0,18.4
+sf,Menlo Park,suburban,22.29,81.4,Visitacion Valley,urban_residential,24.42,75.9,5.5
+sf,Millbrae,suburban,23.0,76.5,Visitacion Valley,urban_residential,24.42,75.9,0.6
+sf,Milpitas,suburban,20.93,71.5,San Ramon,exurban,20.67,63.0,8.5
+sf,Mission Bay,suburban,65.03,91.8,North Beach,urban_residential,72.2,87.9,3.9
+sf,Mission Bay,suburban,65.03,91.8,North Berkeley,urban_residential,62.09,88.8,3.0
+sf,Mission District,suburban,73.85,87.3,North Beach,urban_residential,72.2,87.9,0.6
+sf,Montclair,exurban,10.01,81.0,San Anselmo,suburban,9.97,85.9,4.9
+sf,Montclair,exurban,10.01,81.0,Sausalito,suburban,10.98,92.5,11.5
+sf,Mountain View,suburban,24.52,80.1,Visitacion Valley,urban_residential,24.42,75.9,4.2
+sf,Newark,suburban,23.54,67.5,Visitacion Valley,urban_residential,24.42,75.9,8.4
+sf,North Beach,urban_residential,72.2,87.9,Palo Alto,suburban,65.39,79.1,8.8
+sf,North Berkeley,urban_residential,62.09,88.8,Pacific Heights,suburban,63.36,88.7,0.1
+sf,North Berkeley,urban_residential,62.09,88.8,Palo Alto,suburban,65.39,79.1,9.7
+sf,North Berkeley,urban_residential,62.09,88.8,The Castro,suburban,57.58,86.7,2.1
+sf,Outer Richmond,urban_residential,34.98,82.0,Redwood City,suburban,32.72,83.0,1.0
+sf,Outer Richmond,urban_residential,34.98,82.0,San Mateo,suburban,33.97,80.3,1.7
+sf,Outer Richmond,urban_residential,34.98,82.0,Temescal,suburban,36.65,85.5,3.5
+sf,Pleasanton,exurban,15.99,87.5,Rose Garden,suburban,17.72,75.0,12.5
+sf,Pleasanton,exurban,15.99,87.5,San Rafael,suburban,16.95,80.2,7.3
+sf,Pleasanton,exurban,15.99,87.5,Union City,suburban,16.49,73.4,14.1
+sf,Pleasanton,exurban,15.99,87.5,Willow Glen,suburban,14.8,73.1,14.4
+sf,Potrero Hill,urban_residential,55.63,92.1,Presidio Heights,suburban,53.62,86.4,5.7
+sf,Potrero Hill,urban_residential,55.63,92.1,The Castro,suburban,57.58,86.7,5.4
+sf,Rockridge,suburban,25.83,87.1,Visitacion Valley,urban_residential,24.42,75.9,11.2
+sf,Rose Garden,suburban,17.72,75.0,South San Francisco,exurban,17.76,75.1,0.1
+sf,San Bruno,suburban,21.43,72.0,San Ramon,exurban,20.67,63.0,9.0
+sf,San Carlos,suburban,19.35,85.0,San Ramon,exurban,20.67,63.0,22.0
+sf,San Carlos,suburban,19.35,85.0,South San Francisco,exurban,17.76,75.1,9.9
+sf,San Leandro,suburban,26.0,71.3,Visitacion Valley,urban_residential,24.42,75.9,4.6
+sf,San Rafael,suburban,16.95,80.2,South San Francisco,exurban,17.76,75.1,5.1
+sf,San Ramon,exurban,20.67,63.0,Sunnyvale,suburban,22.12,69.9,6.9
+sf,South San Francisco,exurban,17.76,75.1,Union City,suburban,16.49,73.4,1.7
+sf,Sunnyvale,suburban,22.12,69.9,Visitacion Valley,urban_residential,24.42,75.9,6.0
+sf,Temescal,suburban,36.65,85.5,Walnut Creek,urban_residential,37.9,72.8,12.7
+sf,Visitacion Valley,urban_residential,24.42,75.9,West Portal,suburban,24.13,89.5,13.6
+dallas,Addison,exurban,36.86,55.5,Deep Ellum,suburban,33.51,70.5,15.0
+dallas,Allen,exurban,8.36,69.3,Flower Mound,suburban,8.45,67.6,1.7
+dallas,Allen,exurban,8.36,69.3,Hurst,suburban,8.39,52.3,17.0
+dallas,Allen,exurban,8.36,69.3,Lakewood,suburban,8.59,66.0,3.3
+dallas,Allen,exurban,8.36,69.3,Waxahachie,suburban,8.02,30.3,39.0
+dallas,Anna,exurban,2.8,47.5,Midlothian,rural,2.95,45.3,2.2
+dallas,Arlington Heights,exurban,10.9,57.3,Duncanville,suburban,11.81,64.5,7.2
+dallas,Arlington Heights,exurban,10.9,57.3,Euless,suburban,11.41,56.3,1.0
+dallas,Arlington Heights,exurban,10.9,57.3,Irving,suburban,10.58,60.0,2.7
+dallas,Arlington Heights,exurban,10.9,57.3,Lake Highlands,suburban,11.31,69.6,12.3
+dallas,Arlington,suburban,18.05,59.3,Plano,exurban,17.4,56.1,3.2
+dallas,Bedford,suburban,16.31,50.4,Grapevine,exurban,14.98,66.1,15.7
+dallas,Bedford,suburban,16.31,50.4,Plano,exurban,17.4,56.1,5.7
+dallas,Benbrook,exurban,7.59,49.7,Hurst,suburban,8.39,52.3,2.6
+dallas,Benbrook,exurban,7.59,49.7,Keller,suburban,7.17,61.0,11.3
+dallas,Benbrook,exurban,7.59,49.7,Lancaster,suburban,7.21,56.1,6.4
+dallas,Benbrook,exurban,7.59,49.7,Little Elm,suburban,7.03,68.5,18.8
+dallas,Benbrook,exurban,7.59,49.7,Oak Cliff,suburban,7.03,71.9,22.2
+dallas,Benbrook,exurban,7.59,49.7,Waxahachie,suburban,8.02,30.3,19.4
+dallas,Berkeley Place,exurban,21.34,62.0,Bishop Arts District,suburban,21.73,62.9,0.9
+dallas,Berkeley Place,exurban,21.34,62.0,Denton,suburban,23.06,59.8,2.2
+dallas,Berkeley Place,exurban,21.34,62.0,Knox-Henderson,suburban,21.33,68.8,6.8
+dallas,Berkeley Place,exurban,21.34,62.0,Richardson,suburban,21.06,58.5,3.5
+dallas,Berkeley Place,exurban,21.34,62.0,The Cedars,suburban,20.03,68.3,6.3
+dallas,Burleson,exurban,7.17,50.4,Keller,suburban,7.17,61.0,10.6
+dallas,Burleson,exurban,7.17,50.4,Lancaster,suburban,7.21,56.1,5.7
+dallas,Burleson,exurban,7.17,50.4,Little Elm,suburban,7.03,68.5,18.1
+dallas,Burleson,exurban,7.17,50.4,Oak Cliff,suburban,7.03,71.9,21.5
+dallas,Carrollton,suburban,18.94,61.0,Plano,exurban,17.4,56.1,4.9
+dallas,Casa Linda,suburban,9.44,51.8,Highland Park,exurban,9.58,68.9,17.1
+dallas,Casa Linda,suburban,9.44,51.8,Mesquite,exurban,9.02,55.5,3.7
+dallas,Casa Linda,suburban,9.44,51.8,Murphy,exurban,9.7,70.3,18.5
+dallas,Casa Linda,suburban,9.44,51.8,Wylie,exurban,9.15,65.5,13.7
+dallas,Cedar Hill,rural,6.41,63.3,Colleyville,exurban,6.02,64.0,0.7
+dallas,Cedar Hill,rural,6.41,63.3,Corinth,suburban,5.9,73.2,9.9
+dallas,Cedar Hill,rural,6.41,63.3,DeSoto,exurban,5.93,53.1,10.2
+dallas,Cedar Hill,rural,6.41,63.3,Grand Prairie,exurban,6.07,64.3,1.0
+dallas,Cedar Hill,rural,6.41,63.3,Little Elm,suburban,7.03,68.5,5.2
+dallas,Cedar Hill,rural,6.41,63.3,North Richland Hills,exurban,6.9,56.2,7.1
+dallas,Cedar Hill,rural,6.41,63.3,Oak Cliff,suburban,7.03,71.9,8.6
+dallas,Cedar Hill,rural,6.41,63.3,Preston Hollow,exurban,5.94,58.1,5.2
+dallas,Colleyville,exurban,6.02,64.0,Corinth,suburban,5.9,73.2,9.2
+dallas,Colleyville,exurban,6.02,64.0,Highland Village,rural,5.93,70.9,6.9
+dallas,Coppell,exurban,13.9,61.8,Garland,suburban,14.18,56.6,5.2
+dallas,Coppell,exurban,13.9,61.8,Kessler Park,suburban,14.2,63.8,2.0
+dallas,Coppell,exurban,13.9,61.8,Lower Greenville,suburban,12.79,66.7,4.9
+dallas,Corinth,suburban,5.9,73.2,DeSoto,exurban,5.93,53.1,20.1
+dallas,Corinth,suburban,5.9,73.2,Forney,exurban,5.48,43.0,30.2
+dallas,Corinth,suburban,5.9,73.2,Grand Prairie,exurban,6.07,64.3,8.9
+dallas,Corinth,suburban,5.9,73.2,Highland Village,rural,5.93,70.9,2.3
+dallas,Corinth,suburban,5.9,73.2,Preston Hollow,exurban,5.94,58.1,15.1
+dallas,Corinth,suburban,5.9,73.2,Ridglea,exurban,5.74,48.2,25.0
+dallas,Corinth,suburban,5.9,73.2,Rowlett,exurban,5.54,52.3,20.9
+dallas,Cultural District,exurban,25.28,59.3,Denton,suburban,23.06,59.8,0.5
+dallas,Cultural District,exurban,25.28,59.3,Fairmount,suburban,25.12,57.9,1.4
+dallas,Cultural District,exurban,25.28,59.3,Near Southside,suburban,26.23,62.1,2.8
+dallas,DeSoto,exurban,5.93,53.1,Highland Village,rural,5.93,70.9,17.8
+dallas,Design District,rural,60.27,61.6,Downtown Fort Worth,suburban,62.88,60.6,1.0
+dallas,Downtown Dallas,urban_residential,134.69,67.1,Victory Park,suburban,125.28,62.8,4.3
+dallas,Duncanville,suburban,11.81,64.5,Mansfield,exurban,10.69,53.6,10.9
+dallas,Euless,suburban,11.41,56.3,Lewisville,exurban,10.56,67.1,10.8
+dallas,Euless,suburban,11.41,56.3,Mansfield,exurban,10.69,53.6,2.7
+dallas,Fairview,exurban,8.0,51.1,Flower Mound,suburban,8.45,67.6,16.5
+dallas,Fairview,exurban,8.0,51.1,Hurst,suburban,8.39,52.3,1.2
+dallas,Fairview,exurban,8.0,51.1,Lakewood,suburban,8.59,66.0,14.9
+dallas,Fairview,exurban,8.0,51.1,Lancaster,suburban,7.21,56.1,5.0
+dallas,Fairview,exurban,8.0,51.1,Waxahachie,suburban,8.02,30.3,20.8
+dallas,Farmers Branch,suburban,17.6,63.3,Plano,exurban,17.4,56.1,7.2
+dallas,Flower Mound,suburban,8.45,67.6,Frisco,exurban,7.65,64.7,2.9
+dallas,Flower Mound,suburban,8.45,67.6,Mesquite,exurban,9.02,55.5,12.1
+dallas,Flower Mound,suburban,8.45,67.6,Wylie,exurban,9.15,65.5,2.1
+dallas,Forney,exurban,5.48,43.0,Highland Village,rural,5.93,70.9,27.9
+dallas,Frisco,exurban,7.65,64.7,Hurst,suburban,8.39,52.3,12.4
+dallas,Frisco,exurban,7.65,64.7,Keller,suburban,7.17,61.0,3.7
+dallas,Frisco,exurban,7.65,64.7,Lancaster,suburban,7.21,56.1,8.6
+dallas,Frisco,exurban,7.65,64.7,Little Elm,suburban,7.03,68.5,3.8
+dallas,Frisco,exurban,7.65,64.7,Oak Cliff,suburban,7.03,71.9,7.2
+dallas,Frisco,exurban,7.65,64.7,Waxahachie,suburban,8.02,30.3,34.4
+dallas,Garland,suburban,14.18,56.6,Grapevine,exurban,14.98,66.1,9.5
+dallas,Grand Prairie,exurban,6.07,64.3,Highland Village,rural,5.93,70.9,6.6
+dallas,Grapevine,exurban,14.98,66.1,Kessler Park,suburban,14.2,63.8,2.3
+dallas,Grapevine,exurban,14.98,66.1,University Park,suburban,15.79,67.3,1.2
+dallas,Highland Park,exurban,9.58,68.9,Irving,suburban,10.58,60.0,8.9
+dallas,Highland Village,rural,5.93,70.9,Preston Hollow,exurban,5.94,58.1,12.8
+dallas,Highland Village,rural,5.93,70.9,Ridglea,exurban,5.74,48.2,22.7
+dallas,Highland Village,rural,5.93,70.9,Rowlett,exurban,5.54,52.3,18.6
+dallas,Hurst,suburban,8.39,52.3,Mesquite,exurban,9.02,55.5,3.2
+dallas,Hurst,suburban,8.39,52.3,Wylie,exurban,9.15,65.5,13.2
+dallas,Irving,suburban,10.58,60.0,Lewisville,exurban,10.56,67.1,7.1
+dallas,Irving,suburban,10.58,60.0,Mansfield,exurban,10.69,53.6,6.4
+dallas,Irving,suburban,10.58,60.0,Murphy,exurban,9.7,70.3,10.3
+dallas,Keller,suburban,7.17,61.0,North Richland Hills,exurban,6.9,56.2,4.8
+dallas,Keller,suburban,7.17,61.0,Rockwall,exurban,7.17,47.2,13.8
+dallas,Lake Highlands,suburban,11.31,69.6,Lewisville,exurban,10.56,67.1,2.5
+dallas,Lake Highlands,suburban,11.31,69.6,Mansfield,exurban,10.69,53.6,16.0
+dallas,Lakewood,suburban,8.59,66.0,Mesquite,exurban,9.02,55.5,10.5
+dallas,Lakewood,suburban,8.59,66.0,Wylie,exurban,9.15,65.5,0.5
+dallas,Lancaster,suburban,7.21,56.1,North Richland Hills,exurban,6.9,56.2,0.1
+dallas,Lancaster,suburban,7.21,56.1,Rockwall,exurban,7.17,47.2,8.9
+dallas,Little Elm,suburban,7.03,68.5,North Richland Hills,exurban,6.9,56.2,12.3
+dallas,Little Elm,suburban,7.03,68.5,Rockwall,exurban,7.17,47.2,21.3
+dallas,Melissa,rural,2.27,59.9,Prosper,exurban,2.16,46.4,13.5
+dallas,North Richland Hills,exurban,6.9,56.2,Oak Cliff,suburban,7.03,71.9,15.7
+dallas,Oak Cliff,suburban,7.03,71.9,Rockwall,exurban,7.17,47.2,24.7
+dallas,Oak Lawn,suburban,46.06,64.7,West 7th,exurban,48.89,58.0,6.7
+dallas,Plano,exurban,17.4,56.1,University Park,suburban,15.79,67.3,11.2
+philadelphia,Ambler,suburban,16.09,80.8,Bryn Mawr,exurban,15.36,79.9,0.9
+philadelphia,Bella Vista,urban_residential,106.91,82.0,University City,suburban,112.38,83.4,1.4
+philadelphia,Blue Bell,exurban,4.85,66.3,Exton,rural,5.27,72.9,6.6
+philadelphia,Brewerytown,urban_residential,40.77,84.5,Camden,suburban,42.14,78.5,6.0
+philadelphia,Bryn Mawr,exurban,15.36,79.9,Collingswood,suburban,15.39,67.8,12.1
+philadelphia,Bryn Mawr,exurban,15.36,79.9,Drexel Hill,suburban,14.59,71.7,8.2
+philadelphia,Bryn Mawr,exurban,15.36,79.9,East Falls,suburban,15.49,87.7,7.8
+philadelphia,Bryn Mawr,exurban,15.36,79.9,Lansdale,suburban,15.56,61.8,18.1
+philadelphia,Bryn Mawr,exurban,15.36,79.9,Port Richmond,suburban,15.03,70.6,9.3
+philadelphia,Bryn Mawr,exurban,15.36,79.9,Upper Darby,suburban,15.73,74.3,5.6
+philadelphia,Camden,suburban,42.14,78.5,Fairmount,urban_residential,44.55,83.8,5.3
+philadelphia,Camden,suburban,42.14,78.5,Fishtown,urban_residential,42.49,85.4,6.9
+philadelphia,Camden,suburban,42.14,78.5,Mayfair,urban_residential,41.46,66.2,12.3
+philadelphia,Camden,suburban,42.14,78.5,Spruce Hill,urban_residential,46.78,86.5,8.0
+philadelphia,Cedar Park,suburban,46.22,84.5,Fairmount,urban_residential,44.55,83.8,0.7
+philadelphia,Cedar Park,suburban,46.22,84.5,Fishtown,urban_residential,42.49,85.4,0.9
+philadelphia,Cedar Park,suburban,46.22,84.5,Northern Liberties,urban_residential,48.95,84.6,0.1
+philadelphia,Cedar Park,suburban,46.22,84.5,Spruce Hill,urban_residential,46.78,86.5,2.0
+philadelphia,Cherry Hill,suburban,11.72,64.5,Haverford,exurban,12.68,78.5,14.0
+philadelphia,Cherry Hill,suburban,11.72,64.5,Newtown Square,exurban,10.8,76.5,12.0
+philadelphia,Chester,suburban,7.51,64.6,Elkton,exurban,8.29,73.3,8.7
+philadelphia,Chester,suburban,7.51,64.6,King of Prussia,exurban,7.15,68.8,4.2
+philadelphia,Chester,suburban,7.51,64.6,Langhorne,exurban,6.79,70.5,5.9
+philadelphia,Chester,suburban,7.51,64.6,Malvern,exurban,7.5,85.2,20.6
+philadelphia,Chestnut Hill,suburban,9.44,86.6,Glassboro,exurban,9.5,65.0,21.6
+philadelphia,Chestnut Hill,suburban,9.44,86.6,Haddonfield,exurban,9.88,65.8,20.8
+philadelphia,Collegeville,suburban,7.4,73.1,King of Prussia,exurban,7.15,68.8,4.3
+philadelphia,Collegeville,suburban,7.4,73.1,Langhorne,exurban,6.79,70.5,2.6
+philadelphia,Collegeville,suburban,7.4,73.1,Malvern,exurban,7.5,85.2,12.1
+philadelphia,Downingtown,suburban,8.39,83.0,Elkton,exurban,8.29,73.3,9.7
+philadelphia,Doylestown,suburban,13.66,76.5,Haverford,exurban,12.68,78.5,2.0
+philadelphia,East Passyunk,urban_residential,71.4,73.8,Graduate Hospital,suburban,73.52,81.0,7.2
+philadelphia,Elkins Park,suburban,8.99,75.6,Elkton,exurban,8.29,73.3,2.3
+philadelphia,Elkins Park,suburban,8.99,75.6,Glassboro,exurban,9.5,65.0,10.6
+philadelphia,Elkins Park,suburban,8.99,75.6,Haddonfield,exurban,9.88,65.8,9.8
+philadelphia,Elkton,exurban,8.29,73.3,Levittown,suburban,8.86,63.4,9.9
+philadelphia,Fairmount,urban_residential,44.55,83.8,Wilmington,suburban,45.73,75.5,8.3
+philadelphia,Fishtown,urban_residential,42.49,85.4,Wilmington,suburban,45.73,75.5,9.9
+philadelphia,Glassboro,exurban,9.5,65.0,Levittown,suburban,8.86,63.4,1.6
+philadelphia,Glassboro,exurban,9.5,65.0,Swarthmore,suburban,9.52,75.1,10.1
+philadelphia,Glenside,suburban,12.32,71.9,Haverford,exurban,12.68,78.5,6.6
+philadelphia,Graduate Hospital,suburban,73.52,81.0,Queen Village,urban_residential,67.76,80.3,0.7
+philadelphia,Graduate Hospital,suburban,73.52,81.0,Spring Garden,urban_residential,76.76,84.5,3.5
+philadelphia,Haddonfield,exurban,9.88,65.8,Swarthmore,suburban,9.52,75.1,9.3
+philadelphia,Haverford,exurban,12.68,78.5,Kennett Square,suburban,13.0,68.3,10.2
+philadelphia,Haverford,exurban,12.68,78.5,Marlton,suburban,12.1,58.5,20.0
+philadelphia,Haverford,exurban,12.68,78.5,Newark,suburban,13.19,77.5,1.0
+philadelphia,Haverford,exurban,12.68,78.5,Newtown,suburban,11.5,72.1,6.4
+philadelphia,Haverford,exurban,12.68,78.5,Pennsauken,suburban,13.15,72.1,6.4
+philadelphia,Haverford,exurban,12.68,78.5,Somerton,suburban,12.99,53.4,25.1
+philadelphia,Haverford,exurban,12.68,78.5,Wayne,suburban,12.01,72.8,5.7
+philadelphia,Haverford,exurban,12.68,78.5,Woodbury,suburban,13.69,58.5,20.0
+philadelphia,Mayfair,urban_residential,41.46,66.2,Wilmington,suburban,45.73,75.5,9.3
+philadelphia,Newtown Square,exurban,10.8,76.5,Newtown,suburban,11.5,72.1,4.4
+philadelphia,Northern Liberties,urban_residential,48.95,84.6,Wilmington,suburban,45.73,75.5,9.1
+philadelphia,Old City,urban_residential,99.06,79.2,Society Hill,suburban,92.21,82.0,2.8
+philadelphia,Powelton Village,urban_residential,93.47,85.7,Society Hill,suburban,92.21,82.0,3.7
+philadelphia,Spruce Hill,urban_residential,46.78,86.5,Wilmington,suburban,45.73,75.5,11.0
+denver,Arvada,suburban,11.44,85.8,Ken Caryl,exurban,12.49,84.8,1.0
+denver,Arvada,suburban,11.44,85.8,Parker,exurban,11.47,68.1,17.7
+denver,Arvada,suburban,11.44,85.8,Stapleton,exurban,11.16,83.5,2.3
+denver,Aspen Park,exurban,1.19,66.5,Elizabeth,rural,1.11,36.2,30.3
+denver,Aurora,suburban,17.83,79.9,Highlands Ranch,exurban,17.84,73.5,6.4
+denver,Aurora,suburban,17.83,79.9,Lone Tree,exurban,17.18,76.6,3.3
+denver,Baker,exurban,14.76,81.2,Berkeley,suburban,13.61,82.2,1.0
+denver,Baker,exurban,14.76,81.2,City Park,suburban,14.67,82.3,1.1
+denver,Baker,exurban,14.76,81.2,Edgewater,suburban,13.77,80.5,0.7
+denver,Baker,exurban,14.76,81.2,Sunnyside,suburban,14.29,85.1,3.9
+denver,Baker,exurban,14.76,81.2,Thornton,suburban,14.75,72.6,8.6
+denver,Baker,exurban,14.76,81.2,Wheat Ridge,suburban,14.14,69.9,11.3
+denver,Berkeley,suburban,13.61,82.2,Castle Rock,exurban,14.74,72.0,10.2
+denver,Berkeley,suburban,13.61,82.2,Englewood,exurban,14.57,75.2,7.0
+denver,Berkeley,suburban,13.61,82.2,Ken Caryl,exurban,12.49,84.8,2.6
+denver,Berkeley,suburban,13.61,82.2,Roxborough Park,exurban,13.91,70.2,12.0
+denver,Bow Mar,suburban,7.19,81.5,Commerce City,exurban,7.06,73.1,8.4
+denver,Bow Mar,suburban,7.19,81.5,Hilltop,exurban,7.74,77.8,3.7
+denver,Brighton,suburban,10.37,58.4,Parker,exurban,11.47,68.1,9.7
+denver,Brighton,suburban,10.37,58.4,Stapleton,exurban,11.16,83.5,25.1
+denver,Castle Rock,exurban,14.74,72.0,City Park,suburban,14.67,82.3,10.3
+denver,Castle Rock,exurban,14.74,72.0,Edgewater,suburban,13.77,80.5,8.5
+denver,Castle Rock,exurban,14.74,72.0,Sunnyside,suburban,14.29,85.1,13.1
+denver,Castle Rock,exurban,14.74,72.0,Thornton,suburban,14.75,72.6,0.6
+denver,Castle Rock,exurban,14.74,72.0,Wheat Ridge,suburban,14.14,69.9,2.1
+denver,Cherry Creek,suburban,33.26,82.8,Lakewood,exurban,33.45,74.5,8.3
+denver,City Park,suburban,14.67,82.3,Englewood,exurban,14.57,75.2,7.1
+denver,City Park,suburban,14.67,82.3,Roxborough Park,exurban,13.91,70.2,12.1
+denver,Columbine,suburban,7.55,80.4,Commerce City,exurban,7.06,73.1,7.3
+denver,Columbine,suburban,7.55,80.4,Hilltop,exurban,7.74,77.8,2.6
+denver,Commerce City,exurban,7.06,73.1,Lowry,suburban,7.8,82.1,9.0
+denver,Edgewater,suburban,13.77,80.5,Englewood,exurban,14.57,75.2,5.3
+denver,Edgewater,suburban,13.77,80.5,Ken Caryl,exurban,12.49,84.8,4.3
+denver,Edgewater,suburban,13.77,80.5,Roxborough Park,exurban,13.91,70.2,10.3
+denver,Englewood,exurban,14.57,75.2,Sunnyside,suburban,14.29,85.1,9.9
+denver,Englewood,exurban,14.57,75.2,Thornton,suburban,14.75,72.6,2.6
+denver,Englewood,exurban,14.57,75.2,Wheat Ridge,suburban,14.14,69.9,5.3
+denver,Foxfield,exurban,4.32,66.0,Morrison,rural,4.04,70.4,4.4
+denver,Glendale,suburban,30.44,75.0,Lakewood,exurban,33.45,74.5,0.5
+denver,Highlands Ranch,exurban,17.84,73.5,Platt Park,suburban,19.35,79.4,5.9
+denver,Hilltop,exurban,7.74,77.8,Lowry,suburban,7.8,82.1,4.3
+denver,Ken Caryl,exurban,12.49,84.8,Montclair,suburban,12.08,81.6,3.2
+denver,Ken Caryl,exurban,12.49,84.8,Park Hill,suburban,11.66,77.7,7.1
+denver,Ken Caryl,exurban,12.49,84.8,Sloans Lake,suburban,12.26,82.9,1.9
+denver,Ken Caryl,exurban,12.49,84.8,Washington Park,suburban,12.2,83.2,1.6
+denver,Ken Caryl,exurban,12.49,84.8,Westminster,suburban,11.39,78.0,6.8
+denver,Montclair,suburban,12.08,81.6,Parker,exurban,11.47,68.1,13.5
+denver,Montclair,suburban,12.08,81.6,Stapleton,exurban,11.16,83.5,1.9
+denver,Park Hill,suburban,11.66,77.7,Parker,exurban,11.47,68.1,9.6
+denver,Park Hill,suburban,11.66,77.7,Stapleton,exurban,11.16,83.5,5.8
+denver,Parker,exurban,11.47,68.1,Sloans Lake,suburban,12.26,82.9,14.8
+denver,Parker,exurban,11.47,68.1,Washington Park,suburban,12.2,83.2,15.1
+denver,Parker,exurban,11.47,68.1,Westminster,suburban,11.39,78.0,9.9
+denver,Roxborough Park,exurban,13.91,70.2,Sunnyside,suburban,14.29,85.1,14.9
+denver,Roxborough Park,exurban,13.91,70.2,Thornton,suburban,14.75,72.6,2.4
+denver,Roxborough Park,exurban,13.91,70.2,Wheat Ridge,suburban,14.14,69.9,0.3
+denver,Sloans Lake,suburban,12.26,82.9,Stapleton,exurban,11.16,83.5,0.6
+denver,Stapleton,exurban,11.16,83.5,Washington Park,suburban,12.2,83.2,0.3
+denver,Stapleton,exurban,11.16,83.5,Westminster,suburban,11.39,78.0,5.5
+boston,Acton,exurban,2.01,90.2,Manchester,rural,1.94,94.1,3.9
+boston,Acton,exurban,2.01,90.2,Weston,rural,2.16,92.6,2.4
+boston,Andover,suburban,12.65,85.3,Needham,exurban,14.03,80.3,5.0
+boston,Andover,suburban,12.65,85.3,Norwood,exurban,13.03,85.6,0.3
+boston,Arlington,suburban,18.86,94.4,Waltham,exurban,18.09,79.9,14.5
+boston,Belmont,suburban,8.92,86.3,Natick,exurban,8.15,94.2,7.9
+boston,Belmont,suburban,8.92,86.3,Reading,exurban,8.11,83.9,2.4
+boston,Beverly,suburban,18.71,86.0,Waltham,exurban,18.09,79.9,6.1
+boston,Braintree,exurban,11.02,80.5,Newton,suburban,11.03,87.4,6.9
+boston,Braintree,exurban,11.02,80.5,Woburn,suburban,11.06,91.6,11.1
+boston,Brighton,suburban,36.61,88.2,Charlestown,urban_residential,37.5,97.9,9.7
+boston,Brookline,suburban,77.65,87.0,Fenway,urban_residential,83.12,87.7,0.7
+boston,Brookline,suburban,77.65,87.0,Seaport District,exurban,78.57,92.2,5.2
+boston,Burlington,exurban,10.32,83.3,Newton,suburban,11.03,87.4,4.1
+boston,Burlington,exurban,10.32,83.3,Winchester,suburban,9.7,95.1,11.8
+boston,Burlington,exurban,10.32,83.3,Woburn,suburban,11.06,91.6,8.3
+boston,Canton,suburban,8.34,77.2,Natick,exurban,8.15,94.2,17.0
+boston,Canton,suburban,8.34,77.2,Reading,exurban,8.11,83.9,6.7
+boston,Concord,rural,3.21,95.5,Hopkinton,exurban,3.0,82.5,13.0
+boston,Concord,rural,3.21,95.5,Marshfield,exurban,3.01,79.1,16.4
+boston,Concord,rural,3.21,95.5,Medfield,exurban,3.08,86.6,8.9
+boston,Dedham,exurban,10.45,85.8,Newton,suburban,11.03,87.4,1.6
+boston,Dedham,exurban,10.45,85.8,Winchester,suburban,9.7,95.1,9.3
+boston,Dedham,exurban,10.45,85.8,Woburn,suburban,11.06,91.6,5.8
+boston,Duxbury,rural,1.65,75.1,Sharon,exurban,1.74,88.1,13.0
+boston,Everett,suburban,49.82,94.8,South Boston,urban_residential,54.24,90.0,4.8
+boston,Fenway,urban_residential,83.12,87.7,Seaport District,exurban,78.57,92.2,4.5
+boston,Framingham,suburban,19.37,86.6,Waltham,exurban,18.09,79.9,6.7
+boston,Hopkinton,exurban,3.0,82.5,Scituate,rural,3.17,83.1,0.6
+boston,Hopkinton,exurban,3.0,82.5,Wayland,rural,2.85,87.4,4.9
+boston,Jamaica Plain,suburban,31.71,88.0,Salem,urban_residential,31.25,86.2,1.8
+boston,Lexington,exurban,6.88,93.3,Stoneham,suburban,6.88,82.8,10.5
+boston,Lynnfield,exurban,2.39,83.5,Weston,rural,2.16,92.6,9.1
+boston,Lynn,suburban,22.55,88.8,Medford,exurban,22.88,89.6,0.8
+boston,Manchester,rural,1.94,94.1,Sudbury,exurban,1.95,80.8,13.3
+boston,Marblehead,suburban,5.93,73.5,Walpole,rural,6.01,90.5,17.0
+boston,Marshfield,exurban,3.01,79.1,Scituate,rural,3.17,83.1,4.0
+boston,Marshfield,exurban,3.01,79.1,Wayland,rural,2.85,87.4,8.3
+boston,Medfield,exurban,3.08,86.6,Scituate,rural,3.17,83.1,3.5
+boston,Medfield,exurban,3.08,86.6,Wayland,rural,2.85,87.4,0.8
+boston,Medford,exurban,22.88,89.6,Quincy,suburban,24.62,89.5,0.1
+boston,Medford,exurban,22.88,89.6,Revere,suburban,24.38,90.9,1.3
+boston,Medford,exurban,22.88,89.6,Roslindale,suburban,22.42,79.8,9.8
+boston,Melrose,suburban,17.13,88.9,Waltham,exurban,18.09,79.9,9.0
+boston,Natick,exurban,8.15,94.2,Wellesley,suburban,8.04,90.5,3.7
+boston,Newton,suburban,11.03,87.4,Wakefield,exurban,10.43,89.8,2.4
+boston,North Andover,suburban,17.31,83.9,Waltham,exurban,18.09,79.9,4.0
+boston,Reading,exurban,8.11,83.9,Wellesley,suburban,8.04,90.5,6.6
+boston,Salem,urban_residential,31.25,86.2,Watertown,suburban,29.47,89.9,3.7
+boston,Sharon,exurban,1.74,88.1,Wenham,rural,1.57,80.4,7.7
+boston,Sudbury,exurban,1.95,80.8,Weston,rural,2.16,92.6,11.8
+boston,Swampscott,suburban,18.35,87.5,Waltham,exurban,18.09,79.9,7.6
+boston,Wakefield,exurban,10.43,89.8,Winchester,suburban,9.7,95.1,5.3
+boston,Wakefield,exurban,10.43,89.8,Woburn,suburban,11.06,91.6,1.8
+boston,Waltham,exurban,18.09,79.9,West Roxbury,suburban,16.87,79.3,0.6
+boston,Waltham,exurban,18.09,79.9,Winthrop,suburban,18.33,90.8,10.9
+miami,Bal Harbour,suburban,16.9,59.2,Davie,exurban,15.78,69.8,10.6
+miami,Bal Harbour,suburban,16.9,59.2,Medley,exurban,15.38,31.3,27.9
+miami,Boca Raton,suburban,17.3,60.5,Davie,exurban,15.78,69.8,9.3
+miami,Coral Springs,suburban,14.86,51.8,Davie,exurban,15.78,69.8,18.0
+miami,Coral Springs,suburban,14.86,51.8,Medley,exurban,15.38,31.3,20.5
+miami,Davie,exurban,15.78,69.8,Doral,suburban,16.95,42.7,27.1
+miami,Davie,exurban,15.78,69.8,Lake Worth Beach,suburban,16.92,50.5,19.3
+miami,Davie,exurban,15.78,69.8,Northwood,suburban,14.37,45.1,24.7
+miami,Davie,exurban,15.78,69.8,Pembroke Pines,suburban,16.38,55.6,14.2
+miami,Davie,exurban,15.78,69.8,Sunrise,suburban,14.64,57.5,12.3
+miami,Davie,exurban,15.78,69.8,Tamarac,suburban,14.87,54.2,15.6
+miami,Davie,exurban,15.78,69.8,The Hammocks,suburban,17.38,49.8,20.0
+miami,Deerfield Beach,suburban,12.21,60.2,Palm Beach,exurban,12.81,55.1,5.1
+miami,Doral,suburban,16.95,42.7,Medley,exurban,15.38,31.3,11.4
+miami,Downtown West Palm Beach,suburban,46.12,57.6,South Beach,urban_residential,43.87,56.4,1.2
+miami,Hialeah,suburban,36.04,43.2,Midtown Miami,urban_residential,36.28,46.4,3.2
+miami,Homestead,suburban,12.85,53.8,Palm Beach,exurban,12.81,55.1,1.3
+miami,Lake Worth Beach,suburban,16.92,50.5,Medley,exurban,15.38,31.3,19.2
+miami,Las Olas,suburban,42.79,63.2,South Beach,urban_residential,43.87,56.4,6.8
+miami,Lauderhill,suburban,13.82,60.1,Palm Beach,exurban,12.81,55.1,5.0
+miami,Medley,exurban,15.38,31.3,Northwood,suburban,14.37,45.1,13.8
+miami,Medley,exurban,15.38,31.3,Pembroke Pines,suburban,16.38,55.6,24.3
+miami,Medley,exurban,15.38,31.3,Sunrise,suburban,14.64,57.5,26.2
+miami,Medley,exurban,15.38,31.3,Tamarac,suburban,14.87,54.2,22.9
+miami,Mid-Beach,suburban,35.36,51.8,Midtown Miami,urban_residential,36.28,46.4,5.4
+miami,Midtown Miami,urban_residential,36.28,46.4,Sunny Isles Beach,suburban,38.23,58.9,12.5
+miami,Palm Beach,exurban,12.81,55.1,Wellington,suburban,11.73,66.7,11.6
+miami,Palmetto Bay,exurban,7.82,51.8,Pompano Beach,suburban,8.1,54.5,2.7
+miami,Plantation,exurban,5.89,67.2,Royal Palm Beach,suburban,5.6,78.4,11.2
+orlando,Avalon Park,suburban,9.32,62.6,Casselberry,exurban,9.52,63.7,1.1
+orlando,Avalon Park,suburban,9.32,62.6,Leesburg,exurban,9.57,59.4,3.2
+orlando,Casselberry,exurban,9.52,63.7,College Park,suburban,9.54,55.9,7.8
+orlando,Casselberry,exurban,9.52,63.7,Ocoee,suburban,8.77,48.0,15.7
+orlando,Casselberry,exurban,9.52,63.7,Sanford,suburban,9.65,72.6,8.9
+orlando,Clermont,suburban,7.62,62.7,Maitland,exurban,8.06,60.4,2.3
+orlando,College Park,suburban,9.54,55.9,Leesburg,exurban,9.57,59.4,3.5
+orlando,Conway,suburban,7.91,35.2,Maitland,exurban,8.06,60.4,25.2
+orlando,Downtown Orlando,exurban,58.3,53.2,Dr. Phillips,suburban,63.73,52.7,0.5
+orlando,Edgewood,suburban,6.85,48.9,Lake Mary,exurban,6.36,67.5,18.6
+orlando,Fruitland Park,exurban,2.22,50.0,Groveland,rural,2.18,58.2,8.2
+orlando,Kissimmee,suburban,12.66,71.6,Tavares,exurban,13.81,57.7,13.9
+orlando,Lake Mary,exurban,6.36,67.5,Union Park,suburban,6.79,64.4,3.1
+orlando,Leesburg,exurban,9.57,59.4,Ocoee,suburban,8.77,48.0,11.4
+orlando,Leesburg,exurban,9.57,59.4,Sanford,suburban,9.65,72.6,13.2
+orlando,Maitland,exurban,8.06,60.4,Ocoee,suburban,8.77,48.0,12.4
+orlando,Maitland,exurban,8.06,60.4,Waterford Lakes,suburban,8.53,69.5,9.1
+orlando,Mount Dora,exurban,5.59,77.5,Winter Springs,suburban,5.66,61.7,15.8
+orlando,Pine Hills,suburban,13.04,43.8,Tavares,exurban,13.81,57.7,13.9
+charlotte,Ballantyne,exurban,15.84,60.6,Montford,suburban,14.28,72.0,11.4
+charlotte,Belmont,exurban,6.13,70.0,Cornelius,suburban,6.47,67.9,2.1
+charlotte,Belmont,exurban,6.13,70.0,Salisbury,suburban,6.48,46.9,23.1
+charlotte,Concord,exurban,9.37,36.1,Cotswold,suburban,9.58,54.6,18.5
+charlotte,Concord,exurban,9.37,36.1,NoDa,suburban,10.23,73.9,37.8
+charlotte,Cornelius,suburban,6.47,67.9,Gastonia,exurban,5.94,44.2,23.7
+charlotte,Cotswold,suburban,9.58,54.6,Matthews,exurban,9.93,52.6,2.0
+charlotte,Cotswold,suburban,9.58,54.6,Steele Creek,exurban,10.17,46.2,8.4
+charlotte,Davidson,exurban,5.44,65.4,Mint Hill,rural,4.99,54.1,11.3
+charlotte,Dilworth,suburban,22.56,73.6,SouthPark,exurban,22.39,61.9,11.7
+charlotte,Eastover,suburban,10.6,71.5,Matthews,exurban,9.93,52.6,18.9
+charlotte,Eastover,suburban,10.6,71.5,Steele Creek,exurban,10.17,46.2,25.3
+charlotte,Gastonia,exurban,5.94,44.2,Salisbury,suburban,6.48,46.9,2.7
+charlotte,Huntersville,exurban,5.06,71.1,Mint Hill,rural,4.99,54.1,17.0
+charlotte,Matthews,exurban,9.93,52.6,NoDa,suburban,10.23,73.9,21.3
+charlotte,Mineral Springs,rural,1.3,43.1,Wesley Chapel,exurban,1.41,34.3,8.8
+charlotte,Mint Hill,rural,4.99,54.1,Statesville,exurban,4.53,56.8,2.7
+charlotte,NoDa,suburban,10.23,73.9,Steele Creek,exurban,10.17,46.2,27.7
+charlotte,Stanley,rural,1.47,50.7,Wesley Chapel,exurban,1.41,34.3,16.4
+charlotte,Weddington,rural,1.41,28.3,Wesley Chapel,exurban,1.41,34.3,6.0
+houston,Alief,suburban,16.92,45.9,Hedwig Village,exurban,18.06,49.7,3.8
+houston,Alvin,exurban,13.29,30.3,Garden Oaks,suburban,13.49,49.7,19.4
+houston,Alvin,exurban,13.29,30.3,Meadows Place,suburban,12.82,44.4,14.1
+houston,Alvin,exurban,13.29,30.3,Southside Place,suburban,13.84,48.8,18.5
+houston,Alvin,exurban,13.29,30.3,Third Ward,suburban,12.95,56.0,25.7
+houston,Angleton,suburban,7.22,37.5,Friendswood,exurban,6.83,37.0,0.5
+houston,Angleton,suburban,7.22,37.5,Kingwood,exurban,7.75,58.5,21.0
+houston,Angleton,suburban,7.22,37.5,Seabrook,exurban,7.38,60.6,23.1
+houston,Angleton,suburban,7.22,37.5,Sugar Land,exurban,6.63,50.8,13.3
+houston,Atascocita,suburban,19.21,42.6,Hedwig Village,exurban,18.06,49.7,7.1
+houston,Baytown,suburban,8.16,42.9,Kingwood,exurban,7.75,58.5,15.6
+houston,Baytown,suburban,8.16,42.9,Oak Ridge North,rural,8.37,48.9,6.0
+houston,Baytown,suburban,8.16,42.9,Pearland,exurban,8.81,41.2,1.7
+houston,Baytown,suburban,8.16,42.9,Seabrook,exurban,7.38,60.6,17.7
+houston,Cinco Ranch,suburban,9.32,48.2,Missouri City,exurban,9.76,51.5,3.3
+houston,Cinco Ranch,suburban,9.32,48.2,Pearland,exurban,8.81,41.2,7.0
+houston,Cinco Ranch,suburban,9.32,48.2,Tomball,exurban,10.34,42.5,5.7
+houston,Clear Lake,suburban,6.84,65.5,Friendswood,exurban,6.83,37.0,28.5
+houston,Clear Lake,suburban,6.84,65.5,Seabrook,exurban,7.38,60.6,4.9
+houston,Clear Lake,suburban,6.84,65.5,Sugar Land,exurban,6.63,50.8,14.7
+houston,Conroe,exurban,10.55,47.9,Oak Forest,suburban,10.68,55.1,7.2
+houston,Deer Park,suburban,16.83,38.5,Hedwig Village,exurban,18.06,49.7,11.2
+houston,EaDo,exurban,31.5,58.5,Museum District,suburban,31.13,56.8,1.7
+houston,Energy Corridor,suburban,19.87,69.8,Hedwig Village,exurban,18.06,49.7,20.1
+houston,Friendswood,exurban,6.83,37.0,Meyerland,suburban,6.66,49.4,12.4
+houston,Friendswood,exurban,6.83,37.0,Sienna,suburban,7.19,43.5,6.5
+houston,Garden Oaks,suburban,13.49,49.7,Jersey Village,exurban,12.45,55.9,6.2
+houston,Hedwig Village,exurban,18.06,49.7,Spring Branch,suburban,16.32,46.1,3.6
+houston,Hedwig Village,exurban,18.06,49.7,Spring Valley Village,suburban,18.24,50.6,0.9
+houston,Jersey Village,exurban,12.45,55.9,Meadows Place,suburban,12.82,44.4,11.5
+houston,Jersey Village,exurban,12.45,55.9,Pasadena,suburban,11.73,32.5,23.4
+houston,Jersey Village,exurban,12.45,55.9,Third Ward,suburban,12.95,56.0,0.1
+houston,Katy,exurban,11.0,40.1,Oak Forest,suburban,10.68,55.1,15.0
+houston,Katy,exurban,11.0,40.1,Pasadena,suburban,11.73,32.5,7.6
+houston,Kingwood,exurban,7.75,58.5,Oak Ridge North,rural,8.37,48.9,9.6
+houston,Kingwood,exurban,7.75,58.5,Sienna,suburban,7.19,43.5,15.0
+houston,Kingwood,exurban,7.75,58.5,The Woodlands,suburban,8.11,54.5,4.0
+houston,La Porte,rural,3.72,65.2,Spring,exurban,3.71,49.5,15.7
+houston,La Porte,rural,3.72,65.2,Willis,exurban,3.4,40.2,25.0
+houston,League City,exurban,4.43,57.2,Magnolia,rural,4.06,36.3,20.9
+houston,Magnolia,rural,4.06,36.3,Spring,exurban,3.71,49.5,13.2
+houston,Manvel,rural,1.86,29.1,Memorial,exurban,1.91,57.1,28.0
+houston,Memorial,exurban,1.91,57.1,Montgomery,rural,1.89,58.8,1.7
+houston,Memorial,exurban,1.91,57.1,Waller,rural,1.76,30.3,26.8
+houston,Meyerland,suburban,6.66,49.4,Seabrook,exurban,7.38,60.6,11.2
+houston,Meyerland,suburban,6.66,49.4,Sugar Land,exurban,6.63,50.8,1.4
+houston,Missouri City,exurban,9.76,51.5,Oak Forest,suburban,10.68,55.1,3.6
+houston,Missouri City,exurban,9.76,51.5,Texas City,suburban,9.38,48.9,2.6
+houston,Oak Forest,suburban,10.68,55.1,River Oaks,exurban,10.61,55.7,0.6
+houston,Oak Forest,suburban,10.68,55.1,Shenandoah,exurban,10.47,53.8,1.3
+houston,Oak Forest,suburban,10.68,55.1,Stafford,exurban,10.37,29.7,25.4
+houston,Oak Forest,suburban,10.68,55.1,Tomball,exurban,10.34,42.5,12.6
+houston,Oak Ridge North,rural,8.37,48.9,Pearland,exurban,8.81,41.2,7.7
+houston,Oak Ridge North,rural,8.37,48.9,The Woodlands,suburban,8.11,54.5,5.6
+houston,Pasadena,suburban,11.73,32.5,River Oaks,exurban,10.61,55.7,23.2
+houston,Pearland,exurban,8.81,41.2,Texas City,suburban,9.38,48.9,7.7
+houston,Pearland,exurban,8.81,41.2,The Woodlands,suburban,8.11,54.5,13.3
+houston,Seabrook,exurban,7.38,60.6,Sienna,suburban,7.19,43.5,17.1
+houston,Seabrook,exurban,7.38,60.6,The Woodlands,suburban,8.11,54.5,6.1
+houston,Sienna,suburban,7.19,43.5,Sugar Land,exurban,6.63,50.8,7.3
+houston,Stafford,exurban,10.37,29.7,Texas City,suburban,9.38,48.9,19.2
+houston,Texas City,suburban,9.38,48.9,Tomball,exurban,10.34,42.5,6.4
+sacramento,Antelope,suburban,12.42,53.6,La Riviera,exurban,13.78,55.6,2.0
+sacramento,Arden-Arcade,suburban,15.74,54.0,North Highlands,exurban,16.16,46.8,7.2
+sacramento,Arden-Arcade,suburban,15.74,54.0,Woodland,exurban,17.34,41.8,12.2
+sacramento,Auburn,exurban,6.75,60.0,Citrus Heights,suburban,6.99,48.8,11.2
+sacramento,Auburn,exurban,6.75,60.0,Rio Linda,suburban,7.16,51.7,8.3
+sacramento,Cameron Park,suburban,5.21,42.8,Gold River,exurban,4.87,63.3,20.5
+sacramento,Cameron Park,suburban,5.21,42.8,Winters,rural,5.06,47.1,4.3
+sacramento,Citrus Heights,suburban,6.99,48.8,Fair Oaks,exurban,6.77,55.8,7.0
+sacramento,Citrus Heights,suburban,6.99,48.8,Rocklin,exurban,7.2,71.3,22.5
+sacramento,Curtis Park,suburban,18.2,56.2,Woodland,exurban,17.34,41.8,14.4
+sacramento,Davis,suburban,13.24,52.3,La Riviera,exurban,13.78,55.6,3.3
+sacramento,Diamond Springs,rural,2.35,34.2,Granite Bay,exurban,2.25,44.8,10.6
+sacramento,East Sacramento,suburban,14.62,55.5,La Riviera,exurban,13.78,55.6,0.1
+sacramento,East Sacramento,suburban,14.62,55.5,North Highlands,exurban,16.16,46.8,8.7
+sacramento,El Dorado Hills,exurban,5.98,63.5,Orangevale,suburban,5.94,65.2,1.7
+sacramento,Elk Grove,suburban,17.4,38.3,North Highlands,exurban,16.16,46.8,8.5
+sacramento,Elk Grove,suburban,17.4,38.3,Woodland,exurban,17.34,41.8,3.5
+sacramento,Fair Oaks,exurban,6.77,55.8,Rio Linda,suburban,7.16,51.7,4.1
+sacramento,Florin,suburban,14.24,31.7,La Riviera,exurban,13.78,55.6,23.9
+sacramento,Foothill Farms,suburban,12.65,48.2,La Riviera,exurban,13.78,55.6,7.4
+sacramento,Galt,suburban,3.95,37.0,Loomis,exurban,3.62,50.3,13.3
+sacramento,Galt,suburban,3.95,37.0,Placerville,rural,4.16,43.4,6.4
+sacramento,Galt,suburban,3.95,37.0,Vineyard,exurban,3.89,40.9,3.9
+sacramento,Gold River,exurban,4.87,63.3,Winters,rural,5.06,47.1,16.2
+sacramento,La Riviera,exurban,13.78,55.6,Natomas,suburban,12.77,61.5,5.9
+sacramento,La Riviera,exurban,13.78,55.6,Pocket,suburban,13.62,46.7,8.9
+sacramento,La Riviera,exurban,13.78,55.6,Rosemont,suburban,13.54,57.6,2.0
+sacramento,La Riviera,exurban,13.78,55.6,Roseville,suburban,12.86,62.1,6.5
+sacramento,North Highlands,exurban,16.16,46.8,Oak Park,suburban,15.79,53.0,6.2
+sacramento,North Highlands,exurban,16.16,46.8,Parkway,suburban,17.61,40.2,6.6
+sacramento,North Highlands,exurban,16.16,46.8,Tahoe Park,suburban,15.75,50.0,3.2
+sacramento,North Highlands,exurban,16.16,46.8,West Sacramento,suburban,16.17,53.1,6.3
+sacramento,Oak Park,suburban,15.79,53.0,Woodland,exurban,17.34,41.8,11.2
+sacramento,Parkway,suburban,17.61,40.2,Woodland,exurban,17.34,41.8,1.6
+sacramento,Placerville,rural,4.16,43.4,Vineyard,exurban,3.89,40.9,2.5
+sacramento,Rancho Cordova,suburban,19.14,53.5,Woodland,exurban,17.34,41.8,11.7
+sacramento,Rio Linda,suburban,7.16,51.7,Rocklin,exurban,7.2,71.3,19.6
+sacramento,Tahoe Park,suburban,15.75,50.0,Woodland,exurban,17.34,41.8,8.2
+sacramento,West Sacramento,suburban,16.17,53.1,Woodland,exurban,17.34,41.8,11.3
+la,Alhambra,urban_residential,32.38,61.9,Crenshaw,suburban,29.95,45.8,16.1
+la,Alhambra,urban_residential,32.38,61.9,Downey,suburban,32.68,34.2,27.7
+la,Alhambra,urban_residential,32.38,61.9,Inglewood,suburban,33.41,53.2,8.7
+la,Alhambra,urban_residential,32.38,61.9,Leimert Park,suburban,30.31,47.4,14.5
+la,Alhambra,urban_residential,32.38,61.9,Los Feliz,suburban,31.23,55.3,6.6
+la,Alhambra,urban_residential,32.38,61.9,Marina del Rey,suburban,30.41,72.5,10.6
+la,Alhambra,urban_residential,32.38,61.9,Monterey Park,suburban,35.0,60.6,1.3
+la,Alhambra,urban_residential,32.38,61.9,Sherman Oaks,suburban,33.99,61.9,0.0
+la,Alhambra,urban_residential,32.38,61.9,Whittier,suburban,32.11,63.9,2.0
+la,Arts District,suburban,38.31,45.8,San Pedro,urban_residential,38.28,49.3,3.5
+la,Arts District,suburban,38.31,45.8,West Hollywood,urban_residential,40.99,57.5,11.7
+la,Atwater Village,suburban,22.31,60.7,Frogtown,urban_residential,24.25,69.0,8.3
+la,Beverly Hills,suburban,41.18,61.7,San Pedro,urban_residential,38.28,49.3,12.4
+la,Beverly Hills,suburban,41.18,61.7,West Hollywood,urban_residential,40.99,57.5,4.2
+la,Boyle Heights,urban_residential,29.23,54.4,Crenshaw,suburban,29.95,45.8,8.6
+la,Boyle Heights,urban_residential,29.23,54.4,Leimert Park,suburban,30.31,47.4,7.0
+la,Boyle Heights,urban_residential,29.23,54.4,Los Feliz,suburban,31.23,55.3,0.9
+la,Boyle Heights,urban_residential,29.23,54.4,Marina del Rey,suburban,30.41,72.5,18.1
+la,Boyle Heights,urban_residential,29.23,54.4,Pico-Robertson,suburban,27.11,52.8,1.6
+la,Boyle Heights,urban_residential,29.23,54.4,Reseda,suburban,26.46,64.7,10.3
+la,Boyle Heights,urban_residential,29.23,54.4,Venice,suburban,28.53,81.2,26.8
+la,Boyle Heights,urban_residential,29.23,54.4,Whittier,suburban,32.11,63.9,9.5
+la,Brentwood,suburban,25.59,62.7,Frogtown,urban_residential,24.25,69.0,6.3
+la,Brentwood,suburban,25.59,62.7,Hermosa Beach,urban_residential,26.99,73.5,10.8
+la,Brentwood,suburban,25.59,62.7,Mid-City,urban_residential,28.15,43.7,19.0
+la,Burbank,suburban,48.27,64.6,Culver City,urban_residential,49.58,49.6,15.0
+la,Burbank,suburban,48.27,64.6,Hollywood,urban_residential,50.93,59.0,5.6
+la,Calabasas,exurban,7.24,81.1,La Cañada Flintridge,suburban,6.88,54.4,26.7
+la,Canoga Park,suburban,37.76,68.2,San Pedro,urban_residential,38.28,49.3,18.9
+la,Canoga Park,suburban,37.76,68.2,West Hollywood,urban_residential,40.99,57.5,10.7
+la,Cerritos,suburban,23.28,59.6,Frogtown,urban_residential,24.25,69.0,9.4
+la,Chinatown LA,suburban,67.31,61.3,Franklin Village,exurban,60.61,55.3,6.0
+la,Chinatown LA,suburban,67.31,61.3,Glendale,urban_residential,68.99,55.5,5.8
+la,Chinatown LA,suburban,67.31,61.3,Long Beach,urban_residential,72.24,49.9,11.4
+la,Compton,suburban,25.67,36.7,Frogtown,urban_residential,24.25,69.0,32.3
+la,Compton,suburban,25.67,36.7,Hermosa Beach,urban_residential,26.99,73.5,36.8
+la,Compton,suburban,25.67,36.7,Mid-City,urban_residential,28.15,43.7,7.0
+la,Crenshaw,suburban,29.95,45.8,Hawthorne,urban_residential,31.89,43.9,1.9
+la,Crenshaw,suburban,29.95,45.8,Hermosa Beach,urban_residential,26.99,73.5,27.7
+la,Crenshaw,suburban,29.95,45.8,Mid-City,urban_residential,28.15,43.7,2.1
+la,Crenshaw,suburban,29.95,45.8,Watts,urban_residential,29.18,45.5,0.3
+la,Culver City,urban_residential,49.58,49.6,Palms,suburban,44.87,57.8,8.2
+la,Culver City,urban_residential,49.58,49.6,Santa Monica,suburban,51.92,79.7,30.1
+la,Culver City,urban_residential,49.58,49.6,West LA,suburban,50.69,54.2,4.6
+la,Downey,suburban,32.68,34.2,Echo Park,urban_residential,33.55,59.1,24.9
+la,Downey,suburban,32.68,34.2,Hawthorne,urban_residential,31.89,43.9,9.7
+la,Downtown LA,exurban,79.46,47.8,Long Beach,urban_residential,72.24,49.9,2.1
+la,East Hollywood,urban_residential,60.24,61.6,Franklin Village,exurban,60.61,55.3,6.3
+la,East Hollywood,urban_residential,60.24,61.6,Miracle Mile,suburban,55.42,54.6,7.0
+la,East Hollywood,urban_residential,60.24,61.6,Pasadena,suburban,58.52,63.5,1.9
+la,East Los Angeles,suburban,26.11,49.9,Frogtown,urban_residential,24.25,69.0,19.1
+la,East Los Angeles,suburban,26.11,49.9,Hermosa Beach,urban_residential,26.99,73.5,23.6
+la,East Los Angeles,suburban,26.11,49.9,Mid-City,urban_residential,28.15,43.7,6.2
+la,Echo Park,urban_residential,33.55,59.1,Inglewood,suburban,33.41,53.2,5.9
+la,Echo Park,urban_residential,33.55,59.1,Leimert Park,suburban,30.31,47.4,11.7
+la,Echo Park,urban_residential,33.55,59.1,Los Feliz,suburban,31.23,55.3,3.8
+la,Echo Park,urban_residential,33.55,59.1,Marina del Rey,suburban,30.41,72.5,13.4
+la,Echo Park,urban_residential,33.55,59.1,Monterey Park,suburban,35.0,60.6,1.5
+la,Echo Park,urban_residential,33.55,59.1,Sherman Oaks,suburban,33.99,61.9,2.8
+la,Echo Park,urban_residential,33.55,59.1,Whittier,suburban,32.11,63.9,4.8
+la,El Monte,suburban,22.57,54.7,Frogtown,urban_residential,24.25,69.0,14.3
+la,El Segundo,suburban,25.41,71.5,Frogtown,urban_residential,24.25,69.0,2.5
+la,El Segundo,suburban,25.41,71.5,Hermosa Beach,urban_residential,26.99,73.5,2.0
+la,El Segundo,suburban,25.41,71.5,Mid-City,urban_residential,28.15,43.7,27.8
+la,Elysian Valley,suburban,24.25,69.5,Frogtown,urban_residential,24.25,69.0,0.5
+la,Franklin Village,exurban,60.61,55.3,Miracle Mile,suburban,55.42,54.6,0.7
+la,Franklin Village,exurban,60.61,55.3,Pasadena,suburban,58.52,63.5,8.2
+la,Frogtown,urban_residential,24.25,69.0,Manhattan Beach,suburban,23.07,74.5,5.5
+la,Frogtown,urban_residential,24.25,69.0,Monrovia,suburban,22.42,64.3,4.7
+la,Frogtown,urban_residential,24.25,69.0,Montebello,suburban,26.13,49.5,19.5
+la,Frogtown,urban_residential,24.25,69.0,North Hollywood,suburban,26.16,57.8,11.2
+la,Frogtown,urban_residential,24.25,69.0,Playa Vista,suburban,22.13,77.2,8.2
+la,Frogtown,urban_residential,24.25,69.0,Reseda,suburban,26.46,64.7,4.3
+la,Frogtown,urban_residential,24.25,69.0,San Fernando,suburban,22.77,74.6,5.6
+la,Frogtown,urban_residential,24.25,69.0,San Gabriel,suburban,22.48,64.5,4.5
+la,Frogtown,urban_residential,24.25,69.0,Signal Hill,suburban,24.96,50.0,19.0
+la,Frogtown,urban_residential,24.25,69.0,Silver Lake,suburban,23.6,62.5,6.5
+la,Frogtown,urban_residential,24.25,69.0,Torrance,suburban,23.58,48.7,20.3
+la,Frogtown,urban_residential,24.25,69.0,Wilmington,suburban,24.35,48.8,20.2
+la,Hawthorne,urban_residential,31.89,43.9,Inglewood,suburban,33.41,53.2,9.3
+la,Hawthorne,urban_residential,31.89,43.9,Leimert Park,suburban,30.31,47.4,3.5
+la,Hawthorne,urban_residential,31.89,43.9,Los Feliz,suburban,31.23,55.3,11.4
+la,Hawthorne,urban_residential,31.89,43.9,Marina del Rey,suburban,30.41,72.5,28.6
+la,Hawthorne,urban_residential,31.89,43.9,Monterey Park,suburban,35.0,60.6,16.7
+la,Hawthorne,urban_residential,31.89,43.9,Sherman Oaks,suburban,33.99,61.9,18.0
+la,Hawthorne,urban_residential,31.89,43.9,Whittier,suburban,32.11,63.9,20.0
+la,Hermosa Beach,urban_residential,26.99,73.5,Montebello,suburban,26.13,49.5,24.0
+la,Hermosa Beach,urban_residential,26.99,73.5,North Hollywood,suburban,26.16,57.8,15.7
+la,Hermosa Beach,urban_residential,26.99,73.5,Pico-Robertson,suburban,27.11,52.8,20.7
+la,Hermosa Beach,urban_residential,26.99,73.5,Reseda,suburban,26.46,64.7,8.8
+la,Hermosa Beach,urban_residential,26.99,73.5,Signal Hill,suburban,24.96,50.0,23.5
+la,Hermosa Beach,urban_residential,26.99,73.5,Venice,suburban,28.53,81.2,7.7
+la,Hermosa Beach,urban_residential,26.99,73.5,Wilmington,suburban,24.35,48.8,24.7
+la,Hollywood,urban_residential,50.93,59.0,Miracle Mile,suburban,55.42,54.6,4.4
+la,Hollywood,urban_residential,50.93,59.0,Santa Monica,suburban,51.92,79.7,20.7
+la,Hollywood,urban_residential,50.93,59.0,West LA,suburban,50.69,54.2,4.8
+la,Leimert Park,suburban,30.31,47.4,Mid-City,urban_residential,28.15,43.7,3.7
+la,Leimert Park,suburban,30.31,47.4,Watts,urban_residential,29.18,45.5,1.9
+la,Los Feliz,suburban,31.23,55.3,Mid-City,urban_residential,28.15,43.7,11.6
+la,Los Feliz,suburban,31.23,55.3,Watts,urban_residential,29.18,45.5,9.8
+la,Marina del Rey,suburban,30.41,72.5,Mid-City,urban_residential,28.15,43.7,28.8
+la,Marina del Rey,suburban,30.41,72.5,Watts,urban_residential,29.18,45.5,27.0
+la,Mid-City,urban_residential,28.15,43.7,Montebello,suburban,26.13,49.5,5.8
+la,Mid-City,urban_residential,28.15,43.7,North Hollywood,suburban,26.16,57.8,14.1
+la,Mid-City,urban_residential,28.15,43.7,Pico-Robertson,suburban,27.11,52.8,9.1
+la,Mid-City,urban_residential,28.15,43.7,Reseda,suburban,26.46,64.7,21.0
+la,Mid-City,urban_residential,28.15,43.7,Venice,suburban,28.53,81.2,37.5
+la,Monterey Park,suburban,35.0,60.6,San Pedro,urban_residential,38.28,49.3,11.3
+la,Palms,suburban,44.87,57.8,West Hollywood,urban_residential,40.99,57.5,0.3
+la,Pico-Robertson,suburban,27.11,52.8,Watts,urban_residential,29.18,45.5,7.3
+la,Reseda,suburban,26.46,64.7,Watts,urban_residential,29.18,45.5,19.2
+la,San Pedro,urban_residential,38.28,49.3,Van Nuys,suburban,38.29,72.7,23.4
+la,San Pedro,urban_residential,38.28,49.3,Windsor Square,suburban,41.33,49.7,0.4
+la,San Pedro,urban_residential,38.28,49.3,Woodland Hills,suburban,37.41,73.4,24.1
+la,Van Nuys,suburban,38.29,72.7,West Hollywood,urban_residential,40.99,57.5,15.2
+la,Venice,suburban,28.53,81.2,Watts,urban_residential,29.18,45.5,35.7
+la,Watts,urban_residential,29.18,45.5,Whittier,suburban,32.11,63.9,18.4
+la,West Hollywood,urban_residential,40.99,57.5,Windsor Square,suburban,41.33,49.7,7.8
+la,West Hollywood,urban_residential,40.99,57.5,Woodland Hills,suburban,37.41,73.4,15.9
+atlanta,Alpharetta,exurban,10.66,63.0,Brookhaven,suburban,11.34,52.2,10.8
+atlanta,Alpharetta,exurban,10.66,63.0,Candler Park,suburban,10.87,75.3,12.3
+atlanta,Alpharetta,exurban,10.66,63.0,Kirkwood,suburban,10.91,65.4,2.4
+atlanta,Alpharetta,exurban,10.66,63.0,Norcross,suburban,9.65,55.5,7.5
+atlanta,Avondale Estates,suburban,6.54,65.7,College Park,exurban,6.88,40.2,25.5
+atlanta,Avondale Estates,suburban,6.54,65.7,Lithonia,rural,6.09,45.6,20.1
+atlanta,Avondale Estates,suburban,6.54,65.7,Milton,exurban,6.77,63.4,2.3
+atlanta,Avondale Estates,suburban,6.54,65.7,Tucker,exurban,5.95,56.2,9.5
+atlanta,Brookhaven,suburban,11.34,52.2,Peachtree Corners,exurban,12.0,52.7,0.5
+atlanta,Buford,exurban,5.24,45.5,Conyers,rural,5.08,52.5,7.0
+atlanta,Buford,exurban,5.24,45.5,Covington,rural,5.52,41.2,4.3
+atlanta,Cabbagetown,suburban,16.25,67.2,Marietta,exurban,16.09,65.5,1.7
+atlanta,Candler Park,suburban,10.87,75.3,Cumming,exurban,10.13,60.9,14.4
+atlanta,Candler Park,suburban,10.87,75.3,Johns Creek,exurban,9.9,57.4,17.9
+atlanta,Candler Park,suburban,10.87,75.3,Peachtree Corners,exurban,12.0,52.7,22.6
+atlanta,Canton,exurban,8.47,42.9,Duluth,suburban,8.39,64.5,21.6
+atlanta,Canton,exurban,8.47,42.9,East Atlanta,suburban,8.87,61.1,18.2
+atlanta,Canton,exurban,8.47,42.9,Morningside-Lenox Park,suburban,8.57,74.3,31.4
+atlanta,Canton,exurban,8.47,42.9,Newnan,rural,7.67,50.9,8.0
+atlanta,Canton,exurban,8.47,42.9,Pine Lake,suburban,8.15,47.1,4.2
+atlanta,Canton,exurban,8.47,42.9,Stone Mountain,suburban,8.26,55.5,12.6
+atlanta,Canton,exurban,8.47,42.9,West End,suburban,9.06,59.6,16.7
+atlanta,Cartersville,exurban,4.98,48.4,Conyers,rural,5.08,52.5,4.1
+atlanta,Cartersville,exurban,4.98,48.4,Covington,rural,5.52,41.2,7.2
+atlanta,Cartersville,exurban,4.98,48.4,Fayetteville,rural,4.7,57.6,9.2
+atlanta,Chamblee,exurban,5.48,59.3,Conyers,rural,5.08,52.5,6.8
+atlanta,Chamblee,exurban,5.48,59.3,Covington,rural,5.52,41.2,18.1
+atlanta,Chamblee,exurban,5.48,59.3,Lithonia,rural,6.09,45.6,13.7
+atlanta,Clarkston,suburban,18.12,48.5,Vinings,exurban,18.46,55.5,7.0
+atlanta,College Park,exurban,6.88,40.2,Smyrna,suburban,6.82,62.5,22.3
+atlanta,Conyers,rural,5.08,52.5,Douglasville,exurban,5.0,49.4,3.1
+atlanta,Conyers,rural,5.08,52.5,Riverdale,exurban,5.32,38.1,14.4
+atlanta,Conyers,rural,5.08,52.5,Suwanee,exurban,4.65,63.5,11.0
+atlanta,Conyers,rural,5.08,52.5,Westside,exurban,4.7,56.2,3.7
+atlanta,Covington,rural,5.52,41.2,Douglasville,exurban,5.0,49.4,8.2
+atlanta,Covington,rural,5.52,41.2,Powder Springs,exurban,5.87,50.0,8.8
+atlanta,Covington,rural,5.52,41.2,Riverdale,exurban,5.32,38.1,3.1
+atlanta,Covington,rural,5.52,41.2,Tucker,exurban,5.95,56.2,15.0
+atlanta,Cumming,exurban,10.13,60.9,Kirkwood,suburban,10.91,65.4,4.5
+atlanta,Cumming,exurban,10.13,60.9,Norcross,suburban,9.65,55.5,5.4
+atlanta,Dacula,rural,2.35,57.4,Hiram,exurban,2.4,50.9,6.5
+atlanta,Doraville,exurban,9.48,52.3,East Atlanta,suburban,8.87,61.1,8.8
+atlanta,Doraville,exurban,9.48,52.3,Morningside-Lenox Park,suburban,8.57,74.3,22.0
+atlanta,Doraville,exurban,9.48,52.3,Norcross,suburban,9.65,55.5,3.2
+atlanta,Doraville,exurban,9.48,52.3,West End,suburban,9.06,59.6,7.3
+atlanta,Douglasville,exurban,5.0,49.4,Fayetteville,rural,4.7,57.6,8.2
+atlanta,Duluth,suburban,8.39,64.5,East Point,exurban,8.71,44.7,19.8
+atlanta,Duluth,suburban,8.39,64.5,Jonesboro,exurban,8.66,47.3,17.2
+atlanta,Duluth,suburban,8.39,64.5,Newnan,rural,7.67,50.9,13.6
+atlanta,Duluth,suburban,8.39,64.5,Peachtree City,exurban,8.34,45.8,18.7
+atlanta,Duluth,suburban,8.39,64.5,Roswell,exurban,8.23,66.5,2.0
+atlanta,Dunwoody,exurban,13.4,58.4,Grant Park,suburban,12.13,66.6,8.2
+atlanta,Dunwoody,exurban,13.4,58.4,Virginia-Highland,suburban,14.73,68.8,10.4
+atlanta,East Atlanta,suburban,8.87,61.1,East Point,exurban,8.71,44.7,16.4
+atlanta,East Atlanta,suburban,8.87,61.1,Jonesboro,exurban,8.66,47.3,13.8
+atlanta,East Atlanta,suburban,8.87,61.1,Peachtree City,exurban,8.34,45.8,15.3
+atlanta,East Atlanta,suburban,8.87,61.1,Roswell,exurban,8.23,66.5,5.4
+atlanta,East Point,exurban,8.71,44.7,Morningside-Lenox Park,suburban,8.57,74.3,29.6
+atlanta,East Point,exurban,8.71,44.7,Norcross,suburban,9.65,55.5,10.8
+atlanta,East Point,exurban,8.71,44.7,Pine Lake,suburban,8.15,47.1,2.4
+atlanta,East Point,exurban,8.71,44.7,Stone Mountain,suburban,8.26,55.5,10.8
+atlanta,East Point,exurban,8.71,44.7,West End,suburban,9.06,59.6,14.9
+atlanta,Fayetteville,rural,4.7,57.6,Stockbridge,exurban,4.53,37.8,19.8
+atlanta,Fayetteville,rural,4.7,57.6,Suwanee,exurban,4.65,63.5,5.9
+atlanta,Fayetteville,rural,4.7,57.6,Westside,exurban,4.7,56.2,1.4
+atlanta,Fayetteville,rural,4.7,57.6,Woodstock,exurban,4.38,62.0,4.4
+atlanta,Grant Park,suburban,12.13,66.6,Peachtree Corners,exurban,12.0,52.7,13.9
+atlanta,Hampton,rural,1.91,49.8,Union City,exurban,1.82,43.4,6.4
+atlanta,Inman Park,suburban,19.58,67.9,Lawrenceville,exurban,21.21,51.6,16.3
+atlanta,Inman Park,suburban,19.58,67.9,Vinings,exurban,18.46,55.5,12.4
+atlanta,Johns Creek,exurban,9.9,57.4,Kirkwood,suburban,10.91,65.4,8.0
+atlanta,Johns Creek,exurban,9.9,57.4,Norcross,suburban,9.65,55.5,1.9
+atlanta,Johns Creek,exurban,9.9,57.4,West End,suburban,9.06,59.6,2.2
+atlanta,Jonesboro,exurban,8.66,47.3,Morningside-Lenox Park,suburban,8.57,74.3,27.0
+atlanta,Jonesboro,exurban,8.66,47.3,Pine Lake,suburban,8.15,47.1,0.2
+atlanta,Jonesboro,exurban,8.66,47.3,Stone Mountain,suburban,8.26,55.5,8.2
+atlanta,Jonesboro,exurban,8.66,47.3,West End,suburban,9.06,59.6,12.3
+atlanta,Kennesaw,suburban,6.17,61.6,Lithonia,rural,6.09,45.6,16.0
+atlanta,Kennesaw,suburban,6.17,61.6,Milton,exurban,6.77,63.4,1.8
+atlanta,Kennesaw,suburban,6.17,61.6,Powder Springs,exurban,5.87,50.0,11.6
+atlanta,Kennesaw,suburban,6.17,61.6,Tucker,exurban,5.95,56.2,5.4
+atlanta,Kirkwood,suburban,10.91,65.4,Peachtree Corners,exurban,12.0,52.7,12.7
+atlanta,Lithonia,rural,6.09,45.6,Powder Springs,exurban,5.87,50.0,4.4
+atlanta,Lithonia,rural,6.09,45.6,Tucker,exurban,5.95,56.2,10.6
+atlanta,Marietta,exurban,16.09,65.5,Reynoldstown,suburban,16.02,66.9,1.4
+atlanta,Marietta,exurban,16.09,65.5,Virginia-Highland,suburban,14.73,68.8,3.3
+atlanta,Milton,exurban,6.77,63.4,Smyrna,suburban,6.82,62.5,0.9
+atlanta,Morningside-Lenox Park,suburban,8.57,74.3,Peachtree City,exurban,8.34,45.8,28.5
+atlanta,Morningside-Lenox Park,suburban,8.57,74.3,Roswell,exurban,8.23,66.5,7.8
+atlanta,Newnan,rural,7.67,50.9,Peachtree City,exurban,8.34,45.8,5.1
+atlanta,Newnan,rural,7.67,50.9,Pine Lake,suburban,8.15,47.1,3.8
+atlanta,Newnan,rural,7.67,50.9,Roswell,exurban,8.23,66.5,15.6
+atlanta,Newnan,rural,7.67,50.9,Stone Mountain,suburban,8.26,55.5,4.6
+atlanta,Peachtree City,exurban,8.34,45.8,Pine Lake,suburban,8.15,47.1,1.3
+atlanta,Peachtree City,exurban,8.34,45.8,Stone Mountain,suburban,8.26,55.5,9.7
+atlanta,Peachtree City,exurban,8.34,45.8,West End,suburban,9.06,59.6,13.8
+atlanta,Pine Lake,suburban,8.15,47.1,Roswell,exurban,8.23,66.5,19.4
+atlanta,Roswell,exurban,8.23,66.5,Stone Mountain,suburban,8.26,55.5,11.0
+atlanta,Roswell,exurban,8.23,66.5,West End,suburban,9.06,59.6,6.9
+atlanta,Sandy Springs,exurban,13.98,61.1,Virginia-Highland,suburban,14.73,68.8,7.7
+atlanta,Tyrone,rural,1.75,46.1,Union City,exurban,1.82,43.4,2.7
+austin,Allandale,suburban,10.91,64.5,Cedar Park,exurban,10.61,67.2,2.7
+austin,Allandale,suburban,10.91,64.5,Georgetown,exurban,11.94,66.5,2.0
+austin,Allandale,suburban,10.91,64.5,Rollingwood,exurban,10.28,74.4,9.9
+austin,Allandale,suburban,10.91,64.5,Round Rock,exurban,10.45,71.2,6.7
+austin,Anderson Mill,suburban,11.09,72.4,Cedar Park,exurban,10.61,67.2,5.2
+austin,Anderson Mill,suburban,11.09,72.4,Georgetown,exurban,11.94,66.5,5.9
+austin,Anderson Mill,suburban,11.09,72.4,Rollingwood,exurban,10.28,74.4,2.0
+austin,Anderson Mill,suburban,11.09,72.4,Round Rock,exurban,10.45,71.2,1.2
+austin,Barton Hills,suburban,8.62,75.8,Northwest Hills,exurban,8.27,61.3,14.5
+austin,Barton Hills,suburban,8.62,75.8,Oak Hill,exurban,9.43,78.1,2.3
+austin,Bastrop,rural,5.94,65.8,Sunset Valley,exurban,6.49,77.7,11.9
+austin,Bastrop,rural,5.94,65.8,Taylor,suburban,6.29,59.9,5.9
+austin,Bee Cave,exurban,6.95,67.2,Buda,rural,6.78,61.1,6.1
+austin,Bee Cave,exurban,6.95,67.2,Tarrytown,suburban,7.55,75.1,7.9
+austin,Bee Cave,exurban,6.95,67.2,Taylor,suburban,6.29,59.9,7.3
+austin,Buda,rural,6.78,61.1,Sunset Valley,exurban,6.49,77.7,16.6
+austin,Buda,rural,6.78,61.1,Taylor,suburban,6.29,59.9,1.2
+austin,Cedar Park,exurban,10.61,67.2,Kyle,rural,9.59,51.3,15.9
+austin,Cedar Park,exurban,10.61,67.2,Montopolis,suburban,11.33,68.8,1.6
+austin,East Austin,suburban,11.9,78.5,Georgetown,exurban,11.94,66.5,12.0
+austin,Georgetown,exurban,11.94,66.5,Jollyville,suburban,12.44,62.8,3.7
+austin,Georgetown,exurban,11.94,66.5,Montopolis,suburban,11.33,68.8,2.3
+austin,Georgetown,exurban,11.94,66.5,Southpark Meadows,suburban,12.35,64.1,2.4
+austin,Georgetown,exurban,11.94,66.5,Windsor Park,suburban,12.9,63.1,3.4
+austin,Hutto,suburban,9.35,49.4,Kyle,rural,9.59,51.3,1.9
+austin,Hutto,suburban,9.35,49.4,Oak Hill,exurban,9.43,78.1,28.7
+austin,Hutto,suburban,9.35,49.4,Rollingwood,exurban,10.28,74.4,25.0
+austin,Kyle,rural,9.59,51.3,Oak Hill,exurban,9.43,78.1,26.8
+austin,Kyle,rural,9.59,51.3,Pflugerville,suburban,9.32,59.0,7.7
+austin,Kyle,rural,9.59,51.3,Rollingwood,exurban,10.28,74.4,23.1
+austin,Kyle,rural,9.59,51.3,Round Rock,exurban,10.45,71.2,19.9
+austin,Montopolis,suburban,11.33,68.8,Rollingwood,exurban,10.28,74.4,5.6
+austin,Montopolis,suburban,11.33,68.8,Round Rock,exurban,10.45,71.2,2.4
+austin,Northwest Hills,exurban,8.27,61.3,Tarrytown,suburban,7.55,75.1,13.8
+austin,Oak Hill,exurban,9.43,78.1,Pflugerville,suburban,9.32,59.0,19.1
+austin,Pflugerville,suburban,9.32,59.0,Rollingwood,exurban,10.28,74.4,15.4
+austin,Sunset Valley,exurban,6.49,77.7,Taylor,suburban,6.29,59.9,17.8
+las_vegas,Aliante,suburban,9.98,57.6,Enterprise,exurban,9.02,30.6,27.0
+las_vegas,Anthem,exurban,8.33,50.3,Green Valley,suburban,8.94,66.2,15.9
+las_vegas,Anthem,exurban,8.33,50.3,Inspirada,rural,8.12,63.6,13.3
+las_vegas,Anthem,exurban,8.33,50.3,Mesquite,rural,8.14,51.5,1.2
+las_vegas,Anthem,exurban,8.33,50.3,Seven Hills,suburban,8.99,51.0,0.7
+las_vegas,Boulder City,suburban,9.31,53.5,Centennial Hills,exurban,8.74,55.4,1.9
+las_vegas,Boulder City,suburban,9.31,53.5,Enterprise,exurban,9.02,30.6,22.9
+las_vegas,Centennial Hills,exurban,8.74,55.4,Green Valley,suburban,8.94,66.2,10.8
+las_vegas,Centennial Hills,exurban,8.74,55.4,Inspirada,rural,8.12,63.6,8.2
+las_vegas,Centennial Hills,exurban,8.74,55.4,Mesquite,rural,8.14,51.5,3.9
+las_vegas,Centennial Hills,exurban,8.74,55.4,Seven Hills,suburban,8.99,51.0,4.4
+las_vegas,Enterprise,exurban,9.02,30.6,Green Valley,suburban,8.94,66.2,35.6
+las_vegas,Enterprise,exurban,9.02,30.6,Inspirada,rural,8.12,63.6,33.0
+las_vegas,Enterprise,exurban,9.02,30.6,Mesquite,rural,8.14,51.5,20.9
+las_vegas,Enterprise,exurban,9.02,30.6,Seven Hills,suburban,8.99,51.0,20.4
+las_vegas,Green Valley,suburban,8.94,66.2,Inspirada,rural,8.12,63.6,2.6
+las_vegas,Green Valley,suburban,8.94,66.2,Mesquite,rural,8.14,51.5,14.7
+las_vegas,Henderson,suburban,13.49,57.2,Paradise,exurban,12.37,56.7,0.5
+las_vegas,Henderson,suburban,13.49,57.2,Southern Highlands,exurban,14.38,48.9,8.3
+las_vegas,Inspirada,rural,8.12,63.6,Seven Hills,suburban,8.99,51.0,12.6
+las_vegas,Mesquite,rural,8.14,51.5,Seven Hills,suburban,8.99,51.0,0.5
+las_vegas,North Las Vegas,suburban,17.13,41.2,Summerlin South,exurban,16.92,69.8,28.6
+las_vegas,Paradise,exurban,12.37,56.7,Sunrise Manor,suburban,12.18,45.5,11.2
+las_vegas,Paradise,exurban,12.37,56.7,Whitney,suburban,12.61,47.1,9.6
+las_vegas,Silverado Ranch,exurban,23.13,42.5,Winchester,suburban,24.39,43.5,1.0
+las_vegas,Southern Highlands,exurban,14.38,48.9,Summerlin,suburban,14.5,60.6,11.7
+las_vegas,Southern Highlands,exurban,14.38,48.9,The Lakes,suburban,14.72,48.2,0.7
+las_vegas,Spring Valley,suburban,16.15,40.6,Summerlin South,exurban,16.92,69.8,29.2

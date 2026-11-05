@@ -1,0 +1,7 @@
+metro,place,state,daily,total,local_read,degraded,components_missing
+denver,Perry Park,CO,0.0,41.5,overpass_ok,False,[]
+houston,Mont Belvieu,TX,0.0,17.3,overpass_ok,False,[]
+las_vegas,Moapa Town,NV,0.0,25.5,overpass_empty,True,[]
+sacramento,Georgetown,CA,0.0,34.9,overpass_ok,False,[]
+sacramento,Pollock Pines,CA,0.0,30.2,overpass_ok,False,[]
+san_antonio,Von Ormy,TX,0.0,27.2,overpass_ok,False,[]
