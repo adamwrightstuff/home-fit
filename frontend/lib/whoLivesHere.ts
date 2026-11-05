@@ -43,7 +43,6 @@ export function ageMixWholePercents(age: { under_18?: number; age_18_64?: number
   return floors
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export function buildWhoLivesHere(pillars: any): { groups: WhoLivesHereGroup[]; geography: string | null } {
   const hv = pillars?.housing_value
   const sm = (hv && typeof hv.summary === 'object' && hv.summary) || hv || {}
