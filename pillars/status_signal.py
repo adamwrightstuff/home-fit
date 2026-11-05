@@ -913,6 +913,59 @@ def _classify_class(
     return "Middle Class", "class_middle"
 
 
+# Class-position score (DPv2, option C, 2026-11-04). The 0-100 number is where a place sits on the same
+# income ladder the class label uses, so a higher class can never score lower than a lower class.
+# Each class owns a fixed 20-point band; the position inside the band is the place's median household income
+# between that class's lower and upper income cutoffs, all taken from the label's own cutoffs or the ACS income topcode.
+# UNSOURCED scale choice (TODO, range unknown): the equal 20-point bands. Affluent places over the p90 income line that
+# miss the p90 home value line tie at the band top (known limit, not tuned away).
+CLASS_ORDER = ("Struggling", "Working Class", "Middle Class", "Affluent", "Elite")
+CLASS_BAND_WIDTH = 20.0
+ACS_INCOME_TOPCODE = 250001.0  # Census caps median household income here; the data itself ends
+SCORE_METHOD = "class_position_v1"
+
+
+def _class_income_bounds(
+    archetype: str,
+    cuts: Dict[str, float],
+    nat: Dict[str, float],
+) -> Optional[Tuple[float, float]]:
+    """(lower, upper) median household income of a class, from the same cutoffs _classify_class uses."""
+    median = float(nat["median_household_income"])
+    poverty = float(nat["poverty_guideline_3p"])
+    p80, p90 = float(cuts["income_p80"]), float(cuts["income_p90"])
+    return {
+        "Struggling": (0.0, poverty),
+        "Working Class": (poverty, median),
+        "Middle Class": (median * 2.0 / 3.0, p80),
+        "Affluent": (p80, p90),
+        "Elite": (p90, max(ACS_INCOME_TOPCODE, p90 + 1.0)),
+    }.get(archetype)
+
+
+def class_position_score(
+    archetype: Optional[str],
+    summary: Dict[str, Any],
+    keys_to_try: List[str],
+    baselines: Dict[str, Any],
+) -> Optional[float]:
+    """
+    0-100 position on the class ladder: 20 x class index + 20 x position of median income inside the class
+    income range (clipped to 0..1, so places demoted by housing burden sit at the top of a lower class).
+    None when the class or the income is missing.
+    """
+    if archetype not in CLASS_ORDER:
+        return None
+    income = summary.get("median_household_income")
+    cuts = _class_cuts_for(keys_to_try, baselines)
+    nat = (baselines or {}).get("class_national") or {}
+    if not cuts or not nat or not isinstance(income, (int, float)) or income <= 0:
+        return None
+    lo, hi = _class_income_bounds(archetype, cuts, nat)
+    pos = 0.5 if hi <= lo else max(0.0, min(1.0, (float(income) - lo) / (hi - lo)))
+    return round(CLASS_BAND_WIDTH * CLASS_ORDER.index(archetype) + CLASS_BAND_WIDTH * pos, 1)
+
+
 def _classify_archetype(
     *,
     education: Optional[float],
@@ -1126,10 +1179,8 @@ def compute_status_signal_with_breakdown(
         "original_archetype_rule": None,
         "rerun_inputs": None,
     }
-    if not housing_details or not economic_opportunity_details:
+    if not housing_details:
         return None, breakdown
-    merged_sf = _merge_social_and_diversity_for_signal(social_fabric_details, diversity_details)
-    merged_sf = _backfill_status_signal_social_inputs(merged_sf, tract, lat, lon)
     from data_sources.us_census_divisions import get_division
     division = get_division(state_abbrev) if state_abbrev else "all"
     baselines = _load_baselines()
@@ -1149,7 +1200,7 @@ def compute_status_signal_with_breakdown(
     summary = housing_details.get("summary") or housing_details
     median_home = summary.get("median_home_value")
     home_cost = compute_home_cost(median_home, keys_to_try, baselines)
-    education = compute_education(merged_sf, keys_to_try, baselines)
+    education = None  # retired from the score (class-position method); already in quality_education and economic_opportunity
 
     wealth_character = _wealth_character(housing_details)
     wealth_gap: Optional[float] = None
@@ -1159,15 +1210,8 @@ def compute_status_signal_with_breakdown(
         if mean is not None and isinstance(mean, (int, float)):
             wealth_gap = (float(mean) - float(med)) / float(med)
 
-    # Occupation computed first so white_collar_pct feeds into the DFG composite
-    occupation_neutral = compute_occupation(
-        economic_opportunity_details,
-        merged_sf,
-        tract,
-        keys_to_try,
-        baselines,
-    )
-    _wc_pct: Optional[float] = (economic_opportunity_details.get("breakdown") or {}).get("white_collar_pct")
+    occupation_neutral = None  # retired from the score (see education)
+    _wc_pct = None
 
     wealth = compute_wealth(housing_details, keys_to_try, baselines)
 
@@ -1224,6 +1268,15 @@ def compute_status_signal_with_breakdown(
     if _class is not None:
         archetype, archetype_rule = _class
 
+    if _class is None:
+        # No income, so no class (principle 16): never fall back to the wealth-band default of Struggling.
+        for k in ("archetype", "archetype_rule", "status_label", "status_insight"):
+            breakdown[k] = None
+        breakdown["trajectory"] = breakdown["trajectory_rule"] = None
+        breakdown["top_drivers"] = []
+        breakdown["insufficient_data"] = True
+        return None, breakdown
+
     trajectory, trajectory_rule = _classify_trajectory(
         archetype=archetype,
         wealth=wealth,
@@ -1235,7 +1288,6 @@ def compute_status_signal_with_breakdown(
         area_type=area_type,
     )
 
-    w_wealth, w_home_cost, w_education, w_occupation = _get_archetype_weights(archetype)
     status_label = _get_status_label(archetype)
     status_insight = _get_status_insight(archetype)
     top_drivers = _build_top_drivers(wealth, home_cost, education, occupation_neutral, archetype)
@@ -1267,11 +1319,8 @@ def compute_status_signal_with_breakdown(
     breakdown["status_insight"] = status_insight
     breakdown["top_drivers"] = top_drivers
 
-    if wealth is None and education is None and occupation_neutral is None:
-        return None, breakdown
-
-    # Income and home value both missing (campus, commercial or other non-residential tracts):
-    # education and occupation alone would not describe resident socioeconomic standing.
+    # Income missing: no class and no score. Income and home value both missing (campus, commercial or other
+    # non-residential tracts) never describe resident standing, so the class fields are cleared as well.
     if wealth is None and home_cost is None:
         for k in ("archetype", "archetype_rule", "trajectory", "trajectory_rule", "status_label", "status_insight"):
             breakdown[k] = None
@@ -1279,25 +1328,17 @@ def compute_status_signal_with_breakdown(
         breakdown["insufficient_data"] = True
         return None, breakdown
 
-    total_w = 0.0
-    score = 0.0
-    if wealth is not None:
-        total_w += w_wealth
-        score += w_wealth * wealth
-    if home_cost is not None:
-        total_w += w_home_cost
-        score += w_home_cost * home_cost
-    if education is not None:
-        total_w += w_education
-        score += w_education * education
-    if occupation_neutral is not None:
-        total_w += w_occupation
-        score += w_occupation * occupation_neutral
-
-    if total_w <= 0:
+    final = class_position_score(archetype, summary, keys_to_try, baselines) if _class is not None else None
+    if final is None:
+        breakdown["insufficient_data"] = True
         return None, breakdown
-    raw = score / total_w
-    final = round(max(0.0, min(100.0, raw)), 1)
+
+    monthly = summary.get("median_monthly_housing_cost")
+    if not (isinstance(monthly, (int, float)) and monthly > 0):
+        # The housing-burden demotion could not be tested, so the class may read one step too high.
+        breakdown["degraded"] = True
+        breakdown["degraded_reasons"] = ["housing_cost_missing_burden_test_skipped"]
+    breakdown["score_method"] = SCORE_METHOD
     ss_key, ss_label = _signal_strength_band(final)
     breakdown["composite_score"] = final
     breakdown["signal_strength"] = ss_key
