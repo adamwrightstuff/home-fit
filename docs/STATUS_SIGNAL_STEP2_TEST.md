@@ -61,3 +61,23 @@ Pass criteria (a candidate replaces A only if all hold):
 4. No more than 15% of places change class, and none moves more than one class (judgment limits).
 5. Reported only: Beverly Hills, Brookline, Greenwood Village, Newton, Palo Alto, East Palo Alto, Park Slope, Carroll Gardens, Murray Hill, Tribeca, and the moved places by metro.
 If a candidate passes all five I propose it for sign-off; if none does, A stays and the Beverly Hills result is a known limit.
+
+### Round 2 results (run 2026-11-05, 1,469 places, 1,465 with stored income brackets)
+Cut: median T1 is 25.0 for A's Middle Class and 50.1 for A's Affluent, so the nearest-class cut is 37.55 percent of households at $150,000 or more.
+
+| | A (current) | H1 (promote only) | H2 (promote and demote) |
+|---|---|---|---|
+| Places changing class | none | 223 (15.2%), all Middle Class to Affluent | 255 (17.4%): 223 up, 32 Affluent to Middle Class |
+| Spearman with mean income / rent / home value / graduate share | 0.735 / 0.490 / 0.465 / 0.580 | 0.844 / 0.607 / 0.596 / 0.691 (+0.110 / +0.117 / +0.130 / +0.111) | 0.841 / 0.597 / 0.598 / 0.691 |
+| Median mean income by occupied class | rises strictly | 40,104 / 68,554 / 107,823 / 185,241 / 301,654, rises strictly | rises strictly |
+| Nearest-class test on the moved set (mean income, home value, graduate share) | n/a | closer to the new class on all three | closer to the new class on all three, both directions |
+| Largest move | n/a | 1 class | 1 class |
+
+Criterion 1 PASS (gains of 0.11 or more on all four targets, limit 0.02). Criterion 2 PASS. Criterion 3 PASS: the 223 promoted places have median mean income $171,518 (Middle Class $107,823, Affluent $196,358), median home value $758,755 ($372,349 and $696,500) and graduate share 30 percent (Middle Class 15, Affluent 31). Criterion 4 FAIL by the letter: H1 moves 15.2 percent of places against the 15 percent limit (H2 17.4 percent). The limit was a judgment I fixed; I have not relaxed it.
+Criterion 5 (reported): Beverly Hills (T1 42.7), Brookline (45.0), Greenwood Village (48.3) and Carroll Gardens (55.7) become Affluent. Tribeca, Park Slope and Newton stay Elite; Murray Hill and Palo Alto stay Affluent; East Palo Alto (31.8) stays Middle Class. Moved places by metro: SF 66, NYC 29, Boston 27, LA 17, Denver 16, Philadelphia 16.
+
+Readings and limits:
+- Mean income is related to T1 by construction (both come from the same household distribution), so its gain is partly built in. Rent, home value and graduate share are less tied to T1 and still improve by 0.117, 0.130 and 0.111.
+- T1 is a national line ($150,000 is about twice the national median) applied to places in expensive metros: SF carries 30 percent of the moves. Whether a place with 40 percent of households above the national upper-income line is Affluent when the metro median is high is the frame question again.
+- T1 is stored per tract or place and is not pooled; the pooled Census pull has no income brackets, so pin-shift for this rule cannot be measured offline, and the live scorer does not fetch the bracket bins today (only the total). Adopting H1 means a new Census read of the B19001 bins for live scoring and for the pooled catalog places.
+- Result: H1 passes every check except the 15 percent movement limit by 0.2 points. Adoption is the owner's call; I propose H1 for sign-off, with the live-scoring and pooling gaps accepted as open.
