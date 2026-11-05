@@ -1,0 +1,9 @@
+{
+  "stopped": "max_rounds",
+  "rounds": 1,
+  "api_calls": 3,
+  "material_places_left": 0,
+  "needs_data_source": [],
+  "needs_human_check": [],
+  "still_failing_after_retries": []
+}

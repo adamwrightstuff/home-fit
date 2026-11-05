@@ -1,0 +1,14 @@
+[
+  {
+    "place": "Lucas",
+    "state": "TX",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Parker Police Department, Murphy Police Department, Wylie Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Westlake",
+    "state": "TX",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Trophy Club Police Department, Roanoke Police Department, Southlake Police Department; they police other places, so their numbers are not borrowed."
+  }
+]

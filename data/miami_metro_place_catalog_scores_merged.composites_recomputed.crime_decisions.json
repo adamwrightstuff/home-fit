@@ -1,0 +1,86 @@
+[
+  {
+    "place": "Coconut Creek",
+    "state": "FL",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Coral Springs Police Department, Boca Raton Police Department, Fort Lauderdale Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Cooper City",
+    "state": "FL",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Davie Police Department, Pembroke Pines Police Department, Plantation Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Deerfield Beach",
+    "state": "FL",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Boca Raton Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Hollywood",
+    "state": "FL",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Aventura Police Department, Golden Beach Police Department, Sunny Isles Beach Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Kendall",
+    "state": "FL",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Miami-Dade County Police Department returns 2023 data (county proxy)",
+    "kind": "county",
+    "agency": "Miami-Dade County Police Department",
+    "keys": [
+      "kendall",
+      "kendall township"
+    ]
+  },
+  {
+    "place": "Lauderhill",
+    "state": "FL",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Plantation Police Department, Fort Lauderdale Police Department, Davie Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Parkland",
+    "state": "FL",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Coral Springs Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Pompano Beach",
+    "state": "FL",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Boca Raton Police Department, Coral Springs Police Department, Fort Lauderdale Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Sunrise",
+    "state": "FL",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Plantation Police Department, Davie Police Department, Coral Springs Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Tamarac",
+    "state": "FL",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Coral Springs Police Department, Plantation Police Department, Davie Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "The Hammocks",
+    "state": "FL",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Miami-Dade County Police Department returns 2023 data (county proxy)",
+    "kind": "county",
+    "agency": "Miami-Dade County Police Department",
+    "keys": [
+      "the hammocks",
+      "the hammocks township"
+    ]
+  },
+  {
+    "place": "Weston",
+    "state": "FL",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Davie Police Department, Hillsboro Beach Police Department; they police other places, so their numbers are not borrowed."
+  }
+]

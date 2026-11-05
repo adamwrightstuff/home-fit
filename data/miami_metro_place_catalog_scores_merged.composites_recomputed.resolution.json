@@ -1,0 +1,116 @@
+{
+  "stopped": "no_progress",
+  "rounds": 1,
+  "api_calls": 20,
+  "material_places_left": 20,
+  "needs_data_source": [
+    {
+      "place": "Coconut Creek",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Coconut Creek Police Department"
+    },
+    {
+      "place": "Cooper City",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Cooper City Police Department"
+    },
+    {
+      "place": "Deerfield Beach",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Deerfield Beach Police Department"
+    },
+    {
+      "place": "Design District",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Miami-Dade County Public Schools"
+    },
+    {
+      "place": "Hollywood",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Hollywood Police Department"
+    },
+    {
+      "place": "Kendall",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Village of Pinecrest Police Department"
+    },
+    {
+      "place": "Lauderhill",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Lauderhill Police Department"
+    },
+    {
+      "place": "Midtown Miami",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Miami-Dade County Public Schools"
+    },
+    {
+      "place": "Morningside",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Miami-Dade County Public Schools"
+    },
+    {
+      "place": "Parkland",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Parkland Police Department"
+    },
+    {
+      "place": "Pompano Beach",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Pompano Beach Police Department"
+    },
+    {
+      "place": "Sunrise",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Sunrise Police Department"
+    },
+    {
+      "place": "Tamarac",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Tamarac Police Department"
+    },
+    {
+      "place": "The Hammocks",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=South Miami Police Department"
+    },
+    {
+      "place": "Upper East Side",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Miami-Dade County Public Schools"
+    },
+    {
+      "place": "Weston",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Weston Police Department"
+    }
+  ],
+  "needs_human_check": [
+    {
+      "place": "Juno Beach",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Palm Beach Gardens",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Royal Palm Beach",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Tequesta",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Weston",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    }
+  ],
+  "still_failing_after_retries": []
+}

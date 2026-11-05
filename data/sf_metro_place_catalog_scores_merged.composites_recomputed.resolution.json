@@ -1,0 +1,35 @@
+{
+  "stopped": "no_progress",
+  "rounds": 1,
+  "api_calls": 0,
+  "material_places_left": 3,
+  "needs_data_source": [],
+  "needs_human_check": [],
+  "still_failing_after_retries": [
+    {
+      "place": "El Cerrito",
+      "pillar": "healthcare_access",
+      "evidence": "lookup failed (completeness 0.0); score 33.2 rests on partial data"
+    },
+    {
+      "place": "El Cerrito",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Foster City",
+      "pillar": "healthcare_access",
+      "evidence": "lookup failed (completeness 0.0); score 37.3 rests on partial data"
+    },
+    {
+      "place": "Los Altos Hills",
+      "pillar": "active_outdoors",
+      "evidence": "Overpass failed on: local, regional; score 41.6"
+    },
+    {
+      "place": "Los Altos Hills",
+      "pillar": "healthcare_access",
+      "evidence": "lookup failed (completeness 0.0); score 31.7 rests on partial data"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+[
+  {
+    "place": "Buford",
+    "state": "GA",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Gwinnett County Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "College Park",
+    "state": "GA",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Hapeville Police Department, East Point Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Cumming",
+    "state": "GA",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Forsyth Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Dacula",
+    "state": "GA",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Gwinnett County Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Jonesboro",
+    "state": "GA",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Clayton County Police Department, Morrow Police Department, Lake City Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Mableton",
+    "state": "GA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Cobb County Police Department returns 2023 data (county proxy)",
+    "kind": "county",
+    "agency": "Cobb County Police Department",
+    "keys": [
+      "mableton",
+      "mableton township"
+    ]
+  },
+  {
+    "place": "Peachtree Corners",
+    "state": "GA",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Gwinnett County Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Pine Lake",
+    "state": "GA",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: DeKalb County Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Tucker",
+    "state": "GA",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: DeKalb County Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Union City",
+    "state": "GA",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: East Point Police Department, Hapeville Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Vinings",
+    "state": "GA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Cobb County Police Department returns 2023 data (county proxy)",
+    "kind": "county",
+    "agency": "Cobb County Police Department",
+    "keys": [
+      "vinings",
+      "vinings township"
+    ]
+  }
+]

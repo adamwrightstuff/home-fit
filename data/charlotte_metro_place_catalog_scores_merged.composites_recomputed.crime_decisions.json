@@ -1,0 +1,104 @@
+[
+  {
+    "place": "Ballantyne",
+    "state": "NC",
+    "action": "map",
+    "reason": "C2: neighborhood of Charlotte; Charlotte-Mecklenburg Police Department returns 2024 agency data",
+    "kind": "own",
+    "agency": "Charlotte-Mecklenburg Police Department",
+    "keys": [
+      "charlotte",
+      "charlotte township"
+    ]
+  },
+  {
+    "place": "Harrisburg",
+    "state": "NC",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Concord Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Indian Trail",
+    "state": "NC",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Matthews Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Marvin",
+    "state": "NC",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Midland",
+    "state": "NC",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Mineral Springs",
+    "state": "NC",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Waxhaw Police Department, Monroe Police Department, Wingate Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "NoDa",
+    "state": "NC",
+    "action": "map",
+    "reason": "C2: neighborhood of Charlotte; Charlotte-Mecklenburg Police Department returns 2024 agency data",
+    "kind": "own",
+    "agency": "Charlotte-Mecklenburg Police Department",
+    "keys": [
+      "charlotte",
+      "charlotte township"
+    ]
+  },
+  {
+    "place": "Noda",
+    "state": "NC",
+    "action": "map",
+    "reason": "C2: neighborhood of Charlotte; Charlotte-Mecklenburg Police Department returns 2024 agency data",
+    "kind": "own",
+    "agency": "Charlotte-Mecklenburg Police Department",
+    "keys": [
+      "charlotte",
+      "charlotte township"
+    ]
+  },
+  {
+    "place": "Steele Creek",
+    "state": "NC",
+    "action": "map",
+    "reason": "C2: neighborhood of Charlotte; Charlotte-Mecklenburg Police Department returns 2024 agency data",
+    "kind": "own",
+    "agency": "Charlotte-Mecklenburg Police Department",
+    "keys": [
+      "charlotte",
+      "charlotte township"
+    ]
+  },
+  {
+    "place": "University City",
+    "state": "NC",
+    "action": "map",
+    "reason": "C2: neighborhood of Charlotte; Charlotte-Mecklenburg Police Department returns 2024 agency data",
+    "kind": "own",
+    "agency": "Charlotte-Mecklenburg Police Department",
+    "keys": [
+      "charlotte",
+      "charlotte township"
+    ]
+  },
+  {
+    "place": "Weddington",
+    "state": "NC",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Matthews Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Wesley Chapel",
+    "state": "NC",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Waxhaw Police Department, Monroe Police Department, Wingate Police Department; they police other places, so their numbers are not borrowed."
+  }
+]

@@ -1,0 +1,77 @@
+[
+  {
+    "place": "Boerne",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78006: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Cibolo",
+    "pillar": "public_transit_access",
+    "reason": "accepted by rule: Rule T: Transitland returned no routes (confirmed on retry); OpenStreetMap shows 0 bus stops within 1.9 miles; scores on the commute-time floor only."
+  },
+  {
+    "place": "Comfort",
+    "pillar": "healthcare_access",
+    "reason": "accepted by rule: Rule H: no clinics, pharmacies or hospitals within 3 miles in OpenStreetMap (0 within 7.5 miles)."
+  },
+  {
+    "place": "Elmendorf",
+    "pillar": "healthcare_access",
+    "reason": "accepted by rule: Rule H: no clinics, pharmacies or hospitals within 3 miles in OpenStreetMap (0 within 7.5 miles)."
+  },
+  {
+    "place": "Helotes",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78023: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Live Oak",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78233: only 0.8% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Marion",
+    "pillar": "healthcare_access",
+    "reason": "accepted by rule: Rule H: no clinics, pharmacies or hospitals within 3 miles in OpenStreetMap (5 within 7.5 miles)."
+  },
+  {
+    "place": "New Braunfels",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78130: only 0.2% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Sandy Oaks",
+    "pillar": "healthcare_access",
+    "reason": "accepted by rule: Rule H: no clinics, pharmacies or hospitals within 3 miles in OpenStreetMap (0 within 7.5 miles)."
+  },
+  {
+    "place": "Schertz",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78154: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Seguin",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78155: only 0.2% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Spring Branch",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Timberwood Park",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78260: only 0.3% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Universal City",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78148: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Von Ormy",
+    "pillar": "healthcare_access",
+    "reason": "accepted by rule: Rule H: no clinics, pharmacies or hospitals within 3 miles in OpenStreetMap (2 within 7.5 miles)."
+  }
+]

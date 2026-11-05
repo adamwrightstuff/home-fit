@@ -1,0 +1,66 @@
+[
+  {
+    "place": "Canyon Lake",
+    "state": "TX",
+    "verdict": "USABLE",
+    "note": "no agency named for Canyon Lake; Comal County Sheriff's Office has data (2025). Confirm it polices Canyon Lake before mapping",
+    "agency": "Comal County Sheriff's Office",
+    "ori": "TX0460000"
+  },
+  {
+    "place": "Comfort",
+    "state": "TX",
+    "verdict": "USABLE",
+    "note": "Point Comfort Police Department has its own data (2025): map Comfort to it",
+    "agency": "Point Comfort Police Department",
+    "ori": "TX0290100"
+  },
+  {
+    "place": "Cross Mountain",
+    "state": "TX",
+    "verdict": "USABLE",
+    "note": "no agency named for Cross Mountain; Bexar County Sheriff's Office has data (2025). Confirm it polices Cross Mountain before mapping",
+    "agency": "Bexar County Sheriff's Office",
+    "ori": "TX0150000"
+  },
+  {
+    "place": "Hollywood Park",
+    "state": "TX",
+    "verdict": "USABLE",
+    "note": "Hollywood Park Police Department has its own data (2025): map Hollywood Park to it",
+    "agency": "Hollywood Park Police Department",
+    "ori": "TX0150800"
+  },
+  {
+    "place": "Olmos Park",
+    "state": "TX",
+    "verdict": "USABLE",
+    "note": "Olmos Park Police Department has its own data (2025): map Olmos Park to it",
+    "agency": "Olmos Park Police Department",
+    "ori": "TX0151100"
+  },
+  {
+    "place": "Shavano Park",
+    "state": "TX",
+    "verdict": "USABLE",
+    "note": "Shavano Park Police Department has its own data (2025): map Shavano Park to it",
+    "agency": "Shavano Park Police Department",
+    "ori": "TX0151200"
+  },
+  {
+    "place": "Spring Branch",
+    "state": "TX",
+    "verdict": "USABLE",
+    "note": "Independent School District: Spring Branch has its own data (2024): map Spring Branch to it",
+    "agency": "Independent School District: Spring Branch",
+    "ori": "TX1017000"
+  },
+  {
+    "place": "Timberwood Park",
+    "state": "TX",
+    "verdict": "USABLE",
+    "note": "no agency named for Timberwood Park; Bexar County Sheriff's Office has data (2025). Confirm it polices Timberwood Park before mapping",
+    "agency": "Bexar County Sheriff's Office",
+    "ori": "TX0150000"
+  }
+]

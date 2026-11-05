@@ -1,0 +1,106 @@
+[
+  {
+    "place": "Buford",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "no agency named for Buford; Gwinnett County Police Department has data (2025). Confirm it polices Buford before mapping",
+    "agency": "Gwinnett County Police Department",
+    "ori": "GA0670200"
+  },
+  {
+    "place": "Cartersville",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "Cartersville Police Department has its own data (2025): map Cartersville to it",
+    "agency": "Cartersville Police Department",
+    "ori": "GA0080100"
+  },
+  {
+    "place": "College Park",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "College Park Police Department has its own data (2025): map College Park to it",
+    "agency": "College Park Police Department",
+    "ori": "GA0600100"
+  },
+  {
+    "place": "Cumming",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "no agency named for Cumming; Forsyth County Fire Investigation Unit has data (2025). Confirm it polices Cumming before mapping",
+    "agency": "Forsyth County Fire Investigation Unit",
+    "ori": "GA0580300"
+  },
+  {
+    "place": "Dacula",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "no agency named for Dacula; Gwinnett County Police Department has data (2025). Confirm it polices Dacula before mapping",
+    "agency": "Gwinnett County Police Department",
+    "ori": "GA0670200"
+  },
+  {
+    "place": "Jonesboro",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "no agency named for Jonesboro; Clayton County Police Department has data (2025). Confirm it polices Jonesboro before mapping",
+    "agency": "Clayton County Police Department",
+    "ori": "GA0310100"
+  },
+  {
+    "place": "Mableton",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "no agency named for Mableton; Cobb County Board of Education has data (2025). Confirm it polices Mableton before mapping",
+    "agency": "Cobb County Board of Education",
+    "ori": "GA0331300"
+  },
+  {
+    "place": "Peachtree City",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "Peachtree City Police Department has its own data (2025): map Peachtree City to it",
+    "agency": "Peachtree City Police Department",
+    "ori": "GA0560200"
+  },
+  {
+    "place": "Peachtree Corners",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "no agency named for Peachtree Corners; Gwinnett County Public Schools has data (2025). Confirm it polices Peachtree Corners before mapping",
+    "agency": "Gwinnett County Public Schools",
+    "ori": "GA0671000"
+  },
+  {
+    "place": "Pine Lake",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "no agency named for Pine Lake; DeKalb County School System has data (2022). Confirm it polices Pine Lake before mapping",
+    "agency": "DeKalb County School System",
+    "ori": "GA0445100"
+  },
+  {
+    "place": "Tucker",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "no agency named for Tucker; DeKalb County School System has data (2022). Confirm it polices Tucker before mapping",
+    "agency": "DeKalb County School System",
+    "ori": "GA0445100"
+  },
+  {
+    "place": "Union City",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "no agency named for Union City; Fulton County School System has data (2025). Confirm it polices Union City before mapping",
+    "agency": "Fulton County School System",
+    "ori": "GA0603700"
+  },
+  {
+    "place": "Vinings",
+    "state": "GA",
+    "verdict": "USABLE",
+    "note": "no agency named for Vinings; Cobb County Board of Education has data (2025). Confirm it polices Vinings before mapping",
+    "agency": "Cobb County Board of Education",
+    "ori": "GA0331300"
+  }
+]

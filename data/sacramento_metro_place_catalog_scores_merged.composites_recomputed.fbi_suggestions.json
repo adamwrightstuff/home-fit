@@ -1,0 +1,194 @@
+[
+  {
+    "place": "Antelope",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "Highway Patrol: Antelope Valley Area Office has its own data (2025): map Antelope to it",
+    "agency": "Highway Patrol: Antelope Valley Area Office",
+    "ori": "CA0199945"
+  },
+  {
+    "place": "Cameron Park",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Cameron Park; El Dorado County Sheriff's Office has data (2023). Confirm it polices Cameron Park before mapping",
+    "agency": "El Dorado County Sheriff's Office",
+    "ori": "CA0090000"
+  },
+  {
+    "place": "Carmichael",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Carmichael; Highway Patrol: Sacramento County has data (2025). Confirm it polices Carmichael before mapping",
+    "agency": "Highway Patrol: Sacramento County",
+    "ori": "CA0349900"
+  },
+  {
+    "place": "Clarksburg",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Clarksburg; Yolo County Sheriff's Office has data (2025). Confirm it polices Clarksburg before mapping",
+    "agency": "Yolo County Sheriff's Office",
+    "ori": "CA0570000"
+  },
+  {
+    "place": "Colfax",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Colfax; Placer County Sheriff's Office has data (2025). Confirm it polices Colfax before mapping",
+    "agency": "Placer County Sheriff's Office",
+    "ori": "CA0310000"
+  },
+  {
+    "place": "El Dorado Hills",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for El Dorado Hills; El Dorado County Sheriff's Office has data (2023). Confirm it polices El Dorado Hills before mapping",
+    "agency": "El Dorado County Sheriff's Office",
+    "ori": "CA0090000"
+  },
+  {
+    "place": "Esparto",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Esparto; Yolo County Sheriff's Office has data (2025). Confirm it polices Esparto before mapping",
+    "agency": "Yolo County Sheriff's Office",
+    "ori": "CA0570000"
+  },
+  {
+    "place": "Fair Oaks",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Fair Oaks; Highway Patrol: Sacramento County has data (2025). Confirm it polices Fair Oaks before mapping",
+    "agency": "Highway Patrol: Sacramento County",
+    "ori": "CA0349900"
+  },
+  {
+    "place": "Florin",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Florin; Sacramento County Sheriff's Office has data (2025). Confirm it polices Florin before mapping",
+    "agency": "Sacramento County Sheriff's Office",
+    "ori": "CA0340000"
+  },
+  {
+    "place": "Foothill Farms",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Foothill Farms; Highway Patrol: Sacramento County has data (2025). Confirm it polices Foothill Farms before mapping",
+    "agency": "Highway Patrol: Sacramento County",
+    "ori": "CA0349900"
+  },
+  {
+    "place": "Georgetown",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Georgetown; El Dorado County Sheriff's Office has data (2023). Confirm it polices Georgetown before mapping",
+    "agency": "El Dorado County Sheriff's Office",
+    "ori": "CA0090000"
+  },
+  {
+    "place": "Gold River",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Gold River; Sacramento County Sheriff's Office has data (2025). Confirm it polices Gold River before mapping",
+    "agency": "Sacramento County Sheriff's Office",
+    "ori": "CA0340000"
+  },
+  {
+    "place": "Knights Landing",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Knights Landing; Yolo County Sheriff's Office has data (2025). Confirm it polices Knights Landing before mapping",
+    "agency": "Yolo County Sheriff's Office",
+    "ori": "CA0570000"
+  },
+  {
+    "place": "La Riviera",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for La Riviera; Highway Patrol: Sacramento County has data (2025). Confirm it polices La Riviera before mapping",
+    "agency": "Highway Patrol: Sacramento County",
+    "ori": "CA0349900"
+  },
+  {
+    "place": "Loomis",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Loomis; Placer County Sheriff's Office has data (2025). Confirm it polices Loomis before mapping",
+    "agency": "Placer County Sheriff's Office",
+    "ori": "CA0310000"
+  },
+  {
+    "place": "Meadow Vista",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Meadow Vista; Placer County Sheriff's Office has data (2025). Confirm it polices Meadow Vista before mapping",
+    "agency": "Placer County Sheriff's Office",
+    "ori": "CA0310000"
+  },
+  {
+    "place": "Newcastle",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Newcastle; Placer County Sheriff's Office has data (2025). Confirm it polices Newcastle before mapping",
+    "agency": "Placer County Sheriff's Office",
+    "ori": "CA0310000"
+  },
+  {
+    "place": "North Highlands",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for North Highlands; Highway Patrol: Sacramento County has data (2025). Confirm it polices North Highlands before mapping",
+    "agency": "Highway Patrol: Sacramento County",
+    "ori": "CA0349900"
+  },
+  {
+    "place": "Orangevale",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Orangevale; Highway Patrol: Sacramento County has data (2025). Confirm it polices Orangevale before mapping",
+    "agency": "Highway Patrol: Sacramento County",
+    "ori": "CA0349900"
+  },
+  {
+    "place": "Penryn",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Penryn; Placer County Sheriff's Office has data (2025). Confirm it polices Penryn before mapping",
+    "agency": "Placer County Sheriff's Office",
+    "ori": "CA0310000"
+  },
+  {
+    "place": "Pollock Pines",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Pollock Pines; El Dorado County Sheriff's Office has data (2023). Confirm it polices Pollock Pines before mapping",
+    "agency": "El Dorado County Sheriff's Office",
+    "ori": "CA0090000"
+  },
+  {
+    "place": "Rancho Murieta",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Rancho Murieta; Sacramento County Sheriff's Office has data (2025). Confirm it polices Rancho Murieta before mapping",
+    "agency": "Sacramento County Sheriff's Office",
+    "ori": "CA0340000"
+  },
+  {
+    "place": "Rio Linda",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Rio Linda; Highway Patrol: Sacramento County has data (2025). Confirm it polices Rio Linda before mapping",
+    "agency": "Highway Patrol: Sacramento County",
+    "ori": "CA0349900"
+  },
+  {
+    "place": "Shingle Springs",
+    "state": "CA",
+    "verdict": "USABLE",
+    "note": "no agency named for Shingle Springs; El Dorado County Sheriff's Office has data (2023). Confirm it polices Shingle Springs before mapping",
+    "agency": "El Dorado County Sheriff's Office",
+    "ori": "CA0090000"
+  }
+]

@@ -1,0 +1,278 @@
+[
+  {
+    "place": "Antelope",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Sacramento County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Sacramento County Sheriff's Office",
+    "keys": [
+      "antelope",
+      "antelope township"
+    ]
+  },
+  {
+    "place": "Cameron Park",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; El Dorado County Sheriff's Office returns 2022 data (county proxy)",
+    "kind": "county",
+    "agency": "El Dorado County Sheriff's Office",
+    "keys": [
+      "cameron park",
+      "cameron park township"
+    ]
+  },
+  {
+    "place": "Carmichael",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Sacramento County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Sacramento County Sheriff's Office",
+    "keys": [
+      "carmichael",
+      "carmichael township"
+    ]
+  },
+  {
+    "place": "Clarksburg",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Yolo County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Yolo County Sheriff's Office",
+    "keys": [
+      "clarksburg",
+      "clarksburg township"
+    ]
+  },
+  {
+    "place": "Colfax",
+    "state": "CA",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "El Dorado Hills",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; El Dorado County Sheriff's Office returns 2022 data (county proxy)",
+    "kind": "county",
+    "agency": "El Dorado County Sheriff's Office",
+    "keys": [
+      "el dorado hills",
+      "el dorado hills township"
+    ]
+  },
+  {
+    "place": "Esparto",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Yolo County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Yolo County Sheriff's Office",
+    "keys": [
+      "esparto",
+      "esparto township"
+    ]
+  },
+  {
+    "place": "Fair Oaks",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Sacramento County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Sacramento County Sheriff's Office",
+    "keys": [
+      "fair oaks",
+      "fair oaks township"
+    ]
+  },
+  {
+    "place": "Florin",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Sacramento County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Sacramento County Sheriff's Office",
+    "keys": [
+      "florin",
+      "florin township"
+    ]
+  },
+  {
+    "place": "Foothill Farms",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Sacramento County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Sacramento County Sheriff's Office",
+    "keys": [
+      "foothill farms",
+      "foothill farms township"
+    ]
+  },
+  {
+    "place": "Georgetown",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; El Dorado County Sheriff's Office returns 2022 data (county proxy)",
+    "kind": "county",
+    "agency": "El Dorado County Sheriff's Office",
+    "keys": [
+      "georgetown",
+      "georgetown township"
+    ]
+  },
+  {
+    "place": "Gold River",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Sacramento County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Sacramento County Sheriff's Office",
+    "keys": [
+      "gold river",
+      "gold river township"
+    ]
+  },
+  {
+    "place": "Knights Landing",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Yolo County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Yolo County Sheriff's Office",
+    "keys": [
+      "knights landing",
+      "knights landing township"
+    ]
+  },
+  {
+    "place": "La Riviera",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Sacramento County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Sacramento County Sheriff's Office",
+    "keys": [
+      "la riviera",
+      "la riviera township"
+    ]
+  },
+  {
+    "place": "Loomis",
+    "state": "CA",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Rocklin Police Department, Roseville Police Department, Lincoln Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Meadow Vista",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Placer County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Placer County Sheriff's Office",
+    "keys": [
+      "meadow vista",
+      "meadow vista township"
+    ]
+  },
+  {
+    "place": "Newcastle",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Placer County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Placer County Sheriff's Office",
+    "keys": [
+      "newcastle",
+      "newcastle township"
+    ]
+  },
+  {
+    "place": "North Highlands",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Sacramento County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Sacramento County Sheriff's Office",
+    "keys": [
+      "north highlands",
+      "north highlands township"
+    ]
+  },
+  {
+    "place": "Orangevale",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Sacramento County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Sacramento County Sheriff's Office",
+    "keys": [
+      "orangevale",
+      "orangevale township"
+    ]
+  },
+  {
+    "place": "Penryn",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Placer County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Placer County Sheriff's Office",
+    "keys": [
+      "penryn",
+      "penryn township"
+    ]
+  },
+  {
+    "place": "Pollock Pines",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; El Dorado County Sheriff's Office returns 2022 data (county proxy)",
+    "kind": "county",
+    "agency": "El Dorado County Sheriff's Office",
+    "keys": [
+      "pollock pines",
+      "pollock pines township"
+    ]
+  },
+  {
+    "place": "Rancho Murieta",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Sacramento County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Sacramento County Sheriff's Office",
+    "keys": [
+      "rancho murieta",
+      "rancho murieta township"
+    ]
+  },
+  {
+    "place": "Rio Linda",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Sacramento County Sheriff's Office returns 2024 data (county proxy)",
+    "kind": "county",
+    "agency": "Sacramento County Sheriff's Office",
+    "keys": [
+      "rio linda",
+      "rio linda township"
+    ]
+  },
+  {
+    "place": "Shingle Springs",
+    "state": "CA",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; El Dorado County Sheriff's Office returns 2022 data (county proxy)",
+    "kind": "county",
+    "agency": "El Dorado County Sheriff's Office",
+    "keys": [
+      "shingle springs",
+      "shingle springs township"
+    ]
+  }
+]

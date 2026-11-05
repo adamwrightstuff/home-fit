@@ -1,0 +1,62 @@
+[
+  {
+    "place": "Avalon Park",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 32828: only 0.2% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Belle Isle",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Edgewood Police Department, Orlando Police Department, Oakland Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Celebration",
+    "pillar": "public_transit_access",
+    "reason": "accepted by rule: Rule T: Transitland returned no routes (confirmed on retry); OpenStreetMap shows 5 bus stops within 1.9 miles; scores on the commute-time floor only."
+  },
+  {
+    "place": "Montverde",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Winter Garden Police Department, Ocoee Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Oakland",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Oakland Police Department, Winter Garden Police Department, Ocoee Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Oakland",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 34787: only 0.3% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Ocoee",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Apopka Police Department, Maitland Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Waterford Lakes",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 32828: only 0.2% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Windermere",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Ocoee Police Department, Winter Garden Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Winter Garden",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Apopka Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Winter Springs",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Longwood Police Department, Altamonte Springs Police Department, Lake Mary Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Winter Springs",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 32708: only 0.4% of commuters in this ZIP ride transit; no routes is plausible"
+  }
+]

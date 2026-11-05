@@ -1,0 +1,110 @@
+[
+  {
+    "place": "Blue Diamond",
+    "state": "NV",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Enterprise",
+    "state": "NV",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Indian Springs",
+    "state": "NV",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Laughlin",
+    "state": "NV",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Moapa Town",
+    "state": "NV",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Paradise",
+    "state": "NV",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Las Vegas Metropolitan Police Department returns 2022 data (county proxy)",
+    "kind": "county",
+    "agency": "Las Vegas Metropolitan Police Department",
+    "keys": [
+      "paradise",
+      "paradise township"
+    ]
+  },
+  {
+    "place": "Silverado Ranch",
+    "state": "NV",
+    "action": "map",
+    "reason": "C2: neighborhood of Las Vegas; Las Vegas Metropolitan Police Department returns 2022 agency data",
+    "kind": "own",
+    "agency": "Las Vegas Metropolitan Police Department",
+    "keys": [
+      "las vegas",
+      "las vegas township"
+    ]
+  },
+  {
+    "place": "Spring Valley",
+    "state": "NV",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Las Vegas Metropolitan Police Department returns 2022 data (county proxy)",
+    "kind": "county",
+    "agency": "Las Vegas Metropolitan Police Department",
+    "keys": [
+      "spring valley",
+      "spring valley township"
+    ]
+  },
+  {
+    "place": "Summerlin South",
+    "state": "NV",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Sunrise Manor",
+    "state": "NV",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Las Vegas Metropolitan Police Department returns 2022 data (county proxy)",
+    "kind": "county",
+    "agency": "Las Vegas Metropolitan Police Department",
+    "keys": [
+      "sunrise manor",
+      "sunrise manor township"
+    ]
+  },
+  {
+    "place": "Whitney",
+    "state": "NV",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Las Vegas Metropolitan Police Department returns 2022 data (county proxy)",
+    "kind": "county",
+    "agency": "Las Vegas Metropolitan Police Department",
+    "keys": [
+      "whitney",
+      "whitney township"
+    ]
+  },
+  {
+    "place": "Winchester",
+    "state": "NV",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Las Vegas Metropolitan Police Department returns 2022 data (county proxy)",
+    "kind": "county",
+    "agency": "Las Vegas Metropolitan Police Department",
+    "keys": [
+      "winchester",
+      "winchester township"
+    ]
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "place": "Lynnfield",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 01940: 2.0% of commuters in this ZIP ride transit, but they reach service outside the pillar's walking radius (commuter rail or a distant stop); 0 routes within it scores low by design"
+  },
+  {
+    "place": "Westwood",
+    "pillar": "public_transit_access",
+    "reason": "accepted by rule: Rule T: Transitland returned no routes (confirmed on retry); OpenStreetMap shows 22 bus stops within 1.9 miles; scores on the commute-time floor only."
+  }
+]

@@ -1,0 +1,178 @@
+[
+  {
+    "place": "Apollo Beach",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Apollo Beach; Hillsborough County Sheriff's Office has data (2025). Confirm it polices Apollo Beach before mapping",
+    "agency": "Hillsborough County Sheriff's Office",
+    "ori": "FL0290000"
+  },
+  {
+    "place": "Brandon",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Brandon; Hillsborough County Sheriff's Office has data (2025). Confirm it polices Brandon before mapping",
+    "agency": "Hillsborough County Sheriff's Office",
+    "ori": "FL0290000"
+  },
+  {
+    "place": "Carrollwood",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Carrollwood; Florida Game Commission: Hillsborough County has data (2025). Confirm it polices Carrollwood before mapping",
+    "agency": "Florida Game Commission: Hillsborough County",
+    "ori": "FL0298000"
+  },
+  {
+    "place": "Citrus Park",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Citrus Park; Florida Game Commission: Hillsborough County has data (2025). Confirm it polices Citrus Park before mapping",
+    "agency": "Florida Game Commission: Hillsborough County",
+    "ori": "FL0298000"
+  },
+  {
+    "place": "Downtown St. Petersburg",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Downtown St. Petersburg; Florida Game Commission: Pinellas County has data (2025). Confirm it polices Downtown St. Petersburg before mapping",
+    "agency": "Florida Game Commission: Pinellas County",
+    "ori": "FL0528000"
+  },
+  {
+    "place": "Land O' Lakes",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Land O' Lakes; Pasco County Sheriff's Office has data (2025). Confirm it polices Land O' Lakes before mapping",
+    "agency": "Pasco County Sheriff's Office",
+    "ori": "FL0510000"
+  },
+  {
+    "place": "New Tampa",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for New Tampa; Hillsborough County Sheriff's Office has data (2025). Confirm it polices New Tampa before mapping",
+    "agency": "Hillsborough County Sheriff's Office",
+    "ori": "FL0290000"
+  },
+  {
+    "place": "Odessa",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Odessa; Pasco County Sheriff's Office has data (2025). Confirm it polices Odessa before mapping",
+    "agency": "Pasco County Sheriff's Office",
+    "ori": "FL0510000"
+  },
+  {
+    "place": "Pinellas Park",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "Pinellas Park Police Department has its own data (2025): map Pinellas Park to it",
+    "agency": "Pinellas Park Police Department",
+    "ori": "FL0521100"
+  },
+  {
+    "place": "Plant City",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "Plant City Police Department has its own data (2023): map Plant City to it",
+    "agency": "Plant City Police Department",
+    "ori": "FL0290100"
+  },
+  {
+    "place": "Riverview",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Riverview; Hillsborough County Sheriff's Office has data (2025). Confirm it polices Riverview before mapping",
+    "agency": "Hillsborough County Sheriff's Office",
+    "ori": "FL0290000"
+  },
+  {
+    "place": "Ruskin",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Ruskin; Florida Game Commission: Hillsborough County has data (2025). Confirm it polices Ruskin before mapping",
+    "agency": "Florida Game Commission: Hillsborough County",
+    "ori": "FL0298000"
+  },
+  {
+    "place": "Safety Harbor",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "Safety Harbor Police Department has its own data (2025): map Safety Harbor to it",
+    "agency": "Safety Harbor Police Department",
+    "ori": "FL0521300"
+  },
+  {
+    "place": "Snell Isle",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Snell Isle; Florida Game Commission: Pinellas County has data (2025). Confirm it polices Snell Isle before mapping",
+    "agency": "Florida Game Commission: Pinellas County",
+    "ori": "FL0528000"
+  },
+  {
+    "place": "Spring Hill",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Spring Hill; Hernando County Sheriff's Office has data (2025). Confirm it polices Spring Hill before mapping",
+    "agency": "Hernando County Sheriff's Office",
+    "ori": "FL0270000"
+  },
+  {
+    "place": "St. Pete Beach",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "St. Pete Beach Police Department has its own data (2025): map St. Pete Beach to it",
+    "agency": "St. Pete Beach Police Department",
+    "ori": "FL0521500"
+  },
+  {
+    "place": "St. Petersburg",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "University of South Florida: St. Petersburg has its own data (2025): map St. Petersburg to it",
+    "agency": "University of South Florida: St. Petersburg",
+    "ori": "FL0522900"
+  },
+  {
+    "place": "Sulphur Springs",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Sulphur Springs; Hillsborough County Sheriff's Office has data (2025). Confirm it polices Sulphur Springs before mapping",
+    "agency": "Hillsborough County Sheriff's Office",
+    "ori": "FL0290000"
+  },
+  {
+    "place": "Town 'n' Country",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Town 'n' Country; Florida Game Commission: Hillsborough County has data (2025). Confirm it polices Town 'n' Country before mapping",
+    "agency": "Florida Game Commission: Hillsborough County",
+    "ori": "FL0298000"
+  },
+  {
+    "place": "Valrico",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Valrico; Hillsborough County Sheriff's Office has data (2025). Confirm it polices Valrico before mapping",
+    "agency": "Hillsborough County Sheriff's Office",
+    "ori": "FL0290000"
+  },
+  {
+    "place": "Wesley Chapel",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Wesley Chapel; Pasco County Sheriff's Office has data (2025). Confirm it polices Wesley Chapel before mapping",
+    "agency": "Pasco County Sheriff's Office",
+    "ori": "FL0510000"
+  },
+  {
+    "place": "Westshore",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Westshore; Florida Game Commission: Hillsborough County has data (2025). Confirm it polices Westshore before mapping",
+    "agency": "Florida Game Commission: Hillsborough County",
+    "ori": "FL0298000"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "place": "Anthem",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 89052: only 0.3% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Blue Diamond",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Blue Diamond",
+    "pillar": "healthcare_access",
+    "reason": "accepted by rule: Rule H: no clinics, pharmacies or hospitals within 3 miles in OpenStreetMap (11 within 7.5 miles)."
+  },
+  {
+    "place": "Centennial Hills",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Enterprise",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Indian Springs",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Lake Las Vegas",
+    "pillar": "healthcare_access",
+    "reason": "accepted by rule: Rule H: no clinics, pharmacies or hospitals within 3 miles in OpenStreetMap (12 within 7.5 miles)."
+  },
+  {
+    "place": "Laughlin",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Moapa Town",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Paradise",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Las Vegas Metropolitan Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Silverado Ranch",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Southern Highlands",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Spring Valley",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Las Vegas Metropolitan Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Summerlin",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Las Vegas Metropolitan Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Summerlin South",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Sunrise Manor",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: North Las Vegas Police Department, Las Vegas Metropolitan Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Whitney",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Henderson Police Department, Las Vegas Metropolitan Police Department, North Las Vegas Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Winchester",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Las Vegas Metropolitan Police Department, North Las Vegas Police Department; they police other places, so their numbers are not borrowed."
+  }
+]

@@ -1,0 +1,67 @@
+[
+  {
+    "place": "Anthem",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 85086: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Apache Junction",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 85119: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "DC Ranch",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 85255: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Eastmark",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 85212: only 0.4% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Fountain Hills",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 85268: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Litchfield Park",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 85340: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Queen Creek",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 85142: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Rio Verde",
+    "pillar": "healthcare_access",
+    "reason": "accepted by hand: Rural community with no clinics, pharmacies or hospitals within 7.5 miles in OpenStreetMap (pin is 0.2 miles from the OSM place center)."
+  },
+  {
+    "place": "Sun City West",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 85375: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Sun Lakes",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 85248: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Verrado",
+    "pillar": "public_transit_access",
+    "reason": "accepted by hand: No bus stops within 1.9 miles in OpenStreetMap and no routes in Transitland; scores on the commute-time floor only."
+  },
+  {
+    "place": "Wickenburg",
+    "pillar": "political_lean",
+    "reason": "accepted by rule: Rule P: no precinct polygon within range of the pin in the state's precinct file; political lean is an opt-in filter."
+  },
+  {
+    "place": "Youngtown",
+    "pillar": "community_safety",
+    "reason": "accepted by hand: Youngtown's own police department does not appear among FBI-reporting agencies near the place; the nearest reporting agency (Goodyear) polices a different town and the county sheriff does not police it."
+  }
+]

@@ -1,0 +1,82 @@
+[
+  {
+    "place": "Ballantyne",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Matthews Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Gastonia",
+    "pillar": "public_transit_access",
+    "reason": "accepted by rule: Rule T: Transitland returned no routes (confirmed on retry); OpenStreetMap shows 0 bus stops within 1.9 miles; scores on the commute-time floor only."
+  },
+  {
+    "place": "Harrisburg",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Concord Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Indian Trail",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Matthews Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Marvin",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Midland",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Mineral Springs",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Waxhaw Police Department, Monroe Police Department, Wingate Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Monroe",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 28110: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Mount Holly",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 28120: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "NoDa",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Mint Hill Police Department, Pineville Police Department, Cornelius Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Noda",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Mint Hill Police Department, Pineville Police Department, Cornelius Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Steele Creek",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Cramerton Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "University City",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Mint Hill Police Department, Pineville Police Department, Cornelius Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Waxhaw",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 28173: only 0.7% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Weddington",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Matthews Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Wesley Chapel",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Waxhaw Police Department, Monroe Police Department, Wingate Police Department; they police other places, so their numbers are not borrowed."
+  }
+]

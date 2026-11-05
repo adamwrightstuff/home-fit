@@ -1,0 +1,146 @@
+[
+  {
+    "place": "Aspen Park",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Aspen Park; Jefferson County Sheriff's Office has data (2025). Confirm it polices Aspen Park before mapping",
+    "agency": "Jefferson County Sheriff's Office",
+    "ori": "CO0300000"
+  },
+  {
+    "place": "Bennett",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Bennett; Adams County Sheriff's Office has data (2025). Confirm it polices Bennett before mapping",
+    "agency": "Adams County Sheriff's Office",
+    "ori": "CO0010000"
+  },
+  {
+    "place": "Commerce City",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "Commerce City Police Department has its own data (2025): map Commerce City to it",
+    "agency": "Commerce City Police Department",
+    "ori": "CO0010300"
+  },
+  {
+    "place": "Dakota Ridge",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Dakota Ridge; Jefferson County Sheriff's Office has data (2025). Confirm it polices Dakota Ridge before mapping",
+    "agency": "Jefferson County Sheriff's Office",
+    "ori": "CO0300000"
+  },
+  {
+    "place": "Englewood",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "Englewood Police Department has its own data (2025): map Englewood to it",
+    "agency": "Englewood Police Department",
+    "ori": "CO0030100"
+  },
+  {
+    "place": "Evergreen",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Evergreen; Jefferson County Sheriff's Office has data (2025). Confirm it polices Evergreen before mapping",
+    "agency": "Jefferson County Sheriff's Office",
+    "ori": "CO0300000"
+  },
+  {
+    "place": "Foxfield",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Foxfield; Arapahoe County Sheriff's Office has data (2025). Confirm it polices Foxfield before mapping",
+    "agency": "Arapahoe County Sheriff's Office",
+    "ori": "CO0030000"
+  },
+  {
+    "place": "Franktown",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Franktown; Douglas County Sheriff's Office has data (2025). Confirm it polices Franktown before mapping",
+    "agency": "Douglas County Sheriff's Office",
+    "ori": "CO0180000"
+  },
+  {
+    "place": "Genesee",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Genesee; Jefferson County Sheriff's Office has data (2025). Confirm it polices Genesee before mapping",
+    "agency": "Jefferson County Sheriff's Office",
+    "ori": "CO0300000"
+  },
+  {
+    "place": "Greenwood Village",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "Greenwood Village Police Department has its own data (2025): map Greenwood Village to it",
+    "agency": "Greenwood Village Police Department",
+    "ori": "CO0030700"
+  },
+  {
+    "place": "Highlands Ranch",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Highlands Ranch; Douglas County Sheriff's Office has data (2025). Confirm it polices Highlands Ranch before mapping",
+    "agency": "Douglas County Sheriff's Office",
+    "ori": "CO0180000"
+  },
+  {
+    "place": "Idledale",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Idledale; Jefferson County Sheriff's Office has data (2025). Confirm it polices Idledale before mapping",
+    "agency": "Jefferson County Sheriff's Office",
+    "ori": "CO0300000"
+  },
+  {
+    "place": "Indian Hills",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Indian Hills; Jefferson County Sheriff's Office has data (2025). Confirm it polices Indian Hills before mapping",
+    "agency": "Jefferson County Sheriff's Office",
+    "ori": "CO0300000"
+  },
+  {
+    "place": "Ken Caryl",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Ken Caryl; Jefferson County Sheriff's Office has data (2025). Confirm it polices Ken Caryl before mapping",
+    "agency": "Jefferson County Sheriff's Office",
+    "ori": "CO0300000"
+  },
+  {
+    "place": "Morrison",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Morrison; Jefferson County Sheriff's Office has data (2025). Confirm it polices Morrison before mapping",
+    "agency": "Jefferson County Sheriff's Office",
+    "ori": "CO0300000"
+  },
+  {
+    "place": "Perry Park",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Perry Park; Douglas County Sheriff's Office has data (2025). Confirm it polices Perry Park before mapping",
+    "agency": "Douglas County Sheriff's Office",
+    "ori": "CO0180000"
+  },
+  {
+    "place": "Roxborough Park",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Roxborough Park; Douglas County Sheriff's Office has data (2025). Confirm it polices Roxborough Park before mapping",
+    "agency": "Douglas County Sheriff's Office",
+    "ori": "CO0180000"
+  },
+  {
+    "place": "Sedalia",
+    "state": "CO",
+    "verdict": "USABLE",
+    "note": "no agency named for Sedalia; Douglas County Sheriff's Office has data (2025). Confirm it polices Sedalia before mapping",
+    "agency": "Douglas County Sheriff's Office",
+    "ori": "CO0180000"
+  }
+]

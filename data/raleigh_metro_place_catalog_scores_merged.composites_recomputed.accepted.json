@@ -1,0 +1,17 @@
+[
+  {
+    "place": "Archer Lodge",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Rolesville",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 27571: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Wakefield",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 27614: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  }
+]

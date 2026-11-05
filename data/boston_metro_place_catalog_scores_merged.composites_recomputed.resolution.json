@@ -1,0 +1,20 @@
+{
+  "stopped": "nothing_actionable",
+  "rounds": 2,
+  "api_calls": 13,
+  "material_places_left": 2,
+  "needs_data_source": [],
+  "needs_human_check": [
+    {
+      "place": "Lynnfield",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Westwood",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    }
+  ],
+  "still_failing_after_retries": []
+}

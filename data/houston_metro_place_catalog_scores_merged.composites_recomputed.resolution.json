@@ -1,0 +1,25 @@
+{
+  "stopped": "no_progress",
+  "rounds": 1,
+  "api_calls": 3,
+  "material_places_left": 3,
+  "needs_data_source": [],
+  "needs_human_check": [
+    {
+      "place": "Alvin",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Rosenberg",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Sugar Land",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    }
+  ],
+  "still_failing_after_retries": []
+}

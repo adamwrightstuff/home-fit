@@ -1,0 +1,130 @@
+[
+  {
+    "place": "Coconut Creek",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Coconut Creek; Highway Patrol: Broward County has data (2025). Confirm it polices Coconut Creek before mapping",
+    "agency": "Highway Patrol: Broward County",
+    "ori": "FL0069000"
+  },
+  {
+    "place": "Cooper City",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Cooper City; Highway Patrol: Broward County has data (2025). Confirm it polices Cooper City before mapping",
+    "agency": "Highway Patrol: Broward County",
+    "ori": "FL0069000"
+  },
+  {
+    "place": "Deerfield Beach",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Deerfield Beach; Highway Patrol: Broward County has data (2025). Confirm it polices Deerfield Beach before mapping",
+    "agency": "Highway Patrol: Broward County",
+    "ori": "FL0069000"
+  },
+  {
+    "place": "Design District",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Design District; Miami-Dade County Police Department has data (2025). Confirm it polices Design District before mapping",
+    "agency": "Miami-Dade County Police Department",
+    "ori": "FL0130000"
+  },
+  {
+    "place": "Hollywood",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Hollywood; Highway Patrol: Broward County has data (2025). Confirm it polices Hollywood before mapping",
+    "agency": "Highway Patrol: Broward County",
+    "ori": "FL0069000"
+  },
+  {
+    "place": "Kendall",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Kendall; Department of Law Enforcement: Miami-Dade County, Miami has data (2023). Confirm it polices Kendall before mapping",
+    "agency": "Department of Law Enforcement: Miami-Dade County, Miami",
+    "ori": "FL0133000"
+  },
+  {
+    "place": "Lauderhill",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Lauderhill; Highway Patrol: Broward County has data (2025). Confirm it polices Lauderhill before mapping",
+    "agency": "Highway Patrol: Broward County",
+    "ori": "FL0069000"
+  },
+  {
+    "place": "Midtown Miami",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Midtown Miami; Miami-Dade County Police Department has data (2025). Confirm it polices Midtown Miami before mapping",
+    "agency": "Miami-Dade County Police Department",
+    "ori": "FL0130000"
+  },
+  {
+    "place": "Morningside",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Morningside; Miami-Dade County Police Department has data (2025). Confirm it polices Morningside before mapping",
+    "agency": "Miami-Dade County Police Department",
+    "ori": "FL0130000"
+  },
+  {
+    "place": "Parkland",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Parkland; Highway Patrol: Broward County has data (2025). Confirm it polices Parkland before mapping",
+    "agency": "Highway Patrol: Broward County",
+    "ori": "FL0069000"
+  },
+  {
+    "place": "Pompano Beach",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Pompano Beach; Highway Patrol: Broward County has data (2025). Confirm it polices Pompano Beach before mapping",
+    "agency": "Highway Patrol: Broward County",
+    "ori": "FL0069000"
+  },
+  {
+    "place": "Sunrise",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Sunrise; Highway Patrol: Broward County has data (2025). Confirm it polices Sunrise before mapping",
+    "agency": "Highway Patrol: Broward County",
+    "ori": "FL0069000"
+  },
+  {
+    "place": "Tamarac",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Tamarac; Highway Patrol: Broward County has data (2025). Confirm it polices Tamarac before mapping",
+    "agency": "Highway Patrol: Broward County",
+    "ori": "FL0069000"
+  },
+  {
+    "place": "The Hammocks",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for The Hammocks; Florida Game Commission: Miami-Dade County has data (2025). Confirm it polices The Hammocks before mapping",
+    "agency": "Florida Game Commission: Miami-Dade County",
+    "ori": "FL0138100"
+  },
+  {
+    "place": "Upper East Side",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Upper East Side; Miami-Dade County Police Department has data (2025). Confirm it polices Upper East Side before mapping",
+    "agency": "Miami-Dade County Police Department",
+    "ori": "FL0130000"
+  },
+  {
+    "place": "Weston",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Weston; Highway Patrol: Broward County has data (2025). Confirm it polices Weston before mapping",
+    "agency": "Highway Patrol: Broward County",
+    "ori": "FL0069000"
+  }
+]

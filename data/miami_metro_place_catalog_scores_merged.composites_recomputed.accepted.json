@@ -1,0 +1,87 @@
+[
+  {
+    "place": "Coconut Creek",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Coral Springs Police Department, Boca Raton Police Department, Fort Lauderdale Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Cooper City",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Davie Police Department, Pembroke Pines Police Department, Plantation Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Deerfield Beach",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Boca Raton Police Department, Coconut Creek Police Department, Sea Ranch Lakes Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Hollywood",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Aventura Police Department, Golden Beach Police Department, Sunny Isles Beach Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Juno Beach",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 33408: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Kendall",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Village of Pinecrest Police Department, Coral Gables Police Department, West Miami Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Lauderhill",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Plantation Police Department, Fort Lauderdale Police Department, Davie Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Palm Beach Gardens",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 33418: only 0.2% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Parkland",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Coral Springs Police Department, Coconut Creek Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Pompano Beach",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Sea Ranch Lakes Police Department, Coconut Creek Police Department, Boca Raton Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Royal Palm Beach",
+    "pillar": "public_transit_access",
+    "reason": "accepted by rule: Rule T: Transitland returned no routes (confirmed on retry); OpenStreetMap shows 1 bus stops within 1.9 miles; scores on the commute-time floor only."
+  },
+  {
+    "place": "Sunrise",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Plantation Police Department, Davie Police Department, Coral Springs Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Tamarac",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Coral Springs Police Department, Plantation Police Department, Coconut Creek Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Tequesta",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 33469: only 0.2% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "The Hammocks",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: South Miami Police Department, North Bay Village Police Department, Hialeah Gardens Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Weston",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Davie Police Department, Hillsboro Beach Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Weston",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 33327: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  }
+]

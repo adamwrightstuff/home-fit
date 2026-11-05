@@ -1,0 +1,114 @@
+[
+  {
+    "place": "Ballantyne",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for Ballantyne; Mecklenburg County Alcoholic Beverage Control Law Enforcement Office has data (2022). Confirm it polices Ballantyne before mapping",
+    "agency": "Mecklenburg County Alcoholic Beverage Control Law Enforcement Office",
+    "ori": "NC0605000"
+  },
+  {
+    "place": "Belmont",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "Belmont Police Department has its own data (2025): map Belmont to it",
+    "agency": "Belmont Police Department",
+    "ori": "NC0360100"
+  },
+  {
+    "place": "Denver",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for Denver; Lincoln County Sheriff's Office has data (2025). Confirm it polices Denver before mapping",
+    "agency": "Lincoln County Sheriff's Office",
+    "ori": "NC0550000"
+  },
+  {
+    "place": "Harrisburg",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for Harrisburg; Cabarrus County Sheriff's Office has data (2025). Confirm it polices Harrisburg before mapping",
+    "agency": "Cabarrus County Sheriff's Office",
+    "ori": "NC0130000"
+  },
+  {
+    "place": "Indian Trail",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for Indian Trail; Union County Sheriff's Office has data (2025). Confirm it polices Indian Trail before mapping",
+    "agency": "Union County Sheriff's Office",
+    "ori": "NC0900000"
+  },
+  {
+    "place": "Marvin",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for Marvin; Union County Sheriff's Office has data (2025). Confirm it polices Marvin before mapping",
+    "agency": "Union County Sheriff's Office",
+    "ori": "NC0900000"
+  },
+  {
+    "place": "Midland",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for Midland; Cabarrus County Sheriff's Office has data (2025). Confirm it polices Midland before mapping",
+    "agency": "Cabarrus County Sheriff's Office",
+    "ori": "NC0130000"
+  },
+  {
+    "place": "Mineral Springs",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for Mineral Springs; Union County Sheriff's Office has data (2025). Confirm it polices Mineral Springs before mapping",
+    "agency": "Union County Sheriff's Office",
+    "ori": "NC0900000"
+  },
+  {
+    "place": "NoDa",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for NoDa; Mecklenburg County Alcoholic Beverage Control Law Enforcement Office has data (2022). Confirm it polices NoDa before mapping",
+    "agency": "Mecklenburg County Alcoholic Beverage Control Law Enforcement Office",
+    "ori": "NC0605000"
+  },
+  {
+    "place": "Noda",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for Noda; Mecklenburg County Alcoholic Beverage Control Law Enforcement Office has data (2022). Confirm it polices Noda before mapping",
+    "agency": "Mecklenburg County Alcoholic Beverage Control Law Enforcement Office",
+    "ori": "NC0605000"
+  },
+  {
+    "place": "Steele Creek",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for Steele Creek; Mecklenburg County Alcoholic Beverage Control Law Enforcement Office has data (2022). Confirm it polices Steele Creek before mapping",
+    "agency": "Mecklenburg County Alcoholic Beverage Control Law Enforcement Office",
+    "ori": "NC0605000"
+  },
+  {
+    "place": "University City",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for University City; Mecklenburg County Alcoholic Beverage Control Law Enforcement Office has data (2022). Confirm it polices University City before mapping",
+    "agency": "Mecklenburg County Alcoholic Beverage Control Law Enforcement Office",
+    "ori": "NC0605000"
+  },
+  {
+    "place": "Weddington",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for Weddington; Union County Sheriff's Office has data (2025). Confirm it polices Weddington before mapping",
+    "agency": "Union County Sheriff's Office",
+    "ori": "NC0900000"
+  },
+  {
+    "place": "Wesley Chapel",
+    "state": "NC",
+    "verdict": "USABLE",
+    "note": "no agency named for Wesley Chapel; Union County Sheriff's Office has data (2025). Confirm it polices Wesley Chapel before mapping",
+    "agency": "Union County Sheriff's Office",
+    "ori": "NC0900000"
+  }
+]

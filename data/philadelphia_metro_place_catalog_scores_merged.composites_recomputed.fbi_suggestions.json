@@ -1,0 +1,74 @@
+[
+  {
+    "place": "Blue Bell",
+    "state": "PA",
+    "verdict": "USABLE",
+    "note": "no agency named for Blue Bell; Montgomery County Sheriff's Office has data (2024). Confirm it polices Blue Bell before mapping",
+    "agency": "Montgomery County Sheriff's Office",
+    "ori": "PA0460000"
+  },
+  {
+    "place": "Camden",
+    "state": "NJ",
+    "verdict": "USABLE",
+    "note": "Camden County Sheriff's Office has its own data (2024): map Camden to it",
+    "agency": "Camden County Sheriff's Office",
+    "ori": "NJ0040000"
+  },
+  {
+    "place": "Cherry Hill",
+    "state": "NJ",
+    "verdict": "USABLE",
+    "note": "Cherry Hill Township Police Department has its own data (2024): map Cherry Hill to it",
+    "agency": "Cherry Hill Township Police Department",
+    "ori": "NJ0041200"
+  },
+  {
+    "place": "Exton",
+    "state": "PA",
+    "verdict": "USABLE",
+    "note": "no agency named for Exton; County Detective: Chester County has data (2024). Confirm it polices Exton before mapping",
+    "agency": "County Detective: Chester County",
+    "ori": "PA0154500"
+  },
+  {
+    "place": "Glenside",
+    "state": "PA",
+    "verdict": "USABLE",
+    "note": "no agency named for Glenside; Abington Township Police Department, Montgomery County has data (2024). Confirm it polices Glenside before mapping",
+    "agency": "Abington Township Police Department, Montgomery County",
+    "ori": "PA0460100"
+  },
+  {
+    "place": "Hockessin",
+    "state": "DE",
+    "verdict": "USABLE",
+    "note": "no agency named for Hockessin; Attorney General: New Castle County has data (2024). Confirm it polices Hockessin before mapping",
+    "agency": "Attorney General: New Castle County",
+    "ori": "DE0029Z0X"
+  },
+  {
+    "place": "Levittown",
+    "state": "PA",
+    "verdict": "USABLE",
+    "note": "no agency named for Levittown; Falls Township Police Department, Bucks County has data (2024). Confirm it polices Levittown before mapping",
+    "agency": "Falls Township Police Department, Bucks County",
+    "ori": "PA0090500"
+  },
+  {
+    "place": "Pennsauken",
+    "state": "NJ",
+    "verdict": "USABLE",
+    "note": "Pennsauken Township Police Department has its own data (2024): map Pennsauken to it",
+    "agency": "Pennsauken Township Police Department",
+    "ori": "NJ0042700"
+  },
+  {
+    "place": "Villanova",
+    "state": "PA",
+    "verdict": "USABLE",
+    "note": "Villanova University has its own data (2024): map Villanova to it",
+    "agency": "Villanova University",
+    "ori": "PA023579E"
+  }
+]

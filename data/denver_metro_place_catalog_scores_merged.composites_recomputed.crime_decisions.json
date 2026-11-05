@@ -1,0 +1,38 @@
+[
+  {
+    "place": "Bennett",
+    "state": "CO",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Englewood Police Department, Greenwood Village Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Commerce City",
+    "state": "CO",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Commerce City Police Department, Federal Heights Police Department, Mountain View Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Englewood",
+    "state": "CO",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Englewood Police Department, Columbine Valley Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Foxfield",
+    "state": "CO",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Greenwood Village",
+    "state": "CO",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Greenwood Village Police Department, Columbine Valley Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Morrison",
+    "state": "CO",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  }
+]

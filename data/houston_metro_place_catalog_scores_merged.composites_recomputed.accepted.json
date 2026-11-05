@@ -1,0 +1,127 @@
+[
+  {
+    "place": "Alvin",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77511: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Atascocita",
+    "pillar": "public_transit_access",
+    "reason": "accepted by hand: No bus stops within 1.9 miles in OpenStreetMap and no routes in Transitland; scores on the commute-time floor only. Verified."
+  },
+  {
+    "place": "Baytown",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77520: only 0.4% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Cinco Ranch",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 25826: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Clear Lake",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77062: 2.5% of commuters in this ZIP ride transit, but they reach service outside the pillar's walking radius (commuter rail or a distant stop); 0 routes within it scores low by design"
+  },
+  {
+    "place": "Conroe",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77301: only 0.7% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Deer Park",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77536: only 0.2% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Friendswood",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77546: only 0.3% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Humble",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77396: only 0.6% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Jersey Village",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77040: 2.5% of commuters in this ZIP ride transit, but they reach service outside the pillar's walking radius (commuter rail or a distant stop); 0 routes within it scores low by design"
+  },
+  {
+    "place": "La Porte",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77571: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Lake Jackson",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77566: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Missouri City",
+    "pillar": "public_transit_access",
+    "reason": "accepted by hand: No bus stops within 1.9 miles in OpenStreetMap and no routes in Transitland; scores on the commute-time floor only. Verified."
+  },
+  {
+    "place": "Pasadena",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77506: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Pearland",
+    "pillar": "public_transit_access",
+    "reason": "accepted by hand: No bus stops within 1.9 miles in OpenStreetMap and no routes in Transitland; scores on the commute-time floor only. Verified."
+  },
+  {
+    "place": "Richmond",
+    "pillar": "public_transit_access",
+    "reason": "accepted by hand: No bus stops within 1.9 miles in OpenStreetMap and no routes in Transitland; scores on the commute-time floor only. Verified."
+  },
+  {
+    "place": "Rosenberg",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77471: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Shenandoah",
+    "pillar": "public_transit_access",
+    "reason": "accepted by hand: 24 bus stops within 1.9 miles in OpenStreetMap but Transitland has no routes for them (likely a local operator without a GTFS feed); scores on the commute floor only."
+  },
+  {
+    "place": "Sienna",
+    "pillar": "healthcare_access",
+    "reason": "accepted by rule: Rule H: no clinics, pharmacies or hospitals within 3 miles in OpenStreetMap (13 within 7.5 miles)."
+  },
+  {
+    "place": "Sienna",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77583: only 0.2% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Spring",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77373: only 0.8% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Sugar Land",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77478: only 0.7% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Texas City",
+    "pillar": "public_transit_access",
+    "reason": "accepted by hand: No bus stops within 1.9 miles in OpenStreetMap and no routes in Transitland; scores on the commute-time floor only. Verified."
+  },
+  {
+    "place": "The Woodlands",
+    "pillar": "public_transit_access",
+    "reason": "accepted by hand: No bus stops within 1.9 miles in OpenStreetMap and no routes in Transitland; scores on the commute-time floor only. Verified."
+  },
+  {
+    "place": "Webster",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 77598: only 0.6% of commuters in this ZIP ride transit; no routes is plausible"
+  }
+]

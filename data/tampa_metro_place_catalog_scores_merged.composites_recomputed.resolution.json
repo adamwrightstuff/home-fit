@@ -1,0 +1,171 @@
+{
+  "stopped": "no_progress",
+  "rounds": 1,
+  "api_calls": 29,
+  "material_places_left": 29,
+  "needs_data_source": [
+    {
+      "place": "Apollo Beach",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Temple Terrace Police Department"
+    },
+    {
+      "place": "Brandon",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Temple Terrace Police Department"
+    },
+    {
+      "place": "Carrollwood",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Hillsborough County, Tampa"
+    },
+    {
+      "place": "Citrus Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Hillsborough County, Tampa"
+    },
+    {
+      "place": "Downtown St. Petersburg",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Florida Game Commission: Pinellas County"
+    },
+    {
+      "place": "Land O' Lakes",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Pasco County Sheriff's Office"
+    },
+    {
+      "place": "New Tampa",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Hillsborough County, Tampa"
+    },
+    {
+      "place": "Odessa",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=New Port Richey Police Department"
+    },
+    {
+      "place": "Pinellas Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Kenneth City Police Department"
+    },
+    {
+      "place": "Plant City",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Lakeland Police Department"
+    },
+    {
+      "place": "Riverview",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Temple Terrace Police Department"
+    },
+    {
+      "place": "Ruskin",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Florida Game Commission: Pinellas County"
+    },
+    {
+      "place": "Safety Harbor",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Clearwater Police Department"
+    },
+    {
+      "place": "Snell Isle",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Florida Game Commission: Pinellas County"
+    },
+    {
+      "place": "Spring Hill",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Hernando County Sheriff's Office"
+    },
+    {
+      "place": "St. Pete Beach",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Treasure Island Police Department"
+    },
+    {
+      "place": "St. Petersburg",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Florida Game Commission: Pinellas County"
+    },
+    {
+      "place": "Sulphur Springs",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Hillsborough County, Tampa"
+    },
+    {
+      "place": "Town 'n' Country",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Hillsborough County, Tampa"
+    },
+    {
+      "place": "Valrico",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Temple Terrace Police Department"
+    },
+    {
+      "place": "Wesley Chapel",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Pasco County Sheriff's Office"
+    },
+    {
+      "place": "Westshore",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Hillsborough County, Tampa"
+    }
+  ],
+  "needs_human_check": [
+    {
+      "place": "Gulfport",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Largo",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Old Northeast",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Oldsmar",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Palm Harbor",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Safety Harbor",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Seminole",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Snell Isle",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "St. Pete Beach",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Treasure Island",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    }
+  ],
+  "still_failing_after_retries": []
+}

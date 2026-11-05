@@ -1,0 +1,37 @@
+[
+  {
+    "place": "Cedar Park",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78613: only 0.9% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Georgetown",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78626: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Hutto",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78634: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Lakeway",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78734: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Manchaca",
+    "pillar": "public_transit_access",
+    "reason": "accepted by hand: service only 2-5 km away, outside walking radius; 1.1% commuters"
+  },
+  {
+    "place": "Pflugerville",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78660: only 0.5% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Steiner Ranch",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 78732: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  }
+]

@@ -1,0 +1,247 @@
+{
+  "stopped": "max_rounds",
+  "rounds": 3,
+  "api_calls": 71,
+  "material_places_left": 42,
+  "needs_data_source": [
+    {
+      "place": "Aspen Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Jefferson County Sheriff's Office"
+    },
+    {
+      "place": "Bennett",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Englewood Police Department"
+    },
+    {
+      "place": "Commerce City",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Auraria Higher Education Center"
+    },
+    {
+      "place": "Dakota Ridge",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Bow Mar Police Department"
+    },
+    {
+      "place": "Englewood",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Sheridan Police Department"
+    },
+    {
+      "place": "Evergreen",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Jefferson County Sheriff's Office"
+    },
+    {
+      "place": "Foxfield",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Arapahoe County Sheriff's Office"
+    },
+    {
+      "place": "Franktown",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Castle Rock Police Department"
+    },
+    {
+      "place": "Genesee",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Jefferson County Sheriff's Office"
+    },
+    {
+      "place": "Greenwood Village",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Cherry Hills Village Police Department"
+    },
+    {
+      "place": "Highlands Ranch",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Columbine Valley Police Department"
+    },
+    {
+      "place": "Idledale",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Jefferson County Sheriff's Office"
+    },
+    {
+      "place": "Indian Hills",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Jefferson County Sheriff's Office"
+    },
+    {
+      "place": "Ken Caryl",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Bow Mar Police Department"
+    },
+    {
+      "place": "Morrison",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Jefferson County Sheriff's Office"
+    },
+    {
+      "place": "Perry Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Lone Tree Police Department"
+    },
+    {
+      "place": "Roxborough Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Columbine Valley Police Department"
+    },
+    {
+      "place": "Sedalia",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Douglas County Sheriff's Office"
+    }
+  ],
+  "needs_human_check": [
+    {
+      "place": "Aspen Park",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 15.3 rests on the nearest hospital only"
+    },
+    {
+      "place": "Broomfield",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Castle Rock",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Columbine",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Elizabeth",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 15.5 rests on the nearest hospital only"
+    },
+    {
+      "place": "Evergreen",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 15.3 rests on the nearest hospital only"
+    },
+    {
+      "place": "Indian Hills",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 16.0 rests on the nearest hospital only"
+    },
+    {
+      "place": "Perry Park",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 2.1 rests on the nearest hospital only"
+    }
+  ],
+  "still_failing_after_retries": [
+    {
+      "place": "Aurora",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Baker",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Capitol Hill",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Cherry Creek",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Cherry Hills Village",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "City Park",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Congress Park",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Downtown Denver",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Five Points",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Genesee",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Glendale",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Golden",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Lakewood",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "LoDo",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Lowry",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Montclair",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Northglenn",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Observatory Park",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Platt Park",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Uptown",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Washington Park",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    }
+  ]
+}

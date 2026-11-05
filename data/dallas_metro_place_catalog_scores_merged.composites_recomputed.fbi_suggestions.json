@@ -1,0 +1,18 @@
+[
+  {
+    "place": "Lucas",
+    "state": "TX",
+    "verdict": "USABLE",
+    "note": "no agency named for Lucas; Collin County Sheriff's Office has data (2025). Confirm it polices Lucas before mapping",
+    "agency": "Collin County Sheriff's Office",
+    "ori": "TX0430000"
+  },
+  {
+    "place": "Westlake",
+    "state": "TX",
+    "verdict": "USABLE",
+    "note": "no agency named for Westlake; Tarrant County Sheriff's Office has data (2025). Confirm it polices Westlake before mapping",
+    "agency": "Tarrant County Sheriff's Office",
+    "ori": "TX2200000"
+  }
+]

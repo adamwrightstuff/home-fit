@@ -1,0 +1,58 @@
+[
+  {
+    "place": "Crystal Lake",
+    "state": "IL",
+    "verdict": "USABLE",
+    "note": "Crystal Lake Police Department has its own data (2023): map Crystal Lake to it",
+    "agency": "Crystal Lake Police Department",
+    "ori": "IL0560300"
+  },
+  {
+    "place": "Highland Park",
+    "state": "IL",
+    "verdict": "USABLE",
+    "note": "Highland Park Police Department has its own data (2023): map Highland Park to it",
+    "agency": "Highland Park Police Department",
+    "ori": "IL0490700"
+  },
+  {
+    "place": "Naperville",
+    "state": "IL",
+    "verdict": "USABLE",
+    "note": "Naperville Police Department has its own data (2023): map Naperville to it",
+    "agency": "Naperville Police Department",
+    "ori": "IL0221400"
+  },
+  {
+    "place": "Oak Park",
+    "state": "IL",
+    "verdict": "USABLE",
+    "note": "Oak Park Police Department has its own data (2023): map Oak Park to it",
+    "agency": "Oak Park Police Department",
+    "ori": "IL0168100"
+  },
+  {
+    "place": "Orland Park",
+    "state": "IL",
+    "verdict": "USABLE",
+    "note": "Orland Park Police Department has its own data (2023): map Orland Park to it",
+    "agency": "Orland Park Police Department",
+    "ori": "IL0168300"
+  },
+  {
+    "place": "River Forest",
+    "state": "IL",
+    "verdict": "USABLE",
+    "note": "no agency named for River Forest; Cook County Sheriff's Office has data (2023). Confirm it polices River Forest before mapping",
+    "agency": "Cook County Sheriff's Office",
+    "ori": "IL0160000"
+  },
+  {
+    "place": "Tinley Park",
+    "state": "IL",
+    "verdict": "USABLE",
+    "note": "Tinley Park Police Department has its own data (2023): map Tinley Park to it",
+    "agency": "Tinley Park Police Department",
+    "ori": "IL0165M00"
+  }
+]

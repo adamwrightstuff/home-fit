@@ -1,0 +1,35 @@
+{
+  "stopped": "dependency_down",
+  "rounds": 0,
+  "api_calls": 0,
+  "material_places_left": 1,
+  "needs_data_source": [],
+  "needs_human_check": [],
+  "still_failing_after_retries": [
+    {
+      "place": "Ballard",
+      "pillar": "healthcare_access",
+      "evidence": "lookup failed (completeness 0.0); score 79.2 rests on partial data"
+    },
+    {
+      "place": "Ballard",
+      "pillar": "neighborhood_amenities",
+      "evidence": "Overpass business query failed (osm_unavailable (suburban))"
+    },
+    {
+      "place": "Ballard",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    },
+    {
+      "place": "Ballard",
+      "pillar": "active_outdoors",
+      "evidence": "status=failed error=RuntimeError"
+    },
+    {
+      "place": "Ballard",
+      "pillar": "built_environment",
+      "evidence": "status=failed error=RuntimeError"
+    }
+  ]
+}

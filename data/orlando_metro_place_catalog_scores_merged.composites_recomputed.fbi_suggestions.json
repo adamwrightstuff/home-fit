@@ -1,0 +1,154 @@
+[
+  {
+    "place": "Audubon Park",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Audubon Park; Highway Patrol: Orange County has data (2025). Confirm it polices Audubon Park before mapping",
+    "agency": "Highway Patrol: Orange County",
+    "ori": "FL0489000"
+  },
+  {
+    "place": "Belle Isle",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Belle Isle; Orange County Sheriff's Office has data (2025). Confirm it polices Belle Isle before mapping",
+    "agency": "Orange County Sheriff's Office",
+    "ori": "FL0480000"
+  },
+  {
+    "place": "Celebration",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Celebration; Highway Patrol: Osceola County has data (2025). Confirm it polices Celebration before mapping",
+    "agency": "Highway Patrol: Osceola County",
+    "ori": "FL0499000"
+  },
+  {
+    "place": "College Park",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for College Park; Highway Patrol: Orange County has data (2025). Confirm it polices College Park before mapping",
+    "agency": "Highway Patrol: Orange County",
+    "ori": "FL0489000"
+  },
+  {
+    "place": "Downtown Orlando",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Downtown Orlando; Orange County Sheriff's Office has data (2025). Confirm it polices Downtown Orlando before mapping",
+    "agency": "Orange County Sheriff's Office",
+    "ori": "FL0480000"
+  },
+  {
+    "place": "Dr. Phillips",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Dr. Phillips; Orange County Sheriff's Office has data (2025). Confirm it polices Dr. Phillips before mapping",
+    "agency": "Orange County Sheriff's Office",
+    "ori": "FL0480000"
+  },
+  {
+    "place": "Fruitland Park",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "Fruitland Park Police Department has its own data (2023): map Fruitland Park to it",
+    "agency": "Fruitland Park Police Department",
+    "ori": "FL0350400"
+  },
+  {
+    "place": "Lake Eola Heights",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Lake Eola Heights; Highway Patrol: Orange County has data (2025). Confirm it polices Lake Eola Heights before mapping",
+    "agency": "Highway Patrol: Orange County",
+    "ori": "FL0489000"
+  },
+  {
+    "place": "Mills 50",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Mills 50; Highway Patrol: Orange County has data (2025). Confirm it polices Mills 50 before mapping",
+    "agency": "Highway Patrol: Orange County",
+    "ori": "FL0489000"
+  },
+  {
+    "place": "Montverde",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Montverde; Florida Game Commission: Lake County has data (2025). Confirm it polices Montverde before mapping",
+    "agency": "Florida Game Commission: Lake County",
+    "ori": "FL0358000"
+  },
+  {
+    "place": "Oakland",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Oakland; Orange County Sheriff's Office has data (2025). Confirm it polices Oakland before mapping",
+    "agency": "Orange County Sheriff's Office",
+    "ori": "FL0480000"
+  },
+  {
+    "place": "Ocoee",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Ocoee; Orange County Sheriff's Office has data (2025). Confirm it polices Ocoee before mapping",
+    "agency": "Orange County Sheriff's Office",
+    "ori": "FL0480000"
+  },
+  {
+    "place": "Pine Hills",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Pine Hills; Highway Patrol: Orange County has data (2025). Confirm it polices Pine Hills before mapping",
+    "agency": "Highway Patrol: Orange County",
+    "ori": "FL0489000"
+  },
+  {
+    "place": "Thornton Park",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Thornton Park; Orange County Sheriff's Office has data (2025). Confirm it polices Thornton Park before mapping",
+    "agency": "Orange County Sheriff's Office",
+    "ori": "FL0480000"
+  },
+  {
+    "place": "Union Park",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Union Park; Highway Patrol: Orange County has data (2025). Confirm it polices Union Park before mapping",
+    "agency": "Highway Patrol: Orange County",
+    "ori": "FL0489000"
+  },
+  {
+    "place": "Windermere",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Windermere; Orange County Sheriff's Office has data (2025). Confirm it polices Windermere before mapping",
+    "agency": "Orange County Sheriff's Office",
+    "ori": "FL0480000"
+  },
+  {
+    "place": "Winter Garden",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Winter Garden; Orange County Sheriff's Office has data (2025). Confirm it polices Winter Garden before mapping",
+    "agency": "Orange County Sheriff's Office",
+    "ori": "FL0480000"
+  },
+  {
+    "place": "Winter Park",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "Winter Park Police Department has its own data (2025): map Winter Park to it",
+    "agency": "Winter Park Police Department",
+    "ori": "FL0480600"
+  },
+  {
+    "place": "Winter Springs",
+    "state": "FL",
+    "verdict": "USABLE",
+    "note": "no agency named for Winter Springs; Florida Game Commission: Seminole County has data (2025). Confirm it polices Winter Springs before mapping",
+    "agency": "Florida Game Commission: Seminole County",
+    "ori": "FL0598000"
+  }
+]

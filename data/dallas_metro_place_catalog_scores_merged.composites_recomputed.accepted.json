@@ -1,0 +1,142 @@
+[
+  {
+    "place": "Allen",
+    "pillar": "public_transit_access",
+    "reason": "accepted by hand: No DART service in Allen; OpenStreetMap shows no bus stops within 1.9 miles and no stations nearby. The commute-time floor is the only transit credit."
+  },
+  {
+    "place": "Arlington",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 76015: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Bedford",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 76021: only 0.3% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Burleson",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 76028: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Colleyville",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 76034: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Corinth",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 76210: only 0.4% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "DeSoto",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 75115: only 0.6% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Duncanville",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 75116: only 0.4% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Euless",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 76039: only 0.3% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Fairview",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 75069: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Flower Mound",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 75028: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Forney",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 75126: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Grand Prairie",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 75052: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Hurst",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 76053: only 0.2% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Keller",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 76248: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Lancaster",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 75146: only 0.4% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Little Elm",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 75068: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Lucas",
+    "pillar": "community_safety",
+    "reason": "accepted by hand: Lucas police department does not appear among FBI-reporting agencies near the place; the nearest reporting agencies (Parker, Wylie, Murphy) police other towns."
+  },
+  {
+    "place": "Mansfield",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 76063: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "McKinney",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 75071: only 0.4% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Mesquite",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 75149: only 0.3% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Murphy",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 75094: only 0.9% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Roanoke",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 76262: only 0.0% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Rockwall",
+    "pillar": "public_transit_access",
+    "reason": "accepted by rule: Rule T: Transitland returned no routes (confirmed on retry); OpenStreetMap shows 0 bus stops within 1.9 miles; scores on the commute-time floor only."
+  },
+  {
+    "place": "Rowlett",
+    "pillar": "public_transit_access",
+    "reason": "accepted by hand: DART Blue Line Downtown Rowlett station is about 1.2 miles from the pin, outside the 1,500 m suburban search radius, so it scores on the commute floor only. Same search-radius question as Woodside and Los Altos Hills; left as is by decision."
+  },
+  {
+    "place": "Waxahachie",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 75165: only 0.1% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Weatherford",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 76086: only 0.9% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Westlake",
+    "pillar": "community_safety",
+    "reason": "accepted by hand: Westlake police department does not appear among FBI-reporting agencies near the place; Trophy Club, Roanoke and Southlake police other towns."
+  }
+]

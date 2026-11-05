@@ -1,0 +1,138 @@
+[
+  {
+    "place": "Aliante",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Aliante; Clark County School District has data (2025). Confirm it polices Aliante before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Blue Diamond",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Blue Diamond; Clark County School District has data (2025). Confirm it polices Blue Diamond before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Centennial Hills",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Centennial Hills; Clark County School District has data (2025). Confirm it polices Centennial Hills before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Enterprise",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Enterprise; Clark County School District has data (2025). Confirm it polices Enterprise before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Indian Springs",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Indian Springs; Clark County School District has data (2025). Confirm it polices Indian Springs before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Laughlin",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Laughlin; Clark County School District has data (2025). Confirm it polices Laughlin before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Moapa Town",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Moapa Town; Clark County School District has data (2025). Confirm it polices Moapa Town before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "North Las Vegas",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "North Las Vegas Police Department has its own data (2025): map North Las Vegas to it",
+    "agency": "North Las Vegas Police Department",
+    "ori": "NV0020200"
+  },
+  {
+    "place": "Paradise",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Paradise; Clark County School District has data (2025). Confirm it polices Paradise before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Silverado Ranch",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Silverado Ranch; Clark County School District has data (2025). Confirm it polices Silverado Ranch before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Southern Highlands",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Southern Highlands; Clark County School District has data (2025). Confirm it polices Southern Highlands before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Spring Valley",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Spring Valley; Clark County School District has data (2025). Confirm it polices Spring Valley before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Summerlin South",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Summerlin South; Clark County School District has data (2025). Confirm it polices Summerlin South before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Summerlin",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Summerlin; Clark County School District has data (2025). Confirm it polices Summerlin before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Sunrise Manor",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Sunrise Manor; Clark County School District has data (2025). Confirm it polices Sunrise Manor before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Whitney",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Whitney; Clark County School District has data (2025). Confirm it polices Whitney before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  },
+  {
+    "place": "Winchester",
+    "state": "NV",
+    "verdict": "USABLE",
+    "note": "no agency named for Winchester; Clark County School District has data (2025). Confirm it polices Winchester before mapping",
+    "agency": "Clark County School District",
+    "ori": "NV0021600"
+  }
+]

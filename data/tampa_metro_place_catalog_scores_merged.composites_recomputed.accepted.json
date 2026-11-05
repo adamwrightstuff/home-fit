@@ -1,0 +1,57 @@
+[
+  {
+    "place": "Gulfport",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 33707: only 0.7% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Largo",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 33771: only 0.5% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Old Northeast",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 33704: only 0.9% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Oldsmar",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 34677: only 0.3% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Palm Harbor",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 34683: only 0.2% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Plant City",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Plant City Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Safety Harbor",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 34695: only 0.2% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Seminole",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 33772: only 0.6% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Snell Isle",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 33704: only 0.9% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "St. Pete Beach",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 33706: only 0.4% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Treasure Island",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 33706: only 0.4% of commuters in this ZIP ride transit; no routes is plausible"
+  }
+]

@@ -1,0 +1,166 @@
+{
+  "stopped": "nothing_actionable",
+  "rounds": 1,
+  "api_calls": 26,
+  "material_places_left": 25,
+  "needs_data_source": [
+    {
+      "place": "Antelope",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Citrus Heights Police Department"
+    },
+    {
+      "place": "Cameron Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Folsom Police Department"
+    },
+    {
+      "place": "Carmichael",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Citrus Heights Police Department"
+    },
+    {
+      "place": "Clarksburg",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Sacramento Police Department"
+    },
+    {
+      "place": "Colfax",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Grass Valley Police Department"
+    },
+    {
+      "place": "El Dorado Hills",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Folsom Police Department"
+    },
+    {
+      "place": "Esparto",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Davis Police Department"
+    },
+    {
+      "place": "Esparto",
+      "pillar": "political_lean",
+      "need": "no precinct data within range"
+    },
+    {
+      "place": "Fair Oaks",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Citrus Heights Police Department"
+    },
+    {
+      "place": "Florin",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Sacramento County Sheriff's Office"
+    },
+    {
+      "place": "Foothill Farms",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Citrus Heights Police Department"
+    },
+    {
+      "place": "Georgetown",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Placer County Sheriff's Office"
+    },
+    {
+      "place": "Gold River",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Citrus Heights Police Department"
+    },
+    {
+      "place": "Knights Landing",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Davis Police Department"
+    },
+    {
+      "place": "La Riviera",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=California State Fair"
+    },
+    {
+      "place": "Loomis",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Rocklin Police Department"
+    },
+    {
+      "place": "Meadow Vista",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Auburn Police Department"
+    },
+    {
+      "place": "Newcastle",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Auburn Police Department"
+    },
+    {
+      "place": "North Highlands",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Citrus Heights Police Department"
+    },
+    {
+      "place": "Orangevale",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Folsom Police Department"
+    },
+    {
+      "place": "Penryn",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Rocklin Police Department"
+    },
+    {
+      "place": "Pollock Pines",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=El Dorado County Sheriff's Office"
+    },
+    {
+      "place": "Rancho Murieta",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Folsom Police Department"
+    },
+    {
+      "place": "Rio Linda",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=California State Fair"
+    },
+    {
+      "place": "Shingle Springs",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Placerville Police Department"
+    }
+  ],
+  "needs_human_check": [
+    {
+      "place": "Esparto",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 2.1 rests on the nearest hospital only"
+    },
+    {
+      "place": "Galt",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 2.1 rests on the nearest hospital only"
+    },
+    {
+      "place": "Georgetown",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 2.1 rests on the nearest hospital only"
+    },
+    {
+      "place": "Knights Landing",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 2.3 rests on the nearest hospital only"
+    },
+    {
+      "place": "Pollock Pines",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 2.1 rests on the nearest hospital only"
+    },
+    {
+      "place": "Rancho Murieta",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 2.1 rests on the nearest hospital only"
+    }
+  ],
+  "still_failing_after_retries": []
+}

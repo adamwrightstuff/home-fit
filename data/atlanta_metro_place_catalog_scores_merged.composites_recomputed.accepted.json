@@ -1,0 +1,82 @@
+[
+  {
+    "place": "Buford",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Gwinnett County Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "College Park",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Hapeville Police Department, East Point Police Department, Fulton County Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Cumming",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Forsyth Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Cumming",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 30040: only 0.4% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Dacula",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Gwinnett County Police Department, Lawrenceville Police Department, Suwanee Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Duluth",
+    "pillar": "public_transit_access",
+    "reason": "accepted by rule: Rule T: Transitland returned no routes (confirmed on retry); OpenStreetMap shows 0 bus stops within 1.9 miles; scores on the commute-time floor only."
+  },
+  {
+    "place": "Johns Creek",
+    "pillar": "public_transit_access",
+    "reason": "accepted by rule: Rule T: Transitland returned no routes (confirmed on retry); OpenStreetMap shows 0 bus stops within 1.9 miles; scores on the commute-time floor only."
+  },
+  {
+    "place": "Jonesboro",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Clayton County Police Department, Morrow Police Department, Lake City Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Kennesaw",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 30144: only 0.5% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Peachtree Corners",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Norcross Police Department, Duluth Police Department, Doraville Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Pine Lake",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Stone Mountain Park Police, Dunwoody  Police Department, DeKalb County Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Powder Springs",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 30127: only 0.3% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Stockbridge",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 30281: only 0.3% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Tucker",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Clarkston Police Department, Stone Mountain Police Department, Doraville Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Union City",
+    "pillar": "community_safety",
+    "reason": "accepted by rule: Rule C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: Tyrone Police Department, East Point Police Department, Hapeville Police Department; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Woodstock",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 30188: only 0.4% of commuters in this ZIP ride transit; no routes is plausible"
+  }
+]

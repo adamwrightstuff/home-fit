@@ -1,0 +1,88 @@
+[
+  {
+    "place": "Citrus Park",
+    "state": "FL",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Hillsborough County Sheriff's Office returns 2022 data (county proxy)",
+    "kind": "county",
+    "agency": "Hillsborough County Sheriff's Office",
+    "keys": [
+      "citrus park",
+      "citrus park township"
+    ]
+  },
+  {
+    "place": "Downtown St. Petersburg",
+    "state": "FL",
+    "action": "map",
+    "reason": "C2: neighborhood of St. Petersburg; St. Petersburg Police Department returns 2023 agency data",
+    "kind": "own",
+    "agency": "St. Petersburg Police Department",
+    "keys": [
+      "st. petersburg",
+      "st. petersburg township",
+      "saint petersburg",
+      "saint petersburg township"
+    ]
+  },
+  {
+    "place": "Plant City",
+    "state": "FL",
+    "action": "gap",
+    "reason": "C4: no police agency named for the place within 16 miles reports data, and it is neither a neighborhood of a city whose police department reports nor an unincorporated census-designated place with a reporting county sheriff. Nearby reporting agencies: none; they police other places, so their numbers are not borrowed."
+  },
+  {
+    "place": "Snell Isle",
+    "state": "FL",
+    "action": "map",
+    "reason": "C2: neighborhood of St. Petersburg; St. Petersburg Police Department returns 2023 agency data",
+    "kind": "own",
+    "agency": "St. Petersburg Police Department",
+    "keys": [
+      "st. petersburg",
+      "st. petersburg township",
+      "saint petersburg",
+      "saint petersburg township"
+    ]
+  },
+  {
+    "place": "St. Pete Beach",
+    "state": "FL",
+    "action": "map",
+    "reason": "C1: St. Pete Beach Police Department is named for the place and returns 2023 agency data",
+    "kind": "own",
+    "agency": "St. Pete Beach Police Department",
+    "keys": [
+      "st. pete beach",
+      "st. pete beach township",
+      "saint pete beach",
+      "saint pete beach township"
+    ]
+  },
+  {
+    "place": "St. Petersburg",
+    "state": "FL",
+    "action": "map",
+    "reason": "C1: St. Petersburg Police Department is named for the place and returns 2023 agency data",
+    "kind": "own",
+    "agency": "St. Petersburg Police Department",
+    "keys": [
+      "st. petersburg",
+      "st. petersburg township",
+      "saint petersburg",
+      "saint petersburg township"
+    ]
+  },
+  {
+    "place": "Town 'n' Country",
+    "state": "FL",
+    "action": "map",
+    "reason": "C3: census-designated (unincorporated) place with no agency of its own; Hillsborough County Sheriff's Office returns 2022 data (county proxy)",
+    "kind": "county",
+    "agency": "Hillsborough County Sheriff's Office",
+    "keys": [
+      "town 'n' country",
+      "town 'n' country township"
+    ]
+  }
+]

@@ -1,0 +1,117 @@
+{
+  "stopped": "no_progress",
+  "rounds": 2,
+  "api_calls": 21,
+  "material_places_left": 19,
+  "needs_data_source": [
+    {
+      "place": "Aliante",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Las Vegas Paiute Tribal"
+    },
+    {
+      "place": "Blue Diamond",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Las Vegas Metropolitan Police Department"
+    },
+    {
+      "place": "Centennial Hills",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Las Vegas Paiute Tribal"
+    },
+    {
+      "place": "Enterprise",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Las Vegas Metropolitan Police Department"
+    },
+    {
+      "place": "Indian Springs",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Nye County Sheriff's Office"
+    },
+    {
+      "place": "Laughlin",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Nye County Sheriff's Office"
+    },
+    {
+      "place": "Moapa Town",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Nye County Sheriff's Office"
+    },
+    {
+      "place": "North Las Vegas",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Las Vegas Paiute Tribal"
+    },
+    {
+      "place": "Paradise",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Las Vegas Metropolitan Police Department"
+    },
+    {
+      "place": "Silverado Ranch",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Henderson Police Department"
+    },
+    {
+      "place": "Southern Highlands",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=City of Las Vegas Department of Public Safety"
+    },
+    {
+      "place": "Spring Valley",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Las Vegas Metropolitan Police Department"
+    },
+    {
+      "place": "Summerlin South",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Las Vegas Metropolitan Police Department"
+    },
+    {
+      "place": "Summerlin",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Las Vegas Paiute Tribal"
+    },
+    {
+      "place": "Sunrise Manor",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Las Vegas Fire and Rescue, Arson Bomb Unit"
+    },
+    {
+      "place": "Whitney",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Henderson Police Department"
+    },
+    {
+      "place": "Winchester",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Las Vegas Metropolitan Police Department"
+    }
+  ],
+  "needs_human_check": [
+    {
+      "place": "Anthem",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Blue Diamond",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 3.2 rests on the nearest hospital only"
+    },
+    {
+      "place": "Lake Las Vegas",
+      "pillar": "healthcare_access",
+      "evidence": "no clinics, pharmacies or hospitals found (completeness 0.0); score 3.3 rests on the nearest hospital only"
+    }
+  ],
+  "still_failing_after_retries": [
+    {
+      "place": "Moapa Town",
+      "pillar": "natural_beauty",
+      "evidence": "score 0.0 with confidence 0"
+    }
+  ]
+}

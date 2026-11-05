@@ -1,0 +1,32 @@
+[
+  {
+    "place": "Blue Bell",
+    "pillar": "community_safety",
+    "reason": "accepted by hand: Unincorporated; served by Whitpain Township police, which has no agency-level FBI data. Only a county sheriff reports, which does not police it."
+  },
+  {
+    "place": "Exton",
+    "pillar": "community_safety",
+    "reason": "accepted by hand: Split between West Whiteland and East Whiteland townships; West Whiteland police has no agency-level FBI data, so no single reporting agency polices it."
+  },
+  {
+    "place": "Glenside",
+    "pillar": "community_safety",
+    "reason": "accepted by hand: Split between Abington and Cheltenham townships; Cheltenham police has no agency-level FBI data, so no single reporting agency covers the place."
+  },
+  {
+    "place": "Hockessin",
+    "pillar": "community_safety",
+    "reason": "accepted by hand: Unincorporated; policed by New Castle County Police, whose county-wide rate (430k people) would not describe one community."
+  },
+  {
+    "place": "Levittown",
+    "pillar": "community_safety",
+    "reason": "accepted by hand: Mostly Bristol Township police, which has no agency-level FBI data; Falls Township covers only part of the place."
+  },
+  {
+    "place": "Villanova",
+    "pillar": "community_safety",
+    "reason": "accepted by hand: Pin is in Lower Merion Township, whose police has no agency-level FBI data; the university campus police does not police the community."
+  }
+]

@@ -1,0 +1,55 @@
+{
+  "stopped": "nothing_actionable",
+  "rounds": 1,
+  "api_calls": 10,
+  "material_places_left": 9,
+  "needs_data_source": [
+    {
+      "place": "Blue Bell",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Ambler Police Department"
+    },
+    {
+      "place": "Camden",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Prosecutor: Camden County"
+    },
+    {
+      "place": "Cherry Hill",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Merchantville Police Department"
+    },
+    {
+      "place": "Exton",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Uwchlan Township Police Department"
+    },
+    {
+      "place": "Glenside",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Jenkintown Police Department"
+    },
+    {
+      "place": "Hockessin",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Elsmere Police Department"
+    },
+    {
+      "place": "Levittown",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Tullytown Police Department"
+    },
+    {
+      "place": "Pennsauken",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Merchantville Police Department"
+    },
+    {
+      "place": "Villanova",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=West Conshohocken Police Department"
+    }
+  ],
+  "needs_human_check": [],
+  "still_failing_after_retries": []
+}

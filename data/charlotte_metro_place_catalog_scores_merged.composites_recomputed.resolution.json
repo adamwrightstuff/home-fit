@@ -1,0 +1,101 @@
+{
+  "stopped": "nothing_actionable",
+  "rounds": 1,
+  "api_calls": 18,
+  "material_places_left": 18,
+  "needs_data_source": [
+    {
+      "place": "Ballantyne",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Matthews Police Department"
+    },
+    {
+      "place": "Belmont",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Belmont Abbey College"
+    },
+    {
+      "place": "Denver",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Maiden Police Department"
+    },
+    {
+      "place": "Harrisburg",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Concord Police Department"
+    },
+    {
+      "place": "Indian Trail",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Matthews Police Department"
+    },
+    {
+      "place": "Marvin",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Matthews Police Department"
+    },
+    {
+      "place": "Midland",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Concord Police Department"
+    },
+    {
+      "place": "Mineral Springs",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Waxhaw Police Department"
+    },
+    {
+      "place": "NoDa",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Mint Hill Police Department"
+    },
+    {
+      "place": "Noda",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Mint Hill Police Department"
+    },
+    {
+      "place": "Steele Creek",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Cramerton Police Department"
+    },
+    {
+      "place": "University City",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Mint Hill Police Department"
+    },
+    {
+      "place": "Weddington",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Matthews Police Department"
+    },
+    {
+      "place": "Wesley Chapel",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Waxhaw Police Department"
+    }
+  ],
+  "needs_human_check": [
+    {
+      "place": "Gastonia",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Monroe",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Mount Holly",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Waxhaw",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    }
+  ],
+  "still_failing_after_retries": []
+}

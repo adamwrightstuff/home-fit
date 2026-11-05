@@ -1,0 +1,111 @@
+{
+  "stopped": "nothing_actionable",
+  "rounds": 2,
+  "api_calls": 21,
+  "material_places_left": 19,
+  "needs_data_source": [
+    {
+      "place": "Buford",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Gwinnett County Police Department"
+    },
+    {
+      "place": "Cartersville",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=State Patrol: Cartersville"
+    },
+    {
+      "place": "College Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Hapeville Police Department"
+    },
+    {
+      "place": "Cumming",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Cumming Police Department"
+    },
+    {
+      "place": "Dacula",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Gwinnett County Police Department"
+    },
+    {
+      "place": "Jonesboro",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Jonesboro Police Department"
+    },
+    {
+      "place": "Mableton",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=State Patrol: Metropolitan Traffic Unit, Atlanta"
+    },
+    {
+      "place": "Peachtree City",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Tyrone Police Department"
+    },
+    {
+      "place": "Peachtree Corners",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Norcross Police Department"
+    },
+    {
+      "place": "Pine Lake",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Pine Lake Police Department"
+    },
+    {
+      "place": "Tucker",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Clarkston Police Department"
+    },
+    {
+      "place": "Union City",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Union City Police Department"
+    },
+    {
+      "place": "Vinings",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Smyrna Police Department"
+    }
+  ],
+  "needs_human_check": [
+    {
+      "place": "Cumming",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Duluth",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Johns Creek",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Kennesaw",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Powder Springs",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Stockbridge",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Woodstock",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    }
+  ],
+  "still_failing_after_retries": []
+}

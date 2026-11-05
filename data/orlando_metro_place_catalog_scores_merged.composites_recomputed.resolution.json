@@ -1,0 +1,131 @@
+{
+  "stopped": "no_progress",
+  "rounds": 1,
+  "api_calls": 21,
+  "material_places_left": 21,
+  "needs_data_source": [
+    {
+      "place": "Audubon Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Orange County, Orlando"
+    },
+    {
+      "place": "Belle Isle",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Belle Isle Police Department"
+    },
+    {
+      "place": "Celebration",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Kissimmee Police Department"
+    },
+    {
+      "place": "College Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Orange County, Orlando"
+    },
+    {
+      "place": "Downtown Orlando",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Orange County, Orlando"
+    },
+    {
+      "place": "Dr. Phillips",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Orange County, Orlando"
+    },
+    {
+      "place": "Fruitland Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Lady Lake Police Department"
+    },
+    {
+      "place": "Lake Eola Heights",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Orange County, Orlando"
+    },
+    {
+      "place": "Mills 50",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Orange County, Orlando"
+    },
+    {
+      "place": "Montverde",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Winter Garden Police Department"
+    },
+    {
+      "place": "Oakland",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Oakland Police Department"
+    },
+    {
+      "place": "Ocoee",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Ocoee Police Department"
+    },
+    {
+      "place": "Pine Hills",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Maitland Police Department"
+    },
+    {
+      "place": "Thornton Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Department of Law Enforcement: Orange County, Orlando"
+    },
+    {
+      "place": "Union Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Oviedo Police Department"
+    },
+    {
+      "place": "Windermere",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Windermere Police Department"
+    },
+    {
+      "place": "Winter Garden",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Winter Garden Police Department"
+    },
+    {
+      "place": "Winter Park",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Eatonville Police Department"
+    },
+    {
+      "place": "Winter Springs",
+      "pillar": "community_safety",
+      "need": "no usable crime data; source=fbi_cde_state, matched agency=Winter Springs Police Department"
+    }
+  ],
+  "needs_human_check": [
+    {
+      "place": "Avalon Park",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Celebration",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Oakland",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Waterford Lakes",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    },
+    {
+      "place": "Winter Springs",
+      "pillar": "public_transit_access",
+      "evidence": "Transitland returned no routes; commute-time-only fallback (may be genuinely no service)"
+    }
+  ],
+  "still_failing_after_retries": []
+}

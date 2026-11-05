@@ -1,0 +1,10 @@
+[
+  {
+    "place": "Youngtown",
+    "state": "AZ",
+    "verdict": "USABLE",
+    "note": "no agency named for Youngtown; Maricopa County Sheriff's Office has data (2022). Confirm it polices Youngtown before mapping",
+    "agency": "Maricopa County Sheriff's Office",
+    "ori": "AZ0070000"
+  }
+]

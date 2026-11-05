@@ -1,0 +1,17 @@
+[
+  {
+    "place": "Crown Point",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 46307: only 0.9% of commuters in this ZIP ride transit; no routes is plausible"
+  },
+  {
+    "place": "Lake Zurich",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 60047: 4.0% of commuters in this ZIP ride transit, but they reach service outside the pillar's walking radius (commuter rail or a distant stop); 0 routes within it scores low by design"
+  },
+  {
+    "place": "St. Charles",
+    "pillar": "public_transit_access",
+    "reason": "ZIP 60174: 2.0% of commuters in this ZIP ride transit, but they reach service outside the pillar's walking radius (commuter rail or a distant stop); 0 routes within it scores low by design"
+  }
+]
