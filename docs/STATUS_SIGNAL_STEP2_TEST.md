@@ -43,3 +43,21 @@ So at the same income, high-burden places have more households under $25,000 (3.
 
 ## Result
 No candidate passes. A stays: the burden test is supported by household data at the low end, and the Pew national ladder fits the household distribution worse than the metro p80 line on this catalog (the catalog is all metros, so the metro line suits it). Beverly Hills as Middle Class is unchanged under every candidate. This reverses my earlier lean that housing does not belong in the label.
+
+## Round 2: a household-distribution route to Affluent (criteria fixed before running, 2026-11-05)
+Why: round 1 only tested rules that still read the median income, so it could not reach Beverly Hills, Brookline or Greenwood Village (Middle Class on the median, but 43 to 48 percent of households at $150,000 or more). Round 2 tests a rule that reads the household income distribution directly.
+
+Rule input: T1, the share of households at $150,000 or more (the top two stored B19001 bins; $150,000 is about twice the national median, the Pew upper-income line). Cut: the midpoint between the median T1 of A's Middle Class places and the median T1 of A's Affluent places (a nearest-class cut from the data, not a chosen number). T1 is stored per tract or place, not pooled (known gap).
+- H1: A, plus Middle Class places with T1 at or above the cut become Affluent. Nothing is demoted.
+- H2: H1, plus Affluent places (not Elite) with T1 below the cut become Middle Class.
+Elite, Struggling and Working Class are unchanged from A.
+
+Targets that neither rule uses: stored mean household income, median gross rent, median home value, graduate degree share.
+
+Pass criteria (a candidate replaces A only if all hold):
+1. Spearman between the class ladder (0 to 4) and mean income, and between the ladder and rent, each improves on A by at least 0.02 (judgment limit, as in round 1).
+2. The median mean income rises strictly across the occupied classes.
+3. Nearest-class test on the moved set (places H changes), on mean income, home value and graduate share: the median of the moved set is closer to the class H gives them than to the class A gave them on all three.
+4. No more than 15% of places change class, and none moves more than one class (judgment limits).
+5. Reported only: Beverly Hills, Brookline, Greenwood Village, Newton, Palo Alto, East Palo Alto, Park Slope, Carroll Gardens, Murray Hill, Tribeca, and the moved places by metro.
+If a candidate passes all five I propose it for sign-off; if none does, A stays and the Beverly Hills result is a known limit.
