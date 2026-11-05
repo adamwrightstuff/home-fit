@@ -1,0 +1,482 @@
+[
+ {
+  "pair": 1,
+  "a": "Carefree, AZ",
+  "b": "Baldwin Park, FL",
+  "a_score": 72.17,
+  "b_score": 56.78,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 2,
+  "a": "Mesquite, NV",
+  "b": "Acton, MA",
+  "a_score": 68.41,
+  "b_score": 82.77,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 3,
+  "a": "Midtown, NY",
+  "b": "Downtown Tempe, AZ",
+  "a_score": 24.75,
+  "b_score": 64.08,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 4,
+  "a": "Acton, MA",
+  "b": "Buckeye, AZ",
+  "a_score": 82.77,
+  "b_score": 60.96,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 5,
+  "a": "Downtown Tampa, FL",
+  "b": "Chandler, AZ",
+  "a_score": 24.82,
+  "b_score": 44.98,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 6,
+  "a": "Bel Air, CA",
+  "b": "Mesquite, NV",
+  "a_score": 96.09,
+  "b_score": 68.41,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 7,
+  "a": "Midtown, NY",
+  "b": "Anthem, NV",
+  "a_score": 24.75,
+  "b_score": 77.09,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 8,
+  "a": "Midland, NC",
+  "b": "Chandler, AZ",
+  "a_score": 76.69,
+  "b_score": 44.98,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 9,
+  "a": "Downtown Tempe, AZ",
+  "b": "Loomis, CA",
+  "a_score": 64.08,
+  "b_score": 78.12,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 10,
+  "a": "Downtown Tempe, AZ",
+  "b": "Morrison, CO",
+  "a_score": 64.08,
+  "b_score": 80.55,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 11,
+  "a": "Downtown Tempe, AZ",
+  "b": "Midland, NC",
+  "a_score": 64.08,
+  "b_score": 76.69,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 12,
+  "a": "Windsor Park, TX",
+  "b": "Chandler, AZ",
+  "a_score": 70.73,
+  "b_score": 44.98,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 13,
+  "a": "Southern Highlands, NV",
+  "b": "Midtown, NY",
+  "a_score": 81.4,
+  "b_score": 24.75,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 14,
+  "a": "Buckeye, AZ",
+  "b": "Downtown Tampa, FL",
+  "a_score": 60.96,
+  "b_score": 24.82,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 15,
+  "a": "Midland, NC",
+  "b": "Buckeye, AZ",
+  "a_score": 76.69,
+  "b_score": 60.96,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 16,
+  "a": "Downtown Tampa, FL",
+  "b": "Anthem, NV",
+  "a_score": 24.82,
+  "b_score": 77.09,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 17,
+  "a": "Acton, MA",
+  "b": "Downtown Tempe, AZ",
+  "a_score": 82.77,
+  "b_score": 64.08,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 18,
+  "a": "Southern Highlands, NV",
+  "b": "Downtown Tampa, FL",
+  "a_score": 81.4,
+  "b_score": 24.82,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 19,
+  "a": "Chandler, AZ",
+  "b": "Wakefield, NC",
+  "a_score": 44.98,
+  "b_score": 77.39,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 20,
+  "a": "Forney, TX",
+  "b": "North Las Vegas, NV",
+  "a_score": 59.67,
+  "b_score": 18.29,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 21,
+  "a": "North Las Vegas, NV",
+  "b": "Chandler, AZ",
+  "a_score": 18.29,
+  "b_score": 44.98,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 22,
+  "a": "The Woodlands, TX",
+  "b": "South Beach, FL",
+  "a_score": 79.08,
+  "b_score": 54.62,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 23,
+  "a": "Anthem, NV",
+  "b": "Downtown Tempe, AZ",
+  "a_score": 77.09,
+  "b_score": 64.08,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 24,
+  "a": "Baldwin Park, FL",
+  "b": "Windsor Park, TX",
+  "a_score": 56.78,
+  "b_score": 70.73,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 25,
+  "a": "Capitol Hill, CO",
+  "b": "Maspeth, NY",
+  "a_score": 50.58,
+  "b_score": 38.45,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 26,
+  "a": "Loomis, CA",
+  "b": "Forney, TX",
+  "a_score": 78.12,
+  "b_score": 59.67,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 27,
+  "a": "Loomis, CA",
+  "b": "South Beach, FL",
+  "a_score": 78.12,
+  "b_score": 54.62,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 28,
+  "a": "Midtown, NY",
+  "b": "Midland, NC",
+  "a_score": 24.75,
+  "b_score": 76.69,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 29,
+  "a": "Midland, NC",
+  "b": "Capitol Hill, CO",
+  "a_score": 76.69,
+  "b_score": 50.58,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 30,
+  "a": "Forney, TX",
+  "b": "Midtown, NY",
+  "a_score": 59.67,
+  "b_score": 24.75,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 31,
+  "a": "Wakefield, NC",
+  "b": "South Beach, FL",
+  "a_score": 77.39,
+  "b_score": 54.62,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 32,
+  "a": "Loomis, CA",
+  "b": "Baldwin Park, FL",
+  "a_score": 78.12,
+  "b_score": 56.78,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 33,
+  "a": "Bel Air, CA",
+  "b": "Maspeth, NY",
+  "a_score": 96.09,
+  "b_score": 38.45,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 34,
+  "a": "Buckeye, AZ",
+  "b": "Anthem, NV",
+  "a_score": 60.96,
+  "b_score": 77.09,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 35,
+  "a": "Acton, MA",
+  "b": "Midtown, NY",
+  "a_score": 82.77,
+  "b_score": 24.75,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 36,
+  "a": "Loomis, CA",
+  "b": "Downtown Tampa, FL",
+  "a_score": 78.12,
+  "b_score": 24.82,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 37,
+  "a": "North Las Vegas, NV",
+  "b": "Buckeye, AZ",
+  "a_score": 18.29,
+  "b_score": 60.96,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 38,
+  "a": "Maspeth, NY",
+  "b": "Morrison, CO",
+  "a_score": 38.45,
+  "b_score": 80.55,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 39,
+  "a": "Midtown, NY",
+  "b": "The Woodlands, TX",
+  "a_score": 24.75,
+  "b_score": 79.08,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 40,
+  "a": "South Beach, FL",
+  "b": "Bel Air, CA",
+  "a_score": 54.62,
+  "b_score": 96.09,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 41,
+  "a": "The Woodlands, TX",
+  "b": "Baldwin Park, FL",
+  "a_score": 79.08,
+  "b_score": 56.78,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 42,
+  "a": "Culver City, CA",
+  "b": "Loomis, CA",
+  "a_score": 62.69,
+  "b_score": 78.12,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 43,
+  "a": "Bel Air, CA",
+  "b": "The Woodlands, TX",
+  "a_score": 96.09,
+  "b_score": 79.08,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 44,
+  "a": "Maspeth, NY",
+  "b": "Loomis, CA",
+  "a_score": 38.45,
+  "b_score": 78.12,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 45,
+  "a": "Capitol Hill, CO",
+  "b": "Midtown, NY",
+  "a_score": 50.58,
+  "b_score": 24.75,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 46,
+  "a": "Downtown Tampa, FL",
+  "b": "Acton, MA",
+  "a_score": 24.82,
+  "b_score": 82.77,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 47,
+  "a": "The Woodlands, TX",
+  "b": "Downtown Tampa, FL",
+  "a_score": 79.08,
+  "b_score": 24.82,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 48,
+  "a": "Bel Air, CA",
+  "b": "Morrison, CO",
+  "a_score": 96.09,
+  "b_score": 80.55,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 49,
+  "a": "Maspeth, NY",
+  "b": "South Beach, FL",
+  "a_score": 38.45,
+  "b_score": 54.62,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 50,
+  "a": "Culver City, CA",
+  "b": "Morrison, CO",
+  "a_score": 62.69,
+  "b_score": 80.55,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 51,
+  "a": "Morrison, CO",
+  "b": "Capitol Hill, CO",
+  "a_score": 80.55,
+  "b_score": 50.58,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 52,
+  "a": "Windsor Park, TX",
+  "b": "Downtown Tampa, FL",
+  "a_score": 70.73,
+  "b_score": 24.82,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 53,
+  "a": "Carefree, AZ",
+  "b": "North Las Vegas, NV",
+  "a_score": 72.17,
+  "b_score": 18.29,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 54,
+  "a": "Acton, MA",
+  "b": "Culver City, CA",
+  "a_score": 82.77,
+  "b_score": 62.69,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 55,
+  "a": "The Woodlands, TX",
+  "b": "Forney, TX",
+  "a_score": 79.08,
+  "b_score": 59.67,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 56,
+  "a": "Midtown, NY",
+  "b": "Bel Air, CA",
+  "a_score": 24.75,
+  "b_score": 96.09,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 57,
+  "a": "Baldwin Park, FL",
+  "b": "Bel Air, CA",
+  "a_score": 56.78,
+  "b_score": 96.09,
+  "arid_vs_other": false
+ },
+ {
+  "pair": 58,
+  "a": "Buckeye, AZ",
+  "b": "Wakefield, NC",
+  "a_score": 60.96,
+  "b_score": 77.39,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 59,
+  "a": "Southern Highlands, NV",
+  "b": "Culver City, CA",
+  "a_score": 81.4,
+  "b_score": 62.69,
+  "arid_vs_other": true
+ },
+ {
+  "pair": 60,
+  "a": "Mesquite, NV",
+  "b": "Midtown, NY",
+  "a_score": 68.41,
+  "b_score": 24.75,
+  "arid_vs_other": true
+ }
+]

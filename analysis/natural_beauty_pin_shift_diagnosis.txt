@@ -1,0 +1,34 @@
+== Midtown STORED score 24.75
+  region=mid_atlantic  gvi_pct=14.1  canopy_pct=1.4  gvi_score=16.7  canopy_score=2.3  topo_score=26.7  water_type=river  water_score=16.6  streets_score=12.4  scenery_score=23.7  blend_raw=18.0
+== Midtown LIVE base score 25.8
+  region=mid_atlantic  gvi_pct=14.9  canopy_pct=2.7  gvi_score=17.9  canopy_score=4.5  topo_score=26.7  water_type=river  water_score=16.6  water_status=measured  streets_score=13.9  scenery_score=23.7  blend_raw=18.8
+  canopy radius profile: area_type=urban_core multi_radius={'micro_400m': 1.56, 'neighborhood_1000m': 4.13, 'macro_2000m': 3.24}
+== Midtown LIVE E500 score 60.9
+  region=mid_atlantic  gvi_pct=18.6  canopy_pct=2.2  gvi_score=26.8  canopy_score=3.6  topo_score=26.8  water_type=ocean  water_score=79.8  water_status=measured  streets_score=19.8  scenery_score=63.9  blend_raw=41.9
+  canopy radius profile: area_type=urban_core multi_radius={'micro_400m': 0.11, 'neighborhood_1000m': 4.52, 'macro_2000m': 3.76}
+== Southport STORED score 62.31
+  region=northeast  gvi_pct=15.0  canopy_pct=3.7  gvi_score=14.8  canopy_score=5.6  topo_score=14.0  water_type=ocean  water_score=100.0  streets_score=12.0  scenery_score=74.2  blend_raw=43.1
+== Southport LIVE base score 58.7
+  region=northeast  gvi_pct=15.0  canopy_pct=3.7  gvi_score=14.8  canopy_score=5.6  topo_score=14.0  water_type=ocean  water_score=92.7  water_status=measured  streets_score=12.0  scenery_score=69.1  blend_raw=40.6
+  canopy radius profile: area_type=unknown multi_radius={'micro_400m': 0, 'neighborhood_1000m': 2.95, 'macro_2000m': 17.9}
+== Southport LIVE N250 score 68.0
+  region=northeast  gvi_pct=23.4  canopy_pct=6.7  gvi_score=30.5  canopy_score=10.0  topo_score=14.4  water_type=ocean  water_score=94.5  water_status=measured  streets_score=24.3  scenery_score=70.5  blend_raw=47.4
+  canopy radius profile: area_type=unknown multi_radius={'micro_400m': 0, 'neighborhood_1000m': 9.93, 'macro_2000m': 21.2}
+== Southport LIVE N500 score 78.9
+  region=northeast  gvi_pct=32.4  canopy_pct=9.9  gvi_score=54.8  canopy_score=16.1  topo_score=15.2  water_type=ocean  water_score=95.3  water_status=measured  streets_score=43.2  scenery_score=71.3  blend_raw=57.2
+  canopy radius profile: area_type=unknown multi_radius={'micro_400m': 1.29, 'neighborhood_1000m': 15.84, 'macro_2000m': 24.91}
+== Washington Heights STORED score 83.05
+  region=mid_atlantic  gvi_pct=34.3  canopy_pct=5.8  gvi_score=67.4  canopy_score=9.6  topo_score=34.8  water_type=ocean  water_score=88.5  streets_score=50.1  scenery_score=72.4  blend_raw=61.2
+== Washington Heights LIVE base score 85.6
+  region=mid_atlantic  gvi_pct=38.7  canopy_pct=5.8  gvi_score=75.3  canopy_score=9.6  topo_score=34.8  water_type=ocean  water_score=88.5  water_status=measured  streets_score=55.6  scenery_score=72.4  blend_raw=64.0
+  canopy radius profile: area_type=urban_residential multi_radius={'micro_400m': 1.38, 'neighborhood_1000m': 11.44, 'macro_2000m': 7.54}
+== Maspeth STORED score 38.45
+  region=mid_atlantic  gvi_pct=30.7  canopy_pct=1.7  gvi_score=60.9  canopy_score=2.8  topo_score=12.8  water_status=unavailable  streets_score=43.5  scenery_score=12.8  blend_raw=28.1
+== Maspeth LIVE base score 40.3
+  region=mid_atlantic  gvi_pct=32.2  canopy_pct=1.7  gvi_score=63.6  canopy_score=2.8  topo_score=12.8  water_status=unavailable  streets_score=45.4  scenery_score=12.8  blend_raw=29.0
+  canopy radius profile: area_type=unknown multi_radius={'micro_400m': 0.12, 'neighborhood_1000m': 3.32, 'macro_2000m': 3.22}
+== Midtown East STORED score 32.42
+  region=mid_atlantic  gvi_pct=20.5  canopy_pct=1.4  gvi_score=32.7  canopy_score=2.4  topo_score=25.2  water_status=unavailable  streets_score=23.6  scenery_score=25.2  blend_raw=24.4
+== Midtown East LIVE base score 36.5
+  region=mid_atlantic  gvi_pct=22.3  canopy_pct=2.7  gvi_score=38.3  canopy_score=4.4  topo_score=25.2  water_status=unavailable  streets_score=28.2  scenery_score=25.2  blend_raw=26.7
+  canopy radius profile: area_type=urban_core multi_radius={'micro_400m': 0.76, 'neighborhood_1000m': 4.73, 'macro_2000m': 4.23}

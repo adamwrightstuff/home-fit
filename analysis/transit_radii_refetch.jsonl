@@ -1,0 +1,1476 @@
+{"key": "atlanta|Acworth|34.0620,-84.6811", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Alpharetta|34.0756,-84.2946", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Ansley Park|33.7930,-84.3811", "bus": 14, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Austell|33.8198,-84.6438", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Avondale Estates|33.7687,-84.2647", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Brookhaven|33.8612,-84.3385", "bus": 2, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Buckhead|33.8398,-84.3796", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Buford|34.1186,-83.9886", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Cabbagetown|33.7482,-84.3666", "bus": 3, "subway": 2, "commuter_rail": 0, "light_rail": 1}
+{"key": "atlanta|Candler Park|33.7684,-84.3377", "bus": 1, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Canton|34.2472,-84.4907", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Cartersville|34.1646,-84.8017", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Chamblee|33.8922,-84.2988", "bus": 4, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Clarkston|33.8135,-84.2418", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|College Park|33.6534,-84.4494", "bus": 10, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Conyers|33.6676,-84.0177", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Covington|33.6054,-83.8466", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Cumming|34.2061,-84.1338", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Dacula|33.9820,-83.9011", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Dallas|33.9165,-84.8408", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Decatur|33.7711,-84.2958", "bus": 8, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Doraville|33.8982,-84.2833", "bus": 9, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Douglasville|33.7515,-84.7477", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Downtown Atlanta|33.7638,-84.3856", "bus": 20, "subway": 2, "commuter_rail": 0, "light_rail": 1}
+{"key": "atlanta|Duluth|34.0015,-84.1505", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Dunwoody|33.9464,-84.3343", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|East Atlanta|33.7402,-84.3456", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|East Point|33.6796,-84.4394", "bus": 6, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Emerson|34.1313,-84.7454", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Fairburn|33.5671,-84.5810", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Fayetteville|33.4487,-84.4549", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Grant Park|33.7359,-84.3709", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Hampton|33.3871,-84.2830", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Hiram|33.8757,-84.7622", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Holly Springs|34.1740,-84.5013", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Inman Park|33.7576,-84.3627", "bus": 1, "subway": 2, "commuter_rail": 0, "light_rail": 1}
+{"key": "atlanta|Johns Creek|34.0182,-84.1902", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Jonesboro|33.5208,-84.3547", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Kennesaw|34.0272,-84.6171", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Kirkwood|33.7524,-84.3232", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Lawrenceville|33.9529,-83.9922", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Lilburn|33.8906,-84.1369", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Lindbergh|33.8211,-84.3674", "bus": 4, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Lithonia|33.7130,-84.1062", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Mableton|33.8145,-84.5657", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Marietta|33.9536,-84.5425", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|McDonough|33.4422,-84.1510", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Midtown Atlanta|33.7817,-84.3841", "bus": 18, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Milton|34.1134,-84.2694", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Morningside-Lenox Park|33.7980,-84.3598", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Newnan|33.3807,-84.7997", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Norcross|33.9374,-84.2056", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Old Fourth Ward|33.7641,-84.3718", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "atlanta|Palmetto|33.5179,-84.6697", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Peachtree City|33.3975,-84.5898", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Peachtree Corners|33.9671,-84.2323", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Pine Lake|33.7907,-84.2058", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Powder Springs|33.8642,-84.6820", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Reynoldstown|33.7503,-84.3554", "bus": 6, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Riverdale|33.5639,-84.4110", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Roswell|34.0233,-84.3600", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Sandy Springs|33.9315,-84.3689", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Senoia|33.3077,-84.5548", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Smyrna|33.8839,-84.5147", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Snellville|33.8602,-84.0063", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Stockbridge|33.5300,-84.2343", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Stone Mountain|33.8042,-84.1714", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Suwanee|34.0511,-84.0659", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Tucker|33.8533,-84.2201", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Tyrone|33.4761,-84.5945", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Union City|33.5871,-84.5424", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Vinings|33.8592,-84.4678", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Virginia-Highland|33.7827,-84.3537", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|West End|33.7361,-84.4137", "bus": 6, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Westside|33.8118,-84.4522", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "atlanta|Woodstock|34.1031,-84.5130", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Allandale|30.3393,-97.7470", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Anderson Mill|30.4558,-97.8071", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Barton Hills|30.2534,-97.7830", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Bastrop|30.1111,-97.3182", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Bee Cave|30.3085,-97.9450", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Bouldin Creek|30.2468,-97.7685", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Brentwood|30.3313,-97.7365", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Bryker Woods|30.3052,-97.7546", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Buda|30.0825,-97.8417", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Cedar Park|30.5217,-97.8278", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Cherrywood|30.2920,-97.7177", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Circle C Ranch|30.1875,-97.8903", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Clarksville|30.2777,-97.7598", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "austin|Crestview|30.3458,-97.7248", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "austin|Dove Springs|30.1879,-97.7513", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Downtown Austin|30.2681,-97.7448", "bus": 43, "subway": 0, "commuter_rail": 1, "light_rail": 1}
+{"key": "austin|Dripping Springs|30.1902,-98.0867", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|East Austin|30.2745,-97.7165", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "austin|Elgin|30.3495,-97.3711", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Georgetown|30.6370,-97.6776", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Highland|30.3286,-97.7162", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "austin|Hutto|30.5428,-97.5469", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Hyde Park|30.3044,-97.7304", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Jollyville|30.4424,-97.7751", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Kyle|29.9893,-97.8772", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Lago Vista|30.4602,-97.9883", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Lakeway|30.3645,-97.9875", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Leander|30.5736,-97.8567", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Liberty Hill|30.6649,-97.9225", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Lockhart|29.8832,-97.6737", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Manchaca|30.1408,-97.8331", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Manor|30.3421,-97.5559", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Montopolis|30.2249,-97.7034", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Mueller|30.2965,-97.7002", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|North Loop|30.3179,-97.7188", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Northwest Hills|30.3555,-97.7686", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Oak Hill|30.2343,-97.8688", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Old West Austin|30.2968,-97.7549", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Pflugerville|30.4394,-97.6200", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Riverside|30.2560,-97.7275", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "austin|Rollingwood|30.2742,-97.7856", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Rosedale|30.3134,-97.7449", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Round Rock|30.5086,-97.6788", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|San Marcos|29.8826,-97.9406", "bus": 27, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "austin|South Congress|30.2385,-97.7505", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|South Lamar|30.2364,-97.7826", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Southpark Meadows|30.1629,-97.7921", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|St. Johns|30.3311,-97.7004", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Steiner Ranch|30.3861,-97.8881", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Sunset Valley|30.2258,-97.8150", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Tarrytown|30.3031,-97.7705", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Taylor|30.5729,-97.4141", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "austin|Travis Heights|30.2445,-97.7440", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Wells Branch|30.4256,-97.6772", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Westlake Hills|30.2877,-97.8068", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Wimberley|29.9977,-98.0988", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Windsor Park|30.3135,-97.6911", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "austin|Zilker|30.2542,-97.7696", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Acton|42.4851,-71.4328", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Allston|42.3530,-71.1321", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 1}
+{"key": "boston|Andover|42.6572,-71.1409", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Arlington|42.4187,-71.1639", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Back Bay|42.3507,-71.0797", "bus": 24, "subway": 1, "commuter_rail": 8, "light_rail": 4}
+{"key": "boston|Beacon Hill|42.3587,-71.0678", "bus": 19, "subway": 3, "commuter_rail": 5, "light_rail": 4}
+{"key": "boston|Bedford|42.4917,-71.2818", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Belmont|42.3953,-71.1803", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Beverly|42.5490,-70.8782", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Braintree|42.2206,-71.0041", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Brighton|42.3492,-71.1534", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "boston|Brookline|42.3329,-71.1188", "bus": 12, "subway": 0, "commuter_rail": 0, "light_rail": 3}
+{"key": "boston|Burlington|42.5032,-71.2017", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Cambridge|42.3656,-71.1040", "bus": 10, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Canton|42.1584,-71.1448", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Carlisle|42.5293,-71.3495", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Charlestown|42.3779,-71.0620", "bus": 5, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Chelsea|42.3968,-71.0313", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Cohasset|42.2410,-70.8036", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Concord|42.4605,-71.3489", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Dedham|42.2469,-71.1795", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Dorchester|42.2973,-71.0745", "bus": 6, "subway": 1, "commuter_rail": 3, "light_rail": 0}
+{"key": "boston|Dover|42.2467,-71.2681", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Downtown Boston|42.3558,-71.0556", "bus": 126, "subway": 3, "commuter_rail": 13, "light_rail": 4}
+{"key": "boston|Duxbury|42.0444,-70.6792", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|East Boston|42.3751,-71.0392", "bus": 22, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Everett|42.4086,-71.0542", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Fenway|42.3452,-71.1046", "bus": 24, "subway": 0, "commuter_rail": 1, "light_rail": 4}
+{"key": "boston|Framingham|42.2773,-71.4166", "bus": 16, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "boston|Hamilton|42.6362,-70.8431", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Hingham|42.2418,-70.8898", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Hopkinton|42.2256,-71.5241", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Jamaica Plain|42.3116,-71.1144", "bus": 8, "subway": 1, "commuter_rail": 3, "light_rail": 0}
+{"key": "boston|Lexington|42.4452,-71.2300", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Lincoln|42.4259,-71.3039", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Lynnfield|42.5341,-71.0383", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Lynn|42.4668,-70.9495", "bus": 14, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Malden|42.4294,-71.0587", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Manchester|42.5751,-70.7726", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Marblehead|42.4956,-70.8358", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Marshfield|42.0918,-70.7056", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Medfield|42.1870,-71.3004", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Medford|42.4238,-71.1092", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Melrose|42.4557,-71.0590", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Milton|42.2501,-71.0656", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Mission Hill|42.3333,-71.1020", "bus": 26, "subway": 1, "commuter_rail": 3, "light_rail": 2}
+{"key": "boston|Natick|42.2836,-71.3470", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Needham|42.2816,-71.2424", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Newton|42.3318,-71.2084", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "boston|North Andover|42.7030,-71.1309", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|North End|42.3651,-71.0545", "bus": 27, "subway": 3, "commuter_rail": 5, "light_rail": 4}
+{"key": "boston|Norwood|42.1945,-71.1995", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Quincy|42.2610,-71.0090", "bus": 4, "subway": 1, "commuter_rail": 3, "light_rail": 0}
+{"key": "boston|Reading|42.5260,-71.1020", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Revere|42.4084,-71.0120", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Roslindale|42.2912,-71.1245", "bus": 13, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Salem|42.5214,-70.8957", "bus": 9, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Scituate|42.1803,-70.7344", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Seaport District|42.3458,-71.0437", "bus": 7, "subway": 1, "commuter_rail": 13, "light_rail": 0}
+{"key": "boston|Sharon|42.1237,-71.1787", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Sherborn|42.2398,-71.3701", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Somerville|42.3904,-71.1010", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 3}
+{"key": "boston|South Boston|42.3334,-71.0495", "bus": 12, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|South End|42.3428,-71.0738", "bus": 32, "subway": 1, "commuter_rail": 8, "light_rail": 4}
+{"key": "boston|Stoneham|42.4742,-71.0977", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Sudbury|42.3834,-71.4162", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Swampscott|42.4699,-70.9172", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Wakefield|42.5044,-71.0641", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Walpole|42.1459,-71.2539", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Waltham|42.3889,-71.2423", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Watertown|42.3653,-71.1843", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Wayland|42.3632,-71.3607", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Wellesley|42.3059,-71.2829", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Wenham|42.6046,-70.8874", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|West Roxbury|42.2793,-71.1495", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Weston|42.3668,-71.3031", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Westwood|42.2187,-71.2234", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Weymouth|42.2212,-70.9392", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Winchester|42.4528,-71.1443", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "boston|Winthrop|42.3747,-70.9826", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "boston|Woburn|42.4887,-71.1544", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Ballantyne|35.0547,-80.8502", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Belmont|35.2438,-81.0377", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Concord|35.4094,-80.5800", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Cornelius|35.4817,-80.8590", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Cotswold|35.1759,-80.7983", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Davidson|35.4993,-80.8485", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Denver|35.5312,-81.0298", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Dilworth|35.2066,-80.8509", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "charlotte|Eastover|35.1992,-80.8189", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Elizabeth|35.2158,-80.8221", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "charlotte|Gastonia|35.2490,-81.1848", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Harrisburg|35.3258,-80.6455", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Huntersville|35.4108,-80.8429", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Indian Trail|35.0768,-80.6692", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Kannapolis|35.4980,-80.6240", "bus": 2, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "charlotte|Lincolnton|35.4757,-81.2392", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Marvin|34.9996,-80.8167", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Matthews|35.1198,-80.7097", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Midland|35.2274,-80.5006", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Mineral Springs|34.9379,-80.6687", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Mint Hill|35.1785,-80.6557", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Monroe|34.9854,-80.5495", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Montford|35.1679,-80.8486", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Mooresville|35.5837,-80.8278", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Mount Holly|35.2976,-81.0162", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Myers Park|35.1917,-80.8335", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|NoDa|35.2470,-80.8058", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "charlotte|Pineville|35.0937,-80.8935", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Plaza Midwood|35.2203,-80.8108", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "charlotte|Salisbury|35.6655,-80.4889", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|South End|35.2126,-80.8588", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "charlotte|SouthPark|35.1485,-80.8309", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Stallings|35.0907,-80.6862", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Stanley|35.3547,-81.0918", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Statesville|35.7855,-80.8730", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Steele Creek|35.1364,-80.9778", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|University City|35.3171,-80.7529", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "charlotte|Uptown Charlotte|35.2279,-80.8506", "bus": 46, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "charlotte|Waxhaw|34.9375,-80.7400", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Weddington|35.0224,-80.7609", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "charlotte|Wesley Chapel|35.0071,-80.6745", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Albany Park|41.9703,-87.7160", "bus": 4, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Andersonville|41.9799,-87.6683", "bus": 6, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Arlington Heights|42.0812,-87.9802", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Aurora|41.7572,-88.3148", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Avondale|41.9388,-87.7113", "bus": 4, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Back of the Yards|41.8048,-87.6649", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Barrington|42.1539,-88.1362", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Batavia|41.8500,-88.3126", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Berwyn|41.8506,-87.7937", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Beverly|41.7182,-87.6718", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Bolingbrook|41.7003,-88.0718", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Bridgeport|41.8353,-87.6462", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Bronzeville|41.8313,-87.6171", "bus": 7, "subway": 2, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Bucktown|41.9178,-87.6776", "bus": 5, "subway": 1, "commuter_rail": 2, "light_rail": 0}
+{"key": "chicago|Chesterton|41.6107,-87.0523", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Chinatown|41.8517,-87.6331", "bus": 12, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Cicero|41.8455,-87.7540", "bus": 6, "subway": 1, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Crown Point|41.4170,-87.3653", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Crystal Lake|42.2411,-88.3162", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Deerfield|42.1711,-87.8445", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Downers Grove|41.7937,-88.0102", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Edgewater|41.9834,-87.6640", "bus": 9, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Edison Park|42.0044,-87.8128", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Elgin|42.0373,-88.2811", "bus": 12, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Elmhurst|41.8995,-87.9403", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Englewood|41.7798,-87.6459", "bus": 4, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Evanston|42.0694,-87.6829", "bus": 3, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Evergreen Park|41.7201,-87.7013", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Forest Park|41.8795,-87.8137", "bus": 8, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Frankfort|41.4979,-87.8496", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Garfield Park|41.8851,-87.7167", "bus": 3, "subway": 1, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Garfield Ridge|41.7926,-87.7821", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Gary|41.5637,-87.3369", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Geneva|41.8875,-88.3054", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Glen Ellyn|41.8775,-88.0670", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Glencoe|42.1350,-87.7581", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Glenview|42.0701,-87.8114", "bus": 3, "subway": 0, "commuter_rail": 4, "light_rail": 0}
+{"key": "chicago|Gold Coast|41.9049,-87.6287", "bus": 13, "subway": 3, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Hammond|41.6174,-87.5220", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Hegewisch|41.6536,-87.5470", "bus": 2, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "chicago|Highland Park|42.1837,-87.7993", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Hinsdale|41.8025,-87.9300", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Homewood|41.5574,-87.6651", "bus": 2, "subway": 0, "commuter_rail": 4, "light_rail": 0}
+{"key": "chicago|Humboldt Park|41.9028,-87.7209", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Hyde Park|41.7944,-87.5939", "bus": 20, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "chicago|Irving Park|41.9534,-87.7364", "bus": 5, "subway": 1, "commuter_rail": 2, "light_rail": 0}
+{"key": "chicago|Jefferson Park|41.9710,-87.7625", "bus": 13, "subway": 1, "commuter_rail": 2, "light_rail": 0}
+{"key": "chicago|Joliet|41.5264,-88.0840", "bus": 11, "subway": 0, "commuter_rail": 5, "light_rail": 0}
+{"key": "chicago|Kenwood|41.8091,-87.5980", "bus": 8, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|La Grange|41.8148,-87.8736", "bus": 3, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "chicago|Lake Forest|42.2586,-87.8407", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Lake Zurich|42.1970,-88.0934", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Lakeview|41.9327,-87.6680", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Libertyville|42.2831,-87.9531", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Lincoln Park|41.9325,-87.6392", "bus": 8, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Lincoln Square|41.9686,-87.6885", "bus": 6, "subway": 1, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Lisle|41.8012,-88.0748", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Little Village|41.8444,-87.7148", "bus": 3, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Logan Square|41.9284,-87.7068", "bus": 6, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Lombard|41.8865,-88.0202", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Mount Greenwood|41.6982,-87.7054", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Munster|41.5645,-87.5125", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Naperville|41.7729,-88.1479", "bus": 6, "subway": 0, "commuter_rail": 5, "light_rail": 0}
+{"key": "chicago|North Center|41.9542,-87.6791", "bus": 5, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Northbrook|42.1287,-87.8265", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Norwood Park|41.9881,-87.8027", "bus": 3, "subway": 1, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Oak Brook|41.8327,-87.9484", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Oak Park|41.8878,-87.7888", "bus": 5, "subway": 1, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Old Town|41.9076,-87.6385", "bus": 8, "subway": 3, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Orland Park|41.6307,-87.8536", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Palatine|42.1106,-88.0434", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Park Ridge|42.0112,-87.8406", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Pilsen|41.8570,-87.6619", "bus": 5, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Plainfield|41.6087,-88.2054", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Portage Park|41.9578,-87.7651", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Pullman|41.6922,-87.6067", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Ravenswood|41.9679,-87.6745", "bus": 5, "subway": 1, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|River Forest|41.8978,-87.8139", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|River North|41.8922,-87.6314", "bus": 32, "subway": 7, "commuter_rail": 3, "light_rail": 0}
+{"key": "chicago|Riverside|41.8323,-87.8153", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Rogers Park|42.0090,-87.6768", "bus": 4, "subway": 3, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Roscoe Village|41.9432,-87.6784", "bus": 5, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Sauganash|41.9900,-87.7423", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Schaumburg|42.0334,-88.0834", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Skokie|42.0263,-87.7521", "bus": 4, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|South Loop|41.8658,-87.6258", "bus": 24, "subway": 4, "commuter_rail": 3, "light_rail": 0}
+{"key": "chicago|St. Charles|41.9140,-88.3128", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Streeterville|41.8942,-87.6203", "bus": 30, "subway": 1, "commuter_rail": 3, "light_rail": 0}
+{"key": "chicago|The Loop|41.8816,-87.6295", "bus": 44, "subway": 7, "commuter_rail": 32, "light_rail": 0}
+{"key": "chicago|Tinley Park|41.5734,-87.7845", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Ukrainian Village|41.8958,-87.6819", "bus": 5, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "chicago|Uptown|41.9666,-87.6555", "bus": 8, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Valparaiso|41.4673,-87.0604", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Waukegan|42.3602,-87.8318", "bus": 8, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|West Loop|41.8822,-87.6531", "bus": 3, "subway": 3, "commuter_rail": 22, "light_rail": 0}
+{"key": "chicago|Western Springs|41.8096,-87.9007", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Wheaton|41.8647,-88.1102", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Wicker Park|41.9115,-87.6775", "bus": 4, "subway": 1, "commuter_rail": 2, "light_rail": 0}
+{"key": "chicago|Wilmette|42.0887,-87.7025", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Winnetka|42.1081,-87.7365", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Woodstock|42.3148,-88.4474", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "chicago|Wrigleyville|41.9470,-87.6565", "bus": 6, "subway": 3, "commuter_rail": 0, "light_rail": 0}
+{"key": "chicago|Yorkville|41.6411,-88.4473", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Addison|32.9637,-96.8338", "bus": 11, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "dallas|Allen|33.1097,-96.6730", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Anna|33.3482,-96.5535", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Argyle|33.1212,-97.1833", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Arlington Heights|32.7308,-97.3860", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Arlington|32.7356,-97.1071", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Bedford|32.8458,-97.1351", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Benbrook|32.6783,-97.4636", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Berkeley Place|32.7268,-97.3491", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Bishop Arts District|32.7493,-96.8279", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Burleson|32.5421,-97.3208", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Carrollton|32.9515,-96.9034", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 1}
+{"key": "dallas|Casa Linda|32.8335,-96.7002", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Cedar Hill|32.5843,-96.9589", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Celina|33.3262,-96.7949", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Colleyville|32.8915,-97.1497", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Coppell|32.9553,-97.0156", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Corinth|33.1447,-97.0708", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Cultural District|32.7477,-97.3611", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|DeSoto|32.5993,-96.8629", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Deep Ellum|32.7843,-96.7805", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 4}
+{"key": "dallas|Denton|33.2174,-97.1413", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Design District|32.7899,-96.8188", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 2}
+{"key": "dallas|Downtown Dallas|32.7798,-96.7980", "bus": 50, "subway": 0, "commuter_rail": 2, "light_rail": 6}
+{"key": "dallas|Downtown Fort Worth|32.7540,-97.3296", "bus": 27, "subway": 0, "commuter_rail": 3, "light_rail": 1}
+{"key": "dallas|Duncanville|32.6459,-96.9139", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Euless|32.8494,-97.0786", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Fairmount|32.7241,-97.3377", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Fairview|33.1578,-96.6318", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Farmers Branch|32.9266,-96.8961", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "dallas|Flower Mound|33.0284,-97.0867", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Forney|32.7479,-96.4719", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Frisco|33.1554,-96.8226", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Garland|32.9098,-96.6303", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "dallas|Grand Prairie|32.7460,-96.9978", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Grapevine|32.9350,-97.0759", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "dallas|Heath|32.8365,-96.4750", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Highland Park|32.8311,-96.8012", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Highland Village|33.0897,-97.0615", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Hurst|32.8235,-97.1706", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Irving|32.8295,-96.9442", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Keller|32.9329,-97.2245", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Kessler Park|32.7669,-96.8265", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Knox-Henderson|32.8144,-96.7777", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Lake Highlands|32.8863,-96.7306", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "dallas|Lakewood|32.8271,-96.7525", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Lancaster|32.5921,-96.7561", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Lewisville|33.0462,-96.9942", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "dallas|Little Elm|33.1626,-96.9375", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Lower Greenville|32.8235,-96.7701", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Lucas|33.0843,-96.5767", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Mansfield|32.5635,-97.1420", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|McKinney|33.1976,-96.6154", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Melissa|33.2885,-96.5576", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Mesquite|32.7666,-96.5995", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Midlothian|32.4694,-96.9907", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Murphy|33.0164,-96.6082", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Near Southside|32.7339,-97.3311", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|North Richland Hills|32.8343,-97.2289", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Oak Cliff|32.7393,-96.8111", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "dallas|Oak Lawn|32.8091,-96.8089", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "dallas|Plano|33.0137,-96.6925", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 2}
+{"key": "dallas|Preston Hollow|32.8807,-96.7972", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Prosper|33.2413,-96.8124", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Richardson|32.9482,-96.7297", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "dallas|Ridglea|32.7137,-97.4299", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Roanoke|33.0147,-97.2290", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Rockwall|32.9312,-96.4597", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Rowlett|32.9029,-96.5639", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "dallas|Southlake|32.9412,-97.1342", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|The Cedars|32.7690,-96.7890", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "dallas|The Colony|33.0896,-96.9034", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Trophy Club|32.9925,-97.1730", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|University Park|32.8486,-96.7952", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Uptown|32.8007,-96.7999", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 5}
+{"key": "dallas|Victory Park|32.7877,-96.8093", "bus": 8, "subway": 0, "commuter_rail": 1, "light_rail": 6}
+{"key": "dallas|Waxahachie|32.4025,-96.8445", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Weatherford|32.7590,-97.7971", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|West 7th|32.7505,-97.3387", "bus": 9, "subway": 0, "commuter_rail": 1, "light_rail": 1}
+{"key": "dallas|Westlake|32.9912,-97.1944", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "dallas|Wylie|33.0152,-96.5388", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Arvada|39.8006,-105.0812", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "denver|Aspen Park|39.5427,-105.2963", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Aurora|39.7401,-104.8733", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Baker|39.7112,-104.9924", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 3}
+{"key": "denver|Bennett|39.7571,-104.4273", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Berkeley|39.7744,-105.0350", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Bow Mar|39.6266,-105.0509", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Brighton|39.9837,-104.8111", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Broomfield|39.9536,-105.0508", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Capitol Hill|39.7359,-104.9799", "bus": 25, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Castle Rock|39.3762,-104.8529", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Centennial|39.5792,-104.8769", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 3}
+{"key": "denver|Cherry Creek|39.7166,-104.9525", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Cherry Hills Village|39.6374,-104.9475", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|City Park|39.7471,-104.9537", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Columbine|39.5886,-105.0692", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Commerce City|39.8083,-104.9339", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Congress Park|39.7337,-104.9484", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Dakota Ridge|39.6192,-105.1351", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Downtown Denver|39.7468,-104.9949", "bus": 27, "subway": 0, "commuter_rail": 5, "light_rail": 3}
+{"key": "denver|Edgewater|39.7508,-105.0626", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Elizabeth|39.3653,-104.6039", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Englewood|39.6470,-104.9945", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "denver|Evergreen|39.6356,-105.3381", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Five Points|39.7547,-104.9780", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Foxfield|39.5881,-104.7857", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Franktown|39.3900,-104.7424", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Genesee|39.6879,-105.2712", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Glendale|39.7031,-104.9362", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Golden|39.7425,-105.2106", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Greenwood Village|39.6172,-104.9508", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Highlands Ranch|39.5484,-105.0005", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Highland|39.7620,-105.0112", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 3}
+{"key": "denver|Hilltop|39.7831,-104.9940", "bus": 3, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "denver|Idledale|39.6689,-105.2432", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Indian Hills|39.6299,-105.2475", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Ken Caryl|39.5767,-105.1137", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Lakewood|39.7086,-105.0847", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Littleton|39.6133,-105.0166", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "denver|LoDo|39.7509,-104.9997", "bus": 55, "subway": 0, "commuter_rail": 5, "light_rail": 3}
+{"key": "denver|Lone Tree|39.5309,-104.8710", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "denver|Lowry|39.7174,-104.8864", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Montclair|39.7317,-104.9129", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Morrison|39.6536,-105.1911", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Northglenn|39.9116,-104.9821", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Observatory Park|39.6757,-104.9530", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Park Hill|39.6800,-105.0250", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Parker|39.5185,-104.7613", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Perry Park|39.2567,-104.9925", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Platt Park|39.6876,-104.9805", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "denver|RiNo|39.7713,-104.9812", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "denver|Roxborough Park|39.4754,-105.0750", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Sedalia|39.4397,-104.9699", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Sheridan|39.6478,-105.0175", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Sloans Lake|39.7523,-105.0446", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Stapleton|39.7618,-104.8916", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "denver|Sunnyside|39.7766,-105.0112", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Thornton|39.8696,-104.9852", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Uptown|39.7440,-104.9799", "bus": 31, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Washington Park|39.7021,-104.9710", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "denver|Westminster|39.8367,-105.0372", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "denver|Wheat Ridge|39.7661,-105.0772", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Alief|29.7111,-95.5963", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Alvin|29.4238,-95.2441", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Angleton|29.1718,-95.4293", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Atascocita|29.9990,-95.1620", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Baytown|29.7355,-94.9774", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Bellaire|29.7040,-95.4609", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Bunker Hill Village|29.7675,-95.5299", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Cinco Ranch|29.7399,-95.7607", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Clear Lake|29.5777,-95.1307", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Conroe|30.3119,-95.4561", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Deer Park|29.7052,-95.1238", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Dickinson|29.4517,-95.0562", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Downtown Houston|29.7566,-95.3652", "bus": 98, "subway": 0, "commuter_rail": 0, "light_rail": 3}
+{"key": "houston|EaDo|29.7484,-95.3553", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "houston|Energy Corridor|29.7849,-95.6174", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Friendswood|29.5294,-95.2010", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Fulshear|29.6924,-95.8866", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Galveston|29.3045,-94.7880", "bus": 10, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "houston|Garden Oaks|29.8225,-95.4126", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Hedwig Village|29.7799,-95.5193", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Humble|29.9882,-95.2644", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Hunters Creek Village|29.7727,-95.4981", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Jersey Village|29.8929,-95.5772", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Katy|29.7858,-95.8244", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Kemah|29.5286,-95.0200", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Kingwood|30.0497,-95.1846", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|La Porte|29.6658,-95.0194", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Lake Jackson|29.0339,-95.4344", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|League City|29.5075,-95.0949", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Magnolia|30.2130,-95.7426", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Manvel|29.4665,-95.3557", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Meadows Place|29.6509,-95.5869", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Medical Center|29.7101,-95.3973", "bus": 49, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "houston|Memorial|29.7656,-95.4419", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Meyerland|29.6791,-95.4680", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Midtown|29.7412,-95.3762", "bus": 19, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "houston|Mission Bend|29.6939,-95.6651", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Missouri City|29.6186,-95.5377", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Mont Belvieu|29.8477,-94.8908", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Montgomery|30.3931,-95.6941", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Montrose|29.7447,-95.3913", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Museum District|29.7247,-95.3878", "bus": 17, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "houston|Oak Forest|29.8307,-95.4713", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Oak Ridge North|30.1570,-95.4421", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Pasadena|29.6911,-95.2092", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Pearland|29.5640,-95.2864", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Piney Point Village|29.7565,-95.5154", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Rice Military|29.7661,-95.4165", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Richmond|29.5809,-95.7613", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|River Oaks|29.7479,-95.4265", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Rosenberg|29.5580,-95.8068", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Seabrook|29.5633,-95.0197", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Sharpstown|29.7034,-95.5178", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Shenandoah|30.1840,-95.4557", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Sienna|29.4854,-95.5063", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Southside Place|29.7087,-95.4355", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Spring Branch|29.8066,-95.5294", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Spring Valley Village|29.7898,-95.5040", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Spring|30.0796,-95.4188", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Stafford|29.6257,-95.5657", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Sugar Land|29.6197,-95.6349", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Texas City|29.3960,-94.9175", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|The Heights|29.7977,-95.3984", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|The Woodlands|30.1726,-95.5098", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Third Ward|29.7244,-95.3591", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "houston|Tomball|30.0951,-95.6197", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Upper Kirby|29.7328,-95.4293", "bus": 14, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Uptown Galleria|29.7385,-95.4619", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Waller|30.0584,-95.9267", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Washington Avenue|29.7709,-95.4203", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Webster|29.5321,-95.1165", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|West University Place|29.7154,-95.4316", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Westchase|29.7276,-95.5594", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "houston|Willis|30.4342,-95.4842", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Agoura Hills|34.1531,-118.7617", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Alhambra|34.0953,-118.1270", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Altadena|34.1897,-118.1317", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Arcadia|34.1397,-118.0353", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Arts District|34.0391,-118.2328", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Atwater Village|34.1175,-118.2617", "bus": 4, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "la|Bel Air|34.0838,-118.4590", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Belmont Shore|33.7617,-118.1353", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Beverly Hills|34.0736,-118.4004", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Boyle Heights|34.0333,-118.2056", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Brentwood|34.0532,-118.4764", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Burbank|34.1808,-118.3090", "bus": 11, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "la|Calabasas|34.1447,-118.6441", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Canoga Park|34.2008,-118.5984", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Cerritos|33.8658,-118.0650", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Chatsworth|34.2572,-118.6036", "bus": 8, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "la|Chinatown LA|34.0639,-118.2362", "bus": 25, "subway": 2, "commuter_rail": 11, "light_rail": 1}
+{"key": "la|Compton|33.8958,-118.2201", "bus": 11, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Crenshaw|34.0175,-118.3397", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "la|Culver City|34.0211,-118.3965", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Downey|33.9403,-118.1328", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Downtown LA|34.0407,-118.2468", "bus": 25, "subway": 2, "commuter_rail": 0, "light_rail": 2}
+{"key": "la|Eagle Rock|34.1373,-118.2103", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|East Hollywood|34.0907,-118.2955", "bus": 8, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|East Los Angeles|34.0239,-118.1717", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Echo Park|34.0780,-118.2606", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|El Monte|34.0686,-118.0275", "bus": 24, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "la|El Segundo|33.9192,-118.4165", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|El Sereno|34.0777,-118.1819", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Elysian Valley|34.0894,-118.2306", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Encino|34.1597,-118.5013", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Franklin Village|34.1047,-118.3181", "bus": 9, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Frogtown|34.0894,-118.2306", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Gardena|33.8883,-118.3089", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Glassell Park|34.1217,-118.2367", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Glendale|34.1425,-118.2551", "bus": 15, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Granada Hills|34.2722,-118.5028", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Hancock Park|34.0744,-118.3368", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Hawthorne|33.9164,-118.3526", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Hermosa Beach|33.8622,-118.3995", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Hidden Hills|34.1633,-118.6567", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Highland Park|34.1089,-118.2087", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Hollywood Hills|34.1228,-118.3430", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Hollywood|34.0928,-118.3287", "bus": 7, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Hyde Park|33.9972,-118.3328", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Inglewood|33.9617,-118.3531", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Koreatown|34.0584,-118.3006", "bus": 9, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|La Ca\u00f1ada Flintridge|34.1997,-118.2006", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|La Crescenta|34.2317,-118.2353", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|La Mirada|33.9172,-118.0125", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Lakewood|33.8536,-118.1339", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Larchmont Village|34.0748,-118.3252", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Leimert Park|34.0058,-118.3328", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Little Tokyo|34.0495,-118.2394", "bus": 61, "subway": 2, "commuter_rail": 11, "light_rail": 2}
+{"key": "la|Long Beach|33.7701,-118.1937", "bus": 29, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Los Feliz|34.1087,-118.2951", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Manhattan Beach|33.8847,-118.4109", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Mar Vista|34.0005,-118.4308", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Marina del Rey|33.9800,-118.4517", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Mid-City|34.0383,-118.3558", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Miracle Mile|34.0614,-118.3560", "bus": 6, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Monrovia|34.1442,-117.9995", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Montebello|34.0167,-118.1134", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Monterey Park|34.0625,-118.1228", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Mount Washington|34.0988,-118.2211", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|North Hollywood|34.1872,-118.3830", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Pacific Palisades|34.0445,-118.5253", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Palms|34.0247,-118.4116", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Palos Verdes Estates|33.7939,-118.3870", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Pasadena|34.1478,-118.1445", "bus": 19, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Pico-Robertson|34.0502,-118.3883", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Playa Vista|33.9764,-118.4277", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Playa del Rey|33.9583,-118.4427", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Porter Ranch|34.2811,-118.5647", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Rancho Palos Verdes|33.7444,-118.3870", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Redondo Beach|33.8492,-118.3884", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Reseda|34.1997,-118.5353", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Rolling Hills Estates|33.7858,-118.3578", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Rosemead|34.0803,-118.0728", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|San Fernando|34.2819,-118.4386", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|San Gabriel|34.0961,-118.1058", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|San Marino|34.1211,-118.1067", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|San Pedro|33.7361,-118.2922", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Santa Monica|34.0195,-118.4912", "bus": 16, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Sherman Oaks|34.1514,-118.4490", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Signal Hill|33.8047,-118.1681", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Silver Lake|34.0870,-118.2706", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Studio City|34.1422,-118.3870", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Sunland-Tujunga|34.2589,-118.3031", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Sylmar|34.3025,-118.4478", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "la|Tarzana|34.1683,-118.5490", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Temple City|34.1067,-118.0578", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Thousand Oaks|34.1706,-118.8376", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Torrance|33.8358,-118.3406", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Van Nuys|34.1897,-118.4488", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Venice|33.9850,-118.4695", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|View Park|33.9956,-118.3484", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Watts|33.9428,-118.2465", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|West Hollywood|34.0900,-118.3617", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|West LA|34.0367,-118.4408", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "la|Westwood|34.0625,-118.4457", "bus": 33, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Whittier|33.9792,-118.0328", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Wilmington|33.7789,-118.2617", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Windsor Square|34.0690,-118.3200", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "la|Woodland Hills|34.1684,-118.6059", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Aliante|36.2927,-115.1838", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Anthem|35.9545,-115.0933", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Arts District|36.1595,-115.1513", "bus": 27, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Blue Diamond|36.0399,-115.4128", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Boulder City|35.9788,-114.8338", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Centennial Hills|36.2717,-115.2644", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Downtown Las Vegas|36.1692,-115.1407", "bus": 14, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Enterprise|36.0406,-115.1902", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Green Valley|36.0420,-115.0822", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Henderson|36.0301,-114.9815", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Indian Springs|36.5767,-115.6701", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Inspirada|35.9403,-115.1330", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Lake Las Vegas|36.1145,-114.9180", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Laughlin|35.1686,-114.5725", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|MacDonald Highlands|36.0077,-115.0446", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Mesquite|36.8036,-114.0671", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Moapa Town|36.6925,-114.6356", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|North Las Vegas|36.2005,-115.1215", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Paradise|36.1010,-115.1499", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Rhodes Ranch|36.0824,-115.2924", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Seven Hills|35.9805,-115.1172", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Silverado Ranch|36.0130,-115.1726", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Southern Highlands|35.9739,-115.1940", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Spring Valley|36.1070,-115.2430", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Summerlin South|36.1533,-115.3311", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Summerlin|36.1913,-115.3019", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Sunrise Manor|36.1973,-115.0453", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|The Lakes|36.1376,-115.2974", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Whitney|36.1008,-115.0379", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "las|Winchester|36.1365,-115.1371", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Aventura|25.9602,-80.1330", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Bal Harbour|25.8933,-80.1232", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Boca Raton|26.3587,-80.0831", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "miami|Boynton Beach|26.5289,-80.0581", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Brickell|25.7615,-80.1929", "bus": 13, "subway": 0, "commuter_rail": 1, "light_rail": 2}
+{"key": "miami|Coconut Creek|26.2517,-80.1789", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Coconut Grove|25.7126,-80.2570", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Cooper City|26.0578,-80.2695", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Coral Gables|25.7331,-80.2585", "bus": 10, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "miami|Coral Springs|26.2707,-80.2593", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Cutler Bay|25.5761,-80.3340", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Davie|26.0629,-80.2331", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Deerfield Beach|26.3183,-80.0996", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Delray Beach|26.4615,-80.0728", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Design District|25.8147,-80.1914", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Doral|25.8160,-80.3576", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Downtown Miami|25.7745,-80.1920", "bus": 27, "subway": 0, "commuter_rail": 4, "light_rail": 2}
+{"key": "miami|Downtown West Palm Beach|26.7088,-80.0542", "bus": 4, "subway": 0, "commuter_rail": 4, "light_rail": 0}
+{"key": "miami|Edgewater|25.8008,-80.1892", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Flagler Village|26.1309,-80.1411", "bus": 8, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "miami|Fort Lauderdale|26.1223,-80.1434", "bus": 20, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "miami|Golden Beach|25.9633,-80.1221", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Hialeah|25.8268,-80.2814", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Hollywood|26.0112,-80.1495", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Homestead|25.4719,-80.4760", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Juno Beach|26.8755,-80.0596", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Jupiter|26.9342,-80.0942", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Kendall|25.6793,-80.3173", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "miami|Key Biscayne|25.6907,-80.1656", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Lake Worth Beach|26.6197,-80.0587", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "miami|Las Olas|26.1192,-80.1356", "bus": 11, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "miami|Lauderhill|26.1404,-80.2134", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Little Havana|25.7682,-80.2335", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Medley|25.8407,-80.3264", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "miami|Miami Gardens|25.9489,-80.2436", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Mid-Beach|25.8125,-80.1219", "bus": 10, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Midtown Miami|25.8083,-80.1935", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Miramar|25.9873,-80.2323", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Morningside|25.8245,-80.1800", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|North Beach|25.8647,-80.1202", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|North Miami Beach|25.9300,-80.1652", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|North Miami|25.8901,-80.1867", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Northwood|26.7163,-80.1061", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Palm Beach Gardens|26.8234,-80.1387", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Palm Beach|26.6948,-80.0419", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Palmetto Bay|25.6217,-80.3189", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Parkland|26.3101,-80.2373", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Pembroke Pines|26.0062,-80.2872", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Pinecrest|25.6652,-80.3049", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Plantation|26.1276,-80.2331", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Pompano Beach|26.2416,-80.1339", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Rio Vista|26.1106,-80.1228", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Royal Palm Beach|26.6990,-80.2276", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|South Beach|25.7744,-80.1332", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Southwest Ranches|26.0587,-80.3382", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Sunny Isles Beach|25.9388,-80.1235", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Sunrise|26.1667,-80.2788", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Surfside|25.8788,-80.1250", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Sweetwater|25.7634,-80.3731", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Tamarac|26.2033,-80.2560", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Tequesta|26.9649,-80.1132", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|The Hammocks|25.6704,-80.4489", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Upper East Side|25.8366,-80.1840", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Victoria Park|26.1232,-80.1246", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Wellington|26.6550,-80.2375", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Weston|26.1004,-80.4021", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "miami|Wynwood|25.8014,-80.1991", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Ardsley|41.0082,-73.8399", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Astoria|40.7721,-73.9302", "bus": 8, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Babylon|40.6998,-73.3254", "bus": 4, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Battery Park City|40.7108,-74.0155", "bus": 54, "subway": 17, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Bay Ridge|40.6350,-74.0241", "bus": 30, "subway": 3, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Bayside|40.7632,-73.7730", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Bed-Stuy|40.6872,-73.9418", "bus": 7, "subway": 3, "commuter_rail": 7, "light_rail": 0}
+{"key": "nyc|Bedford|41.2021,-73.6513", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Bellmore|40.6668,-73.5285", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Belmont|40.8556,-73.8898", "bus": 18, "subway": 2, "commuter_rail": 3, "light_rail": 0}
+{"key": "nyc|Bensonhurst|40.6020,-73.9985", "bus": 8, "subway": 3, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Bloomfield|40.8068,-74.1874", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Boerum Hill|40.6862,-73.9878", "bus": 15, "subway": 15, "commuter_rail": 8, "light_rail": 0}
+{"key": "nyc|Borough Park|40.6251,-73.9986", "bus": 3, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Brighton Beach|40.5774,-73.9613", "bus": 5, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Bronxville|40.9387,-73.8327", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Brooklyn Heights|40.6960,-73.9938", "bus": 15, "subway": 15, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Bushwick|40.6942,-73.9211", "bus": 6, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Canarsie|40.6388,-73.9016", "bus": 8, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Carnegie Hill|40.7839,-73.9540", "bus": 26, "subway": 7, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Carroll Gardens|40.6800,-73.9997", "bus": 10, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Cedarhurst|40.6240,-73.7268", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Chappaqua|41.1607,-73.7660", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Chatham|40.7418,-74.3849", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Chelsea|40.7465,-74.0014", "bus": 47, "subway": 19, "commuter_rail": 34, "light_rail": 0}
+{"key": "nyc|Chinatown|40.7158,-73.9970", "bus": 49, "subway": 21, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|City Island|40.8476,-73.7879", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Clinton Hill|40.6890,-73.9640", "bus": 10, "subway": 4, "commuter_rail": 8, "light_rail": 0}
+{"key": "nyc|Closter|40.9754,-73.9596", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Cobble Hill|40.6864,-73.9952", "bus": 9, "subway": 12, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Cold Spring Harbor|40.8573,-73.4282", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Coney Island|40.5765,-73.9929", "bus": 5, "subway": 5, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Cos Cob|41.0507,-73.6007", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Cranford|40.6579,-74.2996", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Cresskill|40.9418,-73.9568", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Croton-on-Hudson|41.2115,-73.8918", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Crown Heights|40.6694,-73.9425", "bus": 7, "subway": 6, "commuter_rail": 7, "light_rail": 0}
+{"key": "nyc|DUMBO|40.7033,-73.9881", "bus": 5, "subway": 9, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Darien|41.0726,-73.4682", "bus": 2, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Demarest|40.9568,-73.9635", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Ditmas Park|40.6399,-73.9655", "bus": 9, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Dobbs Ferry|41.0104,-73.8774", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|East Harlem|40.7957,-73.9389", "bus": 17, "subway": 6, "commuter_rail": 5, "light_rail": 0}
+{"key": "nyc|East New York|40.6653,-73.8836", "bus": 7, "subway": 6, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|East Village|40.7265,-73.9815", "bus": 10, "subway": 14, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Eastchester|40.9582,-73.8121", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Edgewater|40.8232,-73.9724", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Elmhurst|40.7368,-73.8795", "bus": 13, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Englewood|40.8926,-73.9724", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Fairfield|41.1418,-73.2632", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Fieldston|40.8945,-73.9063", "bus": 7, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Financial District|40.7074,-74.0113", "bus": 60, "subway": 17, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Flatbush|40.6501,-73.9496", "bus": 6, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Flatiron|40.7410,-73.9896", "bus": 55, "subway": 23, "commuter_rail": 34, "light_rail": 0}
+{"key": "nyc|Flatlands|40.6228,-73.9327", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Floral Park|40.7221,-73.7021", "bus": 1, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "nyc|Flushing|40.7675,-73.8330", "bus": 17, "subway": 2, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Fordham|40.8614,-73.8992", "bus": 21, "subway": 3, "commuter_rail": 4, "light_rail": 0}
+{"key": "nyc|Forest Hills|40.7185,-73.8448", "bus": 10, "subway": 5, "commuter_rail": 8, "light_rail": 0}
+{"key": "nyc|Fort Greene|40.6867,-73.9716", "bus": 13, "subway": 13, "commuter_rail": 8, "light_rail": 0}
+{"key": "nyc|Fort Lee|40.8507,-73.9707", "bus": 16, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Freeport|40.6576,-73.5835", "bus": 9, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Garden City|40.7268,-73.6335", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Glen Ridge|40.8057,-74.2035", "bus": 7, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Glen Rock|40.9607,-74.1307", "bus": 3, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Glendale|40.7016,-73.8752", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Gowanus|40.6739,-73.9896", "bus": 5, "subway": 7, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Gramercy Park|40.7376,-73.9840", "bus": 55, "subway": 15, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Great Kills|40.5513,-74.1513", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Great Neck|40.8001,-73.7329", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Greenpoint|40.7242,-73.9497", "bus": 5, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Greenwich Village|40.7308,-74.0005", "bus": 26, "subway": 23, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Greenwich|41.0262,-73.6282", "bus": 3, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "nyc|Hamilton Heights|40.8231,-73.9495", "bus": 10, "subway": 6, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Harlem|40.8116,-73.9465", "bus": 16, "subway": 11, "commuter_rail": 5, "light_rail": 0}
+{"key": "nyc|Harrison|40.9759,-73.7129", "bus": 2, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Hastings-on-Hudson|40.9943,-73.8782", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Hell's Kitchen|40.7638,-73.9918", "bus": 165, "subway": 18, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Hempstead|40.7062,-73.6188", "bus": 19, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Hewlett|40.6443,-73.6960", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Hoboken|40.7440,-74.0324", "bus": 8, "subway": 3, "commuter_rail": 8, "light_rail": 1}
+{"key": "nyc|Howard Beach|40.6573,-73.8479", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Huntington|40.8676,-73.4257", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Hunts Point|40.8166,-73.8919", "bus": 6, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Inwood|40.8671,-73.9212", "bus": 6, "subway": 2, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Irvington|41.0393,-73.8682", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Jackson Heights|40.7557,-73.8831", "bus": 7, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Jamaica|40.6943,-73.8072", "bus": 19, "subway": 3, "commuter_rail": 10, "light_rail": 1}
+{"key": "nyc|Jersey City|40.7178,-74.0431", "bus": 11, "subway": 4, "commuter_rail": 0, "light_rail": 1}
+{"key": "nyc|Katonah|41.2587,-73.6824", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Kensington|40.6417,-73.9769", "bus": 10, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Kew Gardens|40.7148,-73.8309", "bus": 13, "subway": 3, "commuter_rail": 8, "light_rail": 0}
+{"key": "nyc|Kips Bay|40.7428,-73.9772", "bus": 77, "subway": 19, "commuter_rail": 5, "light_rail": 0}
+{"key": "nyc|Larchmont|40.9279,-73.7527", "bus": 4, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Lawrence|40.6193,-73.7274", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Leonia|40.8618,-73.9874", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Little Italy|40.7191,-73.9973", "bus": 44, "subway": 21, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Long Beach|40.5882,-73.6579", "bus": 7, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Long Island City|40.7447,-73.9485", "bus": 10, "subway": 10, "commuter_rail": 3, "light_rail": 0}
+{"key": "nyc|Lower East Side|40.7153,-73.9840", "bus": 20, "subway": 7, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Lynbrook|40.6557,-73.6740", "bus": 7, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Madison|40.7596,-74.4174", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Malverne|40.6768,-73.6724", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Mamaroneck|40.9479,-73.7291", "bus": 2, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Manhasset|40.7954,-73.6974", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Manhattanville|40.8157,-73.9557", "bus": 11, "subway": 5, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Maplewood|40.7312,-74.2724", "bus": 0, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Maspeth|40.7254,-73.9100", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Merrick|40.6582,-73.5496", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Midtown East|40.7549,-73.9710", "bus": 96, "subway": 17, "commuter_rail": 14, "light_rail": 1}
+{"key": "nyc|Midtown|40.7549,-73.9840", "bus": 388, "subway": 25, "commuter_rail": 7, "light_rail": 0}
+{"key": "nyc|Millburn|40.7257,-74.3032", "bus": 1, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Mineola|40.7496,-73.6385", "bus": 6, "subway": 0, "commuter_rail": 5, "light_rail": 0}
+{"key": "nyc|Montclair|40.8251,-74.2090", "bus": 3, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Morningside Heights|40.8076,-73.9626", "bus": 9, "subway": 5, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Morris Park|40.8479,-73.8617", "bus": 6, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Morristown|40.7968,-74.4774", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Mott Haven|40.8085,-73.9260", "bus": 9, "subway": 5, "commuter_rail": 5, "light_rail": 0}
+{"key": "nyc|Mount Kisco|41.2043,-73.7274", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Mount Vernon|40.9126,-73.8371", "bus": 9, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "nyc|Murray Hill|40.7479,-73.9756", "bus": 98, "subway": 19, "commuter_rail": 14, "light_rail": 0}
+{"key": "nyc|New Canaan|41.1468,-73.4949", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|New Dorp|40.5733,-74.1154", "bus": 16, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|New Hyde Park|40.7340,-73.6857", "bus": 3, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|New Rochelle|40.9115,-73.7826", "bus": 8, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "nyc|NoHo|40.7267,-73.9941", "bus": 26, "subway": 24, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Nolita|40.7221,-73.9962", "bus": 32, "subway": 19, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Norwalk|41.1177,-73.4082", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Nyack|41.0909,-73.9179", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Oceanside|40.6368,-73.6385", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Old Greenwich|41.0254,-73.5632", "bus": 1, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Ossining|41.1629,-73.8618", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Ozone Park|40.6776,-73.8497", "bus": 10, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Park Slope|40.6726,-73.9772", "bus": 6, "subway": 12, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Peekskill|41.2948,-73.9196", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Pelham Bay|40.8527,-73.8270", "bus": 10, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Pelham Manor|40.8979,-73.8063", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Pelham|40.9098,-73.8077", "bus": 2, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Pleasantville|41.1337,-73.7879", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Port Chester|40.9887,-73.6668", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Port Washington|40.8257,-73.6985", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Prospect Heights|40.6773,-73.9679", "bus": 8, "subway": 13, "commuter_rail": 8, "light_rail": 0}
+{"key": "nyc|Red Hook|40.6750,-74.0089", "bus": 9, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Rego Park|40.7259,-73.8619", "bus": 15, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Richmond Hill|40.6996,-73.8306", "bus": 8, "subway": 2, "commuter_rail": 8, "light_rail": 0}
+{"key": "nyc|Ridgewood|40.9793,-74.1160", "bus": 7, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Ridgewood|40.7051,-73.9058", "bus": 14, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Riverdale|40.8903,-73.9120", "bus": 7, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Riverside|41.0357,-73.5807", "bus": 1, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Rockaway Beach|40.5870,-73.8154", "bus": 8, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Rockville Centre|40.6590,-73.6385", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Roslyn|40.7993,-73.6496", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Rye|40.9807,-73.6874", "bus": 2, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Scarsdale|40.9890,-73.7846", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Sheepshead Bay|40.5921,-73.9449", "bus": 6, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Short Hills|40.7243,-74.3260", "bus": 1, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Sleepy Hollow|41.0890,-73.8618", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|SoHo|40.7233,-74.0030", "bus": 31, "subway": 24, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|South Orange|40.7510,-74.2596", "bus": 3, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Southport|41.1196,-73.2907", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|St. George|40.6438,-74.0740", "bus": 22, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Stamford|41.0534,-73.5387", "bus": 20, "subway": 0, "commuter_rail": 7, "light_rail": 0}
+{"key": "nyc|Stapleton|40.6282,-74.0744", "bus": 7, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Summit|40.7157,-74.3571", "bus": 4, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "nyc|Sunnyside|40.7440,-73.9196", "bus": 5, "subway": 6, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Sunset Park|40.6459,-74.0037", "bus": 4, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Tarrytown|41.0762,-73.8582", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Tenafly|40.9226,-73.9596", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Tottenville|40.5121,-74.2513", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Tremont|40.8450,-73.9026", "bus": 12, "subway": 3, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Tribeca|40.7163,-74.0086", "bus": 45, "subway": 18, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Tuckahoe|40.9504,-73.8260", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Turtle Bay|40.7531,-73.9684", "bus": 64, "subway": 13, "commuter_rail": 14, "light_rail": 1}
+{"key": "nyc|Upper East Side|40.7736,-73.9566", "bus": 26, "subway": 7, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Upper West Side|40.7870,-73.9754", "bus": 8, "subway": 6, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Valley Stream|40.6643,-73.7085", "bus": 7, "subway": 0, "commuter_rail": 4, "light_rail": 0}
+{"key": "nyc|Washington Heights|40.8417,-73.9395", "bus": 13, "subway": 3, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Weehawken|40.7685,-74.0207", "bus": 34, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "nyc|West Orange|40.7918,-74.2635", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|West Village|40.7335,-74.0027", "bus": 28, "subway": 23, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Westfield|40.6590,-74.3474", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Weston|41.2007,-73.3793", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Westport|41.1415,-73.3579", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Westwood|40.9882,-74.0307", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|White Plains|41.0340,-73.7629", "bus": 29, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Williamsburg|40.7081,-73.9571", "bus": 18, "subway": 5, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Wilton|41.1954,-73.4382", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Windsor Terrace|40.6568,-73.9807", "bus": 4, "subway": 3, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Woodmere|40.6318,-73.7135", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "nyc|Woodside|40.7452,-73.9027", "bus": 6, "subway": 7, "commuter_rail": 9, "light_rail": 0}
+{"key": "nyc|Yonkers|40.9312,-73.8988", "bus": 14, "subway": 0, "commuter_rail": 6, "light_rail": 0}
+{"key": "nyc|Yorktown Heights|41.2726,-73.7874", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "nyc|Yorkville|40.7762,-73.9459", "bus": 16, "subway": 7, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Altamonte Springs|28.6610,-81.3947", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Apopka|28.6733,-81.5116", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Audubon Park|28.5646,-81.3427", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Avalon Park|28.5567,-81.1683", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Baldwin Park|28.5699,-81.3275", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Belle Isle|28.4649,-81.3513", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Casselberry|28.6715,-81.3382", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Celebration|28.3103,-81.5511", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Clermont|28.5552,-81.7669", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|College Park|28.5720,-81.3895", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Conway|28.4988,-81.3348", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Downtown Orlando|28.5467,-81.3858", "bus": 32, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "orlando|Dr. Phillips|28.5377,-81.3767", "bus": 13, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "orlando|Edgewood|28.4815,-81.3701", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Eustis|28.8572,-81.6768", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Fruitland Park|28.8614,-81.9065", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Groveland|28.5602,-81.8561", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Kissimmee|28.3028,-81.4178", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Lady Lake|28.9198,-81.9328", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Lake Eola Heights|28.5494,-81.3706", "bus": 14, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "orlando|Lake Mary|28.7591,-81.3328", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Lake Nona|28.3976,-81.2639", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Leesburg|28.8108,-81.8779", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Longwood|28.7014,-81.3484", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "orlando|Maitland|28.6296,-81.3729", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Mills 50|28.5532,-81.3645", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Minneola|28.5757,-81.7483", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Montverde|28.6025,-81.6741", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Mount Dora|28.8005,-81.6447", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Oakland|28.5521,-81.6367", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Ocoee|28.5788,-81.5330", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Oviedo|28.6703,-81.2085", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Pine Hills|28.5780,-81.4515", "bus": 10, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Sanford|28.8117,-81.2680", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|St. Cloud|28.2352,-81.2840", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Tavares|28.8022,-81.7313", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Thornton Park|28.5403,-81.3675", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Union Park|28.5670,-81.2381", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Waterford Lakes|28.5394,-81.2005", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Windermere|28.5025,-81.5377", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Winter Garden|28.5657,-81.5857", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "orlando|Winter Park|28.5966,-81.3457", "bus": 5, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "orlando|Winter Springs|28.6987,-81.3055", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Ambler|40.1545,-75.2222", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Ardmore|40.0041,-75.2883", "bus": 3, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "philadelphia|Bella Vista|39.9410,-75.1590", "bus": 9, "subway": 3, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Blue Bell|40.1478,-75.2728", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Brewerytown|39.9771,-75.1818", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "philadelphia|Bristol|40.1229,-74.8645", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Bryn Mawr|40.0238,-75.3173", "bus": 1, "subway": 1, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Burlington|40.0788,-74.8525", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "philadelphia|Camden|39.9441,-75.1192", "bus": 32, "subway": 1, "commuter_rail": 0, "light_rail": 1}
+{"key": "philadelphia|Cedar Park|39.9504,-75.2274", "bus": 6, "subway": 1, "commuter_rail": 1, "light_rail": 2}
+{"key": "philadelphia|Center City|39.9524,-75.1636", "bus": 69, "subway": 5, "commuter_rail": 13, "light_rail": 5}
+{"key": "philadelphia|Cherry Hill|39.9348,-75.0307", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Chester|39.8456,-75.3719", "bus": 4, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Chestnut Hill|40.0771,-75.2074", "bus": 5, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "philadelphia|Collegeville|40.1855,-75.4512", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Collingswood|39.9182,-75.0713", "bus": 1, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Conshohocken|40.0739,-75.3063", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Downingtown|40.0065,-75.7033", "bus": 1, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "philadelphia|Doylestown|40.3100,-75.1305", "bus": 8, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Drexel Hill|39.9483,-75.3069", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "philadelphia|East Falls|40.0176,-75.1893", "bus": 7, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "philadelphia|East Passyunk|39.9265,-75.1633", "bus": 8, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Elkins Park|40.0771,-75.1268", "bus": 2, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "philadelphia|Elkton|39.6065,-75.8331", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Exton|40.0300,-75.6290", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Fairmount|39.9723,-75.1810", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "philadelphia|Fishtown|39.9733,-75.1304", "bus": 6, "subway": 1, "commuter_rail": 0, "light_rail": 1}
+{"key": "philadelphia|Fitler Square|39.9476,-75.1798", "bus": 29, "subway": 2, "commuter_rail": 24, "light_rail": 5}
+{"key": "philadelphia|Fox Chase|40.0772,-75.0772", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Francisville|39.9701,-75.1691", "bus": 9, "subway": 3, "commuter_rail": 0, "light_rail": 1}
+{"key": "philadelphia|Frankford|40.0282,-75.0849", "bus": 16, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Germantown|40.0358,-75.1747", "bus": 10, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "philadelphia|Glassboro|39.7028,-75.1119", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Glenside|40.1032,-75.1516", "bus": 2, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "philadelphia|Graduate Hospital|39.9424,-75.1792", "bus": 6, "subway": 2, "commuter_rail": 6, "light_rail": 0}
+{"key": "philadelphia|Haddonfield|39.8915,-75.0377", "bus": 3, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Haverford|40.0129,-75.2967", "bus": 3, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "philadelphia|Havertown|39.9809,-75.3085", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Hockessin|39.7874,-75.6880", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Jenkintown|40.0960,-75.1257", "bus": 2, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "philadelphia|Kennett Square|39.8467,-75.7117", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Kensington|39.9859,-75.1318", "bus": 8, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|King of Prussia|40.0948,-75.3851", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Kingsessing|39.9368,-75.2296", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 3}
+{"key": "philadelphia|Langhorne|40.1762,-74.9202", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Lansdale|40.2415,-75.2838", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Levittown|40.1576,-74.8321", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Malvern|40.0362,-75.5139", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Manayunk|40.0291,-75.2242", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Marlton|39.9006,-74.9339", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Mayfair|40.0337,-75.0341", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Medford|39.9009,-74.8235", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Media|39.9168,-75.3877", "bus": 3, "subway": 0, "commuter_rail": 1, "light_rail": 1}
+{"key": "philadelphia|Moorestown|39.9671,-74.9427", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Mount Airy|40.0652,-75.1912", "bus": 2, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "philadelphia|Mount Laurel|39.9340,-74.8910", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Narberth|40.0073,-75.2624", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Newark|39.6828,-75.7516", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Newtown Square|39.9868,-75.4008", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Newtown|40.2294,-74.9365", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Norristown|40.1146,-75.3446", "bus": 9, "subway": 1, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Northern Liberties|39.9650,-75.1419", "bus": 32, "subway": 1, "commuter_rail": 0, "light_rail": 1}
+{"key": "philadelphia|Old City|39.9524,-75.1468", "bus": 34, "subway": 3, "commuter_rail": 12, "light_rail": 0}
+{"key": "philadelphia|Overbrook|39.9808,-75.2545", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 1}
+{"key": "philadelphia|Packer Park|39.9112,-75.1785", "bus": 8, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Pennsauken|39.9562,-75.0580", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Pennsport|39.9318,-75.1497", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Phoenixville|40.1339,-75.5173", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Point Breeze|39.9334,-75.1780", "bus": 5, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Port Richmond|39.9864,-75.1009", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "philadelphia|Powelton Village|39.9584,-75.1910", "bus": 22, "subway": 1, "commuter_rail": 24, "light_rail": 5}
+{"key": "philadelphia|Queen Village|39.9391,-75.1494", "bus": 8, "subway": 1, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Radnor|40.0449,-75.3595", "bus": 1, "subway": 1, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Rittenhouse Square|39.9495,-75.1719", "bus": 28, "subway": 4, "commuter_rail": 24, "light_rail": 5}
+{"key": "philadelphia|Roxborough|40.0306,-75.2136", "bus": 12, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Society Hill|39.9450,-75.1485", "bus": 35, "subway": 3, "commuter_rail": 12, "light_rail": 0}
+{"key": "philadelphia|Somerton|40.1307,-75.0121", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Spring Garden|39.9657,-75.1688", "bus": 14, "subway": 3, "commuter_rail": 0, "light_rail": 1}
+{"key": "philadelphia|Spruce Hill|39.9523,-75.2191", "bus": 7, "subway": 1, "commuter_rail": 1, "light_rail": 4}
+{"key": "philadelphia|Strawberry Mansion|39.9834,-75.1827", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "philadelphia|Swarthmore|39.9021,-75.3499", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|University City|39.9493,-75.1896", "bus": 34, "subway": 1, "commuter_rail": 24, "light_rail": 5}
+{"key": "philadelphia|Upper Darby|39.9432,-75.3011", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "philadelphia|Villanova|40.0412,-75.3311", "bus": 0, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Voorhees|39.8512,-74.9620", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Washington Square West|39.9475,-75.1584", "bus": 69, "subway": 5, "commuter_rail": 13, "light_rail": 5}
+{"key": "philadelphia|Wayne|40.0405,-75.3976", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|West Chester|39.9597,-75.6045", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Wilmington|39.7459,-75.5466", "bus": 20, "subway": 0, "commuter_rail": 9, "light_rail": 0}
+{"key": "philadelphia|Woodbury|39.8382,-75.1527", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "philadelphia|Wynnefield|39.9889,-75.2329", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "philadelphia|Yardley|40.2425,-74.8390", "bus": 1, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "phoenix|Ahwatukee|33.3194,-112.0313", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Alhambra|33.5236,-112.1109", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "phoenix|Anthem|33.8468,-112.1270", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Apache Junction|33.4150,-111.5496", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Arcadia|33.4945,-111.9608", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Avondale|33.4435,-112.3045", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Biltmore|33.5160,-112.0287", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Buckeye|33.3703,-112.5838", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Camelback East|33.4949,-112.0039", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Carefree|33.8232,-111.9133", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Casa Grande|32.8773,-111.7537", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Cave Creek|33.8333,-111.9508", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Chandler|33.3062,-111.8412", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Coolidge|32.9778,-111.5176", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Coronado|33.4730,-112.0564", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|DC Ranch|33.6694,-111.8665", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Deer Valley|33.6861,-112.1186", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Desert Ridge|33.6805,-111.9772", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Downtown Chandler|33.3022,-111.8408", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Downtown Gilbert|33.3586,-111.7952", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Downtown Mesa|33.4151,-111.8315", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "phoenix|Downtown Phoenix|33.4477,-112.0745", "bus": 27, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "phoenix|Downtown Tempe|33.4251,-111.9373", "bus": 13, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "phoenix|Eastmark|33.3245,-111.6182", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|El Mirage|33.6130,-112.3245", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Encanto|33.4805,-112.0748", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "phoenix|Florence|33.0315,-111.3873", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Fountain Hills|33.6117,-111.7174", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Gainey Ranch|33.5712,-111.9174", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Gilbert|33.3528,-111.7890", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Glendale|33.5331,-112.1899", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Gold Canyon|33.3528,-111.4571", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Goodyear|33.4672,-112.3853", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Laveen|33.3619,-112.1534", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Litchfield Park|33.5018,-112.3595", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Maricopa|33.0581,-112.0478", "bus": 1, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "phoenix|McCormick Ranch|33.5525,-111.9021", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Melrose District|33.5006,-112.0862", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "phoenix|Mesa|33.4151,-111.8315", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "phoenix|Midtown Phoenix|33.4869,-112.0852", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "phoenix|Moon Valley|33.6167,-112.0781", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|New River|33.9159,-112.1360", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|North Mountain|33.5856,-112.0722", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Old Town Scottsdale|33.4942,-111.9261", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Paradise Valley|33.5324,-111.9505", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Peoria|33.5806,-112.2373", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Pima Crossing|33.5841,-111.8935", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Queen Creek|33.2484,-111.6342", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Rio Verde|33.7266,-111.6758", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Roosevelt Row|33.4589,-112.0694", "bus": 17, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "phoenix|San Tan Valley|33.1798,-111.5849", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Scottsdale|33.4942,-111.9260", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Sun City West|33.6714,-112.3572", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Sun City|33.6155,-112.2831", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Sun Lakes|33.2150,-111.8700", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Sunnyslope|33.5682,-112.0651", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Surprise|33.6292,-112.3681", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Tempe|33.4255,-111.9400", "bus": 12, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "phoenix|Tolleson|33.4484,-112.2560", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Uptown Phoenix|33.5102,-112.0723", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "phoenix|Verrado|33.4959,-112.5124", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Wickenburg|33.9681,-112.7301", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "phoenix|Willo|33.4730,-112.0792", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "phoenix|Youngtown|33.5850,-112.3049", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Apex|35.7325,-78.8506", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Archer Lodge|35.6823,-78.3704", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Benson|35.3871,-78.5409", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Boylan Heights|35.7742,-78.6521", "bus": 17, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "raleigh|Brier Creek|35.9074,-78.7889", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Cameron Village|35.7945,-78.6568", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Cary|35.7874,-78.7812", "bus": 10, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "raleigh|Clayton|35.6581,-78.4460", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Downtown Raleigh|35.7810,-78.6441", "bus": 34, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "raleigh|Five Points|35.8041,-78.6459", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Four Oaks|35.4456,-78.4176", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Franklinton|36.1011,-78.4551", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Fuquay-Varina|35.5844,-78.7999", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Garner|35.7113,-78.6142", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Glenwood South|35.7854,-78.6474", "bus": 17, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "raleigh|Hayes Barton|35.8033,-78.6514", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Holly Springs|35.6533,-78.8408", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Knightdale|35.7917,-78.4965", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Louisburg|36.0987,-78.3008", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Midtown Raleigh|35.8241,-78.6226", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Morrisville|35.8364,-78.8390", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|North Hills|35.8396,-78.6509", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Oakwood|35.7839,-78.6301", "bus": 11, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Rolesville|35.9246,-78.4615", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Selma|35.5397,-78.2917", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Smithfield|35.5238,-78.3522", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Wake Forest|35.9644,-78.5133", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Wakefield|35.9577,-78.5574", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Wendell|35.7682,-78.3641", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Youngsville|36.0196,-78.4859", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "raleigh|Zebulon|35.8295,-78.3142", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Alkali Flat|38.5859,-121.4915", "bus": 70, "subway": 0, "commuter_rail": 5, "light_rail": 3}
+{"key": "sacramento|Antelope|38.7082,-121.3300", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Arden-Arcade|38.6006,-121.3846", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Auburn|38.8951,-121.0767", "bus": 1, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "sacramento|Boulevard Park|38.5796,-121.4791", "bus": 57, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sacramento|Cameron Park|38.6740,-120.9883", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Carmichael|38.6308,-121.3256", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Citrus Heights|38.6948,-121.2880", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Clarksburg|38.4193,-121.5416", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Colfax|39.0938,-120.9532", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "sacramento|Curtis Park|38.5507,-121.4810", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sacramento|Davis|38.5561,-121.7378", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Diamond Springs|38.6941,-120.8163", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Downtown Sacramento|38.5767,-121.4969", "bus": 75, "subway": 0, "commuter_rail": 5, "light_rail": 3}
+{"key": "sacramento|East Sacramento|38.5694,-121.4489", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sacramento|El Dorado Hills|38.6561,-121.0743", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Elk Grove|38.4146,-121.3850", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Elmhurst|38.5566,-121.4505", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sacramento|Esparto|38.6934,-122.0240", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Fair Oaks|38.6422,-121.2702", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Florin|38.4832,-121.4043", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Folsom|38.6780,-121.1761", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sacramento|Foothill Farms|38.6867,-121.3475", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Galt|38.2685,-121.2990", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Georgetown|38.9114,-120.8346", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Gold River|38.6269,-121.2492", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Granite Bay|38.7604,-121.1682", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Greenhaven|38.5082,-121.5315", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Knights Landing|38.7980,-121.7174", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|La Riviera|38.5685,-121.3550", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sacramento|Land Park|38.5532,-121.4967", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sacramento|Lincoln|38.8916,-121.2932", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Loomis|38.8094,-121.1955", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|McKinley Park|38.5762,-121.4617", "bus": 14, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Meadow Vista|39.0017,-121.0376", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Midtown Sacramento|38.5729,-121.4799", "bus": 57, "subway": 0, "commuter_rail": 0, "light_rail": 3}
+{"key": "sacramento|Natomas|38.6133,-121.5219", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Newcastle|38.8667,-121.1320", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|North Highlands|38.6713,-121.3721", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Oak Park|38.5451,-121.4632", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Orangevale|38.6894,-121.2231", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Parkway|38.4830,-121.4605", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sacramento|Penryn|38.8482,-121.1698", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Placerville|38.7311,-120.7977", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Pocket|38.4847,-121.5349", "bus": 11, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Pollock Pines|38.7576,-120.5910", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Rancho Cordova|38.5891,-121.3027", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sacramento|Rancho Murieta|38.5019,-121.0947", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Rio Linda|38.6875,-121.4417", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Rocklin|38.7907,-121.2358", "bus": 5, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "sacramento|Rosemont|38.5477,-121.3554", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Roseville|38.7521,-121.2880", "bus": 9, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "sacramento|Shingle Springs|38.6659,-120.9362", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Tahoe Park|38.5464,-121.4359", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sacramento|Vineyard|38.4740,-121.3240", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|West Sacramento|38.5805,-121.5302", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Winters|38.5333,-121.9755", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sacramento|Woodland|38.6786,-121.7733", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Alamo Heights|29.4832,-98.4685", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Balcones Heights|29.4902,-98.5491", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Bandera|29.7251,-99.0743", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Beacon Hill|29.4563,-98.5101", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Boerne|29.7849,-98.7279", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Bulverde|29.7438,-98.4531", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Canyon Lake|29.8643,-98.2438", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Castle Hills|29.5247,-98.5191", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Castroville|29.3565,-98.8789", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|China Grove|29.3888,-98.3489", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Cibolo|29.5701,-98.2178", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Comfort|29.9723,-98.9047", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Converse|29.5125,-98.3046", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Cross Mountain|29.6492,-98.6663", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Dignowity Hill|29.4282,-98.4708", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Downtown San Antonio|29.4257,-98.4892", "bus": 72, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Elmendorf|29.2533,-98.3230", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Fair Oaks Ranch|29.7458,-98.6434", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Floresville|29.1336,-98.1561", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Garden Ridge|29.6347,-98.3053", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Government Hill|29.4413,-98.4642", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Helotes|29.5636,-98.6884", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Hollywood Park|29.5992,-98.4855", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|King William|29.4142,-98.4916", "bus": 17, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Kirby|29.4617,-98.3853", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|La Vernia|29.3531,-98.1258", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Leon Valley|29.4954,-98.6143", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Live Oak|29.5554,-98.3400", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Lytle|29.2346,-98.7937", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Marion|29.5726,-98.1429", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Medical Center|29.5133,-98.5811", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Monte Vista|29.4579,-98.4919", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|New Braunfels|29.6993,-98.1151", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Olmos Park|29.4749,-98.4866", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Pleasanton|28.9672,-98.4786", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Sandy Oaks|29.1817,-98.4092", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Schertz|29.5642,-98.2696", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Seguin|29.5688,-97.9647", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Selma|29.5865,-98.3153", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Shavano Park|29.5844,-98.5562", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Southtown|29.4102,-98.4912", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Spring Branch|29.8902,-98.4264", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Stone Oak|29.6494,-98.4513", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Terrell Hills|29.4771,-98.4472", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Timberwood Park|29.7007,-98.4832", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Tobin Hill|29.4454,-98.4894", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Universal City|29.5480,-98.2911", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Von Ormy|29.2774,-98.6574", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "san|Windcrest|29.5148,-98.3813", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "seattle|Bainbridge Island|47.6262,-122.5230", "bus": 20, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "seattle|Ballard|47.6677,-122.3836", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "seattle|Edmonds|47.8106,-122.3775", "bus": 5, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "seattle|Kirkland|47.6815,-122.2088", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "seattle|Mercer Island|47.5707,-122.2221", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Alameda|37.7652,-122.2416", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Alamo Square|37.7762,-122.4342", "bus": 9, "subway": 0, "commuter_rail": 0, "light_rail": 6}
+{"key": "sf|Alamo|37.8510,-122.0325", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Albany|37.8869,-122.2977", "bus": 10, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Almaden Valley|37.2216,-121.8618", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Atherton|37.4613,-122.1977", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Bayview|37.7279,-122.3893", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sf|Belmont|37.5202,-122.2758", "bus": 8, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "sf|Belvedere|37.8694,-122.4578", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Bernal Heights|37.7396,-122.4156", "bus": 12, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sf|Burlingame|37.5841,-122.3647", "bus": 5, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "sf|Campbell|37.2872,-121.9500", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sf|Castro Valley|37.6941,-122.0858", "bus": 1, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Chinatown|37.7941,-122.4078", "bus": 32, "subway": 8, "commuter_rail": 0, "light_rail": 7}
+{"key": "sf|Cole Valley|37.7661,-122.4529", "bus": 17, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sf|Concord|37.9779,-122.0311", "bus": 23, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Corte Madera|37.9252,-122.5247", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Cow Hollow|37.7990,-122.4368", "bus": 15, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Cupertino|37.3229,-122.0322", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Daly City|37.6879,-122.4702", "bus": 12, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Danville|37.8216,-121.9997", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Diamond Heights|37.7417,-122.4417", "bus": 8, "subway": 8, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Dogpatch|37.7594,-122.3897", "bus": 5, "subway": 0, "commuter_rail": 4, "light_rail": 1}
+{"key": "sf|Dublin|37.7022,-121.9358", "bus": 6, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|East Palo Alto|37.4688,-122.1411", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|El Cerrito|37.9241,-122.3177", "bus": 23, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Elmwood|37.8571,-122.2493", "bus": 11, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Emeryville|37.8310,-122.2905", "bus": 11, "subway": 0, "commuter_rail": 5, "light_rail": 0}
+{"key": "sf|Evergreen|37.3097,-121.7836", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Excelsior|37.7228,-122.4278", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sf|Fairfax|37.9863,-122.5888", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Financial District|37.7946,-122.3999", "bus": 72, "subway": 8, "commuter_rail": 0, "light_rail": 7}
+{"key": "sf|Forest Hill|37.7497,-122.4621", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 3}
+{"key": "sf|Foster City|37.5585,-122.2711", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Fremont|37.5485,-121.9886", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Fruitvale|37.7749,-122.2244", "bus": 15, "subway": 6, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Glen Park|37.7332,-122.4353", "bus": 9, "subway": 8, "commuter_rail": 0, "light_rail": 1}
+{"key": "sf|Glenview|37.7994,-122.2217", "bus": 17, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Grand Lake|37.8161,-122.2453", "bus": 14, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Haight-Ashbury|37.7692,-122.4481", "bus": 12, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sf|Half Moon Bay|37.4635,-122.4286", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Hayes Valley|37.7762,-122.4233", "bus": 26, "subway": 8, "commuter_rail": 0, "light_rail": 6}
+{"key": "sf|Hayward|37.6688,-122.0808", "bus": 13, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Hillsborough|37.5730,-122.3600", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Inner Richmond|37.7802,-122.4678", "bus": 12, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Inner Sunset|37.7636,-122.4648", "bus": 18, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sf|Jack London Square|37.7935,-122.2755", "bus": 13, "subway": 10, "commuter_rail": 4, "light_rail": 0}
+{"key": "sf|Kensington|37.9072,-122.2693", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Kentfield|37.9505,-122.5564", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Lafayette|37.8858,-122.1180", "bus": 4, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Larkspur|37.9330,-122.5344", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Livermore|37.6819,-121.7680", "bus": 10, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "sf|Los Altos Hills|37.3788,-122.1417", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Los Altos|37.3852,-122.1141", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Los Gatos|37.2358,-121.9669", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Lower Haight|37.7712,-122.4296", "bus": 10, "subway": 8, "commuter_rail": 0, "light_rail": 6}
+{"key": "sf|Marina District|37.8030,-122.4361", "bus": 14, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Martinez|38.0194,-122.1341", "bus": 11, "subway": 0, "commuter_rail": 5, "light_rail": 0}
+{"key": "sf|Menlo Park|37.4529,-122.1817", "bus": 9, "subway": 0, "commuter_rail": 3, "light_rail": 0}
+{"key": "sf|Mill Valley|37.9060,-122.5450", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Millbrae|37.5985,-122.3869", "bus": 9, "subway": 4, "commuter_rail": 4, "light_rail": 0}
+{"key": "sf|Milpitas|37.4323,-121.8996", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Mission Bay|37.7700,-122.3938", "bus": 21, "subway": 0, "commuter_rail": 4, "light_rail": 2}
+{"key": "sf|Mission District|37.7599,-122.4148", "bus": 15, "subway": 8, "commuter_rail": 0, "light_rail": 1}
+{"key": "sf|Montclair|37.8264,-122.2014", "bus": 16, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Moraga|37.8383,-122.1302", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Mountain View|37.3861,-122.0839", "bus": 9, "subway": 0, "commuter_rail": 4, "light_rail": 3}
+{"key": "sf|Newark|37.5297,-122.0402", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Nob Hill|37.7930,-122.4150", "bus": 19, "subway": 8, "commuter_rail": 0, "light_rail": 7}
+{"key": "sf|Noe Valley|37.7502,-122.4302", "bus": 3, "subway": 8, "commuter_rail": 0, "light_rail": 1}
+{"key": "sf|North Beach|37.8060,-122.4103", "bus": 14, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sf|North Berkeley|37.8780,-122.2716", "bus": 20, "subway": 4, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Novato|38.1074,-122.5697", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "sf|Orinda|37.8771,-122.1797", "bus": 2, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Outer Richmond|37.7760,-122.5053", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Outer Sunset|37.7503,-122.5025", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 2}
+{"key": "sf|Pacific Heights|37.7925,-122.4382", "bus": 8, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Pacifica|37.6138,-122.4869", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Palo Alto|37.4435,-122.1652", "bus": 27, "subway": 0, "commuter_rail": 4, "light_rail": 0}
+{"key": "sf|Piedmont|37.8239,-122.2303", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Pleasant Hill|37.9476,-122.0608", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Pleasanton|37.6624,-121.8747", "bus": 6, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "sf|Portola Valley|37.3869,-122.2280", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Potrero Hill|37.7620,-122.4026", "bus": 11, "subway": 0, "commuter_rail": 4, "light_rail": 0}
+{"key": "sf|Presidio Heights|37.7878,-122.4490", "bus": 10, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Redwood City|37.4852,-122.2364", "bus": 13, "subway": 0, "commuter_rail": 4, "light_rail": 0}
+{"key": "sf|Richmond|37.9358,-122.3477", "bus": 12, "subway": 4, "commuter_rail": 4, "light_rail": 0}
+{"key": "sf|Rockridge|37.8419,-122.2500", "bus": 13, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Rose Garden|37.3302,-121.9236", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Ross|37.9616,-122.5558", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Russian Hill|37.8014,-122.4194", "bus": 23, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "sf|San Anselmo|37.9752,-122.5614", "bus": 6, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|San Bruno|37.6304,-122.4111", "bus": 5, "subway": 4, "commuter_rail": 2, "light_rail": 2}
+{"key": "sf|San Carlos|37.5069,-122.2608", "bus": 5, "subway": 0, "commuter_rail": 2, "light_rail": 0}
+{"key": "sf|San Leandro|37.7249,-122.1561", "bus": 11, "subway": 6, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|San Mateo|37.5630,-122.3255", "bus": 8, "subway": 0, "commuter_rail": 4, "light_rail": 0}
+{"key": "sf|San Rafael|37.9735,-122.5311", "bus": 15, "subway": 0, "commuter_rail": 1, "light_rail": 0}
+{"key": "sf|San Ramon|37.7799,-121.9780", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Santa Clara|37.3541,-121.9552", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Saratoga|37.2638,-122.0230", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Sausalito|37.8591,-122.4853", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|SoMa|37.7785,-122.4057", "bus": 39, "subway": 8, "commuter_rail": 4, "light_rail": 7}
+{"key": "sf|South San Francisco|37.6546,-122.4077", "bus": 12, "subway": 0, "commuter_rail": 4, "light_rail": 0}
+{"key": "sf|Sunnyvale|37.3688,-122.0363", "bus": 4, "subway": 0, "commuter_rail": 4, "light_rail": 0}
+{"key": "sf|Temescal|37.8322,-122.2647", "bus": 17, "subway": 6, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|The Castro|37.7609,-122.4350", "bus": 10, "subway": 0, "commuter_rail": 0, "light_rail": 6}
+{"key": "sf|Tiburon|37.8914,-122.4569", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Union City|37.5934,-122.0438", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|Visitacion Valley|37.7119,-122.4124", "bus": 13, "subway": 0, "commuter_rail": 2, "light_rail": 1}
+{"key": "sf|Walnut Creek|37.9041,-122.0652", "bus": 18, "subway": 2, "commuter_rail": 0, "light_rail": 0}
+{"key": "sf|West Portal|37.7406,-122.4656", "bus": 7, "subway": 0, "commuter_rail": 0, "light_rail": 3}
+{"key": "sf|Willow Glen|37.3097,-121.8950", "bus": 4, "subway": 0, "commuter_rail": 3, "light_rail": 1}
+{"key": "sf|Woodside|37.4293,-122.2539", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Apollo Beach|27.7630,-82.4033", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Brandon|27.9360,-82.2993", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Brooksville|28.5553,-82.3879", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Carrollwood|28.0590,-82.5134", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Channelside|27.9439,-82.4472", "bus": 2, "subway": 0, "commuter_rail": 1, "light_rail": 1}
+{"key": "tampa|Citrus Park|28.0710,-82.5622", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Clearwater Beach|27.9775,-82.8279", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Clearwater|27.9659,-82.8001", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Crescent Lake|27.7881,-82.6413", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Dade City|28.3559,-82.1934", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Davis Islands|27.9220,-82.4557", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Downtown St. Petersburg|27.7710,-82.6393", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Downtown Tampa|27.9453,-82.4568", "bus": 10, "subway": 0, "commuter_rail": 1, "light_rail": 1}
+{"key": "tampa|Dunedin|28.0117,-82.7894", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Gulfport|27.7464,-82.7099", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Harbour Island|27.9384,-82.4517", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "tampa|Hyde Park|27.9353,-82.4732", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Land O' Lakes|28.2189,-82.4576", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Largo|27.9095,-82.7873", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Lutz|28.1511,-82.4615", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|New Port Richey|28.2466,-82.7175", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|New Tampa|28.1280,-82.3697", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Odessa|28.1900,-82.5756", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Old Northeast|27.7875,-82.6297", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Oldsmar|28.0342,-82.6651", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Palm Harbor|28.0848,-82.7576", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Palma Ceia|27.9209,-82.4954", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Pinellas Park|27.8428,-82.6995", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Plant City|28.0154,-82.1178", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Riverview|27.8712,-82.3270", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Ruskin|27.7206,-82.4340", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Safety Harbor|27.9909,-82.6932", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Seminole Heights|27.9887,-82.4479", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Seminole|27.8427,-82.7853", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Snell Isle|27.7956,-82.6165", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|South Tampa|27.9300,-82.4437", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Spring Hill|28.4635,-82.5364", "bus": 2, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|St. Pete Beach|27.7168,-82.7396", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|St. Petersburg|27.7627,-82.6441", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Sulphur Springs|28.0253,-82.4509", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Tampa Palms|28.0861,-82.3590", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Tarpon Springs|28.1471,-82.7564", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Temple Terrace|28.0430,-82.3759", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Town 'n' Country|28.0102,-82.5772", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Treasure Island|27.7648,-82.7691", "bus": 0, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Valrico|27.9378,-82.2328", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Wesley Chapel|28.2397,-82.3279", "bus": 1, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Westshore|27.9473,-82.5274", "bus": 4, "subway": 0, "commuter_rail": 0, "light_rail": 0}
+{"key": "tampa|Ybor City|27.9600,-82.4412", "bus": 5, "subway": 0, "commuter_rail": 0, "light_rail": 1}
+{"key": "tampa|Zephyrhills|28.2407,-82.1790", "bus": 3, "subway": 0, "commuter_rail": 0, "light_rail": 0}
