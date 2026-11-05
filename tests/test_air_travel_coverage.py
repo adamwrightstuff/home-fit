@@ -37,8 +37,19 @@ def test_time_credit_is_continuous_and_non_increasing():
 
 
 def test_estimated_minutes_line():
-    assert air.estimate_drive_minutes(0) == pytest.approx(10.0)
-    assert air.estimate_drive_minutes(100) == pytest.approx(105.0)
+    assert air.estimate_drive_minutes(0) == pytest.approx(8.0)
+    assert air.estimate_drive_minutes(30) == pytest.approx(8.0 + 1.04 * 30)
+    # refit 2026-11-04: the old single line gave 247.5 at 250 km and 67 at 60 km; routed medians are shorter
+    assert 55 <= air.estimate_drive_minutes(60) <= 65
+    assert 225 <= air.estimate_drive_minutes(250) <= 245
+
+
+def test_estimated_minutes_increase_with_distance():
+    prev = -1.0
+    for km in range(0, 401):
+        m = air.estimate_drive_minutes(float(km))
+        assert m > prev
+        prev = m
 
 
 def test_no_reachable_airport_is_a_genuine_zero():

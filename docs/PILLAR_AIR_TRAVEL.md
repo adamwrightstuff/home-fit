@@ -20,7 +20,7 @@ twice. The ceiling is about 96, not 100, because you cannot fly to the airport y
 | Destination weights | CY2023 boardings per airport | FAA final CY2023 enplanements (tier 2) | Includes connecting passengers at hubs |
 | Plateau | 60 minutes of full credit | Median maximum acceptable travel time, Ipsos survey for Airlines for America, Jan 2018, n=5,046 (tier 3) | **Judgment**. Range 30 to 90 minutes; catalog mean 76 to 87, spread 13 to 5 |
 | Decay beyond the plateau | Survey distribution of maximum acceptable time (33% at 30 min, 60% at 60, 78% at 90, 90% at 120, 94% at 180) | Same survey | The question was about travel for a cheaper flight, so beyond the plateau this is a stretch |
-| Drive minutes, live | 10 + 0.95 x straight-line km | Fitted to 1,474 routed catalog pins (tier 2 proxy) | Intercept 9.5 to 11.4, slope 0.92 to 0.98 by area type; median error 4 to 9 minutes |
+| Drive minutes, live and for airports without routed time | Piecewise line: 8.0 + 1.04 x km, slope changes -0.313 beyond 30 km, +0.198 beyond 60, -0.008 beyond 120, -0.333 beyond 250 (refit 2026-11-04; replaces 10 + 0.95 x km, which ran long beyond 60 km) | Least-absolute-deviation fit to 8,504 stored OSRM pin-to-airport routes (tier 2 proxy) | Split-half: intercept 7.6 to 8.5, first slope 1.02 to 1.06; held-out median error within 0.7 min in every distance band |
 | Drive minutes, catalog | Routed time to the 6 nearest served airports | OSRM public server, car profile, free-flow | Not validated against a second source; see limits |
 
 Evidence that did not hold: a published decay rate (none found in a search of the airport-choice literature), and a fit of
@@ -77,7 +77,7 @@ Reference frame: fixed standard (adequacy on a national scale).
 Measurement area: drive-time reach to airports up to 400 km straight line, credit decays after 60 min.
   Reason: access pillar; airport choice studies use access time; the cutoff is a judgment (range 30 to 90 min).
 Place context inputs used (fields) and remaining area-type uses (with reason): pin coordinates only. Area type and density are read from the context for response metadata only; no scoring value keys on them. Live path still calls the Census density lookup when no context is passed, only to fill metadata (TODO: skip it).
-Inputs and data sources (with vintage): BTS T-100 segment 2023; FAA CY2023 enplanements; airports.json (99 hand-listed airports); OSRM free-flow routed minutes (catalog, built 2026-10-25); fitted line 10 + 0.95 x km (live).
+Inputs and data sources (with vintage): BTS T-100 segment 2023; FAA CY2023 enplanements; airports.json (99 hand-listed airports); OSRM free-flow routed minutes (catalog, built 2026-10-25); piecewise fitted line (live and new airports; see Parameters).
 Parameters: see table above. Unsourced: plateau (judgment), 52 departures and 5 passengers cut-offs (definitions), 400 km candidate radius (credit below 6%).
 Shared inputs with other pillars: none.
 Pin-shift sensitivity: 500 m, median 0, max 0.6 (recorded 2026-10-25, fitted-line path); not rerun on routed times.

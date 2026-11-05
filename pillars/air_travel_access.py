@@ -26,11 +26,16 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _AIRPORTS_FILE = os.path.join(_ROOT, "data_sources", "static", "airports.json")
 _COVERAGE_FILE = os.path.join(_ROOT, "data_sources", "static", "airport_nonstop_served_2023.json")
 
-# Drive time from straight-line distance, used when no routed time is supplied (live scoring).
-# Fitted to routed OSRM free-flow times for 1,474 catalog pins (median error 4 to 9 minutes by area type).
-# Per area type the fit gave intercepts 9.5 to 11.4 minutes and slopes 0.92 to 0.98 minutes per km, so one line is used.
-ACCESS_OVERHEAD_MIN = 10.0
-MIN_PER_KM = 0.95
+# Drive time from straight-line distance, used when no routed time is supplied (live scoring, and catalog airports that
+# have no routed time). Piecewise-linear least-absolute-deviation fit to 8,504 stored OSRM free-flow pin-to-airport
+# routes (1,474 pins, distances up to 400 km), refit 2026-11-04 because the earlier single line (10 + 0.95 x km) ran
+# long beyond 60 km (median +8 minutes at 60 to 250 km, +31 minutes beyond 250 km; Valhalla check, validation write-up).
+# Form: ACCESS_OVERHEAD_MIN + MIN_PER_KM * d + sum of slope changes beyond each knot. Held-out half median error is
+# within 0.7 minutes in every distance band; split-half coefficients differ by about 0.4 minute (intercept) and
+# 0.05 minute per km (first slope), so the plausible range is intercept 7.6 to 8.5 and first slope 1.02 to 1.06.
+ACCESS_OVERHEAD_MIN = 8.0
+MIN_PER_KM = 1.04
+DRIVE_KNOT_KM_AND_SLOPE_CHANGE = ((30.0, -0.313), (60.0, 0.198), (120.0, -0.008), (250.0, -0.333))
 
 # Airports farther than this are ignored (their credit is below 6% at this distance).
 CANDIDATE_RADIUS_KM = 400.0
@@ -61,8 +66,11 @@ def time_credit(minutes: float) -> float:
 
 
 def estimate_drive_minutes(distance_km: float) -> float:
-    """Drive minutes from straight-line distance (fitted line; see ACCESS_OVERHEAD_MIN)."""
-    return ACCESS_OVERHEAD_MIN + MIN_PER_KM * distance_km
+    """Drive minutes from straight-line distance (piecewise fit; see ACCESS_OVERHEAD_MIN)."""
+    minutes = ACCESS_OVERHEAD_MIN + MIN_PER_KM * distance_km
+    for knot, change in DRIVE_KNOT_KM_AND_SLOPE_CHANGE:
+        minutes += change * max(0.0, distance_km - knot)
+    return minutes
 
 
 @lru_cache(maxsize=1)
