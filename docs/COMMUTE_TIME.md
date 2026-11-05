@@ -128,7 +128,7 @@ Missing-data finding (2026-11-05): five places have no `work_commute` at all (NY
 
 - A: Document only. Keep curve, list unsourced knots. Fix gaps 3, 4, 5 only.
 - B: A plus a straight line in minutes (100 at 0 or 10, zero at 120) instead of the plateau and the 90-minute zero. Matches revealed-preference linear cost, but the endpoints are still choices.
-- C: A plus remove commute from the general happiness index (gap 7).
+- C: A plus remove commute from the general happiness index (gap 7, decided: keep).
 
 Recommendation: A, with gap 7 raised to you separately as a decision. Reason: no study supplies knots, so B swaps one unsourced shape for another; gap 3 is the only change with a clear evidence-based direction.
 
@@ -189,5 +189,5 @@ Exceptions accepted by the owner:
 - Hub-snap error is high for hubs 4 to 8 miles apart; the card shows the distance, the 15 mile rule stays.
 - R5 vs Google not run for SF and LA (owner declined the Google calls).
 Accepted TODOs (not Level 3): curve knots, office-days blend and 15 mile snap limit have no source.
-Open decision: the general happiness index still gives commute a 5% weight.
+Decided 2026-11-05 (owner): the general happiness index keeps its 5% commute term, using the place's area-average commute (a property of the place). Only the personal hub-based commute is excluded from the general score. Happiness index weights are reviewed in a separate session.
 Limit: copy may not call commute "validated"; independent validation covered NYC Metro-North only.
