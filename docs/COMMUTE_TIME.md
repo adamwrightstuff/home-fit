@@ -137,7 +137,18 @@ Recommendation: A, with gap 7 raised to you separately as a decision. Reason: no
 
 Pass criteria, fixed before results:
 1. All-places distribution: for each hub, no more than 15% of places at 0 or at 100 (SF Sunnyvale, Cupertino, San Jose currently fail the 0 side; Part of this is real geography).
-2. Launch pairs: each should differ by at least 20 score points to the same hub. NYC to Midtown East: Bronxville (short) vs Montauk or Babylon (long). SF to Mountain View: Mountain View vs Pacifica. LA to Downtown: Pasadena vs Lancaster/Santa Clarita (all example places are unconfirmed: confirm each exists in the catalog before running). Pairs that should be similar: Midtown East vs Midtown North for the same place (within 5 min).
+2. Launch pairs (chosen 2026-11-05 from geography and place names before any score was read; all places confirmed present in the catalog; the earlier Montauk, Lancaster and Santa Clarita examples are not in it):
+   Should differ (stored minutes in the faster usable mode at least 20 min apart, 20 min being about 20 score points in the 30 to 60 minute band):
+   NYC to Midtown East: Murray Hill vs Babylon; Kips Bay vs Yorktown Heights; Bronxville vs Westfield; Chelsea vs Huntington.
+   SF to Financial District: Russian Hill vs Livermore; Marina District vs Pleasanton; Mission District vs Novato; Nob Hill vs Walnut Creek.
+   SF to Mountain View: Mountain View vs Pacifica; Palo Alto vs Novato.
+   LA to Downtown: Little Tokyo vs Thousand Oaks; Koreatown vs Porter Ranch; Pasadena vs Palos Verdes Estates.
+   Should be similar (within 10 min):
+   NYC to Union Square: Flatiron vs Gramercy Park; Greenwich Village vs East Village.
+   SF to Financial District: Noe Valley vs Bernal Heights; Pacific Heights vs Russian Hill.
+   LA to Downtown: Los Feliz vs Silver Lake; Echo Park vs Silver Lake.
+   Hub pair: for all places, Midtown East vs Midtown North (0.7 mi apart) median absolute transit difference at most 5 min.
+   Pass: at least 80% of "differ" pairs and at least 80% of "similar" pairs, and the hub pair line.
 3. Hub-snap error: median under 10 min for jobs within 5 miles (currently proxy 6 to 22 min by separation; NYC and SF within 4 miles pass, 4 to 8 mi fails).
 4. R5 versus Google: 80% of pairs within 10 min and absolute bias under 3 min per hub (NYC passes: 89% within 10, per-hub bias at most 3.3, White Plains 3.3 narrowly fails the bias line); SF and LA need fresh Google transit calls. I am asking before any API call: it would need Google Distance Matrix transit calls for a sample of about 100 SF and 100 LA place-hub pairs.
 5. Independent validation brief for another agent: compare 30 NYC rail-town times to Midtown East against published MTA and NJ Transit timetable trip times for a 7:30 to 8:45 arrival-aligned departure; pass if the median absolute difference is under 5 min and none exceeds 15 min. The validator must not see the R5 output until it has written down the timetable times.
