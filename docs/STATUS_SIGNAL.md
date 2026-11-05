@@ -169,23 +169,27 @@ Catalog recompute (offline, new files in `data/status_class_position/`, original
 - The Up-and-Coming trajectory gate reads the area-type label (urban_core or urban_residential). Reason: trajectory is kept as-is by the 2026-10-08 decision; moving it to the place context's activity per acre needs a sourced threshold. TODO.
 - `compute_wealth` substitutes a z of 0 for a missing home value. It no longer feeds the score; it still feeds the trajectory's `_has_pressure` test and the display driver. TODO.
 
-## 9. Level 2 results (2026-11-04, catalog-only, run by the builder, so not independent)
-Criteria were fixed in `docs/STATUS_SIGNAL_LEVEL2_BRIEF.md` (amendment written before the run). No local tract income table exists, so true pin-shift and the B19001 check were replaced by catalog proxies. Result: Level 2 is NOT met.
+## 9. Level 2 results (2026-11-04, catalog and archived Census pull, no new Census calls, run by the builder so not independent)
+Criteria were fixed in `docs/STATUS_SIGNAL_LEVEL2_BRIEF.md` before any run. First pass (single-tract label, section below) failed pin-shift. Fix applied: the label reads the same pooled tracts as the
+housing pillar (D14: tracts under the pin and 8 ring points at 700 m, occupied-unit weighted). Live scoring gets this from `HOMEFIT_HOUSING_POOLED=true` with no code change here; the catalog uses
+`scripts/catalog/pool_status_class_inputs_offline.py`, which reads the cached state pull from the archive folder (`home-fit-archive-2026-11-05/data/census_pull_2026-10-28`) and the tract centers table.
+Pool membership is approximate (tract shape as a disk of its land area): the pooled home value differs from the live-geocoder pool by a median 2.8% (90th percentile 14.0%; 215 of 494 within 2%).
+Monthly housing cost is not in that pull, so pooled places keep their single-tract burden ratio (cost over income) applied to the pooled income. Pooling changed the class of 132 of 495 single-tract places.
 
 | Check | Result | Pass? |
 |---|---|---|
-| 2 All places | 0 inversions; none at the floor; largest tie share in any area type with 100+ places is 8.6% (the 80 tie); 4 areas have fewer than 5 places and were not judged | PASS |
-| 3 Launch pairs, differ | Scarsdale 100 vs Mount Vernon 42.9; Atherton 100 vs East Palo Alto 47.4; Highland Park IL 82.1 vs Englewood 18.0 pass; Palo Alto 72.3 vs East Palo Alto 47.4 is 24.9 apart against a 25 criterion | FAIL by 0.1 |
-| 3 Launch pairs, similar | Park Slope 84.0 vs Carroll Gardens 81.8 pass; Brookline 56.2 (Middle) vs Newton 80.2 (Elite) fail; Wicker Park 85.7 (Elite) vs Bucktown 59.3 (Middle) fail; 1 of 3, needed 2 | FAIL |
-| 1 Pin-shift proxy | 495 places read a single tract (34%); 71 tract-level neighbor pairs within 1 km: median difference 10.7 (limit 5), p95 40.4 (limit 20), same class 45% (limit 80%). Neighbors legitimately differ, so this overstates true pin-shift, but it points the same way as the Wicker Park and Bucktown result | FAIL |
-| 4 Independent proxy | Spearman with mean household income 0.899 (limit 0.80) pass; with median gross rent 0.637 (0.60) pass; with median home value 0.579 (0.60) fail; median home value by class is Struggling 617k, Working 434k, Middle 421k, Affluent 673k, Elite 1.19M, not strictly rising | FAIL |
+| 1 Pin-shift (500 m N/E/S/W, 216 shifts, tract-level places; 54 places, not 60, because only 6 Struggling places read a tract) | pooled: median 1.4 points, p95 13.7, class unchanged 85.2%. For comparison, single-tract: median 1.3, p95 28.5, class unchanged 74.5% | PASS (limits 5, 20, 80%) |
+| 1 Neighbor spread, 71 tract-level pairs within 1 km (amendment proxy, now superseded by the true shift) | median 4.1, p95 23.9, same class 69% | informational |
+| 2 All places | 0 inversions in 573,694 pairs; none at the floor; largest tie share in an area type with 100+ places 8.6% | PASS |
+| 3 Differ pairs | Scarsdale 100 vs Mount Vernon 43.9; Atherton 100 vs East Palo Alto 47.4; Highland Park 82.1 vs Englewood 21.3 pass; Palo Alto 72.3 vs East Palo Alto 47.4 is 24.9 apart (limit 25) | FAIL by 0.1 |
+| 3 Similar pairs | Wicker Park 83.4 vs Bucktown 79.3 pass (was 85.7 vs 59.3); Park Slope 84.9 vs Carroll Gardens 59.7 fail (pooling moved Carroll Gardens from 81.8); Brookline 56.2 vs Newton 80.2 fail (both place-level, unaffected by pooling); 1 of 3, needed 2 | FAIL |
+| 4 Independent proxy (B19001 income bins are not in the pull, so the original statistic was not run) | Spearman with mean household income 0.877 and median gross rent 0.664 pass; median home value 0.581 (limit 0.60) fail; median home value by class Struggling 533k, Working 345k, Middle 428k, Affluent 697k, Elite 1.15M, not strictly rising | FAIL (proxy); original NOT RUN |
 
-Reading: the number does what it was built to do (follows the label, no ties at the floor, tracks income). The failures are about geography, not the ladder: a label that reads one tract
-at the pin flips class between adjacent neighborhoods, the same single-tract risk DPv2 principle 6 names for housing, diversity and social fabric. The 13 Struggling places have a median home
-value of $617k (student and downtown tracts where cost outruns income), which is why the home-value ordering breaks. Recommended fix, not applied (needs owner approval): read the label's income and
-housing cost from the same pooled-tract area the housing pillar uses (`project_housing_pooled_d14`), then rerun checks 1 and 4; expected effect is fewer class flips between neighbors and a smaller
-score range between adjacent places, size unknown until built. Not run: true 500 m pin-shift and the B19001 check, which need Census data the repo does not hold.
+Reading: the ladder, the ordering and the geography problem are fixed (pin-shift passes; single-tract fails the same test). Remaining misses are about what a median income can say. Brookline (median
+$130,600) is Middle Class by metro rank while Newton is Elite; Palo Alto sits one 0.1-point short of a pair threshold I set; the 13-to-6 Struggling places are student and downtown tracts with high home
+values. These are properties of the construct (typical household income against a metro rank), not bugs; changing them means changing the label's definition, which is the owner's call (gap G5).
+Not run: B19001 share of households over $200,000 (needs data not in the repo); a rerun by someone other than the builder (the brief now needs no Census calls: the pull and centers table are in the archive folder).
 
-Proposed level: Level 1 (Converted), for owner sign-off: spec sheet filled, frames declared with evidence tiers (Affluent and Elite frame: none), no shared place facts to take from the place context, remaining uses of the area-type label listed with reasons, no neutral value in the score.
+Level 1 (Converted) signed off. Level 2 proposal for owner decision (checks are run, three criteria still fail, rerun by another session still needed): Level 1 basis: spec sheet filled, frames declared with evidence tiers (Affluent and Elite frame: none), no shared place facts to take from the place context, remaining uses of the area-type label listed with reasons, no neutral value in the score.
 Accepted TODOs to list in the sign-off line: equal 20-point bands unsourced; Affluent and Elite cutoffs (20% and 10% shares) are product definitions; UAC thresholds unsourced; trajectory area-type gate; compute_wealth neutral z; cutoffs are tract-median percentiles compared with place medians; Level 2 run offline and not met (section 9).
 Sign-off: Level 1 (Converted), signed off by the owner (Adam Wright), 2026-11-04, with the TODOs listed above accepted.

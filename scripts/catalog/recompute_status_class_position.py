@@ -29,6 +29,9 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--metro", default=None)
     ap.add_argument("--out-dir", default=str(REPO / "data" / "status_class_position"))
+    ap.add_argument("--pooled", default=None,
+                    help="pooled_inputs.json from pool_status_class_inputs_offline.py: single-tract places read the pooled "
+                         "income and home value (same pool as the housing pillar, D14) and the class is re-derived from them")
     args = ap.parse_args()
 
     from pillars.composite_indices import AURA_WEIGHTS
@@ -38,6 +41,7 @@ def main() -> int:
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     pattern = f"{args.metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl" if args.metro else "*_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
+    pooled_in = json.load(open(args.pooled)) if args.pooled else {}
     summary = collections.Counter()
     class_mismatch = []
     for path in sorted(glob.glob(str(REPO / "data" / pattern))):
@@ -54,10 +58,34 @@ def main() -> int:
             hv = (s.get("livability_pillars") or {}).get("housing_value") or {}
             sm = hv.get("summary") if isinstance(hv.get("summary"), dict) else hv
             arch = bd.get("archetype")
-            re_cls = ss._classify_class(sm, keys, baselines)
-            if re_cls is not None and re_cls[0] != arch:
-                class_mismatch.append((r["catalog"]["name"], arch, re_cls[0]))
-            if re_cls is None and arch is not None:
+            pin = pooled_in.get(f"{metro}|{r['catalog']['name']}")
+            if pin and sm.get("geo_level") == "tract":
+                # Pooled income and home value. The ACS monthly housing cost (B25105) is not in the cached pull, so the
+                # single-tract burden ratio (cost / income) is held and applied to the pooled income.
+                inc1, cost1 = sm.get("median_household_income"), sm.get("median_monthly_housing_cost")
+                sm = dict(sm)
+                sm["median_household_income"] = pin["income"]
+                if pin.get("home_value"):
+                    sm["median_home_value"] = pin["home_value"]
+                if isinstance(cost1, (int, float)) and cost1 > 0 and isinstance(inc1, (int, float)) and inc1 > 0:
+                    sm["median_monthly_housing_cost"] = cost1 * pin["income"] / inc1
+                bd["pooled_inputs"] = {"income": round(pin["income"]), "home_value": round(pin["home_value"] or 0),
+                                       "tracts": pin["tracts"], "method": "disk_approx_700m_ring_occupied_weighted"}
+                summary["pooled_places"] += 1
+                new_cls = ss._classify_class(sm, keys, baselines)
+                if new_cls is not None:
+                    if new_cls[0] != arch:
+                        summary["class_changed_by_pooling"] += 1
+                    arch = new_cls[0]
+                    bd["archetype"], bd["archetype_rule"] = new_cls
+                    bd["status_label"] = ss._get_status_label(arch)
+                    bd["status_insight"] = ss._get_status_insight(arch)
+                re_cls = None  # class was just derived from the pooled inputs
+            else:
+                re_cls = ss._classify_class(sm, keys, baselines)
+                if re_cls is not None and re_cls[0] != arch:
+                    class_mismatch.append((r["catalog"]["name"], arch, re_cls[0]))
+            if re_cls is None and arch is not None and not (pin and sm.get("geo_level") == "tract"):
                 # No income: no class (the old fallback defaulted to Struggling).
                 for k in ("archetype", "archetype_rule", "status_label", "status_insight", "trajectory", "trajectory_rule"):
                     bd[k] = None
