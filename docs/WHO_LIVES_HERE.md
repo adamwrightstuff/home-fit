@@ -1,6 +1,6 @@
 # Who lives here (descriptive panel), DPv2 spec sheet
 
-Written 2026-11-05. Step 1 of docs/PRODUCT_MODEL_PLAN.md. Status: built locally (not pushed), Level 0 until the owner signs off Level 1.
+Written 2026-11-05. Step 1 of docs/PRODUCT_MODEL_PLAN.md. Status: Level 1 signed off 2026-11-05 and pushed to main.
 
 ## Job and construct
 Answers "who lives in this place": plain facts about residents' money, education, tenure and age. It is a description. It has no score, no weight, no filter of its own and is not counted in any total. Because nothing is scored, there are no scoring parameters to source and no reference frame to choose: each number is the Census figure for the place, shown as is.
@@ -42,4 +42,4 @@ Descriptive facts from the Census (tier 1 data, no inference). The mental model 
 - Not run: pin-shift, Census spot check, comprehension.
 
 ## Sign-off
-Level 1 sign-off pending (owner).
+Level 1 (Specified), signed off by the owner (Adam Wright), 2026-11-05, with gaps G1, G2, G4, G5 and G6 accepted as open. Level 2 not claimed: no pin-shift, Census spot check or comprehension test yet.
