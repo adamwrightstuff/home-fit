@@ -155,6 +155,14 @@ Pass criteria, fixed before results:
 
 Launch pair result (2026-11-05, stored times, criteria unchanged from above): PASS. "Differ" 13 of 13 (smallest gap 22 min, Marina District vs Pleasanton). "Similar" 5 of 6 (83%); the miss is Pacific Heights 32 min vs Russian Hill 12 min to Financial District, a 20 min gap (stored values, not investigated). Hub pair Midtown East vs Midtown North median absolute difference 5.0 min over 191 places, exactly at the limit. Bronxville and Westfield were not blind.
 
+Independent timetable validation (2026-11-05, run by a separate session; timetable times written down before stored values were read): PASS. 34 Metro-North towns to Grand Central: median absolute difference 2 min (limit 6), largest 2 (limit 15), 100% within 8 (limit 80%). Stored is +2 min on 32 towns, Bronxville +1, Fairfield -1 (unexplained). Sources: MTA Hudson, Harlem and New Haven PDFs effective 2026-10-04 (Hudson revised 2026-10-15). Limits: times read by eye from PDFs by one reader with no second pass; the PDFs and the router likely share the same schedule source, so this tests routing and walk logic, not the schedule data; NYC Metro-North only.
+
+Check 1 (all-places distribution): FAIL on the 0 side for SF Sunnyvale (24%), Cupertino (20%), San Jose (17%), North San Jose (16%), Mountain View (15%) and Jersey City (12%, NYC); stored times are genuine long trips, so this reflects geography, not a data error (not verified place by place).
+Check 3 (hub snap error): FAIL for 4 to 8 mi separation (median 12 to 22 min).
+Check 4 (R5 vs Google): NYC pass on agreement (89% within 10 min); White Plains bias +3.3 narrowly over the 3 min line; SF and LA not run (needs about 200 Google calls, not approved).
+
+Proposed level: stays 0 for sign-off. Level 1 needs fix 3 and the removal or reasoned use of the area-type speed fallback (gap 5). Level 2 needs checks 1, 3 and 4 to pass or have their failures accepted in writing by you.
+
 Results: other checks not yet run beyond what section 3 states. Proposed level: stays 0 until fix 3 is approved and shipped and checks 2 and 5 are run.
 
 ## 7. Open items for owner
