@@ -425,6 +425,7 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
                     cohesion=sf_breakdown.get("social_capital"),
                     rootedness=corrected_root,
                     civic=_civ if isinstance(_civ, (int, float)) and _civ > 0 else None,
+                    economic_connectedness=sf_breakdown.get("economic_connectedness"),
                 )
                 sf_breakdown["rootedness"] = round(corrected_root, 1)
                 # Update stored contribution so total_score recomputation picks up the fix.

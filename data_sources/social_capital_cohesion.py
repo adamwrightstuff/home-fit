@@ -40,6 +40,13 @@ _BANDS_PATH = os.getenv(
 
 # zip -> {clustering, support, civic_orgs}
 _cohesion_by_zip: Dict[str, Dict[str, float]] = {}
+# National scale for economic connectedness: mean and SD over ZIPs with at least this many people (2026-11-03:
+# mean 0.883, SD 0.219, n=18,854). Computed from the Atlas file at load so a refreshed file refreshes the scale.
+_EC_MIN_POP = 1000
+_ec_pop_values: list = []
+_ec_mean: Optional[float] = None
+_ec_std: Optional[float] = None
+_EC_CLIP_Z = 2.5
 _bands: Dict[str, Any] = {}
 
 
@@ -78,6 +85,12 @@ def _load() -> None:
                         rec["support"] = s
                     if cv is not None:
                         rec["civic_orgs"] = cv
+                    ec = _fval(row.get("ec_zip"))
+                    if ec is not None:
+                        rec["ec"] = ec
+                        pop = _fval(row.get("pop2018"))
+                        if pop is not None and pop >= _EC_MIN_POP:
+                            _ec_pop_values.append(ec)
                     if rec:
                         _cohesion_by_zip[z] = rec
             logger.info(
@@ -90,6 +103,27 @@ def _load() -> None:
 
 
 _load()
+if len(_ec_pop_values) > 100:
+    import statistics as _st
+    _ec_mean, _ec_std = _st.mean(_ec_pop_values), _st.stdev(_ec_pop_values)
+
+
+def get_ec_score(zip_code: Optional[str]) -> Tuple[Optional[float], Optional[float]]:
+    """
+    (score 0-100 or None, raw Atlas economic connectedness or None) for the ZIP.
+
+    Economic connectedness is the share of high-income friends among low-income people (Chetty et al. 2022), the
+    Atlas measure that best predicts upward mobility. National scale, no area-type norm: z-score against all
+    US ZIPs with 1,000+ people, clipped at +-2.5, mapped to 0-100. None when the ZIP is not in the Atlas.
+    """
+    if not zip_code or not _ec_std:
+        return None, None
+    rec = _cohesion_by_zip.get(str(zip_code).split("-")[0].zfill(5))
+    ec = rec.get("ec") if rec else None
+    if ec is None:
+        return None, None
+    z = max(-_EC_CLIP_Z, min(_EC_CLIP_Z, (ec - _ec_mean) / _ec_std))
+    return round((z + _EC_CLIP_Z) / (2 * _EC_CLIP_Z) * 100.0, 1), ec
 
 # Area types that have their own bands; everything else falls back to nearest tier.
 _AREA_FALLBACK = {

@@ -4,15 +4,28 @@ import pytest
 from pillars.social_fabric_blend import SF_BASE_WEIGHTS, blend_social_fabric
 
 
+def test_base_weights_sum_to_one_and_ec_is_a_fifth_of_it():
+    assert abs(sum(SF_BASE_WEIGHTS.values()) - 1.0) < 1e-9
+    assert SF_BASE_WEIGHTS["economic_connectedness"] == 0.20
+
+
 def test_all_present_uses_base_weights():
-    score, w, missing = blend_social_fabric(participation=50.0, cohesion=60.0, rootedness=70.0, civic=80.0)
+    score, w, missing = blend_social_fabric(participation=50.0, cohesion=60.0, rootedness=70.0, civic=80.0,
+                                            economic_connectedness=90.0)
     assert missing == [] and w == SF_BASE_WEIGHTS
+    assert score == round(0.48 * 50 + 0.16 * 60 + 0.08 * 70 + 0.08 * 80 + 0.20 * 90, 1)
+
+
+def test_missing_ec_leaves_the_old_proportions_unchanged():
+    score, w, missing = blend_social_fabric(participation=50.0, cohesion=60.0, rootedness=70.0, civic=80.0)
+    assert missing == ["economic_connectedness"]
+    assert abs(w["participation"] - 0.60) < 1e-9 and abs(w["cohesion"] - 0.20) < 1e-9
     assert score == round(0.60 * 50 + 0.20 * 60 + 0.10 * 70 + 0.10 * 80, 1)
 
 
 def test_missing_cohesion_scales_the_rest_proportionally():
     score, w, missing = blend_social_fabric(participation=50.0, cohesion=None, rootedness=70.0, civic=80.0)
-    assert missing == ["cohesion"] and abs(sum(w.values()) - 1.0) < 1e-12
+    assert missing == ["cohesion", "economic_connectedness"] and abs(sum(w.values()) - 1.0) < 1e-12
     assert abs(w["participation"] - 0.75) < 1e-12 and abs(w["rootedness"] - 0.125) < 1e-12
     assert score == round(0.75 * 50 + 0.125 * 70 + 0.125 * 80, 1)
 
@@ -20,7 +33,18 @@ def test_missing_cohesion_scales_the_rest_proportionally():
 def test_missing_stability_is_not_scored_as_zero():
     with_zero = 0.60 * 50 + 0.20 * 60 + 0.10 * 0 + 0.10 * 80
     score, _, missing = blend_social_fabric(participation=50.0, cohesion=60.0, rootedness=None, civic=80.0)
-    assert missing == ["rootedness"] and score > round(with_zero, 1)
+    assert "rootedness" in missing and score > round(with_zero, 1)
+
+
+def test_ec_score_is_national_clipped_and_missing_zip_is_none(monkeypatch):
+    from data_sources import social_capital_cohesion as sc
+    monkeypatch.setattr(sc, "_ec_mean", 0.9)
+    monkeypatch.setattr(sc, "_ec_std", 0.2)
+    monkeypatch.setattr(sc, "_cohesion_by_zip", {"10001": {"ec": 0.9}, "10002": {"ec": 5.0}, "10003": {"ec": -5.0}, "10004": {}})
+    assert sc.get_ec_score("10001") == (50.0, 0.9)
+    assert sc.get_ec_score("10002")[0] == 100.0 and sc.get_ec_score("10003")[0] == 0.0
+    assert sc.get_ec_score("10004") == (None, None) and sc.get_ec_score("99999") == (None, None) and sc.get_ec_score(None) == (None, None)
+    assert sc.get_ec_score("10001-1234")[0] == 50.0
 
 
 def test_no_score_without_participation_or_with_one_component():

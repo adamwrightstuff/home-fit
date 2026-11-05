@@ -1,0 +1,1477 @@
+metro,place,old,new,old_total,new_total
+atlanta,Acworth,90.7,91.6,62.35,62.42
+atlanta,Alpharetta,90.5,91.2,67.91,67.97
+atlanta,Ansley Park,90.5,91.1,70.23,70.28
+atlanta,Austell,90.5,91.1,53.23,53.28
+atlanta,Avondale Estates,90.5,91.1,64.5,64.55
+atlanta,Brookhaven,90.5,91.1,67.29,67.34
+atlanta,Buckhead,90.5,91.1,64.67,64.72
+atlanta,Buford,86.3,86.8,51.25,51.3
+atlanta,Cabbagetown,90.5,91.1,63.94,63.99
+atlanta,Candler Park,90.5,91.1,69.41,69.46
+atlanta,Canton,84.7,86.2,63.23,63.35
+atlanta,Cartersville,80.7,82.4,60.57,60.71
+atlanta,Chamblee,90.6,91.1,54.65,54.7
+atlanta,Clarkston,90.5,91.0,59.09,59.13
+atlanta,College Park,90.4,91.2,52.23,52.3
+atlanta,Conyers,90.4,91.0,51.59,51.64
+atlanta,Covington,90.4,91.0,52.17,52.22
+atlanta,Cumming,84.5,85.2,65.71,65.77
+atlanta,Dacula,83.7,84.1,56.09,56.13
+atlanta,Dallas,89.9,90.6,56.4,56.45
+atlanta,Decatur,90.5,91.1,74.99,75.04
+atlanta,Doraville,90.6,91.1,54.01,54.05
+atlanta,Douglasville,90.5,91.2,55.65,55.71
+atlanta,Downtown Atlanta,90.5,91.1,66.12,66.17
+atlanta,Duluth,90.6,91.1,60.44,60.48
+atlanta,Dunwoody,90.5,91.1,66.5,66.55
+atlanta,East Atlanta,90.5,91.1,66.29,66.34
+atlanta,East Point,90.4,91.2,59.59,59.66
+atlanta,Emerson,86.8,88.2,59.91,60.03
+atlanta,Fairburn,90.3,91.4,53.93,54.02
+atlanta,Fayetteville,90.3,91.8,61.92,62.04
+atlanta,Grant Park,90.5,91.1,63.0,63.05
+atlanta,Hampton,90.3,91.7,53.29,53.4
+atlanta,Hiram,90.5,91.2,53.45,53.51
+atlanta,Holly Springs,90.6,91.8,62.58,62.68
+atlanta,Inman Park,90.5,91.1,69.62,69.67
+atlanta,Johns Creek,90.6,91.1,70.45,70.49
+atlanta,Jonesboro,90.4,91.3,52.03,52.12
+atlanta,Kennesaw,90.6,91.3,67.4,67.46
+atlanta,Kirkwood,90.5,91.1,62.07,62.12
+atlanta,Lawrenceville,90.6,91.0,56.84,56.87
+atlanta,Lilburn,90.6,91.0,63.36,63.4
+atlanta,Lindbergh,90.5,91.1,63.43,63.48
+atlanta,Lithonia,90.4,91.0,50.82,50.87
+atlanta,Mableton,90.5,91.1,58.6,58.65
+atlanta,Marietta,90.6,91.2,68.45,68.5
+atlanta,McDonough,90.4,91.2,50.08,50.15
+atlanta,Midtown Atlanta,90.5,91.1,69.89,69.94
+atlanta,Milton,90.5,91.2,69.36,69.41
+atlanta,Morningside-Lenox Park,90.5,91.1,66.39,66.44
+atlanta,Newnan,90.2,92.6,54.62,54.82
+atlanta,Norcross,90.6,91.1,57.69,57.73
+atlanta,Old Fourth Ward,90.5,91.1,64.66,64.71
+atlanta,Palmetto,90.3,91.8,54.49,54.61
+atlanta,Peachtree City,90.3,92.3,68.83,69.0
+atlanta,Peachtree Corners,90.6,91.1,55.57,55.61
+atlanta,Pine Lake,90.5,91.0,51.79,51.84
+atlanta,Powder Springs,90.5,91.2,59.21,59.27
+atlanta,Reynoldstown,90.5,91.1,65.06,65.11
+atlanta,Riverdale,90.4,91.3,57.9,57.98
+atlanta,Roswell,90.5,91.2,68.68,68.74
+atlanta,Sandy Springs,90.5,91.2,65.3,65.36
+atlanta,Senoia,90.2,92.7,60.44,60.65
+atlanta,Smyrna,90.5,91.2,64.34,64.4
+atlanta,Snellville,90.5,90.9,61.69,61.72
+atlanta,Stockbridge,90.4,91.2,46.64,46.71
+atlanta,Stone Mountain,90.5,91.0,56.37,56.41
+atlanta,Suwanee,90.6,91.1,66.41,66.45
+atlanta,Tucker,90.6,91.0,60.39,60.42
+atlanta,Tyrone,90.3,91.9,65.12,65.25
+atlanta,Union City,90.4,91.3,47.76,47.84
+atlanta,Vinings,90.5,91.1,64.34,64.39
+atlanta,Virginia-Highland,90.5,91.1,68.1,68.15
+atlanta,West End,90.5,91.1,59.89,59.94
+atlanta,Westside,90.5,91.1,62.68,62.73
+atlanta,Woodstock,90.6,91.5,65.34,65.41
+austin,Allandale,86.2,86.3,69.18,69.19
+austin,Anderson Mill,86.2,86.2,61.8,61.8
+austin,Barton Hills,86.2,86.3,65.57,65.58
+austin,Bastrop,86.3,86.4,57.64,57.65
+austin,Bee Cave,86.2,86.2,66.67,66.67
+austin,Bouldin Creek,86.3,86.4,66.75,66.76
+austin,Brentwood,86.2,86.3,69.84,69.85
+austin,Bryker Woods,86.2,86.3,69.87,69.88
+austin,Buda,86.4,86.5,61.95,61.96
+austin,Cedar Park,86.2,86.2,67.1,67.1
+austin,Cherrywood,86.3,86.4,68.75,68.76
+austin,Circle C Ranch,86.2,86.3,64.02,64.03
+austin,Clarksville,86.2,86.3,73.3,73.31
+austin,Crestview,86.2,86.3,67.22,67.23
+austin,Dove Springs,86.3,86.4,54.63,54.64
+austin,Downtown Austin,86.3,86.4,65.78,65.79
+austin,Dripping Springs,86.3,86.3,61.47,61.47
+austin,East Austin,86.3,86.4,65.58,65.58
+austin,Elgin,86.3,86.3,52.74,52.74
+austin,Georgetown,86.2,86.3,62.37,62.38
+austin,Highland,86.3,86.4,65.97,65.98
+austin,Hutto,86.2,86.2,57.72,57.72
+austin,Hyde Park,86.2,86.3,69.51,69.52
+austin,Jollyville,86.2,86.3,59.06,59.07
+austin,Kyle,86.5,86.7,60.39,60.41
+austin,Lago Vista,79.3,79.3,55.45,55.45
+austin,Lakeway,85.9,86.0,62.53,62.54
+austin,Leander,86.1,86.1,61.88,61.88
+austin,Liberty Hill,86.0,86.1,61.16,61.17
+austin,Lockhart,86.4,86.5,61.43,61.44
+austin,Manchaca,86.3,86.5,54.72,54.74
+austin,Manor,86.2,86.3,54.37,54.38
+austin,Montopolis,86.3,86.4,53.86,53.87
+austin,Mueller,86.3,86.4,64.84,64.85
+austin,North Loop,86.3,86.4,66.75,66.75
+austin,Northwest Hills,86.1,86.2,65.59,65.59
+austin,Oak Hill,86.2,86.3,66.95,66.96
+austin,Old West Austin,86.2,86.3,68.52,68.53
+austin,Pflugerville,86.3,86.3,59.74,59.74
+austin,Riverside,86.3,86.4,58.8,58.8
+austin,Rollingwood,86.2,86.3,68.0,68.01
+austin,Rosedale,86.2,86.3,71.66,71.67
+austin,Round Rock,86.3,86.3,64.31,64.31
+austin,San Marcos,86.6,86.8,62.43,62.45
+austin,South Congress,86.3,86.4,61.07,61.08
+austin,South Lamar,86.3,86.4,66.98,66.99
+austin,Southpark Meadows,86.4,86.5,57.41,57.42
+austin,St. Johns,86.3,86.4,54.91,54.92
+austin,Steiner Ranch,86.0,86.1,65.53,65.53
+austin,Sunset Valley,86.2,86.3,61.6,61.6
+austin,Tarrytown,86.2,86.3,71.53,71.54
+austin,Taylor,86.2,86.2,60.56,60.56
+austin,Travis Heights,86.3,86.4,61.39,61.4
+austin,Wells Branch,86.4,86.4,56.75,56.75
+austin,Westlake Hills,86.1,86.2,70.42,70.42
+austin,Wimberley,82.1,82.1,60.42,60.42
+austin,Windsor Park,86.3,86.4,60.23,60.23
+austin,Zilker,86.2,86.3,68.51,68.52
+boston,Acton,84.2,85.1,70.44,70.52
+boston,Allston,84.2,85.7,63.91,64.04
+boston,Andover,84.0,85.2,74.29,74.39
+boston,Arlington,84.2,85.5,75.59,75.7
+boston,Back Bay,84.2,85.8,66.76,66.89
+boston,Beacon Hill,84.2,85.8,69.72,69.85
+boston,Bedford,84.2,85.3,73.83,73.93
+boston,Belmont,84.2,85.5,77.69,77.8
+boston,Beverly,84.0,85.8,65.56,65.71
+boston,Braintree,84.3,86.0,66.35,66.49
+boston,Brighton,84.3,85.6,66.7,66.81
+boston,Brookline,84.3,85.7,76.8,76.92
+boston,Burlington,84.1,85.4,65.81,65.92
+boston,Cambridge,84.2,85.7,69.76,69.88
+boston,Canton,84.4,85.8,65.77,65.89
+boston,Carlisle,84.1,85.1,68.63,68.72
+boston,Charlestown,84.2,85.8,69.54,69.68
+boston,Chelsea,84.1,85.8,52.3,52.44
+boston,Cohasset,84.2,86.2,67.67,67.84
+boston,Concord,84.2,85.2,75.8,75.89
+boston,Dedham,84.4,85.7,67.86,67.97
+boston,Dorchester,84.3,85.8,57.06,57.19
+boston,Dover,84.4,85.5,68.56,68.65
+boston,Downtown Boston,84.2,85.8,69.82,69.95
+boston,Duxbury,84.3,86.1,62.79,62.94
+boston,East Boston,84.2,85.8,67.16,67.29
+boston,Everett,84.1,85.8,60.75,60.89
+boston,Fenway,84.2,85.7,69.84,69.96
+boston,Framingham,84.4,85.3,60.55,60.63
+boston,Hamilton,83.9,85.6,60.47,60.61
+boston,Hingham,84.3,86.2,68.96,69.12
+boston,Hopkinton,84.4,85.3,72.97,73.05
+boston,Jamaica Plain,84.3,85.7,72.63,72.74
+boston,Lexington,84.2,85.4,76.95,77.05
+boston,Lincoln,84.2,85.3,67.79,67.88
+boston,Lynnfield,84.0,85.6,65.34,65.47
+boston,Lynn,84.0,85.9,59.22,59.38
+boston,Malden,84.1,85.7,65.09,65.23
+boston,Manchester,83.9,85.9,67.72,67.89
+boston,Marblehead,84.0,86.0,63.71,63.88
+boston,Marshfield,84.3,86.1,63.88,64.03
+boston,Medfield,84.4,85.4,71.71,71.79
+boston,Medford,84.2,85.6,69.11,69.22
+boston,Melrose,84.1,85.7,72.88,73.01
+boston,Milton,84.3,85.9,69.97,70.1
+boston,Mission Hill,84.3,85.7,66.99,67.11
+boston,Natick,84.4,85.4,68.28,68.37
+boston,Needham,84.4,85.5,74.38,74.48
+boston,Newton,84.3,85.5,75.11,75.21
+boston,North Andover,84.0,85.2,69.05,69.15
+boston,North End,84.2,85.8,70.21,70.35
+boston,Norwood,84.4,85.7,66.61,66.72
+boston,Quincy,84.3,86.0,66.71,66.85
+boston,Reading,84.1,85.5,74.27,74.38
+boston,Revere,84.1,85.8,56.93,57.08
+boston,Roslindale,84.3,85.7,68.66,68.77
+boston,Salem,84.0,85.8,65.83,65.98
+boston,Scituate,84.2,86.1,64.29,64.45
+boston,Seaport District,84.2,85.9,64.61,64.75
+boston,Sharon,84.4,85.8,75.66,75.77
+boston,Sherborn,84.4,85.3,65.31,65.39
+boston,Somerville,84.2,85.7,70.28,70.41
+boston,South Boston,84.3,85.8,63.52,63.65
+boston,South End,84.2,85.8,63.27,63.4
+boston,Stoneham,84.1,85.6,69.61,69.73
+boston,Sudbury,84.2,85.2,71.54,71.62
+boston,Swampscott,84.0,85.9,68.09,68.24
+boston,Wakefield,84.1,85.6,71.58,71.7
+boston,Walpole,84.4,85.6,69.23,69.33
+boston,Waltham,84.2,85.4,65.65,65.75
+boston,Watertown,84.2,85.6,72.27,72.39
+boston,Wayland,84.3,85.3,73.12,73.2
+boston,Wellesley,84.4,85.4,72.9,72.99
+boston,Wenham,83.9,85.7,63.71,63.86
+boston,West Roxbury,84.3,85.7,68.23,68.35
+boston,Weston,84.3,85.3,71.48,71.56
+boston,Westwood,84.4,85.6,71.49,71.59
+boston,Weymouth,84.3,86.2,63.39,63.55
+boston,Winchester,84.1,85.5,78.52,78.64
+boston,Winthrop,84.1,85.9,63.39,63.54
+boston,Woburn,84.1,85.4,68.25,68.36
+charlotte,Ballantyne,88.5,89.2,69.27,69.33
+charlotte,Belmont,88.7,89.4,57.56,57.62
+charlotte,Concord,88.4,89.6,59.44,59.54
+charlotte,Cornelius,88.5,89.5,67.4,67.48
+charlotte,Cotswold,88.5,89.1,64.48,64.53
+charlotte,Davidson,88.4,89.6,72.69,72.79
+charlotte,Denver,88.6,89.3,54.2,54.26
+charlotte,Dilworth,88.5,89.1,68.92,68.97
+charlotte,Eastover,88.5,89.1,70.29,70.34
+charlotte,Elizabeth,88.5,89.1,68.17,68.22
+charlotte,Gastonia,89.0,89.8,48.57,48.64
+charlotte,Harrisburg,88.5,89.5,63.03,63.12
+charlotte,Huntersville,88.5,89.4,65.78,65.85
+charlotte,Indian Trail,88.4,89.1,56.95,57.01
+charlotte,Kannapolis,88.4,89.8,56.45,56.56
+charlotte,Lincolnton,89.0,89.5,53.9,53.94
+charlotte,Marvin,88.5,89.2,60.32,60.39
+charlotte,Matthews,88.4,89.1,66.29,66.35
+charlotte,Midland,88.4,89.3,55.51,55.6
+charlotte,Mineral Springs,88.4,89.3,55.9,55.98
+charlotte,Mint Hill,88.4,89.2,61.92,61.99
+charlotte,Monroe,88.4,89.3,48.44,48.51
+charlotte,Montford,88.5,89.1,69.79,69.84
+charlotte,Mooresville,88.4,89.7,57.72,57.82
+charlotte,Mount Holly,88.6,89.3,61.3,61.36
+charlotte,Myers Park,88.5,89.1,69.34,69.39
+charlotte,NoDa,88.5,89.2,60.16,60.22
+charlotte,Pineville,88.5,89.2,55.0,55.05
+charlotte,Plaza Midwood,88.5,89.1,65.73,65.78
+charlotte,Salisbury,81.7,83.9,51.57,51.76
+charlotte,South End,88.5,89.1,65.76,65.81
+charlotte,SouthPark,88.5,89.1,66.65,66.7
+charlotte,Stallings,88.4,89.1,61.37,61.43
+charlotte,Stanley,88.6,89.4,54.37,54.44
+charlotte,Statesville,82.3,83.7,50.04,50.16
+charlotte,Steele Creek,88.6,89.4,52.43,52.5
+charlotte,University City,88.5,89.4,53.55,53.62
+charlotte,Uptown Charlotte,88.5,89.1,64.14,64.19
+charlotte,Waxhaw,88.4,89.3,58.45,58.53
+charlotte,Weddington,88.5,89.1,62.76,62.81
+charlotte,Wesley Chapel,88.4,89.1,54.06,54.12
+chicago,Albany Park,94.0,94.2,62.42,62.44
+chicago,Andersonville,93.8,94.0,68.25,68.27
+chicago,Arlington Heights,94.4,94.6,72.81,72.82
+chicago,Aurora,92.5,92.8,61.83,61.86
+chicago,Avondale,93.9,94.1,61.62,61.64
+chicago,Back of the Yards,93.0,93.3,58.12,58.14
+chicago,Barrington,94.3,94.6,72.68,72.71
+chicago,Batavia,92.5,92.8,74.43,74.46
+chicago,Berwyn,93.3,93.4,62.45,62.46
+chicago,Beverly,92.6,93.2,65.37,65.42
+chicago,Bolingbrook,92.6,92.9,67.51,67.54
+chicago,Bridgeport,93.3,93.5,64.28,64.3
+chicago,Bronzeville,93.2,93.5,57.77,57.8
+chicago,Bucktown,93.8,94.0,67.77,67.79
+chicago,Chesterton,72.2,77.6,69.64,70.09
+chicago,Chinatown,93.3,93.5,65.38,65.39
+chicago,Cicero,93.2,93.4,59.31,59.33
+chicago,Crown Point,75.8,77.3,63.29,63.42
+chicago,Crystal Lake,90.1,90.6,72.21,72.25
+chicago,Deerfield,95.6,95.8,77.5,77.52
+chicago,Downers Grove,93.1,93.4,75.87,75.89
+chicago,Edgewater,93.8,94.0,65.56,65.58
+chicago,Edison Park,94.4,94.5,71.54,71.55
+chicago,Elgin,93.2,93.6,64.31,64.34
+chicago,Elmhurst,93.8,94.0,75.81,75.82
+chicago,Englewood,93.0,93.4,54.91,54.94
+chicago,Evanston,94.3,94.5,67.71,67.73
+chicago,Evergreen Park,92.6,93.1,59.15,59.19
+chicago,Forest Park,93.6,93.7,72.58,72.59
+chicago,Frankfort,90.0,90.2,70.53,70.55
+chicago,Garfield Park,93.6,93.7,55.17,55.17
+chicago,Garfield Ridge,92.8,93.0,62.31,62.33
+chicago,Gary,87.7,89.6,50.64,50.8
+chicago,Geneva,92.5,92.8,75.28,75.3
+chicago,Glen Ellyn,93.2,93.4,73.59,73.6
+chicago,Glencoe,95.1,95.3,74.96,74.98
+chicago,Glenview,94.7,94.9,75.01,75.02
+chicago,Gold Coast,93.6,93.8,66.37,66.39
+chicago,Hammond,90.7,91.8,55.17,55.27
+chicago,Hegewisch,90.9,91.9,54.53,54.62
+chicago,Highland Park,95.5,95.7,77.64,77.66
+chicago,Hinsdale,93.4,93.6,76.41,76.42
+chicago,Homewood,92.2,92.8,69.12,69.17
+chicago,Humboldt Park,93.7,93.9,52.66,52.67
+chicago,Hyde Park,92.9,93.5,68.17,68.22
+chicago,Irving Park,94.1,94.2,65.94,65.95
+chicago,Jefferson Park,94.0,94.2,69.01,69.03
+chicago,Joliet,89.9,90.1,59.94,59.95
+chicago,Kenwood,93.0,93.5,61.8,61.84
+chicago,La Grange,93.4,93.6,80.98,81.0
+chicago,Lake Forest,96.1,96.3,79.24,79.25
+chicago,Lake Zurich,94.6,94.9,68.64,68.67
+chicago,Lakeview,93.8,93.9,72.99,73.0
+chicago,Libertyville,96.2,96.5,77.67,77.69
+chicago,Lincoln Park,93.6,93.8,69.77,69.78
+chicago,Lincoln Square,93.9,94.1,69.55,69.56
+chicago,Lisle,93.1,93.4,73.92,73.94
+chicago,Little Village,93.2,93.4,58.91,58.92
+chicago,Logan Square,93.9,94.0,64.23,64.24
+chicago,Lombard,93.4,93.6,70.8,70.82
+chicago,Mount Greenwood,92.6,93.1,63.82,63.86
+chicago,Munster,90.3,91.4,74.31,74.4
+chicago,Naperville,92.7,93.0,79.17,79.19
+chicago,North Center,93.9,94.0,74.27,74.28
+chicago,Northbrook,95.4,95.6,76.26,76.28
+chicago,Norwood Park,94.2,94.4,70.11,70.13
+chicago,Oak Brook,93.6,93.8,71.36,71.37
+chicago,Oak Park,93.4,93.6,74.93,74.94
+chicago,Old Town,93.7,93.8,66.92,66.93
+chicago,Orland Park,92.6,92.8,73.2,73.22
+chicago,Palatine,94.4,94.6,70.65,70.66
+chicago,Park Ridge,94.5,94.7,76.28,76.3
+chicago,Pilsen,93.4,93.6,60.29,60.3
+chicago,Plainfield,92.1,92.3,66.35,66.37
+chicago,Portage Park,94.0,94.2,63.23,63.25
+chicago,Pullman,92.1,92.8,54.57,54.63
+chicago,Ravenswood,93.8,94.0,71.38,71.4
+chicago,River Forest,93.6,93.8,75.52,75.54
+chicago,River North,93.5,93.7,63.24,63.25
+chicago,Riverside,93.2,93.4,78.1,78.12
+chicago,Rogers Park,93.9,94.1,63.86,63.88
+chicago,Roscoe Village,93.8,94.0,70.31,70.33
+chicago,Sauganash,94.3,94.5,73.76,73.77
+chicago,Schaumburg,93.7,94.0,65.56,65.58
+chicago,Skokie,94.5,94.6,69.84,69.84
+chicago,South Loop,93.4,93.6,68.7,68.72
+chicago,St. Charles,92.5,92.9,72.52,72.55
+chicago,Streeterville,93.5,93.7,61.92,61.93
+chicago,The Loop,93.5,93.7,67.09,67.11
+chicago,Tinley Park,92.3,92.5,67.25,67.27
+chicago,Ukrainian Village,93.6,93.7,67.2,67.21
+chicago,Uptown,93.7,93.9,63.28,63.29
+chicago,Valparaiso,58.9,65.6,67.46,68.02
+chicago,Waukegan,96.0,96.2,59.91,59.93
+chicago,West Loop,93.6,93.7,67.86,67.87
+chicago,Western Springs,93.5,93.7,80.81,80.83
+chicago,Wheaton,92.8,93.1,76.46,76.49
+chicago,Wicker Park,93.8,93.9,67.64,67.64
+chicago,Wilmette,94.5,94.7,73.35,73.37
+chicago,Winnetka,94.8,95.0,76.71,76.73
+chicago,Woodstock,71.9,73.1,70.06,70.16
+chicago,Wrigleyville,93.7,93.9,66.18,66.2
+chicago,Yorkville,86.6,87.0,67.54,67.58
+dallas,Addison,91.9,92.3,56.28,56.31
+dallas,Allen,91.8,92.3,66.23,66.27
+dallas,Anna,91.0,91.4,52.08,52.11
+dallas,Argyle,92.0,92.3,61.08,61.1
+dallas,Arlington Heights,91.9,92.5,57.97,58.02
+dallas,Arlington,91.8,92.5,54.8,54.86
+dallas,Bedford,91.9,92.4,63.68,63.72
+dallas,Benbrook,91.9,92.6,60.25,60.31
+dallas,Berkeley Place,91.9,92.5,61.41,61.46
+dallas,Bishop Arts District,91.9,92.4,62.35,62.4
+dallas,Burleson,91.9,93.3,58.69,58.81
+dallas,Carrollton,91.9,92.3,67.17,67.21
+dallas,Casa Linda,91.8,92.4,65.41,65.46
+dallas,Cedar Hill,91.9,93.0,56.73,56.82
+dallas,Celina,91.9,92.2,58.48,58.51
+dallas,Colleyville,91.9,92.4,69.71,69.75
+dallas,Coppell,91.9,92.3,67.07,67.11
+dallas,Corinth,92.0,92.3,64.49,64.51
+dallas,Cultural District,91.9,92.5,60.22,60.27
+dallas,DeSoto,91.9,92.8,54.45,54.53
+dallas,Deep Ellum,91.8,92.4,60.61,60.66
+dallas,Denton,92.0,92.3,64.05,64.07
+dallas,Design District,91.8,92.4,60.3,60.35
+dallas,Downtown Dallas,91.9,92.4,63.0,63.04
+dallas,Downtown Fort Worth,91.9,92.5,60.3,60.35
+dallas,Duncanville,91.9,92.7,53.7,53.76
+dallas,Euless,91.9,92.4,65.35,65.39
+dallas,Fairmount,91.9,92.5,60.12,60.17
+dallas,Fairview,91.8,92.3,59.65,59.69
+dallas,Farmers Branch,91.9,92.3,64.94,64.98
+dallas,Flower Mound,91.9,92.3,68.42,68.45
+dallas,Forney,91.8,93.0,57.61,57.71
+dallas,Frisco,91.9,92.2,65.51,65.54
+dallas,Garland,91.8,92.4,59.09,59.14
+dallas,Grand Prairie,91.8,92.4,54.54,54.59
+dallas,Grapevine,91.9,92.3,71.39,71.43
+dallas,Heath,91.7,92.8,64.53,64.62
+dallas,Highland Park,91.8,92.4,70.91,70.96
+dallas,Highland Village,91.9,92.2,74.76,74.79
+dallas,Hurst,91.9,92.4,63.92,63.96
+dallas,Irving,91.9,92.4,55.11,55.16
+dallas,Keller,91.9,92.3,69.21,69.25
+dallas,Kessler Park,91.9,92.4,60.43,60.48
+dallas,Knox-Henderson,91.8,92.4,65.6,65.65
+dallas,Lake Highlands,91.8,92.4,63.63,63.68
+dallas,Lakewood,91.8,92.4,66.94,66.99
+dallas,Lancaster,91.9,92.7,48.24,48.31
+dallas,Lewisville,92.0,92.3,61.3,61.32
+dallas,Little Elm,91.9,92.2,56.76,56.78
+dallas,Lower Greenville,91.8,92.4,67.15,67.2
+dallas,Lucas,91.8,92.4,59.46,59.52
+dallas,Mansfield,91.9,93.2,60.11,60.22
+dallas,McKinney,91.8,92.3,62.11,62.15
+dallas,Melissa,91.9,92.3,60.92,60.95
+dallas,Mesquite,91.8,92.6,55.72,55.79
+dallas,Midlothian,91.9,93.5,56.77,56.9
+dallas,Murphy,91.8,92.4,72.85,72.9
+dallas,Near Southside,91.9,92.5,58.74,58.79
+dallas,North Richland Hills,91.9,92.4,62.31,62.36
+dallas,Oak Cliff,91.9,92.4,57.92,57.96
+dallas,Oak Lawn,91.8,92.4,62.55,62.6
+dallas,Plano,91.8,92.4,62.99,63.04
+dallas,Preston Hollow,91.9,92.4,58.86,58.9
+dallas,Prosper,91.9,92.2,62.42,62.44
+dallas,Richardson,91.9,92.4,68.1,68.14
+dallas,Ridglea,91.9,92.5,53.17,53.22
+dallas,Roanoke,91.9,92.3,64.41,64.44
+dallas,Rockwall,91.8,92.7,68.28,68.35
+dallas,Rowlett,91.8,92.5,62.79,62.85
+dallas,Southlake,91.9,92.3,73.23,73.26
+dallas,The Cedars,91.8,92.4,54.85,54.9
+dallas,The Colony,91.9,92.2,60.5,60.52
+dallas,Trophy Club,91.9,92.3,68.38,68.42
+dallas,University Park,91.8,92.4,74.58,74.63
+dallas,Uptown,91.8,92.4,67.24,67.29
+dallas,Victory Park,91.8,92.4,63.43,63.48
+dallas,Waxahachie,91.9,93.5,56.05,56.19
+dallas,Weatherford,80.2,80.8,58.96,59.01
+dallas,West 7th,91.9,92.5,60.73,60.78
+dallas,Westlake,91.9,92.3,63.29,63.33
+dallas,Wylie,91.8,92.4,66.48,66.53
+denver,Arvada,92.5,93.1,68.26,68.31
+denver,Aspen Park,72.5,73.8,64.88,65.0
+denver,Aurora,92.3,93.5,59.2,59.3
+denver,Baker,92.4,93.5,61.88,61.97
+denver,Bennett,92.3,93.3,47.53,47.62
+denver,Berkeley,92.4,93.2,65.14,65.2
+denver,Bow Mar,92.4,93.8,65.15,65.27
+denver,Brighton,92.3,92.7,50.46,50.49
+denver,Broomfield,92.3,92.7,64.18,64.21
+denver,Capitol Hill,92.4,93.4,67.24,67.33
+denver,Castle Rock,92.3,95.4,69.89,70.15
+denver,Centennial,92.3,94.2,68.12,68.28
+denver,Cherry Creek,92.4,93.5,68.01,68.1
+denver,Cherry Hills Village,92.4,93.8,66.39,66.51
+denver,City Park,92.4,93.4,67.1,67.19
+denver,Columbine,92.4,93.9,67.85,67.98
+denver,Commerce City,92.4,93.2,52.64,52.71
+denver,Congress Park,92.4,93.4,67.33,67.41
+denver,Dakota Ridge,92.5,93.7,64.01,64.11
+denver,Downtown Denver,92.4,93.4,63.14,63.22
+denver,Edgewater,92.5,93.3,63.98,64.05
+denver,Elizabeth,88.9,92.3,58.25,58.56
+denver,Englewood,92.4,93.8,60.85,60.96
+denver,Evergreen,70.8,71.6,67.27,67.34
+denver,Five Points,92.4,93.3,65.86,65.94
+denver,Foxfield,92.3,94.2,60.96,61.14
+denver,Franktown,92.3,95.4,60.62,60.91
+denver,Genesee,92.6,93.3,58.42,58.47
+denver,Glendale,92.4,93.6,63.55,63.65
+denver,Golden,92.5,93.2,69.8,69.86
+denver,Greenwood Village,92.4,93.9,62.42,62.54
+denver,Highlands Ranch,92.4,94.2,70.32,70.47
+denver,Highland,92.4,93.3,67.85,67.93
+denver,Hilltop,92.4,93.2,54.35,54.42
+denver,Idledale,84.9,85.8,54.84,54.92
+denver,Indian Hills,69.6,70.7,60.22,60.32
+denver,Ken Caryl,92.4,93.9,67.92,68.04
+denver,Lakewood,92.5,93.4,65.41,65.48
+denver,Littleton,92.4,93.9,73.76,73.89
+denver,LoDo,92.4,93.3,64.15,64.23
+denver,Lone Tree,92.3,94.5,64.26,64.44
+denver,Lowry,92.3,93.6,56.32,56.43
+denver,Montclair,92.4,93.5,61.35,61.44
+denver,Morrison,92.5,93.5,63.12,63.21
+denver,Northglenn,92.4,92.8,61.0,61.04
+denver,Observatory Park,92.4,93.7,66.32,66.43
+denver,Park Hill,92.4,93.6,56.24,56.34
+denver,Parker,92.3,94.6,67.65,67.84
+denver,Perry Park,67.6,78.4,55.21,56.19
+denver,Platt Park,92.4,93.6,68.14,68.24
+denver,RiNo,92.4,93.3,59.16,59.24
+denver,Roxborough Park,85.6,87.8,63.15,63.35
+denver,Sedalia,92.3,94.9,51.67,51.89
+denver,Sheridan,92.4,93.7,59.97,60.08
+denver,Sloans Lake,92.4,93.3,60.87,60.95
+denver,Stapleton,92.4,93.4,65.22,65.31
+denver,Sunnyside,92.4,93.2,61.93,62.0
+denver,Thornton,92.4,92.9,59.31,59.35
+denver,Uptown,92.4,93.4,65.15,65.24
+denver,Washington Park,92.4,93.6,66.98,67.08
+denver,Westminster,92.4,93.0,58.17,58.22
+denver,Wheat Ridge,92.5,93.2,66.15,66.21
+houston,Alief,90.1,90.4,45.08,45.1
+houston,Alvin,84.6,84.8,52.45,52.47
+houston,Angleton,78.6,78.9,57.64,57.67
+houston,Atascocita,90.0,90.3,59.33,59.36
+houston,Baytown,90.0,90.2,46.5,46.51
+houston,Bellaire,90.0,90.4,64.38,64.42
+houston,Bunker Hill Village,90.1,90.4,63.25,63.27
+houston,Cinco Ranch,88.0,88.3,63.61,63.63
+houston,Clear Lake,90.0,90.1,56.94,56.94
+houston,Conroe,90.1,90.2,52.19,52.2
+houston,Deer Park,90.0,90.2,57.0,57.02
+houston,Dickinson,84.5,84.7,52.96,52.98
+houston,Downtown Houston,90.0,90.3,61.29,61.31
+houston,EaDo,90.0,90.3,60.26,60.29
+houston,Energy Corridor,90.1,90.4,58.93,58.95
+houston,Friendswood,88.8,89.0,62.01,62.03
+houston,Fulshear,84.2,84.6,57.93,57.96
+houston,Galveston,75.0,75.2,56.36,56.38
+houston,Garden Oaks,90.0,90.3,59.99,60.02
+houston,Hedwig Village,90.1,90.4,63.55,63.58
+houston,Humble,90.0,90.3,51.78,51.81
+houston,Hunters Creek Village,90.1,90.4,65.47,65.49
+houston,Jersey Village,90.1,90.4,55.48,55.5
+houston,Katy,89.5,89.8,61.5,61.53
+houston,Kemah,85.7,85.9,55.34,55.36
+houston,Kingwood,90.0,90.3,63.23,63.25
+houston,La Porte,90.0,90.2,58.44,58.46
+houston,Lake Jackson,66.5,66.9,49.03,49.03
+houston,League City,88.2,88.4,62.11,62.13
+houston,Magnolia,89.8,90.0,57.69,57.71
+houston,Manvel,89.8,90.0,52.66,52.68
+houston,Meadows Place,90.1,90.4,61.01,61.04
+houston,Medical Center,90.0,90.3,60.76,60.78
+houston,Memorial,90.1,90.4,59.66,59.69
+houston,Meyerland,90.0,90.4,57.1,57.14
+houston,Midtown,90.0,90.3,59.87,59.9
+houston,Mission Bend,90.1,90.4,55.31,55.34
+houston,Missouri City,90.0,90.4,54.3,54.33
+houston,Mont Belvieu,89.9,90.3,53.45,53.48
+houston,Montgomery,81.9,82.0,58.33,58.34
+houston,Montrose,90.0,90.3,62.54,62.56
+houston,Museum District,90.0,90.3,62.9,62.93
+houston,Oak Forest,90.1,90.4,52.26,52.29
+houston,Oak Ridge North,90.1,90.3,64.42,64.43
+houston,Pasadena,90.0,90.3,46.01,46.04
+houston,Pearland,90.0,90.2,61.24,61.26
+houston,Piney Point Village,90.1,90.4,64.27,64.29
+houston,Rice Military,90.1,90.3,60.75,60.77
+houston,Richmond,84.4,84.8,54.89,54.93
+houston,River Oaks,90.0,90.3,62.37,62.4
+houston,Rosenberg,83.2,83.5,51.67,51.69
+houston,Seabrook,88.0,88.2,53.68,53.7
+houston,Sharpstown,90.1,90.4,52.16,52.19
+houston,Shenandoah,90.1,90.3,62.39,62.41
+houston,Sienna,85.3,85.5,51.4,51.42
+houston,Southside Place,90.0,90.3,65.74,65.77
+houston,Spring Branch,90.1,90.4,53.9,53.93
+houston,Spring Valley Village,90.1,90.4,64.09,64.11
+houston,Spring,90.1,90.3,58.22,58.23
+houston,Stafford,90.0,90.4,50.69,50.72
+houston,Sugar Land,90.1,90.4,64.22,64.25
+houston,Texas City,80.3,80.5,50.02,50.04
+houston,The Heights,90.0,90.3,62.25,62.27
+houston,The Woodlands,90.0,90.2,64.98,65.0
+houston,Third Ward,90.0,90.3,55.93,55.96
+houston,Tomball,90.0,90.2,59.34,59.36
+houston,Upper Kirby,90.0,90.3,58.32,58.34
+houston,Uptown Galleria,90.1,90.4,56.48,56.5
+houston,Waller,81.9,82.1,43.68,43.7
+houston,Washington Avenue,90.1,90.3,59.79,59.81
+houston,Webster,88.9,89.1,52.98,52.99
+houston,West University Place,90.0,90.3,67.24,67.27
+houston,Westchase,90.1,90.4,46.41,46.44
+houston,Willis,89.8,89.9,47.87,47.88
+la,Agoura Hills,85.5,85.7,69.37,69.39
+la,Alhambra,87.4,87.6,65.23,65.24
+la,Altadena,87.4,87.6,62.11,62.13
+la,Arcadia,87.4,87.6,69.28,69.3
+la,Arts District,87.3,87.6,52.6,52.63
+la,Atwater Village,87.3,87.6,68.22,68.24
+la,Bel Air,86.3,86.6,68.08,68.1
+la,Belmont Shore,86.9,87.2,64.82,64.85
+la,Beverly Hills,86.6,86.9,67.95,67.98
+la,Boyle Heights,87.3,87.6,58.9,58.92
+la,Brentwood,86.5,86.7,70.0,70.02
+la,Burbank,87.0,87.3,66.44,66.46
+la,Calabasas,85.3,85.6,68.15,68.17
+la,Canoga Park,85.4,85.7,58.57,58.59
+la,Cerritos,87.3,87.6,60.08,60.11
+la,Chatsworth,85.2,85.5,63.17,63.2
+la,Chinatown LA,87.3,87.6,64.15,64.17
+la,Compton,87.3,87.5,55.65,55.66
+la,Crenshaw,87.1,87.4,53.56,53.59
+la,Culver City,87.0,87.3,65.45,65.47
+la,Downey,87.3,87.6,60.2,60.23
+la,Downtown LA,87.3,87.6,59.08,59.11
+la,Eagle Rock,87.3,87.6,69.98,70.01
+la,East Hollywood,87.3,87.6,57.96,57.99
+la,East Los Angeles,87.3,87.6,54.82,54.85
+la,Echo Park,87.3,87.6,63.25,63.28
+la,El Monte,87.4,87.6,59.62,59.64
+la,El Segundo,86.5,86.8,67.61,67.64
+la,El Sereno,87.3,87.6,63.85,63.87
+la,Elysian Valley,87.3,87.6,62.35,62.38
+la,Encino,86.1,86.4,67.48,67.51
+la,Franklin Village,87.2,87.5,62.32,62.34
+la,Frogtown,87.3,87.6,62.05,62.08
+la,Gardena,86.8,87.1,55.09,55.12
+la,Glassell Park,87.3,87.5,63.48,63.5
+la,Glendale,87.2,87.5,65.47,65.49
+la,Granada Hills,85.8,86.1,62.76,62.78
+la,Hancock Park,87.0,87.3,65.44,65.46
+la,Hawthorne,86.8,87.1,55.14,55.17
+la,Hermosa Beach,86.2,86.4,66.75,66.76
+la,Hidden Hills,85.4,85.6,66.87,66.89
+la,Highland Park,87.3,87.6,64.87,64.89
+la,Hollywood Hills,87.1,87.3,62.71,62.73
+la,Hollywood,87.1,87.4,59.29,59.32
+la,Hyde Park,87.0,87.3,55.69,55.72
+la,Inglewood,86.7,87.0,54.88,54.9
+la,Koreatown,87.3,87.6,57.15,57.18
+la,La Cañada Flintridge,87.3,87.6,71.56,71.59
+la,La Crescenta,87.1,87.4,66.54,66.56
+la,La Mirada,87.4,87.6,66.69,66.71
+la,Lakewood,87.3,87.6,63.53,63.56
+la,Larchmont Village,87.1,87.4,65.18,65.2
+la,Leimert Park,87.1,87.4,56.54,56.57
+la,Little Tokyo,87.3,87.6,60.33,60.36
+la,Long Beach,86.7,86.9,59.88,59.9
+la,Los Feliz,87.2,87.4,66.24,66.26
+la,Manhattan Beach,86.2,86.4,67.9,67.92
+la,Mar Vista,86.6,86.9,67.18,67.2
+la,Marina del Rey,86.2,86.4,60.71,60.73
+la,Mid-City,87.2,87.5,56.98,57.0
+la,Miracle Mile,86.9,87.2,66.87,66.89
+la,Monrovia,87.4,87.6,66.89,66.91
+la,Montebello,87.3,87.6,58.52,58.55
+la,Monterey Park,87.3,87.6,62.11,62.13
+la,Mount Washington,87.3,87.6,64.47,64.5
+la,North Hollywood,86.5,86.8,59.5,59.53
+la,Pacific Palisades,86.2,86.4,74.1,74.12
+la,Palms,87.0,87.2,68.13,68.15
+la,Palos Verdes Estates,85.6,85.9,71.37,71.4
+la,Pasadena,87.4,87.6,62.08,62.1
+la,Pico-Robertson,86.9,87.2,66.97,67.0
+la,Playa Vista,86.3,86.6,66.81,66.83
+la,Playa del Rey,86.3,86.5,67.17,67.18
+la,Porter Ranch,85.5,85.8,64.97,64.99
+la,Rancho Palos Verdes,85.3,85.6,66.15,66.17
+la,Redondo Beach,86.2,86.4,69.34,69.36
+la,Reseda,85.7,86.0,60.88,60.9
+la,Rolling Hills Estates,86.0,86.2,68.25,68.27
+la,Rosemead,87.4,87.6,62.79,62.8
+la,San Fernando,86.1,86.4,62.31,62.33
+la,San Gabriel,87.4,87.6,65.14,65.16
+la,San Marino,87.4,87.6,71.61,71.62
+la,San Pedro,86.3,86.5,57.78,57.8
+la,Santa Monica,86.6,86.9,72.2,72.22
+la,Sherman Oaks,86.4,86.7,65.15,65.18
+la,Signal Hill,87.0,87.2,58.92,58.94
+la,Silver Lake,87.3,87.6,66.14,66.16
+la,Studio City,86.6,86.9,68.23,68.25
+la,Sunland-Tujunga,86.7,86.9,60.34,60.36
+la,Sylmar,86.0,86.3,61.73,61.75
+la,Tarzana,85.9,86.2,64.96,64.98
+la,Temple City,87.4,87.6,68.13,68.15
+la,Thousand Oaks,86.0,86.2,66.3,66.31
+la,Torrance,86.4,86.7,65.27,65.29
+la,Van Nuys,86.1,86.4,56.96,56.98
+la,Venice,86.3,86.6,62.49,62.51
+la,View Park,86.9,87.2,55.45,55.48
+la,Watts,87.2,87.5,53.41,53.43
+la,West Hollywood,86.9,87.2,62.18,62.2
+la,West LA,86.7,87.0,64.83,64.85
+la,Westwood,86.6,86.8,76.97,76.99
+la,Whittier,87.4,87.6,63.44,63.45
+la,Wilmington,86.5,86.7,53.5,53.52
+la,Windsor Square,87.1,87.4,66.01,66.04
+la,Woodland Hills,85.7,85.9,67.25,67.27
+las_vegas,Aliante,86.1,86.3,48.96,48.98
+las_vegas,Anthem,88.8,89.0,53.02,53.04
+las_vegas,Arts District,88.8,88.9,54.27,54.28
+las_vegas,Blue Diamond,88.7,89.0,46.72,46.75
+las_vegas,Boulder City,84.9,85.1,59.3,59.32
+las_vegas,Centennial Hills,87.1,87.3,53.31,53.33
+las_vegas,Downtown Las Vegas,88.8,88.9,53.56,53.57
+las_vegas,Enterprise,88.8,89.0,52.32,52.34
+las_vegas,Green Valley,88.8,89.0,57.17,57.18
+las_vegas,Henderson,88.8,89.0,57.05,57.07
+las_vegas,Indian Springs,44.8,45.0,42.46,42.49
+las_vegas,Inspirada,88.8,89.0,55.09,55.11
+las_vegas,Lake Las Vegas,84.5,84.7,46.33,46.35
+las_vegas,Laughlin,20.0,20.2,44.07,44.09
+las_vegas,MacDonald Highlands,88.8,89.0,56.42,56.44
+las_vegas,Mesquite,30.1,30.2,56.59,56.59
+las_vegas,Moapa Town,32.0,32.1,36.05,36.06
+las_vegas,North Las Vegas,88.7,88.9,50.84,50.86
+las_vegas,Paradise,88.8,88.9,51.28,51.29
+las_vegas,Rhodes Ranch,88.8,89.0,49.38,49.39
+las_vegas,Seven Hills,88.8,89.0,54.24,54.26
+las_vegas,Silverado Ranch,88.8,89.0,49.82,49.84
+las_vegas,Southern Highlands,88.8,89.0,51.65,51.66
+las_vegas,Spring Valley,88.8,89.0,50.13,50.14
+las_vegas,Summerlin South,88.7,89.0,63.4,63.43
+las_vegas,Summerlin,88.7,88.9,65.91,65.93
+las_vegas,Sunrise Manor,88.7,88.9,39.72,39.73
+las_vegas,The Lakes,88.7,89.0,58.35,58.37
+las_vegas,Whitney,88.7,88.9,43.93,43.95
+las_vegas,Winchester,88.8,88.9,55.17,55.18
+miami,Aventura,86.8,86.9,63.92,63.92
+miami,Bal Harbour,86.8,86.9,54.86,54.86
+miami,Boca Raton,86.7,86.8,64.65,64.65
+miami,Boynton Beach,86.5,86.6,58.55,58.56
+miami,Brickell,86.7,86.9,61.58,61.6
+miami,Coconut Creek,86.9,87.0,55.48,55.48
+miami,Coconut Grove,86.7,86.9,58.92,58.93
+miami,Cooper City,86.8,86.9,59.51,59.51
+miami,Coral Gables,86.7,86.9,66.45,66.47
+miami,Coral Springs,86.8,87.0,59.98,59.99
+miami,Cutler Bay,86.4,86.5,59.18,59.19
+miami,Davie,86.8,86.9,56.95,56.96
+miami,Deerfield Beach,86.8,86.9,53.11,53.12
+miami,Delray Beach,86.6,86.7,61.43,61.44
+miami,Design District,86.8,86.9,60.42,60.43
+miami,Doral,86.8,86.9,60.85,60.85
+miami,Downtown Miami,86.7,86.9,60.73,60.75
+miami,Downtown West Palm Beach,84.7,84.8,60.9,60.91
+miami,Edgewater,86.8,86.9,57.12,57.13
+miami,Flagler Village,86.8,86.9,57.76,57.77
+miami,Fort Lauderdale,86.8,86.9,61.47,61.48
+miami,Golden Beach,86.8,86.9,60.11,60.12
+miami,Hialeah,86.8,86.9,51.5,51.51
+miami,Hollywood,86.8,86.9,59.09,59.1
+miami,Homestead,85.6,85.7,49.97,49.98
+miami,Juno Beach,75.7,75.8,58.59,58.59
+miami,Jupiter,74.8,74.9,60.31,60.32
+miami,Kendall,86.7,86.9,61.35,61.37
+miami,Key Biscayne,86.7,86.9,61.83,61.85
+miami,Lake Worth Beach,86.4,86.5,59.92,59.93
+miami,Las Olas,86.8,86.9,59.75,59.76
+miami,Lauderhill,86.8,86.9,53.96,53.97
+miami,Little Havana,86.8,86.9,56.72,56.73
+miami,Medley,86.8,86.9,53.33,53.34
+miami,Miami Gardens,86.8,86.9,52.89,52.9
+miami,Mid-Beach,86.7,86.9,55.57,55.59
+miami,Midtown Miami,86.8,86.9,58.82,58.83
+miami,Miramar,86.8,86.9,54.31,54.31
+miami,Morningside,86.8,86.9,56.5,56.51
+miami,North Beach,86.8,86.9,49.47,49.48
+miami,North Miami Beach,86.8,86.9,56.53,56.54
+miami,North Miami,86.8,86.9,64.3,64.31
+miami,Northwood,83.3,83.4,54.73,54.74
+miami,Palm Beach Gardens,77.2,77.3,59.66,59.67
+miami,Palm Beach,81.9,82.0,57.68,57.69
+miami,Palmetto Bay,86.7,86.8,61.35,61.36
+miami,Parkland,86.9,87.0,55.04,55.05
+miami,Pembroke Pines,86.8,86.9,59.08,59.09
+miami,Pinecrest,86.7,86.9,62.51,62.53
+miami,Plantation,86.8,86.9,58.75,58.76
+miami,Pompano Beach,86.9,87.0,53.81,53.82
+miami,Rio Vista,86.8,86.9,50.95,50.96
+miami,Royal Palm Beach,80.5,80.7,57.81,57.82
+miami,South Beach,86.7,86.9,55.97,55.99
+miami,Southwest Ranches,86.8,86.9,62.14,62.15
+miami,Sunny Isles Beach,86.8,86.9,59.23,59.24
+miami,Sunrise,86.8,87.0,53.63,53.65
+miami,Surfside,86.8,86.9,57.22,57.23
+miami,Sweetwater,86.8,86.9,54.98,54.99
+miami,Tamarac,86.8,87.0,57.08,57.1
+miami,Tequesta,70.5,70.6,56.04,56.04
+miami,The Hammocks,86.7,86.9,54.64,54.66
+miami,Upper East Side,86.8,86.9,57.07,57.08
+miami,Victoria Park,86.8,86.9,57.38,57.39
+miami,Wellington,82.7,82.9,62.68,62.7
+miami,Weston,86.8,87.0,53.32,53.33
+miami,Wynwood,86.8,86.9,57.75,57.76
+nyc,Ardsley,87.1,88.7,78.22,78.35
+nyc,Astoria,87.3,88.7,68.27,68.39
+nyc,Babylon,86.9,88.0,71.22,71.31
+nyc,Battery Park City,87.4,88.7,75.99,76.1
+nyc,Bay Ridge,87.5,88.8,74.73,74.84
+nyc,Bayside,87.2,88.5,72.71,72.82
+nyc,Bed-Stuy,87.3,88.6,66.7,66.81
+nyc,Bedford,82.5,85.0,69.7,69.91
+nyc,Bellmore,87.0,88.3,74.51,74.61
+nyc,Belmont,87.3,88.7,58.15,58.26
+nyc,Bensonhurst,87.5,88.8,67.35,67.46
+nyc,Bloomfield,87.5,88.9,72.45,72.57
+nyc,Boerum Hill,87.4,88.7,71.23,71.34
+nyc,Borough Park,87.5,88.8,64.26,64.37
+nyc,Brighton Beach,87.4,88.7,66.04,66.15
+nyc,Bronxville,87.2,88.7,75.35,75.47
+nyc,Brooklyn Heights,87.4,88.7,76.39,76.5
+nyc,Bushwick,87.3,88.6,61.22,61.33
+nyc,Canarsie,87.3,88.6,65.85,65.96
+nyc,Carnegie Hill,87.3,88.7,78.54,78.65
+nyc,Carroll Gardens,87.4,88.7,75.91,76.02
+nyc,Cedarhurst,87.1,88.4,67.16,67.27
+nyc,Chappaqua,84.5,87.1,75.32,75.54
+nyc,Chatham,83.4,88.1,76.93,77.32
+nyc,Chelsea,87.4,88.8,74.57,74.68
+nyc,Chinatown,87.4,88.8,77.7,77.82
+nyc,City Island,87.1,88.6,67.45,67.58
+nyc,Clinton Hill,87.4,88.7,74.67,74.78
+nyc,Closter,87.2,88.8,72.87,73.01
+nyc,Cobble Hill,87.4,88.7,77.36,77.47
+nyc,Cold Spring Harbor,86.9,88.2,71.28,71.38
+nyc,Coney Island,87.4,88.7,59.9,60.01
+nyc,Cos Cob,86.9,88.4,66.32,66.44
+nyc,Cranford,87.2,89.0,76.61,76.76
+nyc,Cresskill,87.3,88.8,74.61,74.74
+nyc,Croton-on-Hudson,76.6,84.9,70.9,71.59
+nyc,Crown Heights,87.4,88.7,69.07,69.18
+nyc,DUMBO,87.4,88.7,71.7,71.81
+nyc,Darien,84.7,86.5,72.7,72.85
+nyc,Demarest,87.3,88.8,74.64,74.77
+nyc,Ditmas Park,87.4,88.7,67.8,67.91
+nyc,Dobbs Ferry,87.1,88.7,74.04,74.17
+nyc,East Harlem,87.3,88.7,63.04,63.15
+nyc,East New York,87.3,88.6,62.9,63.01
+nyc,East Village,87.4,88.7,69.23,69.34
+nyc,Eastchester,87.1,88.7,74.85,74.98
+nyc,Edgewater,87.4,88.8,70.29,70.4
+nyc,Elmhurst,87.3,88.6,66.82,66.93
+nyc,Englewood,87.4,88.8,71.91,72.03
+nyc,Fairfield,65.2,74.8,74.02,74.82
+nyc,Fieldston,87.3,88.7,72.97,73.09
+nyc,Financial District,87.4,88.7,76.67,76.78
+nyc,Flatbush,87.4,88.7,59.65,59.75
+nyc,Flatiron,87.4,88.7,74.08,74.19
+nyc,Flatlands,87.4,88.7,64.95,65.06
+nyc,Floral Park,87.1,88.4,75.99,76.1
+nyc,Flushing,87.2,88.6,64.35,64.47
+nyc,Fordham,87.3,88.7,58.05,58.16
+nyc,Forest Hills,87.2,88.6,73.21,73.32
+nyc,Fort Greene,87.4,88.7,73.65,73.76
+nyc,Fort Lee,87.4,88.8,76.28,76.4
+nyc,Freeport,87.0,88.4,63.92,64.04
+nyc,Garden City,87.0,88.4,75.73,75.85
+nyc,Glen Ridge,87.5,88.9,80.0,80.11
+nyc,Glen Rock,87.3,88.9,81.82,81.95
+nyc,Glendale,87.2,88.6,66.97,67.09
+nyc,Gowanus,87.4,88.8,73.15,73.27
+nyc,Gramercy Park,87.4,88.7,76.55,76.66
+nyc,Great Kills,87.7,88.9,74.17,74.27
+nyc,Great Neck,87.1,88.5,77.36,77.48
+nyc,Greenpoint,87.3,88.7,70.64,70.75
+nyc,Greenwich Village,87.4,88.8,75.13,75.25
+nyc,Greenwich,87.0,88.5,73.59,73.72
+nyc,Hamilton Heights,87.3,88.7,67.74,67.86
+nyc,Harlem,87.3,88.7,69.58,69.7
+nyc,Harrison,87.0,88.6,73.4,73.53
+nyc,Hastings-on-Hudson,87.1,88.7,77.27,77.4
+nyc,Hell's Kitchen,87.4,88.8,70.03,70.15
+nyc,Hempstead,87.0,88.4,61.89,62.0
+nyc,Hewlett,87.1,88.4,74.64,74.75
+nyc,Hoboken,87.5,88.8,75.73,75.84
+nyc,Howard Beach,87.2,88.6,69.25,69.36
+nyc,Huntington,86.9,88.2,71.24,71.35
+nyc,Hunts Point,87.3,88.7,57.77,57.89
+nyc,Inwood,87.3,88.8,64.52,64.64
+nyc,Irvington,87.1,88.7,77.02,77.16
+nyc,Jackson Heights,87.3,88.6,66.76,66.87
+nyc,Jamaica,87.2,88.5,60.73,60.84
+nyc,Jersey City,87.5,88.8,70.43,70.54
+nyc,Katonah,80.0,83.4,71.68,71.96
+nyc,Kensington,87.4,88.7,68.66,68.77
+nyc,Kew Gardens,87.2,88.5,72.7,72.81
+nyc,Kips Bay,87.4,88.7,77.61,77.72
+nyc,Larchmont,87.1,88.6,77.43,77.56
+nyc,Lawrence,87.1,88.4,67.52,67.63
+nyc,Leonia,87.4,88.8,76.25,76.36
+nyc,Little Italy,87.4,88.8,74.74,74.85
+nyc,Long Beach,87.0,88.3,66.83,66.94
+nyc,Long Island City,87.4,88.7,69.11,69.22
+nyc,Lower East Side,87.4,88.7,69.25,69.35
+nyc,Lynbrook,87.1,88.4,75.69,75.8
+nyc,Madison,77.8,87.5,76.02,76.83
+nyc,Malverne,87.1,88.4,75.45,75.56
+nyc,Mamaroneck,87.1,88.6,71.51,71.64
+nyc,Manhasset,87.1,88.5,75.27,75.38
+nyc,Manhattanville,87.3,88.7,67.9,68.02
+nyc,Maplewood,85.4,88.5,76.84,77.1
+nyc,Maspeth,87.3,88.7,64.39,64.51
+nyc,Merrick,87.0,88.3,73.8,73.9
+nyc,Midtown East,87.4,88.8,76.55,76.66
+nyc,Midtown,87.4,88.8,71.4,71.53
+nyc,Millburn,84.4,88.3,76.49,76.82
+nyc,Mineola,87.0,88.4,68.69,68.81
+nyc,Montclair,87.4,88.8,78.46,78.58
+nyc,Morningside Heights,87.3,88.7,73.88,74.0
+nyc,Morris Park,87.3,88.7,62.84,62.96
+nyc,Morristown,74.9,87.2,72.54,73.56
+nyc,Mott Haven,87.3,88.7,63.78,63.9
+nyc,Mount Kisco,82.8,85.1,70.08,70.27
+nyc,Mount Vernon,87.2,88.7,62.08,62.2
+nyc,Murray Hill,87.4,88.7,77.59,77.69
+nyc,New Canaan,76.0,81.2,73.55,73.99
+nyc,New Dorp,87.6,88.8,71.36,71.46
+nyc,New Hyde Park,87.1,88.4,69.18,69.29
+nyc,New Rochelle,87.1,88.6,67.67,67.8
+nyc,NoHo,87.4,88.8,71.88,71.99
+nyc,Nolita,87.4,88.8,74.47,74.58
+nyc,Norwalk,80.1,83.5,65.4,65.68
+nyc,Nyack,85.8,88.5,72.25,72.47
+nyc,Oceanside,87.1,88.4,69.55,69.66
+nyc,Old Greenwich,86.6,88.1,70.92,71.05
+nyc,Ossining,83.4,88.0,69.54,69.92
+nyc,Ozone Park,87.2,88.6,69.73,69.85
+nyc,Park Slope,87.4,88.7,77.01,77.12
+nyc,Peekskill,65.1,78.8,61.77,62.91
+nyc,Pelham Bay,87.2,88.7,65.99,66.12
+nyc,Pelham Manor,87.2,88.6,72.29,72.41
+nyc,Pelham,87.1,88.6,79.65,79.77
+nyc,Pleasantville,85.9,88.4,74.33,74.54
+nyc,Port Chester,87.0,88.5,67.41,67.53
+nyc,Port Washington,87.0,88.4,75.96,76.08
+nyc,Prospect Heights,87.4,88.7,76.4,76.51
+nyc,Red Hook,87.4,88.7,65.16,65.26
+nyc,Rego Park,87.2,88.6,71.44,71.56
+nyc,Richmond Hill,87.2,88.5,65.66,65.77
+nyc,Ridgewood,87.3,88.8,82.31,82.43
+nyc,Ridgewood,87.3,88.6,63.44,63.55
+nyc,Riverdale,87.3,88.7,72.02,72.14
+nyc,Riverside,86.9,88.4,74.92,75.05
+nyc,Rockaway Beach,87.2,88.5,60.26,60.37
+nyc,Rockville Centre,87.1,88.4,77.09,77.19
+nyc,Roslyn,87.0,88.4,71.92,72.04
+nyc,Rye,87.0,88.5,76.04,76.17
+nyc,Scarsdale,87.1,88.6,75.36,75.49
+nyc,Sheepshead Bay,87.4,88.7,64.32,64.43
+nyc,Short Hills,83.7,88.2,77.73,78.11
+nyc,Sleepy Hollow,86.8,88.6,69.71,69.86
+nyc,SoHo,87.5,88.8,73.73,73.84
+nyc,South Orange,85.5,88.5,77.87,78.12
+nyc,Southport,64.1,74.2,59.98,60.82
+nyc,St. George,87.5,88.8,62.18,62.29
+nyc,Stamford,86.9,88.3,66.98,67.1
+nyc,Stapleton,87.5,88.8,64.93,65.04
+nyc,Summit,84.1,88.2,75.1,75.44
+nyc,Sunnyside,87.3,88.7,70.49,70.61
+nyc,Sunset Park,87.5,88.8,72.34,72.45
+nyc,Tarrytown,87.0,88.7,72.99,73.13
+nyc,Tenafly,87.3,88.8,76.66,76.79
+nyc,Tottenville,87.6,89.2,72.52,72.65
+nyc,Tremont,87.3,88.7,58.4,58.52
+nyc,Tribeca,87.4,88.8,74.43,74.55
+nyc,Tuckahoe,87.1,88.7,75.2,75.33
+nyc,Turtle Bay,87.4,88.8,78.97,79.09
+nyc,Upper East Side,87.3,88.7,81.23,81.35
+nyc,Upper West Side,87.4,88.7,77.13,77.24
+nyc,Valley Stream,87.1,88.5,69.48,69.6
+nyc,Washington Heights,87.3,88.8,67.12,67.25
+nyc,Weehawken,87.5,88.9,70.55,70.67
+nyc,West Orange,86.4,88.7,75.36,75.55
+nyc,West Village,87.4,88.8,75.37,75.49
+nyc,Westfield,82.3,88.1,76.94,77.42
+nyc,Weston,63.8,74.1,70.65,71.51
+nyc,Westport,73.0,79.4,73.51,74.05
+nyc,Westwood,87.2,88.8,76.09,76.23
+nyc,White Plains,87.0,88.6,69.17,69.31
+nyc,Williamsburg,87.4,88.7,72.36,72.47
+nyc,Wilton,67.9,76.5,70.45,71.17
+nyc,Windsor Terrace,87.4,88.7,78.66,78.77
+nyc,Woodmere,87.1,88.4,67.61,67.72
+nyc,Woodside,87.3,88.7,69.83,69.95
+nyc,Yonkers,87.2,88.7,59.91,60.03
+nyc,Yorktown Heights,74.3,80.8,72.65,73.19
+nyc,Yorkville,87.3,88.7,77.43,77.54
+orlando,Altamonte Springs,85.2,86.7,57.34,57.46
+orlando,Apopka,85.2,86.7,54.02,54.14
+orlando,Audubon Park,85.3,86.8,59.15,59.28
+orlando,Avalon Park,85.2,86.6,51.41,51.52
+orlando,Baldwin Park,85.3,86.8,58.64,58.76
+orlando,Belle Isle,85.5,87.0,48.83,48.96
+orlando,Casselberry,85.2,86.7,60.24,60.37
+orlando,Celebration,86.3,87.7,58.09,58.2
+orlando,Clermont,85.7,87.2,52.89,53.01
+orlando,College Park,85.4,86.9,56.65,56.77
+orlando,Conway,85.4,86.9,51.99,52.12
+orlando,Downtown Orlando,85.5,87.0,58.27,58.39
+orlando,Dr. Phillips,85.6,87.0,62.88,62.99
+orlando,Edgewood,85.5,87.0,55.76,55.89
+orlando,Eustis,70.7,73.3,57.37,57.59
+orlando,Fruitland Park,62.0,64.2,46.77,46.96
+orlando,Groveland,85.9,87.2,52.04,52.14
+orlando,Kissimmee,85.9,87.3,53.55,53.67
+orlando,Lady Lake,50.0,52.7,47.98,48.21
+orlando,Lake Eola Heights,85.5,87.0,63.5,63.62
+orlando,Lake Mary,85.1,86.6,64.32,64.44
+orlando,Lake Nona,85.6,87.1,52.56,52.69
+orlando,Leesburg,69.6,71.7,52.25,52.43
+orlando,Longwood,85.1,86.6,58.23,58.36
+orlando,Maitland,85.2,86.7,60.96,61.08
+orlando,Mills 50,85.5,87.0,63.19,63.31
+orlando,Minneola,85.6,87.1,55.9,56.02
+orlando,Montverde,85.2,86.7,51.78,51.92
+orlando,Mount Dora,82.2,83.9,59.87,60.01
+orlando,Oakland,85.4,86.9,53.81,53.95
+orlando,Ocoee,85.5,86.9,47.76,47.89
+orlando,Oviedo,85.1,86.6,62.65,62.78
+orlando,Pine Hills,85.4,86.9,48.46,48.59
+orlando,Sanford,85.0,86.6,59.87,60.0
+orlando,St. Cloud,85.3,86.7,54.09,54.21
+orlando,Tavares,68.5,71.0,55.72,55.92
+orlando,Thornton Park,85.5,87.0,63.74,63.87
+orlando,Union Park,85.2,86.7,54.39,54.52
+orlando,Waterford Lakes,85.2,86.7,53.49,53.62
+orlando,Windermere,85.5,87.0,59.67,59.81
+orlando,Winter Garden,85.6,87.1,58.66,58.79
+orlando,Winter Park,85.2,86.7,66.18,66.3
+orlando,Winter Springs,85.1,86.6,55.26,55.39
+philadelphia,Ambler,83.4,85.2,74.74,74.89
+philadelphia,Ardmore,83.1,84.1,77.74,77.83
+philadelphia,Bella Vista,83.3,84.4,65.5,65.59
+philadelphia,Blue Bell,83.3,84.9,69.62,69.77
+philadelphia,Brewerytown,83.3,84.4,57.7,57.79
+philadelphia,Bristol,83.9,86.8,57.66,57.9
+philadelphia,Bryn Mawr,83.2,84.1,76.04,76.11
+philadelphia,Burlington,84.1,86.5,54.39,54.59
+philadelphia,Camden,83.4,84.5,56.31,56.4
+philadelphia,Cedar Park,83.3,84.1,58.45,58.52
+philadelphia,Center City,83.4,84.4,63.56,63.65
+philadelphia,Cherry Hill,83.5,84.9,67.48,67.59
+philadelphia,Chester,83.3,83.9,57.36,57.41
+philadelphia,Chestnut Hill,83.3,84.8,72.5,72.62
+philadelphia,Collegeville,82.9,84.2,73.07,73.17
+philadelphia,Collingswood,83.4,84.6,67.6,67.7
+philadelphia,Conshohocken,83.3,84.4,73.82,73.91
+philadelphia,Downingtown,83.0,84.2,75.9,76.0
+philadelphia,Doylestown,70.8,77.5,76.64,77.2
+philadelphia,Drexel Hill,83.1,83.9,64.13,64.2
+philadelphia,East Falls,83.2,84.6,66.27,66.38
+philadelphia,East Passyunk,83.3,84.3,59.87,59.95
+philadelphia,Elkins Park,83.3,85.2,65.25,65.41
+philadelphia,Elkton,84.5,85.0,56.49,56.53
+philadelphia,Exton,83.0,84.1,71.32,71.42
+philadelphia,Fairmount,83.3,84.4,62.96,63.05
+philadelphia,Fishtown,83.4,84.7,66.62,66.73
+philadelphia,Fitler Square,83.3,84.3,67.15,67.23
+philadelphia,Fox Chase,83.5,85.4,65.06,65.22
+philadelphia,Francisville,83.3,84.5,64.58,64.68
+philadelphia,Frankford,83.4,85.1,51.08,51.22
+philadelphia,Germantown,83.2,84.7,59.68,59.81
+philadelphia,Glassboro,83.2,83.7,58.2,58.25
+philadelphia,Glenside,83.3,85.2,73.57,73.75
+philadelphia,Graduate Hospital,83.3,84.3,66.69,66.78
+philadelphia,Haddonfield,83.5,84.6,75.25,75.35
+philadelphia,Haverford,83.2,84.1,75.29,75.36
+philadelphia,Havertown,83.1,84.0,78.74,78.81
+philadelphia,Hockessin,83.5,84.2,64.95,65.01
+philadelphia,Jenkintown,83.4,85.3,75.76,75.92
+philadelphia,Kennett Square,83.3,84.2,65.26,65.33
+philadelphia,Kensington,83.4,84.7,57.17,57.28
+philadelphia,King of Prussia,83.2,84.2,71.57,71.65
+philadelphia,Kingsessing,83.3,84.0,57.05,57.11
+philadelphia,Langhorne,83.7,86.8,67.38,67.64
+philadelphia,Lansdale,83.1,85.1,68.91,69.08
+philadelphia,Levittown,83.8,87.1,55.42,55.72
+philadelphia,Malvern,83.1,84.1,76.44,76.52
+philadelphia,Manayunk,83.2,84.5,69.15,69.25
+philadelphia,Marlton,83.6,85.0,66.63,66.75
+philadelphia,Mayfair,83.5,85.4,52.89,53.05
+philadelphia,Medford,83.6,85.3,66.67,66.82
+philadelphia,Media,83.2,83.9,74.18,74.23
+philadelphia,Moorestown,83.6,85.3,68.84,68.98
+philadelphia,Mount Airy,83.2,84.8,67.46,67.59
+philadelphia,Mount Laurel,83.6,85.3,58.61,58.75
+philadelphia,Narberth,83.1,84.2,75.74,75.83
+philadelphia,Newark,84.3,84.8,64.71,64.76
+philadelphia,Newtown Square,83.2,84.0,73.55,73.62
+philadelphia,Newtown,83.7,87.1,70.21,70.49
+philadelphia,Norristown,83.2,84.4,61.34,61.44
+philadelphia,Northern Liberties,83.3,84.5,59.47,59.57
+philadelphia,Old City,83.4,84.5,65.73,65.82
+philadelphia,Overbrook,83.2,84.1,60.7,60.77
+philadelphia,Packer Park,83.3,84.1,58.31,58.37
+philadelphia,Pennsauken,83.5,84.9,63.02,63.14
+philadelphia,Pennsport,83.4,84.4,60.74,60.82
+philadelphia,Phoenixville,83.0,84.2,71.1,71.2
+philadelphia,Point Breeze,83.3,84.2,57.2,57.28
+philadelphia,Port Richmond,83.4,84.9,54.08,54.21
+philadelphia,Powelton Village,83.3,84.3,61.65,61.74
+philadelphia,Queen Village,83.3,84.4,65.91,66.0
+philadelphia,Radnor,83.2,84.1,73.27,73.34
+philadelphia,Rittenhouse Square,83.3,84.4,65.04,65.13
+philadelphia,Roxborough,83.1,84.5,70.36,70.47
+philadelphia,Society Hill,83.3,84.4,67.17,67.27
+philadelphia,Somerton,83.7,86.0,63.57,63.76
+philadelphia,Spring Garden,83.3,84.4,63.03,63.12
+philadelphia,Spruce Hill,83.3,84.2,61.35,61.43
+philadelphia,Strawberry Mansion,83.2,84.5,52.6,52.7
+philadelphia,Swarthmore,83.2,83.9,74.22,74.28
+philadelphia,University City,83.3,84.3,65.38,65.47
+philadelphia,Upper Darby,83.1,83.9,62.76,62.82
+philadelphia,Villanova,83.2,84.2,73.32,73.41
+philadelphia,Voorhees,83.4,84.5,68.21,68.3
+philadelphia,Washington Square West,83.3,84.4,63.98,64.07
+philadelphia,Wayne,83.1,84.1,74.46,74.54
+philadelphia,West Chester,83.0,84.1,68.44,68.53
+philadelphia,Wilmington,83.8,84.4,58.85,58.9
+philadelphia,Woodbury,83.4,84.0,58.92,58.97
+philadelphia,Wynnefield,83.2,84.3,56.55,56.64
+philadelphia,Yardley,84.5,88.0,71.18,71.47
+phoenix,Ahwatukee,87.6,88.4,49.49,49.55
+phoenix,Alhambra,87.6,88.3,50.96,51.02
+phoenix,Anthem,87.7,88.3,58.69,58.74
+phoenix,Apache Junction,87.5,88.3,53.73,53.8
+phoenix,Arcadia,87.6,88.4,59.86,59.93
+phoenix,Avondale,87.5,88.3,49.92,49.98
+phoenix,Biltmore,87.6,88.3,58.96,59.02
+phoenix,Buckeye,87.4,87.9,52.4,52.44
+phoenix,Camelback East,87.6,88.4,57.68,57.75
+phoenix,Carefree,87.6,88.3,54.19,54.25
+phoenix,Casa Grande,88.5,89.3,45.52,45.59
+phoenix,Cave Creek,87.6,88.3,53.49,53.54
+phoenix,Chandler,87.7,88.4,62.98,63.04
+phoenix,Coolidge,78.5,80.8,42.52,42.71
+phoenix,Coronado,87.6,88.4,55.05,55.12
+phoenix,DC Ranch,87.5,88.3,57.5,57.57
+phoenix,Deer Valley,87.6,88.4,50.01,50.08
+phoenix,Desert Ridge,87.6,88.4,62.59,62.65
+phoenix,Downtown Chandler,87.7,88.4,61.68,61.74
+phoenix,Downtown Gilbert,87.6,88.4,62.98,63.05
+phoenix,Downtown Mesa,87.6,88.4,58.13,58.2
+phoenix,Downtown Phoenix,87.6,88.4,57.3,57.37
+phoenix,Downtown Tempe,87.6,88.4,65.72,65.79
+phoenix,Eastmark,87.6,88.3,56.36,56.41
+phoenix,El Mirage,87.5,88.2,51.41,51.46
+phoenix,Encanto,87.6,88.4,54.15,54.22
+phoenix,Florence,66.7,70.7,42.1,42.46
+phoenix,Fountain Hills,87.5,88.3,54.02,54.09
+phoenix,Gainey Ranch,87.5,88.3,63.26,63.33
+phoenix,Gilbert,87.6,88.4,63.61,63.68
+phoenix,Glendale,87.5,88.3,51.5,51.56
+phoenix,Gold Canyon,87.6,88.4,44.88,44.95
+phoenix,Goodyear,87.5,88.2,56.31,56.37
+phoenix,Laveen,87.6,88.4,50.81,50.87
+phoenix,Litchfield Park,87.5,88.2,55.72,55.78
+phoenix,Maricopa,87.7,88.4,48.96,49.02
+phoenix,McCormick Ranch,87.6,88.3,64.44,64.5
+phoenix,Melrose District,87.6,88.3,54.19,54.25
+phoenix,Mesa,87.6,88.4,58.13,58.2
+phoenix,Midtown Phoenix,87.6,88.4,54.19,54.26
+phoenix,Moon Valley,87.6,88.4,56.33,56.4
+phoenix,New River,87.9,88.4,49.9,49.95
+phoenix,North Mountain,87.6,88.3,48.99,49.05
+phoenix,Old Town Scottsdale,87.6,88.3,68.56,68.62
+phoenix,Paradise Valley,87.6,88.3,64.07,64.12
+phoenix,Peoria,87.6,88.3,56.04,56.1
+phoenix,Pima Crossing,87.6,88.3,65.54,65.59
+phoenix,Queen Creek,87.6,88.4,60.59,60.66
+phoenix,Rio Verde,77.4,79.7,46.92,47.15
+phoenix,Roosevelt Row,87.6,88.4,58.16,58.23
+phoenix,San Tan Valley,84.8,86.0,58.02,58.12
+phoenix,Scottsdale,87.6,88.3,68.56,68.62
+phoenix,Sun City West,87.6,88.1,57.56,57.61
+phoenix,Sun City,87.6,88.2,53.77,53.82
+phoenix,Sun Lakes,87.8,88.5,56.79,56.85
+phoenix,Sunnyslope,87.6,88.3,58.51,58.57
+phoenix,Surprise,87.5,88.1,55.69,55.74
+phoenix,Tempe,87.6,88.4,63.44,63.51
+phoenix,Tolleson,87.6,88.3,44.21,44.27
+phoenix,Uptown Phoenix,87.6,88.3,61.58,61.64
+phoenix,Verrado,87.5,88.0,59.98,60.02
+phoenix,Wickenburg,60.4,60.6,52.59,52.61
+phoenix,Willo,87.6,88.4,58.57,58.64
+phoenix,Youngtown,87.5,88.2,46.53,46.59
+raleigh,Apex,80.7,80.8,70.29,70.29
+raleigh,Archer Lodge,80.3,80.4,53.57,53.58
+raleigh,Benson,80.3,80.4,51.31,51.32
+raleigh,Boylan Heights,80.6,80.7,68.07,68.08
+raleigh,Brier Creek,80.8,80.9,60.82,60.83
+raleigh,Cameron Village,80.6,80.7,67.33,67.34
+raleigh,Cary,80.7,80.8,74.3,74.31
+raleigh,Clayton,80.4,80.5,59.97,59.98
+raleigh,Downtown Raleigh,80.6,80.7,66.56,66.57
+raleigh,Five Points,80.6,80.7,65.83,65.84
+raleigh,Four Oaks,77.4,77.5,49.55,49.56
+raleigh,Franklinton,80.5,80.6,48.27,48.28
+raleigh,Fuquay-Varina,80.5,80.6,64.0,64.01
+raleigh,Garner,80.5,80.6,57.85,57.85
+raleigh,Glenwood South,80.6,80.7,66.92,66.93
+raleigh,Hayes Barton,80.6,80.7,65.66,65.67
+raleigh,Holly Springs,80.6,80.7,64.43,64.44
+raleigh,Knightdale,80.5,80.6,54.04,54.05
+raleigh,Louisburg,80.4,80.5,50.25,50.26
+raleigh,Midtown Raleigh,80.6,80.7,62.86,62.87
+raleigh,Morrisville,80.7,80.9,62.18,62.2
+raleigh,North Hills,80.6,80.7,64.96,64.97
+raleigh,Oakwood,80.6,80.7,68.02,68.03
+raleigh,Rolesville,80.5,80.6,61.07,61.08
+raleigh,Selma,80.3,80.4,52.37,52.38
+raleigh,Smithfield,80.3,80.4,52.41,52.42
+raleigh,Wake Forest,80.6,80.7,63.03,63.04
+raleigh,Wakefield,80.6,80.7,54.59,54.6
+raleigh,Wendell,80.4,80.5,52.15,52.16
+raleigh,Youngsville,80.5,80.6,53.43,53.44
+raleigh,Zebulon,80.4,80.5,50.78,50.79
+sacramento,Alkali Flat,66.5,67.0,63.22,63.27
+sacramento,Antelope,65.9,66.0,54.74,54.75
+sacramento,Arden-Arcade,66.1,66.3,50.4,50.41
+sacramento,Auburn,65.1,65.2,61.9,61.9
+sacramento,Boulevard Park,66.5,67.0,65.79,65.83
+sacramento,Cameron Park,65.0,65.2,51.4,51.42
+sacramento,Carmichael,65.9,66.0,52.8,52.81
+sacramento,Citrus Heights,65.8,66.0,52.91,52.93
+sacramento,Clarksburg,65.7,67.3,41.89,42.03
+sacramento,Colfax,56.8,56.8,57.67,57.67
+sacramento,Curtis Park,66.4,67.1,57.68,57.73
+sacramento,Davis,68.9,69.5,63.5,63.55
+sacramento,Diamond Springs,57.5,57.7,53.97,53.97
+sacramento,Downtown Sacramento,66.6,67.1,66.26,66.31
+sacramento,East Sacramento,66.4,66.8,59.61,59.64
+sacramento,El Dorado Hills,65.3,65.5,63.02,63.04
+sacramento,Elk Grove,65.9,67.0,60.7,60.79
+sacramento,Elmhurst,66.4,67.0,59.34,59.39
+sacramento,Esparto,67.3,67.9,47.12,47.17
+sacramento,Fair Oaks,65.8,65.9,57.84,57.85
+sacramento,Florin,66.1,66.9,46.56,46.62
+sacramento,Folsom,65.5,65.7,65.91,65.93
+sacramento,Foothill Farms,66.0,66.1,49.22,49.23
+sacramento,Galt,66.3,67.5,44.37,44.47
+sacramento,Georgetown,43.4,43.5,49.47,49.47
+sacramento,Gold River,65.8,65.9,51.91,51.92
+sacramento,Granite Bay,65.3,65.5,55.47,55.48
+sacramento,Greenhaven,66.3,67.3,48.26,48.34
+sacramento,Knights Landing,66.2,66.3,43.24,43.25
+sacramento,La Riviera,66.1,66.4,50.53,50.56
+sacramento,Land Park,66.5,67.2,60.04,60.1
+sacramento,Lincoln,65.2,65.3,60.87,60.88
+sacramento,Loomis,65.5,65.6,58.97,58.98
+sacramento,McKinley Park,66.4,66.9,61.02,61.06
+sacramento,Meadow Vista,59.3,59.4,50.68,50.69
+sacramento,Midtown Sacramento,66.5,67.0,66.6,66.64
+sacramento,Natomas,66.6,67.0,49.61,49.64
+sacramento,Newcastle,65.3,65.3,55.2,55.2
+sacramento,North Highlands,66.0,66.1,44.82,44.83
+sacramento,Oak Park,66.4,67.0,54.55,54.6
+sacramento,Orangevale,65.5,65.7,52.76,52.77
+sacramento,Parkway,66.1,67.1,45.79,45.87
+sacramento,Penryn,65.4,65.4,52.59,52.59
+sacramento,Placerville,56.2,56.3,59.66,59.66
+sacramento,Pocket,66.2,67.3,51.21,51.3
+sacramento,Pollock Pines,41.7,41.8,47.31,47.32
+sacramento,Rancho Cordova,66.0,66.2,51.68,51.7
+sacramento,Rancho Murieta,65.2,65.4,46.97,46.99
+sacramento,Rio Linda,66.1,66.2,46.32,46.33
+sacramento,Rocklin,65.6,65.7,65.46,65.47
+sacramento,Rosemont,66.1,66.5,50.85,50.88
+sacramento,Roseville,65.7,65.8,63.41,63.42
+sacramento,Shingle Springs,65.0,65.1,51.93,51.94
+sacramento,Tahoe Park,66.4,66.9,53.08,53.12
+sacramento,Vineyard,65.7,66.4,50.84,50.9
+sacramento,West Sacramento,66.9,67.4,54.37,54.41
+sacramento,Winters,71.2,71.8,50.25,50.3
+sacramento,Woodland,67.2,67.6,57.47,57.5
+san_antonio,Alamo Heights,78.7,78.7,67.15,67.15
+san_antonio,Balcones Heights,78.0,78.0,49.46,49.46
+san_antonio,Bandera,65.0,65.0,54.13,54.13
+san_antonio,Beacon Hill,77.7,77.7,57.55,57.55
+san_antonio,Boerne,74.9,74.9,60.99,60.99
+san_antonio,Bulverde,77.9,77.9,57.03,57.03
+san_antonio,Canyon Lake,78.2,78.2,49.77,49.77
+san_antonio,Castle Hills,78.5,78.5,57.32,57.32
+san_antonio,Castroville,74.8,74.8,54.52,54.52
+san_antonio,China Grove,79.1,79.1,49.04,49.04
+san_antonio,Cibolo,81.1,81.3,54.88,54.89
+san_antonio,Comfort,74.6,74.6,50.13,50.13
+san_antonio,Converse,79.8,79.9,48.31,48.32
+san_antonio,Cross Mountain,75.5,75.5,54.94,54.94
+san_antonio,Dignowity Hill,78.7,78.7,58.58,58.58
+san_antonio,Downtown San Antonio,78.4,78.4,57.83,57.83
+san_antonio,Elmendorf,77.7,77.7,40.57,40.57
+san_antonio,Fair Oaks Ranch,74.9,74.9,55.46,55.46
+san_antonio,Floresville,75.8,75.9,52.05,52.05
+san_antonio,Garden Ridge,81.3,81.4,57.6,57.61
+san_antonio,Government Hill,78.5,78.5,54.14,54.14
+san_antonio,Helotes,76.4,76.4,64.67,64.67
+san_antonio,Hollywood Park,78.5,78.7,62.42,62.44
+san_antonio,King William,78.3,78.3,59.81,59.81
+san_antonio,Kirby,79.2,79.2,48.27,48.27
+san_antonio,La Vernia,79.6,79.7,49.15,49.16
+san_antonio,Leon Valley,77.0,77.0,56.11,56.11
+san_antonio,Live Oak,81.2,81.4,50.69,50.71
+san_antonio,Lytle,74.8,74.8,50.26,50.26
+san_antonio,Marion,83.1,83.3,54.04,54.06
+san_antonio,Medical Center,77.2,77.2,54.61,54.61
+san_antonio,Monte Vista,78.0,78.0,57.5,57.5
+san_antonio,New Braunfels,85.3,85.5,59.39,59.4
+san_antonio,Olmos Park,78.1,78.1,67.61,67.61
+san_antonio,Pleasanton,74.6,74.6,44.03,44.03
+san_antonio,Sandy Oaks,76.1,76.2,45.95,45.95
+san_antonio,Schertz,81.4,81.6,54.26,54.27
+san_antonio,Seguin,86.1,86.2,50.72,50.73
+san_antonio,Selma,81.0,81.1,50.67,50.68
+san_antonio,Shavano Park,77.7,77.9,61.34,61.36
+san_antonio,Southtown,78.2,78.2,59.27,59.27
+san_antonio,Spring Branch,78.6,78.6,51.48,51.48
+san_antonio,Stone Oak,78.4,78.4,57.94,57.94
+san_antonio,Terrell Hills,78.7,78.8,63.79,63.8
+san_antonio,Timberwood Park,77.0,77.0,54.28,54.28
+san_antonio,Tobin Hill,77.9,77.9,58.01,58.01
+san_antonio,Universal City,80.5,80.7,56.1,56.11
+san_antonio,Von Ormy,75.9,75.9,39.95,39.95
+san_antonio,Windcrest,79.8,79.9,55.65,55.66
+seattle,Bainbridge Island,22.7,34.5,71.58,72.57
+seattle,Ballard,84.0,84.4,68.8,68.83
+seattle,Edmonds,84.0,84.8,70.06,70.12
+seattle,Kirkland,84.0,84.4,75.15,75.18
+seattle,Mercer Island,84.0,84.4,71.77,71.8
+sf,Alameda,81.8,84.8,72.43,72.68
+sf,Alamo Square,81.6,84.6,71.24,71.49
+sf,Alamo,82.4,84.8,69.48,69.68
+sf,Albany,82.5,84.5,74.37,74.53
+sf,Almaden Valley,82.0,84.7,64.05,64.27
+sf,Atherton,81.4,84.7,73.02,73.3
+sf,Bayview,81.5,84.8,62.37,62.65
+sf,Belmont,81.4,84.8,73.55,73.83
+sf,Belvedere,81.5,84.3,70.68,70.91
+sf,Bernal Heights,81.6,84.7,73.68,73.94
+sf,Burlingame,81.4,84.8,71.69,71.97
+sf,Campbell,81.9,84.7,65.43,65.66
+sf,Castro Valley,81.5,84.8,64.14,64.42
+sf,Chinatown,81.8,84.6,71.64,71.87
+sf,Cole Valley,81.5,84.6,73.94,74.2
+sf,Concord,82.8,84.4,62.65,62.78
+sf,Corte Madera,81.8,84.0,72.42,72.6
+sf,Cow Hollow,81.5,84.5,71.26,71.51
+sf,Cupertino,81.8,84.7,75.68,75.92
+sf,Daly City,81.5,84.7,66.68,66.95
+sf,Danville,82.3,84.8,72.72,72.93
+sf,Diamond Heights,81.5,84.7,71.77,72.04
+sf,Dogpatch,81.7,84.7,72.26,72.51
+sf,Dublin,81.8,84.8,71.41,71.66
+sf,East Palo Alto,81.5,84.7,61.54,61.81
+sf,El Cerrito,82.6,84.4,69.84,69.99
+sf,Elmwood,82.0,84.7,74.01,74.24
+sf,Emeryville,82.2,84.7,66.05,66.26
+sf,Evergreen,82.0,84.7,60.59,60.81
+sf,Excelsior,81.5,84.7,70.87,71.13
+sf,Fairfax,81.6,83.7,72.12,72.29
+sf,Financial District,81.8,84.6,73.65,73.88
+sf,Forest Hill,81.5,84.6,72.53,72.78
+sf,Foster City,81.4,84.8,68.88,69.16
+sf,Fremont,81.5,84.8,73.58,73.85
+sf,Fruitvale,81.9,84.8,59.47,59.71
+sf,Glen Park,81.5,84.7,71.93,72.19
+sf,Glenview,82.0,84.8,65.14,65.37
+sf,Grand Lake,82.1,84.8,65.7,65.93
+sf,Haight-Ashbury,81.5,84.6,72.8,73.05
+sf,Half Moon Bay,81.3,84.7,65.86,66.14
+sf,Hayes Valley,81.7,84.6,69.93,70.17
+sf,Hayward,81.5,84.8,63.01,63.28
+sf,Hillsborough,81.4,84.8,70.73,71.01
+sf,Inner Richmond,81.5,84.5,73.86,74.11
+sf,Inner Sunset,81.5,84.6,75.81,76.07
+sf,Jack London Square,81.9,84.8,63.46,63.7
+sf,Kensington,82.3,84.5,69.3,69.48
+sf,Kentfield,81.7,83.8,70.0,70.17
+sf,Lafayette,82.5,84.7,73.0,73.18
+sf,Larkspur,81.7,83.9,72.63,72.82
+sf,Livermore,81.8,84.8,67.76,68.01
+sf,Los Altos Hills,81.5,84.7,67.65,67.91
+sf,Los Altos,81.5,84.7,75.17,75.43
+sf,Los Gatos,82.0,84.7,70.92,71.15
+sf,Lower Haight,81.7,84.6,71.8,72.04
+sf,Marina District,81.5,84.5,70.92,71.17
+sf,Martinez,79.3,82.2,70.72,70.97
+sf,Menlo Park,81.4,84.7,76.04,76.32
+sf,Mill Valley,81.6,84.0,72.8,73.0
+sf,Millbrae,81.4,84.8,72.24,72.53
+sf,Milpitas,81.8,84.8,67.04,67.29
+sf,Mission Bay,81.7,84.7,69.28,69.53
+sf,Mission District,81.7,84.7,68.81,69.06
+sf,Montclair,81.8,84.8,67.91,68.16
+sf,Moraga,82.0,84.8,67.11,67.34
+sf,Mountain View,81.7,84.7,74.21,74.46
+sf,Newark,81.5,84.8,57.17,57.45
+sf,Nob Hill,81.7,84.6,71.22,71.47
+sf,Noe Valley,81.5,84.7,75.34,75.61
+sf,North Beach,81.7,84.6,69.31,69.55
+sf,North Berkeley,82.2,84.6,73.46,73.66
+sf,Novato,80.0,82.2,65.99,66.18
+sf,Orinda,82.3,84.7,73.93,74.13
+sf,Outer Richmond,81.4,84.4,72.0,72.25
+sf,Outer Sunset,81.4,84.5,71.39,71.65
+sf,Pacific Heights,81.5,84.5,74.03,74.28
+sf,Pacifica,81.4,84.8,67.95,68.23
+sf,Palo Alto,81.4,84.7,79.04,79.32
+sf,Piedmont,82.0,84.8,71.01,71.24
+sf,Pleasant Hill,82.8,84.5,69.97,70.11
+sf,Pleasanton,81.6,84.8,72.39,72.65
+sf,Portola Valley,81.3,84.7,64.81,65.09
+sf,Potrero Hill,81.7,84.7,72.17,72.42
+sf,Presidio Heights,81.5,84.5,73.49,73.74
+sf,Redwood City,81.4,84.7,69.47,69.74
+sf,Richmond,82.6,84.3,57.94,58.08
+sf,Rockridge,82.0,84.7,69.11,69.33
+sf,Rose Garden,81.8,84.7,62.07,62.31
+sf,Ross,81.7,83.8,69.41,69.59
+sf,Russian Hill,81.6,84.6,73.85,74.1
+sf,San Anselmo,81.8,83.7,73.5,73.66
+sf,San Bruno,81.4,84.8,64.25,64.54
+sf,San Carlos,81.4,84.7,74.19,74.46
+sf,San Leandro,81.6,84.8,63.97,64.24
+sf,San Mateo,81.4,84.8,70.78,71.07
+sf,San Rafael,81.9,83.8,67.48,67.64
+sf,San Ramon,82.1,84.8,73.37,73.6
+sf,Santa Clara,81.8,84.7,65.87,66.12
+sf,Saratoga,81.9,84.7,68.83,69.06
+sf,Sausalito,81.5,84.2,71.09,71.31
+sf,SoMa,81.8,84.7,65.78,66.02
+sf,South San Francisco,81.5,84.8,62.48,62.76
+sf,Sunnyvale,81.7,84.7,69.58,69.83
+sf,Temescal,82.2,84.7,68.33,68.54
+sf,The Castro,81.6,84.6,73.33,73.58
+sf,Tiburon,81.5,84.2,69.03,69.25
+sf,Union City,81.5,84.8,61.98,62.26
+sf,Visitacion Valley,81.5,84.8,65.13,65.41
+sf,Walnut Creek,82.7,84.7,70.97,71.14
+sf,West Portal,81.5,84.6,75.66,75.92
+sf,Willow Glen,81.9,84.7,66.36,66.6
+sf,Woodside,81.4,84.7,70.12,70.4
+tampa,Apollo Beach,84.5,85.6,54.75,54.84
+tampa,Brandon,85.2,86.3,59.8,59.89
+tampa,Brooksville,76.6,77.7,51.56,51.65
+tampa,Carrollwood,84.1,85.5,53.91,54.03
+tampa,Channelside,85.0,86.2,56.53,56.63
+tampa,Citrus Park,83.9,85.3,58.08,58.19
+tampa,Clearwater Beach,83.8,85.2,52.97,53.09
+tampa,Clearwater,83.9,85.2,58.26,58.37
+tampa,Crescent Lake,84.1,85.3,62.55,62.65
+tampa,Dade City,80.2,81.5,52.56,52.67
+tampa,Davis Islands,84.7,86.0,62.75,62.85
+tampa,Downtown St. Petersburg,84.1,85.3,62.45,62.55
+tampa,Downtown Tampa,85.0,86.2,59.72,59.82
+tampa,Dunedin,83.8,85.2,64.13,64.25
+tampa,Gulfport,84.1,85.2,58.94,59.03
+tampa,Harbour Island,84.9,86.1,60.81,60.91
+tampa,Hyde Park,84.8,86.1,63.15,63.25
+tampa,Land O' Lakes,84.0,85.5,55.95,56.08
+tampa,Largo,84.0,85.2,54.05,54.14
+tampa,Lutz,84.0,85.5,58.37,58.49
+tampa,New Port Richey,83.6,85.1,56.93,57.05
+tampa,New Tampa,84.9,86.2,61.05,61.16
+tampa,Odessa,83.8,85.3,57.54,57.67
+tampa,Old Northeast,84.1,85.3,57.95,58.05
+tampa,Oldsmar,83.9,85.3,61.09,61.2
+tampa,Palm Harbor,83.8,85.2,60.85,60.97
+tampa,Palma Ceia,84.7,86.0,63.55,63.66
+tampa,Pinellas Park,84.1,85.3,56.23,56.33
+tampa,Plant City,86.4,87.6,53.14,53.25
+tampa,Riverview,85.1,86.2,58.47,58.56
+tampa,Ruskin,84.2,85.4,52.57,52.67
+tampa,Safety Harbor,84.0,85.3,64.96,65.07
+tampa,Seminole Heights,84.9,86.2,57.12,57.23
+tampa,Seminole,84.0,85.2,61.98,62.08
+tampa,Snell Isle,84.1,85.3,52.3,52.4
+tampa,South Tampa,84.8,86.1,52.76,52.87
+tampa,Spring Hill,83.6,85.1,51.57,51.7
+tampa,St. Pete Beach,84.0,85.2,55.26,55.36
+tampa,St. Petersburg,84.1,85.3,59.49,59.59
+tampa,Sulphur Springs,84.8,86.1,51.69,51.8
+tampa,Tampa Palms,84.4,85.8,50.96,51.07
+tampa,Tarpon Springs,83.7,85.1,56.56,56.68
+tampa,Temple Terrace,85.0,86.3,49.99,50.1
+tampa,Town 'n' Country,84.1,85.5,53.72,53.84
+tampa,Treasure Island,84.0,85.2,56.6,56.7
+tampa,Valrico,85.3,86.5,57.37,57.47
+tampa,Wesley Chapel,84.4,85.8,54.93,55.04
+tampa,Westshore,84.7,85.9,61.79,61.89
+tampa,Ybor City,85.1,86.3,60.79,60.89
+tampa,Zephyrhills,85.0,86.4,50.92,51.04

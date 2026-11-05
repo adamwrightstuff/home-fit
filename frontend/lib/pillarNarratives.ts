@@ -194,30 +194,27 @@ export function getAirTravelNarrative(
   pillar: Record<string, unknown>
 ): string {
   const airportName = getPillarString(pillar, 'primary_airport.name')
-  const distanceKm = getPillarValue(pillar, 'summary.nearest_airport_km')
-  const airportCount = getPillarValue(pillar, 'summary.airport_count')
+  const minutes = getPillarValue(pillar, 'primary_airport.drive_minutes')
+  const coverage = getPillarValue(pillar, 'summary.nonstop_coverage_pct')
 
-  let accessPhrase = 'basic access to air travel'
-  if (typeof distanceKm === 'number') {
-    if (distanceKm <= 25) accessPhrase = 'very convenient access to a major airport'
-    else if (distanceKm <= 60) accessPhrase = 'reasonable access to a major airport'
-    else accessPhrase = 'a longer trip to reach a major airport'
+  let reachPhrase = 'basic access to air travel'
+  if (typeof coverage === 'number') {
+    if (coverage >= 90) reachPhrase = 'nonstop flights to nearly everywhere Americans fly'
+    else if (coverage >= 75) reachPhrase = 'nonstop flights to most places Americans fly'
+    else if (coverage >= 55) reachPhrase = 'nonstop flights to many places Americans fly'
+    else if (coverage >= 35) reachPhrase = 'a limited set of nonstop flights'
+    else reachPhrase = 'few nonstop flight options'
   }
 
-  let namePhrase = ''
+  let viaPhrase = ''
   if (airportName) {
-    namePhrase = ` via ${airportName}`
+    viaPhrase =
+      typeof minutes === 'number'
+        ? `, mainly via ${airportName} (about ${Math.round(minutes)} minutes by car)`
+        : `, mainly via ${airportName}`
   }
 
-  let countPhrase = ''
-  if (typeof airportCount === 'number') {
-    if (airportCount >= 2) countPhrase = ' and more than one airport within range.'
-    else countPhrase = '.'
-  } else {
-    countPhrase = '.'
-  }
-
-  const locationSentence = `${placeLabel} offers ${accessPhrase}${namePhrase}${countPhrase}`
+  const locationSentence = `${placeLabel} offers ${reachPhrase}${viaPhrase}.`
   const genericSentence =
     'Good airport access makes it easier to see family and friends, travel for work, and take trips without long drives on either end.'
 

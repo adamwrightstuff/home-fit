@@ -1,0 +1,43 @@
+{
+ "metadata": {
+  "source": "OurAirports airports.csv matched to the FAA CY2023 enplanement file",
+  "ambiguous_left_out": []
+ },
+ "map": {
+  "0AK": "PQS",
+  "16A": "NUP",
+  "1G4": "GCW",
+  "2A3": "KLN",
+  "2A9": "KOT",
+  "A61": "WTL",
+  "AKW": "KLW",
+  "AQH": "KWN",
+  "AWI": "AIN",
+  "BBG": "BKG",
+  "BVK": "BKC",
+  "BVU": "BLD",
+  "CFK": "CYF",
+  "CRQ": "CLD",
+  "D76": "ORV",
+  "DUY": "KKH",
+  "ENM": "EMK",
+  "FHR": "FRD",
+  "GPI": "FCA",
+  "GRO": "ROP",
+  "GSN": "SPN",
+  "HLA": "HSL",
+  "HXD": "HHH",
+  "IIK": "KPN",
+  "IWA": "AZA",
+  "JQF": "USA",
+  "MDM": "MLL",
+  "NYL": "YUM",
+  "ORS": "ESD",
+  "RVR": "NRR",
+  "SAW": "MQT",
+  "TNI": "TIQ",
+  "UNV": "SCE",
+  "Z09": "KUK",
+  "Z13": "KKI"
+ }
+}
