@@ -99,3 +99,10 @@ Last re-validated: never under DPv2.
 | 5 | Live path calls the Census density lookup only for metadata | code | Skip it when no scoring use (principle 13) | None on score |
 | 6 | No independent validation, pin-shift on routed times not run | none | Level 2 brief | None |
 | 7 | Frequency not measured (literature says frequency shapes choice sets) | T-100 has departures | Optional second input; needs rebuild of the served file with departure weights | Unknown |
+
+### Level 2 pass criteria (written 2026-11-04 before any Level 2 result was computed)
+Origin set now 412 airports (served sets from BTS T-100 2023, rebuilt 2026-11-04). The builder ran checks 1 to 4; check 5 is for another agent (brief in `docs/AIR_TRAVEL_VALIDATION_BRIEF.md`).
+1. Pin shift (all 1,476 places, shifts N/E/S/W, fitted-line minutes for every airport so only geometry moves). PASS: 500 m median change <= 1.0 and 95th percentile <= 3.0; 1,000 m median <= 2.0 and 95th <= 6.0.
+2. Fitted line versus routed (stored catalog minutes). PASS: median absolute score difference <= 3 and 95th percentile <= 10. This bounds the error on the 313 new airports, which use the line.
+3. All-places (new catalog). PASS: no single rounded score above 15% of places; at least 40 distinct rounded scores; at most 2% of places at 99.5 or above; urban residential mean minus rural mean >= 10 (the earlier launch criterion; failing it is reported, not hidden).
+4. Launch pairs. Should differ by >= 15 points: Park Slope (nyc) vs Esparto (sacramento); Midtown (nyc) vs Galt (sacramento); Palo Alto (sf) vs Bainbridge Island (seattle). Should be within 4 points: Park Slope vs Brooklyn Heights (nyc); Cambridge vs Brookline (boston); Mountain View vs Sunnyvale (sf).
