@@ -121,3 +121,30 @@ Pairs off by more than 30 minutes (stored vs Valhalla, minutes), all stored too 
 Remaining pattern: the refit fixed the 60 to 120 km band (median error 12.8 min before, 5.6 now) but pairs of 120 km and more (n=9) are still about 34 min high on median (was 43). Under 60 km (n=14) is 3.1 min. Bainbridge Island to PAE was not re-evaluated (the water-crossing case sits outside the random sample and its Valhalla time of 70.1 min is from the first run; the new stored value was not re-read).
 
 Independence note: the refit coefficients came from stored OSRM times, not from Valhalla, so this comparison against Valhalla is still independent. The sample was drawn before the refit and the refit was made after seeing the first V1 result, so the passing margin on the estimated group (17.0% against 20%, 7.3 against 10 min) is a post-hoc fit on the same pairs only in the sense that the builder knew the failure; the Valhalla times were not used in the fit.
+
+## Rerun after FAA-to-IATA fix
+
+Requested by the coordinator after commit d651e680 (35 FAA location IDs mapped to IATA codes, 30 airports added as origins, served sets rebuilt, catalog recomputed into the same final/ folder). Criteria unchanged. No new Valhalla requests and no new web reads: saved Valhalla results and saved published counts were reused.
+
+### V1 (same 60 pairs, stored minutes re-read from the new files)
+
+One pair is gone: Gold Canyon (Phoenix metro) to FLG. Gold Canyon's five nearest airports are now AZA (newly an origin, 27.9 min, estimated), PHX, TUS, SOW, PRC, so FLG dropped out of the stored list. Its routed Valhalla time was therefore not compared. I did not replace it, because a replacement needs a new Valhalla request, which is not allowed on this rerun. Routed group is n=29. No source labels changed on the 59 remaining pairs. The 30 estimated values are the same as in the "V1 rerun after refit" section (29 changed in the earlier refit, none now); routed values unchanged.
+
+| Group | n | Median abs % error | Median abs error (min) | Mean signed (stored minus Valhalla) | Pairs off by more than 30 min |
+|---|---|---|---|---|---|
+| estimated (added airports) | 30 | 17.0% | 7.3 | +12.9 min | 6 |
+| routed (older airports) | 29 | 13.6% | 5.3 | +1.2 min | 1 |
+
+Pairs off by more than 30 minutes (all stored too high): estimated, Washington Park to CYS 155.2 vs 111.5; Midlothian to TYR 143.7 vs 110.9; Lewisville to TYR 160.3 vs 113.8; Sloans Lake to CYS 150.7 vs 105.1; Lithonia to CSG 147.7 vs 113.5; Castroville to LRD 198.6 vs 148.6. Routed, Buford to TYS 246.0 vs 214.5.
+
+Criteria unchanged (median abs % error <= 20% for both groups; estimated group median abs error <= 10 min). Verdict: PASS (estimated 17.0% and 7.3 min; routed 13.6%).
+
+### V2 (same 40 airports, served-set sizes recomputed from airport_nonstop_served_2023.json)
+
+All 40 airport codes are still present in the served file and none changed code. Served-set size changed for 7 airports: GRR 29 to 30, CID 13 to 14, AEX 4 to 5, SAN 59 to 60, SLC 82 to 83, LGA 76 to 78, FCA 9 to 10. Published counts are the saved ones (current Wikipedia tables, with the same caveats as in the V2 section above).
+
+- All 40: Spearman 0.970; median absolute relative difference 18.4% (was 22.3%).
+- Added airports (n=20): Spearman 0.905, median 22.6%. Older airports (n=20): Spearman 0.987, median 17.5%.
+- Airports with a difference above 50%: HDN 6 vs 18, OME 2 vs 16, CDB 3 vs 7, HYS 2 vs 1, and AEX 5 vs 3 (was +33%, now +67%, a small count).
+
+Criteria unchanged (Spearman >= 0.85 and median abs relative difference <= 30%). Verdict: PASS, with the same sourcing caveat as before (current published lists, not 2023).
