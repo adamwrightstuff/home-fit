@@ -60,7 +60,7 @@ Catalog rescore: `scripts/catalog/recompute_air_travel_coverage_offline.py` (off
 
 ## DPv2 spec sheet and audit (2026-11-04, DRAFT for owner review; no scoring changed)
 
-Proposed level: Level 1 (candidate for sign-off). Level 2 not reached: independent validation not yet run, and one pre-registered all-places criterion failed (see Level 2 results).
+Level: 1 (Converted). Signed off by the owner 2026-11-04 with TODOs (a) to (h) below accepted. Not pushed to main; new catalog files not yet swapped in. Level 2 not reached: independent validation not yet run, and one pre-registered all-places criterion failed (see Level 2 results).
 
 ### Evidence search (one standard search per topic, read from summaries only; full papers not read)
 - Airport choice in multi-airport regions (Los Angeles, Bay Area, Washington/Baltimore, Sao Paulo; Hess 2014 review): access time and flight frequency both significantly drive choice. Frequency shapes which airports are considered; access time dominates the final pick. Nonstop availability is a standard mixed-logit variable. Tier 1 for "service level and access time both matter". Source examples: https://eprints.whiterose.ac.uk/43626, https://www.economics.uci.edu/files/docs/colloqpapers/f06/VanDender.pdf
@@ -119,3 +119,5 @@ Changes this session (2026-11-04): origins 99 to 412 (359 airports added from Ou
 
 Open items and TODOs for sign-off: (a) independent validation; (b) urban over rural criterion failed; (c) Bainbridge Island rose 22.7 to 34.4 because PAE is credited 44 estimated minutes with no ferry modelled, likely overstated, same ferry limit as before; (d) plateau 60 minutes and survey decay unsourced at tier 1 or 2 (range 30 to 90); (e) frequency not measured; (f) vacation catalog (49 records) not yet recomputed; (g) live path density lookup for metadata only; (h) 46 FAA airports without a US coordinate in OurAirports are not origins (mostly Alaska strips and territories; none checked for catalog proximity).
 Proposed sign-off: Level 1 now, with TODOs (a) to (h) accepted. Level 2 after the validation brief passes and the owner accepts or overrules criterion 3's urban-rural gap.
+
+Sign-off: Level 1, owner, 2026-11-04. Accepted TODOs: (a) to (h) above. Level 2 pending the validation brief.
