@@ -30,3 +30,14 @@ Reported only: Beverly Hills, Brookline and Greenwood Village move Middle Class 
 
 Result: no candidate passes, so A stays. Two limits on reading this. B misses the improvement limit by under 0.003, so the criterion is the deciding factor, not the data; I did not relax it. C's gain is partly built in: the targets (mean income, rent) sit on the national scale, so a national cutoff ordering matches them better than a metro rank by construction, and the test cannot say whether a metro-relative or national frame is what people mean. That question has no published study behind it and stays an owner definition.
 Beverly Hills as Middle Class is recorded as a known limit of a median-income label with a metro rank.
+
+## Validation of the home-value route B (criteria fixed before running, 2026-11-05)
+Question: are the places B would move from Middle Class to Affluent (set M) really Affluent-like? Read-only, stored catalog, pooled inputs where the place reads a single tract. Nothing changes.
+
+Method: compare M with the places A already calls Affluent (set Aff) and the places A calls Middle Class and B leaves there (set Mid), on measures neither rule uses: (1) share of households at $150,000 or more (last two of the 16 stored income brackets; $150,000 is about twice the national median, the Pew Research Center upper-income line for middle-income households), (2) graduate degree share of adults 25 and over, (3) white-collar share of jobs, (4) stored mean household income.
+
+Pass criteria (no tuned limits; only the nearest-class test):
+1. On every one of the four measures the median of M is closer to the median of Aff than to the median of Mid.
+2. On the share of households at $150,000 or more, the median of M is inside the Aff interquartile range.
+3. No more than a quarter of M sits below the Mid median on the $150,000 share (reported as a count; the quarter is a judgment, flagged as such).
+Reported only: the same table for Beverly Hills, Brookline and Greenwood Village; M by metro. If B passes all three it is a validated candidate for the owner to choose; it is still the owner's call whether to adopt it. If it fails, A stays.
