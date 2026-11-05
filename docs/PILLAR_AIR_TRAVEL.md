@@ -123,3 +123,12 @@ Proposed sign-off: Level 1 now, with TODOs (a) to (h) accepted. Level 2 after th
 Sign-off: Level 1, owner, 2026-11-04. Accepted TODOs: (a) to (h) above. Level 2 pending the validation brief.
 
 Owner decision 2026-11-04: all-places criterion 3 (urban residential minus rural mean >= 10) is accepted as an explained failure. Reason: air travel is an adequacy pillar on a fixed national standard (like healthcare); 7.0 reflects that most places reach a major hub, not a defect. It is recorded here, not relaxed in the criteria above.
+
+### Independent validation results (2026-11-04, validator agent; write-up `analysis/air_travel_validation_writeup_2026-11-04.md`, seed 42)
+- V1 drive minutes vs Valhalla (60 pairs): first run FAIL on estimated airports (22.6 percent, 11.6 min). Cause confirmed offline: the single drive-time line ran long beyond 60 km. After the piecewise refit (commit 56e18e88): estimated group 17.0 percent and 7.3 min, routed group 13.5 percent, against limits of 20 percent and 10 min. PASS, criteria unchanged. Remaining: pairs of 120 km or more are still about 34 min high, 6 pairs off by over 30 min (all stored too high, so scores are conservative); Bainbridge Island to Paine Field is stored 44 min against 70 by ferry (stored too low).
+- V2 served counts vs published route lists (n=40): Spearman 0.970, median absolute relative difference 22.3 percent. PASS. Caveat: current Wikipedia tables read through a summarising fetch, not 2023 data.
+- V3 pair spot check: NOT DONE as specified (no 2023 schedule source found). Partial: 37 of 38 served pairs listed on current pages; 16 of 40 not-served pairs appear on current pages, 3 of them dated as post-2023 additions, 13 unresolved. Written reason none exists: free 2023 schedule data was not reachable.
+- V4: not scored; 20 proposed places await owner confirmation (findings only, no pass gate).
+
+Proposed level: Level 2 (Verified), for owner sign-off, with these accepted items: V3 not done (reason above), V2 sourced from current pages, urban-rural gap 7.0 (accepted 2026-11-04), Bainbridge Island ferry overstatement, long-distance estimates about 34 min high, plateau and survey decay unsourced (range 30 to 90 min), frequency not measured, vacation catalog not recomputed, 46 FAA airports without a US coordinate not origins. Not Level 3: plateau, decay, and the 52-departure and 5-passenger cut-offs have no tier 1 or 2 source.
+Last re-validated: 2026-11-04 (builder checks 1 to 4, validator V1 to V3). Level 2 not signed off.

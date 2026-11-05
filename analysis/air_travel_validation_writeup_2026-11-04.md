@@ -102,3 +102,22 @@ Note: some of these (Boerne, Midlothian, Galt, Wendell) are within 30 to 60 minu
 - V2: no 2023 or early-2024 published lists were obtained; used current Wikipedia tables via a fetch-and-summarise tool; MCO/LGA/IAH merged from two chunks with some of each page unread; no airport official pages used.
 - V3: the 2023 schedule confirmation was not possible; only a partial cross-check on 78 of 200 pairs against current lists, with three dated spot confirmations.
 - V4: owner confirmation pending, nothing scored.
+
+## V1 rerun after refit
+
+Requested by the coordinator after commit 56e18e88 (piecewise refit of estimated drive minutes, catalog recomputed into new files). Same 60 sampled pairs (seed 42), same criteria, no criteria changed. No new Valhalla requests: saved results from the first run were reused. Stored minutes were re-read from the new files under analysis/air_travel_dpv2_recompute_2026-11-04/final/. All 60 pairs are still present and no source label changed (30 estimated_from_distance, 30 routed), so no replacements were needed. The 30 routed values are unchanged; 29 of 30 estimated values changed.
+
+| Group | n | Median abs % error | Median abs error (min) | Mean signed (stored minus Valhalla) | Pairs off by more than 30 min |
+|---|---|---|---|---|---|
+| estimated (added airports) | 30 | 17.0% | 7.3 | +12.9 min | 6 |
+| routed (older airports) | 30 | 13.5% | 5.4 | +1.5 min | 1 |
+
+Criteria: median absolute percentage error <= 20% for both groups, and median absolute error <= 10 minutes for the 30 estimated pairs. Estimated group 17.0% and 7.3 min, routed group 13.5%. Verdict: PASS.
+
+Pairs off by more than 30 minutes (stored vs Valhalla, minutes), all stored too high:
+- Estimated: Washington Park (Denver) to CYS 155.2 vs 111.5; Midlothian TX to TYR 143.7 vs 110.9; Lewisville TX to TYR 160.3 vs 113.8; Sloans Lake (Denver) to CYS 150.7 vs 105.1; Lithonia GA to CSG 147.7 vs 113.5; Castroville TX to LRD 198.6 vs 148.6. (Before the refit there were 9; Wendell, Gulfport and Austell dropped under 30.)
+- Routed: Buford GA to TYS 246.0 vs 214.5 (unchanged).
+
+Remaining pattern: the refit fixed the 60 to 120 km band (median error 12.8 min before, 5.6 now) but pairs of 120 km and more (n=9) are still about 34 min high on median (was 43). Under 60 km (n=14) is 3.1 min. Bainbridge Island to PAE was not re-evaluated (the water-crossing case sits outside the random sample and its Valhalla time of 70.1 min is from the first run; the new stored value was not re-read).
+
+Independence note: the refit coefficients came from stored OSRM times, not from Valhalla, so this comparison against Valhalla is still independent. The sample was drawn before the refit and the refit was made after seeing the first V1 result, so the passing margin on the estimated group (17.0% against 20%, 7.3 against 10 min) is a post-hoc fit on the same pairs only in the sense that the builder knew the failure; the Valhalla times were not used in the fit.
