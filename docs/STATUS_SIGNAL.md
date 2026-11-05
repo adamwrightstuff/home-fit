@@ -169,8 +169,23 @@ Catalog recompute (offline, new files in `data/status_class_position/`, original
 - The Up-and-Coming trajectory gate reads the area-type label (urban_core or urban_residential). Reason: trajectory is kept as-is by the 2026-10-08 decision; moving it to the place context's activity per acre needs a sourced threshold. TODO.
 - `compute_wealth` substitutes a z of 0 for a missing home value. It no longer feeds the score; it still feeds the trajectory's `_has_pressure` test and the display driver. TODO.
 
-## 9. Level 2 status and proposed level
-Level 2 checks 1 (pin-shift) and 4 (independent validation) need Census calls and must be run by someone other than the builder: see `docs/STATUS_SIGNAL_LEVEL2_BRIEF.md`, pass criteria fixed there. Checks 2 and 3 are also written for the runner; the all-places numbers above are the builder's own and are not independent.
+## 9. Level 2 results (2026-11-04, catalog-only, run by the builder, so not independent)
+Criteria were fixed in `docs/STATUS_SIGNAL_LEVEL2_BRIEF.md` (amendment written before the run). No local tract income table exists, so true pin-shift and the B19001 check were replaced by catalog proxies. Result: Level 2 is NOT met.
+
+| Check | Result | Pass? |
+|---|---|---|
+| 2 All places | 0 inversions; none at the floor; largest tie share in any area type with 100+ places is 8.6% (the 80 tie); 4 areas have fewer than 5 places and were not judged | PASS |
+| 3 Launch pairs, differ | Scarsdale 100 vs Mount Vernon 42.9; Atherton 100 vs East Palo Alto 47.4; Highland Park IL 82.1 vs Englewood 18.0 pass; Palo Alto 72.3 vs East Palo Alto 47.4 is 24.9 apart against a 25 criterion | FAIL by 0.1 |
+| 3 Launch pairs, similar | Park Slope 84.0 vs Carroll Gardens 81.8 pass; Brookline 56.2 (Middle) vs Newton 80.2 (Elite) fail; Wicker Park 85.7 (Elite) vs Bucktown 59.3 (Middle) fail; 1 of 3, needed 2 | FAIL |
+| 1 Pin-shift proxy | 495 places read a single tract (34%); 71 tract-level neighbor pairs within 1 km: median difference 10.7 (limit 5), p95 40.4 (limit 20), same class 45% (limit 80%). Neighbors legitimately differ, so this overstates true pin-shift, but it points the same way as the Wicker Park and Bucktown result | FAIL |
+| 4 Independent proxy | Spearman with mean household income 0.899 (limit 0.80) pass; with median gross rent 0.637 (0.60) pass; with median home value 0.579 (0.60) fail; median home value by class is Struggling 617k, Working 434k, Middle 421k, Affluent 673k, Elite 1.19M, not strictly rising | FAIL |
+
+Reading: the number does what it was built to do (follows the label, no ties at the floor, tracks income). The failures are about geography, not the ladder: a label that reads one tract
+at the pin flips class between adjacent neighborhoods, the same single-tract risk DPv2 principle 6 names for housing, diversity and social fabric. The 13 Struggling places have a median home
+value of $617k (student and downtown tracts where cost outruns income), which is why the home-value ordering breaks. Recommended fix, not applied (needs owner approval): read the label's income and
+housing cost from the same pooled-tract area the housing pillar uses (`project_housing_pooled_d14`), then rerun checks 1 and 4; expected effect is fewer class flips between neighbors and a smaller
+score range between adjacent places, size unknown until built. Not run: true 500 m pin-shift and the B19001 check, which need Census data the repo does not hold.
+
 Proposed level: Level 1 (Converted), for owner sign-off: spec sheet filled, frames declared with evidence tiers (Affluent and Elite frame: none), no shared place facts to take from the place context, remaining uses of the area-type label listed with reasons, no neutral value in the score.
-Accepted TODOs to list in the sign-off line: equal 20-point bands unsourced; Affluent and Elite cutoffs (20% and 10% shares) are product definitions; UAC thresholds unsourced; trajectory area-type gate; compute_wealth neutral z; cutoffs are tract-median percentiles compared with place medians; Level 2 not run.
+Accepted TODOs to list in the sign-off line: equal 20-point bands unsourced; Affluent and Elite cutoffs (20% and 10% shares) are product definitions; UAC thresholds unsourced; trajectory area-type gate; compute_wealth neutral z; cutoffs are tract-median percentiles compared with place medians; Level 2 run offline and not met (section 9).
 Sign-off: Level 1 (Converted), signed off by the owner (Adam Wright), 2026-11-04, with the TODOs listed above accepted.

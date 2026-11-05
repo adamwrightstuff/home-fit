@@ -30,3 +30,8 @@ Limit to write down: this tests the cutoff construction against another statisti
 
 ## Report format
 One table per check with n, the numbers, pass or fail against the criteria above, and the failing places. State what was not run. Do not propose scoring changes in the report.
+
+## Amendment 2026-11-04 (owner asked for catalog-only checks; criteria fixed before running)
+No local tract income table exists, so true pin-shift and B19001 cannot be run offline. The owner asked to use the catalog. These offline variants replace checks 1 and 4 for a first pass, run by the builder (not independent, so they do not by themselves allow a Level 2 sign-off):
+- Check 1 proxy (neighbor spread): for every tract-level place (geo_level "tract"), find catalog places within 1,000 m that are also tract-level. Pass: median absolute score difference at most 5, 95th percentile at most 20, same class for at least 80% of neighbor pairs. Also report how many places use a geography wider than a tract (those cannot change class from a 500 m shift unless the pin crosses the boundary).
+- Check 4 proxy: Spearman of the score with stored mean household income at least 0.80, with stored median home value at least 0.60, and with stored median gross rent at least 0.60; median home value must rise strictly Struggling to Elite across classes. Mean income and rent are not inputs to the score. Home value is an input only to the Elite test.
