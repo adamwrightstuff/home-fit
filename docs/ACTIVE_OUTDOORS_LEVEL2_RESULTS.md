@@ -349,3 +349,17 @@ Every criterion in force (check 2 a, b, c; check 3 pairs 1 to 4; 3b; 3c; 4b; 5) 
 
 ### Files
 `analysis/ao_level2_rerun5_check2_distribution.csv`, `ao_level2_rerun5_check2_empty_and_zero_daily.csv`, `ao_level2_rerun5_check3_pairs.csv`, `ao_level2_rerun5_check3b_neighbour_pairs.csv`, `ao_level2_rerun5_check3c_density_pairs.csv`, `ao_level2_rerun5_check3_crosstype_pairs.csv` (retired test, reference), `ao_level2_rerun5_check4b_protected_land.csv`, `ao_level2_rerun5_check5_live_vs_stored.csv`, `ao_level2_rerun5_ref_daily_vs_city_parks.csv`.
+
+## Rerun 6 2026-11-04 (check 1 pin-shift on the current code)
+Code: commit ce44cf2a (clean trail destination count, typed park count, population-weighted density for the park baseline, refit baselines). Same sample and method as the first run: the 60 places of `analysis/ao_level2_check1_pin_shift.csv` (seed 20261102, 15 per stored area type, 11 first-server states), each pin shifted 500 m and 1,000 m (0.3 and 0.6 miles) north, east, south and west, 480 shifted reads plus 60 fresh unshifted reads, private Overpass server only, no paid calls, tree canopy 0, stored area type held fixed, density recomputed at each shifted pin from the local tables (this now also supplies the weighted density the park baseline reads). Change is measured against the fresh unshifted score of the same place. Results: `analysis/ao_level2_rerun6_check1_pin_shift.csv`.
+
+| Shift | n | median | 95th pct | share over 10 | largest | first run (median / 95th / over 10 / largest) | Result |
+|---|---|---|---|---|---|---|---|
+| 500 m (0.3 mi) | 240 | 1.8 (limit 3) | 6.0 (limit 10) | 0.8% | 13.4 Atherton CA | 1.7 / 5.5 / 0.4% / 13.7 | PASS |
+| 1,000 m (0.6 mi) | 240 | 2.7 (limit 5) | 8.5 (limit 15) | 4.2% | 18.6 Atherton CA | 2.7 / 8.4 / 2.9% / 18.6 | PASS |
+
+- Reads over 10 points (12 of 480): Atherton CA (3), Morningside Heights NY (2), West Loop IL (2), Malvern, Winters, Weatherford, Mar Vista and Seguin (1 each). Atherton and Morningside Heights were also the over-10 places in the first run; West Loop, Malvern, Winters, Weatherford, Mar Vista and Seguin were not (the first run's own count of its over-10 reads is inconsistent between its table and its list, so no exact comparison is made).
+- Empty park read where the unshifted read was not: 4, all Von Ormy TX (rural, 0 parks either way; as in the first run). No read errors or timeouts.
+- Fresh unshifted score vs stored score, 60 places: median absolute difference 0.00, 90th percentile 0.11, largest 9.1 (Scarsdale NY and Irvington NY; cause not examined).
+- Method notes: the run was done in four parallel shards and resumed after the first verifier's session ended; 339 reads were written twice (an overlap of two runs) and the repeats agree exactly, so the first copy of each was used. Spring Branch TX exists in two metros; the rural San Antonio row (29.89, -98.43) was used, matching the first run's stated area type. This rerun was completed by the builder from the verifier's script because the verifier stopped before finishing; the script and the sample are the verifier's, the criteria unchanged. An independent reader may want to re-derive the table from the CSV.
+Conclusion: check 1 passes on the current code with slightly more spread at 1,000 m than before (95th percentile 6.0 and 8.5 against 5.5 and 8.4). Check 1 now covers the current code; checks 2, 3, 3b, 3c, 4b and 5 were rerun on it in rerun 5.
