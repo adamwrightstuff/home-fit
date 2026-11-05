@@ -13,7 +13,7 @@ Places outside a built metro use the US-wide cutoffs stored under `class_cuts.al
 | Struggling | Median household income below the HHS poverty guideline for three ($23,030, 2022), or housing takes more than 50% of income while income is below the national median |
 | Working Class | Income under two-thirds of the national median ($75,149, ACS 2022), or housing takes more than 30% of income while income is below the national median |
 | Elite | Income in the metro's top 10% of households and median home value in the metro's top 10% (owner-weighted) |
-| Affluent | Income in the metro's top 20% of households |
+| Affluent | Income in the metro's top 20% of households, or (household route, adopted 2026-11-05, not yet in the catalog files) a place that would be Middle Class where the share of households at $150,000 or more is 37.55% or higher. The route never lifts a place the burden tests demoted |
 | Middle Class | Everyone else |
 
 Housing share = 12 x median monthly housing cost (ACS B25105, renters and owners) / median household income.
@@ -21,7 +21,7 @@ Housing share = 12 x median monthly housing cost (ACS B25105, renters and owners
 Where the numbers come from, and which parts are judgment:
 - Middle band (two-thirds of the national median), the 30% and 50% housing-cost thresholds, and the poverty guideline are
   published conventions (Pew income tiers, HUD cost-burden thresholds, HHS guidelines).
-- The 20% Affluent share, and Elite as "top 10% on both income and home value", are product definitions, not research findings.
+- The 20% Affluent share, and Elite as "top 10% on both income and home value", are product definitions, not research findings. So is the 37.55% household-route cut (midpoint of the catalog's Middle Class and Affluent medians); the $150,000 line it counts is about twice the national median (Pew upper income).
 - The burden tests apply only below the national median so higher earners in expensive metros are not demoted.
 
 Known limits: tract and place median income describes the typical household, not individuals; student areas can show

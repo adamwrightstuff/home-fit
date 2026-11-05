@@ -58,6 +58,13 @@ def main() -> int:
             hv = (s.get("livability_pillars") or {}).get("housing_value") or {}
             sm = hv.get("summary") if isinstance(hv.get("summary"), dict) else hv
             arch = bd.get("archetype")
+            # Household route to Affluent (round 2): share of households at $150,000 or more from the stored B19001 bins
+            # (single tract or place; not pooled, the pooled pull has no income bins).
+            sm = dict(sm)
+            br = ((((s.get("livability_pillars") or {}).get("diversity") or {}).get("raw_shares")) or {}).get("income_brackets")
+            if isinstance(br, list) and len(br) == 16 and all(isinstance(v, (int, float)) for v in br[-2:]):
+                sm["share_households_150k_plus"] = float(br[-2]) + float(br[-1])
+                bd["households_150k_plus_share"] = round(sm["share_households_150k_plus"], 1)
             pin = pooled_in.get(f"{metro}|{r['catalog']['name']}")
             if pin and sm.get("geo_level") == "tract":
                 # Pooled income and home value. The ACS monthly housing cost (B25105) is not in the cached pull, so the
@@ -79,12 +86,18 @@ def main() -> int:
                     arch = new_cls[0]
                     bd["archetype"], bd["archetype_rule"] = new_cls
                     bd["status_label"] = ss._get_status_label(arch)
-                    bd["status_insight"] = ss._get_status_insight(arch)
+                    bd["status_insight"] = ss._get_status_insight(arch, new_cls[1])
                 re_cls = None  # class was just derived from the pooled inputs
             else:
                 re_cls = ss._classify_class(sm, keys, baselines)
-                if re_cls is not None and re_cls[0] != arch:
-                    class_mismatch.append((r["catalog"]["name"], arch, re_cls[0]))
+                if re_cls is not None and (re_cls[0] != arch or re_cls[1] != bd.get("archetype_rule")):
+                    if re_cls[0] != arch:
+                        class_mismatch.append((r["catalog"]["name"], arch, re_cls[0]))
+                        summary["class_changed_at_stored_inputs"] += 1
+                    arch = re_cls[0]
+                    bd["archetype"], bd["archetype_rule"] = re_cls
+                    bd["status_label"] = ss._get_status_label(arch)
+                    bd["status_insight"] = ss._get_status_insight(arch, re_cls[1])
             if re_cls is None and arch is not None and not (pin and sm.get("geo_level") == "tract"):
                 # No income: no class (the old fallback defaulted to Struggling).
                 for k in ("archetype", "archetype_rule", "status_label", "status_insight", "trajectory", "trajectory_rule"):

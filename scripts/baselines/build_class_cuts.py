@@ -112,8 +112,10 @@ def main() -> None:
     args = ap.parse_args()
     b = json.loads(BASELINES.read_text())
     r = requests.get(ACS, params={"get": "B19013_001E", "for": "us:1", "key": CENSUS_API_KEY}, timeout=30).json()
-    b["class_national"] = {"median_household_income": float(r[1][0]),
-                           "poverty_guideline_3p": POVERTY_GUIDELINE_3P_2022, "acs_year": 2022}
+    # update, not replace: keeps affluent_household_share_150k_cut (a product definition set by hand, round 2 of
+    # docs/STATUS_SIGNAL_STEP2_TEST.md) when the national median is refreshed.
+    b.setdefault("class_national", {}).update({"median_household_income": float(r[1][0]),
+                                               "poverty_guideline_3p": POVERTY_GUIDELINE_3P_2022, "acs_year": 2022})
     cuts = b.setdefault("class_cuts", {})
     if args.national:
         print("=== all (national)")

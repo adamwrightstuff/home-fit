@@ -574,7 +574,9 @@
   "class_national": {
     "acs_year": 2022,
     "median_household_income": 75149.0,
-    "poverty_guideline_3p": 23030
+    "poverty_guideline_3p": 23030,
+    "affluent_household_share_150k_cut": 37.55,
+    "affluent_household_share_150k_cut_note": "Percent of households at $150,000 or more (ACS B19001 bins 016 and 017; $150,000 is about twice the national median, the Pew upper-income line). The cut is the midpoint between the median share of the catalog's Middle Class places (25.0) and Affluent places (50.1). Product definition; see docs/STATUS_SIGNAL_STEP2_TEST.md round 2."
   },
   "cleveland,_ohio": {
     "brand": {},

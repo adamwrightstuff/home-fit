@@ -431,7 +431,7 @@ def _fetch_housing_acs(for_clause: str, in_clause: str) -> Optional[Dict]:
     try:
         url = f"{CENSUS_BASE_URL}/{ACS_YEAR}/acs/acs5"
         params = {
-            "get": "B25077_001E,B19013_001E,B25018_001E,B19025_001E,B19001_001E,B25064_001E,B25003_001E,B25003_003E,B25105_001E,NAME",
+            "get": "B25077_001E,B19013_001E,B25018_001E,B19025_001E,B19001_001E,B25064_001E,B25003_001E,B25003_003E,B25105_001E,B19001_016E,B19001_017E,NAME",
             "for": for_clause,
             "in": in_clause,
             "key": CENSUS_API_KEY,
@@ -466,6 +466,10 @@ def _fetch_housing_acs(for_clause: str, in_clause: str) -> Optional[Dict]:
         total_occupied = parse_census_value(data[1][6])
         renter_occupied = parse_census_value(data[1][7])
         median_monthly_housing_cost = parse_census_value(data[1][8])
+        # B19001 bins 016 ($150,000 to $199,999) and 017 ($200,000 or more): households above about twice the national
+        # median (the Pew upper-income line). Feeds the status signal Affluent test (docs/STATUS_SIGNAL_STEP2_TEST.md).
+        hh_150_199 = parse_census_value(data[1][9])
+        hh_200_plus = parse_census_value(data[1][10])
 
         if not median_income:
             return None
@@ -504,6 +508,9 @@ def _fetch_housing_acs(for_clause: str, in_clause: str) -> Optional[Dict]:
             result["median_monthly_housing_cost"] = median_monthly_housing_cost
         if mean_household_income is not None:
             result["mean_household_income"] = mean_household_income
+        if total_households and total_households > 0 and hh_150_199 is not None and hh_200_plus is not None:
+            # Percent of households at $150,000 or more. None (not 0) when a bin is suppressed.
+            result["share_households_150k_plus"] = 100.0 * (hh_150_199 + hh_200_plus) / total_households
         if renter_pct is not None:
             result["renter_pct"] = renter_pct
         if total_occupied is not None:
@@ -627,7 +634,7 @@ def _pooled_tract_housing(lat: float, lon: float, tract: Dict, ring_m: int = 700
     occ = sum(r["total_occupied"] for r in rows)
     ren = sum(r["renter_pct"] * r["total_occupied"] for r in rows if r.get("renter_pct") is not None)
     out: Dict = {k: wmean(k) for k in ("median_home_value", "median_household_income", "median_rooms")}
-    for k in ("median_gross_rent", "median_monthly_housing_cost", "mean_household_income"):
+    for k in ("median_gross_rent", "median_monthly_housing_cost", "mean_household_income", "share_households_150k_plus"):
         v = wmean(k)
         if v is not None:
             out[k] = v

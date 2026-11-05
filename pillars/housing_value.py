@@ -183,6 +183,8 @@ def get_housing_value_score(lat: float, lon: float,
     }
     if housing_data.get("mean_household_income") is not None:
         breakdown["summary"] = {**(breakdown["summary"] or {}), "mean_household_income": housing_data["mean_household_income"]}
+    if housing_data.get("share_households_150k_plus") is not None:
+        breakdown["summary"] = {**(breakdown["summary"] or {}), "share_households_150k_plus": housing_data["share_households_150k_plus"]}
     if housing_geo_level:
         breakdown["summary"]["geo_level"] = housing_geo_level
 

@@ -5,7 +5,8 @@ import unittest
 from pillars import status_signal as ss
 
 BASE = {
-    "class_national": {"median_household_income": 75149.0, "poverty_guideline_3p": 23030},
+    "class_national": {"median_household_income": 75149.0, "poverty_guideline_3p": 23030,
+                       "affluent_household_share_150k_cut": 37.55},
     "class_cuts": {"m": {"income_p80": 120000.0, "income_p90": 150000.0, "home_value_p90": 800000.0}},
 }
 KEYS = ["m"]
@@ -58,6 +59,46 @@ class TestClassPosition(unittest.TestCase):
         a = score("Affluent", 130000)
         b = score("Affluent", 130000, education_attainment={"grad_pct": 99}, white_collar_pct=99)
         self.assertEqual(a, b)
+
+
+class TestHouseholdRouteToAffluent(unittest.TestCase):
+    """Round 2 (docs/STATUS_SIGNAL_STEP2_TEST.md): a Middle Class place with many households at $150,000 or more is Affluent."""
+
+    @staticmethod
+    def cls(income, share=None, home=500000, monthly=2000):
+        s = {"median_household_income": income, "median_home_value": home, "median_monthly_housing_cost": monthly}
+        if share is not None:
+            s["share_households_150k_plus"] = share
+        return ss._classify_class(s, KEYS, BASE)
+
+    def test_share_at_or_above_cut_promotes_middle_to_affluent(self):
+        self.assertEqual(self.cls(100000, 40.0), ("Affluent", "class_affluent_households"))
+        self.assertEqual(self.cls(100000, 37.55), ("Affluent", "class_affluent_households"))
+
+    def test_share_below_cut_stays_middle(self):
+        self.assertEqual(self.cls(100000, 30.0), ("Middle Class", "class_middle"))
+
+    def test_missing_share_changes_nothing(self):
+        self.assertEqual(self.cls(100000), ("Middle Class", "class_middle"))
+
+    def test_burden_demoted_place_is_never_lifted(self):
+        # income 60,000 with 70% housing share is demoted below Middle Class; a high share cannot lift it back
+        self.assertEqual(self.cls(60000, 50.0, monthly=3500)[0], "Struggling")
+        self.assertEqual(self.cls(60000, 50.0, monthly=1600)[0], "Working Class")
+
+    def test_income_route_and_elite_are_unchanged(self):
+        self.assertEqual(self.cls(130000, 10.0), ("Affluent", "class_affluent"))
+        self.assertEqual(self.cls(200000, 10.0, home=900000), ("Elite", "class_elite"))
+
+    def test_household_route_places_sit_at_the_affluent_band_floor(self):
+        # Known limit: income is under the p80 line, so the position inside the Affluent band clips to 0 and they tie at 60.
+        self.assertEqual(ss.class_position_score("Affluent", {"median_household_income": 100000}, KEYS, BASE), 60.0)
+        self.assertEqual(ss.class_position_score("Affluent", {"median_household_income": 95000}, KEYS, BASE), 60.0)
+
+    def test_insight_text_does_not_claim_the_top_fifth(self):
+        t = ss._get_status_insight("Affluent", "class_affluent_households")
+        self.assertIn("$150,000", t)
+        self.assertNotEqual(t, ss._get_status_insight("Affluent", "class_affluent"))
 
 
 if __name__ == "__main__":

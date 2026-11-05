@@ -162,8 +162,10 @@ def _signal_strength_band(score: float) -> Tuple[str, str]:
     return "dominant", "Dominant signal"
 
 
-def _get_status_insight(archetype: str) -> str:
+def _get_status_insight(archetype: str, rule: Optional[str] = None) -> str:
     """One-sentence tooltip 'why' for the UI."""
+    if archetype == "Affluent" and rule == "class_affluent_households":
+        return "Many households earn $150,000 or more, though the typical household sits below the top fifth of this metro."
     return {
         "Elite":         "Top-tier income and home values for this metro: extreme wealth and assets.",
         "Affluent":      "Household incomes in the top fifth of this metro.",
@@ -889,7 +891,10 @@ def _classify_class(
       Struggling  poverty-level income, or housing takes >50% of income (income below the national median)
       Working     income under two-thirds of the national median, or housing takes >30% (income below median)
       Elite       top 20% of metro households by income, plus income and home value both in the metro top 10%
-      Affluent    income in the top 20% of the metro's households
+      Affluent    income in the top 20% of the metro's households, or (household route, 2026-11-05) a Middle Class
+                  place where the share of households at $150,000 or more reaches the cut stored in
+                  class_national (docs/STATUS_SIGNAL_STEP2_TEST.md round 2). The route needs the share; without it
+                  the place is classified on income alone. It never lifts a place the burden tests demoted.
       Middle      everyone else
     """
     cuts = _class_cuts_for(keys_to_try, baselines)
@@ -910,6 +915,10 @@ def _classify_class(
         if income >= cuts["income_p90"] and isinstance(home, (int, float)) and home >= cuts["home_value_p90"]:
             return "Elite", "class_elite"
         return "Affluent", "class_affluent"
+    share = summary.get("share_households_150k_plus")
+    share_cut = nat.get("affluent_household_share_150k_cut")
+    if isinstance(share, (int, float)) and isinstance(share_cut, (int, float)) and share >= share_cut:
+        return "Affluent", "class_affluent_households"
     return "Middle Class", "class_middle"
 
 
@@ -1289,7 +1298,7 @@ def compute_status_signal_with_breakdown(
     )
 
     status_label = _get_status_label(archetype)
-    status_insight = _get_status_insight(archetype)
+    status_insight = _get_status_insight(archetype, archetype_rule)
     top_drivers = _build_top_drivers(wealth, home_cost, education, occupation_neutral, archetype)
 
     breakdown["wealth"] = wealth
