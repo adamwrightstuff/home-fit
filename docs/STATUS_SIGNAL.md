@@ -1,6 +1,6 @@
 # Status signal: DPv2 spec sheet and audit
 
-Level: 1 (Converted), signed off 2026-11-04. Branch `status-signal-dpv2`, local only, not pushed.
+Level: 2 (Verified), signed off 2026-11-04 with failed checks accepted as TODOs (section 9). Not "validated" for user-facing copy: that needs every check to pass. Branch `status-signal-dpv2`, local only, not pushed.
 
 Status signal is a composite beside the pillars, not a pillar. It has two parts that disagree with each other (see gap G1):
 the class label (Struggling to Elite), documented in `docs/STATUS_SIGNAL_CLASS.md`, and the legacy 0 to 100 composite.
@@ -197,3 +197,4 @@ Not run: B19001 share of households over $200,000 (needs data not in the repo); 
 Level 1 (Converted) signed off. Level 2 proposal for owner decision (checks run and independently rerun; launch pairs and the home-value proxy still fail): Level 1 basis: spec sheet filled, frames declared with evidence tiers (Affluent and Elite frame: none), no shared place facts to take from the place context, remaining uses of the area-type label listed with reasons, no neutral value in the score.
 Accepted TODOs to list in the sign-off line: equal 20-point bands unsourced; Affluent and Elite cutoffs (20% and 10% shares) are product definitions; UAC thresholds unsourced; trajectory area-type gate; compute_wealth neutral z; cutoffs are tract-median percentiles compared with place medians; Level 2 run offline and not met (section 9).
 Sign-off: Level 1 (Converted), signed off by the owner (Adam Wright), 2026-11-04, with the TODOs listed above accepted.
+Sign-off: Level 2 (Verified), signed off by the owner (Adam Wright), 2026-11-04. Checks run by the builder and independently rerun by a separate agent session. Accepted as TODOs: launch pairs (Palo Alto vs East Palo Alto 24.9 against 25; Park Slope vs Carroll Gardens and Brookline vs Newton not within 15); median home value proxy (Spearman 0.581 against 0.60, class ordering not strictly rising); original B19001 check not run; pin-shift uses approximate tract disks; four tract places shift over 20 points. Product copy must not call status signal validated.
