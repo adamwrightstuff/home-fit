@@ -2,7 +2,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { summarizeRoute, isNoRoute, commuteTimeScore, commutePillarScore } from '../frontend/lib/commuteTime.ts'
+import { summarizeRoute, isNoRoute, commuteTimeScore, commutePillarScore, estimateHubDriveMinutes, HUB_DRIVE_ESTIMATE } from '../frontend/lib/commuteTime.ts'
 
 test('stored entry with both modes null is a real no route, not missing', () => {
   const s = summarizeRoute({ transit: null, drive: null }, false)
@@ -59,4 +59,30 @@ test('stored catalog: no-route entries are as audited (NYC 11, SF 40, LA 23 tran
   }
   // NYC/SF numbers changed from the audit (11, 40) because five places were restored; LA unchanged.
   assert.ok(counts.nyc <= 11 && counts.sf <= 40 && counts.la === 23, JSON.stringify(counts))
+})
+
+test('hub drive estimate is distance only and matches stored drive times', () => {
+  assert.equal(estimateHubDriveMinutes(10), 31)
+  assert.equal(estimateHubDriveMinutes(-1), null)
+  assert.equal(estimateHubDriveMinutes(NaN), null)
+  // Median absolute error on stored Google drive times must stay under 10 min (fit gave 8.1; old area-type table 11.6).
+  const zones = Object.fromEntries(Object.values(JSON.parse(readFileSync('frontend/lib/workZones.json', 'utf8'))).flat().map((z) => [z.id, z]))
+  const rad = (d) => (d * Math.PI) / 180
+  const hav = (a, b, c, d) => 2 * 3958.8 * Math.asin(Math.sqrt(Math.sin(rad(c - a) / 2) ** 2 + Math.cos(rad(a)) * Math.cos(rad(c)) * Math.sin(rad(d - b) / 2) ** 2))
+  const errs = []
+  for (const m of ['nyc', 'sf', 'la']) {
+    for (const l of readFileSync(`data/${m}_metro_place_catalog_scores_merged.composites_recomputed.jsonl`, 'utf8').split('\n')) {
+      if (!l) continue
+      const r = JSON.parse(l)
+      for (const [h, v] of Object.entries(r.work_commute ?? {})) {
+        const z = zones[h]
+        if (z.transitOnly || typeof v.drive !== 'number') continue
+        const d = hav(Number(r.catalog.lat), Number(r.catalog.lon), z.lat, z.lon)
+        if (d >= 1) errs.push(Math.abs(estimateHubDriveMinutes(d) - v.drive))
+      }
+    }
+  }
+  errs.sort((a, b) => a - b)
+  assert.ok(errs.length > 2500, `pairs ${errs.length}`)
+  assert.ok(errs[Math.floor(errs.length / 2)] < 10, `median error ${errs[Math.floor(errs.length / 2)]}`)
 })

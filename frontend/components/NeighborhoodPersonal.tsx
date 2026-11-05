@@ -90,7 +90,7 @@ export default function NeighborhoodPersonal({ score, workCommute }: { score: Sc
         {showCommute &&
           row(
             'Commute',
-            `${commuteNoRoute ? 'No route to your work hub by your chosen mode' : `About ${Math.round(commuteMinutes!)} min one way`}${
+            `${commuteNoRoute ? 'No route to your work hub by your chosen mode' : `${commute?.breakdown?.estimated ? 'Rough estimate, about' : 'About'} ${Math.round(commuteMinutes!)} min one way`}${
               typeof commute.breakdown?.office_days === 'number' ? `, ${commute.breakdown.office_days} office days a week` : ''
             }`,
             commuteScore

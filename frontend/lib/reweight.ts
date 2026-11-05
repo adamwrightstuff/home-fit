@@ -267,7 +267,8 @@ export function withCommuteTimePillar(
   data: ScoreResponse,
   minutes: number | null | undefined,
   officeDays?: number | null,
-  noRoute = false
+  noRoute = false,
+  estimated = false
 ): ScoreResponse {
   // Fully remote: commute doesn't touch daily life, so it drops out of the happiness index and
   // gets no pillar score (no numeric score means reweighting ignores it too).
@@ -300,6 +301,7 @@ export function withCommuteTimePillar(
           minutes: typeof minutes === 'number' ? Math.round(minutes * 10) / 10 : null,
           office_days: days,
           ...(typeof minutes === 'number' ? {} : { no_route: true }),
+          ...(estimated ? { estimated: true } : {}),
         },
       },
     } as any,

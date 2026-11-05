@@ -65,3 +65,19 @@ export function commutePillarScore(
   const days = typeof officeDays === 'number' ? Math.min(5, Math.max(1, officeDays)) : 5
   return 100 - (100 - base) * (days / 5)
 }
+
+/**
+ * Rough one-way drive minutes to a work hub for a place with no stored routed time (an address
+ * searched outside the catalog). Distance only, no area type (DPv2 principle 14).
+ * Fit 2026-11-05 on 2,696 stored Google peak drive times (NYC, SF, LA catalogs, drivable hubs, places
+ * at least 1 mile from the hub): minutes = 11 + 2.0 x straight-line miles, least absolute deviation.
+ * Split-half check: the two halves fit a=11 b=2.0 and a=13 b=1.76; held-out median error 8.2 to 8.6 min
+ * (p90 23), against 11.6 min (p90 32) for the old area-type speed table. Plausible range a 11 to 13,
+ * b 1.76 to 2.0. Limits: three metros, peak Google times, a drive-only estimate, and few pairs beyond 60 miles.
+ */
+export const HUB_DRIVE_ESTIMATE = { baseMinutes: 11, minutesPerMile: 2.0 }
+
+export function estimateHubDriveMinutes(straightLineMiles: number): number | null {
+  if (!Number.isFinite(straightLineMiles) || straightLineMiles < 0) return null
+  return HUB_DRIVE_ESTIMATE.baseMinutes + HUB_DRIVE_ESTIMATE.minutesPerMile * straightLineMiles
+}

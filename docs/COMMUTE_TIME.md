@@ -23,9 +23,8 @@ Measurement area: other. Destination = nearest of 11 or 12 precomputed job hubs 
   origin = catalog place centroid, plus rail station for commuter-rail towns (faster kept).
   Reason: hubs are chosen from LODES job counts (greedy coverage, then moved to the nearest transit
   interchange). Reason for 15 miles: undocumented (TODO).
-Place context inputs used and remaining area-type uses: none for catalog places. The fallback for a
-  searched address (not in the catalog) uses straight line x area-type speed (estimatedDriveMinutes).
-  That is an area-type scoring input and needs a reason or removal (principle 14).
+Place context inputs used and remaining area-type uses: none. The searched-address fallback is distance
+  only since 2026-11-05 (see change log).
 Inputs and data sources (with vintage):
   Transit: r5py over agency GTFS, best-timed trip (1st percentile of departures swept every minute
     7:30 to 8:45), one typical weekday per agency, schedule label 2026-10-13, built 2026-10-09 (NYC, SF)
@@ -173,6 +172,8 @@ Results: other checks not yet run beyond what section 3 states. Proposed level: 
 
 ## Change log
 2026-11-05: fix 3 implemented on branch commute-time-dpv2 (not pushed): a place routed to the hub but with no time in the user's chosen mode scores 0 (scaled by office days) and shows "No route to your work hub by your chosen mode", instead of dropping out. Also corrected: the explorer treated a stored no-route entry as "off zone". Curve unchanged. New pure module frontend/lib/commuteTime.ts, tests in tests/commute_time.test.mjs (7 pass), tsc clean. Card snap-distance note not done: the picker already shows it; place cards do not have the snapped distance available.
+
+2026-11-05 (gap 5): the searched-address fallback no longer uses the area-type speed table. It is now minutes = 11 + 2.0 x straight-line miles (frontend/lib/commuteTime.ts), fitted on 2,696 stored Google drive times from NYC, SF and LA, area-type free. Split-half fits: a 11 b 2.0 and a 13 b 1.76. Held-out median error 8.2 to 8.6 min (p90 23) versus 11.6 (p90 32) for the old table. Plausible range a 11 to 13, b 1.76 to 2.0. Card shows "Rough estimate, about N min". Limits: three metros, peak Google times, drive only, few pairs beyond 60 miles; the 75 mile cutoff is still a round number. Tests: 8 pass, tsc clean. The shared estimatedDriveMinutes (social proximity, air travel) is unchanged and belongs to those specs.
 
 ## Owner acceptances
 2026-11-05: owner accepted check 1 (places at 0 are real long trips) and the snap-error approach (show the snap distance and error band on the card, keep the 15 mile rule) as known limits, on condition that the work continues to Level 2. Level 2 is not yet reached: fix 3, the card disclosure, and check 4 for SF and LA are still open.
