@@ -30,6 +30,7 @@ def main():
     ap.add_argument("--exact", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--shift-out")
+    ap.add_argument("--ring-m", type=float, default=700.0, help="ring radius around the pin; 700 is the shipped pool (D14)")
     ap.add_argument("--centers", default=os.path.join(REPO, "data", "tract_pop_area_centers.parquet"))
     a = ap.parse_args()
 
@@ -52,7 +53,8 @@ def main():
         x = np.sin((CLA[idx] - p) / 2) ** 2 + np.cos(CLA[idx]) * math.cos(p) * np.sin((CLO[idx] - q) / 2) ** 2
         return 2 * 6371000 * np.arcsin(np.sqrt(x))
 
-    def ring_pts(lat, lon, R=700.0):
+    def ring_pts(lat, lon, R=None):
+        R = a.ring_m if R is None else R
         pts = [(lat, lon)]
         for ang in range(0, 360, 45):
             pts.append((lat + R / 111000.0 * math.cos(math.radians(ang)),
