@@ -18,4 +18,15 @@ Stored mean household income (pooled-free, stored value) and median gross rent (
 The 0.02 and 15% limits are judgment fixed here before results, not published standards. If no candidate passes, A stays and the Beverly Hills result is recorded as a known limit of a median-income label.
 
 ## Results
-(to be filled after the run)
+Run 2026-11-04 on 1,469 classified places (pooled inputs for single-tract places).
+
+| Candidate | Places changing class | Largest move | Spearman with mean income / rent (A: 0.735 / 0.504) | Median mean income rises strictly? | Verdict |
+|---|---|---|---|---|---|
+| A current | 0 | 0 | 0.735 / 0.504 | yes | baseline |
+| B home-value route | 78 (5.3%), all Middle to Affluent | 1 class | 0.752 / 0.523 (+0.017 / +0.019) | yes | FAIL criterion 1 by 0.003 and 0.001 |
+| C national ladder | 375 (25.5%) | 2 classes | 0.850 / 0.674 (+0.115 / +0.170) | yes | FAIL criterion 3 (limits 15% and one class) |
+
+Reported only: Beverly Hills, Brookline and Greenwood Village move Middle Class to Affluent under B; under C Beverly Hills and Brookline go to Affluent and Greenwood Village to Elite, Palo Alto goes Affluent to Elite. B moves places mostly in NYC (11), Philadelphia (9), Austin and Phoenix (8 each). C moves NYC 86, SF 83, Boston 48, LA 31, Denver 25.
+
+Result: no candidate passes, so A stays. Two limits on reading this. B misses the improvement limit by under 0.003, so the criterion is the deciding factor, not the data; I did not relax it. C's gain is partly built in: the targets (mean income, rent) sit on the national scale, so a national cutoff ordering matches them better than a metro rank by construction, and the test cannot say whether a metro-relative or national frame is what people mean. That question has no published study behind it and stays an owner definition.
+Beverly Hills as Middle Class is recorded as a known limit of a median-income label with a metro rank.
