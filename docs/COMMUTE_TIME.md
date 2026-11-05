@@ -171,5 +171,8 @@ Results: other checks not yet run beyond what section 3 states. Proposed level: 
 3. Approve the Google call for SF and LA R5 comparison (about 200 element calls), or skip it.
 4. Citations still to verify from full text: Stutzer and Frey magnitude (the "+18 minutes, -0.09" figure in HAPPINESS_EVIDENCE_NOTES is UNVERIFIED by me; the PDF would not parse), Chatterjee 2020 mode ordering, van Ommeren and Fosgerau euro figure, Wardman multipliers, DOT 2016 guidance.
 
+## Owner acceptances
+2026-11-05: owner accepted check 1 (places at 0 are real long trips) and the snap-error approach (show the snap distance and error band on the card, keep the 15 mile rule) as known limits, on condition that the work continues to Level 2. Level 2 is not yet reached: fix 3, the card disclosure, and check 4 for SF and LA are still open.
+
 ## Sign-off
 Level: 0. Date: 2026-11-04. TODOs accepted: none yet.
