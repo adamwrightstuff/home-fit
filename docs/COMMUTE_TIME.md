@@ -179,4 +179,15 @@ Results: other checks not yet run beyond what section 3 states. Proposed level: 
 2026-11-05: owner accepted check 1 (places at 0 are real long trips) and the snap-error approach (show the snap distance and error band on the card, keep the 15 mile rule) as known limits, on condition that the work continues to Level 2. Level 2 is not yet reached: fix 3, the card disclosure, and check 4 for SF and LA are still open.
 
 ## Sign-off
-Level: 0. Date: 2026-11-04. TODOs accepted: none yet.
+Level: 2 (Verified). Date: 2026-11-05. Signed off by: Adam Wright (owner).
+Level 1 met: spec sheet filled, reference frame declared (fixed standard, tier 1),
+no scoring keys on the area-type label, no route in the chosen mode scores worst and is labeled.
+Level 2 met: launch pairs passed (13 of 13, 5 of 6); independent timetable check passed
+(34 Metro-North towns, median 2 min off); R5 vs Google passed for NYC only.
+Exceptions accepted by the owner:
+- 6 hubs have more than 15% of places at 0 (long real trips, not a data error).
+- Hub-snap error is high for hubs 4 to 8 miles apart; the card shows the distance, the 15 mile rule stays.
+- R5 vs Google not run for SF and LA (owner declined the Google calls).
+Accepted TODOs (not Level 3): curve knots, office-days blend and 15 mile snap limit have no source.
+Open decision: the general happiness index still gives commute a 5% weight.
+Limit: copy may not call commute "validated"; independent validation covered NYC Metro-North only.
