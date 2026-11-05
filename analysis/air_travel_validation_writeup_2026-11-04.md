@@ -148,3 +148,19 @@ All 40 airport codes are still present in the served file and none changed code.
 - Airports with a difference above 50%: HDN 6 vs 18, OME 2 vs 16, CDB 3 vs 7, HYS 2 vs 1, and AEX 5 vs 3 (was +33%, now +67%, a small count).
 
 Criteria unchanged (Spearman >= 0.85 and median abs relative difference <= 30%). Verdict: PASS, with the same sourcing caveat as before (current published lists, not 2023).
+
+## V4 scored
+
+Findings only, no pass gate. The owner confirmed the 20 proposed places ("all"), so the list is unchanged. Scores read from the served files data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl, key score.livability_pillars.air_travel_access.score. All 20 places were found.
+
+Rich (score, nearest airports with drive minutes): Evanston 94.5 (ORD 44.5, MDW 43.4); Wicker Park 93.9 (MDW 20.4, ORD 38.0); Capitol Hill 93.4 (DEN 39.8); Decatur 91.1 (ATL 26.6); Hoboken 88.8; Midtown 88.8; Park Slope 88.7 (all three NYC airports within 41 min); Brookline 85.7; Cambridge 85.7 (BOS 19.2 and 15.5 min, but BOS carries 83.4% coverage and no second big airport inside an hour); Palo Alto 84.7 (SFO 30.3, SJC 31.6, OAK 40.1).
+
+Poor: Midlothian 93.5; Gold Canyon 88.4; Wendell 80.5; Floresville 75.9; Boerne 74.9; Castroville 74.8; Winters 71.8; Esparto 67.9; Galt 67.5; Bainbridge Island 34.5.
+
+Separation: Mann-Whitney U = 89 of 100 rich-over-poor pairs (a rank-sum probability of 0.89 that a random rich place outscores a random poor one). Normal-approximation z about 2.95, two-sided p about 0.003 (approximation, no exact tables used). Rich median 89.4 (range 84.7 to 94.5); poor median 74.9 (range 34.5 to 93.5). Lowest rich: Palo Alto 84.7. Highest poor: Midlothian 93.5.
+
+Places on the wrong side, with the reason from the airport breakdown:
+- Midlothian (Dallas metro), poor 93.5, above every rich place. It sits 43.1 min from DAL and 48.8 min from DFW (91.1% coverage). It is a drive-time hub place, not remote. This is my selection error (I had flagged it as within 30 to 60 minutes of a hub), not a scoring defect: with DFW inside the 60 minute plateau the score is correctly high.
+- Gold Canyon (Phoenix metro), poor 88.4, above Palo Alto, Brookline and Cambridge. PHX is 49.2 min away (87.1% coverage), inside the plateau, and AZA is 27.9 min. Same reading: my label was wrong given a 49 minute drive to a major hub; the pillar measures reach to nonstop service, and this place has it.
+
+Excluding those two mislabelled places, every remaining rich place (84.7 and up) outscores every remaining poor place (80.5 and below), a gap of 4.2 points between Palo Alto and Wendell, and the poor tail (Winters, Esparto, Galt, Bainbridge Island) is separated by distance to a hub or by a ferry. Bainbridge Island at 34.5 is the one case driven by the known water-crossing limit (PAE is credited 43.6 min by an estimate, SEA 118.2 min routed). Caveat: the poor group was chosen from the few remote places a 20-metro catalog contains, and several are only 40 to 60 minutes from a large hub, so a compressed gap is expected for an adequacy pillar.
