@@ -13,10 +13,12 @@
  * - Schoeni, Cho and Choi 2022 (Soc Sci Med 292:114627, PSID, 810 parents 55+ with a disability):
  *   adjusted weekly hours of help from an adult child are 1.16 at 2-5 miles, 0.79 at 5-10 miles
  *   and 0.58 beyond 100 miles, and little help depends on distance past about 2-5 miles.
- *   So: 100 through 5 miles (the reference band), 68 at 7.5 miles (0.79 / 1.16), linear to a
- *   floor of 50 at 100 miles (0.58 / 1.16), flat beyond. The 10-30 and 30-100 mile bands were not
- *   retrieved, so the line between 7.5 and 100 miles is a TODO, and so is the 5 to 7.5 mile
- *   segment. Plausible range for the floor, from the paper's intervals: about 20 to 80.
+ *   So: 100 through 5 miles (the reference band), 68 at 15 miles, linear to a floor of 50 at
+ *   100 miles (0.58 / 1.16), flat beyond. The 68 is the 5-10 mile band's ratio (0.79 / 1.16),
+ *   placed at 15 miles so the drop is gentle (3.2 points a mile); the paper gives a band average,
+ *   not a value at a distance, so where inside the band it falls is a judgment (owner approved
+ *   2026-11-05, after a 7.5 mile placement failed the step-size check). The 10-30 and 30-100 mile
+ *   bands were not retrieved, so the line from 15 to 100 miles and the 5 to 15 mile segment are TODOs. Plausible range for the floor, from the paper's intervals: about 20 to 80.
  *   Construct caveat: this is help to disabled older parents, not wellbeing, and the paper notes
  *   possible endogeneity (families may have moved closer as health declined).
  * - Supporting, not used for a constant: Sun and Schafer 2023 (SHARE): losing a relative within
@@ -42,8 +44,8 @@ function validMiles(miles: number | null | undefined): miles is number {
 export function closeTieProximityScore(miles: number | null | undefined): number | null {
   if (!validMiles(miles)) return null
   if (miles <= 5) return 100
-  if (miles <= 7.5) return 100 - (miles - 5) * (32 / 2.5)
-  if (miles <= 100) return 68 - (miles - 7.5) * (18 / 92.5)
+  if (miles <= 15) return 100 - (miles - 5) * (32 / 10)
+  if (miles <= 100) return 68 - (miles - 15) * (18 / 85)
   return 50
 }
 
@@ -73,7 +75,7 @@ const TIE_PROXIMITY_CURVE: Record<SocialConnectionTier, (miles: number | null | 
  * The bonus amount (5), the cap (2 extras) and the "counts as close" thresholds (close 70,
  * acquaintance 60) are unsourced placeholders, all TODO with range unknown. The older derivations
  * of the thresholds from minute-based curves no longer apply. On the current curves a threshold of
- * 70 means a close person within about 7 miles, and 60 means an acquaintance within about 11 miles.
+ * 70 means a close person within about 14 miles, and 60 means an acquaintance within about 12 miles.
  */
 const SOCIAL_CONNECTION_BONUS_THRESHOLD: Record<SocialConnectionTier, number> = {
   close: 70,

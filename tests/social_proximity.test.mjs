@@ -8,18 +8,21 @@ const MILES = [0, 1, 2, 5, 6, 7.5, 10, 25, 50, 100, 500, 3000]
 test('close curve anchors', () => {
   assert.equal(closeTieProximityScore(0), 100)
   assert.equal(closeTieProximityScore(5), 100)
-  assert.equal(closeTieProximityScore(7.5), 68)
+  assert.equal(closeTieProximityScore(7.5), 92)
+  assert.equal(closeTieProximityScore(15), 68)
   assert.equal(closeTieProximityScore(100), 50)
   assert.equal(closeTieProximityScore(3000), 50)
 })
 
-test('close curve is non-increasing with no jump over 10 points between tested distances', () => {
+test('close curve is non-increasing and no steeper than 3.2 points a mile', () => {
+  // Regression guard on slope. The Level 2 criterion "no jump over 10 points between adjacent tested
+  // distances" is a different test and fails on the 10 to 25 mile gap; see docs/SOCIAL_PROXIMITY.md.
   let prev = null
-  for (const m of MILES) {
+  for (let m = 0; m <= 200; m += 0.5) {
     const s = closeTieProximityScore(m)
     if (prev !== null) {
       assert.ok(s <= prev + 1e-9, `rises at ${m}`)
-      assert.ok(prev - s <= 35, `step too large at ${m}`) // 5 to 7.5 mi is a 32 point segment by design
+      assert.ok(prev - s <= 3.2 * 0.5 + 1e-9, `too steep at ${m}`)
     }
     prev = s
   }
@@ -49,19 +52,17 @@ test('invalid distance gives null, not a neutral number', () => {
 
 test('nearest person carries the score; bonus only for people at or above the threshold', () => {
   assert.equal(socialConnectionScore([{ tier: 'close', miles: 3 }]), 100)
-  assert.equal(socialConnectionScore([{ tier: 'close', miles: 30 }]), 63.6) // 68 - 22.5 * 18 / 92.5 = 63.62
-  // 7.5 mi scores 68, under the close threshold of 70, so extra people at 7.5 mi add nothing
-  assert.equal(socialConnectionScore([{ tier: 'close', miles: 7.5 }, { tier: 'close', miles: 7.5 }]), 68)
-  // 6 mi scores 87.2 (above 70): one extra adds 5
-  assert.equal(socialConnectionScore([{ tier: 'close', miles: 6 }, { tier: 'close', miles: 6 }]), 92.2)
+  assert.equal(socialConnectionScore([{ tier: 'close', miles: 30 }]), 64.8) // 68 - 15 * 18 / 85 = 64.82
+  // 15 mi scores 68, under the close threshold of 70, so extra people at 15 mi add nothing
+  assert.equal(socialConnectionScore([{ tier: 'close', miles: 15 }, { tier: 'close', miles: 15 }]), 68)
+  // 10 mi scores 84 (above 70): one extra adds 5
+  assert.equal(socialConnectionScore([{ tier: 'close', miles: 10 }, { tier: 'close', miles: 10 }]), 89)
 })
 
 test('bonus cap: three extras count as two', () => {
-  const base = closeTieProximityScore(6.5) // between 5 and 7.5, above 70
-  const two = socialConnectionScore([{ tier: 'close', miles: 6.5 }, { tier: 'close', miles: 6.5 }, { tier: 'close', miles: 6.5 }])
-  const four = socialConnectionScore([{ tier: 'close', miles: 6.5 }, { tier: 'close', miles: 6.5 }, { tier: 'close', miles: 6.5 }, { tier: 'close', miles: 6.5 }])
-  assert.equal(two, four)
-  assert.equal(two, Math.min(100, Math.round((base + 10) * 10) / 10))
+  const p = { tier: 'close', miles: 10 }
+  assert.equal(socialConnectionScore([p, p, p]), 94)
+  assert.equal(socialConnectionScore([p, p, p, p]), 94)
 })
 
 test('score does not depend on any place label (function takes miles only)', () => {
