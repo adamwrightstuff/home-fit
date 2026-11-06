@@ -39,16 +39,12 @@ export default function NeighborhoodPersonal({ score, workCommute }: { score: Sc
   const showSocial = social && typeof social.weight === 'number' && social.weight > 0
   if (!showCommute && !showSocial) return null
 
-  const points: Array<{ tier: 'close' | 'acquaintance'; minutes: number | null; label: string | null }> =
+  const points: Array<{ tier: 'close' | 'acquaintance'; miles: number | null; label: string | null }> =
     Array.isArray(social?.breakdown?.points) ? social.breakdown.points : []
 
-  const formatTravel = (m: number | null) => {
-    if (typeof m !== 'number' || !Number.isFinite(m)) return 'n/a'
-    if (m < 60) return `${Math.round(m)} min`
-    if (m < 240) return `${Math.floor(m / 60)} hr ${Math.round(m % 60)} min`
-    return 'Over 4 hr'
-  }
-  const sortedPoints = [...points].sort((a, b) => (a.minutes ?? Infinity) - (b.minutes ?? Infinity))
+  const formatMiles = (m: number | null) =>
+    typeof m !== 'number' || !Number.isFinite(m) ? 'n/a' : m < 10 ? `${m.toFixed(1)} mi` : `${Math.round(m).toLocaleString()} mi`
+  const sortedPoints = [...points].sort((a, b) => (a.miles ?? Infinity) - (b.miles ?? Infinity))
 
   const row = (title: string, note: string, value: number | null) => {
     const band = value != null ? getScoreBand(value) : null
@@ -99,7 +95,7 @@ export default function NeighborhoodPersonal({ score, workCommute }: { score: Sc
           <div className={showCommute ? 'border-t border-[var(--hf-border)]' : ''}>
             {row(
               'Social connection',
-              'Proximity to the people you added. A rough estimate, not one of the 12 research-backed pillars.',
+              'Distance to the people you added. Your own preference. The shape comes from studies of older adults and caregiving, not a research-backed score.',
               typeof social.score === 'number' ? social.score : null
             )}
             {points.length > 0 && (
@@ -107,7 +103,7 @@ export default function NeighborhoodPersonal({ score, workCommute }: { score: Sc
                 {sortedPoints.map((p, i) => (
                   <div key={i} className="flex items-baseline justify-between gap-3 py-1.5 text-sm text-[var(--hf-text-secondary)]">
                     <span className="min-w-0 truncate">{p.label ?? (p.tier === 'close' ? 'Close connection' : 'Acquaintance')}</span>
-                    <span className="shrink-0 tabular-nums text-[var(--hf-text-tertiary)]">{formatTravel(p.minutes)}</span>
+                    <span className="shrink-0 tabular-nums text-[var(--hf-text-tertiary)]">{formatMiles(p.miles)}</span>
                   </div>
                 ))}
               </div>

@@ -18,7 +18,7 @@ import CatalogListView from '@/components/catalog/CatalogListView'
 import HeroBand from '@/components/catalog/HeroBand'
 import FilterSheet from '@/components/catalog/FilterSheet'
 import MetroPicker from '@/components/catalog/MetroPicker'
-import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, minutesForMode, noRouteToZone } from '@/lib/workZones'
+import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, haversineMiles, minutesForMode, noRouteToZone } from '@/lib/workZones'
 import IndexInfoButton from '@/components/catalog/IndexInfoButton'
 import CompareTray from '@/components/catalog/CompareTray'
 import { DEFAULT_PRIORITIES, type PillarPriorities, type PriorityLevel } from '@/components/SearchOptions'
@@ -37,7 +37,7 @@ import {
   type CatalogMapPlace,
   type CatalogMapPlaceWithMetro,
 } from '@/lib/catalogMapTypes'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar, estimatedDriveMinutes } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { fetchProfile, type CommuteMode } from '@/lib/userProfile'
 import { ALL_SCHOOL_LEVELS, applyExplorerScoreAdjustments, writeCompareContext, type SchoolLevel } from '@/lib/explorerScoreAdjust'
@@ -610,8 +610,7 @@ export default function CatalogPageClient({
       }
 
       // Optional social_connection pillar (see lib/reweight.ts) -- only meaningful once at least
-      // one person has been added. No precomputed routing to arbitrary addresses exists, so
-      // minutes come from estimatedDriveMinutes' straight-line + area-type-speed estimate.
+      // one person has been added. Distance is straight-line miles (no area-type label input).
       // catalog.lat/lon come out of the JSONL as strings despite the CatalogMapPlace type
       // declaring them as number, so a strict `typeof === 'number'` guard here silently never
       // passes -- Number(...) + Number.isFinite matches how the rest of the app actually
@@ -620,10 +619,9 @@ export default function CatalogPageClient({
       const placeLat = Number(p.catalog?.lat)
       const placeLon = Number(p.catalog?.lon)
       if (people.length > 0 && Number.isFinite(placeLat) && Number.isFinite(placeLon)) {
-        const areaType = p.score.data_quality_summary?.area_classification?.area_type ?? null
         const points = people.map((person) => ({
           tier: person.tier,
-          minutes: estimatedDriveMinutes(person.lat, person.lon, placeLat, placeLon, areaType),
+          miles: haversineMiles(person.lat, person.lon, placeLat, placeLon),
           label: person.label,
         }))
         adjusted = { ...adjusted, score: withSocialConnectionPillar(adjusted.score, points) }

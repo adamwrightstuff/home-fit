@@ -2,6 +2,9 @@ import type { ScoreResponse } from '@/types/api'
 import { PILLAR_ORDER, SCORE_BANDS, type PillarKey, computeHappinessIndex } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import { haversineMiles } from '@/lib/workZones'
+import { socialConnectionScore, type SocialConnectionTier } from '@/lib/socialProximity'
+export { closeTieProximityScore, acquaintanceProximityScore, socialConnectionScore } from '@/lib/socialProximity'
+export type { SocialConnectionTier, SocialConnectionPoint } from '@/lib/socialProximity'
 import { commutePillarScore, commuteTimeScore } from '@/lib/commuteTime'
 import { applyAoPreferences, applyWaterfrontPreference, type WaterfrontSubPreference } from '@/lib/aoPreference'
 import { applyNbPreferencesV9 } from '@/lib/nbPreference'
@@ -312,136 +315,6 @@ export function withCommuteTimePillar(
 }
 
 /**
- * Social-connection pillar score (opt-in, catalog-explorer only, same non-backend mechanism
- * as commute_time above -- see CLAUDE.md, this isn't one of the 13 research-backed pillars).
- * User supplies named points (family/friends' homes) tagged by tie strength; each point's
- * proximity decays on its own curve (below), then the points combine via the simple
- * nearest-plus-bonus rule in socialConnectionScore.
- *
- * Close-tie curve knots come from three real, verified studies (each checked against its
- * actual text, not taken from a summary) measuring three different things -- combining them
- * into one curve is itself a judgment call, not something any single paper hands you:
- * - Healy & Dunifon 2025 (PSID data): households within 1 mile of a grandparent received a
- *   median 208 hrs/year of help; 1-5 miles away, 186 hrs/year (~89% retained). Real dose-
- *   response, same study, same population -- anchors the 15min and 40min knots below.
- * - "Distance in Disconnection" (PMC10645308, SHARE data): bands are 0-1km/1-5km/5-25km/>25km
- *   (walking distance / convenient face-to-face / transit-accessible-casual / long-distance),
- *   and losing a tie within 1-5km raises loneliness more than losing a distant one -- supports
- *   continued decline through the ~25km (~15.5mi) mark, not a plateau.
- * - HRS relocation study: no significant in-person-contact difference for moves under ~50
- *   miles, a real but partial (~0.3 effect size) drop for moves >=50mi -- anchors the 120min
- *   knot as "still not significantly worse than the 40min point," not "back to normal."
- * Miles->minutes uses this file's suburban speed constant (52 km/h, the AIRPORT_DRIVE_KMH
- * "suburban" entry) as one disclosed baseline for turning those studies' mile/km anchors into
- * fixed minute knots -- an actual place's own minutes still come from its own area type via
- * estimatedDriveMinutes, so this only affects where the curve's knots sit, not how any given
- * place's minutes get computed. The interpolation between knots, and everything past the last
- * one, is not from these studies.
- *
- * Acquaintance curve: 100 only through 18min (anchored on a study's measured mean "convenient
- * driving distance" of 17.9min, SD 10.8), dropping to 55 by 30min (~mean+1SD, where
- * "convenient" stops covering most respondents), 10 by 60min, 0 by 75min with no floor --
- * casual ties are the proximity-dependent category with no long-distance selection effect
- * (per the HRS finding above), unlike close ties, which is why this curve has no floor and
- * the close-tie curve does.
- */
-export type SocialConnectionTier = 'close' | 'acquaintance'
-
-export interface SocialConnectionPoint {
-  lat: number
-  lon: number
-  tier: SocialConnectionTier
-  label?: string
-}
-
-export function closeTieProximityScore(minutes: number | null | undefined): number | null {
-  if (minutes === null || minutes === undefined || !Number.isFinite(minutes) || minutes < 0) return null
-  if (minutes <= 15) return 100
-  if (minutes <= 40) return 100 - (minutes - 15) * (28 / 25)
-  if (minutes <= 120) return 72 - (minutes - 40) * (7 / 80)
-  return Math.max(40, 65 - (minutes - 120) * (25 / 120))
-}
-
-export function acquaintanceProximityScore(minutes: number | null | undefined): number | null {
-  if (minutes === null || minutes === undefined || !Number.isFinite(minutes) || minutes < 0) return null
-  if (minutes <= 18) return 100
-  if (minutes <= 30) return 100 - (minutes - 18) * (45 / 12)
-  if (minutes <= 60) return 55 - (minutes - 30) * (45 / 30)
-  if (minutes <= 75) return 10 - (minutes - 60) * (10 / 15)
-  return 0
-}
-
-const TIE_PROXIMITY_CURVE: Record<SocialConnectionTier, (minutes: number | null | undefined) => number | null> = {
-  close: closeTieProximityScore,
-  acquaintance: acquaintanceProximityScore,
-}
-
-/**
- * Area-type drive speed table, reused from the air-travel dealbreaker above -- these are
- * general-purpose area-type driving speeds, not airport-specific, and there's no precomputed
- * routing to arbitrary user-picked points the way work_commute precomputes work hubs, so
- * straight-line distance + area-type speed + road circuity is the estimate, same approach as
- * passesAirTravelDealbreaker.
- */
-export function estimatedDriveMinutes(
-  originLat: number,
-  originLon: number,
-  destLat: number,
-  destLon: number,
-  effectiveAreaType: string | null | undefined
-): number {
-  const miles = haversineMiles(originLat, originLon, destLat, destLon)
-  const km = miles * 1.60934
-  const kmh = AIRPORT_DRIVE_KMH[(effectiveAreaType || '').toLowerCase()] ?? 50.0
-  return (km * ROAD_CIRCUITY) / kmh * 60.0
-}
-
-/**
- * Nearest-tie-plus-bonus: score is whoever's closest, plus a small flat bonus for each
- * additional point that's also meaningfully close (up to a cap). Chosen over an earlier
- * noisy-OR combine, which let a single point above the close-tie plateau instantly saturate
- * every place in that tie's whole metro to ~100 regardless of the rest of the list, with no way
- * to tell places in that metro apart on this pillar anymore. This version still lets one very
- * close tie carry most of the score, but multiple close ties add a visible, bounded bump
- * instead of an invisible ceiling effect.
- *
- * The bonus amount and the cap are round placeholder constants, not fitted or sourced. The
- * "counts as close" threshold is tier-specific, each derived from the paper its own curve is
- * actually built on rather than one number borrowed across both:
- * - Close tie: PMC10645308's own long-distance cutoff (>25km, their own boundary) and the
- *   Compton-Pollak "close" definition (25-30mi, a different paper's own boundary) each convert,
- *   through this file's suburban-baseline speed, to a close-tie-curve score of ~75 and ~69-70
- *   respectively -- two independent sources bracketing ~70-75. 70 is the stricter end.
- * - Acquaintance: the same "convenient driving distance" study the acquaintance curve's own
- *   30min knot already comes from (mean 17.9min + 1SD = ~28.7min) scores ~60 on that curve.
- *   Using the close-tie threshold (70) here would exclude someone at 27-28min even though
- *   that's within the source study's own "still convenient" range -- a mismatch, not a choice.
- */
-const SOCIAL_CONNECTION_BONUS_THRESHOLD: Record<SocialConnectionTier, number> = {
-  close: 70,
-  acquaintance: 60,
-}
-const SOCIAL_CONNECTION_BONUS_PER_EXTRA_POINT = 5
-const SOCIAL_CONNECTION_MAX_BONUS_POINTS = 2
-
-export function socialConnectionScore(
-  points: Array<{ tier: SocialConnectionTier; minutes: number | null | undefined }>
-): number | null {
-  const scored: Array<{ tier: SocialConnectionTier; proximity: number }> = []
-  for (const p of points) {
-    const proximity = TIE_PROXIMITY_CURVE[p.tier](p.minutes)
-    if (proximity === null) continue
-    scored.push({ tier: p.tier, proximity })
-  }
-  if (scored.length === 0) return null
-  scored.sort((a, b) => b.proximity - a.proximity)
-  const [best, ...rest] = scored
-  const bonusEligibleCount = rest.filter((p) => p.proximity >= SOCIAL_CONNECTION_BONUS_THRESHOLD[p.tier]).length
-  const bonus = Math.min(bonusEligibleCount, SOCIAL_CONNECTION_MAX_BONUS_POINTS) * SOCIAL_CONNECTION_BONUS_PER_EXTRA_POINT
-  return Math.min(100, Math.round((best.proximity + bonus) * 10) / 10)
-}
-
-/**
  * Injects a synthetic social_connection pillar into a catalog place's score, same mechanism
  * as withCommuteTimePillar: any key in livability_pillars with a numeric score is eligible for
  * a token share via prioritiesToTokens' extra-keys handling. No-ops when there are no usable
@@ -450,7 +323,7 @@ export function socialConnectionScore(
  */
 export function withSocialConnectionPillar(
   data: ScoreResponse,
-  points: Array<{ tier: SocialConnectionTier; minutes: number | null | undefined; label?: string }>
+  points: Array<{ tier: SocialConnectionTier; miles: number | null | undefined; label?: string }>
 ): ScoreResponse {
   const score = socialConnectionScore(points)
   if (score === null) return data
@@ -466,7 +339,7 @@ export function withSocialConnectionPillar(
         breakdown: {
           points: points.map((p) => ({
             tier: p.tier,
-            minutes: typeof p.minutes === 'number' ? Math.round(p.minutes * 10) / 10 : null,
+            miles: typeof p.miles === 'number' ? Math.round(p.miles * 10) / 10 : null,
             label: p.label ?? null,
           })),
         },

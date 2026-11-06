@@ -106,7 +106,7 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
           const fill = score != null ? homefitPillarBarFill(score) : 'rgba(0,0,0,0.08)'
           return (
             <div className="flex min-w-0 items-center gap-2 text-[0.65rem]">
-              <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]" title="Rough proximity estimate to the people you added, not a research-backed pillar.">
+              <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]" title="Distance to the people you added. Your own preference. The shape comes from studies of older adults and caregiving, not a research-backed score.">
                 Social Connection
               </span>
               <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">

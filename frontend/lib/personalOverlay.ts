@@ -1,7 +1,6 @@
 import type { ScoreResponse } from '@/types/api'
 import {
   applyUserIncomeToScore,
-  estimatedDriveMinutes,
   withCommuteTimePillar,
   withSocialConnectionPillar,
 } from '@/lib/reweight'
@@ -59,8 +58,6 @@ export function applyProfileToScore(
   const lat = Number((out.coordinates as any)?.lat)
   const lon = Number((out.coordinates as any)?.lon)
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return out
-  const areaType = (out as any).data_quality_summary?.area_classification?.area_type ?? null
-
   // Precomputed routed minutes (catalog places) win over the straight-line drive estimate, and are
   // the only source for transit-only hubs.
   const zone = findWorkZone(profile.work_zone_id ?? null)
@@ -76,7 +73,7 @@ export function applyProfileToScore(
   if (profile.people?.length) {
     const points = profile.people.map((person) => ({
       tier: person.tier,
-      minutes: estimatedDriveMinutes(person.lat, person.lon, lat, lon, areaType),
+      miles: haversineMiles(person.lat, person.lon, lat, lon),
       label: person.label,
     }))
     out = withSocialConnectionPillar(out, points)

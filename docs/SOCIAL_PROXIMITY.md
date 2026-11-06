@@ -1,6 +1,6 @@
 # Social proximity (personal priority): DPv2 spec sheet and audit
 
-Level: 0 (audit only, 2026-11-05, no scoring change made). Proposed after an approved fix: Level 1.
+Level: 0 until signed off. Option B implemented locally 2026-11-05 (unpushed); proposed Level 1 once you approve the diff.
 Scope: a personal, client-side priority (closeness to the user's own family and friends). Not a pillar, not in the general happiness index. Frontend id: `social_connection`; map label "Social proximity"; weight panel label "Closeness to people you know".
 
 Verification key: VERIFIED = I read the source text or abstract in this session (a fetch summary counts as an abstract read, not a full-text read). SUMMARY = seen only in a search snippet or press release. UNVERIFIED = not seen.
@@ -120,8 +120,15 @@ Social proximity is injected as a synthetic pillar and weighted by the same Low 
 
 Recommendation: B, with the copy from A and the disclosure line in gap 8. The evidence is real but narrow, so B uses it where it exists (steep inside 5 miles, small tail) and says plainly it is a preference everywhere else. C is the fallback if you do not want to lean on a single care-hours study. Nothing here changes scoring until you approve.
 
-## 4. Change (not started, waiting for approval)
-Files: `frontend/lib/reweight.ts` (curves, remove speed use for this priority), `frontend/lib/personalOverlay.ts` and `frontend/app/catalog/catalog-page-client.tsx` (pass miles), copy in `ScoreDisplay.tsx`, `NeighborhoodPersonal.tsx`, `PeopleYouKnowPicker.tsx`, tests in `tests/social_proximity.test.mjs`.
+## 4. Change (option B, implemented 2026-11-05 on branch social-proximity-dpv2, not pushed)
+- `frontend/lib/socialProximity.ts` (new, pure): curves in miles, combine rule. Re-exported from `frontend/lib/reweight.ts`.
+- Close curve: 100 through 5 mi, 68 at 7.5 mi, linear to 50 at 100 mi, flat beyond. Acquaintance: previous curve converted to miles at the old suburban baseline (100 through 7.5 mi, 55 at 12.5, 10 at 25, 0 at 31). All knots between anchors are TODO.
+- `estimatedDriveMinutes` removed. Callers (`personalOverlay.ts`, `catalog-page-client.tsx`) pass straight-line miles. The area-type label, the speed table and the 1.3 circuity are no longer inputs. Missing area_type can no longer cause a silent 50 km/h default (gap 7).
+- Stored breakdown field changed from `minutes` to `miles` (client-side only, nothing persisted in the catalog).
+- Copy: one-line disclosure on the three display surfaces (gap 8). Picker text unchanged (gap 9 is a no-op).
+- Tests: `tests/social_proximity.test.mjs` (anchors, monotone, invalid input gives null, combine rule, cap). 15 of 15 pass with the commute tests; `tsc --noEmit` clean; `next lint` shows only warnings that were already there.
+- Behavior shift to know about: the combine bonus threshold (close 70, acquaintance 60) is unchanged, but on the new curves it now means a close person within about 7 miles and an acquaintance within about 11 miles (before: roughly 15 to 25 miles). Extra people count less often. Still TODO, range unknown.
+- Not changed: token weighting (gap 5), tiers (gap 9).
 
 ## 5. Level 2 checks adapted to a personal priority (plan, pass criteria fixed now)
 

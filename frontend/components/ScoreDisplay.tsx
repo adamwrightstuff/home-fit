@@ -675,7 +675,7 @@ export default function ScoreDisplay({
           const sc = (livability_pillars as any)?.social_connection
           if (!sc || typeof sc.weight !== 'number' || sc.weight <= 0) return null
           const score = typeof sc.score === 'number' ? sc.score : null
-          const points: Array<{ tier: 'close' | 'acquaintance'; minutes: number | null; label: string | null }> =
+          const points: Array<{ tier: 'close' | 'acquaintance'; miles: number | null; label: string | null }> =
             Array.isArray(sc.breakdown?.points) ? sc.breakdown.points : []
           return (
             <div className="hf-card-sm" style={{ marginTop: '1rem' }}>
@@ -685,7 +685,7 @@ export default function ScoreDisplay({
                   <div style={{ minWidth: 0 }}>
                     <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)' }}>Social Connection</span>
                     <div className="tr-muted" style={{ fontSize: '0.95rem', marginTop: '0.5rem', lineHeight: 1.4 }}>
-                      Not a research-backed pillar like the 13 above -- a rough estimate of proximity to the people you added under People You Know, off by default.
+                      Distance to the people you added under People You Know, off by default. Your own preference. The shape comes from studies of older adults and caregiving, not a research-backed score.
                     </div>
                   </div>
                 </div>
@@ -736,7 +736,7 @@ export default function ScoreDisplay({
                   {points.map((p, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--hf-text-secondary)' }}>
                       <span>{p.tier === 'close' ? '❤️' : '🙂'} {p.label ?? (p.tier === 'close' ? 'Close connection' : 'Acquaintance')}</span>
-                      <span>{typeof p.minutes === 'number' ? `${Math.round(p.minutes)} min` : '—'}</span>
+                      <span>{typeof p.miles === 'number' ? `${p.miles < 10 ? p.miles.toFixed(1) : Math.round(p.miles).toLocaleString()} mi` : '—'}</span>
                     </div>
                   ))}
                 </div>
