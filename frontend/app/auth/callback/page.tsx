@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -57,7 +58,17 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="hf-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-      <p className="tr-muted" style={{ fontSize: '1.1rem' }}>{status}</p>
+      <div style={{ textAlign: 'center' }}>
+        <p className="tr-muted" style={{ fontSize: '1.1rem' }}>{status}</p>
+        {status === 'Something went wrong.' && (
+          <p style={{ marginTop: '0.75rem' }}>
+            <Link href="/catalog" className="hf-btn-primary" style={{ display: 'inline-block' }}>Back to the catalog</Link>
+            <span className="tr-muted" style={{ display: 'block', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+              Then use Sign in to try again.
+            </span>
+          </p>
+        )}
+      </div>
     </div>
   )
 }

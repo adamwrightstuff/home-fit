@@ -46,6 +46,17 @@ export default function TwinFinderPanel({
       : []
 
   if (!twinQueryKey && twinSearchText.trim() === '') {
+    // Suggested starts: the top-scored place in each of six different metros.
+    const seen = new Set<string>()
+    const suggestions = [...places]
+      .sort((a, b) => (b.score?.total_score ?? 0) - (a.score?.total_score ?? 0))
+      .filter((p) => {
+        const m = inferCatalogMetro(p)
+        if (seen.has(m)) return false
+        seen.add(m)
+        return true
+      })
+      .slice(0, 6)
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-6 pb-24 text-center">
         <Search className="h-12 w-12 text-[var(--hf-text-tertiary)] opacity-60" strokeWidth={1.25} />
@@ -55,6 +66,21 @@ export default function TwinFinderPanel({
             Pick any neighborhood and HomeFit compares it across 12 pillars to surface its closest match in a different metro — same character, different city.
           </p>
         </div>
+        {suggestions.length > 0 && (
+          <div className="flex max-w-sm flex-wrap justify-center gap-1.5">
+            <span className="w-full text-[0.7rem] text-[var(--hf-text-tertiary)]">Try one of these</span>
+            {suggestions.map((p) => (
+              <button
+                key={catalogRowKey(p.catalog)}
+                type="button"
+                className="rounded-full border border-[var(--hf-border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
+                onClick={() => onSelectQuery(catalogRowKey(p.catalog))}
+              >
+                {p.catalog.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     )
   }

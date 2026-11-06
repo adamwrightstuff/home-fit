@@ -1061,7 +1061,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                                   }}
                                   disabled={rerunDisabled}
                                   aria-label="Rerun this pillar"
-                                  className="hf-btn-primary"
+                                  className="hf-btn-secondary"
                                   style={{
                                     padding: '0.5rem 0.75rem',
                                     minHeight: 44,
@@ -1098,7 +1098,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                         togglePillar(key)
                       }}
                       onKeyDown={(e) => e.stopPropagation()}
-                      className="hf-btn-primary"
+                      className="hf-btn-secondary"
                       style={{
                         padding: '0.4rem 0.85rem',
                         borderRadius: 8,
@@ -1473,16 +1473,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           >
             View results
           </button>
-        ) : (
-          <button
-            type="button"
-            disabled
-            className="hf-btn-primary"
-            style={{ width: '100%', padding: '1rem 1.5rem', fontSize: '1.1rem', opacity: 0.6, cursor: 'not-allowed' }}
-          >
-            Run Score
-          </button>
-        )}
+        ) : null}
       </div>
 
       {/* Scoring overlay: full-screen live results — shows actual scores as each pillar completes */}
