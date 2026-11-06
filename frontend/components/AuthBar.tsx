@@ -2,12 +2,17 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import AuthModal from '@/components/AuthModal'
 
 export default function AuthBar() {
   const { user, loading, isConfigured, signOut, openAuthModal, closeAuthModal, authModalOpen, authModalMode } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const pathname = usePathname() ?? ''
+  // Two modes, one switch: travel pages are under /vacation, everything else is HomeFit.
+  const travelMode = pathname.startsWith('/vacation')
+  const searchHref = travelMode ? '/vacation' : '/search'
   const headerRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -81,30 +86,26 @@ export default function AuthBar() {
           </Link>
 
           {/* Middle nav — hidden on mobile, visible md+ */}
-          <nav className="hf-auth-bar-nav hidden md:flex" aria-label="Main" style={{ alignItems: 'center', gap: '0.5rem' }}>
-            {/* HomeFit cluster */}
-            <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e', fontWeight: 600, fontSize: '0.875rem' }}>
-              HomeFit
-            </Link>
-            <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#6B7280', fontSize: '0.8rem' }}>
-              Explore
-            </Link>
-            <Link href="/search" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#6B7280', fontSize: '0.8rem' }}>
-              Search
-            </Link>
-
-            {/* Divider */}
-            <span style={{ width: 1, height: 18, background: '#D1D5DB', margin: '0 0.25rem', display: 'inline-block', flexShrink: 0 }} aria-hidden="true" />
-
-            {/* TravelFit cluster */}
-            <Link href="/vacation/explorer" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#92400E', fontWeight: 600, fontSize: '0.875rem' }}>
-              TravelFit
-            </Link>
-            <Link href="/vacation/explorer" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#B45309', fontSize: '0.8rem' }}>
-              Explore
-            </Link>
-            <Link href="/vacation" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#B45309', fontSize: '0.8rem' }}>
-              Search
+          <nav className="hf-auth-bar-nav hidden md:flex" aria-label="Main" style={{ alignItems: 'center', gap: '0.75rem' }}>
+            {/* Mode switch: one control, two options (Airbnb style) */}
+            <div role="group" aria-label="Mode" style={{ display: 'inline-flex', background: '#F3F4F6', borderRadius: 999, padding: 3 }}>
+              <Link
+                href="/catalog"
+                aria-current={!travelMode ? 'page' : undefined}
+                style={{ textDecoration: 'none', borderRadius: 999, padding: '0.3rem 0.9rem', fontSize: '0.875rem', fontWeight: 600, color: !travelMode ? '#1a1a2e' : '#6B7280', background: !travelMode ? '#fff' : 'transparent', boxShadow: !travelMode ? '0 1px 2px rgba(0,0,0,0.12)' : 'none' }}
+              >
+                HomeFit
+              </Link>
+              <Link
+                href="/vacation/explorer"
+                aria-current={travelMode ? 'page' : undefined}
+                style={{ textDecoration: 'none', borderRadius: 999, padding: '0.3rem 0.9rem', fontSize: '0.875rem', fontWeight: 600, color: travelMode ? '#92400E' : '#6B7280', background: travelMode ? '#fff' : 'transparent', boxShadow: travelMode ? '0 1px 2px rgba(0,0,0,0.12)' : 'none' }}
+              >
+                TravelFit
+              </Link>
+            </div>
+            <Link href={searchHref} className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e', fontSize: '0.875rem' }}>
+              Search any place
             </Link>
           </nav>
 
@@ -138,23 +139,14 @@ export default function AuthBar() {
 
         {/* Mobile dropdown */}
         <nav className={`hf-auth-bar-mobile-menu${mobileMenuOpen ? ' open' : ''}`} aria-label="Mobile menu">
-          <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e', fontWeight: 600 }} onClick={closeMobileMenu}>
+          <Link href="/catalog" className="hf-auth-bar-btn" aria-current={!travelMode ? 'page' : undefined} style={{ textDecoration: 'none', color: '#1a1a2e', fontWeight: !travelMode ? 700 : 500 }} onClick={closeMobileMenu}>
             HomeFit
           </Link>
-          <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#6B7280', fontSize: '0.85rem', paddingLeft: '1.25rem' }} onClick={closeMobileMenu}>
-            Explore
-          </Link>
-          <Link href="/search" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#6B7280', fontSize: '0.85rem', paddingLeft: '1.25rem' }} onClick={closeMobileMenu}>
-            Search
-          </Link>
-          <Link href="/vacation/explorer" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#92400E', fontWeight: 600, marginTop: '0.25rem' }} onClick={closeMobileMenu}>
+          <Link href="/vacation/explorer" className="hf-auth-bar-btn" aria-current={travelMode ? 'page' : undefined} style={{ textDecoration: 'none', color: '#92400E', fontWeight: travelMode ? 700 : 500 }} onClick={closeMobileMenu}>
             TravelFit
           </Link>
-          <Link href="/vacation/explorer" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#B45309', fontSize: '0.85rem', paddingLeft: '1.25rem' }} onClick={closeMobileMenu}>
-            Explore
-          </Link>
-          <Link href="/vacation" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#B45309', fontSize: '0.85rem', paddingLeft: '1.25rem' }} onClick={closeMobileMenu}>
-            Search
+          <Link href={searchHref} className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e', fontSize: '0.9rem' }} onClick={closeMobileMenu}>
+            Search any place
           </Link>
           {accountNav}
         </nav>
