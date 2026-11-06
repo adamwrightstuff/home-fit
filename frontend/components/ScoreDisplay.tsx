@@ -6,6 +6,7 @@ import { ScoreResponse } from '@/types/api'
 import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
 import TotalScore from './TotalScore'
 import PillarCard from './PillarCard'
+import CatalogWeightPanel from '@/components/catalog/CatalogWeightPanel'
 import WhyNotHigher from './WhyNotHigher'
 import InteractiveMap, { type PillarPoi } from './InteractiveMap'
 import LongevityInfo from './LongevityInfo'
@@ -316,6 +317,9 @@ export default function ScoreDisplay({
     }
   }
 
+  const [weightsOpen, setWeightsOpen] = useState(false)
+  const canEditPriorities = Boolean(onPrioritiesChange && priorities && !readOnlyPriorities)
+
   const saveRow =
     onSave && priorities && !isLoading ? (
       <div
@@ -371,6 +375,21 @@ export default function ScoreDisplay({
 
   return (
     <div style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
+      {canEditPriorities && priorities && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button type="button" className="hf-btn-secondary" onClick={() => setWeightsOpen(true)}>
+              Adjust priorities
+            </button>
+          </div>
+          <CatalogWeightPanel
+            open={weightsOpen}
+            onClose={() => setWeightsOpen(false)}
+            priorities={priorities}
+            onChange={(next) => onPrioritiesChange?.(next)}
+          />
+        </>
+      )}
       {showMap && mapCoords && (
         <div style={{ borderRadius: 12, overflow: 'hidden', background: 'var(--hf-bg-subtle)' }}>
           <div style={{ height: 280 }}>
@@ -599,15 +618,6 @@ export default function ScoreDisplay({
                 placeLabel={locationDisplayName}
                 loading={Boolean(isLoading && pillarLoadingKeys?.has(key))}
                 importanceLevel={level}
-                onImportanceChange={
-                  onPrioritiesChange && !readOnlyPriorities
-                    ? (newLevel) => {
-                        const next = { ...priorities } as PillarPriorities
-                        next[key as keyof PillarPriorities] = newLevel
-                        onPrioritiesChange(next)
-                      }
-                    : undefined
-                }
                 onRescorePillar={onRescorePillar}
                 rescoring={rescoringPillarKey === key}
                 includeChainsValue={key === 'neighborhood_amenities' ? Boolean(searchOptions?.include_chains) : undefined}
