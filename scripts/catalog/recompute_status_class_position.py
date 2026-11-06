@@ -32,6 +32,9 @@ def main() -> int:
     ap.add_argument("--pooled", default=None,
                     help="pooled_inputs.json from pool_status_class_inputs_offline.py: single-tract places read the pooled "
                          "income and home value (same pool as the housing pillar, D14) and the class is re-derived from them")
+    ap.add_argument("--pooled-nbhd", default=None,
+                    help="pooled_nbhd.json from pool_neighborhood_city_level_offline.py: catalog neighborhoods whose housing read was the whole city "
+                         "(geo_level incorporated_place) read the pooled tracts instead (income, home value, share of households at $150,000 or more)")
     ap.add_argument("--ring-m", type=int, default=700, help="ring radius of the pooled file, recorded in the breakdown (350 is the label pool)")
     args = ap.parse_args()
 
@@ -43,6 +46,7 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     pattern = f"{args.metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl" if args.metro else "*_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
     pooled_in = json.load(open(args.pooled)) if args.pooled else {}
+    pooled_nbhd = json.load(open(args.pooled_nbhd)) if args.pooled_nbhd else {}
     summary = collections.Counter()
     class_mismatch = []
     for path in sorted(glob.glob(str(REPO / "data" / pattern))):
@@ -89,6 +93,32 @@ def main() -> int:
                     bd["status_label"] = ss._get_status_label(arch)
                     bd["status_insight"] = ss._get_status_insight(arch, new_cls[1])
                 re_cls = None  # class was just derived from the pooled inputs
+            elif (nb := pooled_nbhd.get(f"{metro}|{r['catalog']['name']}")) and r["catalog"].get("type") == "neighborhood" \
+                    and sm.get("geo_level") == "incorporated_place":
+                # A neighborhood read as its whole city (the 200,000-unit place rule): read its own pooled tracts instead.
+                # The city's burden ratio (cost / income) is held; the archive has no tract monthly cost.
+                inc1, cost1, city_geo = sm.get("median_household_income"), sm.get("median_monthly_housing_cost"), sm.get("geo_level")
+                sm = dict(sm)
+                sm["median_household_income"] = nb["income"]
+                if nb.get("home_value"):
+                    sm["median_home_value"] = nb["home_value"]
+                if nb.get("share_150k") is not None:
+                    sm["share_households_150k_plus"] = nb["share_150k"]
+                    bd["households_150k_plus_share"] = round(nb["share_150k"], 1)
+                if isinstance(cost1, (int, float)) and cost1 > 0 and isinstance(inc1, (int, float)) and inc1 > 0:
+                    sm["median_monthly_housing_cost"] = cost1 * nb["income"] / inc1
+                bd["pooled_inputs"] = {"income": round(nb["income"]), "home_value": round(nb["home_value"] or 0), "tracts": nb["tracts"],
+                                       "method": f"disk_approx_{args.ring_m}m_ring_occupied_weighted", "replaced_geography": city_geo,
+                                       "income_topcoded": nb.get("topcoded", False)}
+                summary["city_level_neighborhoods_repooled"] += 1
+                re_cls = ss._classify_class(sm, keys, baselines)
+                if re_cls is not None:
+                    if re_cls[0] != arch:
+                        summary["class_changed_by_neighborhood_pool"] += 1
+                    arch = re_cls[0]
+                    bd["archetype"], bd["archetype_rule"] = re_cls
+                    bd["status_label"] = ss._get_status_label(arch)
+                    bd["status_insight"] = ss._get_status_insight(arch, re_cls[1])
             else:
                 re_cls = ss._classify_class(sm, keys, baselines)
                 if re_cls is not None and (re_cls[0] != arch or re_cls[1] != bd.get("archetype_rule")):
