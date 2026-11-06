@@ -5,13 +5,13 @@ import { buildWhoLivesHere } from '@/lib/whoLivesHere'
  * Race and income distributions are deliberately not shown (docs/PILLAR_DIVERSITY.md, owner ruling 2026-10-28).
  */
 export default function WhoLivesHere({ pillars }: { pillars: unknown }) {
-  const { groups, geography } = buildWhoLivesHere(pillars)
+  const { groups } = buildWhoLivesHere(pillars)
   if (groups.length === 0) return null
   return (
     <section className="mb-8" aria-label="Who lives here">
       <h2 className="mb-1 text-lg font-bold text-[var(--hf-text-primary)]">Who lives here</h2>
       <p className="mb-3 text-xs leading-relaxed text-[var(--hf-text-tertiary)]">
-        Residents{geography ? `, measured over ${geography}` : ''} (Census ACS 2022). Facts, not a score, and not counted in the total.
+        Residents (Census ACS 2022). Each figure covers the neighborhood tract or the whole city or town that the Census data for this place describes. Facts, not a score, and not counted in the total.
         Incomes are capped by the Census at $250,000 and home values at $2,000,000.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">

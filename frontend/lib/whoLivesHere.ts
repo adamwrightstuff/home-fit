@@ -78,6 +78,18 @@ export function buildWhoLivesHere(pillars: any): { groups: WhoLivesHereGroup[]; 
     })
   }
 
+  // Household type (ACS B11001, B11005, B11007), added from the same geography as the age mix (docs/WHO_LIVES_HERE.md).
+  const ht = div.household_type
+  if (ht && typeof ht === 'object') {
+    const rows: WhoLivesHereRow[] = [
+      { label: 'With children under 18', value: pct(num(ht.pct_with_children), 'percent') },
+      { label: 'Living alone', value: pct(num(ht.pct_living_alone), 'percent') },
+      { label: 'Married-couple families', value: pct(num(ht.pct_married_couple), 'percent') },
+      { label: 'With someone 65 or over', value: pct(num(ht.pct_with_65plus), 'percent') },
+    ]
+    if (rows.some((r) => r.value !== 'n/a')) groups.push({ title: 'Household type', rows })
+  }
+
   const ages = ageMixWholePercents(div.raw_shares?.age)
   if (ages) {
     groups.push({
