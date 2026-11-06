@@ -1,6 +1,6 @@
 # Social proximity (personal priority): DPv2 spec sheet and audit
 
-Level: 0 until signed off. Level 1 signed 2026-11-05 on curve version 2; curve refit to Table A2 afterwards (version 3), so reconfirmation is pending. See section 6. Branch social-proximity-dpv2, unpushed.
+Level: 0 until signed off. Level 1 (reconfirmed 2026-11-05 on curve version 3, owner). Level 2 proposed, unsigned. See section 6. Branch social-proximity-dpv2, unpushed.
 Scope: a personal, client-side priority (closeness to the user's own family and friends). Not a pillar, not in the general happiness index. Frontend id: `social_connection`; map label "Social proximity"; weight panel label "Closeness to people you know".
 
 Verification key: VERIFIED = I read the source text or abstract in this session (a fetch summary counts as an abstract read, not a full-text read). SUMMARY = seen only in a search snippet or press release. UNVERIFIED = not seen.
@@ -162,9 +162,13 @@ Notes:
 - Clumping (principle 10), important: beyond 20 miles every place scores 39. That is 270 of 411 places for the Park Slope person and 330 to 342 for the other four. Distinct scores per person 60 to 103. The pillar cannot tell places apart past 20 miles from the person. Places at the ceiling of 100: 2 to 27.
 - Rank order of places is robust to every constant except whether the tail slopes at all.
 - The earlier independent check (version 2) found the Table A2 bands, same-block premium about 2.7 times the 2 to 5 mile band, and that Sun and Schafer find relatives matter only within 1 km. Its out-of-fit bands (10 to 30 and 30 to 100 mi) are now fit bands, so that result does not carry over.
-- Not run: area-type spread. Independent check on version 3 done 2026-11-05 by a separate agent, read through WebFetch summaries; not verified by it: Healy and Dunifon bands, Sun and Schafer intervals, the bootstrap ranges.
+- Independent check on version 3 done 2026-11-05 by a separate agent, read through WebFetch summaries; not verified by it: Healy and Dunifon bands, Sun and Schafer intervals, the bootstrap ranges.
 
-Level: still Level 1 pending your signature on version 3. Level 1 was signed 2026-11-05 on version 2; the curve changed afterwards, so the signature does not carry over until you reconfirm. Level 2 not reached only because 1c, 2b and 3b (flat edge) fail by evidence or edge case and need your written acceptance; the independent check passed.
+Spread by area type (run 2026-11-05, 5 persons x 411 places pooled): share of person-place scores at the floor of 39 is 76 to 83 percent in every area type (suburban 229 places 79, urban_residential 118 76, exurban 48 82, rural 12 83; urban_core and unknown have 2 each), median 39 in every type. The curve takes miles only, so area type cannot move a score; these shares only reflect that most person-place pairs in this test are cross-metro. A within-metro spread would need real user addresses and was not run.
+
+Sign-off: Level 1 (Converted) reconfirmed on curve version 3. Date: 2026-11-05. Signed off by: Adam Wright (owner).
+Written acceptance by the owner, 2026-11-05: checks 1c (step size), 2b (pair gap) and 3b (flat-tail edge) fail by evidence or edge case and are accepted as known limits; the clumping beyond 20 miles (every place scores 39) is accepted as a known limit.
+Level 2: all fixed checks are now run or accepted (area-type spread run, independent check passed, failures accepted). Proposed for your sign-off as Level 2, not yet signed. User-facing copy must not call this priority "validated": the independent check supports the shape only weakly (wide intervals, one study of help to disabled older parents).
 Accepted TODOs (not Level 3): lines between band midpoints, the near-premium inside 3 miles, acquaintance knots and cap, combine bonus (5, cap 2), thresholds (70 and 60).
 
 ## Sources checked this session
