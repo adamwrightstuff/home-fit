@@ -17,6 +17,9 @@ export default function QuizPage() {
         ...opts,
         quiz_override: true,
         priorities: merged,
+        // Same fields the profile page writes, so the catalog reads them.
+        ...(payload.commuteMode ? { commute_mode: payload.commuteMode } : {}),
+        ...(payload.officeDays ? { office_days: payload.officeDays } : {}),
         filters: {
           ...(opts.filters ?? {}),
           filterAoTypes: payload.filterAoTypes,
@@ -24,8 +27,6 @@ export default function QuizPage() {
           filterHousingType: payload.filterHousingType,
           filterTenure: payload.filterTenure,
           ...(payload.workZoneId ? { workZoneId: payload.workZoneId } : {}),
-          ...(payload.commuteMode ? { commuteMode: payload.commuteMode } : {}),
-          ...(payload.officeDays ? { officeDays: payload.officeDays } : {}),
           filterLocalScene: payload.filterLocalScene ?? 'all',
           filterPoliticalLean: payload.filterPoliticalLean,
           filterTrajectory: payload.filterTrajectory,
