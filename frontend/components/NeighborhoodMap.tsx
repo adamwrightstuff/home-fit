@@ -24,6 +24,7 @@ export default function NeighborhoodMap({
         location={location}
         coordinates={score.coordinates}
         completed_pillars={Object.keys(score.livability_pillars ?? {})}
+        showProgress={false}
       />
     </div>
   )

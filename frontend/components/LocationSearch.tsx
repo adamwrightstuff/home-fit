@@ -183,6 +183,7 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     setSubmitted(true)
+    if (!location.trim()) inputRef.current?.focus()
     if (location.trim() && !disabled) {
       setSuggestionsOpen(false)
       onSearch(location.trim())
@@ -294,7 +295,7 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
         </div>
         <button
           type="submit"
-          disabled={disabled || !location.trim()}
+          disabled={disabled}
           className="hf-btn-primary"
         >
           {disabled ? 'Searching...' : 'Search'}

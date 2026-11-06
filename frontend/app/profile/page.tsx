@@ -348,6 +348,18 @@ export default function ProfilePage() {
                   className={INPUT_CLASS + ' pl-7'}
                 />
               </div>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-[var(--hf-text-tertiary)]">Quick pick</span>
+                {[50000, 75000, 100000, 150000, 200000].map((v) => (
+                  <Chip
+                    key={v}
+                    active={profile.household_income === v}
+                    onClick={() => { setIncomeInput(v.toLocaleString('en-US')); update({ household_income: v }) }}
+                  >
+                    {`$${v / 1000}k`}
+                  </Chip>
+                ))}
+              </div>
             </div>
 
             <div ref={homeBoxRef} className="relative">

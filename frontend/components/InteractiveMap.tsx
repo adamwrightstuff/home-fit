@@ -15,6 +15,8 @@ interface InteractiveMapProps {
   location: string
   coordinates?: { lat: number; lon: number } | null
   completed_pillars: string[]
+  /** Live-scoring progress badge; off for stored places where it is not meaningful. */
+  showProgress?: boolean
   pois?: PillarPoi[] | null
   activePillarLabel?: string | null
 }
@@ -24,7 +26,7 @@ const TOTAL_PILLARS = Object.keys(PILLAR_META).length
 const POI_COLOR = '#1D9E75'
 const POI_STROKE = '#FFFFFF'
 
-export default function InteractiveMap({ location, coordinates, completed_pillars, pois, activePillarLabel }: InteractiveMapProps) {
+export default function InteractiveMap({ location, coordinates, completed_pillars, pois, activePillarLabel, showProgress = true }: InteractiveMapProps) {
   const map_container_ref = useRef<HTMLDivElement>(null)
   const map_ref = useRef<any>(null)
   const [map_loaded, set_map_loaded] = useState(false)
@@ -422,7 +424,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
           <div className="tr-muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>
             {coordinates.lat.toFixed(4)}, {coordinates.lon.toFixed(4)}
           </div>
-          {completed_pillars.length > 0 && (
+          {showProgress && completed_pillars.length > 0 && (
             <div className="tr-muted" style={{ fontSize: '0.9rem', marginTop: '0.35rem', fontWeight: 700 }}>
               {Math.min(completed_pillars.length, TOTAL_PILLARS)}/{TOTAL_PILLARS} pillars complete
             </div>

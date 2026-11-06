@@ -1906,8 +1906,8 @@ export default function CatalogPageClient({
       )}
 
       {/* Floating map/list toggle — Airbnb style */}
-      {catalogMode === 'explorer' && (
-        <div className="md:hidden pointer-events-none fixed bottom-6 left-0 right-0 z-40 flex justify-center">
+      {catalogMode === 'explorer' && !(viewMode === 'map' && selectedKey) && (
+        <div className={`md:hidden pointer-events-none fixed ${viewMode === 'map' ? 'bottom-24' : 'bottom-6'} left-0 right-0 z-40 flex justify-center`}>
           <button
             type="button"
             className="pointer-events-auto flex items-center gap-2 rounded-full border border-[var(--hf-border-strong)] bg-white px-5 py-3 text-sm font-semibold text-[var(--hf-text-primary)] shadow-xl"
