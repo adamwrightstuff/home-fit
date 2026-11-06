@@ -86,8 +86,8 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
                       <div className="h-full rounded-full" style={{ width: `${Math.min(100, score)}%`, background: fill }} />
                     )}
                   </div>
-                  <span className="w-7 shrink-0 tabular-nums text-[var(--hf-text-secondary)]">
-                    {score != null ? score.toFixed(0) : '—'}
+                  <span className="min-w-7 shrink-0 tabular-nums text-[var(--hf-text-secondary)]" title={score == null ? 'Not enough source data to score this pillar here' : undefined}>
+                    {score != null ? score.toFixed(0) : 'No data'}
                   </span>
                   <span className="w-9 shrink-0 text-right tabular-nums text-[var(--hf-text-tertiary)]">{w.toFixed(0)}%</span>
                 </>

@@ -104,7 +104,7 @@ function ScoreHero({
         {label}
       </div>
       <div className="mt-1 text-4xl font-bold tabular-nums" style={{ color: accent }}>
-        {value != null && Number.isFinite(value) ? value.toFixed(0) : 'n/a'}
+        {value != null && Number.isFinite(value) ? value.toFixed(0) : 'No data'}
       </div>
       <div className="mt-1 text-[0.7rem] text-[var(--hf-text-tertiary)]">out of 100</div>
     </div>
@@ -226,8 +226,11 @@ export default async function NeighborhoodPage({
                         {band.label}
                       </span>
                     )}
-                    <span className="w-8 text-right text-sm font-bold tabular-nums text-[var(--hf-text-primary)]">
-                      {v != null ? v.toFixed(0) : 'n/a'}
+                    {v == null && (
+                      <span className="text-[0.7rem] text-[var(--hf-text-tertiary)]">Not enough source data here</span>
+                    )}
+                    <span className="min-w-8 text-right text-sm font-bold tabular-nums text-[var(--hf-text-primary)]">
+                      {v != null ? v.toFixed(0) : 'No data'}
                     </span>
                   </div>
                 </div>

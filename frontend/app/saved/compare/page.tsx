@@ -771,7 +771,7 @@ function CompareContent() {
                         ) : (
                           <div className="tr-muted" style={{ opacity: 0.5, fontSize: '0.85rem' }}>
                             —<br />
-                            <span style={{ fontSize: '0.75rem' }}>Not scored</span>
+                            <span style={{ fontSize: '0.75rem' }}>No data for this place</span>
                             <br />
                             <button
                               type="button"
@@ -885,7 +885,7 @@ function CompareContent() {
                         ) : (
                           <div className="tr-muted" style={{ opacity: 0.5, fontSize: '0.85rem' }}>
                             —<br />
-                            <span style={{ fontSize: '0.75rem' }}>Not scored</span>
+                            <span style={{ fontSize: '0.75rem' }}>No data for this place</span>
                             <br />
                             <button
                               type="button"

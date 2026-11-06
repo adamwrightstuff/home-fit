@@ -36,7 +36,7 @@ const PEEK_RAMP_CSS: Record<CompositeIndexMode, { c400: string; c600: string }> 
 }
 
 function fmt(v: number | null): string {
-  if (v == null || !Number.isFinite(v)) return '—'
+  if (v == null || !Number.isFinite(v)) return 'No data'
   return v.toFixed(1)
 }
 
