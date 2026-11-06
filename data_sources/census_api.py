@@ -646,6 +646,24 @@ def _pooled_tract_housing(lat: float, lon: float, tract: Dict, ring_m: int = 700
     return out
 
 
+# The status class label reads a narrower pool than the housing pillar (700 m, D14): a 350 m pool kept the pin-shift
+# check passing and fixed 3 of 4 launch pairs that the wider pool smeared across neighbors
+# (docs/STATUS_SIGNAL_GEOGRAPHY_TEST.md, owner decision 2026-11-05).
+STATUS_POOL_RING_M = 350
+
+
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=20)
+def get_status_pool_summary(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
+    """Pooled housing inputs for the status class label (tracts under the pin and an 8-point ring at 350 m)."""
+    if tract is None:
+        tract = get_census_tract(lat, lon)
+    if not tract:
+        return None
+    return _pooled_tract_housing(lat, lon, tract, ring_m=STATUS_POOL_RING_M)
+
+
 @cached(ttl_seconds=CACHE_TTL['census_data'])
 @safe_api_call("census", required=False)
 @handle_api_timeout(timeout_seconds=15)

@@ -67,6 +67,7 @@ from pillars.composite_indices import (
     recompute_composites_from_payload,
 )
 from data_sources.census_api import estimate_community_safety_disk_population
+from data_sources import census_api
 from data_sources.crime_api import community_safety_crime_radius_m
 from data_sources.arch_diversity import compute_arch_diversity
 from data_sources.job_category_overlays import parse_job_categories
@@ -1048,8 +1049,9 @@ def _compute_status_signal_for_response(
     if isinstance(coordinates, dict):
         lat = coordinates.get("lat")
         lon = coordinates.get("lon")
+    housing_for_status = _housing_at_status_pool(housing_details, lat, lon, census_tract)
     return compute_status_signal_with_breakdown(
-        housing_details,
+        housing_for_status,
         social_fabric_details,
         economic_opportunity_details,
         business_list,
@@ -1062,6 +1064,34 @@ def _compute_status_signal_for_response(
         area_type=area_type,
         zip_code=(zip_code or None),
     )
+
+
+def _housing_at_status_pool(housing_details: Dict[str, Any], lat: Any, lon: Any, census_tract: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    The status class label reads the 350 m pool of tracts (census_api.STATUS_POOL_RING_M), not the housing pillar's wider
+    pool. Only tract-level housing reads change (place-level reads are already a whole municipality). When the pool cannot
+    be built, the housing pillar's own summary is used unchanged.
+    """
+    summary = (housing_details or {}).get("summary")
+    if not isinstance(summary, dict) or summary.get("geo_level") != "tract" or not census_tract:
+        return housing_details
+    if not (isinstance(lat, (int, float)) and isinstance(lon, (int, float))):
+        return housing_details
+    try:
+        pool = census_api.get_status_pool_summary(lat, lon, census_tract)
+    except Exception:
+        pool = None
+    if not pool or not pool.get("median_household_income"):
+        return housing_details
+    merged = dict(summary)
+    for src, dst in (("median_household_income", "median_household_income"), ("median_home_value", "median_home_value"),
+                     ("median_monthly_housing_cost", "median_monthly_housing_cost"),
+                     ("mean_household_income", "mean_household_income"),
+                     ("share_households_150k_plus", "share_households_150k_plus")):
+        if pool.get(src) is not None:
+            merged[dst] = pool[src]
+    merged["status_pool"] = {"ring_m": census_api.STATUS_POOL_RING_M, "tracts": pool.get("pooled_tracts")}
+    return {**housing_details, "summary": merged}
 
 
 def _need_arch_diversity_for_area_type(only_pillars: Optional[set[str]]) -> bool:

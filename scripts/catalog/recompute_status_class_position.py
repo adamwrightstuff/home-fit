@@ -32,6 +32,7 @@ def main() -> int:
     ap.add_argument("--pooled", default=None,
                     help="pooled_inputs.json from pool_status_class_inputs_offline.py: single-tract places read the pooled "
                          "income and home value (same pool as the housing pillar, D14) and the class is re-derived from them")
+    ap.add_argument("--ring-m", type=int, default=700, help="ring radius of the pooled file, recorded in the breakdown (350 is the label pool)")
     args = ap.parse_args()
 
     from pillars.composite_indices import AURA_WEIGHTS
@@ -77,7 +78,7 @@ def main() -> int:
                 if isinstance(cost1, (int, float)) and cost1 > 0 and isinstance(inc1, (int, float)) and inc1 > 0:
                     sm["median_monthly_housing_cost"] = cost1 * pin["income"] / inc1
                 bd["pooled_inputs"] = {"income": round(pin["income"]), "home_value": round(pin["home_value"] or 0),
-                                       "tracts": pin["tracts"], "method": "disk_approx_700m_ring_occupied_weighted"}
+                                       "tracts": pin["tracts"], "method": f"disk_approx_{args.ring_m}m_ring_occupied_weighted"}
                 summary["pooled_places"] += 1
                 new_cls = ss._classify_class(sm, keys, baselines)
                 if new_cls is not None:
