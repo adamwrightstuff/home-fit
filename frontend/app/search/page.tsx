@@ -21,6 +21,19 @@ import { buildResultsCacheKey, buildResultsUrl, type ResultsRouteParams } from '
 import { longevityIndexFromLivabilityPillars } from '@/lib/pillars'
 import { useRouter } from 'next/navigation'
 
+/**
+ * Writes search options into the shared `homefit_search_options` object without dropping the
+ * fields this page does not own (filters, work hub, commute mode, office days, current home,
+ * deal-breakers), which the profile page and the catalog also keep there.
+ */
+function mergeStoredOptions(options: SearchOptions) {
+  let existing: Record<string, unknown> = {}
+  try {
+    existing = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}') ?? {}
+  } catch { /* start from an empty object */ }
+  localStorage.setItem('homefit_search_options', JSON.stringify({ ...existing, ...options }))
+}
+
 export default function SearchPage() {
   const { user, isConfigured } = useAuth()
   const router = useRouter()
@@ -110,7 +123,7 @@ export default function SearchPage() {
         job_categories: [],
       }
       try {
-        localStorage.setItem('homefit_search_options', JSON.stringify(updated))
+        mergeStoredOptions(updated)
       } catch (e) {
         // ignore
       }
@@ -173,7 +186,7 @@ export default function SearchPage() {
   const handleSearchOptionsChange = (options: SearchOptions) => {
     set_search_options(options)
     try {
-      localStorage.setItem('homefit_search_options', JSON.stringify(options))
+      mergeStoredOptions(options)
     } catch (e) {
       // ignore
     }
