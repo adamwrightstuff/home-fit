@@ -153,17 +153,25 @@ Run 1 (68 at 7.5 mi) failed checks 1c and 2b: the curve dropped 32 points in 2.5
 | 3a Median change for a 0.5 mi address shift under 3 points | median under 3 | PASS (median 0.00; p95 1.4 to 1.6) |
 | 3b Rank correlation at least 0.95 for knot changes within range | 0.95 | PASS for every sloped tail (floor 20 and 35, 15 mi value 45 with floor 20, 15 mi value 95: 1.000); FAIL at the flat-tail edge (floor equal to the 15 mi value): 0.61 to 0.83, because every place beyond 15 mi then ties |
 | 3c Combine bonus 0, 5, 10 | rank corr at least 0.95 | PASS (0.997 to 0.998) |
-| 4 Independent check | brief written, criteria fixed | brief written (`docs/SOCIAL_PROXIMITY_VALIDATION_BRIEF.md`), NOT run. Its criterion 2 uses the 20 and 65 mile values, which on the current curve are 66.9 and 57.4 (the brief says 0.669 and 0.574; the agent should recompute from the current file) |
+| 4 Independent check | brief written, criteria fixed | PASS 3 of 3 (see below; brief in `docs/SOCIAL_PROXIMITY_VALIDATION_BRIEF.md`). Its criterion 2 uses the 20 and 65 mile values, which on the current curve are 66.9 and 57.4 (the brief says 0.669 and 0.574; the agent should recompute from the current file) |
 
 Notes:
 - Correction in section 1: the floor's valid range is 20 up to the 15 mile value (68), not "20 to 80".
 - Place order is robust to every parameter except whether the tail slopes at all.
 - Clumping (principle 10): at the floor of 50 sit 218 of 411 places for the NYC persons and 298 to 306 for the California persons; at the ceiling of 100, 4 to 44. Distinct scores per person 68 to 105. The curve cannot separate places beyond 100 miles. Spread by area type was not run.
-- Not run: independent check; area-type spread.
+- Not run: area-type spread.
+
+Independent check (run 2026-11-05 by a separate agent, brief criteria fixed in advance, papers read through WebFetch summaries, not full PDFs): all three criteria PASS.
+- 1 Transcription: 1.16, 0.79, 0.58 match.
+- 2 Out of fit: curve 0.669 at 20 mi and 0.574 at 65 mi fall inside the ratio intervals of the 10 to 30 and 30 to 100 mile bands under both reference choices. The intervals are very wide ([0.11, 0.94] and [0.06, 1.96] with the spline reference), so this is weak support. On point estimates the curve sits above the 10 to 30 mile band (0.67 vs 0.28 to 0.37).
+- 3 Inside 5 miles: up-to-2-mile ratio 1.03 or 0.77, at most 1.5. The same-block ratio is about 2.7 and coresident 3.4 to 5.2, so a premium at the closest distances is not in the curve.
+- The paper has two models. The spline text gives five bands; the dummy-variable model (Appendix Table A2) gives all eight, with 2 to 5 miles at 1.56 rather than 1.16. The 10 to 30 mile (0.43) and 30 to 100 mile (0.75) bands are in Table A2, so the earlier "not retrieved" TODO is closable. The data are not monotone (10 to 30 is below over 100).
+- Sun and Schafer Table 3: relatives significant only at 0 to 0.9 km; non-kin noticeable to about 25 km. Nothing clearly contradicts a flat plateau from 2 to 5 miles; mild tension with a hard 5 mile cutoff for non-kin.
+- Not verified: Sun and Schafer table read once; Figure 1 is an image and was not read.
 
 Level 1 sign-off: Level 1 (Converted). Date: 2026-11-05. Signed off by: Adam Wright (owner).
 Level 1 met: spec sheet filled, frame declared (fixed standard, tier 1 narrow), area-type label no longer an input, invalid distance returns null and the pillar drops out, unsourced constants listed as TODO.
-Level 2 not reached: checks 1c and 2b fail on the letter, 3b fails at the flat-tail edge, independent check not run.
+Level 2 not reached: checks 1c and 2b fail on the letter and 3b fails at the flat-tail edge (independent check passed). Level 2 needs you to accept those three in writing or ask for a curve change.
 Accepted TODOs (not Level 3): line shape from 5 to 100 miles and the 15 mile placement, acquaintance knots, combine bonus (5, cap 2), thresholds (70 and 60).
 
 ## Sources checked this session
