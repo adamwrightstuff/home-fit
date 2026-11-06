@@ -1382,6 +1382,7 @@ export default function CatalogPageClient({
                   Search a neighborhood to start
                 </span>
               )}
+              {!twinControlsLocked && (<>
               <button
                 type="button"
                 disabled={twinControlsLocked}
@@ -1409,6 +1410,7 @@ export default function CatalogPageClient({
                 <SlidersHorizontal className="h-3 w-3" />
                 Pillars ({twinPillarList.length})
               </button>
+              </>)}
             </div>
           )}
 
@@ -1429,13 +1431,13 @@ export default function CatalogPageClient({
                     </span>
                   )}
                 </button>
-                <button
+                {indexMode === 'homefit' && <button
                   type="button"
-                  title={indexMode !== 'homefit' ? 'Weights apply to HomeFit score only' : undefined}
+                  title={undefined}
                   className="h-[var(--hf-control-h)] rounded-[var(--hf-control-radius)] border border-[var(--hf-border-strong)] px-2.5 text-[length:var(--hf-control-text)] font-bold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
                   style={{ opacity: indexMode !== 'homefit' ? 0.4 : 1, pointerEvents: indexMode !== 'homefit' ? 'none' : 'auto' }}
                   onClick={() => setWeightOpen(true)}
-                >Adjust weights</button>
+                >Adjust weights</button>}
               </>
             )}
             <div className="h-4 w-px bg-[var(--hf-border)]" />

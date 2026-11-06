@@ -446,6 +446,8 @@ export default function ProfilePage() {
               />
             </div>
 
+            {profile.work_zone_id && (
+              <>
             <div>
               <Label>How do you get there?</Label>
               <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
@@ -473,6 +475,8 @@ export default function ProfilePage() {
                 Fewer office days count your commute less. Fully remote ignores it.
               </p>
             </div>
+              </>
+            )}
           </Section>
 
           <Section

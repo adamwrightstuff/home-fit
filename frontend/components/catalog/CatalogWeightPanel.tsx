@@ -213,15 +213,15 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           </button>
                         ))}
                       </div>
-                      {key === 'natural_beauty' && (
+                      {key === 'natural_beauty' && current !== 'None' && (
                         <KindChips label="Which scenery? (blank = all)" options={NB_TYPE_OPTIONS} selected={filterNbTypes}
                           onToggle={(v) => onFilterNbTypesChange?.(filterNbTypes.includes(v) ? filterNbTypes.filter((x) => x !== v) : [...filterNbTypes, v])} />
                       )}
-                      {key === 'active_outdoors' && (
+                      {key === 'active_outdoors' && current !== 'None' && (
                         <KindChips label="Which kind? (blank = all)" options={AO_TYPE_OPTIONS} selected={filterAoTypes}
                           onToggle={(v) => onFilterAoTypesChange?.(filterAoTypes.includes(v) ? filterAoTypes.filter((x) => x !== v) : [...filterAoTypes, v])} />
                       )}
-                      {key === 'quality_education' && (
+                      {key === 'quality_education' && current !== 'None' && (
                         <KindChips label="Which schools? (pick one or both)" options={SCHOOL_TYPE_OPTIONS} selected={schoolTypeSelected(filterSchoolType)}
                           onToggle={(v) => {
                             const cur = schoolTypeSelected(filterSchoolType)
@@ -229,7 +229,7 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                             onFilterSchoolTypeChange?.(schoolTypeFromSelected(next.length ? next : ['public']))
                           }} />
                       )}
-                      {key === 'quality_education' && (
+                      {key === 'quality_education' && current !== 'None' && (
                         <KindChips label="Which grades? (pick any)" options={SCHOOL_LEVEL_OPTIONS} selected={filterSchoolLevels}
                           onToggle={(v) => {
                             const next = filterSchoolLevels.includes(v) ? filterSchoolLevels.filter((x) => x !== v) : [...filterSchoolLevels, v]

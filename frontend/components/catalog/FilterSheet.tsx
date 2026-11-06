@@ -5,6 +5,7 @@ import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 import { X } from 'lucide-react'
+import Link from 'next/link'
 import { CATALOG_METROS, CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 
 const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
@@ -232,7 +233,7 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Never show places with</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {MUST_HAVE_PILLARS.map((key) => {
+              {MUST_HAVE_PILLARS.filter((key) => key !== 'housing_value' || householdIncome).map((key) => {
                 const fails = dealbreakerFailCounts?.[key]
                 const lbl = MUST_HAVE_LABELS[key]!
                 const count = typeof fails === 'number' && fails > 0 && (key !== 'housing_value' || householdIncome) ? ` · ${fails}` : ''
@@ -250,19 +251,27 @@ export default function FilterSheet({
               })}
             </div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
-              Numbers show places removed.{!householdIncome ? ' Add your income in your profile to use the price filter.' : ''}
+              Numbers show places removed.{!householdIncome ? ' Add your income in your profile for a price filter.' : ''}
             </div>
-            <div style={{ fontSize: 13, fontWeight: 600, marginTop: 12, marginBottom: 6 }}>🚆 Commute over</div>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              {workZoneLabel ? `To ${workZoneLabel}.` : 'To the metro downtown by transit. Add a work address in your profile to use your own commute.'}
-              {filterCommuteMax !== 'all' && commuteFailCount > 0 ? ` Removes ${commuteFailCount} place${commuteFailCount === 1 ? '' : 's'}.` : ''}
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {chip(filterCommuteMax === 'all', 'Any', () => onFilterCommuteMaxChange('all'))}
-              {(['15', '30', '45', '60'] as const).map((v) =>
-                chip(filterCommuteMax === v, `Under ${v} min`, () => onFilterCommuteMaxChange(filterCommuteMax === v ? 'all' : v))
-              )}
-            </div>
+            {workZoneLabel ? (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 600, marginTop: 12, marginBottom: 6 }}>🚆 Commute over</div>
+                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+                  To {workZoneLabel}. <Link href="/profile" style={{ fontWeight: 600, color: 'var(--hf-primary-1)' }}>Change in your profile</Link>
+                  {filterCommuteMax !== 'all' && commuteFailCount > 0 ? ` Removes ${commuteFailCount} place${commuteFailCount === 1 ? '' : 's'}.` : ''}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {chip(filterCommuteMax === 'all', 'Any', () => onFilterCommuteMaxChange('all'))}
+                  {(['15', '30', '45', '60'] as const).map((v) =>
+                    chip(filterCommuteMax === v, `Under ${v} min`, () => onFilterCommuteMaxChange(filterCommuteMax === v ? 'all' : v))
+                  )}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 12 }}>
+                🚆 <Link href="/profile" style={{ fontWeight: 600, color: 'var(--hf-primary-1)' }}>Add a work address</Link> to filter by your commute.
+              </div>
+            )}
           </div>
 
           {/* Metro */}
