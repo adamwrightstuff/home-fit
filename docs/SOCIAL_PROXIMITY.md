@@ -1,6 +1,6 @@
 # Social proximity (personal priority): DPv2 spec sheet and audit
 
-Level: 0 until signed off. Level 2 (Verified), signed 2026-11-05 by Adam Wright (owner) on curve version 3. See section 6. Branch social-proximity-dpv2, unpushed.
+Level: 2 (Verified), signed 2026-11-05 by Adam Wright (owner) on curve version 3. See section 6. Branch social-proximity-dpv2, unpushed.
 Scope: a personal, client-side priority (closeness to the user's own family and friends). Not a pillar, not in the general happiness index. Frontend id: `social_connection`; map label "Social proximity"; weight panel label "Closeness to people you know".
 
 Verification key: VERIFIED = I read the source text or abstract in this session (a fetch summary counts as an abstract read, not a full-text read). SUMMARY = seen only in a search snippet or press release. UNVERIFIED = not seen.
