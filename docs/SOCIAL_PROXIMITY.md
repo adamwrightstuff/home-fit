@@ -1,6 +1,6 @@
 # Social proximity (personal priority): DPv2 spec sheet and audit
 
-Level: 0 until signed off. Level 1 (reconfirmed 2026-11-05 on curve version 3, owner). Level 2 proposed, unsigned. See section 6. Branch social-proximity-dpv2, unpushed.
+Level: 0 until signed off. Level 2 (Verified), signed 2026-11-05 by Adam Wright (owner) on curve version 3. See section 6. Branch social-proximity-dpv2, unpushed.
 Scope: a personal, client-side priority (closeness to the user's own family and friends). Not a pillar, not in the general happiness index. Frontend id: `social_connection`; map label "Social proximity"; weight panel label "Closeness to people you know".
 
 Verification key: VERIFIED = I read the source text or abstract in this session (a fetch summary counts as an abstract read, not a full-text read). SUMMARY = seen only in a search snippet or press release. UNVERIFIED = not seen.
@@ -60,7 +60,7 @@ Fail-loud conditions: a person with a failed geocode is rejected with an error a
 Launch check pairs: not defined (see section 5).
 Known data limits: straight line distance, not routed; the user's own address choices are untested for
   entry errors; family and friends are not told apart (tiers are close vs acquaintance).
-Last re-validated: never.
+Last re-validated: 2026-11-05 (Level 2 checks, section 6).
 ```
 
 ### What the user enters
@@ -168,7 +168,8 @@ Spread by area type (run 2026-11-05, 5 persons x 411 places pooled): share of pe
 
 Sign-off: Level 1 (Converted) reconfirmed on curve version 3. Date: 2026-11-05. Signed off by: Adam Wright (owner).
 Written acceptance by the owner, 2026-11-05: checks 1c (step size), 2b (pair gap) and 3b (flat-tail edge) fail by evidence or edge case and are accepted as known limits; the clumping beyond 20 miles (every place scores 39) is accepted as a known limit.
-Level 2: all fixed checks are now run or accepted (area-type spread run, independent check passed, failures accepted). Proposed for your sign-off as Level 2, not yet signed. User-facing copy must not call this priority "validated": the independent check supports the shape only weakly (wide intervals, one study of help to disabled older parents).
+Level 2: all fixed checks are run or accepted (area-type spread run, independent check passed, failures accepted).
+Sign-off: Level 2 (Verified). Date: 2026-11-05. Signed off by: Adam Wright (owner). Accepted TODOs listed below. Re-validate quarterly or when a source changes. User-facing copy must not call this priority "validated": the independent check supports the shape only weakly (wide intervals, one study of help to disabled older parents).
 Accepted TODOs (not Level 3): lines between band midpoints, the near-premium inside 3 miles, acquaintance knots and cap, combine bonus (5, cap 2), thresholds (70 and 60).
 
 ## Sources checked this session
