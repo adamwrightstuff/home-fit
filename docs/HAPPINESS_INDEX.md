@@ -189,4 +189,4 @@ Full tables, coverage and caveats: `analysis/happiness_validation_2026-11-05.md`
 
 Coverage: T2 n 1,314 of 1,476 (89.0 percent), T1 n 850 (57.6 percent). No matches in Pennsylvania or Maryland; no T1 outcomes in Colorado, Florida, Washington and nearly all of Texas. Allowed label: "checked on a subset", not validated. Not verified: PLACES ZIP values are modeled estimates, crude not age-adjusted, 304 matched places share a ZIP.
 
-Level 2, owner, 2026-11-05. Level 2 here means the checks were run by an independent session against criteria fixed beforehand, not that all passed. Results: T1, T2, T4 pass; T2 tracks affluence; T3 and launch pairs fail (3 of 6). Accepted TODOs are the Level 1 list above plus these failures. User copy may say "checked on a subset", never "validated".
+Level 2 sign-off withdrawn 2026-11-05 (owner). It was recorded in error over two failed criteria. Level 1 stands. Next: new written Level 2 criteria with no health outcome (loneliness and lack of support only; pair rule rechecked), approved before any run, then a rerun by an independent session.
