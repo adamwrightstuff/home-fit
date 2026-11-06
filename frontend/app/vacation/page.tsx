@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AppHeader from '@/components/AppHeader';
 import LocationSearch from '@/components/LocationSearch';
@@ -13,6 +13,7 @@ import TripTypeSelector, { type TripType } from '@/components/vacation/TripTypeS
 import TravelerProfileSelector, { type TravelerProfile } from '@/components/vacation/TravelerProfileSelector';
 import type { ScoreResponse } from '@/types/api';
 import { getScore } from '@/lib/api';
+import { loadVacationPrefs, saveVacationPrefs } from '@/lib/vacationPrefs';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -24,8 +25,16 @@ const NB_PREF: Record<string, string> = {
 };
 
 export default function VacationPage() {
-  const [tripType, setTripType] = useState<TripType | null>(null);
-  const [travelerProfile, setTravelerProfile] = useState<TravelerProfile | null>(null);
+  // Starts on Beach so a first search never needs a prior choice; a saved choice replaces it.
+  const [tripType, setTripTypeState] = useState<TripType | null>('beach');
+  const [travelerProfile, setTravelerProfileState] = useState<TravelerProfile | null>(null);
+  useEffect(() => {
+    const saved = loadVacationPrefs();
+    if (saved.tripType) setTripTypeState(saved.tripType);
+    if (saved.travelerProfile) setTravelerProfileState(saved.travelerProfile);
+  }, []);
+  const setTripType = (v: TripType) => { setTripTypeState(v); saveVacationPrefs({ tripType: v }); };
+  const setTravelerProfile = (v: TravelerProfile | null) => { setTravelerProfileState(v); saveVacationPrefs({ travelerProfile: v }); };
   const [travelMonth, setTravelMonth] = useState<number>(new Date().getMonth() + 1);
   const [loading, setLoading] = useState(false);
   const [scoreData, setScoreData] = useState<ScoreResponse | null>(null);
@@ -175,14 +184,8 @@ export default function VacationPage() {
             <div style={{ marginTop: '1.25rem' }}>
               <LocationSearch
                 onSearch={handleSearch}
-                disabled={!tripType}
                 examples={['Sedona, AZ', 'Charleston, SC', 'Asheville, NC']}
               />
-              {!tripType && (
-                <p className="hf-helper" style={{ marginTop: '0.5rem' }}>
-                  Select a trip type above to enable search.
-                </p>
-              )}
             </div>
           </div>
         )}

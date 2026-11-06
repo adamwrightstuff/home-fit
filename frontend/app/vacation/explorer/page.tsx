@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { scoreBandFill, homefitPillarBarFill } from '@/lib/indexColorSystem'
 import type { VacationPlace, TripType } from '@/lib/vacationCatalogTypes'
 import { TRIP_TYPE_LABEL, TRIP_TYPE_EMOJI, VACATION_PILLAR_LABELS } from '@/lib/vacationCatalogTypes'
+import { loadVacationPrefs, saveVacationPrefs } from '@/lib/vacationPrefs'
 import type { TravelerProfile } from '@/components/vacation/TravelerProfileSelector'
 import { PROFILE_META, recomputeScoreWithProfile, getDisplayWeights } from '@/lib/travelerProfiles'
 
@@ -272,8 +273,15 @@ function BottomSheet({
 export default function VacationExplorerPage() {
   const [places, setPlaces] = useState<VacationPlace[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<TripType | 'all'>('all')
-  const [profile, setProfile] = useState<TravelerProfile | null>(null)
+  const [filter, setFilterState] = useState<TripType | 'all'>('all')
+  const [profile, setProfileState] = useState<TravelerProfile | null>(null)
+  useEffect(() => {
+    const saved = loadVacationPrefs()
+    if (saved.tripType) setFilterState(saved.tripType as TripType)
+    if (saved.travelerProfile) setProfileState(saved.travelerProfile)
+  }, [])
+  const setFilter = (v: TripType | 'all') => { setFilterState(v); saveVacationPrefs({ tripType: v === 'all' ? null : (v as any) }) }
+  const setProfile = (v: TravelerProfile | null) => { setProfileState(v); saveVacationPrefs({ travelerProfile: v }) }
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
 
   useEffect(() => {
