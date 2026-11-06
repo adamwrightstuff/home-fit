@@ -138,7 +138,32 @@ Recommendation: B, with the copy from A and the disclosure line in gap 8. The ev
 4. Independent check, brief for another agent (to be written as docs/SOCIAL_PROXIMITY_VALIDATION_BRIEF.md after approval): reproduce the adjusted help-hours by distance band from Schoeni, Cho and Choi 2022 and the 1 km and 5 km bands from Sun and Schafer 2023 from the papers' tables, then compare the curve's relative values at those distances. Pass: the curve's score ratio between the 5 to 10 mile band and the up-to-5-mile band is within 0.15 of the paper's ratio; the 100+ mile ratio within the paper's confidence interval.
 
 ## 6. Results and proposed level
-Not run. Pending approval of an option in section 3.
+
+Run 2026-11-05 on the stored catalog (NYC 193, LA 105, SF 113 = 411 places, `data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl`, 5 test persons: Park Slope, White Plains, Pasadena, Santa Monica, Rockridge). Offline, no API call. Scripts were in the session scratchpad, not committed. Pass criteria are the ones fixed in section 5 before running.
+
+| Check | Criterion (fixed) | Result |
+|---|---|---|
+| 1a No dependence on area type | identical output for the same miles | PASS by construction (functions take miles only; tested) |
+| 1b Non-increasing | never rises | PASS |
+| 1c No jump over 10 points between adjacent tested distances | max step 10 | FAIL: 12.8 (5 to 6 mi) and 19.2 (6 to 7.5 mi) |
+| 2a Near vs far, 5 of 5 persons, both tiers | place within 3 mi at least 25 above any place 50+ mi away | PASS 10 of 10 (near min 100, far max 50 close and 0 acquaintance) |
+| 2b Equidistant pairs differ under 3 points (read as: distances within 1 mi of each other) | max diff under 3 | FAIL: max 12.8 points, at 5.4 to 6.4 mi; 224 of 2,133 pairs for Park Slope differ by 3 or more, 2 of 2,419 for Rockridge |
+| 2c 100 mi vs 3,000 mi expected to tie | tie | PASS (50 and 50) |
+| 3a Median change for a 0.5 mi address shift under 3 points | median under 3 | PASS (median 0.00; p95 3.1 Park Slope, 0.1 elsewhere) |
+| 3b Rank correlation at least 0.95 for knot changes within range | 0.95 | PASS for every sloped tail tested (floor 20 and 35, 7.5 mi value 45 with floor 20, 7.5 mi value 95: 1.000); FAIL at the flat-tail edge (floor equal to the 7.5 mi value, 68 or 45): 0.37 to 0.71, because every place beyond 7.5 mi then ties |
+| 3c Combine bonus 0, 5, 10 | rank corr at least 0.95 | PASS (1.000) |
+| 4 Independent check | brief written, criteria fixed | brief written (`docs/SOCIAL_PROXIMITY_VALIDATION_BRIEF.md`), NOT run |
+
+Notes:
+- 1c and 2b fail for one reason: the 5 to 7.5 mile segment drops 32 points in 2.5 miles (12.8 per mile). The 7.5 mile point is my choice for the middle of the 5 to 10 mile band; the paper gives a band average, not a value at a distance. This is a flaw in my curve, not in the criteria.
+- Correction to section 1: the stated plausible range for the floor, "about 20 to 80", is wrong for any value above 68, because the curve would then rise past 7.5 miles. The valid range is 20 up to the 7.5 mile value (68). At the top edge the tail goes flat.
+- Rank order of places is robust to every parameter except whether the tail slopes at all. Whether the curve declines past 7.5 miles at all is the one structural choice; the evidence for a small decline is the 0.58 vs 1.16 hours ratio with wide intervals.
+- Clumping (principle 10): at the floor of 50 sit 218 of 411 places for NYC persons and 298 to 306 of 411 for CA persons; at the ceiling of 100, 4 to 44 places. Distinct score values per person: 43 to 85. By design the curve cannot separate places beyond 100 miles. Spread by area type was not run.
+- Not run: independent check; area-type spread.
+
+Proposed level: Level 1 (spec sheet filled, frame declared tier 1 narrow, area-type label no longer an input, invalid distance returns null and the pillar drops out, unsourced constants listed as TODO). Level 2 is not reached: two fixed criteria failed (1c, 2b) and the independent check has not run. Accepted TODOs for your sign-off if you sign Level 1: 5 to 100 mile line shape, acquaintance curve knots, combine bonus (5, cap 2), bonus thresholds (70 and 60), 7.5 mile knot.
+
+Proposed fix for 1c and 2b (needs your approval, not done): move the 68 point from 7.5 miles to 10 miles, the top of the band, so 100 to 68 falls over 5 miles (6.4 points per mile, still over the 3 per mile that criterion 2b implies for a 1 mile gap). Even this fails 2b, so a fix that passes needs a gentler slope, for example 5 to 15 miles (3.2 per mile), which says the band average of 0.79 is reached at 10 miles. Both are judgment; the paper does not say where inside the band the hours fall.
 
 ## Sources checked this session
 - Sun and Schafer 2023, J Gerontol B 78(11):1917-1926, SHARE waves 4 and 6, n=18,055, fixed effects: relative within 1 km and non-kin within about 5 km (odds ratios about 1.7 and 1.3 for severe loneliness); losses farther away not significant; a new core member offsets most of it. VERIFIED abstract-level. Correction to the earlier note in HAPPINESS_EVIDENCE_NOTES.md section 2c ("losing a child raises loneliness at any distance"): the version I read does not say that, and the code comment claiming it supports decline "through 25 km" for kin is not supported (kin effect only within 1 km).
