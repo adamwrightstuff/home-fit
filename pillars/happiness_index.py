@@ -18,7 +18,12 @@ Components (all 0–100, renormalized over those available):
 - N (Neighborhood amenities) 0.04: walkability raises walking; no wellbeing outcome found.
 Schools, healthcare, diversity, air travel and the other pillars carry zero weight (education is still
 reported in the breakdown for display).
-Safety and any missing component renormalize out.
+Safety and any missing component renormalize out; the breakdown lists them in components_missing and
+reports the share of nominal weight actually used in weight_covered.
+
+Weights are judgments, not fits. Weight is not influence: safety is a national percentile (SD about 29)
+and carries about 48 percent of index variance on its 18 percent weight. Tested ranges, variance shares
+and the audit are in docs/HAPPINESS_INDEX.md.
 """
 
 from __future__ import annotations
@@ -240,6 +245,10 @@ def compute_happiness_index_with_breakdown(
         breakdown[key] = round(val, 1) if val is not None else None
 
     used = [(key, val, base_weights[key]) for key, val in values.items() if val is not None and base_weights[key] > 0]
+    # Disclosure only (DPv2 principle 11): which weighted components had no score, and how much of the
+    # nominal weight the score rests on. Does not change the number.
+    breakdown["components_missing"] = [k for k, v in values.items() if v is None and base_weights[k] > 0]
+    breakdown["weight_covered"] = round(sum(w for _, _, w in used), 3)
     if not used:
         return None, breakdown
 

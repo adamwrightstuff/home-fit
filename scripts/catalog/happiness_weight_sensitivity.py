@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 
 REPO = Path(__file__).resolve().parents[2]
-FILES = ["nyc", "la", "sf"]
+FILES = None  # None = every data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl (what the Explorer serves)
 BASE = {"social": .26, "safety": .18, "home_space": .14, "green": .12, "economic": .08,
         "active_outdoors": .07, "climate": .06, "commute": .05, "neighborhood": .04}
 OLD_V4 = {"social": .30, "safety": .20, "commute": .15, "neighborhood": .05, "home_space": .10, "green": .12, "education": .08}
@@ -27,8 +27,11 @@ KEYS = list(BASE)
 
 def load():
     names, mats = [], []
-    for f in FILES:
-        for line in (REPO / "data" / f"{f}_metro_place_catalog_scores_merged.jsonl").read_text().splitlines():
+    paths = sorted((REPO / "data").glob("*_metro_place_catalog_scores_merged.composites_recomputed.jsonl")) if FILES is None else [
+        REPO / "data" / f"{f}_metro_place_catalog_scores_merged.jsonl" for f in FILES]
+    for path in paths:
+        f = path.name.split("_metro")[0]
+        for line in path.read_text().splitlines():
             if not line.strip():
                 continue
             r = json.loads(line)
@@ -109,6 +112,21 @@ def main():
     for j, k in enumerate(KEYS):
         w = base_w.copy(); w[j] *= 1.3; up = score(X, w); w[j] = base_w[j] * 0.7; dn = score(X, w)
         per.append((spearman(up, dn), k, np.abs(up - dn).mean()))
+    # Extension (DPv2): share of index variance per component, and each weight alone to 0, 0.5x, 1.5x, 2x.
+    m = ~np.isnan(X)
+    ww = m * base_w
+    ww = ww / ww.sum(1, keepdims=True)
+    print("\nShare of index variance per component (weight is not influence):")
+    for j, k in enumerate(KEYS):
+        c = np.where(m[:, j], X[:, j] - np.nanmean(X[:, j]), 0) * ww[:, j]
+        print(f"  {k:<16} nominal {base_w[j]:.2f}  SD {np.nanstd(X[:, j]):5.1f}  variance share {np.cov(c, base)[0, 1] / base.var():6.1%}")
+    print("\nOne weight at a time (mean score change, rank correlation with base):")
+    for j, k in enumerate(KEYS):
+        parts = []
+        for mult in (0, 0.5, 1.5, 2):
+            w = base_w.copy(); w[j] *= mult; s_ = score(X, w)
+            parts.append(f"x{mult}: {np.abs(s_ - base).mean():.2f}pt rho {spearman(base, s_):.3f}")
+        print(f"  {k:<16} " + " | ".join(parts))
     print("\nWhich single weight matters most (+/-30% on one weight at a time):")
     for rho, k, d in sorted(per):
         print(f"  {k:<16} mean score swing {d:.2f} points, rank correlation between low and high {rho:.3f}")

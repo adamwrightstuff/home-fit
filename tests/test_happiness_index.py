@@ -80,3 +80,26 @@ def test_failed_pillar_stored_as_zero_is_missing_data_not_a_zero():
     assert score == 80.0
     assert bd["green"] is None and bd["social"] is None
     assert "green" not in bd["component_weights"] and "social" not in bd["component_weights"]
+
+
+def test_missing_components_reported_and_score_unchanged():
+    full = hi.compute_happiness_index_with_breakdown(**_all(60.0))[1]
+    assert full["components_missing"] == [] and abs(full["weight_covered"] - 1.0) < 1e-9
+    kw = _all(60.0)
+    kw["community_safety_details"] = None
+    kw["public_transit_details"] = None
+    score, bd = hi.compute_happiness_index_with_breakdown(**kw)
+    assert set(bd["components_missing"]) == {"safety", "commute"}
+    assert abs(bd["weight_covered"] - (1.0 - hi.W_SAFETY - hi.W_COMMUTE)) < 1e-9
+    assert score == 60.0  # all remaining components are 60, renormalized
+
+
+def test_failed_pillar_is_listed_missing_and_all_missing_returns_none():
+    kw = _all(60.0)
+    kw["social_fabric_details"] = {"status": "failed", "score": 0, "confidence": 0}
+    _, bd = hi.compute_happiness_index_with_breakdown(**kw)
+    assert "social" in bd["components_missing"]
+    none_kw = {k: None for k in _all()}
+    none_kw["state_abbrev"] = None
+    score, bd = hi.compute_happiness_index_with_breakdown(**none_kw)
+    assert score is None and len(bd["components_missing"]) == 9 and bd["weight_covered"] == 0

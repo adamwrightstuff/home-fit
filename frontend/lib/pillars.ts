@@ -42,10 +42,15 @@ export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
 
 /** Pillars that feed the Happiness Index (tag dot on pillar cards). */
 export const HAPPINESS_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>([
-  'public_transit_access',
   'social_fabric',
+  'community_safety',
   'housing_value',
   'natural_beauty',
+  'economic_opportunity',
+  'active_outdoors',
+  'climate_risk',
+  'public_transit_access', // feeds the commute term
+  'neighborhood_amenities',
 ])
 
 /** Weights for Longevity Index (must match backend LONGEVITY_INDEX_WEIGHTS). */
