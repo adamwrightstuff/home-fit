@@ -190,3 +190,16 @@ Full tables, coverage and caveats: `analysis/happiness_validation_2026-11-05.md`
 Coverage: T2 n 1,314 of 1,476 (89.0 percent), T1 n 850 (57.6 percent). No matches in Pennsylvania or Maryland; no T1 outcomes in Colorado, Florida, Washington and nearly all of Texas. Allowed label: "checked on a subset", not validated. Not verified: PLACES ZIP values are modeled estimates, crude not age-adjusted, 304 matched places share a ZIP.
 
 Level 2 sign-off withdrawn 2026-11-05 (owner). It was recorded in error over two failed criteria. Level 1 stands. Next: new written Level 2 criteria with no health outcome (loneliness and lack of support only; pair rule rechecked), approved before any run, then a rerun by an independent session.
+
+## Level 2 plan v2 (owner approved 2026-11-05; written before any rerun)
+
+Replaces section 8 for the Level 2 rerun. The first run (analysis/happiness_validation_2026-11-05.md) stays on record as a failed run under the old plan. Self-rated health is dropped as a criterion: it is a health outcome and belongs to the longevity index, not a happiness index.
+
+Data: the same PLACES ZCTA file (LONELINESS, EMOTIONSPT), same catalog copies. Outcome sign flipped so higher is better. Places joined by their own ZIP.
+- V1: index without social fabric (renormalized) vs LONELINESS and EMOTIONSPT. Pass: Spearman 0.20 or higher on both, partial after income rank 0.10 or higher on both.
+- V2: current weights vs equal weights on the V1 index and outcomes. Pass: current no more than 0.03 below equal weights, on raw and partial, for both outcomes.
+- V3: same sign of the V1 correlation in every metro with at least 30 places that have both outcomes.
+- V4 launch pairs, named from place names only, before any score was looked at. First place should score higher by 6 points or more: Bronxville NY over Yonkers NY; Manhattan Beach CA over Inglewood CA; Wellesley MA over Chelsea MA (Massachusetts). Should be within 7 points (twice the 3.5 point weight-noise band from section 4): Wilmette IL and Winnetka IL; Glen Rock NJ and Ridgewood NJ; Needham MA and Lexington MA. Pass: at least 5 of 6. The three pairs from the first run are not reused.
+- Informational only, not pass criteria: full index vs self-rated health (GHLTH), labeled a health outcome.
+- Wording: "checked on a subset" until matched places cover the full catalog.
+- Level 2 means V1 to V4 all pass. Any fail means Level 1 stands.
