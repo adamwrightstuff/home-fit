@@ -155,16 +155,16 @@ Fit (owner approved 2026-11-05): isotonic regression on Table A2 bands (up to 2 
 | 3a Median change for a 0.5 mi address shift under 3 | median under 3 | PASS (median 0.00); p95 5.1 Park Slope, 0.7 elsewhere |
 | 3b Rank correlation at least 0.95 for constant changes within range | 0.95 | PASS when the tail still slopes (V1 100, V2 22 to 65, V1 31 with V2 22: 0.997 to 1.000); FAIL at the flat edge (value at 20 mi equal to value at 7.5 mi): 0.47 to 0.77 |
 | 3c Combine bonus 0, 5, 10 | rank corr at least 0.95 | PASS (1.000) |
-| 4 Independent check | brief written, criteria fixed | version 2 run on the 68 at 15 mi curve only (3 of 3 passed, weak, see below); a new brief for version 3 is in `docs/SOCIAL_PROXIMITY_VALIDATION_BRIEF.md`, NOT run on version 3 |
+| 4 Independent check (version 3) | brief written, criteria fixed | PASS on criteria 1 to 3 (transcription of all eight Table A2 bands; reproduction of 100, 57, 39; implementation at 3.5, 7.5, 20, 100 mi checked by hand, I also ran it in node tests). 4(a) Healy and Dunifon bands could not be read (PDF unreadable), not a failure. 4(b) Sun and Schafer: relatives matter only within 1 km (0.6 mi), nothing contradicts a steep drop, but it cannot confirm one at 3.5 to 7.5 mi |
 
 Notes:
 - 1c and 2b were written assuming a smooth curve. The data say the drop is concentrated between about 3.5 and 7.5 miles, so a curve that fits the data cannot pass them. They fail by evidence, and are listed for you to accept or overrule in writing. I did not relax them.
 - Clumping (principle 10), important: beyond 20 miles every place scores 39. That is 270 of 411 places for the Park Slope person and 330 to 342 for the other four. Distinct scores per person 60 to 103. The pillar cannot tell places apart past 20 miles from the person. Places at the ceiling of 100: 2 to 27.
 - Rank order of places is robust to every constant except whether the tail slopes at all.
 - The earlier independent check (version 2) found the Table A2 bands, same-block premium about 2.7 times the 2 to 5 mile band, and that Sun and Schafer find relatives matter only within 1 km. Its out-of-fit bands (10 to 30 and 30 to 100 mi) are now fit bands, so that result does not carry over.
-- Not run: area-type spread; independent check on version 3.
+- Not run: area-type spread. Independent check on version 3 done 2026-11-05 by a separate agent, read through WebFetch summaries; not verified by it: Healy and Dunifon bands, Sun and Schafer intervals, the bootstrap ranges.
 
-Level: still Level 1 pending your signature on version 3. Level 1 was signed 2026-11-05 on version 2; the curve changed afterwards, so the signature does not carry over until you reconfirm. Level 2 not reached: 1c, 2b, 3b (flat edge) fail by evidence or by edge case, independent check not run on version 3.
+Level: still Level 1 pending your signature on version 3. Level 1 was signed 2026-11-05 on version 2; the curve changed afterwards, so the signature does not carry over until you reconfirm. Level 2 not reached only because 1c, 2b and 3b (flat edge) fail by evidence or edge case and need your written acceptance; the independent check passed.
 Accepted TODOs (not Level 3): lines between band midpoints, the near-premium inside 3 miles, acquaintance knots and cap, combine bonus (5, cap 2), thresholds (70 and 60).
 
 ## Sources checked this session
