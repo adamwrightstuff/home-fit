@@ -374,3 +374,13 @@ Nothing outside `docs/UX_AUDIT.md` and `docs/ux_audit_screens/` was modified. `n
 ## I. Fix log
 
 - 2026-11-05, owner approved starting with R2-3 and R2-2. Changed `frontend/app/search/page.tsx` (options now merge into the stored object instead of replacing it) and `frontend/app/quiz/page.tsx` (writes `commute_mode` and `office_days` where the profile and catalog read them, and no longer writes the unread `filters.commuteMode` and `filters.officeDays`). `tsc --noEmit` passes. Not browser-tested (the search place screen needs the backend), not committed, not pushed. Per the brief, a different agent must re-run the checks before these rows are marked fixed.
+
+- 2026-11-05, shipped to `main` after owner approval (each built and type-checked; checked in a fresh browser where the screen renders without the backend): R2-2, R2-3 (storage); R2-1 partial, R3-1 to R3-5 (dependent controls hidden, commute edited on profile only; the commute cap and commute level stay as a filter and a priority with links back); R2-5, R1-1 (duplicate Metro removed, mode pills outlined); R3-6, R5-3, R2-8 (vacation); R5-1, R5-4, R3-8, R1-2 (suggestions, dead ends, search place buttons); R2-4 partial (results and saved views use the shared weights panel); dead `SearchOptions` panel and three unreferenced components removed; CB-1 to CB-3 ("No data" with a reason; catalog list reason is hover-only); CA-1 (one-line basis under the catalog toolbar); header (one HomeFit/TravelFit switch and one Search link, not previously a gap row). None of these is marked fixed until a different agent re-runs the checks (Level 2).
+
+### Owner-accepted limits
+
+- 2026-11-05, R2-6 (live-scoring card selectors): the scenery, built-environment, life-stage and chain-business selectors on result and saved cards stay on the card. They are inputs to that one live-scored number and trigger a rescore of it, so they are accepted as an exception to Rule 2. The catalog side keeps the weights panel and filter sheet as its homes.
+
+### Still open
+
+R2-4 (search place screen importance buttons), R2-7 (premium code in two places), R2-9 (quiz as initializer, treated as such), R3-7 (greyed search button), R5-2 (profile suggestions), R6-1 (weights and preferences on the search place screen), CA-2 (15 vs 12 pillars copy), mobile "Show list" overlap, signed-in and backend-only screens not rendered.
