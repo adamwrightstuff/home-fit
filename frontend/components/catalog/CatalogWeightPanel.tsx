@@ -5,7 +5,9 @@ import { X } from 'lucide-react'
 import { fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 import PillarInfoIcon from '@/components/PillarInfoIcon'
-import type { PillarPriorities, PriorityLevel } from '@/components/SearchOptions'
+import { DEFAULT_PRIORITIES, type PillarPriorities, type PriorityLevel } from '@/components/SearchOptions'
+import { MUST_HAVE_LABELS, CLIMATE_MUST_HAVES } from '@/components/catalog/FilterSheet'
+import type { ClimatePreferences, ClimateMustHaves } from '@/lib/climatePreferences'
 
 const GROUPS: { title: string; keys: PillarKey[] }[] = [
   {
@@ -25,6 +27,8 @@ const GROUPS: { title: string; keys: PillarKey[] }[] = [
     keys: ['economic_opportunity', 'climate_risk'],
   },
 ]
+
+const MUST_HAVE_KEYS = Object.keys(MUST_HAVE_LABELS) as PillarKey[]
 
 const LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
 
@@ -54,6 +58,13 @@ interface CatalogWeightPanelProps {
   onFilterAoTypesChange?: (v: string[]) => void
   filterSchoolLevels?: string[]
   onFilterSchoolLevelsChange?: (v: string[]) => void
+  /** Hide-places choices live beside the priority they belong to. */
+  dealbreakers?: Partial<Record<PillarKey, boolean>>
+  onDealbreakerToggle?: (key: PillarKey) => void
+  dealbreakerFailCounts?: Partial<Record<PillarKey, number>>
+  climatePrefs?: ClimatePreferences
+  onClimatePrefsChange?: (v: ClimatePreferences) => void
+  climateMustHaveFailCounts?: Partial<Record<keyof ClimateMustHaves, number>>
   filterSchoolType?: 'any' | 'public_only' | 'charter' | 'both'
   onFilterSchoolTypeChange?: (v: 'any' | 'public_only' | 'charter' | 'both') => void
 }
@@ -124,8 +135,37 @@ function KindChips({ label, options, selected, onToggle }: {
   )
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, filterNbTypes = [], onFilterNbTypesChange, filterAoTypes = [], onFilterAoTypesChange, filterSchoolType = 'any', onFilterSchoolTypeChange, filterSchoolLevels = ['elementary', 'middle', 'high'], onFilterSchoolLevelsChange }: CatalogWeightPanelProps) {
+function HideChips({ items }: { items: { on: boolean; label: string; title: string; toggle: () => void }[] }) {
+  return (
+    <div className="mt-1.5">
+      <div className="mb-1 text-[0.7rem] text-[var(--hf-text-secondary)]">Hide places with</div>
+      <div className="flex flex-wrap gap-1">
+        {items.map((it) => (
+          <button
+            key={it.label}
+            type="button"
+            title={it.title}
+            aria-pressed={it.on}
+            onClick={it.toggle}
+            className={`rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${it.on ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+            style={it.on ? { background: '#1a1a2e' } : undefined}
+          >
+            {it.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, filterNbTypes = [], onFilterNbTypesChange, filterAoTypes = [], onFilterAoTypesChange, filterSchoolType = 'any', onFilterSchoolTypeChange, filterSchoolLevels = ['elementary', 'middle', 'high'], onFilterSchoolLevelsChange, dealbreakers, onDealbreakerToggle, dealbreakerFailCounts, climatePrefs, onClimatePrefsChange, climateMustHaveFailCounts }: CatalogWeightPanelProps) {
   if (!open) return null
+
+  function resetAll() {
+    onChange({ ...DEFAULT_PRIORITIES })
+    MUST_HAVE_KEYS.forEach((k) => { if (dealbreakers?.[k]) onDealbreakerToggle?.(k) })
+    onClimatePrefsChange?.({ ...(climatePrefs ?? {}), must_haves: {} })
+  }
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
     onChange({ ...priorities, [key]: level })
@@ -150,16 +190,24 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
         <div className="flex items-center justify-between border-b border-[var(--hf-border)] px-4 py-3">
           <div>
             <div className="flex items-center gap-2 font-bold text-[var(--hf-text-primary)]">
-              Weights
+              Priorities
             </div>
             <p className="text-xs text-[var(--hf-text-secondary)]">
-              Scores reflect equal weighting — adjust importance to personalize.
+              Priorities change which places rank higher. Nothing is hidden unless you choose Hide.
             </p>
+            <button
+              type="button"
+              onClick={resetAll}
+              className="mt-1 block text-xs font-semibold"
+              style={{ color: 'var(--hf-primary-1)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              Reset priorities
+            </button>
             {onTakeQuiz && (
               <button
                 type="button"
                 onClick={onTakeQuiz}
-                className="mt-1.5 text-xs font-semibold"
+                className="mt-1.5 block text-xs font-semibold"
                 style={{ color: 'var(--hf-primary-1)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
               >
                 Not sure what matters to you? Take the quiz →
@@ -213,6 +261,26 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           </button>
                         ))}
                       </div>
+                      {current !== 'None' && MUST_HAVE_LABELS[key] && onDealbreakerToggle && (key !== 'housing_value' || householdIncome) && (
+                        <HideChips
+                          items={[{
+                            on: Boolean(dealbreakers?.[key]),
+                            label: `${MUST_HAVE_LABELS[key]!.short}${typeof dealbreakerFailCounts?.[key] === 'number' && (dealbreakerFailCounts?.[key] ?? 0) > 0 ? ` · ${dealbreakerFailCounts?.[key]}` : ''}`,
+                            title: MUST_HAVE_LABELS[key]!.full,
+                            toggle: () => onDealbreakerToggle(key),
+                          }]}
+                        />
+                      )}
+                      {key === 'climate_risk' && current !== 'None' && climatePrefs && onClimatePrefsChange && (
+                        <HideChips
+                          items={CLIMATE_MUST_HAVES.map(({ key: ck, short, full }) => ({
+                            on: Boolean(climatePrefs.must_haves?.[ck]),
+                            label: `${short}${typeof climateMustHaveFailCounts?.[ck] === 'number' && (climateMustHaveFailCounts?.[ck] ?? 0) > 0 ? ` · ${climateMustHaveFailCounts?.[ck]}` : ''}`,
+                            title: full,
+                            toggle: () => onClimatePrefsChange({ ...climatePrefs, must_haves: { ...climatePrefs.must_haves, [ck]: !climatePrefs.must_haves?.[ck] } }),
+                          }))}
+                        />
+                      )}
                       {key === 'natural_beauty' && current !== 'None' && (
                         <KindChips label="Which scenery? (blank = all)" options={NB_TYPE_OPTIONS} selected={filterNbTypes}
                           onToggle={(v) => onFilterNbTypesChange?.(filterNbTypes.includes(v) ? filterNbTypes.filter((x) => x !== v) : [...filterNbTypes, v])} />

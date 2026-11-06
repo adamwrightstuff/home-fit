@@ -60,7 +60,7 @@ function scoreBasisLine(mode: CatalogMapIndexMode, priorities: PillarPriorities)
     const adjusted = PILLAR_ORDER.some((k) => priorities[k as keyof PillarPriorities] !== DEFAULT_PRIORITIES[k as keyof PillarPriorities])
     return adjusted
       ? 'HomeFit: average of the pillars, weighted by your priorities.'
-      : 'HomeFit: average of the 12 pillars, equal weights. Adjust weights to personalize.'
+      : 'HomeFit: average of the 12 pillars, equal weights. Adjust priorities to personalize.'
   }
   if (mode === 'longevity') return 'Longevity: ' + LONGEVITY_COPY.tooltip
   if (mode === 'happiness') return 'Happiness: ' + HAPPINESS_INDEX_COPY.tooltip
@@ -848,7 +848,9 @@ export default function CatalogPageClient({
   // showing the count before mount made the Filters badge differ between server and client HTML.
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
+  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
+  // Priorities badge: pillars moved off the default level, plus Hide choices (which live in Priorities).
+  const priorityBadgeCount = !mounted ? 0 : PILLAR_ORDER.filter((k) => priorities[k as keyof PillarPriorities] !== DEFAULT_PRIORITIES[k as keyof PillarPriorities]).length + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
   // Places blocked by regular filters — always shown in "Show excluded"
   const metroFilterExcluded = useMemo(() => {
     const filteredSet = new Set(filteredPlaces)
@@ -1452,7 +1454,12 @@ export default function CatalogPageClient({
                   className="h-[var(--hf-control-h)] rounded-[var(--hf-control-radius)] border border-[var(--hf-border-strong)] px-2.5 text-[length:var(--hf-control-text)] font-bold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
                   style={{ opacity: indexMode !== 'homefit' ? 0.4 : 1, pointerEvents: indexMode !== 'homefit' ? 'none' : 'auto' }}
                   onClick={() => setWeightOpen(true)}
-                >Adjust weights</button>}
+                >
+                  Priorities
+                  {priorityBadgeCount > 0 && (
+                    <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>{priorityBadgeCount}</span>
+                  )}
+                </button>}
               </>
             )}
             <div className="h-4 w-px bg-[var(--hf-border)]" />
@@ -1736,10 +1743,10 @@ export default function CatalogPageClient({
                 <button
                   type="button"
                   onClick={() => setWeightOpen(true)}
-                  aria-label="Adjust weights"
+                  aria-label="Priorities"
                   className="pointer-events-auto shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
                   style={{ background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }}
-                >⚖ Weights</button>
+                >⚖ Priorities{priorityBadgeCount > 0 ? ` (${priorityBadgeCount})` : ''}</button>
               )}
             </div>
           )}
@@ -1999,6 +2006,12 @@ export default function CatalogPageClient({
         onFilterSchoolTypeChange={setFilterSchoolType}
         filterSchoolLevels={filterSchoolLevels}
         onFilterSchoolLevelsChange={(v) => setFilterSchoolLevels(v as SchoolLevel[])}
+        dealbreakers={dealbreakers}
+        onDealbreakerToggle={toggleDealbreaker}
+        dealbreakerFailCounts={dealbreakerFailCounts}
+        climatePrefs={climatePrefs}
+        onClimatePrefsChange={setClimatePrefs}
+        climateMustHaveFailCounts={climateMustHaveFailCounts}
       />
 
       <PillarTwinDrawer

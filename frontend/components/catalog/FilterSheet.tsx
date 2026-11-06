@@ -16,10 +16,10 @@ const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'rural', label: 'Rural' },
 ]
 
-const MUST_HAVE_PILLARS: PillarKey[] = ['housing_value', 'quality_education', 'community_safety', 'healthcare_access', 'air_travel_access', 'public_transit_access']
+export const MUST_HAVE_PILLARS: PillarKey[] = ['housing_value', 'quality_education', 'community_safety', 'healthcare_access', 'air_travel_access', 'public_transit_access']
 
 /** What "fails" means per pillar; mirrors the thresholds in lib/reweight.ts. Keep in sync. */
-const MUST_HAVE_LABELS: Partial<Record<PillarKey, { short: string; full: string }>> = {
+export const MUST_HAVE_LABELS: Partial<Record<PillarKey, { short: string; full: string }>> = {
   housing_value: { short: 'Price over 3x income', full: 'Home price over 3x your household income' },
   quality_education: { short: 'Schools below state median', full: 'Schools that count here rank below the state median (under a 3-star equivalent)' },
   community_safety: { short: 'Highest-crime quarter', full: 'In the highest-crime quarter nationally' },
@@ -28,7 +28,7 @@ const MUST_HAVE_LABELS: Partial<Record<PillarKey, { short: string; full: string 
   public_transit_access: { short: 'No rail, few buses', full: 'No rail and very few bus stops' },
 }
 
-const CLIMATE_MUST_HAVES: { key: keyof ClimateMustHaves; short: string; full: string }[] = [
+export const CLIMATE_MUST_HAVES: { key: keyof ClimateMustHaves; short: string; full: string }[] = [
   { key: 'no_cold_winters', short: '❄️ Cold winters', full: 'Cold winters: coldest month averages below 40°F' },
   { key: 'no_hot_summers', short: '☀️ Hot summers', full: 'Hot summers: July average above 72°F' },
   { key: 'no_grey_days', short: '🌧️ Very grey & rainy', full: 'Very grey, rainy climate' },
@@ -154,8 +154,7 @@ export default function FilterSheet({
     (filterLocalScene !== 'all' ? 1 : 0) +
     (filterAura ? 1 : 0) +
     (filterCommuteMax !== 'all' ? 1 : 0) +
-    MUST_HAVE_PILLARS.filter((k) => dealbreakers?.[k]).length +
-    (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
+    0
 
   function handleClearAll() {
     onFilterMetroChange('all')
@@ -168,9 +167,7 @@ export default function FilterSheet({
     onFilterTenureChange([])
     onFilterLocalSceneChange('all')
     onFilterAuraChange(false)
-    onClimatePrefsChange({})
     onFilterCommuteMaxChange('all')
-    MUST_HAVE_PILLARS.forEach((k) => { if (dealbreakers?.[k]) onDealbreakerToggle?.(k) })
   }
 
   function toggleAreaType(value: string) {
@@ -212,8 +209,8 @@ export default function FilterSheet({
         aria-labelledby="filter-sheet-title"
         className="fixed z-[70] max-h-[85vh] overflow-y-auto bg-white
           bottom-0 left-0 right-0 rounded-t-2xl border-t border-gray-200
-          md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2
-          md:w-[480px] md:rounded-2xl md:border md:border-gray-200 md:shadow-xl"
+          md:bottom-4 md:left-auto md:right-4 md:top-16 md:max-h-none md:w-[448px]
+          md:rounded-2xl md:border md:border-gray-200 md:shadow-xl"
       >
         <div className="flex justify-center pt-2.5 md:hidden">
           <div style={{ width: 40, height: 4, borderRadius: 2, background: '#e5e7eb' }} />
@@ -229,30 +226,10 @@ export default function FilterSheet({
         </div>
 
         <div style={{ padding: '16px 16px 0' }}>
-          {/* Must-haves: the hard "never show me" filters */}
+          <p style={{ fontSize: 12, color: '#6b7280', margin: '0 0 16px' }}>
+            Filters hide places that do not match. To change what ranks higher, use Priorities.
+          </p>
           <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Never show places with</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {MUST_HAVE_PILLARS.filter((key) => key !== 'housing_value' || householdIncome).map((key) => {
-                const fails = dealbreakerFailCounts?.[key]
-                const lbl = MUST_HAVE_LABELS[key]!
-                const count = typeof fails === 'number' && fails > 0 && (key !== 'housing_value' || householdIncome) ? ` · ${fails}` : ''
-                return chip(Boolean(dealbreakers?.[key]), `${PILLAR_META[key].icon} ${lbl.short}${count}`, () => onDealbreakerToggle?.(key), lbl.full)
-              })}
-              {CLIMATE_MUST_HAVES.map(({ key, short, full }) => {
-                const fails = climateMustHaveFailCounts?.[key]
-                const count = typeof fails === 'number' && fails > 0 ? ` · ${fails}` : ''
-                return chip(
-                  Boolean(climatePrefs.must_haves?.[key]),
-                  `${short}${count}`,
-                  () => onClimatePrefsChange({ ...climatePrefs, must_haves: { ...climatePrefs.must_haves, [key]: !climatePrefs.must_haves?.[key] } }),
-                  full,
-                )
-              })}
-            </div>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
-              Numbers show places removed.{!householdIncome ? ' Add your income in your profile for a price filter.' : ''}
-            </div>
             {workZoneLabel ? (
               <>
                 <div style={{ fontSize: 13, fontWeight: 600, marginTop: 12, marginBottom: 6 }}>🚆 Commute over</div>
