@@ -1289,14 +1289,14 @@ export default function CatalogPageClient({
           <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
-              className={`rounded-full px-3 py-1 text-xs font-bold ${catalogMode === 'explorer' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
-              style={catalogMode === 'explorer' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
+              className={`rounded-full px-3 py-1 text-xs font-bold ${catalogMode === 'explorer' ? 'text-[var(--hf-text-primary)]' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+              style={catalogMode === 'explorer' ? { background: '#fff', boxShadow: 'inset 0 0 0 1.5px var(--hf-primary-1)' } : {}}
               onClick={() => { setCatalogMode('explorer'); setTwinQueryKey(null); setTwinSearchText(''); router.replace('/catalog', { scroll: false }) }}
             >Explorer</button>
             <button
               type="button"
-              className={`rounded-full px-3 py-1 text-xs font-bold ${catalogMode === 'twin' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
-              style={catalogMode === 'twin' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
+              className={`rounded-full px-3 py-1 text-xs font-bold ${catalogMode === 'twin' ? 'text-[var(--hf-text-primary)]' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+              style={catalogMode === 'twin' ? { background: '#fff', boxShadow: 'inset 0 0 0 1.5px var(--hf-primary-1)' } : {}}
               onClick={() => {
                 setCatalogMode('twin')
                 setViewMode('list')
@@ -1541,14 +1541,14 @@ export default function CatalogPageClient({
           <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
-              className={`rounded-full px-3 h-[var(--hf-control-h-touch)] text-xs font-bold ${catalogMode === 'explorer' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
-              style={catalogMode === 'explorer' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
+              className={`rounded-full px-3 h-[var(--hf-control-h-touch)] text-xs font-bold ${catalogMode === 'explorer' ? 'text-[var(--hf-text-primary)]' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+              style={catalogMode === 'explorer' ? { background: '#fff', boxShadow: 'inset 0 0 0 1.5px var(--hf-primary-1)' } : {}}
               onClick={() => { setCatalogMode('explorer'); setTwinQueryKey(null); setTwinSearchText(''); router.replace('/catalog', { scroll: false }) }}
             >Explorer</button>
             <button
               type="button"
-              className={`rounded-full px-3 h-[var(--hf-control-h-touch)] text-xs font-bold ${catalogMode === 'twin' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
-              style={catalogMode === 'twin' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
+              className={`rounded-full px-3 h-[var(--hf-control-h-touch)] text-xs font-bold ${catalogMode === 'twin' ? 'text-[var(--hf-text-primary)]' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+              style={catalogMode === 'twin' ? { background: '#fff', boxShadow: 'inset 0 0 0 1.5px var(--hf-primary-1)' } : {}}
               onClick={() => { setCatalogMode('twin'); setViewMode('list') }}
             >Twin</button>
           </div>
@@ -1882,7 +1882,7 @@ export default function CatalogPageClient({
         <div className="md:hidden pointer-events-none fixed bottom-6 left-0 right-0 z-40 flex justify-center">
           <button
             type="button"
-            className="pointer-events-auto flex items-center gap-2 rounded-full bg-[#222] px-5 py-3 text-sm font-semibold text-white shadow-xl"
+            className="pointer-events-auto flex items-center gap-2 rounded-full border border-[var(--hf-border-strong)] bg-white px-5 py-3 text-sm font-semibold text-[var(--hf-text-primary)] shadow-xl"
             onClick={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
           >
             {viewMode === 'map'

@@ -274,16 +274,6 @@ export default function FilterSheet({
             )}
           </div>
 
-          {/* Metro */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Metro</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {(['all', ...CATALOG_METROS] as const).map((m) =>
-                chip(filterMetro === m, m === 'all' ? 'All metros' : CATALOG_METRO_META[m].label, () => onFilterMetroChange(m))
-              )}
-            </div>
-          </div>
-
           {/* Area type */}
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Built environment</div>
