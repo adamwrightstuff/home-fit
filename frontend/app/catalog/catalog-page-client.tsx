@@ -54,6 +54,21 @@ const INDEXES: { id: 'homefit' | 'longevity' | 'happiness' | 'status'; label: st
   { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
 ]
 
+/** One-line basis for the score being shown, so a number is never read without knowing what it is. */
+function scoreBasisLine(mode: CatalogMapIndexMode, priorities: PillarPriorities): string {
+  if (mode === 'homefit') {
+    const adjusted = PILLAR_ORDER.some((k) => priorities[k as keyof PillarPriorities] !== DEFAULT_PRIORITIES[k as keyof PillarPriorities])
+    return adjusted
+      ? 'HomeFit: average of the pillars, weighted by your priorities.'
+      : 'HomeFit: average of the 12 pillars, equal weights. Adjust weights to personalize.'
+  }
+  if (mode === 'longevity') return 'Longevity: ' + LONGEVITY_COPY.tooltip
+  if (mode === 'happiness') return 'Happiness: ' + HAPPINESS_INDEX_COPY.tooltip
+  if (mode === 'status') return 'Archetype: social character from income, education, occupation and housing data.'
+  const meta = PILLAR_META[mode as PillarKey]
+  return meta ? `${meta.name}: this pillar's own 0 to 100 score, not your weighted total.` : ''
+}
+
 type CatalogMode = 'explorer' | 'twin'
 
 function sortPlaces(
@@ -1656,6 +1671,12 @@ export default function CatalogPageClient({
           </div>
         )}
       </header>
+
+      {catalogMode === 'explorer' && (
+        <p className="m-0 shrink-0 border-b border-[var(--hf-border)] bg-white px-4 py-1 text-[0.7rem] text-[var(--hf-text-secondary)]">
+          {scoreBasisLine(indexMode, priorities)}
+        </p>
+      )}
 
       {viewMode === 'map' && (
         <div className="relative flex min-h-0 flex-1 flex-col">
