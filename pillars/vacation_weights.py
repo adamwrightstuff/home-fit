@@ -5,9 +5,7 @@ Used by main.py when mode=vacation is passed to /score.
 
 from typing import Dict, FrozenSet, List, Optional
 
-# Per-trip-type pillar sets. built_environment excluded from city: all 19 catalog cities
-# scored exactly 50 (zero variance), so it provides no differentiation signal.
-# NA alone reliably separates urban from rural destinations.
+# Per-trip-type pillar sets. Built environment is not a pillar (it is an opt-in filter), so no trip type uses it.
 VACATION_PILLAR_SETS: Dict[str, FrozenSet[str]] = {
     "beach": frozenset({
         "natural_beauty",
@@ -39,13 +37,12 @@ VACATION_PILLAR_SETS: Dict[str, FrozenSet[str]] = {
         "neighborhood_amenities",
         "air_travel_access",
         "climate_risk",
-        "built_environment",
         "healthcare_access",
     }),
 }
 
 # Weights must sum to 100 for each preset.
-# beach/mountain have 6 pillars; city/road_trip have 7.
+# Every preset has 6 pillars.
 VACATION_WEIGHT_PRESETS: Dict[str, Dict[str, float]] = {
     "beach": {
         "natural_beauty": 30.0,       # ocean/water signal dominant; freed 3pts from built_env
@@ -72,13 +69,13 @@ VACATION_WEIGHT_PRESETS: Dict[str, Dict[str, float]] = {
         "healthcare_access": 5.0,
     },
     "road_trip": {
-        "active_outdoors": 25.0,         # parks, scenery stops
-        "natural_beauty": 25.0,
-        "neighborhood_amenities": 20.0,  # food, charm towns
-        "climate_risk": 12.0,
-        "built_environment": 8.0,        # small town character matters
-        "healthcare_access": 5.0,
-        "air_travel_access": 5.0,
+        # Built environment's former 8 points are split evenly across the six remaining pillars (8 / 6 each).
+        "active_outdoors": 25.0 + 8.0 / 6,   # parks, scenery stops
+        "natural_beauty": 25.0 + 8.0 / 6,
+        "neighborhood_amenities": 20.0 + 8.0 / 6,  # food, charm towns
+        "climate_risk": 12.0 + 8.0 / 6,
+        "healthcare_access": 5.0 + 8.0 / 6,
+        "air_travel_access": 5.0 + 8.0 / 6,
     },
 }
 
@@ -86,7 +83,7 @@ VALID_TRIP_TYPES = set(VACATION_WEIGHT_PRESETS.keys())
 
 # Traveler profile weight overrides.  AT fixed at 15% across all profiles.
 # Remaining 85% redistributed per profile × trip type.
-# beach/mountain: 6 pillars (no built_environment).  city: 7 pillars.
+# beach/mountain/city/road_trip: 6 pillars each.
 TRAVELER_PROFILE_WEIGHTS: Dict[str, Dict[str, Dict[str, float]]] = {
     "adventurer": {
         "beach":    {"active_outdoors": 36.0, "natural_beauty": 26.0, "neighborhood_amenities": 8.0,  "air_travel_access": 15.0, "healthcare_access": 7.0,  "climate_risk": 8.0},
