@@ -1,6 +1,6 @@
 # Happiness index: DPv2 spec sheet and audit
 
-Level: 0 (audit in progress, 2026-11-05). Nothing in scoring has changed. Branch `happiness-dpv2`, worktree `home-fit-happiness`, cut from origin/main 02e03b31.
+Level: 2 (owner sign-off 2026-11-05, plan v2). Nothing in scoring has changed. Branch `happiness-dpv2`, worktree `home-fit-happiness`, cut from origin/main 02e03b31.
 
 The happiness index is a composite beside the pillars, not a pillar. Weights, evidence and sensitivity history are in `HAPPINESS_WEIGHTS_PROPOSAL.md` (v5, applied October 2026) and `HAPPINESS_EVIDENCE_NOTES.md`; they are linked here, not repeated. Worked examples for the format: `PILLAR_ECONOMIC_SECURITY.md`, `PILLAR_SOCIAL_FABRIC.md`.
 
@@ -203,3 +203,22 @@ Data: the same PLACES ZCTA file (LONELINESS, EMOTIONSPT), same catalog copies. O
 - Informational only, not pass criteria: full index vs self-rated health (GHLTH), labeled a health outcome.
 - Wording: "checked on a subset" until matched places cover the full catalog.
 - Level 2 means V1 to V4 all pass. Any fail means Level 1 stands.
+
+## Level 2 plan v2 results (run by the independent session, 2026-11-05)
+
+Level 2 passes under plan v2: V1 to V4 all pass, label "checked on a subset". Full tables and method in analysis/happiness_validation_v2_2026-11-05.md. No scoring, weights, criteria, pairs or data changed.
+
+| Test | n | Raw | Partial (income) | Result |
+|---|---|---|---|---|
+| V1 LONELINESS | 850 | 0.577 | 0.416 | PASS |
+| V1 EMOTIONSPT | 850 | 0.610 | 0.405 | PASS |
+| V2 current minus equal, LONELINESS | 850 | +0.087 | +0.140 | PASS |
+| V2 current minus equal, EMOTIONSPT | 850 | +0.042 | +0.081 | PASS |
+| V3 sign by metro (30 or more with both outcomes) | 9 metros | all positive | | PASS |
+| V4 launch pairs | 6 | | | PASS, 6 of 6 |
+
+No partial is under half its raw, so nothing here is flagged as tracking affluence. Informational only: full index vs GHLTH (health outcome) raw 0.550, partial 0.196, tracks affluence, not a criterion. Not verified: PLACES ZIP values are modeled estimates, crude not age-adjusted, outcomes missing for CO, FL, WA, PA, MD and most of TX (12 metros untested in V3), shared ZIPs make observations non-independent, no significance tests.
+
+## Level sign-off (current)
+
+Level 2, owner, 2026-11-05. Plan v2 passed V1 to V4 in an independent session. Disclosure: plan v2 was written after the first run failed under plan v1 (the self-rated health outcome and the 5-point pair rule were replaced); V1 to V3 numbers are identical to the first run, only the pair test (V4) used new data. Label stays "checked on a subset", never "validated". Accepted TODOs: weights are unsourced judgments with recorded ranges (Level 3 not met); safety carries about 48 percent of index variance (option A kept); loneliness and support data missing for CO, FL, WA, PA, MD and most of TX (12 metros untested for direction); PLACES values are modeled ZIP estimates, not age-adjusted, shared across places in a ZIP, no significance tests; catalog-versus-PLACES weight check not rerun on current pillars (G4). Any scoring change drops the index back to Level 1.
