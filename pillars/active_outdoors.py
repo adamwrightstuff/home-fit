@@ -776,7 +776,6 @@ def _score_wild_adventure_v2(
 
     baseline_context = get_baseline_context(
         area_type=area_type,
-        form_context=None,
         pillar_name="active_outdoors"
     )
     expectations = get_contextual_expectations(baseline_context, "active_outdoors") or {}

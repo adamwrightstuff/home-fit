@@ -45,7 +45,6 @@ JSONL = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.composites_r
 CONFIDENCE_THRESHOLDS: Dict[str, int] = {
     "healthcare_access":    30,
     "air_travel_access":    50,
-    "built_environment":    30,
     "quality_education":    50,
     "community_safety":     50,
     "default":              70,
@@ -140,10 +139,6 @@ HAPPINESS_COMPONENT_WEIGHTS = {
 # Pillars that store confidence on 0-1 scale instead of 0-100
 ZERO_ONE_CONFIDENCE_PILLARS = {"political_lean"}
 
-# Pillars where confidence is structurally undefined in residential catalog mode
-# and should not be flagged (built_environment is vacation/road_trip only)
-SKIP_CONFIDENCE_PILLARS = {"built_environment"}
-
 
 def pillar_version(pillar: str, data: Dict[str, Any]) -> Optional[str]:
     if pillar == "natural_beauty":
@@ -161,13 +156,7 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
     score = data.get("score")
     status = data.get("status")
     if score is None and pillar not in NO_SCORE_EXPECTED:
-        # built_environment is preference-gated: top-level score is null when no user
-        # preference is set (catalog mode), but the quality score is in details.
-        # Check that instead so we don't false-flag preference-gated nulls as data gaps.
-        if pillar == "built_environment" and (data.get("details") or {}).get("built_environment_score"):
-            pass
-        else:
-            flags.append("score_null")
+        flags.append("score_null")
     # fallback with score=0 is a data gap (e.g. education where SchoolDigger returned nothing)
     elif status == "fallback" and score == 0 and pillar not in NO_SCORE_EXPECTED:
         flags.append("fallback_zero")
@@ -177,7 +166,7 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
     conf = dq.get("confidence")
     threshold = CONFIDENCE_THRESHOLDS.get(pillar, CONFIDENCE_THRESHOLDS["default"])
     # Some pillars store confidence on 0-1 scale or are structurally unscored in catalog mode
-    if pillar in ZERO_ONE_CONFIDENCE_PILLARS or pillar in SKIP_CONFIDENCE_PILLARS:
+    if pillar in ZERO_ONE_CONFIDENCE_PILLARS:
         conf = None
     if isinstance(conf, (int, float)) and conf < threshold:
         flags.append(f"conf_{int(conf)}")
@@ -206,7 +195,7 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
             and score is not None and score > 0
             and data.get("confidence") != 0
             and status not in ("fallback", "error")
-            and pillar not in {"political_lean", "built_environment"}):
+            and pillar not in {"political_lean"}):
         flags.append("ghosted_weight")
 
     # Version checks

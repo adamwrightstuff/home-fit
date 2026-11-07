@@ -10,8 +10,7 @@ Two tiers:
   1. Generic hard-failure floor check (all 13 pillars): if data_quality.data_warning(s)
      contains a known hard-failure marker, confidence must be floored to <=10. Catches
      drift like the healthcare_access query_failed bug (eab6652).
-  2. Pillar-specific checks (registry below): built_environment's coverage-threshold
-     consistency (osm_building_coverage vs data_warning/confidence_0_1).
+  2. Pillar-specific checks (registry below; none registered at present).
 
 Report-only -- does not modify the catalog. Add new pillar-specific checks to
 PILLAR_SPECIFIC_CHECKS as new bug classes are found; don't assume this registry is
@@ -70,29 +69,8 @@ def generic_floor_check(pillar_name: str, pillar: Dict[str, Any]) -> Optional[st
     return None
 
 
-def built_environment_coverage_check(pillar_name: str, pillar: Dict[str, Any]) -> Optional[str]:
-    """Tier 2: built_environment coverage vs data_warning consistency."""
-    if pillar_name != "built_environment":
-        return None
-    aa = (pillar.get("details") or {}).get("architectural_analysis")
-    if not isinstance(aa, dict):
-        return None
-    cov = aa.get("osm_building_coverage")
-    if cov is None:
-        cov = (aa.get("metrics") or {}).get("built_coverage_ratio")
-    if cov is None:
-        return None
-    warning = aa.get("data_warning")
-    expected_warning = "low_building_coverage" if cov < 0.50 else None
-    if expected_warning == "low_building_coverage" and warning != "low_building_coverage":
-        return f"osm_building_coverage={cov:.3f} (<0.50) but data_warning={warning!r} (stale -- predates threshold check)"
-    return None
-
-
 # Registry of pillar-specific checks. Each fn: (pillar_name, pillar_dict) -> Optional[issue_str]
-PILLAR_SPECIFIC_CHECKS = [
-    built_environment_coverage_check,
-]
+PILLAR_SPECIFIC_CHECKS: list = []
 
 
 def audit_file(path: Path) -> List[Dict[str, Any]]:

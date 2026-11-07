@@ -21,7 +21,7 @@ Phases (all run unless --skip-* flags used):
   4. zips      — Nominatim ZIP code backfill
   5. lean      — political lean data
   6. scene     — local_scene_bucket from stored business_list
-  7. labels    — best-fit preference labels on NB + built_environment
+  7. labels    — best-fit preference labels on NB
   8. schools   — charter/public flag on school arrays
   9. archs     — Claude-based archetype summaries (costs ~$5-15, requires ANTHROPIC_API_KEY)
  10. compose   — recompute composites (longevity, status_signal, happiness_index)
@@ -65,7 +65,6 @@ def _coverage(path: Path) -> None:
     """Print a quick coverage table for key fields."""
     checks = {
         "housing_stock.pct_low_density": 0,
-        "built_environment.score": 0,
         "political_lean.lean_2024": 0,
         "local_scene_bucket": 0,
         "zip_code": 0,
@@ -91,9 +90,6 @@ def _coverage(path: Path) -> None:
             hs = s.get("housing_stock") or {}
             if isinstance(hs.get("pct_low_density"), (int, float)):
                 checks["housing_stock.pct_low_density"] += 1
-            be = pillars.get("built_environment") or {}
-            if be.get("score") is not None:
-                checks["built_environment.score"] += 1
             pl = pillars.get("political_lean") or {}
             if (pl.get("breakdown") or {}).get("lean_2024") is not None:
                 checks["political_lean.lean_2024"] += 1

@@ -724,7 +724,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     """
     Parse token allocation string or return default equal distribution.
     
-    Format: "active_outdoors:5,built_environment:4,natural_beauty:4,air_travel:3,..."
+    Format: "active_outdoors:5,natural_beauty:4,air_travel:3,..."
     Default: Equal distribution across all 13 primary pillars (totals 100).
     
     Note: This function now uses 100 tokens total (migrated from 20 tokens).
@@ -2118,7 +2118,7 @@ def _compute_single_score_internal(
     # Excludes quality_education (has its own dedicated
     # _apply_schools_disabled_weight_override -- confidence=0 there is the normal,
     # deliberate "schools disabled by default" state, not a failure) and
-    # built_environment/natural_beauty (extracted later in this function, not part
+    # natural_beauty (extracted later in this function, not part
     # of this weight pool the same way -- a known gap, not yet covered here).
     _no_data_pillars: List[str] = []
     _ghost_weight_candidates: List[tuple] = [
@@ -2670,7 +2670,7 @@ def get_livability_score(request: Request,
     Calculate livability score for a given address.
 
     Returns scores across 13 token-weighted pillars (default equal weights) plus optional composite indices:
-    - Active Outdoors, Built Environment, Natural Beauty, Neighborhood Amenities
+    - Active Outdoors, Natural Beauty, Neighborhood Amenities
     - Air Travel Access, Public Transit Access, Healthcare Access, Economic Security
     - Quality Education, Housing Value, Climate Risk, Social Fabric, Diversity
     - Composite (not token-weighted): status_signal, happiness_index — derived from census/tract and pillar context; see response fields.
@@ -2683,7 +2683,7 @@ def get_livability_score(request: Request,
         priorities: Optional priority-based allocation (JSON string or query param)
                    Format: JSON object mapping pillar names to priority levels
                    Priority levels: "None" (0), "Low" (1), "Medium" (2), "High" (3)
-                   Example: '{"active_outdoors":"High","built_environment":"Medium",...}'
+                   Example: '{"active_outdoors":"High","natural_beauty":"Medium",...}'
                    Default: Equal distribution across all pillars (100 tokens total)
         include_chains: Include chain/franchise businesses in amenities score (default: True)
         enable_schools: Enable school scoring for this request (default: uses global ENABLE_SCHOOL_SCORING flag)
@@ -5200,7 +5200,6 @@ def _calculate_data_quality_summary(pillars: dict, area_type: str = None) -> dic
             try:
                 baseline_contexts[pillar_name] = get_baseline_context(
                     area_type=area_type,
-                    form_context=None,
                     pillar_name=pillar_name
                 )
             except Exception:

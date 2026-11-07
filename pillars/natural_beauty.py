@@ -3701,7 +3701,6 @@ def calculate_natural_beauty(lat: float,
                              enhancer_radius_m: int = 1500,
                              precomputed_tree_canopy_5km: Optional[float] = None,
                              density: Optional[float] = None,
-                             form_context: Optional[str] = None,
                              natural_beauty_preference: Optional[List[str]] = None,
                              place_context=None) -> Dict:
     """
