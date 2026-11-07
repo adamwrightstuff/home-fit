@@ -424,7 +424,7 @@ export default function FilterSheet({
               <div style={LABEL_STYLE}>Local Scene</div>
             </div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Reflects the presence of independent places to spend time, like cafés, bookstores, bars, and galleries.
+              Places with more cafés, bars, galleries, bookstores and record stores for their size than most. Places with too few mapped venues have no label.
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterLocalScene === 'all', 'All', () => onFilterLocalSceneChange('all'))}

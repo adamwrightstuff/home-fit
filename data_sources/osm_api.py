@@ -3072,6 +3072,9 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
             "office": office or None,
             "sport": sport or None,
             "healthcare": healthcare or None,
+            # Chain evidence for local scene (docs/LOCAL_SCENE.md): OSM marks chains with brand and brand:wikidata.
+            "brand": (tags.get("brand") or "").strip() or None,
+            "brand_wikidata": (tags.get("brand:wikidata") or "").strip() or None,
         }
 
         if amenity == "cafe":

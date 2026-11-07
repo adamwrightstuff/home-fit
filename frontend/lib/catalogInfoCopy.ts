@@ -54,12 +54,12 @@ export const SCENE_COPY: Record<string, InfoCopy> = {
   High: {
     title: 'Vibrant Scene',
     body: 'Independent restaurants, cafes, shops, and cultural spots create a lively neighborhood with plenty to do close to home. Expect more walkable streets, spontaneous activity, and a stronger local identity.',
-    detail: 'Based on the concentration and diversity of independent restaurants, cafes, boutiques, cultural venues, and other experience-oriented businesses.',
+    detail: 'Based on how many of the cafes, bars, restaurants, galleries, bookstores and record stores nearby (for towns, inside the town boundary) are galleries, bookstores, record stores and hangouts, compared with places of similar density. A rough guide from OpenStreetMap data, not a verified rating.',
   },
   Some: {
     title: 'Some Scene',
     body: 'There is enough local activity to give the neighborhood character, but it is not buzzing from block to block. You\'ll find places to go without the constant energy of a major neighborhood destination.',
-    detail: 'Based on the concentration and diversity of independent restaurants, cafes, boutiques, cultural venues, and other experience-oriented businesses.',
+    detail: 'Based on how many of the cafes, bars, restaurants, galleries, bookstores and record stores nearby (for towns, inside the town boundary) are galleries, bookstores, record stores and hangouts, compared with places of similar density. A rough guide from OpenStreetMap data, not a verified rating.',
   },
   Low: {
     title: 'Residential',

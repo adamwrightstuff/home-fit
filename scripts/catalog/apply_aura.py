@@ -50,7 +50,11 @@ def process(metro: str) -> None:
         biz = (pillars.get("neighborhood_amenities") or {}).get("breakdown", {}).get("business_list") or []
         if biz:
             sc, bucket, sub = _compute(biz)
-            s["local_scene_score"], s["local_scene_bucket"], s["local_scene_breakdown"] = sc, bucket, sub
+            s["local_scene_score"], s["local_scene_breakdown"] = sc, sub
+            if "local_scene_v2" in s:
+                s["local_scene_bucket_v1"] = bucket  # the visible bucket is the v2 tier (add_local_scene_v2_offline.py)
+            else:
+                s["local_scene_bucket"] = bucket
         s["it_score"] = compute_aura_score(s.get("status_signal"), s.get("local_scene_score"), pillars)
         s["aura"] = False
         s.pop("aura_excluded", None)

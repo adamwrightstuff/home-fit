@@ -301,9 +301,9 @@ def passes_hard_filters(row: dict, cfg: dict) -> tuple[bool, str]:
     local_scene = cfg.get("local_scene")
     if local_scene and local_scene != "all":
         ls = score.get("local_scene_bucket")
-        if local_scene == "High" and ls != "High":
+        if local_scene == "High" and ls != "High":  # None (too few venues or below the cut) is not a scene
             return False, f"local_scene={ls}"
-        if local_scene == "Some" and ls == "Low":
+        if local_scene == "Some" and ls not in ("High", "Some"):
             return False, f"local_scene={ls}"
 
     built_forms = cfg.get("built_forms", [])

@@ -254,6 +254,8 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
                 "office": b.get("office"),
                 "sport": b.get("sport"),
                 "healthcare": b.get("healthcare"),
+                "brand": b.get("brand"),
+                "brand_wikidata": b.get("brand_wikidata"),
                 "source": b.get("source"),
             }
             for b in all_businesses

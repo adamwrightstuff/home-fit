@@ -702,8 +702,8 @@ export default function CatalogPageClient({
         })
         if (!matchesAny) return false
       }
-      if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') return false
-      if (filterLocalScene === 'High' && p.score.local_scene_bucket && p.score.local_scene_bucket !== 'High') return false
+      if (filterLocalScene === 'Some' && p.score.local_scene_bucket !== 'High' && p.score.local_scene_bucket !== 'Some') return false
+      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false
       if (filterAura && p.score.aura !== true) return false
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
@@ -873,8 +873,8 @@ export default function CatalogPageClient({
         const tr = normalizeTrajectory(p.score.status_signal_breakdown?.trajectory)
         if (tr && tr !== filterTrajectory) r.push('Trajectory')
       }
-      if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
-      if (filterLocalScene === 'High' && p.score.local_scene_bucket && p.score.local_scene_bucket !== 'High') r.push('Local scene')
+      if (filterLocalScene === 'Some' && p.score.local_scene_bucket !== 'High' && p.score.local_scene_bucket !== 'Some') r.push('Local scene')
+      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
       if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
@@ -991,8 +991,8 @@ export default function CatalogPageClient({
         })
         if (!matchesAny) r.push('Political lean')
       }
-      if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
-      if (filterLocalScene === 'High' && p.score.local_scene_bucket && p.score.local_scene_bucket !== 'High') r.push('Local scene')
+      if (filterLocalScene === 'Some' && p.score.local_scene_bucket !== 'High' && p.score.local_scene_bucket !== 'Some') r.push('Local scene')
+      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
       if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
