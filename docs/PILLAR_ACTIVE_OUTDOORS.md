@@ -39,7 +39,7 @@ The 45 places with a failed read were then re-read through the private Overpass 
 
 ## DPv2 spec sheet and audit (2026-11-02)
 
-Status: **Level 2 against criteria revised after the first run (not a blind pass): independent verifier reruns 5 and 6 of 2026-11-04 pass every criterion in force, including pin-shift on the current code (docs/ACTIVE_OUTDOORS_LEVEL2_RESULTS.md). An owner sign-off line is not yet recorded in this doc.** The audit below is the original Level 0 text, kept for the record. Audit done offline from
+Status: **Level 2 against criteria revised after the first run (not a blind pass): independent verifier reruns 5 and 6 of 2026-11-04 pass every criterion in force, including pin-shift on the current code (docs/ACTIVE_OUTDOORS_LEVEL2_RESULTS.md). Signed off by the owner 2026-11-06.** The audit below is the original Level 0 text, kept for the record. Audit done offline from
 `data/*_merged.composites_recomputed.jsonl` at origin/main 3841a87 (1,476 places), plus the fresh park reads in
 `analysis/ao_fresh_parks_uncovered/` (stored files, no new reads). No live call, no tunnel, no scoring change. The Level 2 checks
 are not run; they are written as a brief for another agent (`docs/ACTIVE_OUTDOORS_LEVEL2_BRIEF.md`).
@@ -215,3 +215,6 @@ offline apply (`scripts/catalog/apply_active_outdoors_camping_25km.py`, new file
   the stored water for these places is unchanged (catalog and live code differ slightly there; not measured).
 Gap 6 is closed in the catalog. The 4 places typed "unknown" were included in the read.
 
+## Level sign-off (owner, 2026-11-06)
+
+Level 2 (Verified) against criteria revised after the first run (rerun 5 on the typed park count, rerun 6 for pin-shift on the current code). Not a blind pass: the criteria were revised after results were seen, check 2 was not blind, and the thresholds are unsourced. Accepted gaps: trail targets, budgets, park baseline, decay and radii are unsourced or catalog medians; LA daily term against city park polygons is weak (0.28); Brooklyn neighbour gaps remain the largest in check 3b (Flatbush against Fort Greene 29.6); no separate credit for bike paths; older stored water reads at two places (data age, not code). Copy must not call this pillar validated.
