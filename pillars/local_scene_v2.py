@@ -32,6 +32,11 @@ METHOD = "culture_hangout_mix_v1"
 # 2026-11-06); unsourced judgments, not research values. High = strong scene, Some = has a scene.
 HIGH_READING = 65.0
 SOME_READING = 45.0
+# Activity tiers (the tag users see, owner decision 2026-11-06): independent named venues of the seven types within
+# ACTIVITY_RADIUS_M of the pin. Cuts are the catalog's median (13) and 85th percentile (71) on that date: unsourced.
+ACTIVITY_RADIUS_M = 1200
+QUIET_BELOW = 13
+VIBRANT_FROM = 71
 
 
 def _has_brand(v: Dict[str, Any]) -> bool:
@@ -155,3 +160,19 @@ def boundary_facts(venues: Iterable[Dict[str, Any]], area_km2: float) -> Dict[st
         "geography": "town_boundary",
         "method": METHOD,
     }
+
+
+def independent_venue_count(venues: Iterable[Dict[str, Any]], radius_m: int = ACTIVITY_RADIUS_M) -> int:
+    """Named venues of the seven types within radius_m of the pin with no OSM brand or brand:wikidata tag."""
+    return sum(
+        1
+        for v in venues or []
+        if v.get("type") in VENUE_TYPES and v.get("distance_m") is not None and v["distance_m"] <= radius_m and not _has_brand(v)
+    )
+
+
+def activity_bucket(count: Optional[int]) -> Optional[str]:
+    """High (Vibrant), Some or Low (Quiet) from the independent venue count; None when the place has no venue read."""
+    if count is None:
+        return None
+    return "High" if count >= VIBRANT_FROM else "Low" if count < QUIET_BELOW else "Some"
