@@ -13,8 +13,7 @@
     "air_travel_access": "None",
     "economic_security": "None",
     "climate_risk": "None",
-    "political_lean": "None",
-    "built_environment": "None"
+    "political_lean": "None"
   },
   "filters": {
     "archetypes": ["Elite", "Affluent"],

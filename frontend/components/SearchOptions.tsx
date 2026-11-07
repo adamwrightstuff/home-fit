@@ -3,7 +3,6 @@ export type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
 interface PillarPriorities {
   active_outdoors: PriorityLevel
   natural_beauty: PriorityLevel
-  built_environment: PriorityLevel
   neighborhood_amenities: PriorityLevel
   air_travel_access: PriorityLevel
   public_transit_access: PriorityLevel
@@ -31,8 +30,6 @@ interface SearchOptions {
   job_categories: string[]
   /** Natural Beauty preference from quiz: 1–2 of mountains, ocean, lakes_rivers, canopy; null = no preference. */
   natural_beauty_preference?: string[] | null
-  /** Built Environment area-type preference: urban_residential | suburban | exurban | rural; null = no preference (score = 50). */
-  built_env_preference?: 'urban_residential' | 'suburban' | 'exurban' | 'rural' | null
   /** Diversity: which mix dimensions to emphasize in the headline (race, income, age). null = average all available. */
   diversity_preference?: string[] | null
   /** Political lean preference: progressive | conservative | null = no preference declared. */
@@ -54,7 +51,6 @@ interface SearchOptionsProps {
 const DEFAULT_PRIORITIES: PillarPriorities = {
   active_outdoors: 'Medium',
   natural_beauty: 'Medium',
-  built_environment: 'None',
   neighborhood_amenities: 'Medium',
   air_travel_access: 'Medium',
   public_transit_access: 'Medium',

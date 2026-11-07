@@ -7,7 +7,6 @@ export type ResultsRouteParams = {
   include_chains?: boolean
   enable_schools?: boolean
   natural_beauty_preference?: string | null
-  built_env_preference?: string | null
   diversity_preference?: string | null
   political_preference?: string | null
   household_income?: number | null
@@ -49,7 +48,6 @@ export function buildResultsCacheKey(p: ResultsRouteParams): string {
     `include_chains=${p.include_chains ? '1' : '0'}`,
     `enable_schools=${p.enable_schools ? '1' : '0'}`,
     `natural_beauty_preference=${p.natural_beauty_preference ?? ''}`,
-    `built_env_preference=${p.built_env_preference ?? ''}`,
     `diversity_preference=${p.diversity_preference ?? ''}`,
     `political_preference=${p.political_preference ?? ''}`,
     `household_income=${p.household_income ?? ''}`,
@@ -65,7 +63,6 @@ export function buildResultsUrl(p: ResultsRouteParams): string {
   if (p.include_chains) usp.set('include_chains', '1')
   if (p.enable_schools) usp.set('enable_schools', '1')
   if (p.natural_beauty_preference) usp.set('natural_beauty_preference', p.natural_beauty_preference)
-  if (p.built_env_preference) usp.set('built_env_preference', p.built_env_preference)
   if (p.diversity_preference) usp.set('diversity_preference', p.diversity_preference)
   if (p.political_preference) usp.set('political_preference', p.political_preference)
   if (p.household_income) usp.set('household_income', String(p.household_income))

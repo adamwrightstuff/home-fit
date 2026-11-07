@@ -21,7 +21,6 @@ export interface RunPillarScoreOptions {
   priorities: PillarPriorities
   job_categories?: string[]
   natural_beauty_preference?: string[] | null
-  built_env_preference?: 'urban_residential' | 'suburban' | 'exurban' | 'rural' | null
   diversity_preference?: string[] | null
   political_preference?: string | null
   include_chains?: boolean

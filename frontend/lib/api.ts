@@ -120,9 +120,6 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   if (params.natural_beauty_preference) {
     searchParams.append('natural_beauty_preference', params.natural_beauty_preference);
   }
-  if (params.built_env_preference) {
-    searchParams.append('built_env_preference', params.built_env_preference);
-  }
   if (params.diversity_preference) {
     searchParams.append('diversity_preference', params.diversity_preference);
   }
@@ -335,7 +332,6 @@ export async function getScoreWithProgress(
   if (params.priorities) searchParams.append('priorities', params.priorities);
   if (params.only) searchParams.append('only', params.only);
   if (params.natural_beauty_preference) searchParams.append('natural_beauty_preference', params.natural_beauty_preference);
-  if (params.built_env_preference) searchParams.append('built_env_preference', params.built_env_preference);
   if (params.diversity_preference) searchParams.append('diversity_preference', params.diversity_preference);
   if (params.household_income != null) searchParams.append('household_income', String(params.household_income));
   if (params.job_categories) searchParams.append('job_categories', params.job_categories);
@@ -493,7 +489,6 @@ export function streamScore(
   if (params.include_chains !== undefined) searchParams.append('include_chains', params.include_chains.toString());
   if (params.enable_schools !== undefined) searchParams.append('enable_schools', params.enable_schools.toString());
   if (params.natural_beauty_preference) searchParams.append('natural_beauty_preference', params.natural_beauty_preference);
-  if (params.built_env_preference) searchParams.append('built_env_preference', params.built_env_preference);
   if (params.diversity_preference) searchParams.append('diversity_preference', params.diversity_preference);
   if (params.household_income != null) searchParams.append('household_income', String(params.household_income));
   try {

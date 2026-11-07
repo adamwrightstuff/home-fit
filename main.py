@@ -477,52 +477,6 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
     return {pillar: float(rounded_tokens.get(pillar, 0)) for pillar in primary_pillars}
 
 
-_BUILT_EFFECTIVE_AREA_LABELS: Dict[str, str] = {
-    "urban_core": "Urban core",
-    "urban_residential": "Urban residential",
-    "suburban": "Suburban",
-    "exurban": "Exurban",
-    "rural": "Rural",
-}
-
-
-def _humanize_built_effective_area_type(eat: Optional[str]) -> Optional[str]:
-    if not eat or not isinstance(eat, str):
-        return None
-    return _BUILT_EFFECTIVE_AREA_LABELS.get(eat.lower(), eat.replace("_", " ").title())
-
-
-# Density spectrum of the shared area type (least to most dense). urban_core is not a class any more;
-# an old saved preference of urban_core is read as urban_residential.
-_AREA_TYPE_INDEX: Dict[str, int] = {
-    "rural": 0, "exurban": 1, "suburban": 2, "urban_residential": 3,
-}
-
-def _built_env_match_score(effective_area_type: Optional[str], preference: Optional[str]) -> Optional[float]:
-    """Area-type preference match score (0-100). Returns None when no preference is set so callers
-    can emit a null score rather than a meaningless 50 that would pollute the blend."""
-    if not preference:
-        return None
-    normalized = (effective_area_type or "").lower().replace("-", "_")
-    if normalized == "urban_core":
-        normalized = "urban_residential"
-    if preference == "urban_core":
-        preference = "urban_residential"
-    place_idx = _AREA_TYPE_INDEX.get(normalized, _AREA_TYPE_INDEX["suburban"])
-    pref_idx = _AREA_TYPE_INDEX.get(preference, _AREA_TYPE_INDEX["suburban"])
-    diff = place_idx - pref_idx
-    if diff == 0: return 100.0
-    if diff > 0:
-        if diff == 1: return 60.0
-        if diff == 2: return 30.0
-        return 5.0
-    d = abs(diff)
-    if d == 1: return 75.0
-    if d == 2: return 50.0
-    return 20.0
-
-
-
 _QUALITY_TIER_CONFIDENCE = {"excellent": 92, "good": 78, "fair": 60, "poor": 30, "very_poor": 5}
 
 def _dq_confidence(dq: dict) -> int:
@@ -1395,7 +1349,6 @@ def _compute_single_score_internal(
     on_partial_longevity: Optional[Callable[[float], None]] = None,
     only_pillars: Optional[set[str]] = None,
     natural_beauty_preference: Optional[List[str]] = None,
-    built_env_preference: Optional[str] = None,
     diversity_preference: Optional[List[str]] = None,
     political_preference: Optional[str] = None,
     lat_override: Optional[float] = None,
@@ -2226,9 +2179,6 @@ def _compute_single_score_internal(
         exceptions['natural_beauty'] = exc  # same failure path as a raised pillar: no data, weight redistributed
     pillar_results['natural_beauty'] = (natural_score, natural_details)
 
-    nb_effective_area_type = area_type
-    built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
-
     # a missing education score stays None (no data); only the weighted sum below treats it as 0 contribution
 
     if schools_by_level:
@@ -2285,21 +2235,6 @@ def _compute_single_score_internal(
             "confidence": active_outdoors_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": active_outdoors_details.get("data_quality", {}),
             "area_classification": active_outdoors_details.get("area_classification", {})
-        },
-        "built_environment": {
-            "score": built_env_score,
-            "weight": 0.0,
-            "importance_level": None,
-            "contribution": 0.0,
-            "details": {
-                "effective_area_type": nb_effective_area_type,
-                "built_env_preference": built_env_preference,
-            },
-            "breakdown": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference},
-            "summary": {"effective_area_type": nb_effective_area_type},
-            "confidence": 100,
-            "data_quality": {},
-            "area_classification": {},
         },
         "natural_beauty": {
             "score": natural_score,
@@ -2656,7 +2591,6 @@ def get_livability_score(request: Request,
                          job_categories: Optional[str] = None,
                          test_mode: Optional[bool] = False,
                          natural_beauty_preference: Optional[str] = None,
-                         built_env_preference: Optional[str] = None,
                          diversity_preference: Optional[str] = None,
                          political_preference: Optional[str] = None,
                          household_income: Optional[int] = None,
@@ -2805,7 +2739,6 @@ def get_livability_score(request: Request,
             test_mode=test_mode_enabled,
             request=request,
             natural_beauty_preference=natural_beauty_preference_parsed,
-            built_env_preference=built_env_preference,
             diversity_preference=diversity_preference_parsed,
             political_preference=political_preference_parsed,
             lat_override=lat_override,
@@ -3857,9 +3790,6 @@ async def _stream_score_with_progress(
             use_school_scoring=use_school_scoring,
         )
         
-        nb_effective_area_type = area_type
-        built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
-
         # Calculate weighted total
         total_score = (
             (active_outdoors_score * token_allocation["active_outdoors"] / 100)
@@ -3896,18 +3826,6 @@ async def _stream_score_with_progress(
                 "confidence": active_outdoors_details.get("data_quality", {}).get("confidence", 0),
                 "data_quality": active_outdoors_details.get("data_quality", {}),
                 "area_classification": active_outdoors_details.get("area_classification", {})
-            },
-            "built_environment": {
-                "score": built_env_score,
-                "weight": 0.0,
-                "importance_level": None,
-                "contribution": 0.0,
-                "details": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference},
-                "breakdown": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference},
-                "summary": {"effective_area_type": nb_effective_area_type},
-                "confidence": 100,
-                "data_quality": {},
-                "area_classification": {},
             },
             "natural_beauty": {
                 "score": natural_score,
