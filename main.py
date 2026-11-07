@@ -44,7 +44,7 @@ from data_sources.telemetry import record_request_metrics, record_error, get_tel
 from pillars.strict_lookups import apply_strict_lookup_failures
 from pillars.schools import get_school_data, summary_extras as school_summary_extras
 from pillars.active_outdoors import get_active_outdoors_score_v2
-from pillars import built_environment, natural_beauty
+from pillars import natural_beauty
 from pillars.neighborhood_amenities import get_neighborhood_amenities_score
 from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
@@ -267,7 +267,6 @@ def _compute_scoring_hash() -> str:
     scoring_files = [
         # Pillar scoring logic
         "pillars/active_outdoors.py",
-        "pillars/built_environment.py",
         "pillars/natural_beauty.py",
         "pillars/neighborhood_amenities.py",
         "pillars/air_travel_access.py",
@@ -360,7 +359,7 @@ _CATALOG_INDEX: Dict[Tuple[float, float], Dict[str, Any]] = _load_catalog_index(
 LOCATION_CACHE_TTL_SECONDS = 12 * 3600  # 12 hours
 LOCATION_CACHE_MAX_BYTES = 256_000      # hard cap per entry (base64 text length)
 
-# Shared pre-pillar cache: census_tract, density, arch_diversity, area_type, tree_canopy, form_context.
+# Shared pre-pillar cache: census_tract, density, area_type, tree_canopy.
 # Keyed only by (lat, lon) so any request for the same location reuses expensive pre-pillar work.
 # Used only when only_pillars is None (full score).
 SHARED_PREPILLAR_CACHE_TTL_SECONDS = 12 * 3600  # 12 hours, match location cache
@@ -494,8 +493,10 @@ def _humanize_built_effective_area_type(eat: Optional[str]) -> Optional[str]:
     return _BUILT_EFFECTIVE_AREA_LABELS.get(eat.lower(), eat.replace("_", " ").title())
 
 
+# Density spectrum of the shared area type (least to most dense). urban_core is not a class any more;
+# an old saved preference of urban_core is read as urban_residential.
 _AREA_TYPE_INDEX: Dict[str, int] = {
-    "rural": 0, "exurban": 1, "suburban": 2, "urban_residential": 3, "urban_core": 4,
+    "rural": 0, "exurban": 1, "suburban": 2, "urban_residential": 3,
 }
 
 def _built_env_match_score(effective_area_type: Optional[str], preference: Optional[str]) -> Optional[float]:
@@ -504,6 +505,10 @@ def _built_env_match_score(effective_area_type: Optional[str], preference: Optio
     if not preference:
         return None
     normalized = (effective_area_type or "").lower().replace("-", "_")
+    if normalized == "urban_core":
+        normalized = "urban_residential"
+    if preference == "urban_core":
+        preference = "urban_residential"
     place_idx = _AREA_TYPE_INDEX.get(normalized, _AREA_TYPE_INDEX["suburban"])
     pref_idx = _AREA_TYPE_INDEX.get(preference, _AREA_TYPE_INDEX["suburban"])
     diff = place_idx - pref_idx
@@ -1094,21 +1099,6 @@ def _housing_at_status_pool(housing_details: Dict[str, Any], lat: Any, lon: Any,
     return {**housing_details, "summary": merged}
 
 
-def _need_arch_diversity_for_area_type(only_pillars: Optional[set[str]]) -> bool:
-    """
-    Full scores (and catalog JSONL) pass built_coverage into area_type detection.
-    Status Signal refresh uses only=...neighborhood_amenities... without built_environment; we still
-    need arch diversity so area_type matches a full run and Status Signal aligns with catalog.
-    """
-    if only_pillars is None:
-        return True
-    if "built_environment" in only_pillars:
-        return True
-    if "neighborhood_amenities" in only_pillars:
-        return True
-    return False
-
-
 def _compute_happiness_index_for_response(
     housing_details: Optional[Dict[str, Any]],
     public_transit_details: Optional[Dict[str, Any]],
@@ -1206,7 +1196,6 @@ def _generate_request_cache_key(
     job_categories: Optional[str] = None,
     natural_beauty_preference: Optional[List[str]] = None,
     only_pillars: Optional[set[str]] = None,
-    built_density_preference: Optional[str] = None,
     diversity_preference: Optional[List[str]] = None,
     political_preference: Optional[str] = None,
 ) -> str:
@@ -1223,7 +1212,6 @@ def _generate_request_cache_key(
         str(job_categories).strip() if job_categories else "jobcats=None",
         json.dumps(sorted(natural_beauty_preference)) if natural_beauty_preference else "nb_pref=None",
         json.dumps(sorted(only_pillars)) if only_pillars else "only=None",
-        (built_density_preference or "").strip() or "dens=None",
         json.dumps(sorted(diversity_preference)) if diversity_preference else "div_pref=None",
         (political_preference or "").strip() or "pol_pref=None",
     ]
@@ -1268,7 +1256,7 @@ def _generate_location_cache_key(
 
 
 def _generate_shared_prepillar_cache_key(lat: float, lon: float) -> str:
-    """Key for shared pre-pillar data (census_tract, density, arch_diversity, area_type, tree_canopy, form_context). Keyed by lat/lon only."""
+    """Key for shared pre-pillar data (census_tract, density, area_type, tree_canopy). Keyed by lat/lon only."""
     lat_r = round(float(lat), 4)
     lon_r = round(float(lon), 4)
     return f"shared_prepillar:schema{SHARED_PREPILLAR_CACHE_SCHEMA}:{lat_r:.4f}:{lon_r:.4f}"
@@ -1409,7 +1397,6 @@ def _compute_single_score_internal(
     only_pillars: Optional[set[str]] = None,
     natural_beauty_preference: Optional[List[str]] = None,
     built_env_preference: Optional[str] = None,
-    built_density_preference: Optional[str] = None,
     diversity_preference: Optional[List[str]] = None,
     political_preference: Optional[str] = None,
     lat_override: Optional[float] = None,
@@ -1626,14 +1613,12 @@ def _compute_single_score_internal(
         except Exception as e:
             logger.debug(f"Vacation cache read failed (non-fatal): {e}")
 
-    # Shared pre-pillar cache: reuse census_tract, density, arch_diversity, area_type, tree_canopy, form_context
+    # Shared pre-pillar cache: reuse census_tract, density, area_type, tree_canopy
     # when another request already computed them for this (lat, lon). Only used for full-score requests.
     census_tract = None
     density = None  # None = unknown; do not conflate with 0.0 (rural) when Census fails
-    arch_diversity_data = None
     area_type = "unknown"
     tree_canopy_5km = None
-    form_context = None
     area_type_source = "unknown"
     provisional_area_type = None
     prefetched_businesses = None
@@ -1659,13 +1644,11 @@ def _compute_single_score_internal(
         census_tract = shared_blob.get("census_tract")
         _d_cached = shared_blob.get("density")
         density = None if _d_cached is None else float(_d_cached)
-        arch_diversity_data = shared_blob.get("arch_diversity_data")
         area_type = str(shared_blob.get("area_type", "unknown"))
         area_type_source = "cache"
         tree_canopy_5km = shared_blob.get("tree_canopy_5km")
         if tree_canopy_5km is not None:
             tree_canopy_5km = float(tree_canopy_5km)
-        form_context = shared_blob.get("form_context")
         logger.debug("Shared pre-pillar cache hit")
     else:
         # Compute a single area_type centrally for consistent radius profiles
@@ -1675,10 +1658,7 @@ def _compute_single_score_internal(
             from data_sources import census_api as _ca
             from data_sources import data_quality as _dq
             from data_sources import osm_api
-            from data_sources.arch_diversity import compute_arch_diversity, get_built_coverage_only
             from data_sources.regional_baselines import RegionalBaselineManager
-
-            need_built_environment = _include_pillar('built_environment')
 
             # Parallelize independent API calls that don't depend on each other
             def _fetch_census_tract():
@@ -1704,16 +1684,6 @@ def _compute_single_score_internal(
                     logger.warning(f"Business read failed (non-fatal): {e}")
                     return None
 
-            def _fetch_built_coverage():
-                try:
-                    if need_built_environment:
-                        return compute_arch_diversity(lat, lon, radius_m=2000)
-                    coverage = get_built_coverage_only(lat, lon, radius_m=2000)
-                    return {"built_coverage_ratio": coverage} if coverage is not None else {}
-                except Exception as e:
-                    logger.warning(f"Built coverage query failed (non-fatal): {e}")
-                    return None
-
             def _fetch_metro_distance():
                 try:
                     baseline_mgr = RegionalBaselineManager()
@@ -1728,12 +1698,6 @@ def _compute_single_score_internal(
                 future_density = executor.submit(_fetch_density, None)
                 future_osm_businesses = executor.submit(_fetch_osm_businesses)
                 future_metro_distance = executor.submit(_fetch_metro_distance)
-
-                need_built_coverage = _need_arch_diversity_for_area_type(only_pillars)
-                if need_built_coverage:
-                    future_built_coverage = executor.submit(_fetch_built_coverage)
-                else:
-                    future_built_coverage = None
 
                 try:
                     census_tract = future_census_tract.result(timeout=12)
@@ -1755,13 +1719,6 @@ def _compute_single_score_internal(
                 except Exception:
                     logger.warning("metro_distance timed out in shared compute — skipping")
                     metro_distance_km = None
-                try:
-                    arch_diversity_data = future_built_coverage.result(timeout=10) if future_built_coverage else None
-                except Exception:
-                    logger.warning("arch_diversity timed out in shared compute — skipping")
-                    arch_diversity_data = None
-
-            built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
 
             from data_sources.place_context import resolve_area_type
             area_type, area_type_source, provisional_area_type, prefetched_businesses, places_meta, prefetched_radius_m = resolve_area_type(
@@ -1770,91 +1727,18 @@ def _compute_single_score_internal(
                 location_input=location,
                 density=density,
                 osm_businesses=osm_businesses,
-                built_coverage=built_coverage,
+                built_coverage=None,
                 metro_distance_km=metro_distance_km,
                 location_scope=location_scope,
                 census_tract=census_tract,
             )
         except Exception:
             area_type = "unknown"
-            arch_diversity_data = None
             density = None
 
         # Tree canopy (5km) is no longer pre-fetched here — each pillar fetches its own
         # canopy in its internal parallel batch, so a blocking GEE call here only adds latency.
         tree_canopy_5km = None
-
-        # Compute form_context once when beauty pillars are requested
-        form_context = None
-        need_built_environment = _include_pillar('built_environment')
-        need_natural_beauty = _include_pillar('natural_beauty')
-
-        if need_built_environment or need_natural_beauty:
-            try:
-                from data_sources.data_quality import get_form_context
-                from data_sources import census_api
-                from data_sources import osm_api
-
-                if arch_diversity_data:
-                    levels_entropy = arch_diversity_data.get("levels_entropy")
-                    building_type_diversity = arch_diversity_data.get("building_type_diversity")
-                    built_coverage_ratio = arch_diversity_data.get("built_coverage_ratio")
-                    footprint_area_cv = arch_diversity_data.get("footprint_area_cv")
-                    material_profile = arch_diversity_data.get("material_profile")
-                else:
-                    levels_entropy = None
-                    building_type_diversity = None
-                    built_coverage_ratio = None
-                    footprint_area_cv = None
-                    material_profile = None
-
-                def _fetch_charm():
-                    try:
-                        return osm_api.query_charm_features(lat, lon, radius_m=1000)
-                    except Exception:
-                        return None
-
-                def _fetch_year_built():
-                    try:
-                        return census_api.get_year_built_data(lat, lon) if census_api else None
-                    except Exception:
-                        return None
-
-                with ThreadPoolExecutor(max_workers=2) as _fc_pool:
-                    _f_charm = _fc_pool.submit(_fetch_charm)
-                    _f_year = _fc_pool.submit(_fetch_year_built)
-                    try:
-                        charm_data = _f_charm.result(timeout=8)
-                    except Exception:
-                        logger.warning("charm_features timed out in form_context — skipping")
-                        charm_data = None
-                    try:
-                        year_built_data = _f_year.result(timeout=8)
-                    except Exception:
-                        logger.warning("year_built timed out in form_context — skipping")
-                        year_built_data = None
-
-                historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
-                median_year_built = year_built_data.get('median_year_built') if year_built_data else None
-                pre_1940_pct = year_built_data.get('pre_1940_pct') if year_built_data else None
-
-                form_context = get_form_context(
-                    area_type=area_type,
-                    density=density,
-                    levels_entropy=levels_entropy,
-                    building_type_diversity=building_type_diversity,
-                    historic_landmarks=historic_landmarks,
-                    median_year_built=median_year_built,
-                    built_coverage_ratio=built_coverage_ratio,
-                    footprint_area_cv=footprint_area_cv,
-                    pre_1940_pct=pre_1940_pct,
-                    material_profile=material_profile,
-                    use_multinomial=True
-                )
-                logger.debug(f"Computed form_context: {form_context}")
-            except Exception as e:
-                logger.warning(f"Form context computation failed (non-fatal): {e}")
-                form_context = None
 
         _log_place_timing("shared_data_compute", t_shared_compute)
         # Write shared pre-pillar cache for future requests at this location
@@ -1864,10 +1748,8 @@ def _compute_single_score_internal(
                     "_schema": SHARED_PREPILLAR_CACHE_SCHEMA,
                     "census_tract": census_tract,
                     "density": density,
-                    "arch_diversity_data": arch_diversity_data,
                     "area_type": area_type,
                     "tree_canopy_5km": tree_canopy_5km,
-                    "form_context": form_context,
                 }
                 redis_set_compressed_json(
                     _generate_shared_prepillar_cache_key(lat, lon),
@@ -1911,7 +1793,6 @@ def _compute_single_score_internal(
                 logger.error(f"{name} pillar failed after retry: {e2}")
                 return (name, None, e2)
 
-    need_built_environment = _include_pillar('built_environment')
     need_natural_beauty = _include_pillar('natural_beauty')
 
     pillar_tasks = []
@@ -1925,19 +1806,6 @@ def _compute_single_score_internal(
                 'trip_type': trip_type if is_vacation_mode else None,
             })
         )
-    if need_built_environment:
-        pillar_tasks.append(
-            ('built_environment', built_environment.calculate_built_environment, {
-                'place_context': place_ctx,
-                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
-                'location_scope': location_scope, 'location_name': location,
-                'test_overrides': beauty_overrides if beauty_overrides else None,
-                'precomputed_arch_diversity': arch_diversity_data,
-                'density': density,
-                'form_context': form_context,
-                'built_density_preference': built_density_preference,
-            })
-        )
     if need_natural_beauty:
         pillar_tasks.append(
             ('natural_beauty', natural_beauty.calculate_natural_beauty, {
@@ -1946,7 +1814,6 @@ def _compute_single_score_internal(
                 'location_scope': location_scope, 'location_name': location,
                 'overrides': beauty_overrides if beauty_overrides else None,
                 'precomputed_tree_canopy_5km': tree_canopy_5km,
-                'form_context': form_context,
                 'natural_beauty_preference': natural_beauty_preference,
             })
         )
@@ -2118,7 +1985,7 @@ def _compute_single_score_internal(
                 _score = 0.0
             else:
                 pillar_results[name] = result
-                if name in ('built_environment', 'natural_beauty') and isinstance(result, dict):
+                if name == 'natural_beauty' and isinstance(result, dict):
                     _score = float(result.get('score', 0.0))
                 elif name == 'quality_education' and isinstance(result, (tuple, list)) and len(result) >= 1:
                     _score = float(result[0] if result[0] is not None else 0.0)
@@ -2145,7 +2012,7 @@ def _compute_single_score_internal(
                         _score = 0.0
                     else:
                         pillar_results[pillar_name] = result
-                        if pillar_name in ('built_environment', 'natural_beauty') and isinstance(result, dict):
+                        if pillar_name == 'natural_beauty' and isinstance(result, dict):
                             _score = float(result.get('score', 0.0))
                         elif pillar_name == 'quality_education' and isinstance(result, (tuple, list)) and len(result) >= 1:
                             _score = float(result[0] if result[0] is not None else 0.0)
@@ -2284,24 +2151,7 @@ def _compute_single_score_internal(
     _inject_white_collar_into_economic_opportunity(economic_opportunity_details, census_tract)
 
     # Extract built/natural beauty from parallel results
-    built_calc = pillar_results.get('built_environment')
     natural_calc = pillar_results.get('natural_beauty')
-
-    if built_calc:
-        built_score = built_calc["score"]
-        built_details = built_calc["details"]
-    else:
-        built_score = 0.0
-        built_details = {
-            "component_score_0_50": 0.0,
-            "enhancer_bonus_raw": 0.0,
-            "enhancer_bonus_scaled": 0.0,
-            "score_before_normalization": 0.0,
-            "normalization": None,
-            "source": "built_environment",
-            "architectural_analysis": {},
-            "enhancer_bonus": {"built_raw": 0.0, "built_scaled": 0.0, "scaled_total": 0.0}
-        }
 
     if natural_calc:
         tree_details = natural_calc["details"]
@@ -2368,7 +2218,6 @@ def _compute_single_score_internal(
             "Natural beauty data sources all failed (empty tree_analysis and scenic_proxy)"
         )
 
-    pillar_results['built_environment'] = (built_score, built_details)
     try:
         natural_score, natural_details = _apply_v9_to_natural(
             natural_calc or {}, natural_score, natural_details, lat, lon,
@@ -2378,7 +2227,7 @@ def _compute_single_score_internal(
         exceptions['natural_beauty'] = exc  # same failure path as a raised pillar: no data, weight redistributed
     pillar_results['natural_beauty'] = (natural_score, natural_details)
 
-    nb_effective_area_type = (built_calc or {}).get("effective_area_type") or area_type
+    nb_effective_area_type = area_type
     built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
 
     # a missing education score stays None (no data); only the weighted sum below treats it as 0 contribution
@@ -2446,7 +2295,6 @@ def _compute_single_score_internal(
             "details": {
                 "effective_area_type": nb_effective_area_type,
                 "built_env_preference": built_env_preference,
-                "built_environment_score": built_score,
             },
             "breakdown": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference},
             "summary": {"effective_area_type": nb_effective_area_type},
@@ -2676,7 +2524,6 @@ def _compute_single_score_internal(
         "data_quality_summary": _calculate_data_quality_summary(
             livability_pillars,
             area_type=area_type,
-            form_context=form_context,
         ),
         "metadata": {
             "version": API_VERSION,
@@ -2731,25 +2578,12 @@ def _compute_single_score_internal(
         response["happiness_index_breakdown"] = hi_breakdown
 
     if test_mode_enabled and beauty_overrides:
-        arch_override_keys = {
-            "levels_entropy",
-            "building_type_diversity",
-            "footprint_area_cv",
-            "block_grain",
-            "streetwall_continuity",
-            "setback_consistency",
-            "facade_rhythm",
-            "architecture_score"
-        }
         tree_override_keys = {
             "tree_canopy_pct",
             "tree_score"
         }
         overrides_payload = {}
-        built_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in arch_override_keys}
         natural_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in tree_override_keys}
-        if built_overrides:
-            overrides_payload["built_environment"] = built_overrides
         if natural_overrides:
             overrides_payload["natural_beauty"] = natural_overrides
         if overrides_payload:
@@ -2824,7 +2658,6 @@ def get_livability_score(request: Request,
                          test_mode: Optional[bool] = False,
                          natural_beauty_preference: Optional[str] = None,
                          built_env_preference: Optional[str] = None,
-                         built_density_preference: Optional[str] = None,
                          diversity_preference: Optional[str] = None,
                          political_preference: Optional[str] = None,
                          household_income: Optional[int] = None,
@@ -2925,7 +2758,6 @@ def get_livability_score(request: Request,
                 enable_schools,
                 job_categories=job_categories,
                 natural_beauty_preference=natural_beauty_preference_parsed,
-                built_density_preference=built_density_preference,
                 diversity_preference=diversity_preference_parsed,
             )
             # Differentiated cache TTL based on data stability
@@ -2975,7 +2807,6 @@ def get_livability_score(request: Request,
             request=request,
             natural_beauty_preference=natural_beauty_preference_parsed,
             built_env_preference=built_env_preference,
-            built_density_preference=built_density_preference,
             diversity_preference=diversity_preference_parsed,
             political_preference=political_preference_parsed,
             lat_override=lat_override,
@@ -3016,7 +2847,6 @@ def get_livability_score(request: Request,
                     enable_schools,
                     job_categories=job_categories,
                     natural_beauty_preference=natural_beauty_preference_parsed,
-                    built_density_preference=built_density_preference,
                     diversity_preference=diversity_preference_parsed,
                 )
                 request_cache_ttl = 300  # 5 minutes for request-level cache
@@ -3127,7 +2957,6 @@ def create_score_job(
     test_mode: Optional[bool] = False,
     only: Optional[str] = None,
     natural_beauty_preference: Optional[str] = None,
-    built_density_preference: Optional[str] = None,
     diversity_preference: Optional[str] = None,
     political_preference: Optional[str] = None,
     lat: Optional[str] = None,
@@ -3143,7 +2972,7 @@ def create_score_job(
     Use GET /score/jobs/{job_id} to poll status/result.
     If only=pillar1,pillar2 is set, only those pillars are computed (tap-to-score flow).
     """
-    # Parse only_pillars (e.g. "economic_opportunity" or "built_environment,natural_beauty")
+    # Parse only_pillars (e.g. "economic_opportunity" or "natural_beauty")
     only_pillars: Optional[set[str]] = None
     if only:
         raw_only = {part.strip() for part in only.split(",") if part.strip()}
@@ -3151,7 +2980,7 @@ def create_score_job(
             expanded = set()
             for name in raw_only:
                 if name == "beauty":
-                    expanded.update({"built_environment", "natural_beauty"})
+                    expanded.add("natural_beauty")
                 else:
                     expanded.add(name)
             only_pillars = expanded if expanded else None
@@ -3264,7 +3093,6 @@ def create_score_job(
                 on_partial_longevity=_on_partial_longevity,
                 only_pillars=only_pillars,
                 natural_beauty_preference=natural_beauty_preference_parsed,
-                built_density_preference=built_density_preference,
                 diversity_preference=diversity_preference_parsed,
                 political_preference=political_preference_parsed,
                 lat_override=lat_override,
@@ -3345,14 +3173,13 @@ async def _stream_score_with_progress(
     request: Optional[Request] = None,
     only_pillars: Optional[set[str]] = None,
     natural_beauty_preference: Optional[List[str]] = None,
-    built_density_preference: Optional[str] = None,
     diversity_preference: Optional[List[str]] = None,
     political_preference: Optional[str] = None,
 ):
     """
     Async generator that streams score calculation with real-time progress.
     Streams events as each pillar completes (no artificial delays).
-    If only_pillars is set, only those pillars are computed and shared work (GEE, form_context) is gated.
+    If only_pillars is set, only those pillars are computed and shared work (GEE) is gated.
     """
     def _include_pillar(name: str) -> bool:
         return only_pillars is None or name in only_pillars
@@ -3378,7 +3205,6 @@ async def _stream_score_with_progress(
                     job_categories=job_categories,
                     natural_beauty_preference=natural_beauty_preference,
                     only_pillars=only_pillars,
-                    built_density_preference=built_density_preference,
                     diversity_preference=diversity_preference,
                     political_preference=political_preference,
                 )
@@ -3488,7 +3314,6 @@ async def _stream_score_with_progress(
                     # Emit pillar completion events quickly (match existing behavior: omit school pillar when disabled)
                     pillar_order = [
                         "active_outdoors",
-                        "built_environment",
                         "natural_beauty",
                         "neighborhood_amenities",
                         "air_travel_access",
@@ -3527,7 +3352,6 @@ async def _stream_score_with_progress(
         # Step 3: Pre-compute shared data in parallel
         census_tract = None
         density = None
-        arch_diversity_data = None
         area_type = "unknown"
         
         def prepare_shared_data():
@@ -3535,7 +3359,6 @@ async def _stream_score_with_progress(
                 from data_sources import census_api as _ca
                 from data_sources import data_quality as _dq
                 from data_sources import osm_api
-                from data_sources.arch_diversity import compute_arch_diversity
                 from data_sources.regional_baselines import RegionalBaselineManager
                 
                 census_tract = _ca.get_census_tract(lat, lon)
@@ -3548,20 +3371,6 @@ async def _stream_score_with_progress(
                     except Exception:
                         osm_businesses = None
 
-                arch_diversity_data = None
-                if _need_arch_diversity_for_area_type(only_pillars):
-                    try:
-                        need_be = only_pillars is None or "built_environment" in only_pillars
-                        if need_be:
-                            arch_diversity_data = compute_arch_diversity(lat, lon, radius_m=2000)
-                        else:
-                            from data_sources.arch_diversity import get_built_coverage_only
-                            coverage = get_built_coverage_only(lat, lon, radius_m=2000)
-                            arch_diversity_data = {"built_coverage_ratio": coverage} if coverage is not None else {}
-                    except Exception:
-                        arch_diversity_data = None
-
-                built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
                 
                 try:
                     baseline_mgr = RegionalBaselineManager()
@@ -3576,7 +3385,7 @@ async def _stream_score_with_progress(
                     location_input=location,
                     density=density,
                     osm_businesses=osm_businesses,
-                    built_coverage=built_coverage,
+                    built_coverage=None,
                     metro_distance_km=metro_distance_km,
                     location_scope=location_scope,
                     census_tract=census_tract,
@@ -3589,70 +3398,18 @@ async def _stream_score_with_progress(
                     prefetched_businesses=prefetched_businesses, prefetched_radius_m=prefetched_radius_m,
                     places_meta=places_meta,
                 )
-                return census_tract, density, arch_diversity_data, area_type, place_ctx
+                return census_tract, density, area_type, place_ctx
             except Exception as e:
                 logger.warning(f"Shared data preparation failed: {e}")
-                return None, None, None, "unknown", None
+                return None, None, "unknown", None
         
         t_prepare_shared = time.perf_counter()
-        census_tract, density, arch_diversity_data, area_type, place_ctx = await loop.run_in_executor(None, prepare_shared_data)
+        census_tract, density, area_type, place_ctx = await loop.run_in_executor(None, prepare_shared_data)
         _log_place_timing("shared_data_compute", t_prepare_shared)
 
         # Tree canopy (5km) no longer pre-fetched — each pillar fetches in its own parallel batch.
         tree_canopy_5km = None
 
-        # Compute form_context only when beauty pillars are requested
-        form_context = None
-        if _include_pillar("built_environment") or _include_pillar("natural_beauty"):
-            t_form = time.perf_counter()
-            try:
-                from data_sources.data_quality import get_form_context
-                from data_sources import census_api, osm_api
-
-                if arch_diversity_data:
-                    levels_entropy = arch_diversity_data.get("levels_entropy")
-                    building_type_diversity = arch_diversity_data.get("building_type_diversity")
-                    built_coverage_ratio = arch_diversity_data.get("built_coverage_ratio")
-                    footprint_area_cv = arch_diversity_data.get("footprint_area_cv")
-                    material_profile = arch_diversity_data.get("material_profile")
-                else:
-                    levels_entropy = building_type_diversity = built_coverage_ratio = footprint_area_cv = material_profile = None
-
-                try:
-                    charm_data = await loop.run_in_executor(None, osm_api.query_charm_features, lat, lon, 1000)
-                    historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
-                except Exception:
-                    historic_landmarks = 0
-
-                year_built_data = None
-                median_year_built = None
-                pre_1940_pct = None
-                try:
-                    year_built_data = await loop.run_in_executor(None, census_api.get_year_built_data, lat, lon)
-                    if year_built_data:
-                        median_year_built = year_built_data.get('median_year_built')
-                        pre_1940_pct = year_built_data.get('pre_1940_pct')
-                except Exception:
-                    pass
-
-                form_context = get_form_context(
-                    area_type=area_type,
-                    density=density,
-                    levels_entropy=levels_entropy,
-                    building_type_diversity=building_type_diversity,
-                    historic_landmarks=historic_landmarks,
-                    median_year_built=median_year_built,
-                    built_coverage_ratio=built_coverage_ratio,
-                    footprint_area_cv=footprint_area_cv,
-                    pre_1940_pct=pre_1940_pct,
-                    material_profile=material_profile,
-                    use_multinomial=True
-                )
-            except Exception as e:
-                logger.warning(f"Form context computation failed: {e}")
-                form_context = None
-            _log_place_timing("form_context", t_form)
-        
         # Build pillar tasks
         use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
         
@@ -3666,25 +3423,12 @@ async def _stream_score_with_progress(
             })
         )
         pillar_tasks.append(
-            ('built_environment', built_environment.calculate_built_environment, {
-                'place_context': place_ctx,
-                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
-                'location_scope': location_scope, 'location_name': location,
-                'test_overrides': None,
-                'precomputed_arch_diversity': arch_diversity_data,
-                'density': density,
-                'form_context': form_context,
-                'built_density_preference': built_density_preference,
-            })
-        )
-        pillar_tasks.append(
             ('natural_beauty', natural_beauty.calculate_natural_beauty, {
                 'place_context': place_ctx,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
                 'overrides': None,
                 'precomputed_tree_canopy_5km': tree_canopy_5km,
-                'form_context': form_context,
                 'natural_beauty_preference': natural_beauty_preference,
             })
         )
@@ -3796,7 +3540,7 @@ async def _stream_score_with_progress(
                     f"event: complete\n"
                     f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'error': str(error), 'completed': completed_count, 'total': total_pillars})}\n\n"
                 )
-            if pillar_name in ['built_environment', 'natural_beauty']:
+            if pillar_name == 'natural_beauty':
                 score = result.get('score', 0.0) if isinstance(result, dict) else 0.0
             elif pillar_name == 'quality_education':
                 if isinstance(result, tuple) and len(result) >= 2:
@@ -3952,24 +3696,7 @@ async def _stream_score_with_progress(
         _inject_white_collar_into_economic_opportunity(economic_opportunity_details, census_tract)
 
         # Extract built/natural beauty
-        built_calc = pillar_results.get('built_environment')
         natural_calc = pillar_results.get('natural_beauty')
-        
-        if built_calc:
-            built_score = built_calc.get("score", 0.0) if isinstance(built_calc, dict) else 0.0
-            built_details = built_calc.get("details", {}) if isinstance(built_calc, dict) else {}
-        else:
-            built_score = 0.0
-            built_details = {
-                "component_score_0_50": 0.0,
-                "enhancer_bonus_raw": 0.0,
-                "enhancer_bonus_scaled": 0.0,
-                "score_before_normalization": 0.0,
-                "normalization": None,
-                "source": "built_environment",
-                "architectural_analysis": {},
-                "enhancer_bonus": {"built_raw": 0.0, "built_scaled": 0.0, "scaled_total": 0.0}
-            }
         
         if natural_calc:
             tree_details = natural_calc.get("details", {}) if isinstance(natural_calc, dict) else {}
@@ -4023,7 +3750,6 @@ async def _stream_score_with_progress(
                 "Natural beauty data sources all failed (empty tree_analysis and scenic_proxy)"
             )
 
-        pillar_results['built_environment'] = (built_score, built_details)
         try:
             natural_score, natural_details = _apply_v9_to_natural(
                 natural_calc or {}, natural_score, natural_details, lat, lon,
@@ -4091,7 +3817,6 @@ async def _stream_score_with_progress(
             priority_levels = {}
             primary_pillars = [
                 "active_outdoors",
-                "built_environment",
                 "natural_beauty",
                 "neighborhood_amenities",
                 "air_travel_access",
@@ -4133,7 +3858,7 @@ async def _stream_score_with_progress(
             use_school_scoring=use_school_scoring,
         )
         
-        nb_effective_area_type = (built_calc or {}).get("effective_area_type") or area_type
+        nb_effective_area_type = area_type
         built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
 
         # Calculate weighted total
@@ -4178,7 +3903,7 @@ async def _stream_score_with_progress(
                 "weight": 0.0,
                 "importance_level": None,
                 "contribution": 0.0,
-                "details": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference, "built_environment_score": built_score},
+                "details": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference},
                 "breakdown": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference},
                 "summary": {"effective_area_type": nb_effective_area_type},
                 "confidence": 100,
@@ -4398,7 +4123,6 @@ async def _stream_score_with_progress(
             "data_quality_summary": _calculate_data_quality_summary(
                 livability_pillars,
                 area_type=area_type,
-                form_context=form_context,
             ),
             "metadata": {
                 "version": API_VERSION,
@@ -4489,7 +4213,6 @@ async def _stream_score_with_progress(
                     job_categories=job_categories,
                     natural_beauty_preference=natural_beauty_preference,
                     only_pillars=only_pillars,
-                    built_density_preference=built_density_preference,
                     diversity_preference=diversity_preference,
                 )
                 if isinstance(final_response.get("metadata"), dict):
@@ -4534,7 +4257,6 @@ async def stream_score(
     test_mode: Optional[bool] = False,
     only: Optional[str] = None,
     natural_beauty_preference: Optional[str] = None,
-    built_density_preference: Optional[str] = None,
     diversity_preference: Optional[str] = None,
     political_preference: Optional[str] = None,
 ):
@@ -4561,7 +4283,7 @@ async def stream_score(
             expanded = set()
             for name in raw_only:
                 if name == "beauty":
-                    expanded.update({"built_environment", "natural_beauty"})
+                    expanded.add("natural_beauty")
                 else:
                     expanded.add(name)
             only_pillars = expanded if expanded else None
@@ -4610,7 +4332,6 @@ async def stream_score(
                 request=request,
                 only_pillars=only_pillars,
                 natural_beauty_preference=natural_beauty_preference_parsed,
-                built_density_preference=built_density_preference,
                 diversity_preference=diversity_preference_parsed,
                 political_preference=political_preference_parsed,
             ),
@@ -5415,7 +5136,7 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
     return " ".join(chosen) if chosen else f"{place} is scored across livability, longevity, and happiness. See the full breakdown below."
 
 
-def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_context: str = None) -> dict:  # Changed from Dict to dict
+def _calculate_data_quality_summary(pillars: dict, area_type: str = None) -> dict:  # Changed from Dict to dict
     """Calculate data quality summary for the response."""
     data_sources_used = set()
     area_classifications = []
@@ -5480,19 +5201,14 @@ def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_c
             try:
                 baseline_contexts[pillar_name] = get_baseline_context(
                     area_type=area_type,
-                    form_context=form_context,
+                    form_context=None,
                     pillar_name=pillar_name
                 )
             except Exception:
                 pass  # Non-fatal if computation fails
     
-    # Compute deprecated effective_area_type (for backward compatibility)
-    # Use form_context if available, otherwise use area_type
-    effective_area_type = form_context if form_context is not None else area_type
-    
     area_classification_dict = {
         "area_type": most_common_area,  # Universal morphological classification
-        "form_context": form_context,  # Beauty pillars only (architectural classification)
         "metro_name": metro_name
     }
     
@@ -5500,9 +5216,9 @@ def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_c
     if baseline_contexts:
         area_classification_dict["baseline_contexts"] = baseline_contexts
     
-    # Add deprecated effective_area_type for backward compatibility
-    if effective_area_type:
-        area_classification_dict["effective_area_type"] = effective_area_type  # DEPRECATED: Use form_context instead
+    # Deprecated alias kept for older clients: the shared area type.
+    if area_type:
+        area_classification_dict["effective_area_type"] = area_type
     
     return {
         "data_sources_used": list(data_sources_used),
@@ -5659,7 +5375,6 @@ def health_check():
         "architecture": "11 Purpose-Driven Pillars",
         "pillars": [
             "active_outdoors",
-            "built_environment",
             "natural_beauty",
             "neighborhood_amenities",
             "air_travel_access",

@@ -31,10 +31,8 @@ interface SearchOptions {
   job_categories: string[]
   /** Natural Beauty preference from quiz: 1–2 of mountains, ocean, lakes_rivers, canopy; null = no preference. */
   natural_beauty_preference?: string[] | null
-  /** Built Environment density: spread_out_residential | walkable_residential | dense_urban_living; null = no selection. */
-  built_density_preference?: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null
-  /** Built Environment area-type preference: urban_core | urban_residential | suburban | exurban | rural; null = no preference (score = 50). */
-  built_env_preference?: 'urban_core' | 'urban_residential' | 'suburban' | 'exurban' | 'rural' | null
+  /** Built Environment area-type preference: urban_residential | suburban | exurban | rural; null = no preference (score = 50). */
+  built_env_preference?: 'urban_residential' | 'suburban' | 'exurban' | 'rural' | null
   /** Diversity: which mix dimensions to emphasize in the headline (race, income, age). null = average all available. */
   diversity_preference?: string[] | null
   /** Political lean preference: progressive | conservative | null = no preference declared. */

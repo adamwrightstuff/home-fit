@@ -9,7 +9,6 @@ import Link from 'next/link'
 import { CATALOG_METROS, CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 
 const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'urban_core', label: 'Urban Core' },
   { value: 'urban_residential', label: 'Urban Neighborhood' },
   { value: 'suburban', label: 'Suburban' },
   { value: 'exurban', label: 'Exurban' },

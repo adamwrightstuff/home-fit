@@ -12,23 +12,21 @@ export type NbPreference = 'mountains' | 'ocean' | 'lakes_rivers' | 'canopy'
 
 // ── Built Environment Preference ─────────────────────────────────────────────
 
-export type BuiltEnvPreference = 'urban_core' | 'urban_residential' | 'suburban' | 'exurban' | 'rural'
+export type BuiltEnvPreference = 'urban_residential' | 'suburban' | 'exurban' | 'rural'
 
 export const BUILT_ENV_LABELS: Record<BuiltEnvPreference, string> = {
-  urban_core: 'Urban Core',
   urban_residential: 'Urban Neighborhood',
   suburban: 'Suburban',
   exurban: 'Exurban',
   rural: 'Rural',
 }
 
-// Density spectrum index: 0 (least dense) → 4 (most dense)
+// Density spectrum index: 0 (least dense) → 3 (most dense). urban_core is not a class of the shared area type.
 const AREA_TYPE_INDEX: Record<string, number> = {
   rural: 0,
   exurban: 1,
   suburban: 2,
   urban_residential: 3,
-  urban_core: 4,
 }
 
 /**
@@ -40,9 +38,10 @@ export function builtEnvMatchScore(
   placeAreaType: string | null | undefined,
   preference: BuiltEnvPreference,
 ): number {
-  const normalized = (placeAreaType ?? '').toLowerCase().replace(/-/g, '_')
+  const norm = (placeAreaType ?? '').toLowerCase().replace(/-/g, '_')
+  const normalized = norm === 'urban_core' ? 'urban_residential' : norm
   const placeIdx = AREA_TYPE_INDEX[normalized] ?? AREA_TYPE_INDEX['suburban']
-  const prefIdx = AREA_TYPE_INDEX[preference]
+  const prefIdx = AREA_TYPE_INDEX[preference === ('urban_core' as string) ? 'urban_residential' : preference]
   const diff = placeIdx - prefIdx // positive = denser than preferred
 
   if (diff === 0) return 100
