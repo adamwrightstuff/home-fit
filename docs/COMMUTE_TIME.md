@@ -1,6 +1,6 @@
 # Commute time (personal priority): DPv2 spec sheet and audit
 
-Level: 0 (audit done 2026-11-04, no scoring change made). Proposed after approved fixes: Level 1.
+Level: 2 (Verified), signed off by the owner 2026-11-05 (see the Sign-off section at the end). The audit of 2026-11-04 started at Level 0.
 Scope: a personal, client-side priority (minutes from a place to the user's workplace). Not a pillar, not in the general score as designed. See "Discrepancy" below: the general happiness index still carries a 5% commute term.
 
 Verification key: VERIFIED = I read the source text or abstract in this session. SUMMARY = seen only in a search summary or abstract listing. UNVERIFIED = not seen.

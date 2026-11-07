@@ -58,4 +58,4 @@ Score = min(100, 0.6 x (density + variety + proximity) + location quality). Vers
 
 ## Level 1 sign-off (owner, 2026-11-06)
 
-Level 1 accepted. Level 2 is not reached because no independent validation exists (Walk Score measures a different thing). Gaps: pin-shift median 2.2 and p95 about 12, with 405 of 1,426 places moving more than 5 points; the 800 m reach is a convention, not a measured cutoff; launch pairs not yet owner-approved; 49 places score 0 because no tracked business is within 1,500 m.
+Level 1 accepted. Level 2 is not reached because no independent validation exists. A Walk Score comparison was run as a contrast check only (54 places, Spearman 0.63; a 15-place recheck at the pin coordinates, 0.62; the first town-page comparison was discarded because those scores are area averages). Walk Score measures walkability, not this pillar, so the owner ruled on 2026-10-26 that it is not a validation target. Gaps: pin-shift median 2.2 and p95 about 12, with 405 of 1,426 places moving more than 5 points; the 800 m reach is a convention, not a measured cutoff; launch pairs not yet owner-approved; 49 places score 0 because no tracked business is within 1,500 m.
