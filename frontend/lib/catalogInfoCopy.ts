@@ -70,8 +70,8 @@ export const SCENE_COPY: Record<string, InfoCopy> = {
 
 export const AURA_COPY: InfoCopy = {
   title: 'Aura',
-  body: 'Aura marks a neighborhood with a standout local scene, backed by strong everyday livability. It goes to the top 5% of places in each metro.',
-  detail: 'Scored mostly on local scene (independent cafés, bars, bookstores and galleries), then livability, with a small weight on socioeconomic standing. It is ranked within each metro, so it shows how a neighborhood compares with others in its own region, and a place needs a local scene score of at least 45 to qualify. Job centers with more than five workers per resident are excluded.',
+  body: 'Aura marks a neighborhood with a lot going on, a strong mix of independent cafes, bars and culture, and an affluent or elite resident profile. It is rare.',
+  detail: 'A place gets Aura only if it has a Vibrant local scene (71 or more independent venues within about 0.75 miles), a high mix of independent culture and hangout venues compared with places of similar density, and a status class of Affluent or Elite. Job centers with more than five workers per resident are excluded. The cut-offs are rough judgments and not validated.',
 }
 
 export const INDEX_COPY: Record<string, InfoCopy> = {
