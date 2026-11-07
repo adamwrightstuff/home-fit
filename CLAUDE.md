@@ -8,7 +8,7 @@ Answer in one sentence. Lead with the fix, not the explanation. No code snippets
 
 ## What This Is
 
-HomeFit is a personalized livability scoring API that evaluates any location across 13 research-backed pillars (active outdoors, natural beauty, neighborhood amenities, air travel, public transit, healthcare, education, housing value, economic security, climate risk, social fabric, diversity, community safety) to produce a weighted 0–100 score. Political lean and built environment are opt-in filters, not pillars. Commute time and social proximity (nearby family and friends) are opt-in personal priorities, also not pillars. The pillar list lives in `pillar_registry.py`; frontend `PILLAR_ORDER` mirrors it by hand. Production backend runs on Railway; frontend on Vercel.
+HomeFit is a personalized livability scoring API that evaluates any location across 12 research-backed pillars (active outdoors, natural beauty, neighborhood amenities, air travel, public transit, healthcare, education, housing value, economic security, climate risk, social fabric, community safety) to produce a weighted 0–100 score. Political lean and diversity are opt-in filters, not pillars. Built environment is retired: the area type is decided once per request and shared by every pillar. Commute time and social proximity (nearby family and friends) are opt-in personal priorities, also not pillars. The pillar list lives in `pillar_registry.py`; frontend `PILLAR_ORDER` mirrors it by hand. Production backend runs on Railway; frontend on Vercel.
 
 ## Running Locally
 
@@ -28,7 +28,7 @@ curl "http://localhost:8000/score?location=Seattle,WA"
 
 ## Architecture
 
-**Request flow:** geocode → cache check → parallel pillar collection (13 pillars via `ThreadPoolExecutor`) → composite indices (status_signal, happiness_index) → weight allocation → JSON response.
+**Request flow:** geocode → cache check → parallel pillar collection (12 pillars via `ThreadPoolExecutor`) → composite indices (status_signal, happiness_index) → weight allocation → JSON response.
 
 Set `HOMEFIT_PILLARS_SEQUENTIAL=true` to run pillars one-at-a-time (useful for rate-limit testing).
 
