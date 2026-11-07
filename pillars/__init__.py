@@ -4,7 +4,6 @@ Scoring logic for HomeFit livability metrics
 """
 
 from . import active_outdoors
-from . import built_environment
 from . import natural_beauty
 from . import neighborhood_amenities
 from . import air_travel_access
@@ -22,7 +21,6 @@ from . import composite_indices
 
 __all__ = [
     "active_outdoors",
-    "built_environment",
     "natural_beauty",
     "neighborhood_amenities",
     "air_travel_access",

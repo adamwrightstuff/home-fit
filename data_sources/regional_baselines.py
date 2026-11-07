@@ -985,13 +985,6 @@ def get_area_classification(lat: float, lon: float, city: str = None,
         except Exception:
             business_count = None
     
-    if built_coverage is None:
-        try:
-            from .arch_diversity import get_built_coverage_only
-            built_coverage = get_built_coverage_only(lat, lon, radius_m=2000)
-        except Exception:
-            built_coverage = None
-    
     area_type = detect_area_type(
         lat, lon,
         density=density,

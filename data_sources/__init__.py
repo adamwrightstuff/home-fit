@@ -2,7 +2,7 @@
 Data Sources Package
 Pure API clients for external data sources.
 
-Many modules live alongside this package (e.g. cache, arch_diversity, data_quality) and are
+Many modules live alongside this package (e.g. cache, data_quality) and are
 imported explicitly: ``from data_sources import census_api`` or ``from data_sources import X``.
 ``__all__`` lists the names historically re-exported from this entrypoint; it is not exhaustive.
 """

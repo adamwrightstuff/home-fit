@@ -39,11 +39,6 @@ def test_healthcare_suburban():
     assert rp['pharm_radius_m'] == 3000
 
 
-def test_built_environment_neighborhood_scope():
-    rp = get_radius_profile('built_environment', 'urban_core', 'neighborhood')
-    assert rp['tree_canopy_radius_m'] == 1000
-
-
 def test_natural_beauty_neighborhood_scope():
     rp = get_radius_profile('natural_beauty', 'historic_urban', 'neighborhood')
     assert rp['tree_canopy_radius_m'] == 1000
