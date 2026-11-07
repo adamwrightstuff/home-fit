@@ -1,5 +1,7 @@
 # Pillar Deep-Dive: Healthcare Access
 
+Level: 2 (Verified), recorded by the owner 2026-11-06. See the level section at the end.
+
 How `pillars/healthcare_access.py` scores a location.
 
 ## What it measures
@@ -124,3 +126,7 @@ pharmacy anchors lacks a source and a plausible range; (3) the nothing-mapped pl
   of 10) parts are scored from far hospitals while the independent list (HIFLD) places a hospital at 4.98 km and 9.02 km. Their
   scores (57.2 and 59.6) are understated on these parts. The guard does not fire (the reads are not empty). Fixing it means
   using a fuller hospital list as the fallback (for example HIFLD), a change that needs a decision and a download.
+
+## Level 2 sign-off (owner, 2026-11-06)
+
+Level 2 accepted with recorded gaps. Independent validation covered 668 of 1,476 places. The pharmacy distance term is unvalidated. The shortage-area check is inconclusive. The hospital distance curve and supply scale are unsourced. Agoura Hills and Bainbridge Island are understated because the fallback hospital list lacks their local hospitals. Hospital count is not scored.

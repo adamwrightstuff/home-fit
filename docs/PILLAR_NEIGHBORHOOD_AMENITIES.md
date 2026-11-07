@@ -1,5 +1,7 @@
 # Pillar Deep-Dive: Neighborhood Amenities
 
+Level: 1 (Converted), recorded by the owner 2026-11-06. See the level section at the end.
+
 How `pillars/neighborhood_amenities.py` scores a location. Audit: `analysis/audit_amenities_2026-10-25.md`. Pending changes: `analysis/amenities_remove_location_proposal_2026-10-25.md`.
 
 ## v2 spec sheet
@@ -53,3 +55,7 @@ Score = min(100, 0.6 x (density + variety + proximity) + location quality). Vers
 - Location quality measures the median coordinate of all nearby businesses, not a real town center, and counts auto-oriented clusters. Redesign pending.
 - Every weight and threshold is judgment (table above).
 - Pin placement matters: the walkable circle can miss the commercial strip. Spot-check a place's real main street if its score looks off.
+
+## Level 1 sign-off (owner, 2026-11-06)
+
+Level 1 accepted. Level 2 is not reached because no independent validation exists (Walk Score measures a different thing). Gaps: pin-shift median 2.2 and p95 about 12, with 405 of 1,426 places moving more than 5 points; the 800 m reach is a convention, not a measured cutoff; launch pairs not yet owner-approved; 49 places score 0 because no tracked business is within 1,500 m.

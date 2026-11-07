@@ -1,5 +1,7 @@
 # Pillar Deep-Dive: Public Transit Access
 
+Level: 2 (Verified), recorded by the owner 2026-11-06. See the level section at the end.
+
 How `pillars/public_transit_access.py` scores a location today, end to end. This pillar has
 the most moving parts (supply model + commuter floor), so it gets its own page.
 
@@ -202,3 +204,7 @@ Offline from the saved sample points (`scripts/catalog/sensitivity_transit_area.
 | No commuter drive credit | 0.0 / 19.2 / 33.1 | -4.1 |
 
 The bus and commuter rail weights move the catalog mean most among the weights (about 2 to 3 points). The drive credit leaves the median place unchanged but moves the 95th percentile place by 19 points when removed.
+
+## Level 2 sign-off (owner, 2026-11-06)
+
+Level 2 accepted with recorded gaps. Pin-shift p95 is 9.6 points against the 5-point gate (known limitation). The radii and mode weights are judgments. Ferry service and route frequency are not measured. Validation is against tract commute share (Spearman 0.691), a proxy and not a direct measure.

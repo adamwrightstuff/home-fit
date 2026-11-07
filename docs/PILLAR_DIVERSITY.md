@@ -1,5 +1,7 @@
 # Diversity: a preference, not a pillar
 
+Level: not scored (preference, not a pillar), recorded by the owner 2026-11-06. See the level section at the end.
+
 Status 2026-10-28 (owner decisions). Diversity is no longer a scored pillar. It is an opt-in life-stage preference plus a
 neutral description. `pillar_registry.py` lists it under `FILTER_PILLARS`, not `SCORED_PILLARS` (12 scored pillars).
 
@@ -49,3 +51,7 @@ Audit: `analysis/audit_diversity_d3_d5_2026-10-27.md`. Scripts: `scripts/catalog
 - **P10 launch check** (`scripts/qa/launch_check.py`): 1 FAIL (healthcare 40 percent at 100) and 21 WARN, unchanged from 2026-10-25; none involve diversity.
 - **P7 independent validation:** not applicable to the score (a direct Census share, not a proxy); the race and income entropy it replaced were never validated.
 - **P12 schedule:** re-run these checks when the ACS vintage or tract boundaries change, and at least once a year. Data is ACS 2022 5-year.
+
+## Level (owner, 2026-11-06)
+
+No pillar level applies because diversity is an opt-in life-stage preference. The preference checks are recorded: the independent validation check does not apply to a direct Census share, and the remaining pin-shift is disclosed.

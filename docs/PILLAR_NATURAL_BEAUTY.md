@@ -1,5 +1,7 @@
 # Pillar Deep-Dive: Natural Beauty
 
+Level: 1 (Converted), recorded by the owner 2026-11-06. See the level section at the end.
+
 How `pillars/natural_beauty.py` scores a location today: the two-part model (2026-10) plus the scenery preference.
 Evidence, judgment calls and open gaps are in `analysis/natural_beauty_two_part_proposal_2026-10-24.md` (local file).
 
@@ -394,3 +396,7 @@ The catalog stores the neutral score plus `details.v9_breakdown` (component scor
 - `ocean` vs `lakes_rivers` both target water; the per-type distinction is only as good as the stored water type.
 - Older catalog rows (NYC, LA) keep `v9_breakdown` at the pillar root, not under `details`.
 - History: the V7 to V9 upgrade once silently orphaned the preference, so picking one changed nothing for a while.
+
+## Level 1 sign-off (owner, 2026-11-06)
+
+Level 1 accepted. Level 2 is not reached because pin-shift fails at 500 m (it passes at 250 m) and validation is partial and below the 0.7 gate (streets vs Place Pulse r 0.37, blend unvalidated). Gaps: judgments signed off 2026-10-29, the water classification limit, desert places with no rating data, and the blend left open (P7).
