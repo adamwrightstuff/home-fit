@@ -21,7 +21,7 @@ import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 export type CatalogSheetSnap = 'peek' | 'expanded'
 
 const INDEX_TABS: { id: CatalogMapIndexMode; label: string; tooltip: string }[] = [
-  { id: 'homefit', label: 'Trovamo', tooltip: HOMEFIT_COPY.tooltip },
+  { id: 'homefit', label: 'HomeFit', tooltip: HOMEFIT_COPY.tooltip },
   { id: 'happiness', label: 'Happiness', tooltip: HAPPINESS_INDEX_COPY.tooltip },
   { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
 ]
@@ -239,9 +239,13 @@ export default function CatalogBottomSheet({
                       {tab.label}
                     </div>
                     {tab.id !== 'status' && (
-                      <span className="tabular-nums" style={scoreNumeralStyle(tab.id, active)}>
-                        {fmt(v)}
-                      </span>
+                      v == null || !Number.isFinite(v) ? (
+                        <span style={{ fontSize: '0.6rem', lineHeight: 1.2, textAlign: 'center', color: 'var(--hf-text-secondary)' }}>No data<br />not enough source data</span>
+                      ) : (
+                        <span className="tabular-nums" style={scoreNumeralStyle(tab.id, active)}>
+                          {fmt(v)}
+                        </span>
+                      )
                     )}
                   </button>
                 )
