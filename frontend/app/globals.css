@@ -45,7 +45,6 @@
 
   /* Index color aliases */
   --tr-homefit-score:    var(--tr-accent-600);
-  --tr-longevity-score:  var(--tr-score-high);
   --tr-happiness-score:  var(--tr-score-mid);
 
   /* === HF structural vars (used by existing component classes) === */
@@ -90,7 +89,7 @@
   --c-teal-50:  #e6f4e8;
   --c-teal-200: #a8c9aa;
   --c-teal-400: var(--tr-score-high);
-  --c-teal-600: var(--tr-longevity-score);
+  --c-teal-600: var(--tr-score-high);
   --c-teal-800: #4a6b4d;
 
   --c-blue-50:  #fdf6ed;
@@ -107,7 +106,7 @@
 
   /* Index color aliases (kept for backward compat with inline styles) */
   --hf-homefit-green:    var(--tr-homefit-score);
-  --hf-longevity-purple: var(--tr-longevity-score);
+  --hf-compare-b-accent: var(--tr-score-high);
   --hf-happiness-teal:   var(--tr-happiness-score);
 }
 

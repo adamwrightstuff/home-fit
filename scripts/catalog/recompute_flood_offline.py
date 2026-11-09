@@ -8,8 +8,7 @@ contribution. A place whose flood component cannot be measured (zone D, no mappe
 and is stored as null) loses the flood component: the score is built from the components that remain and the pillar is
 marked degraded, as pillars/climate_risk.py does. A place whose pin is not in the snapshot is left as stored.
 
-Then, per changed place: total_score_breakdown, total_score (by the change in the summed contributions) and the longevity
-index follow. The happiness index is recomputed afterwards with recompute_happiness_only.py on the written files. Nothing is
+Then, per changed place: total_score_breakdown, total_score (by the change in the summed contributions). The happiness index is recomputed afterwards with recompute_happiness_only.py on the written files. Nothing is
 written in place; the input files are never modified. No API, Census or Overpass call.
 
   cd /Users/adamwright/Dev/home-fit/.claude/worktrees/dpv2-climate-risk
@@ -88,9 +87,7 @@ def recompute_place(score: Dict[str, Any], features: Optional[list], request_fai
 
 
 def update_composites(score: Dict[str, Any]) -> None:
-    """Carry a changed climate pillar into total_score_breakdown, total_score and the longevity index (offline)."""
-    from pillars.composite_indices import compute_longevity_index
-
+    """Carry a changed climate pillar into total_score_breakdown and total_score (offline)."""
     pillars = score["livability_pillars"]
     cr = pillars["climate_risk"]
     tb = (score.get("total_score_breakdown") or {}).get("climate_risk")
@@ -100,11 +97,6 @@ def update_composites(score: Dict[str, Any]) -> None:
     old_total = score.get("total_score")
     if isinstance(old_total, (int, float)) and isinstance(old_sum, (int, float)):
         score["total_score"] = round(old_total + (cr["contribution"] - old_sum), 2)
-    li, contrib = compute_longevity_index(pillars, token_allocation=score.get("token_allocation"), only_pillars=None)
-    score["longevity_index"] = round(li, 2)
-    score["longevity_index_contributions"] = contrib
-    if isinstance(score.get("longevity_index_breakdown"), dict):
-        score["longevity_index_breakdown"] = dict(contrib)
 
 
 def main() -> int:

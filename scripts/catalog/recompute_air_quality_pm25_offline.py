@@ -7,7 +7,7 @@ pillars.climate_risk.air_quality_points curve as the live pillar (20 points at 5
 place's census tract comes from its stored coordinates (cached Census geocoder calls). The other three components
 are taken as stored; a place with no tract value gets air quality as no data, the score is built from the
 remaining components (degraded flag), and fewer than three components makes the pillar no data. Run
-recompute_catalog_composites.py --no-census on the changed rows afterwards (happiness, longevity, aura).
+recompute_catalog_composites.py --no-census on the changed rows afterwards (happiness, aura).
 
   PYTHONPATH=. python3 scripts/catalog/recompute_air_quality_pm25_offline.py                  # dry run
   PYTHONPATH=. python3 scripts/catalog/recompute_air_quality_pm25_offline.py --write --backup-dir <dir>

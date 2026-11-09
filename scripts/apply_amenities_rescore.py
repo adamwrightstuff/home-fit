@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 Recompute neighborhood_amenities (v3 amenity-access model) from each catalog place's
-stored business_list and cascade into total_score + longevity_index. No network: the
+stored business_list and cascade into total_score. No network: the
 OSM query is unchanged, so the stored business_list is valid input; only the scoring
 math changed. Writes to a NEW file for review.
 
-Cascades (both linear, verified): total contribution = score*weight/100;
-longevity factor = stored_contribution/score (constant ~0.2551). Amenities does not
-feed a happiness component, so happiness_index is untouched.
+Cascade (linear, verified): total contribution = score*weight/100. Amenities does not
+feed a happiness component, so happiness_index is untouched. (This script once also
+cascaded the longevity index, which was retired 2026-11-08.)
 """
 from __future__ import annotations
 
@@ -58,15 +58,6 @@ def apply_cascade(sc, new, dens, var, prox, nwalk):
     tsb["contribution"] = new_c
     sc["total_score"] = round(sc["total_score"] - old_c + new_c, 4)
 
-    lb = sc.get("longevity_index_breakdown")
-    if lb and "neighborhood_amenities" in lb and old:
-        factor = lb["neighborhood_amenities"] / old
-        old_l = lb["neighborhood_amenities"]
-        new_l = round(new * factor, 4)
-        lb["neighborhood_amenities"] = new_l
-        if "neighborhood_amenities" in sc.get("longevity_index_contributions", {}):
-            sc["longevity_index_contributions"]["neighborhood_amenities"] = new_l
-        sc["longevity_index"] = round(sc.get("longevity_index", 0) - old_l + new_l, 4)
     return old, new
 
 

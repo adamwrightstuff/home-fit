@@ -1,5 +1,5 @@
 """
-Composite indices: single module for Longevity, Status Signal, and Happiness.
+Composite indices: single module for Status Signal and Happiness. (The Longevity index was retired 2026-11-08, see docs/LONGEVITY_INDEX_SPEC.md.)
 
 All formulas and version tags live here so API responses stay the source of truth.
 """
@@ -8,31 +8,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-# ---------------------------------------------------------------------------
-# Longevity Index (Blue Zone–inspired fixed weights on six pillars)
-# ---------------------------------------------------------------------------
-LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
-    "social_fabric": 35.0,       # Holt-Lunstad (2015): social isolation = 29% mortality increase
-    "active_outdoors": 22.0,     # Li (2019 JAMA, 900k): greenspace → 12-24% lower all-cause mortality; Kokkinos (2022 NEJM): fitness = top longevity predictor
-    "neighborhood_amenities": 15.0,  # Blue Zone "Move Naturally" walkability pathway; food access
-    # healthcare_access removed: RWJF evidence is county-level rural-vs-urban; within a metro
-    # the pillar measures OSM pharmacy/clinic density on commercial corridors, not care access.
-    # That signal does not meaningfully predict longevity differences between nearby neighborhoods.
-    # climate_risk slot is scored from air quality + heat only (see _longevity_pillar_score);
-    # flood zone and 30-yr temperature trend are property/forward risk, not mortality drivers.
-    "climate_risk": 8.0,         # Pope (2009): reducing fine particles → 0.61yr life expectancy gain
-    "natural_beauty": 5.0,       # Independent stress-reduction / cortisol pathway; partially overlaps active_outdoors
-    "quality_education": 3.0,    # Cutler & Lleras-Muney (2008): each year of education → 1.8% lower mortality
-    "community_safety": 8.0,     # Trauma and chronic stress from crime are real mortality factors; renormalized when degraded
-}
-
-INDEX_VERSION_LONGEVITY = "5"
 INDEX_VERSION_STATUS = "7"
 INDEX_VERSION_HAPPINESS = "5"
 INDEX_VERSION_HOTNESS = "1"
 
 INDICES_VERSION_METADATA = {
-    "longevity": INDEX_VERSION_LONGEVITY,
     "status_signal": INDEX_VERSION_STATUS,
     "happiness": INDEX_VERSION_HAPPINESS,
     "hotness": INDEX_VERSION_HOTNESS,
@@ -157,108 +137,6 @@ def build_total_score_breakdown(
     return breakdown
 
 
-LONGEVITY_ENV_AIR_SHARE = 5.0 / 8.0   # air quality share of the 8% environmental slot
-LONGEVITY_ENV_HEAT_SHARE = 3.0 / 8.0  # heat exposure share (excess summer mortality)
-
-
-def _longevity_pillar_usable(pdata: Any) -> bool:
-    """
-    False for a pillar that failed, returned no data, or has zero confidence. Such a pillar
-    carries a placeholder score (often 0) that is a data gap, not a real measurement, so the
-    index drops it and renormalizes instead of scoring the place as if it had nothing there.
-    """
-    if not isinstance(pdata, dict):
-        return False
-    if pdata.get("status") in ("failed", "no_data") or pdata.get("error"):
-        return False
-    if pdata.get("confidence") == 0:
-        return False
-    return True
-
-
-def _longevity_pillar_score(name: str, pdata: Any) -> Optional[float]:
-    """
-    Score used for a pillar inside the Longevity Index. For climate_risk this is air quality
-    and heat only (from the stored breakdown), falling back to the full pillar score when the
-    sub-scores are absent.
-    """
-    if not isinstance(pdata, dict):
-        return None
-    raw = pdata.get("score")
-    if name == "climate_risk":
-        bd = pdata.get("breakdown") or {}
-        aqi, lst = bd.get("aqi_score"), bd.get("lst_score")
-        if isinstance(aqi, (int, float)) and isinstance(lst, (int, float)):
-            return float(aqi) * LONGEVITY_ENV_AIR_SHARE + float(lst) * LONGEVITY_ENV_HEAT_SHARE
-    return float(raw) if isinstance(raw, (int, float)) else None
-
-
-def compute_longevity_index(
-    livability_pillars: Dict[str, Any],
-    token_allocation: Optional[Dict[str, float]] = None,
-    only_pillars: Optional[Set[str]] = None,
-) -> Tuple[float, Dict[str, float]]:
-    """
-    Longevity Index 0–100 from livability_pillars using LONGEVITY_INDEX_WEIGHTS.
-
-    With token_allocation: renormalize over eligible longevity pillars (weight > 0 or
-    pillar was in only_pillars partial run). Fallback: any longevity pillar with a score.
-    Without token_allocation: all six pillars, missing score = 0.
-    """
-    contributions: Dict[str, float] = {}
-    if token_allocation is not None:
-
-        def _has_score(p: str) -> bool:
-            pdata = livability_pillars.get(p) or {}
-            raw = pdata.get("score")
-            return isinstance(raw, (int, float)) and _longevity_pillar_usable(pdata)
-
-        def _eligible(p: str) -> bool:
-            has_weight = float(token_allocation.get(p, 0.0) or 0.0) > 0
-            was_requested = only_pillars is not None and p in only_pillars
-            return _has_score(p) and (has_weight or was_requested)
-
-        eligible: List[str] = [p for p in LONGEVITY_INDEX_WEIGHTS if _eligible(p)]
-        if not eligible:
-            eligible = [p for p in LONGEVITY_INDEX_WEIGHTS if _has_score(p)]
-        if not eligible:
-            return 0.0, contributions
-        total_weight = sum(LONGEVITY_INDEX_WEIGHTS[p] for p in eligible)
-        if total_weight <= 0:
-            return 0.0, contributions
-        total = 0.0
-        for p in eligible:
-            score = _longevity_pillar_score(p, livability_pillars.get(p)) or 0.0
-            weight_pct = LONGEVITY_INDEX_WEIGHTS[p] / total_weight
-            contrib = score * weight_pct
-            contributions[p] = round(contrib, 2)
-            total += contrib
-        return round(total, 2), contributions
-
-    total = 0.0
-    for pillar, weight in LONGEVITY_INDEX_WEIGHTS.items():
-        score = _longevity_pillar_score(pillar, livability_pillars.get(pillar)) or 0.0
-        contrib = score * weight / 100.0
-        contributions[pillar] = round(contrib, 2)
-        total += contrib
-    return round(min(100.0, total), 2), contributions
-
-
-LONGEVITY_INDEX_PILLAR_KEYS = frozenset(LONGEVITY_INDEX_WEIGHTS.keys())
-
-
-def should_emit_longevity_index(only_pillars: Optional[Set[str]]) -> bool:
-    """
-    Full-score responses always include longevity_index.
-
-    Partial ``only=`` runs omit it unless all six longevity pillars were requested,
-    so a single pillar (e.g. schools at 100) cannot dominate the index.
-    """
-    if only_pillars is None:
-        return True
-    return LONGEVITY_INDEX_PILLAR_KEYS.issubset(only_pillars)
-
-
 def attach_indices_version(response: Dict[str, Any]) -> None:
     """Merge indices_version into response metadata (idempotent)."""
     md = response.get("metadata")
@@ -361,7 +239,7 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
 
 def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Recompute longevity, status_signal, happiness, and total_score from stored pillar JSON
+    Recompute status_signal, happiness, and total_score from stored pillar JSON
     (no pillar re-run). Also applies stored-data corrections before computing composites:
       F15 — social fabric stability cliff suppressed for high-value markets.
       F19 — fabricated neighborhood_amenities scores (confidence=0) nullified.
@@ -383,9 +261,6 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
         lat, lon = None, None
 
     out: Dict[str, Any] = {
-        "longevity_index": None,
-        "longevity_index_contributions": None,
-        "longevity_index_breakdown": None,
         "status_signal": None,
         "status_signal_breakdown": None,
         "happiness_index": None,
@@ -441,17 +316,6 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
     if isinstance(na_data, dict) and na_data.get("confidence") == 0 and na_data.get("score") is not None and not _na_verified_empty:
         na_data["score"] = None
         na_data["contribution"] = 0.0  # stored-gap shape: weight is redistributed in the total below
-
-    try:
-        li, contrib = compute_longevity_index(
-            pillars,
-            token_allocation=token_allocation,
-            only_pillars=None,
-        )
-        out["longevity_index"] = round(li, 2)
-        out["longevity_index_contributions"] = contrib
-    except Exception:
-        pass
 
     census_tract = None
     if lat is not None and lon is not None:
@@ -531,12 +395,6 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
             out["happiness_index_breakdown"] = hi_breakdown
     except Exception:
         pass
-
-    lic = out.get("longevity_index_contributions")
-    if isinstance(lic, dict) and lic:
-        out["longevity_index_breakdown"] = dict(lic)
-    else:
-        out["longevity_index_breakdown"] = {}
 
     try:
         out["total_score_breakdown"] = build_total_score_breakdown(pillars, token_allocation)

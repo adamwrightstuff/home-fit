@@ -5,7 +5,7 @@ Offline: apply the heat plausibility screen (data_sources/heat_screen.py) to the
 For each place, samples the PRISM 1991-2020 June, July and August mean daily maximum temperature normals (800 m GeoTIFFs the
 owner downloaded, see docs/PILLAR_CLIMATE_RISK.md Level 2 status) at the scored pin. When the stored land-surface temperature
 (local_lst_c) is more than HEAT_MAX_BELOW_AIR_C below that air normal, the heat component becomes no data: the climate score
-is rebuilt over the remaining components, the pillar is marked degraded, and total score and longevity follow
+is rebuilt over the remaining components, the pillar is marked degraded, and total score follows
 (recompute_flood_offline.update_composites). The happiness index is recomputed afterwards with recompute_happiness_only.py.
 The live pillar uses the same function with the TerraClimate 4 km normal instead of PRISM, so a place near the margin can
 differ between catalog and live. No API, Earth Engine, Census or Overpass call. Inputs are never modified.

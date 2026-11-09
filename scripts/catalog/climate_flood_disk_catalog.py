@@ -7,7 +7,7 @@ Catalog run of the 800 m disk flood measure (docs/PILLAR_CLIMATE_RISK.md, flood 
          <out-dir>/disk_flood.json after every 25 places, so an interrupted run resumes. A place whose query fails is skipped and
          counted; run the same command again to retry only those. Polygons are not kept.
   apply  Reads disk_flood.json and the post-option-B catalog files, replaces each place's flood points with the disk value, and
-         carries the climate score, total score and longevity into NEW files in <apply-dir> (the inputs are never modified).
+         carries the climate score, total score into NEW files in <apply-dir> (the inputs are never modified).
          Then run recompute_happiness_only.py on those files. No FEMA call.
 
   cd /Users/adamwright/Dev/home-fit/.claude/worktrees/dpv2-climate-risk

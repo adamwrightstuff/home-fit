@@ -29,15 +29,6 @@ export const PILLAR_ORDER: PillarKey[] = [
   'housing_value',
   'community_safety',
 ]
-export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>([
-  'social_fabric',
-  'active_outdoors',
-  'neighborhood_amenities',
-  'natural_beauty',
-  'climate_risk',
-  'quality_education',
-  'community_safety',
-])
 
 /** Pillars that feed the Happiness Index (tag dot on pillar cards). */
 export const HAPPINESS_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>([
@@ -51,61 +42,6 @@ export const HAPPINESS_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
   'public_transit_access', // feeds the commute term
   'neighborhood_amenities',
 ])
-
-/** Weights for Longevity Index (must match backend LONGEVITY_INDEX_WEIGHTS). */
-export const LONGEVITY_INDEX_WEIGHTS: Record<string, number> = {
-  social_fabric: 35,
-  active_outdoors: 22,
-  neighborhood_amenities: 15,
-  climate_risk: 8,
-  natural_beauty: 5,
-  quality_education: 3,
-  community_safety: 8,
-}
-
-/**
- * Score a pillar contributes to the Longevity Index. climate_risk counts air quality (5/8) and
- * heat (3/8) only, from the stored breakdown; flood and temperature trend are excluded.
- * Mirrors backend _longevity_pillar_score.
- */
-export function longevityPillarScore(
-  key: string,
-  pillar: { score?: number; breakdown?: Record<string, unknown> } | undefined | null
-): number | null {
-  if (!pillar) return null
-  if (key === 'climate_risk') {
-    const aqi = pillar.breakdown?.aqi_score
-    const lst = pillar.breakdown?.lst_score
-    if (typeof aqi === 'number' && typeof lst === 'number') return (aqi * 5 + lst * 3) / 8
-  }
-  return typeof pillar.score === 'number' && Number.isFinite(pillar.score) ? pillar.score : null
-}
-
-/**
- * Compute Longevity Index (0–100) from pillar scores using fixed longevity weights.
- * Uses only longevity pillars that have a valid score (excludes failed runs); renormalizes weights over that subset.
- * Returns null if no longevity pillar has a valid score.
- */
-export function computeLongevityIndex(
-  pillarScores: Record<string, { score?: number; failed?: boolean }>
-): number | null {
-  const eligible = (Object.keys(LONGEVITY_INDEX_WEIGHTS) as PillarKey[]).filter((p) => {
-    const entry = pillarScores[p]
-    if (!entry) return false
-    if (entry.failed) return false
-    const s = entry.score
-    return typeof s === 'number' && Number.isFinite(s)
-  })
-  if (eligible.length === 0) return null
-  const totalWeight = eligible.reduce((sum, p) => sum + LONGEVITY_INDEX_WEIGHTS[p], 0)
-  if (totalWeight <= 0) return null
-  let total = 0
-  for (const p of eligible) {
-    const score = pillarScores[p]!.score!
-    total += score * (LONGEVITY_INDEX_WEIGHTS[p] / totalWeight)
-  }
-  return Math.round(total * 100) / 100
-}
 
 /**
  * Compute Happiness Index (0–100) client-side from livability_pillars. Mirrors backend pillars/happiness_index.py (v5).
@@ -147,45 +83,6 @@ export function computeHappinessIndex(pillars: Record<string, any>): number | nu
   return Math.round(Math.max(0, Math.min(100, avail.reduce((s, [v, w]) => s + v * w, 0) / tw)) * 10) / 10
 }
 
-/** API `only=` list includes every longevity pillar → server returns a meaningful longevity_index. */
-export function allLongevityPillarsInOnlyKeys(onlyKeys: string[]): boolean {
-  const set = new Set(onlyKeys)
-  return (Object.keys(LONGEVITY_INDEX_WEIGHTS) as PillarKey[]).every((k) => set.has(k))
-}
-
-/** Longevity index from merged livability_pillars (saved/API shape). */
-export function longevityIndexFromLivabilityPillars(
-  pillars: Record<string, { score?: number; status?: string; error?: string; confidence?: number | null; breakdown?: Record<string, unknown> } | undefined>
-): number | null {
-  const pillarScores: Record<string, { score?: number; failed?: boolean }> = {}
-  for (const k of Object.keys(LONGEVITY_INDEX_WEIGHTS) as PillarKey[]) {
-    const p = pillars[k]
-    const score = longevityPillarScore(k, p)
-    if (!p || score == null) continue
-    pillarScores[k] = {
-      score,
-      failed: Boolean(p.error) || p.status === 'failed' || p.status === 'no_data' || p.confidence === 0,
-    }
-  }
-  return computeLongevityIndex(pillarScores)
-}
-
-/** Copy for Longevity Score UX: tooltip, short subtitle, full modal, and key distinction. */
-export const LONGEVITY_COPY = {
-  /** Full version for modal. */
-  full:
-    "Blue Zone-inspired score of the neighborhood conditions linked to long, healthy lives. Same formula for everyone, ignores your weights.",
-  /** Short version for subtitle or card label. */
-  short:
-    'Seven research-based pillars (social fabric, outdoors, amenities, air and heat, safety, nature, schools) — same formula for everyone.',
-  /** One-line tooltip next to the score. */
-  tooltip:
-    'Blue Zone-inspired score of the neighborhood conditions linked to long, healthy lives. Same formula for everyone, ignores your weights.',
-  /** Key distinction to communicate. */
-  distinction:
-    'Trovamo = right for you. Longevity = Blue Zone-inspired conditions for health over time.',
-} as const
-
 /** Copy for HomeFit Score UX: tooltip, subtitle, full modal, and callout distinction. */
 export const HOMEFIT_COPY = {
   /** Full body for modal — Results, Saved, Public (13 active pillars). */
@@ -202,7 +99,7 @@ export const HOMEFIT_COPY = {
     'A composite of all 12 pillars, weighted equally by default. Adjust weights to personalize.',
   /** Callout in modal. */
   distinction:
-    'HomeFit = right for you. Longevity = right for your health over time.',
+    'HomeFit = right for you.',
 } as const
 
 /** Copy for Archetype index UX: tooltip and modal. */
@@ -249,10 +146,6 @@ export const TRAJECTORY_COPY = {
 /** Comma-separated pillar names required to compute the archetype index (for only= param). */
 export const STATUS_SIGNAL_ONLY_PILLARS =
   'housing_value,social_fabric,economic_opportunity,neighborhood_amenities,diversity'
-
-export function isLongevityPillar(key: PillarKey): boolean {
-  return LONGEVITY_PILLAR_KEYS.has(key)
-}
 
 export function isHappinessPillar(key: PillarKey): boolean {
   return HAPPINESS_PILLAR_KEYS.has(key)

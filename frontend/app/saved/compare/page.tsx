@@ -8,7 +8,7 @@ import { getSavedScore, type SavedScoreRow } from '@/lib/savedScores'
 import type { CatalogMapPlaceWithMetro } from '@/lib/catalogMapTypes'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/lib/reweight'
-import { PILLAR_META, PILLAR_ORDER, isLongevityPillar, isHappinessPillar, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, isHappinessPillar, type PillarKey } from '@/lib/pillars'
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import PillarInfoIcon from '@/components/PillarInfoIcon'
@@ -134,7 +134,6 @@ type ComparePillarSide = {
 type ComparePillarRow = {
   key: PillarKey
   meta: (typeof PILLAR_META)[PillarKey]
-  isLongevity: boolean
   isHappiness: boolean
   a: ComparePillarSide
   b: ComparePillarSide
@@ -243,8 +242,6 @@ function CompareContent() {
 
   const homefitA = typeof displayA?.total_score === 'number' ? displayA.total_score : null
   const homefitB = typeof displayB?.total_score === 'number' ? displayB.total_score : null
-  const longevityA = typeof displayA?.longevity_index === 'number' ? displayA.longevity_index : null
-  const longevityB = typeof displayB?.longevity_index === 'number' ? displayB.longevity_index : null
   const happinessA = typeof displayA?.happiness_index === 'number' ? displayA.happiness_index : null
   const happinessB = typeof displayB?.happiness_index === 'number' ? displayB.happiness_index : null
 
@@ -265,7 +262,6 @@ function CompareContent() {
       return {
         key,
         meta: PILLAR_META[key],
-        isLongevity: isLongevityPillar(key),
         isHappiness: isHappinessPillar(key),
         a: { score: scoreA, confidence: confA, hasScore: scoreA != null },
         b: { score: scoreB, confidence: confB, hasScore: scoreB != null },
@@ -385,7 +381,7 @@ function CompareContent() {
             <span className="tr-muted" style={{ fontSize: '0.85rem' }}>
               vs
             </span>
-            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--hf-longevity-purple)', whiteSpace: 'nowrap' }}>
+            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--hf-compare-b-accent)', whiteSpace: 'nowrap' }}>
               {placeNameB}
             </span>
           </div>
@@ -469,7 +465,7 @@ function CompareContent() {
                     flex: 1,
                     background:
                       homefitWinner === 'b'
-                        ? 'var(--hf-longevity-purple)'
+                        ? 'var(--hf-compare-b-accent)'
                         : 'color-mix(in srgb, var(--hf-border) 70%, transparent)',
                   }}
                 />
@@ -492,9 +488,6 @@ function CompareContent() {
                   </div>
                   <div className="tr-muted" style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>
                     Trovamo Score
-                  </div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.35rem', color: 'var(--hf-longevity-purple)' }}>
-                    {longevityA != null ? `Longevity ${longevityA.toFixed(1)}` : 'Longevity —'}
                   </div>
                   <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.2rem', color: 'var(--hf-happiness-teal)' }}>
                     {happinessA != null ? `Happiness ${happinessA.toFixed(1)}` : 'Happiness —'}
@@ -526,14 +519,11 @@ function CompareContent() {
                   <div className="tr-label" style={{ marginBottom: '0.25rem', fontSize: '0.8rem' }}>
                     {placeNameB.toUpperCase()}
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--hf-longevity-purple)' }}>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--hf-compare-b-accent)' }}>
                     {homefitB != null ? homefitB.toFixed(1) : '—'}
                   </div>
                   <div className="tr-muted" style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>
                     Trovamo Score
-                  </div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.35rem', color: 'var(--hf-homefit-green)' }}>
-                    {longevityB != null ? `Longevity ${longevityB.toFixed(1)}` : 'Longevity —'}
                   </div>
                   <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.2rem', color: 'var(--hf-happiness-teal)' }}>
                     {happinessB != null ? `Happiness ${happinessB.toFixed(1)}` : 'Happiness —'}
@@ -601,17 +591,6 @@ function CompareContent() {
                     </button>
                   </div>
                 </div>
-                <div className="tr-muted" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: 'var(--hf-homefit-green)',
-                    }}
-                  />
-                  <span>Longevity pillar</span>
-                </div>
               </div>
             </section>
             {idA && idB && (() => {
@@ -628,7 +607,7 @@ function CompareContent() {
                   )}
                   {specB && (
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--hf-longevity-purple)', marginBottom: 4 }}>{placeNameB}</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--hf-compare-b-accent)', marginBottom: 4 }}>{placeNameB}</div>
                       <RelocationEquivalent dest={specB} fallbackOrigin={specA ?? undefined} />
                     </div>
                   )}
@@ -654,7 +633,7 @@ function CompareContent() {
                   {placeNameA.toUpperCase()}
                 </div>
                 <div />
-                <div style={{ textAlign: 'center', color: 'var(--hf-longevity-purple)', fontWeight: 600 }}>
+                <div style={{ textAlign: 'center', color: 'var(--hf-compare-b-accent)', fontWeight: 600 }}>
                   {placeNameB.toUpperCase()}
                 </div>
               </div>
@@ -702,21 +681,6 @@ function CompareContent() {
                             {p.meta.name}
                             <PillarInfoIcon pillarKey={p.key} />
                           </div>
-                          {p.isLongevity && (
-                            <div style={{ marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                              <span
-                                style={{
-                                  width: 8,
-                                  height: 8,
-                                  borderRadius: '50%',
-                                  background: 'var(--hf-homefit-green)',
-                                }}
-                              />
-                              <span className="tr-muted" style={{ fontSize: '0.8rem' }}>
-                                Longevity
-                              </span>
-                            </div>
-                          )}
                           {p.isHappiness && (
                             <div style={{ marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                               <span
@@ -840,7 +804,7 @@ function CompareContent() {
                                   style={{
                                     width: `${fillPct}%`,
                                     height: '100%',
-                                    background: 'var(--hf-longevity-purple)',
+                                    background: 'var(--hf-compare-b-accent)',
                                   }}
                                 />
                               )}
@@ -856,7 +820,7 @@ function CompareContent() {
                           paddingRight: '0.5rem',
                           borderRight:
                             winner === 'b'
-                              ? '3px solid var(--hf-longevity-purple)'
+                              ? '3px solid var(--hf-compare-b-accent)'
                               : '3px solid transparent',
                         }}
                       >
@@ -929,7 +893,7 @@ function CompareContent() {
                 <strong style={{ color: 'var(--hf-homefit-green)' }}>{placeNameA}</strong> leads on{' '}
                 {summary.aLeads.length ? summary.aLeads.join(', ') : 'no pillars yet'}.
                 {' '}
-                <strong style={{ color: 'var(--hf-longevity-purple)' }}>{placeNameB}</strong> leads on{' '}
+                <strong style={{ color: 'var(--hf-compare-b-accent)' }}>{placeNameB}</strong> leads on{' '}
                 {summary.bLeads.length ? summary.bLeads.join(', ') : 'no pillars yet'}.
                 {(summary.aUnscored > 0 || summary.bUnscored > 0) && (
                   <>

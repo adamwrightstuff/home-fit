@@ -1,6 +1,6 @@
 /**
  * HomeFit index → color ramp bindings (fixed).
- * HomeFit = purple, Longevity = teal, Happiness = blue, Archetype index map = coral.
+ * HomeFit = purple, Happiness = blue, Archetype index map = coral.
  */
 
 import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
@@ -131,8 +131,6 @@ export function catalogModeToRamp(mode: CatalogMapIndexMode): IndexRampKey {
   switch (mode) {
     case 'homefit':
       return 'purple'
-    case 'longevity':
-      return 'teal'
     case 'happiness':
       return 'blue'
     case 'status':

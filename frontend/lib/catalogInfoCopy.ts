@@ -80,11 +80,6 @@ export const INDEX_COPY: Record<string, InfoCopy> = {
     body: 'The big picture: how well a neighborhood fits the things that matter most to everyday life. It brings 13 dimensions of livability into one score, from schools and safety to transit, nature, space, and local amenities.',
     detail: 'A weighted composite of 12 research-backed livability pillars using neighborhood-level data from sources including the Census, schools data, transit and mobility data, environmental datasets, and other public records.',
   },
-  longevity: {
-    title: 'Longevity',
-    body: 'How many of the everyday conditions that health research links to longer lives this place has: social connection, outdoor activity, walkable amenities, clean air and moderate heat, safety, nature, and schools.',
-    detail: 'A fixed-weight score inspired by Blue Zone research: social connection (largest weight), outdoor activity and green space, walkable amenities, air quality and heat exposure, community safety, natural beauty, and education. It describes the neighborhood, not a forecast of how long you will live. Healthcare access is not included.',
-  },
   happiness: {
     title: 'Happiness',
     body: 'How likely the neighborhood is to make everyday life feel easier and more satisfying. It combines the practical things that shape daily experience, from commute and space to greenery, safety, and social connection.',

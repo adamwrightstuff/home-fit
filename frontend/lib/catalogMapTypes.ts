@@ -16,7 +16,6 @@ export interface CatalogRow {
 
 export type CatalogMapIndexMode =
   | 'homefit'
-  | 'longevity'
   | 'happiness'
   | 'status'
   | 'active_outdoors'

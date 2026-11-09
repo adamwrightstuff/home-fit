@@ -54,9 +54,6 @@ function displayScoreForMode(
     return { v: rw.total_score, archetype: null }
   }
   const s = place.score
-  if (mode === 'longevity') {
-    return { v: typeof s.longevity_index === 'number' ? s.longevity_index : null, archetype: null }
-  }
   if (mode === 'happiness') {
     return { v: typeof s.happiness_index === 'number' ? s.happiness_index : null, archetype: null }
   }
@@ -140,7 +137,6 @@ export function getAllCatalogIndexDisplay(
   priorities: PillarPriorities
 ): {
   homefit: number | null
-  longevity: number | null
   happiness: number | null
   statusSignal: number | null
   archetype: string | null
@@ -158,7 +154,6 @@ export function getAllCatalogIndexDisplay(
   ).text
   return {
     homefit: typeof rw.total_score === 'number' && Number.isFinite(rw.total_score) ? rw.total_score : null,
-    longevity: typeof s.longevity_index === 'number' ? s.longevity_index : null,
     happiness: typeof s.happiness_index === 'number' ? s.happiness_index : null,
     statusSignal: typeof s.status_signal === 'number' ? s.status_signal : null,
     archetype,
@@ -246,9 +241,8 @@ export function displayIndexValue(
       sub: badge.text,
     }
   }
-  const labels: Record<'homefit' | 'longevity' | 'happiness' | 'status', string> = {
+  const labels: Record<'homefit' | 'happiness' | 'status', string> = {
     homefit: 'Trovamo',
-    longevity: 'Longevity',
     happiness: 'Happiness',
     status: 'Archetype',
   }

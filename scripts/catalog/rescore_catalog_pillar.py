@@ -14,7 +14,7 @@ Typical use after changing pillar code (e.g. natural_beauty):
     --in-place --no-backup \\
     --pillars natural_beauty
 
-Then refresh composites (longevity / status / happiness) from the merged file:
+Then refresh composites (status / happiness) from the merged file:
 
   PYTHONPATH=. python3 scripts/catalog/recompute_catalog_composites.py \\
     --input data/nyc_metro_place_catalog_scores_merged.jsonl \\

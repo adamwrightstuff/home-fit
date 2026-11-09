@@ -144,7 +144,7 @@ Check: `cd frontend && npx tsc --noEmit`.
 | 7 | Best-fit preference labels | Stored NB/built_env data | NB + built_environment UI |
 | 8 | Charter school flag | NCES school data | Education filter |
 | 9 | Archetype summaries | Claude API (~$5–15) | Agent recommendations |
-| 10 | Composite recompute | Stored pillar scores (no API) | `total_score`, longevity, happiness |
+| 10 | Composite recompute | Stored pillar scores (no API) | `total_score`, happiness |
 
 ---
 

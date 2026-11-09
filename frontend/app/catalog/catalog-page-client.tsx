@@ -42,14 +42,13 @@ import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections
 import { fetchProfile, type CommuteMode } from '@/lib/userProfile'
 import { ALL_SCHOOL_LEVELS, applyExplorerScoreAdjustments, writeCompareContext, type SchoolLevel } from '@/lib/explorerScoreAdjust'
 import { climateMustHaveFails, hasClimateMustHaves, normalizeClimatePrefs, type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
-import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
+import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel, normalizeTrajectory } from '@/lib/statusSignalArchetype'
 import QuizModal, { type QuizPayload } from '@/components/QuizModal'
 
-const INDEXES: { id: 'homefit' | 'longevity' | 'happiness' | 'status'; label: string; tooltip: string }[] = [
+const INDEXES: { id: 'homefit' | 'happiness' | 'status'; label: string; tooltip: string }[] = [
   { id: 'homefit', label: 'HomeFit', tooltip: HOMEFIT_COPY.tooltip },
-  { id: 'longevity', label: 'Longevity', tooltip: LONGEVITY_COPY.tooltip },
   { id: 'happiness', label: 'Happiness', tooltip: HAPPINESS_INDEX_COPY.tooltip },
   { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
 ]
@@ -62,7 +61,6 @@ function scoreBasisLine(mode: CatalogMapIndexMode, priorities: PillarPriorities)
       ? 'HomeFit: average of the pillars, weighted by your priorities.'
       : 'HomeFit: average of the 12 pillars, equal weights. Adjust priorities to personalize.'
   }
-  if (mode === 'longevity') return 'Longevity: ' + LONGEVITY_COPY.tooltip
   if (mode === 'happiness') return 'Happiness: ' + HAPPINESS_INDEX_COPY.tooltip
   if (mode === 'status') return 'Archetype: social character from income, education, occupation and housing data.'
   const meta = PILLAR_META[mode as PillarKey]
@@ -90,7 +88,6 @@ function sortPlaces(
       // displayed numbers consistent instead of a hidden multiplier reordering the list
       // without the displayed score explaining why.
       if (sortKey === 'homefit') return reweightScoreResponseFromPriorities(p.score, priorities).total_score
-      if (sortKey === 'longevity') return p.score.longevity_index ?? NaN
       if (sortKey === 'happiness') return p.score.happiness_index ?? NaN
       if (isPillarIndexMode(sortKey)) return (p.score.livability_pillars as any)?.[sortKey]?.score ?? NaN
       return p.score.status_signal ?? NaN
@@ -1573,6 +1570,22 @@ export default function CatalogPageClient({
           </div>
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
+            {/* Priorities pill (mobile: always reachable next to Filters) */}
+            {catalogMode === 'explorer' && indexMode === 'homefit' && (
+              <button
+                type="button"
+                className="flex items-center gap-1.5 rounded-full border border-[var(--hf-border)] bg-white px-3 h-[var(--hf-control-h-touch)] text-xs font-semibold text-[var(--hf-text-primary)] shadow-sm"
+                onClick={() => setWeightOpen(true)}
+                aria-label="Priorities"
+              >
+                Priorities
+                {priorityBadgeCount > 0 && (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
+                    {priorityBadgeCount}
+                  </span>
+                )}
+              </button>
+            )}
             {/* Filters pill */}
             <button
               type="button"
@@ -1601,6 +1614,7 @@ export default function CatalogPageClient({
         {/* Twin mode second row: search + controls */}
         {catalogMode === 'twin' && (
           <div className="md:hidden flex flex-col gap-1.5 border-t border-[var(--hf-border)] px-3 py-2">
+            {!twinControlsLocked && (
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -1630,6 +1644,7 @@ export default function CatalogPageClient({
                 Pillars ({twinPillarList.length})
               </button>
             </div>
+            )}
             <div className="relative">
               <input
                 type="text"
@@ -1736,15 +1751,6 @@ export default function CatalogPageClient({
                 >A–Z</button>
               </div>
               </div>
-              {indexMode === 'homefit' && !sortByName && (
-                <button
-                  type="button"
-                  onClick={() => setWeightOpen(true)}
-                  aria-label="Priorities"
-                  className="pointer-events-auto shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
-                  style={{ background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }}
-                >⚖ Priorities{priorityBadgeCount > 0 ? ` (${priorityBadgeCount})` : ''}</button>
-              )}
             </div>
           )}
 
@@ -1753,7 +1759,6 @@ export default function CatalogPageClient({
             if (!hoverPlace) return null
             const rw = reweightScoreResponseFromPriorities(hoverPlace.score, effectivePriorities)
             const hf = rw.total_score
-            const lon = hoverPlace.score.longevity_index ?? null
             const hap = hoverPlace.score.happiness_index ?? null
             const archetype = hoverPlace.score.status_signal_breakdown?.archetype ?? null
             const pillarScore = isPillarIndexMode(indexMode)
@@ -1797,7 +1802,6 @@ export default function CatalogPageClient({
                 )}
                 {!pillarLabel && (
                   <div style={{ fontSize: 11, color: '#6b7280', display: 'flex', gap: 8, marginBottom: archetype ? 4 : 0 }}>
-                    <span>Lon {lon != null && Number.isFinite(lon) ? lon.toFixed(0) : '—'}</span>
                     <span>Hap {hap != null && Number.isFinite(hap) ? hap.toFixed(0) : '—'}</span>
                   </div>
                 )}

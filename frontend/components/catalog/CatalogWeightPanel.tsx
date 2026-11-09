@@ -195,6 +195,7 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
             <p className="text-xs text-[var(--hf-text-secondary)]">
               Priorities change which places rank higher. Nothing is hidden unless you choose Hide.
             </p>
+            {JSON.stringify(priorities) !== JSON.stringify(DEFAULT_PRIORITIES) && (
             <button
               type="button"
               onClick={resetAll}
@@ -203,6 +204,7 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
             >
               Reset priorities
             </button>
+            )}
             {onTakeQuiz && (
               <button
                 type="button"
