@@ -1,6 +1,6 @@
 # Local scene activity tag: Level 1 spec sheet and Level 2 plan (written 2026-11-08, before any Level 2 result was run)
 
-Status: nothing here changes scoring. No "validated" claim is allowed. Written by a session that did not build the tag (DPv2 adoption rule, section 2), but that read the 2026-11-06 decision notes first, which matters for the launch pairs (section 4b).
+Status: nothing here changes scoring. No "validated" claim is allowed. Written by a session that did not build the tag (DPv2 adoption rule, section 2), but that read the 2026-11-06 decision notes first, which matters for the launch pairs (section 2b).
 
 ## 0. The Level 1 sign-off covers a different measure than the one that ships
 Level 1 was signed on 2026-11-05 for two measures, the pin-circle culture-and-hangout mix and the town-boundary hybrid (docs/LOCAL_SCENE.md sections 10 and 16). On 2026-11-06 the visible tag became something else: a count of independent named venues within 1,200 m, cut into Quiet, Some and Vibrant. Aura became an and-rule on that count plus the mix reading plus status class plus a job-center exclusion. The signed measure no longer sets the tag; it survives only as one input to Aura. Under the DPv2 adoption rule a change to a signed-off scoring definition drops it back to Level 1 until re-specified and re-signed. So the activity tag and the Aura rule currently have no Level 1 sign-off at all. This sheet is that spec.
@@ -27,7 +27,7 @@ Pin-shift sensitivity: not run (Level 2 a).
 Independent validation: none (Level 2 c, d).
 All-places check: stated 2026-11-06 as about half Quiet and about 15% Vibrant; recomputed in section 5 of this file after the run.
 Fail-loud conditions: a place with no venue read gets no tag (None), never Quiet. NOT flagged: a place whose OSM coverage is thin but nonzero reads Quiet (Rye, 7 venues). That is a believable wrong number (principle 9) and is gap A3 below.
-Launch check pairs: section 4b.
+Launch check pairs: section 2b, results in section 4.
 Known data limits: OSM coverage and tagging vary by place (Rye, Hastings-on-Hudson, Pelham Manor, Irvington, Ardsley map too thin for any measure); long commercial strips count as much as compact centers (Sunnyside, Bay Ridge read Vibrant, Bronxville and Silver Lake read Some); straight-line distance, not walking network; no opening hours; pin may sit off the main street.
 Last re-validated: never.
 ```
@@ -87,3 +87,27 @@ All of 2a, 2b, 2c, 2d pass: propose Level 2 for sign-off. Any fails: the tag sta
 
 ## 3. Label sheet
 `docs/LOCAL_SCENE_LABEL_SHEET.md` and `docs/local_scene_label_sheet.csv`. Instructions are on the sheet. Nothing on it reveals a score.
+
+## 4. Results of 2a and 2b (run 2026-11-08, offline, criteria as fixed above; `scripts/catalog/local_scene_activity_l2_check.py`)
+Data checks first: all 1,476 places have a stored read; recomputing the independent count at 1,200 m from the reads matches the stored `independent_venues_1200m` for all 1,476 (0 mismatches); stored distances agree with coordinates to 0.5 m; the cut rule applied to the 1,200 m counts gives 13 and 71, as shipped. At 1,000 m the same rule gives Quiet below 10 and Vibrant from 58. Baseline tiers at 1,000 m: Quiet 716, Some 535, Vibrant 225.
+
+**2a activity tier, covered form (1,000 m, 5,904 shifts): PASS on all three gates.** Tier unchanged in 89.1% of shifts (gate 85%); baseline-Vibrant places stay Vibrant in 86.2% of shifts (gate 80%); two-tier jumps 0.05% (gate 1%). By baseline tier: Quiet 94.0%, Some 83.7%, Vibrant 86.2% unchanged (the overall number is lifted by Quiet places). Median change in count 2, 95th percentile 40; median relative change 14%, 95th percentile 100%. 188 places change tier in 2 or more of 4 shifts. Secondary, shipped 1,200 m with cuts 13 and 71, truncated beyond the reads (not gated): 92.5% unchanged; of 445 changes, 307 went down and 138 up, the downward lean being the truncation. Named: Los Feliz 62 at the pin, 22 shifted north, 103 south (Vibrant to Some in two shifts); Silver Lake 46, one shift reaches Vibrant (59); Hastings-on-Hudson 10 (Some, stored Low at 1,200 m); Rye 7, Pelham 18 and Bronxville 34 do not move; Murray Hill, Hell's Kitchen, Battery Park City, Santa Monica, Sunnyside, Bay Ridge stay Vibrant in every shift though counts swing (Battery Park City 66 to 392).
+
+**2a Aura, covered form: FAIL on both gates.** The baseline Aura set at 1,000 m has 50 places, 44 shared with the stored 49 (stored only: Downtown Denver, Arts District, Long Island City, West Village, Inner Sunset; covered form only: Ansley Park, Decatur, Society Hill, Kirkland, Alamo Square, Lower Haight). Retention 75.0% of shifts (gate 80%). Eighteen places that are not baseline Aura gain it in at least one shift (gate 10): Bouldin Creek, Clarksville, Somerville, Lincoln Square, The Loop, Houston Midtown, Gramercy Park, West Village, Lake Eola Heights, Bella Vista, Queen Village, Elmwood, Grand Lake, Jack London Square, Mission District, Noe Valley, Palo Alto, Rockridge. Least stable: Ansley Park, Berkeley, Fitler Square, Russian Hill, The Castro (1 of 4 shifts); Hayes Valley, Dogpatch, Greenwich Village, Windsor Terrace, Hyde Park (2 of 4). Stable at 4 of 4: Tribeca 3 of 4, SoHo, Park Slope, Prospect Heights, Cobble Hill, Carroll Gardens. Held at stored values, so not tested: status class, jobs per resident, density band.
+
+**2b launch pairs: FAIL, 3 of 6 (rule 5 of 6).** Passed: West Village (818, Vibrant) over Pelham Bay (11, Quiet); Carroll Gardens (213, Vibrant) over Pelham (18, Some); Bronxville (34, Some) over Pelham Manor (8, Quiet). Failed (same tier): Tribeca (669) and Battery Park City (349), both Vibrant; Park Slope (361) and Bay Ridge (144), both Vibrant; Silver Lake (60, Some) below Sunnyside (156, Vibrant), the reverse of your sense. Pairs 5 and 6 were expected to fail (section 2b); pair 2 was not, and fails because Battery Park City's 1,200 m circle reaches Tribeca and the Financial District.
+
+## 5. All-places check on stored tiers (2026-11-08, 1,476 places, no failures to read)
+Quiet 732 (49.6%), Some 520 (35.2%), Vibrant 224 (15.2%). The cuts therefore behave as described on 2026-11-06. 144 places have zero independent venues in the 1,200 m read and are tagged Quiet (gap A3: no flag separates sparse mapping from an empty place). By metro Vibrant share is highest in Chicago (24 of 103), NYC (62 of 193), SF (35 of 113) and lowest in Houston, San Antonio, Orlando (2 each); small metros with few catalog places (Seattle has 5) say little.
+
+## 6. Where the tag reads differently than your sense (stored counts, nothing changed)
+Your judgments are "has it" or "does not", from docs/VIBE_VALIDATION.md, which is the earlier vibe construct, not busyness; where your sense of busyness differs, I have not guessed.
+- Has it, tag below Vibrant: Larchmont 41 (Some), Bronxville 34 (Some), Silver Lake 60 (Some), Venice 65 (Some), Rye 7 (Quiet, pin off the downtown and thin OSM, known).
+- Does not have it, tag Vibrant: Sunnyside 156, Murray Hill 628, Battery Park City 349, Bay Ridge 144, Forest Hills 109, Flushing 91.
+- Does not have it, tag Some: Pelham 18, Brighton Beach 54. Quiet as you would expect: Pelham Bay 11, Yonkers 4.
+- "Some of it", tag Vibrant: Astoria 92, Windsor Terrace 116, Upper East Side 395, Long Island City 156, Financial District 335, Clinton Hill 242, Beacon Hill 343.
+- Has it and Vibrant, agrees: West Village 818, Tribeca 669, Chelsea 675, Hell's Kitchen 652, Boerum Hill 381, Greenpoint 363, Park Slope 361, Hayes Valley 340, Fort Greene 338, Williamsburg 323, Rittenhouse Square 273, Back Bay 251, Wicker Park 221, Carroll Gardens 213, Santa Monica 129, Cambridge 124, Fishtown 97.
+Pattern: the tag follows count, so dense places read Vibrant regardless of feel (6 of your 10 "does not" places and all 7 "some of it" places), and small or thinly mapped places read low (5 of your 22 "has it" places). Whether that is a defect depends on whether the tag means busy or has-it; the labels in section 2c will say which one raters hear in "Vibrant".
+
+## 7. Status
+Done offline: 2a, 2b, all-places, section 6. Not run: 2c, 2d (need raters; sheet in docs/LOCAL_SCENE_LABEL_SHEET.md). Level 1 not yet signed. Nothing pushed.
