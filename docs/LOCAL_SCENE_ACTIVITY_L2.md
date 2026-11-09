@@ -65,7 +65,7 @@ Coverage problem, decided before running: a 1,200 m circle moved 500 m reaches 1
 Rule: the first place's stored tier (shipped `local_scene_bucket`, 1,200 m) must be strictly higher than the second's. Pass: at least 5 of 6. Counts and ratios reported per pair.
 1. West Village over Pelham Bay (NYC)
 2. Tribeca over Battery Park City
-3. Carroll Gardens over Pelham Bay's neighbor Pelham (Westchester)
+3. Carroll Gardens over Pelham (Westchester)
 4. Bronxville over Pelham Manor
 5. Silver Lake (Los Angeles) over Sunnyside (Queens)
 6. Park Slope over Bay Ridge
