@@ -111,3 +111,6 @@ Pattern: the tag follows count, so dense places read Vibrant regardless of feel 
 
 ## 7. Status
 Done offline: 2a, 2b, all-places, section 6. Not run: 2c, 2d (need raters; sheet in docs/LOCAL_SCENE_LABEL_SHEET.md). Level 1 not yet signed. Nothing pushed.
+
+## 8. Sign-off
+Level 1 (Specified), signed off by the owner (Adam Wright), 2026-11-08, for the local scene activity tag (independent named venues within 1,200 m; Quiet under 13, Some 13 to 70, Vibrant 71 or more) and for the Aura and-rule (Vibrant, mix reading 65 or more with 15 or more venues, Affluent or Elite class, not a job center), with gaps A1 to A8 accepted as open, A3 (unflagged sparse-map Quiet) accepted as an exception to principle 9, and every parameter recorded as an unsourced judgment. Level 2 not passed (section 4: Aura pin-shift and launch pairs failed; labels not yet collected); "validated" may not be claimed.
