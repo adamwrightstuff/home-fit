@@ -383,6 +383,9 @@ Nothing outside `docs/UX_AUDIT.md` and `docs/ux_audit_screens/` was modified. `n
 
 - 2026-11-05 to 2026-11-06, shipped to `main` after owner approval, each type-checked and built: Filters and Priorities (Filters sheet hides places, Priorities panel ranks; one-line explainer on each; same right-side drawer on desktop; "Hide places with" choices sit under their own priority; count badges; Reset priorities), R6-1 partial (catalog side only); polish batch: R3-7 (search button always enabled, empty submit focuses the input), R5-2 partial (income quick picks on the profile), mobile "Show list" no longer overlaps the bottom sheet, live-progress badge removed on stored places. Still not marked fixed until a different agent re-runs the checks (Level 2).
 
+- 2026-11-09, R1-1 (two filled controls on the first catalog screen): the owner ruled the active purple sort pill is a selected state, not a second primary action. Accepted, counts as PASS.
+- 2026-11-09, R2-1 (commute cap in the Filters sheet and commute level in Priorities stay editable, each with a link to the profile): the owner accepted this as an exception to Rule 2.
+
 ### Still open
 
 R2-4 and R6-1 (search place screen importance buttons and weights, preferences and settings editing after a search), R2-7 (premium code in two places), R2-9 (quiz as initializer, treated as such), CA-2 (15 vs 12 pillars copy), signed-in and backend-only screens not rendered (saved, compare, in-catalog quiz modal). Level 2 re-check by a different agent has not run; the owner paused it on 2026-11-05 until all pillars are DPv2 L2 certified.
