@@ -131,6 +131,15 @@ Known data limits: OSM tagging completeness varies by region and the park measur
   not stored; water is best-feature-only, every place has at least one water feature within its read radius (min water score
   0.1); the health check flags 93 places conf_36 (poor quality tier) and 6 conf_68, and stored confidence is 36 in 75 places (50
   in the SF metro) and missing in 41; reasons not examined here; 175 places have no winning feature type recorded in the breakdown; 4 places have no area type.
+  Regional gap (measured 2026-11-09, owner decision: disclosed as a limit, no scoring change): this pillar's score is 81.3 for
+  NYC, Boston, Philadelphia and Chicago places against 61.0 for the other 17 metros, 20.3 points (10.0 before the typed park count
+  and trail work). Wild adventure is 14.9 of those points, the daily park term 4.5, water 2.9. Protected land within 9.3 miles
+  (PAD-US) shows no regional difference (0.01 SD against our 1.28 SD), and at equal protected land the Northeast and Chicago have
+  3.6 times as many stored trail destinations (median 63 against 15). A 40-place check against USGS trails found the same 4x
+  factor but cannot settle the cause: USGS trail coverage is partner-driven (Illinois and Georgia federal only) and tracks the
+  stored count poorly. The wild term probably overstates the Northeast and Chicago advantage by an unsized amount (OSM mapping
+  density or the destination definition); the daily term gap holds inside every density tercile. Not tested: the daily park term
+  outside NYC, Chicago and LA. Details: analysis/regional_bias_results_2026-11-09.md.
 Last re-validated: never.
 ```
 
