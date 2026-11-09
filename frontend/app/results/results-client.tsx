@@ -10,7 +10,6 @@ import type { Metadata, ScoreResponse } from '@/types/api'
 import type { PillarKey } from '@/lib/pillars'
 import {
   PILLAR_ORDER,
-  longevityIndexFromLivabilityPillars,
   HOMEFIT_COPY,
   STATUS_SIGNAL_ONLY_PILLARS,
 } from '@/lib/pillars'
@@ -27,7 +26,6 @@ import {
 import { readAndConsumeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import InteractiveMap from '@/components/InteractiveMap'
 import HomeFitInfo from '@/components/HomeFitInfo'
-import LongevityInfo from '@/components/LongevityInfo'
 import StatusSignalInfo from '@/components/StatusSignalInfo'
 import HappinessInfo from '@/components/HappinessInfo'
 import ArchetypeTrajectoryInfo from '@/components/ArchetypeTrajectoryInfo'
@@ -228,10 +226,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
     // income typed into this search wins over the saved profile's.
     const personalized = applyProfileToScore(finalResponse, profile, { incomeOverride: searchOptions.household_income })
     const rew = reweightScoreResponseFromPriorities(personalized, searchOptions.priorities)
-    const li = longevityIndexFromLivabilityPillars(
-      rew.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
-    )
-    if (li != null) return { ...rew, longevity_index: li }
     return rew
   }, [finalResponse, searchOptions, profile])
 
@@ -397,11 +391,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           mergedBase.happiness_index_breakdown = (resp as { happiness_index_breakdown: Record<string, unknown> }).happiness_index_breakdown
         }
 
-        let next = reweightScoreResponseFromPriorities(mergedBase, searchOptions.priorities)
-        const li = longevityIndexFromLivabilityPillars(
-          next.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
-        )
-        if (li != null) next = { ...next, longevity_index: li }
+        const next = reweightScoreResponseFromPriorities(mergedBase, searchOptions.priorities)
 
         setFinalResponse(next)
         persistCache(cacheKey, next)
@@ -450,11 +440,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
       if ((response as { happiness_index_breakdown?: Record<string, unknown> }).happiness_index_breakdown != null) {
         mergedBase.happiness_index_breakdown = (response as { happiness_index_breakdown: Record<string, unknown> }).happiness_index_breakdown
       }
-      let next = reweightScoreResponseFromPriorities(mergedBase, options.priorities)
-      const li = longevityIndexFromLivabilityPillars(
-        next.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
-      )
-      if (li != null) next = { ...next, longevity_index: li }
+      const next = reweightScoreResponseFromPriorities(mergedBase, options.priorities)
       setFinalResponse(next)
       // Persist under the post-navigation cache key *before* router.replace so the
       // normalized/cacheKey effect finds a hit and does not restart a full score run.
@@ -537,11 +523,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           (response as { happiness_index_breakdown?: Record<string, unknown> }).happiness_index_breakdown ??
           current.happiness_index_breakdown,
       }
-      let merged = reweightScoreResponseFromPriorities(mergedBase, searchOptions.priorities)
-      const li = longevityIndexFromLivabilityPillars(
-        merged.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
-      )
-      if (li != null) merged = { ...merged, longevity_index: li }
+      const merged = reweightScoreResponseFromPriorities(mergedBase, searchOptions.priorities)
       setFinalResponse(merged)
       persistCache(cacheKey, merged)
     } catch (e) {
@@ -571,20 +553,14 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
       const current = finalResponse
       const merged: ScoreResponse = {
         ...current,
-        longevity_index: resp.longevity_index ?? current.longevity_index,
-        longevity_index_contributions: resp.longevity_index_contributions ?? (current as any).longevity_index_contributions,
         status_signal: resp.status_signal ?? current.status_signal,
         status_signal_breakdown: resp.status_signal_breakdown ?? (current as any).status_signal_breakdown,
         happiness_index: resp.happiness_index ?? current.happiness_index,
         happiness_index_breakdown: resp.happiness_index_breakdown ?? current.happiness_index_breakdown,
       }
       const next = reweightScoreResponseFromPriorities(merged, searchOptions.priorities)
-      const li = longevityIndexFromLivabilityPillars(
-        next.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
-      )
-      const out = li != null ? { ...next, longevity_index: li } : next
-      setFinalResponse(out)
-      persistCache(cacheKey, out)
+      setFinalResponse(next)
+      persistCache(cacheKey, next)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to refresh indices.')
     } finally {
@@ -839,21 +815,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   color: 'var(--hf-text-secondary)',
                 }}
               >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span className="tr-muted">Longevity Index</span>
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      color:
-                        typeof displayData!.longevity_index === 'number'
-                          ? 'var(--c-teal-600)'
-                          : 'var(--hf-text-secondary)',
-                    }}
-                  >
-                    {typeof displayData!.longevity_index === 'number' ? displayData!.longevity_index.toFixed(1) : '—'}
-                  </span>
-                  <LongevityInfo />
-                </span>
                 {/* Archetype pill + Trajectory pill + combined ? — pill pair wrapper keeps pills together as a unit */}
                 {(displayData!.status_signal_breakdown?.status_label || (displayData!.status_signal_breakdown as any)?.trajectory) && (
                   <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>

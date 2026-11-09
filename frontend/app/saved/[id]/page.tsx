@@ -15,12 +15,11 @@ import { DEFAULT_PRIORITIES, PREMIUM_CODE_KEY } from '@/components/SearchOptions
 import ScoreDisplay from '@/components/ScoreDisplay'
 import InteractiveMap from '@/components/InteractiveMap'
 import HomeFitInfo from '@/components/HomeFitInfo'
-import LongevityInfo from '@/components/LongevityInfo'
 import StatusSignalInfo from '@/components/StatusSignalInfo'
 import HappinessInfo from '@/components/HappinessInfo'
 import ArchetypeTrajectoryInfo from '@/components/ArchetypeTrajectoryInfo'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
-import { longevityIndexFromLivabilityPillars, HOMEFIT_COPY, STATUS_SIGNAL_ONLY_PILLARS } from '@/lib/pillars'
+import { HOMEFIT_COPY, STATUS_SIGNAL_ONLY_PILLARS } from '@/lib/pillars'
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
   const p = row.priorities as Record<string, string> | null | undefined
@@ -113,10 +112,6 @@ export default function SavedDetailPage() {
   const displayData = useMemo(() => {
     if (!rawPayload || !priorities) return null
     const rew = reweightScoreResponseFromPriorities(rawPayload, priorities)
-    const li = longevityIndexFromLivabilityPillars(
-      rew.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
-    )
-    if (li != null) return { ...rew, longevity_index: li }
     return rew
   }, [rawPayload, priorities])
 
@@ -124,7 +119,7 @@ export default function SavedDetailPage() {
     if (!row || !priorities) return
     if (
       !window.confirm(
-        'Refresh all pillar data for this place?\n\nThis will overwrite your existing pillar scores and longevity index with freshly pulled data and cannot be undone.'
+        'Refresh all pillar data for this place?\n\nThis will overwrite your existing pillar scores with freshly pulled data and cannot be undone.'
       )
     ) {
       return
@@ -217,13 +212,7 @@ export default function SavedDetailPage() {
       if ((response as { happiness_index_breakdown?: Record<string, unknown> }).happiness_index_breakdown != null) {
         merged.happiness_index_breakdown = (response as { happiness_index_breakdown: Record<string, unknown> }).happiness_index_breakdown
       }
-      let toSave = reweightScoreResponseFromPriorities(merged, options.priorities)
-      {
-        const li = longevityIndexFromLivabilityPillars(
-          toSave.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
-        )
-        if (li != null) toSave = { ...toSave, longevity_index: li }
-      }
+      const toSave = reweightScoreResponseFromPriorities(merged, options.priorities)
       await updateSavedScore(row.id, { scorePayload: toSave, priorities: options.priorities })
       setRow((prev) =>
         prev
@@ -291,12 +280,6 @@ export default function SavedDetailPage() {
         ...mergedBase,
         metadata: { ...(mergedBase.metadata ?? {}), saved_search_options: searchOptions } as any,
       }
-      {
-        const li = longevityIndexFromLivabilityPillars(
-          merged.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
-        )
-        if (li != null) merged.longevity_index = li
-      }
       await updateSavedScore(row.id, { scorePayload: merged, priorities })
       setRow((prev) => (prev ? { ...prev, score_payload: merged, updated_at: new Date().toISOString() } : null))
     } catch (e) {
@@ -326,8 +309,6 @@ export default function SavedDetailPage() {
       const current = rawPayload as ScoreResponse
       const merged: ScoreResponse = {
         ...current,
-        longevity_index: resp.longevity_index ?? current.longevity_index,
-        longevity_index_contributions: resp.longevity_index_contributions ?? (current as any).longevity_index_contributions,
         status_signal: resp.status_signal ?? current.status_signal,
         status_signal_breakdown: resp.status_signal_breakdown ?? (current as any).status_signal_breakdown,
         happiness_index: resp.happiness_index ?? current.happiness_index,
@@ -592,7 +573,6 @@ export default function SavedDetailPage() {
     'Unknown location'
   const coordinates = rawPayload?.coordinates ?? row.coordinates
   const totalScore = displayData.total_score
-  const longevityIndex = typeof displayData.longevity_index === 'number' ? displayData.longevity_index : null
   const happinessIndex = typeof displayData.happiness_index === 'number' ? displayData.happiness_index : null
   const { location_info } = displayData
 
@@ -742,7 +722,7 @@ export default function SavedDetailPage() {
             </p>
           )}
 
-          {/* HomeFit on top, Longevity & Archetype below (same layout as PlaceView) */}
+          {/* HomeFit on top, Archetype below (same layout as PlaceView) */}
           <div
             style={{
               display: 'flex',
@@ -791,13 +771,6 @@ export default function SavedDetailPage() {
                 color: 'var(--hf-text-secondary)',
               }}
             >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span className="tr-muted">Longevity Index</span>
-                <span style={{ fontWeight: 600, color: longevityIndex != null ? 'var(--c-teal-600)' : 'var(--hf-text-secondary)' }}>
-                  {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
-                </span>
-                <LongevityInfo />
-              </span>
               {/* Archetype pill + Trajectory pill + combined ? — pill pair wrapper keeps pills together as a unit */}
               {(displayData.status_signal_breakdown?.status_label || (displayData.status_signal_breakdown as any)?.trajectory) && (
                 <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>

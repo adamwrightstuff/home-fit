@@ -3,14 +3,13 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import InteractiveMap from './InteractiveMap'
-import LongevityInfo from './LongevityInfo'
 import HomeFitInfo from './HomeFitInfo'
 import StatusSignalInfo from './StatusSignalInfo'
 import HappinessInfo from './HappinessInfo'
 import TrajectoryInfo from './TrajectoryInfo'
 import ExportScoresModal from './ExportScoresModal'
 import { buildExportRow } from '@/lib/exportScores'
-import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, longevityIndexFromLivabilityPillars, allLongevityPillarsInOnlyKeys, STATUS_SIGNAL_ONLY_PILLARS, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, HOMEFIT_COPY, STATUS_SIGNAL_ONLY_PILLARS, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores, getPillarWeightsAndContributions, getPillarWeightsFromPriorities } from '@/lib/reweight'
 import { getScoreWithProgress, recomputeComposites } from '@/lib/api'
 import type { GeocodeResult, StatusSignalBreakdown } from '@/types/api'
@@ -139,16 +138,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     return {}
   })
   const [placeSummary, setPlaceSummary] = useState<string | null>(() => initialPayload?.place_summary ?? null)
-  /** Backend longevity index when set (from initial payload, full run, or recompute); else we use client-computed. */
-  const [longevityIndexState, setLongevityIndexState] = useState<number | null>(() => initialPayload?.longevity_index ?? null)
-  const longevityIndex = useMemo(() => {
-    const fromPillars = longevityIndexFromLivabilityPillars(fullPillarData as Record<string, { score?: number; breakdown?: Record<string, unknown> }>)
-    if (fromPillars != null) return fromPillars
-    if (longevityIndexState != null && Number.isFinite(longevityIndexState)) return longevityIndexState
-    const fromPayload = initialPayload?.longevity_index
-    if (typeof fromPayload === 'number' && Number.isFinite(fromPayload)) return fromPayload
-    return null
-  }, [longevityIndexState, initialPayload?.longevity_index, fullPillarData])
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [scoreProgress, setScoreProgress] = useState<Record<string, { score: number }>>({})
@@ -260,14 +249,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                 ? JSON.stringify(options.diversity_preference)
                 : undefined,
           },
-        (partial, meta) => {
+        (partial) => {
           setScoreProgress((prev) => ({ ...prev, ...partial }))
-          if (
-            typeof meta?.partialLongevityIndex === 'number' &&
-            allLongevityPillarsInOnlyKeys([pillarKey])
-          ) {
-            setLongevityIndexState(meta.partialLongevityIndex)
-          }
           setProgress(Math.min(98, 5 + 90))
         }
         )
@@ -398,7 +381,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         coordinates: { lat: place.lat, lon: place.lon },
         token_allocation: initialPayload?.token_allocation,
       })
-      if (resp.longevity_index != null) setLongevityIndexState(resp.longevity_index)
       if (resp.status_signal != null) setStatusSignal(resp.status_signal)
       if (resp.status_signal_breakdown != null) setStatusSignalBreakdown(resp.status_signal_breakdown)
       if (resp.happiness_index != null) setHappinessIndex(resp.happiness_index)
@@ -500,7 +482,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       livability_pillars: livability_pillars as unknown as ScoreResponse['livability_pillars'],
       place_summary: placeSummary ?? undefined,
       total_score: totalScore,
-      longevity_index: longevityIndex ?? undefined,
       status_signal: statusSignal ?? undefined,
       status_signal_breakdown: statusSignalBreakdown ?? undefined,
       happiness_index: happinessIndex ?? undefined,
@@ -514,7 +495,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     place,
     pillarScores,
     totalScore,
-    longevityIndex,
     statusSignal,
     statusSignalBreakdown,
     happinessIndex,
@@ -610,14 +590,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
               ? JSON.stringify(searchOptions.diversity_preference)
               : undefined,
         },
-        (partial, meta) => {
+        (partial) => {
           setScoreProgress((prev) => ({ ...prev, ...partial }))
-          if (
-            typeof meta?.partialLongevityIndex === 'number' &&
-            allLongevityPillarsInOnlyKeys(toRun)
-          ) {
-            setLongevityIndexState(meta.partialLongevityIndex)
-          }
           const completed = Object.keys(partial).length
           const total = toRun.length
           const pct = total > 0 ? Math.min(98, 5 + (completed / total) * 90) : 5
@@ -651,14 +625,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       }
       const summary = (resp as { place_summary?: string }).place_summary
       setPlaceSummary(summary ?? null)
-      if (
-        typeof (resp as { longevity_index?: number }).longevity_index === 'number' &&
-        allLongevityPillarsInOnlyKeys(toRun)
-      ) {
-        setLongevityIndexState((resp as { longevity_index: number }).longevity_index)
-      } else if (!allLongevityPillarsInOnlyKeys(toRun)) {
-        setLongevityIndexState(null)
-      }
       if (typeof (resp as { status_signal?: number }).status_signal === 'number') {
         setStatusSignal((resp as { status_signal: number }).status_signal)
       }
@@ -698,12 +664,11 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         lat: place.lat,
         lon: place.lon,
         homefitScore: totalScore,
-        longevityScore: longevityIndex,
         happinessScore: happinessIndex,
         pillarScores,
         selectedPriorities,
       }),
-    [locationLabel, place.lat, place.lon, totalScore, longevityIndex, happinessIndex, pillarScores, selectedPriorities]
+    [locationLabel, place.lat, place.lon, totalScore, happinessIndex, pillarScores, selectedPriorities]
   )
 
   return (
@@ -748,7 +713,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       )}
 
       {/* Score Summary Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', marginBottom: '1.5rem' }} data-longevity-index>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', marginBottom: '1.5rem' }}>
 
         {/* Trovamo Score — spans full width */}
         <div style={{
@@ -774,23 +739,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           </div>
         </div>
 
-        {/* Longevity Index */}
-        <div style={{
-          background: 'var(--hf-bg-subtle)',
-          border: '1.5px solid var(--hf-border)',
-          borderRadius: 12,
-          padding: '1rem 1.25rem',
-        }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: '0.68rem', fontWeight: 700, color: 'var(--hf-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.4rem' }}>
-            Longevity <LongevityInfo />
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1, color: longevityIndex != null ? 'var(--c-teal-600)' : 'var(--hf-text-secondary)' }}>
-            {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
-          </div>
-        </div>
-
         {/* Happiness Index */}
         <div style={{
+          gridColumn: '1 / -1',
           background: 'var(--hf-bg-subtle)',
           border: '1.5px solid var(--hf-border)',
           borderRadius: 12,
@@ -981,22 +932,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
                       <PillarInfoIcon pillarKey={key} />
-                      {isLongevityPillar(key) && (
-                        <span
-                          className="tr-muted"
-                          title={LONGEVITY_COPY.tooltip}
-                          style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 600,
-                            padding: '0.2rem 0.45rem',
-                            borderRadius: 6,
-                            background: 'var(--hf-bg-subtle)',
-                            border: '1px solid var(--hf-border)',
-                          }}
-                        >
-                          Longevity
-                        </span>
-                      )}
                       {score != null && (() => {
                         const ft = getPillarFailureType({ status: score.status, error: score.failed ? 'PillarExecutionFailed' : undefined, data_quality: score.data_quality })
                         const incomplete = ft === 'incomplete'

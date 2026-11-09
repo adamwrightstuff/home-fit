@@ -58,15 +58,6 @@ def apply_cascade(sc, new, dens, var, prox, nwalk):
     tsb["contribution"] = new_c
     sc["total_score"] = round(sc["total_score"] - old_c + new_c, 4)
 
-    lb = sc.get("longevity_index_breakdown")
-    if lb and "neighborhood_amenities" in lb and old:
-        factor = lb["neighborhood_amenities"] / old
-        old_l = lb["neighborhood_amenities"]
-        new_l = round(new * factor, 4)
-        lb["neighborhood_amenities"] = new_l
-        if "neighborhood_amenities" in sc.get("longevity_index_contributions", {}):
-            sc["longevity_index_contributions"]["neighborhood_amenities"] = new_l
-        sc["longevity_index"] = round(sc.get("longevity_index", 0) - old_l + new_l, 4)
     return old, new
 
 

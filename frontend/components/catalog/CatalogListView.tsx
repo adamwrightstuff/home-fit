@@ -233,7 +233,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
             const bar = (v: number | null, mode: CatalogMapIndexMode) => {
               if (v == null || !Number.isFinite(v)) return <span className="text-[var(--hf-text-tertiary)]">—</span>
               const ramp = catalogRampKey(
-                mode === 'homefit' ? 'homefit' : mode === 'longevity' ? 'longevity' : mode === 'happiness' ? 'happiness' : 'status'
+                mode === 'homefit' ? 'homefit' : mode === 'happiness' ? 'happiness' : 'status'
               )
               const fill = scoreBandFill(ramp, v)
               return (
@@ -293,9 +293,9 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       </td>
                     )
                   })() : (() => {
-                    const compositeV = indexMode === 'longevity' ? idx.longevity : indexMode === 'happiness' ? idx.happiness : null
+                    const compositeV = indexMode === 'happiness' ? idx.happiness : null
                     const displayV = compositeV ?? hf
-                    const rampKey = indexMode === 'longevity' ? 'longevity' : indexMode === 'happiness' ? 'happiness' : 'homefit'
+                    const rampKey = indexMode === 'happiness' ? 'happiness' : 'homefit'
                     return (
                       <td className="py-2 px-1">
                         <span className="text-sm font-bold tabular-nums" style={{ color: displayV != null ? scoreBandFill(catalogRampKey(rampKey), displayV) : 'var(--hf-text-tertiary)' }}>

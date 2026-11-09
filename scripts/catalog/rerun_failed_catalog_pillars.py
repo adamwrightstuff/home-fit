@@ -133,8 +133,6 @@ def recompute_totals(score: Dict[str, Any]) -> None:
         from pillars.composite_indices import build_total_score_breakdown
 
         score["total_score_breakdown"] = build_total_score_breakdown(pillars, alloc)
-        lic = score.get("longevity_index_contributions")
-        score["longevity_index_breakdown"] = dict(lic) if isinstance(lic, dict) and lic else {}
     except Exception:
         pass
 

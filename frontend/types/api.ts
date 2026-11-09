@@ -162,10 +162,6 @@ export interface ScoreResponse {
   /** Short factual summary (2–4 sentences) from pillar data; template-based, no LLM. */
   place_summary?: string;
   total_score: number;
-  /** Longevity Index: fixed blend of social_fabric, neighborhood_amenities, active_outdoors, natural_beauty, climate_risk, quality_education. Separate from total_score. */
-  longevity_index?: number;
-  /** Per-pillar contribution to longevity_index (same six pillars). */
-  longevity_index_contributions?: Record<string, number>;
   /** Archetype index (0–100): wealth, home cost, education mix, occupation, luxury POI presence (OSM + fallback). Needs four pillars. API: status_signal. */
   status_signal?: number;
   /** Detailed breakdown for archetype index (archetype, status_label, status_insight, top_drivers, analysis_radius_note). */
@@ -258,12 +254,10 @@ export interface RecomputePayload {
 
 /** Response from POST /score/recompute_composites. */
 export interface RecomputeResponse {
-  longevity_index: number | null;
-  longevity_index_contributions: Record<string, number> | null;
   status_signal: number | null;
   status_signal_breakdown: StatusSignalBreakdown | null;
   happiness_index: number | null;
   happiness_index_breakdown: Record<string, unknown> | null;
-  /** Backend composite index spec versions (longevity / status_signal / happiness). */
+  /** Backend composite index spec versions (status_signal / happiness). */
   indices_version?: Record<string, string>;
 }

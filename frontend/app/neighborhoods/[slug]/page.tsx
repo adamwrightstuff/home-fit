@@ -11,7 +11,6 @@ import {
   PILLAR_META,
   getScoreBand,
   HOMEFIT_COPY,
-  LONGEVITY_COPY,
   HAPPINESS_INDEX_COPY,
 } from '@/lib/pillars'
 import { CATALOG_METRO_META } from '@/lib/catalogMetros'
@@ -166,18 +165,12 @@ export default async function NeighborhoodPage({
       </div>
 
       {/* Score hero */}
-      <section className="mb-6 grid grid-cols-3 gap-3" aria-label="Scores">
+      <section className="mb-6 grid grid-cols-2 gap-3" aria-label="Scores">
         <ScoreHero
           label="HomeFit"
           value={typeof score.total_score === 'number' ? score.total_score : null}
           tooltip={HOMEFIT_COPY.tooltip}
           accent="var(--hf-primary-1)"
-        />
-        <ScoreHero
-          label="Longevity"
-          value={typeof score.longevity_index === 'number' ? score.longevity_index : null}
-          tooltip={LONGEVITY_COPY.tooltip}
-          accent="var(--hf-primary-2)"
         />
         <ScoreHero
           label="Happiness"

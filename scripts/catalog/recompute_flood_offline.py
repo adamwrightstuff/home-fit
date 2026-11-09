@@ -88,9 +88,7 @@ def recompute_place(score: Dict[str, Any], features: Optional[list], request_fai
 
 
 def update_composites(score: Dict[str, Any]) -> None:
-    """Carry a changed climate pillar into total_score_breakdown, total_score and the longevity index (offline)."""
-    from pillars.composite_indices import compute_longevity_index
-
+    """Carry a changed climate pillar into total_score_breakdown and total_score (offline)."""
     pillars = score["livability_pillars"]
     cr = pillars["climate_risk"]
     tb = (score.get("total_score_breakdown") or {}).get("climate_risk")
@@ -100,11 +98,6 @@ def update_composites(score: Dict[str, Any]) -> None:
     old_total = score.get("total_score")
     if isinstance(old_total, (int, float)) and isinstance(old_sum, (int, float)):
         score["total_score"] = round(old_total + (cr["contribution"] - old_sum), 2)
-    li, contrib = compute_longevity_index(pillars, token_allocation=score.get("token_allocation"), only_pillars=None)
-    score["longevity_index"] = round(li, 2)
-    score["longevity_index_contributions"] = contrib
-    if isinstance(score.get("longevity_index_breakdown"), dict):
-        score["longevity_index_breakdown"] = dict(contrib)
 
 
 def main() -> int:

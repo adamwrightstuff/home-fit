@@ -60,8 +60,6 @@ from pillars.status_signal import compute_status_signal, compute_status_signal_w
 from pillars.happiness_index import compute_happiness_index_with_breakdown
 from pillars.composite_indices import (
     build_total_score_breakdown,
-    compute_longevity_index,
-    should_emit_longevity_index,
     attach_indices_version,
     backfill_status_happiness_if_missing,
     recompute_composites_from_payload,
@@ -206,7 +204,7 @@ class BatchLocationResult(BaseModel):
 
 
 class RecomputeCompositesRequest(BaseModel):
-    """Payload for recomputing longevity_index, status_signal, happiness_index from existing pillar data."""
+    """Payload for recomputing status_signal, happiness_index from existing pillar data."""
     livability_pillars: Dict[str, Any]
     location_info: Optional[Dict[str, Any]] = None
     coordinates: Optional[Dict[str, Any]] = None
@@ -819,8 +817,7 @@ def _derive_token_allocation_for_scoring(
     use_school_scoring: bool,
 ) -> Tuple[Dict[str, float], str, Optional[Dict[str, str]]]:
     """
-    Token weights for HomeFit total score and longevity eligibility.
-    Must run before pillar execution when partial job longevity is computed per pillar.
+    Token weights for the HomeFit total score.
     """
     if priorities_dict:
         token_allocation = parse_priority_allocation(priorities_dict)
@@ -1320,11 +1317,6 @@ def _apply_allocation_to_cached_response(
 
     _set_pillar_status(livability_pillars, {})  # Ensure status/quality_tier on cached pillars
     response["total_score"] = round(total_score, 2)
-    longevity_index, longevity_contributions = compute_longevity_index(
-        livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
-    )
-    response["longevity_index"] = longevity_index
-    response["longevity_index_contributions"] = longevity_contributions
     backfill_status_happiness_if_missing(response)
     attach_indices_version(response)
 
@@ -1346,7 +1338,6 @@ def _compute_single_score_internal(
     request: Optional[Request] = None,
     premium_code: Optional[str] = None,
     on_pillar_complete: Optional[Callable[[str, float], None]] = None,
-    on_partial_longevity: Optional[Callable[[float], None]] = None,
     only_pillars: Optional[set[str]] = None,
     natural_beauty_preference: Optional[List[str]] = None,
     diversity_preference: Optional[List[str]] = None,
@@ -1898,19 +1889,7 @@ def _compute_single_score_internal(
             token_allocation[k] = vacation_alloc.get(k, 0.0)
         allocation_type = f"vacation_{(trip_type or 'city').lower()}"
 
-    _partial_scores_for_longevity: Dict[str, float] = {}
-
     def _pillar_done_notify(pname: str, sc: float) -> None:
-        _partial_scores_for_longevity[pname] = sc
-        if on_partial_longevity and should_emit_longevity_index(only_pillars):
-            try:
-                mini_lp = {k: {"score": v} for k, v in _partial_scores_for_longevity.items()}
-                li, _ = compute_longevity_index(
-                    mini_lp, token_allocation=token_allocation, only_pillars=only_pillars
-                )
-                on_partial_longevity(float(li))
-            except Exception as e:
-                logger.debug(f"on_partial_longevity skipped: {e}")
         if on_pillar_complete:
             try:
                 on_pillar_complete(pname, sc)
@@ -2429,12 +2408,6 @@ def _compute_single_score_internal(
         livability_pillars = {k: v for k, v in livability_pillars.items() if k in only_pillars}
 
     # Build response
-    longevity_index, longevity_contributions = compute_longevity_index(
-        livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
-    )
-    if not should_emit_longevity_index(only_pillars):
-        longevity_index = None
-        longevity_contributions = {}
     location_info = {"city": city, "state": state, "zip": zip_code}
     response = {
         "input": location,
@@ -2446,11 +2419,6 @@ def _compute_single_score_internal(
         "livability_pillars": livability_pillars,
         "place_summary": _build_place_summary(livability_pillars, location_info, only_pillars=None),
         "total_score": round(total_score, 2),
-        "longevity_index": longevity_index,
-        "longevity_index_contributions": longevity_contributions,
-        "longevity_index_breakdown": (
-            dict(longevity_contributions) if isinstance(longevity_contributions, dict) and longevity_contributions else {}
-        ),
         "total_score_breakdown": build_total_score_breakdown(livability_pillars, token_allocation),
         "token_allocation": token_allocation,
         "allocation_type": allocation_type,
@@ -2984,13 +2952,6 @@ def create_score_job(
         except Exception:
             pass
 
-    def _on_partial_longevity(li: float) -> None:
-        with _SCORE_JOBS_LOCK:
-            if job_id in _SCORE_JOBS:
-                _SCORE_JOBS[job_id]["partial_longevity_index"] = round(li, 2)
-                _SCORE_JOBS[job_id]["updated_at"] = time.time()
-        _sync_job_snap()
-
     def _on_pillar_complete(pillar_name: str, score: float) -> None:
         with _SCORE_JOBS_LOCK:
             if job_id in _SCORE_JOBS:
@@ -3022,7 +2983,6 @@ def create_score_job(
                 request=None,
                 premium_code=premium_code,
                 on_pillar_complete=_on_pillar_complete,
-                on_partial_longevity=_on_partial_longevity,
                 only_pillars=only_pillars,
                 natural_beauty_preference=natural_beauty_preference_parsed,
                 diversity_preference=diversity_preference_parsed,
@@ -3088,9 +3048,6 @@ def get_score_job(job_id: str):
     partial = job.get("partial")
     if partial:
         response["partial"] = partial
-    pli = job.get("partial_longevity_index")
-    if pli is not None:
-        response["partial_longevity_index"] = pli
     return response
 
 
@@ -4014,12 +3971,6 @@ async def _stream_score_with_progress(
         _set_pillar_status(livability_pillars, exceptions)
 
         # Build final response
-        longevity_index, longevity_contributions = compute_longevity_index(
-            livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
-        )
-        if not should_emit_longevity_index(only_pillars):
-            longevity_index = None
-            longevity_contributions = {}
         location_info = {"city": city, "state": state, "zip": zip_code}
         final_response = {
             "input": location,
@@ -4028,11 +3979,6 @@ async def _stream_score_with_progress(
             "livability_pillars": livability_pillars,
             "place_summary": _build_place_summary(livability_pillars, location_info, only_pillars=None),
             "total_score": round(total_score, 2),
-            "longevity_index": longevity_index,
-            "longevity_index_contributions": longevity_contributions,
-            "longevity_index_breakdown": (
-                dict(longevity_contributions) if isinstance(longevity_contributions, dict) and longevity_contributions else {}
-            ),
             "total_score_breakdown": build_total_score_breakdown(livability_pillars, token_allocation),
             "token_allocation": token_allocation,
             "allocation_type": allocation_type,
@@ -5050,7 +4996,7 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
 
     # Cap at 4
     chosen = [b[1] for b in blocks[:4]]
-    return " ".join(chosen) if chosen else f"{place} is scored across livability, longevity, and happiness. See the full breakdown below."
+    return " ".join(chosen) if chosen else f"{place} is scored across livability and happiness. See the full breakdown below."
 
 
 def _calculate_data_quality_summary(pillars: dict, area_type: str = None) -> dict:  # Changed from Dict to dict
@@ -5151,7 +5097,7 @@ def _calculate_data_quality_summary(pillars: dict, area_type: str = None) -> dic
 @app.post("/score/recompute_composites", dependencies=[Depends(require_proxy_auth)])
 def recompute_composites(body: RecomputeCompositesRequest):
     """
-    Recompute longevity_index, status_signal, and happiness_index from existing
+    Recompute status_signal and happiness_index from existing
     livability_pillars (no pillar re-run). Use when formula or baselines change
     or to refresh indices for a saved place.
     """

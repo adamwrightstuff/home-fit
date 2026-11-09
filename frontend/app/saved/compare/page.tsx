@@ -8,7 +8,7 @@ import { getSavedScore, type SavedScoreRow } from '@/lib/savedScores'
 import type { CatalogMapPlaceWithMetro } from '@/lib/catalogMapTypes'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/lib/reweight'
-import { PILLAR_META, PILLAR_ORDER, isLongevityPillar, isHappinessPillar, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, isHappinessPillar, type PillarKey } from '@/lib/pillars'
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import PillarInfoIcon from '@/components/PillarInfoIcon'
@@ -134,7 +134,6 @@ type ComparePillarSide = {
 type ComparePillarRow = {
   key: PillarKey
   meta: (typeof PILLAR_META)[PillarKey]
-  isLongevity: boolean
   isHappiness: boolean
   a: ComparePillarSide
   b: ComparePillarSide
@@ -243,8 +242,6 @@ function CompareContent() {
 
   const homefitA = typeof displayA?.total_score === 'number' ? displayA.total_score : null
   const homefitB = typeof displayB?.total_score === 'number' ? displayB.total_score : null
-  const longevityA = typeof displayA?.longevity_index === 'number' ? displayA.longevity_index : null
-  const longevityB = typeof displayB?.longevity_index === 'number' ? displayB.longevity_index : null
   const happinessA = typeof displayA?.happiness_index === 'number' ? displayA.happiness_index : null
   const happinessB = typeof displayB?.happiness_index === 'number' ? displayB.happiness_index : null
 
@@ -265,7 +262,6 @@ function CompareContent() {
       return {
         key,
         meta: PILLAR_META[key],
-        isLongevity: isLongevityPillar(key),
         isHappiness: isHappinessPillar(key),
         a: { score: scoreA, confidence: confA, hasScore: scoreA != null },
         b: { score: scoreB, confidence: confB, hasScore: scoreB != null },
@@ -493,9 +489,6 @@ function CompareContent() {
                   <div className="tr-muted" style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>
                     Trovamo Score
                   </div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.35rem', color: 'var(--hf-longevity-purple)' }}>
-                    {longevityA != null ? `Longevity ${longevityA.toFixed(1)}` : 'Longevity —'}
-                  </div>
                   <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.2rem', color: 'var(--hf-happiness-teal)' }}>
                     {happinessA != null ? `Happiness ${happinessA.toFixed(1)}` : 'Happiness —'}
                   </div>
@@ -531,9 +524,6 @@ function CompareContent() {
                   </div>
                   <div className="tr-muted" style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>
                     Trovamo Score
-                  </div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.35rem', color: 'var(--hf-homefit-green)' }}>
-                    {longevityB != null ? `Longevity ${longevityB.toFixed(1)}` : 'Longevity —'}
                   </div>
                   <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.2rem', color: 'var(--hf-happiness-teal)' }}>
                     {happinessB != null ? `Happiness ${happinessB.toFixed(1)}` : 'Happiness —'}
@@ -600,17 +590,6 @@ function CompareContent() {
                       {placeNameB}
                     </button>
                   </div>
-                </div>
-                <div className="tr-muted" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: 'var(--hf-homefit-green)',
-                    }}
-                  />
-                  <span>Longevity pillar</span>
                 </div>
               </div>
             </section>
@@ -702,21 +681,6 @@ function CompareContent() {
                             {p.meta.name}
                             <PillarInfoIcon pillarKey={p.key} />
                           </div>
-                          {p.isLongevity && (
-                            <div style={{ marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                              <span
-                                style={{
-                                  width: 8,
-                                  height: 8,
-                                  borderRadius: '50%',
-                                  background: 'var(--hf-homefit-green)',
-                                }}
-                              />
-                              <span className="tr-muted" style={{ fontSize: '0.8rem' }}>
-                                Longevity
-                              </span>
-                            </div>
-                          )}
                           {p.isHappiness && (
                             <div style={{ marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                               <span
