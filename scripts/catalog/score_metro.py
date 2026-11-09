@@ -24,7 +24,7 @@ Phases (all run unless --skip-* flags used):
   7. labels    — best-fit preference labels on NB
   8. schools   — charter/public flag on school arrays
   9. archs     — Claude-based archetype summaries (costs ~$5-15, requires ANTHROPIC_API_KEY)
- 10. compose   — recompute composites (longevity, status_signal, happiness_index)
+ 10. compose   — recompute composites (status_signal, happiness_index)
 
 Skip individual phases with --skip-baselines, --skip-batch, etc.
 Skip archs by default if ANTHROPIC_API_KEY is unset; override with --archs.

@@ -9,7 +9,7 @@ schools-disabled weight override (main.py _apply_schools_disabled_weight_overrid
 the pillar even though the data was computed. Since the scores exist, enabling the weight
 is a free offline reweight — no re-fetch.
 
-Education feeds only total_score (happiness/longevity don't reference it; status_signal's
+Education feeds only total_score (happiness doesn't reference it; status_signal's
 'education' is a separate census-attainment input, not this pillar). So the cascade is:
 add quality_education to each place's active pillar set, renormalize equal weights to 100,
 recompute every pillar's contribution and the total.

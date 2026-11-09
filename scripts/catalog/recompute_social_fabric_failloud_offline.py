@@ -12,7 +12,7 @@ weights: stability = (score - old_weights . other components) / 0.10 (accurate t
 score is rounded to 0.1; the effect on the new score is under 0.07). Only places with a missing component
 change score; every place gets summary.weights_used / components_missing and, where data is missing or
 the civic read is implausibly thin, a degraded flag. Run recompute_catalog_composites.py --in-place
---no-census afterwards for the composites that read social fabric (longevity, local scene, aura).
+--no-census afterwards for the composites that read social fabric (local scene, aura).
 
   PYTHONPATH=. python3 scripts/catalog/recompute_social_fabric_failloud_offline.py                  # dry run
   PYTHONPATH=. python3 scripts/catalog/recompute_social_fabric_failloud_offline.py --write --backup-dir <dir>

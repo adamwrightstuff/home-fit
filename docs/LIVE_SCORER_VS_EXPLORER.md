@@ -54,8 +54,8 @@ The Live Scorer has its own server-side equivalents. Any change to one must be m
 ### 10. neighborhood_beauty split in Explorer (2026-06-24)
 The Explorer weight panel splits `neighborhood_beauty` into two independently weighted pillars:
 - **`natural_beauty`** — the stored `natural_beauty_score` sub-score from the NB breakdown,
-  optionally re-biased by scenery preference (mountains/ocean/etc.). Feeds Longevity and
-  Happiness indices.
+  optionally re-biased by scenery preference (mountains/ocean/etc.). Feeds the
+  Happiness index.
 - **`built_environment`** — a client-computed area-type **match score** (0–100) based on how
   closely the place's `effective_area_type` matches the user's preferred neighborhood type
   (Urban Core / Urban Neighborhood / Suburban / Exurban / Rural). Uses an asymmetric distance
@@ -64,7 +64,7 @@ The Explorer weight panel splits `neighborhood_beauty` into two independently we
 - The original `neighborhood_beauty` pillar is zeroed out in the catalog composite so it
   doesn't double-count. The live scorer still returns the merged `neighborhood_beauty` score
   and is unaffected.
-- Longevity and Happiness indices now reference `natural_beauty` (client-side catalog only);
+- The Happiness index now references `natural_beauty` (client-side catalog only);
   the backend Python indices still use `neighborhood_beauty`. Mirror when the live scorer
   is updated.
 

@@ -30,7 +30,7 @@ Run Python entrypoints from the **repository root** with `PYTHONPATH=.` unless a
 | `batch_score_place_catalog.py` | CSV catalog → API → JSONL scores. |
 | `rerun_failed_catalog_pillars.py` | Fix failed pillars in JSONL → merged JSONL. |
 | `rescore_catalog_pillar.py` | Rescore chosen pillar(s); optional completeness/confidence filters; `--dry-run` lists only. |
-| `recompute_catalog_composites.py` | Refresh longevity / status_signal / happiness from existing JSONL (no pillar re-run). |
+| `recompute_catalog_composites.py` | Refresh status_signal / happiness from existing JSONL (no pillar re-run). |
 | `export_catalog_scores_csv.py` | JSONL → wide CSV. |
 | `report_catalog_pillar_health.py` | JSONL → pillar health CSVs. |
 | `report_catalog_confidence_below.py` | Count places under a confidence threshold. |
