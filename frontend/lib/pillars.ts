@@ -1,6 +1,5 @@
 export type PillarKey =
   | 'natural_beauty'
-  | 'built_environment'
   | 'neighborhood_amenities'
   | 'active_outdoors'
   | 'healthcare_access'
@@ -162,12 +161,6 @@ export const PILLAR_META: Record<
     description:
       'Two parts: how green your streets are (tree canopy and green view) and how scenic the setting is (terrain and water).',
   },
-  built_environment: {
-    icon: '🏙️',
-    name: 'Built Environment',
-    description:
-      'Architectural variety, historic fabric, and urban design quality. Rewards walkable streetscapes and penalizes strip-mall sprawl.',
-  },
   neighborhood_amenities: {
     icon: '🛒',
     name: 'Daily Amenities',
@@ -307,8 +300,6 @@ export function getPillarFailureType(pillar: {
 export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
   natural_beauty:
     'Two kinds of beauty: how green the streets are (tree canopy and green view) and how scenic the setting is (hills, mountains and water). Each part is checked against public beauty ratings; how the two are weighted together is our judgment. Pick a scenery preference to lean toward greenery or toward mountains, ocean, lakes and rivers.',
-  built_environment:
-    'How well the neighborhood type matches what you are looking for — urban core, urban neighborhood, suburban, exurban, or rural. Score reflects how closely the area type aligns with your preference.',
   neighborhood_amenities:
     'Being able to walk to cafés, groceries, and daily needs reduces car dependence and encourages routine activity. Neighborhoods with a mix of local businesses tend to foster social interaction and a stronger sense of community.',
   active_outdoors:

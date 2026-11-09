@@ -156,7 +156,7 @@ def resolve(
         # Most pillars query Overpass. If it is down, every retry just waits out timeouts (minutes per place) and
         # fails, so check once per round whenever any retry depends on it, not only for systemic failures.
         overpass_pillars = {"active_outdoors", "neighborhood_amenities", "healthcare_access", "natural_beauty",
-                            "built_environment", "social_fabric", "public_transit_access"}
+                            "social_fabric", "public_transit_access"}
         if result["systemic"] or any(overpass_pillars & ps for ps in todo.values()):
             problem = dependency_check(rows)
             if problem:

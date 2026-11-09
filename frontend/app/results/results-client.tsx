@@ -17,7 +17,6 @@ import { getScoreSinglePillar, getScoreWithProgress, recomputeComposites } from 
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { applyProfileToScore } from '@/lib/personalOverlay'
 import { useProfile } from '@/hooks/useProfile'
-import { builtEnvMatchScore, type BuiltEnvPreference } from '@/lib/nbPreference'
 import {
   buildResultsCacheKey,
   buildResultsUrl,
@@ -45,8 +44,6 @@ type Normalized = Required<Pick<ResultsRouteParams, 'location' | 'prioritiesJson
     include_chains: boolean
     enable_schools: boolean
     natural_beauty_preference: string | null
-    built_env_preference: string | null
-    built_density_preference: string | null
     diversity_preference: string | null
     political_preference: string | null
     household_income: number | null
@@ -84,8 +81,6 @@ function normalizeSearchParams(sp: RawSearchParams): Normalized | null {
   })()
 
   const natural_beauty_preference = firstParam(sp.natural_beauty_preference)
-  const built_env_preference = firstParam(sp.built_env_preference)
-  const built_density_preference = firstParam(sp.built_density_preference)
   const diversity_preference = firstParam(sp.diversity_preference)
   const political_preference = firstParam(sp.political_preference)
 
@@ -103,8 +98,6 @@ function normalizeSearchParams(sp: RawSearchParams): Normalized | null {
     include_chains,
     enable_schools,
     natural_beauty_preference: natural_beauty_preference && natural_beauty_preference.trim() ? natural_beauty_preference : null,
-    built_env_preference: built_env_preference && ['urban_core','urban_residential','suburban','exurban','rural'].includes(built_env_preference) ? built_env_preference : null,
-    built_density_preference: built_density_preference && built_density_preference.trim() ? built_density_preference : null,
     diversity_preference: diversity_preference && diversity_preference.trim() ? diversity_preference : null,
     political_preference: political_preference && ['progressive', 'conservative'].includes(political_preference) ? political_preference : null,
     household_income,
@@ -209,8 +202,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           return null
         }
       })(),
-      built_env_preference: normalized.built_env_preference as any,
-      built_density_preference: normalized.built_density_preference as any,
       diversity_preference: (() => {
         if (!normalized.diversity_preference) return null
         try {
@@ -350,26 +341,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
     (next: SearchOptions) => {
       if (!normalized) return
 
-      // built_env_preference: apply client-side (no rescore needed — pure lookup)
-      if (next.built_env_preference !== searchOptions?.built_env_preference && finalResponse) {
-        const areaType = (finalResponse.livability_pillars as any)?.built_environment?.details?.effective_area_type ?? null
-        const newScore = next.built_env_preference
-          ? builtEnvMatchScore(areaType, next.built_env_preference as BuiltEnvPreference)
-          : null
-        const patchedResponse: ScoreResponse = {
-          ...finalResponse,
-          livability_pillars: {
-            ...finalResponse.livability_pillars,
-            built_environment: {
-              ...(finalResponse.livability_pillars as any).built_environment,
-              score: newScore,
-            },
-          } as ScoreResponse['livability_pillars'],
-        }
-        const reweighted = reweightScoreResponseFromPriorities(patchedResponse, next.priorities)
-        setFinalResponse(reweighted)
-      }
-
       const updated: ResultsRouteParams = {
         location: normalized.location,
         prioritiesJson: JSON.stringify(next.priorities),
@@ -377,14 +348,12 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
         include_chains: Boolean(next.include_chains),
         enable_schools: Boolean(next.enable_schools),
         natural_beauty_preference: next.natural_beauty_preference?.length ? JSON.stringify(next.natural_beauty_preference) : null,
-        built_env_preference: next.built_env_preference ?? null,
-        built_density_preference: next.built_density_preference ?? null,
         diversity_preference: next.diversity_preference?.length ? JSON.stringify(next.diversity_preference) : null,
         political_preference: next.political_preference ?? normalized.political_preference ?? null,
       }
       router.replace(buildResultsUrl(updated))
     },
-    [normalized, router, searchOptions?.built_env_preference, finalResponse]
+    [normalized, router]
   )
 
   const handleRescorePillar = useCallback(
@@ -400,8 +369,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           include_chains: normalized.include_chains,
           enable_schools: normalized.enable_schools,
           natural_beauty_preference: normalized.natural_beauty_preference ?? undefined,
-          built_env_preference: normalized.built_env_preference ?? undefined,
-          built_density_preference: normalized.built_density_preference ?? undefined,
           diversity_preference: normalized.diversity_preference ?? undefined,
           political_preference: normalized.political_preference ?? undefined,
         })
@@ -449,8 +416,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           natural_beauty_preference: options.natural_beauty_preference?.length
             ? JSON.stringify(options.natural_beauty_preference)
             : undefined,
-          built_env_preference: options.built_env_preference ?? undefined,
-          built_density_preference: options.built_density_preference ?? undefined,
           diversity_preference:
             options.diversity_preference && options.diversity_preference.length > 0
               ? JSON.stringify(options.diversity_preference)
@@ -493,8 +458,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           options.natural_beauty_preference && options.natural_beauty_preference.length > 0
             ? JSON.stringify(options.natural_beauty_preference)
             : normalized.natural_beauty_preference,
-        built_env_preference: options.built_env_preference ?? normalized.built_env_preference,
-        built_density_preference: options.built_density_preference ?? normalized.built_density_preference,
         diversity_preference:
           options.diversity_preference && options.diversity_preference.length > 0
             ? JSON.stringify(options.diversity_preference)
@@ -530,8 +493,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           ...(searchOptions.natural_beauty_preference?.length
             ? { natural_beauty_preference: JSON.stringify(searchOptions.natural_beauty_preference) }
             : {}),
-          ...(searchOptions.built_env_preference ? { built_env_preference: searchOptions.built_env_preference } : {}),
-          ...(searchOptions.built_density_preference ? { built_density_preference: searchOptions.built_density_preference } : {}),
           ...(searchOptions.diversity_preference?.length
             ? { diversity_preference: JSON.stringify(searchOptions.diversity_preference) }
             : {}),
@@ -668,7 +629,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
               include_chains={normalized.include_chains}
               enable_schools={normalized.enable_schools}
               natural_beauty_preference={normalized.natural_beauty_preference ?? undefined}
-              built_density_preference={normalized.built_density_preference ?? undefined}
               diversity_preference={normalized.diversity_preference ?? undefined}
               political_preference={normalized.political_preference ?? undefined}
               on_complete={(resp) => {

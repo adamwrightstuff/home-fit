@@ -53,7 +53,6 @@ def main() -> int:
             disable_enhancers=True,
             precomputed_tree_canopy_5km=None,
             density=None,
-            form_context=None,
         )
         rows.append(
             {

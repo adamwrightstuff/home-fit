@@ -4,7 +4,7 @@
 #
 # Set HOMEFIT_API_BASE and HOMEFIT_PROXY_SECRET, then e.g.:
 #   ./scripts/ops/catalog_rescore_pillar_completeness_threshold.sh
-#   PILLAR=built_beauty TH=0.85 ./scripts/ops/catalog_rescore_pillar_completeness_threshold.sh
+#   PILLAR=natural_beauty TH=0.85 ./scripts/ops/catalog_rescore_pillar_completeness_threshold.sh
 
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

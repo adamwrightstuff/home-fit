@@ -69,7 +69,6 @@ def get_natural_beauty_score(lat: float, lon: float) -> Tuple[float, Dict]:
             disable_enhancers=False,
             precomputed_tree_canopy_5km=None,
             density=None,
-            form_context=None
         )
         return float(calc.get("score", 0.0) or 0.0), calc
     except Exception as e:

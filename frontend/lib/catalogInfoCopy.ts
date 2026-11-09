@@ -53,25 +53,25 @@ export const TRAJECTORY_COPY: Record<string, InfoCopy> = {
 export const SCENE_COPY: Record<string, InfoCopy> = {
   High: {
     title: 'Vibrant Scene',
-    body: 'Independent restaurants, cafes, shops, and cultural spots create a lively neighborhood with plenty to do close to home. Expect more walkable streets, spontaneous activity, and a stronger local identity.',
-    detail: 'Based on how many of the cafes, bars, restaurants, galleries, bookstores and record stores nearby (for towns, inside the town boundary) are galleries, bookstores, record stores and hangouts, compared with places of similar density. A rough guide from OpenStreetMap data, not a verified rating.',
+    body: 'A lot is going on within a short walk: many independent cafes, bars, restaurants, galleries, bookstores and theaters. Expect plenty to do close to home and busy streets.',
+    detail: 'Based on the number of independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters within about 0.75 miles, from OpenStreetMap. Vibrant is 71 or more, roughly the top 15% of places we score. It measures how much is going on, not what kind of places they are. The cut-offs are rough and not validated.',
   },
   Some: {
     title: 'Some Scene',
-    body: 'There is enough local activity to give the neighborhood character, but it is not buzzing from block to block. You\'ll find places to go without the constant energy of a major neighborhood destination.',
-    detail: 'Based on how many of the cafes, bars, restaurants, galleries, bookstores and record stores nearby (for towns, inside the town boundary) are galleries, bookstores, record stores and hangouts, compared with places of similar density. A rough guide from OpenStreetMap data, not a verified rating.',
+    body: 'There is enough local activity to give the area character, but it is not buzzing from block to block. You will find places to go without the constant energy of a major destination.',
+    detail: 'Based on the number of independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters within about 0.75 miles, from OpenStreetMap. Some is 13 to 70. The cut-offs are rough and not validated; places with few mapped venues can read lower than they feel.',
   },
   Low: {
-    title: 'Residential',
-    body: 'This is primarily a place to live rather than a place people go for the local scene. Streets tend to be quieter, with fewer independent businesses and less pedestrian activity.',
-    detail: 'Based on the concentration of independent restaurants, cafes, boutiques, cultural venues, and other experience-oriented businesses relative to the surrounding area.',
+    title: 'Quiet Area',
+    body: 'This is mostly a place to live rather than a place people go out. Streets tend to be quieter, with few independent places to go nearby.',
+    detail: 'Based on the number of independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters within about 0.75 miles, from OpenStreetMap. Quiet is under 13. Places with few mapped venues can read lower than they feel.',
   },
 }
 
 export const AURA_COPY: InfoCopy = {
   title: 'Aura',
-  body: 'Aura marks a neighborhood with a standout local scene, backed by strong everyday livability. It goes to the top 5% of places in each metro.',
-  detail: 'Scored mostly on local scene (independent cafés, bars, bookstores and galleries), then livability, with a small weight on socioeconomic standing. It is ranked within each metro, so it shows how a neighborhood compares with others in its own region, and a place needs a local scene score of at least 45 to qualify. Job centers with more than five workers per resident are excluded.',
+  body: 'Aura marks a neighborhood with a lot going on, a strong mix of independent cafes, bars and culture, and an affluent or elite resident profile. It is rare.',
+  detail: 'A place gets Aura only if it has a Vibrant local scene (71 or more independent venues within about 0.75 miles), a high mix of independent culture and hangout venues compared with places of similar density, and a status class of Affluent or Elite. Job centers with more than five workers per resident are excluded. The cut-offs are rough judgments and not validated.',
 }
 
 export const INDEX_COPY: Record<string, InfoCopy> = {

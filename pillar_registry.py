@@ -27,7 +27,6 @@ SCORED_PILLARS: Tuple[str, ...] = (
 
 # Opt-in filters. They take a priority like a pillar but are not scored pillars.
 FILTER_PILLARS: Tuple[str, ...] = (
-    "built_environment",
     "political_lean",
     # Diversity is a preference, not a quality score (owner decision 2026-10-28): weight 0 unless the user sets it.
     "diversity",

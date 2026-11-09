@@ -99,7 +99,6 @@ export interface LivabilityPillar {
 
 export interface LivabilityPillars {
   active_outdoors: LivabilityPillar;
-  built_environment?: LivabilityPillar;
   natural_beauty?: LivabilityPillar;
   neighborhood_amenities: LivabilityPillar;
   air_travel_access: LivabilityPillar;
@@ -216,10 +215,6 @@ export interface ScoreRequestParams {
   only?: string;
   /** Natural Beauty preference: JSON array of 1–2 of mountains, ocean, lakes_rivers, canopy. */
   natural_beauty_preference?: string;
-  /** Built Environment area-type preference: urban_core | urban_residential | suburban | exurban | rural. */
-  built_env_preference?: string;
-  /** Built Environment density: spread_out_residential | walkable_residential | dense_urban_living. */
-  built_density_preference?: string;
   /** Diversity: JSON array of race, income, and/or age (e.g. '["race","income"]'). Omitted = average all dimensions with data. */
   diversity_preference?: string;
   /** Political preference: "progressive" | "conservative". Omitted = no preference (political_lean pillar weight zeroed out). */

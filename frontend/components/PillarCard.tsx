@@ -45,12 +45,6 @@ interface PillarCardProps {
   naturalBeautyPreference?: string[] | null
   /** Natural Beauty only: when provided, show scenery preference chips and call with new value (can trigger rescore). */
   onNaturalBeautyPreferenceChange?: (preference: string[] | null) => void
-  /** Built Environment only: area-type preference (instant client-side match score). */
-  /** Built Environment only: when provided, show area-type chips and call with new value (no rescore needed). */
-  /** Built Environment only: density preference applied when scoring. */
-  builtDensityPreference?: string | null
-  /** Built Environment only: update density preference (shown with chips; use with Rescore). */
-  onBuiltDensityPreferenceChange?: (value: string | null) => void
   /** Demographic diversity only: which mix dimensions to emphasize. */
   diversityPreference?: string[] | null
   /** Demographic diversity only: change dimension weights (use with Rescore). */
@@ -72,15 +66,6 @@ const NATURAL_BEAUTY_PREFERENCE_CHIPS: Array<{ value: string | null; label: stri
   { value: 'ocean', label: 'Ocean' },
   { value: 'lakes_rivers', label: 'Lakes & rivers' },
   { value: 'canopy', label: 'Greenery' },
-]
-
-const BUILT_DENSITY_CHIPS: Array<{
-  value: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living'
-  label: string
-}> = [
-  { value: 'spread_out_residential', label: 'Spread out' },
-  { value: 'walkable_residential', label: 'Walkable' },
-  { value: 'dense_urban_living', label: 'Downtown' },
 ]
 
 function isRecord(value: unknown): value is Record<string, any> {
@@ -188,9 +173,6 @@ const METRIC_EXPLAINERS: Record<string, string> = {
   'neighborhood_amenities:Businesses within ~0.6 mi': 'Count of mapped shops and services used for walkability near home.',
   'neighborhood_amenities:Typical distance to businesses': 'Median distance to businesses we found—shorter usually means easier errands.',
   'neighborhood_amenities:Places within ~10 min walk': 'Rough count within about half a mile (≈10 minute walk).',
-  'built_environment:Built form': 'High-level character of the built area (e.g. historic urban vs suburban) from OSM signals.',
-  'built_environment:Streetscape tags': 'Short tags from the map that describe the streetscape (e.g. rowhouse, historic).',
-  'built_environment:Median year built': 'Typical building age nearby—older can mean more character, not always “better.”',
   'healthcare_access:Hospitals in search': 'Major hospitals found in the OSM search used for this pillar.',
   'healthcare_access:Nearest hospital': 'Road distance to the closest hospital with a usable distance.',
   'healthcare_access:Pharmacies nearby': 'Pharmacies with distance in the search area.',
@@ -245,8 +227,6 @@ export default function PillarCard({
   onImportanceChange,
   naturalBeautyPreference,
   onNaturalBeautyPreferenceChange,
-  builtDensityPreference,
-  onBuiltDensityPreferenceChange,
   diversityPreference,
   onDiversityPreferenceChange,
   schoolsPremiumSection,
@@ -280,21 +260,7 @@ export default function PillarCard({
       ? null
       : typeof pillar.score === 'number' && Number.isFinite(pillar.score) ? pillar.score : null
 
-  // Built Environment: the useful metrics live under details.architectural_analysis.metrics.
-  // Some summary fields are placeholders (often zeros), so override them when available.
-  const builtMetrics = pillar_key === 'built_environment' ? pillar.details?.architectural_analysis?.metrics : null
-  const summary =
-    pillar_key === 'built_environment' && isRecord(builtMetrics)
-      ? {
-          ...rawSummary,
-          height_diversity: builtMetrics.height_diversity ?? rawSummary.height_diversity,
-          type_diversity: builtMetrics.type_diversity ?? rawSummary.type_diversity,
-          footprint_variation: builtMetrics.footprint_variation ?? rawSummary.footprint_variation,
-          built_coverage_ratio: builtMetrics.built_coverage_ratio ?? rawSummary.built_coverage_ratio,
-          diversity_score:
-            builtMetrics.diversity_score ?? rawSummary.diversity_score ?? pillar.details?.architectural_analysis?.score,
-        }
-      : detailsSource ?? {}
+  const summary = detailsSource ?? {}
 
   const locationLabel = placeLabel || 'This area'
   const pillarNarrative = getPillarNarrative(pillar_key, locationLabel, pillar as unknown as Record<string, unknown>)
@@ -704,51 +670,6 @@ export default function PillarCard({
                   ) : (
                     displayPreference ? <>{' '}{displayPreference.join(', ')}</> : null
                   )}
-                </div>
-              )
-            })()}
-            {pillar_key === 'built_environment' && (() => {
-              const dens = builtDensityPreference ?? null
-              const canDens = Boolean(onBuiltDensityPreferenceChange)
-              const densLabel = dens ? BUILT_DENSITY_CHIPS.find((d) => d.value === dens)?.label : null
-              return (
-                <div style={{ marginBottom: canDens ? '0.85rem' : '0.5rem' }}>
-                  <div>
-                    <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>Density:</span>
-                    {canDens ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
-                        {BUILT_DENSITY_CHIPS.map(({ value, label }) => {
-                          const selected = dens === value
-                          return (
-                            <button
-                              key={value}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onBuiltDensityPreferenceChange!(selected ? null : value)
-                              }}
-                              disabled={rescoring}
-                              style={{
-                                padding: '0.35rem 0.65rem',
-                                borderRadius: 8,
-                                fontSize: '0.85rem',
-                                fontWeight: selected ? 600 : 400,
-                                background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
-                                color: selected ? 'white' : 'var(--hf-text-secondary)',
-                                border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
-                                cursor: rescoring ? 'not-allowed' : 'pointer',
-                                opacity: rescoring ? 0.7 : 1,
-                              }}
-                            >
-                              {label}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    ) : densLabel ? (
-                      <span style={{ marginLeft: '0.35rem' }}>{densLabel}</span>
-                    ) : null}
-                  </div>
                 </div>
               )
             })()}

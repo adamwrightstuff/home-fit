@@ -76,7 +76,7 @@ def process_row(row: dict, delay: float = 1.5) -> tuple[bool, str]:
     new_overpass_status = "overpass_ok" if (parks or playgrounds or facilities) else "overpass_empty"
 
     # Recompute daily only
-    baseline_context = get_baseline_context(area_type=area_type, form_context=None, pillar_name="active_outdoors")
+    baseline_context = get_baseline_context(area_type=area_type, pillar_name="active_outdoors")
     expectations = get_contextual_expectations(baseline_context, "active_outdoors") or {}
     new_daily = _score_daily_urban_outdoors_v2(parks, playgrounds, facilities, area_type, expectations)
 

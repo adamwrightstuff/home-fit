@@ -5,7 +5,7 @@ Local mirror of Trovamo's filter + weight UI — all levers configurable, no har
 Mirrors:
   - CatalogWeightPanel  → --weight <pillar>=<None|Low|Medium|High>
   - FilterSheet chips   → --archetype, --trajectory, --local-scene, --political-lean,
-                          --housing, --nb-pref, --ao-pref, --waterfront-sub, --built-form
+                          --housing, --nb-pref, --ao-pref, --waterfront-sub
   - Saves/loads profile → --profile <path.json>  (--save-profile to write current flags)
 
 Usage:
@@ -306,13 +306,6 @@ def passes_hard_filters(row: dict, cfg: dict) -> tuple[bool, str]:
         if local_scene == "Some" and ls not in ("High", "Some"):
             return False, f"local_scene={ls}"
 
-    built_forms = cfg.get("built_forms", [])
-    if built_forms:
-        be_summary = (lp.get("built_environment") or {}).get("summary") or {}
-        built_form = be_summary.get("built_form_label") if isinstance(be_summary, dict) else None
-        if built_form not in built_forms:
-            return False, f"built_form={built_form}"
-
     political_lean = cfg.get("political_lean", [])
     if political_lean:
         pl_bd = (lp.get("political_lean") or {}).get("breakdown") or {}
@@ -368,8 +361,6 @@ def score_row(row: dict, weights: dict[str, int], nb_prefs: list[str], ao_prefs:
     pl_bd = (lp.get("political_lean") or {}).get("breakdown") or {}
     hs = score.get("housing_stock") or {}
     pct_ld = hs.get("pct_low_density") if isinstance(hs, dict) else None
-    be_summary = (lp.get("built_environment") or {}).get("summary") or {}
-    built_form = be_summary.get("built_form_label") if isinstance(be_summary, dict) else None
     lean_2024 = pl_bd.get("lean_2024") if isinstance(pl_bd, dict) else None
 
     display_pillars = [k for k in ALL_PILLARS if weights.get(k, 0) > 0]
@@ -392,7 +383,6 @@ def score_row(row: dict, weights: dict[str, int], nb_prefs: list[str], ao_prefs:
         "archetype":      ss.get("archetype") if isinstance(ss, dict) else None,
         "trajectory":     ss.get("trajectory") if isinstance(ss, dict) else None,
         "local_scene":    score.get("local_scene_bucket"),
-        "built_form":     built_form,
         "pct_low_density": pct_ld,
         "housing_type":   housing_type_for(pct_ld),
         "water_type":     water_type,
@@ -445,7 +435,6 @@ DEFAULT_PROFILE: dict = {
         "archetypes": [],
         "trajectories": [],
         "local_scene": "all",
-        "built_forms": [],
         "political_lean": [],
         "housing": [],
     },
@@ -498,8 +487,6 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Allow trajectory (Up-and-Coming, Stable, Declining). Repeatable. Empty = all.")
     p.add_argument("--local-scene", default=None, choices=["all", "Some", "High"],
                    help="Local scene minimum (all/Some/High)")
-    p.add_argument("--built-form", action="append", default=[], metavar="LABEL",
-                   help="Allow built form label. Repeatable. Empty = all.")
     p.add_argument("--political-lean", action="append", default=[], metavar="LABEL",
                    help="Allow political lean (strong_d/lean_d/moderate/lean_r/strong_r). Repeatable. Empty = all.")
     p.add_argument("--housing", action="append", default=[], metavar="TYPE",
@@ -544,8 +531,6 @@ def main(argv: Optional[list[str]] = None) -> None:
         filters["trajectories"] = args.trajectory
     if args.local_scene:
         filters["local_scene"] = args.local_scene
-    if args.built_form:
-        filters["built_forms"] = args.built_form
     if args.political_lean:
         filters["political_lean"] = args.political_lean
     if args.housing:
@@ -564,7 +549,6 @@ def main(argv: Optional[list[str]] = None) -> None:
         "archetypes":     filters.get("archetypes", []),
         "trajectories":   filters.get("trajectories", []),
         "local_scene":    filters.get("local_scene", "all"),
-        "built_forms":    filters.get("built_forms", []),
         "political_lean": filters.get("political_lean", []),
         "housing":        filters.get("housing", []),
         "nb_prefs":       prefs.get("nb", []),

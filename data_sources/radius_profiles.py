@@ -30,7 +30,6 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
     - neighborhood_amenities: {query_radius_m, walkable_distance_m}
     - public_transit_access: {routes_radius_m}
     - healthcare_access: {fac_radius_m, pharm_radius_m}
-    - built_environment: {architectural_diversity_radius_m}
     - natural_beauty: {tree_canopy_radius_m, context_radius_m (optional)}
     - air_travel_access: {search_radius_km}
     - quality_education: {search_radius_miles}
@@ -99,23 +98,23 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
         # rural or unknown
         return {"fac_radius_m": 20000, "pharm_radius_m": 8000}
 
-    if p in {"built_environment", "natural_beauty"}:
+    if p == "natural_beauty":
         # Tree radius adjustments:
         # - urban_historic and urban_residential: 800m (tighter for dense urban areas)
         # - urban_core: 1000m
         # - suburban: 1000-2000m (keep wider for suburban)
         # - neighborhood scope: 1000m (stays within neighborhood boundaries)
         if s == "neighborhood":
-            return {"tree_canopy_radius_m": 1000, "architectural_diversity_radius_m": 2000}
+            return {"tree_canopy_radius_m": 1000}
         # Check for urban_historic/urban_residential first (before urban_core check)
         # Use original area_type (a) which may be lowercase, check both cases
         a_lower = a.lower()
         if a_lower in ("urban_historic", "historic_urban", "urban_residential"):
-            return {"tree_canopy_radius_m": 800, "architectural_diversity_radius_m": 2000}
+            return {"tree_canopy_radius_m": 800}
         if a_lower == "urban_core":
-            return {"tree_canopy_radius_m": 1000, "architectural_diversity_radius_m": 2000}
+            return {"tree_canopy_radius_m": 1000}
         # suburban, exurban, rural: keep 1-2km radius
-        return {"tree_canopy_radius_m": 2000, "architectural_diversity_radius_m": 2000}
+        return {"tree_canopy_radius_m": 2000}
 
     if p == "air_travel_access":
         # Search within 100km for airports by default

@@ -244,7 +244,7 @@ def test_passes_political_strong_r_excluded():
 # ---------------------------------------------------------------------------
 
 def _make_row(archetype="Affluent", trajectory="Arrived", local_scene="High",
-               built_form="Historic urban fabric", lean_2024=0.3, pct_low=0.50) -> dict:
+               lean_2024=0.3, pct_low=0.50) -> dict:
     return {
         "success": True,
         "score": {
@@ -252,7 +252,6 @@ def _make_row(archetype="Affluent", trajectory="Arrived", local_scene="High",
             "local_scene_bucket": local_scene,
             "housing_stock": {"pct_low_density": pct_low},
             "livability_pillars": {
-                "built_environment": {"summary": {"built_form_label": built_form}},
                 "political_lean": {"breakdown": {"lean_2024": lean_2024, "label": "lean_d"}},
             },
         },
@@ -265,7 +264,6 @@ def test_passes_all_filters():
         "archetypes": ["Affluent", "Elite"],
         "trajectories": ["Arrived"],
         "local_scene": "High",
-        "built_forms": ["Historic urban fabric", "Suburban"],
         "political_lean": ["lean_d", "moderate"],
         "housing": ["sf_townhouse"],
     }
@@ -323,7 +321,6 @@ def test_integration_filter_count():
         "archetypes": ["Elite", "Affluent"],
         "trajectories": ["Arrived"],
         "local_scene": "High",
-        "built_forms": ["Historic urban fabric", "Urban residential", "Suburban"],
         "political_lean": ["lean_d", "moderate"],
         "housing": ["sf_townhouse"],
         "nb_prefs": ["ocean", "canopy"],

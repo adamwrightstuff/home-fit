@@ -96,7 +96,6 @@ def build_prompt(name: str, place_type: str, metro: str, ss: dict, pillars: dict
     amenities = _pillar_score(pillars, "neighborhood_amenities")
     schools   = _pillar_score(pillars, "education")
     social    = _pillar_score(pillars, "social_fabric")
-    beauty    = _pillar_score(pillars, "built_environment")
     nature    = _pillar_score(pillars, "natural_beauty")
     health    = _pillar_score(pillars, "healthcare")
     climate   = _pillar_score(pillars, "climate_risk")
@@ -126,7 +125,6 @@ SCORED DIMENSIONS (0–100, higher = better):
   Neighborhood amenities:   {_fmt(amenities)}
   Schools:                  {_fmt(schools)}
   Social fabric / community:{_fmt(social)}
-  Built environment beauty: {_fmt(beauty)}
   Natural surroundings:     {_fmt(nature)}
   Healthcare access:        {_fmt(health)}
   Climate risk:             {_fmt(climate)}  (higher = lower risk)

@@ -241,7 +241,6 @@ def test_resolver_pays_for_no_density_call_when_the_caller_supplies_the_type(mon
 
 PILLAR_ENTRY_POINTS = [
     ("pillars.active_outdoors", "get_active_outdoors_score_v2"),
-    ("pillars.built_environment", "calculate_built_environment"),
     ("pillars.natural_beauty", "calculate_natural_beauty"),
     ("pillars.neighborhood_amenities", "get_neighborhood_amenities_score"),
     ("pillars.air_travel_access", "get_air_travel_score"),

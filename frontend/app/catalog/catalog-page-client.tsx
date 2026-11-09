@@ -784,10 +784,9 @@ export default function CatalogPageClient({
     },
     air_travel_access: (p) => {
       const ata = (p.score.livability_pillars as any)?.air_travel_access
-      const be = (p.score.livability_pillars as any)?.built_environment
       const nearestAirportKm = Number(ata?.summary?.nearest_airport_km ?? 0) || null
-      const effectiveAreaType = be?.breakdown?.effective_area_type ?? be?.details?.effective_area_type ?? null
-      return passesAirTravelDealbreaker(nearestAirportKm, effectiveAreaType)
+      const areaType = ata?.area_classification?.area_type ?? null
+      return passesAirTravelDealbreaker(nearestAirportKm, areaType)
     },
     quality_education: (p) => {
       const qe = (p.score.livability_pillars as any)?.quality_education

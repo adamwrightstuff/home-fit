@@ -163,14 +163,6 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     ],
     degradedMessage: 'Limited data: natural beauty data sources were unavailable.',
   },
-  built_environment: {
-    topLine: 'How well the neighborhood type matches your preference — from urban core to rural.',
-    metrics: [
-      { label: 'Area type', path: 'breakdown.effective_area_type', format: 'text' },
-      { label: 'Density (pop/sq mi)', path: 'breakdown.density', format: 'text' },
-    ],
-    degradedMessage: 'Area type data unavailable for this place.',
-  },
   active_outdoors: {
     topLine: 'Everyday parks, trails, and water access the score is built from.',
     metrics: [

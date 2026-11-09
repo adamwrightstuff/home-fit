@@ -32,7 +32,6 @@ CATALOGS = [
 PILLARS = [
     "active_outdoors",
     "natural_beauty",
-    "built_environment",
     "neighborhood_amenities",
     "air_travel_access",
     "public_transit_access",

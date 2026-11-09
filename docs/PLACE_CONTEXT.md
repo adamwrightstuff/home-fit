@@ -15,7 +15,7 @@ Amenities takes the merged list from the context and skips its own Places call, 
 Google's Places policy lets place IDs be stored indefinitely and says other Places content must not be pre-fetched, cached or stored beyond the allowed exceptions. The merged list therefore lives only on the request-local context. The shared pre-pillar cache (schema 2) stores the area type label, as before.
 
 ## How every pillar gets its place
-Every pillar that depends on the area type or density (active outdoors, built environment, natural beauty, amenities, air travel, transit, healthcare, economic, housing, climate, social fabric, diversity, community safety, schools) takes `place_context=` and `main.py` passes the same object to all of them. The pillar reads `area_type` and `density` from it and no longer detects its own. The data-quality step (`assess_pillar_data_quality`, `get_expected_minimums`) takes the context's density too, so it does not fetch a second, possibly different, density from the Census.
+Every pillar that depends on the area type or density (active outdoors, natural beauty, amenities, air travel, transit, healthcare, economic, housing, climate, social fabric, diversity, community safety, schools) takes `place_context=` and `main.py` passes the same object to all of them. The pillar reads `area_type` and `density` from it and no longer detects its own. The data-quality step (`assess_pillar_data_quality`, `get_expected_minimums`) takes the context's density too, so it does not fetch a second, possibly different, density from the Census.
 
 `resolve_place_context` is the one resolver. Given a context it returns it unchanged and ignores any conflicting `area_type` or `density` argument. Given none (catalog batch scripts, tests, direct calls) it derives the place once, with the density-first rule each pillar used to carry its own copy of, and marks the result `area_type_source="derived_by_pillar"`. Density is fetched only when the type must be derived or the pillar needs it.
 
@@ -26,5 +26,5 @@ Four pillars used to ignore the type they were handed and re-detect it from dens
 
 ## Known limits
 - Direct calls without a context still derive per pillar (through the one resolver). The catalog batch scripts work this way; they are not changed here.
-- Built environment, natural beauty and transit keep their own fallback inside helper functions for direct callers; with a context those paths are not reached.
+- Natural beauty and transit keep their own fallback inside helper functions for direct callers; with a context those paths are not reached.
 - Catalog results scored under older area types (249 places, 656 pillar results in the 2026-10-26 check) are not touched by this change.

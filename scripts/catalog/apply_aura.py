@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-Recompute local scene, the Aura score (it_score) and the per-metro Aura flag, offline.
+Aura flag, offline (owner decision 2026-11-06, replaces the weighted score and the top-5% quota).
 
-For each metro's composites_recomputed catalog: rescore local scene from the stored business_list,
-recompute it_score = 0.50 local scene + 0.35 livability (non-overlapping pillars) + 0.15 SES, then
-set score["aura"] = True for places in the top AURA_TOP_PCT of scored places in that metro whose
-local scene score is at least AURA_MIN_SCENE and that are not job centers (more than
-AURA_MAX_JOBS_PER_RESIDENT jobs per resident in the stored LODES radius). Failing places are dropped, not backfilled.
-Metros with fewer than AURA_MIN_METRO_PLACES scored places get no Aura flags (a percentile over a
-handful of places is meaningless).
+score["aura"] is True only when ALL of these hold for the stored place:
+  1. Vibrant activity: local_scene_v2.independent_venues_1200m >= AURA_MIN_VENUES (the Vibrant tier);
+  2. independent-venue mix: local_scene_v2.combined >= AURA_MIN_MIX and the place has at least 15 venues;
+  3. status class (status_signal_breakdown.archetype) is Affluent or Elite;
+  and it is not a job center (more than AURA_MAX_JOBS_PER_RESIDENT workers per resident in the stored LODES radius).
+No weights, no quota. Only score["aura"] and score["aura_excluded"] are written; the old local scene fields (twin finder and vibe
+matching still read them) are left as stored, and it_score is no longer written (the UI never read it; stored values are stale).
 
-Usage: PYTHONPATH=. python3 scripts/catalog/apply_aura.py nyc la seattle
+Usage: PYTHONPATH=. python3 scripts/catalog/apply_aura.py            (every metro)
+       PYTHONPATH=. python3 scripts/catalog/apply_aura.py nyc la
 """
 import json, math, os, sys
 from pathlib import Path
@@ -19,12 +20,9 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "catalog"))
 
-from compute_local_scene import _compute  # noqa: E402
-from pillars.composite_indices import compute_aura_score  # noqa: E402
-
-AURA_TOP_PCT = 0.05
-AURA_MIN_METRO_PLACES = 20
-AURA_MIN_SCENE = 45  # judgment call, not researched: a standout-scene badge needs a real scene
+AURA_MIN_VENUES = 71  # Vibrant activity tier (docs/LOCAL_SCENE.md, 2026-11-06)
+AURA_MIN_MIX = 65.0   # judgment call, not researched: the mix reading that separated Tribeca (70) from Battery Park City (50)
+AURA_CLASSES = ("Affluent", "Elite")
 # Judgment call: above ~5 workers per resident a place is a job center, not a neighborhood scene.
 # Residential places tested at 0.1 to 1.3; office cores at 7 to 22. Only applied when LODES jobs data
 # exists for the place (the table covers only the NYC area, SF Bay and LA).
@@ -39,47 +37,46 @@ def jobs_per_resident(s: dict):
     return jobs / res
 
 
+def qualifies(s: dict) -> tuple:
+    """(is_aura, excluded_reason) from the stored score."""
+    v = s.get("local_scene_v2") or {}
+    n, mix = v.get("independent_venues_1200m"), v.get("combined")
+    cls = (s.get("status_signal_breakdown") or {}).get("archetype")
+    if not (isinstance(n, (int, float)) and n >= AURA_MIN_VENUES):
+        return False, None
+    if not (isinstance(mix, (int, float)) and mix >= AURA_MIN_MIX and not v.get("few_venues")):
+        return False, None
+    if cls not in AURA_CLASSES:
+        return False, None
+    jpr = jobs_per_resident(s)
+    if jpr is not None and jpr > AURA_MAX_JOBS_PER_RESIDENT:
+        return False, "job_center"
+    return True, None
+
+
 def process(metro: str) -> None:
     path = ROOT / "data" / f"{metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
     rows = [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
+    winners = []
     for d in rows:
         s = d.get("score")
         if not d.get("success") or not isinstance(s, dict):
             continue
-        pillars = s.get("livability_pillars") or {}
-        biz = (pillars.get("neighborhood_amenities") or {}).get("breakdown", {}).get("business_list") or []
-        if biz:
-            sc, bucket, sub = _compute(biz)
-            s["local_scene_score"], s["local_scene_breakdown"] = sc, sub
-            if "local_scene_v2" in s:
-                s["local_scene_bucket_v1"] = bucket  # the visible bucket is the v2 tier (add_local_scene_v2_offline.py)
-            else:
-                s["local_scene_bucket"] = bucket
-        s["it_score"] = compute_aura_score(s.get("status_signal"), s.get("local_scene_score"), pillars)
-        s["aura"] = False
+        ok, why = qualifies(s)
+        s["aura"] = ok
         s.pop("aura_excluded", None)
-    scored = [d for d in rows if d.get("success") and isinstance(d.get("score"), dict)
-              and isinstance(d["score"].get("it_score"), (int, float))]
-    n = math.ceil(len(scored) * AURA_TOP_PCT) if len(scored) >= AURA_MIN_METRO_PLACES else 0
-    scored.sort(key=lambda d: -d["score"]["it_score"])
-    winners = []
-    for d in scored[:n]:
-        sc = d["score"]
-        if (sc.get("local_scene_score") or 0) < AURA_MIN_SCENE:
-            continue
-        jpr = jobs_per_resident(sc)
-        if jpr is not None and jpr > AURA_MAX_JOBS_PER_RESIDENT:
-            sc["aura_excluded"] = "job_center"
-            continue
-        winners.append(d)
-    for d in winners:
-        d["score"]["aura"] = True
+        if why:
+            s["aura_excluded"] = why
+        if ok:
+            winners.append(d)
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text("\n".join(json.dumps(d, ensure_ascii=False) for d in rows) + "\n")
     os.replace(tmp, path)  # atomic: a crash mid-write leaves the original file intact
-    print(f"{metro}: {len(scored)} scored, {len(winners)} Aura (top {n}, scene floor {AURA_MIN_SCENE}, jobs/resident <= {AURA_MAX_JOBS_PER_RESIDENT:g}): {[d['catalog']['name'] for d in winners]}")
+    print(f"{metro}: {len(winners)} Aura of {len(rows)}: {[d['catalog']['name'] for d in winners]}")
 
 
 if __name__ == "__main__":
-    for m in sys.argv[1:] or ["nyc", "la", "seattle"]:
+    import glob
+    metros = sys.argv[1:] or sorted(Path(f).name.split("_metro_")[0] for f in glob.glob(str(ROOT / "data" / "*_metro_place_catalog_scores_merged.composites_recomputed.jsonl")))
+    for m in metros:
         process(m)

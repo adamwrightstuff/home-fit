@@ -9,7 +9,6 @@ import Link from 'next/link'
 import { CATALOG_METROS, CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 
 const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'urban_core', label: 'Urban Core' },
   { value: 'urban_residential', label: 'Urban Neighborhood' },
   { value: 'suburban', label: 'Suburban' },
   { value: 'exurban', label: 'Exurban' },
@@ -424,7 +423,7 @@ export default function FilterSheet({
               <div style={LABEL_STYLE}>Local Scene</div>
             </div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Places with more cafés, bars, galleries, bookstores and record stores for their size than most. Places with too few mapped venues have no label.
+              How much independent activity is within a short walk: cafés, bars, restaurants, galleries, bookstores and theaters.
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterLocalScene === 'all', 'All', () => onFilterLocalSceneChange('all'))}

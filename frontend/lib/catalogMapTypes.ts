@@ -25,7 +25,6 @@ export type CatalogMapIndexMode =
   | 'climate_risk'
   | 'housing_value'
   | 'social_fabric'
-  | 'built_environment'
   | 'healthcare_access'
   | 'economic_opportunity'
   | 'quality_education'

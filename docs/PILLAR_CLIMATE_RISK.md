@@ -211,6 +211,10 @@ Not run: V3 disk pin-shift rerun (needs Earth Engine heat reads). Owner decision
 
 Proposed level: below Level 2. Level 1 plus the independent air check and the MODIS heat check. Flood is unvalidated (two independent fails), heat passes MODIS but has leftover bad cool readings in San Antonio that the screen misses, and the pin-shift rerun is not run. Level 2 needs a flood result that passes (or a better outside source, for example county share of land in the special flood hazard area, not tried), and V3 or an owner waiver.
 
+### Level 2 second pass, offline part (2026-11-08)
+
+Criteria fixed first and results in `docs/CLIMATE_RISK_LEVEL2_PASS2_CRITERIA.md`. Cap rule as exempted by the owner: FAIL (99 places, 6.71%, limit 5%; heat at cap 87 places, all at LST 30 C or lower). Galveston heat vs MODIS: FAIL (Landsat 7.8 C below MODIS, outside the 5th to 95th percentile band). San Antonio: 13 leftover cool readings listed, 29 catalog wide. Heat pin-shift on MODIS: passes (500 m median 0.21, p95 1.32; 1,000 m median 0.49), understates by about 3x against the builder's Landsat reads. Flood against NFIP claims (tract, 2010 to 2025): FAIL on all four parts (pooled Spearman +0.062, needs -0.40 or stronger; wrong sign). Third independent flood fail. Proposed level: Level 1 stands.
+
 ### Level 1 accepted by the owner (2026-11-05)
 
 Climate risk stays at Level 1 (Converted). Accepted gaps: flood is unvalidated (two independent checks failed, V1c and V1c-b);
@@ -218,3 +222,7 @@ heat passes the MODIS check but San Antonio has leftover bad cool readings the p
 rerun was not run (owner decision 2026-11-03, no Google spending), and the pilot pin-shift on 60 places is the builder's own;
 the air zero point (35 ug/m3) and hazard weights are unsourced. Level 2 would need a flood result that passes or a better
 outside source (for example county share of land in the special flood hazard area, not tried), plus V3 or an owner waiver.
+
+### Level 1 stands, signed off by the owner (2026-11-08)
+
+Level 2 second pass (`docs/CLIMATE_RISK_LEVEL2_PASS2_CRITERIA.md`) did not reach Level 2. Climate risk stays at Level 1 (Converted). Accepted gaps: flood unvalidated (V1c, V1c-b and the NFIP claims check F1 all failed); cap rule fails on the owner's exempted rule (99 places, 6.71%; the heat-exempt variant, 13 places, was not adopted); Galveston heat reads 7.8 C below MODIS; 29 leftover cool Landsat readings catalog wide (13 in San Antonio); the heat pin-shift passes on MODIS and on the builder's Landsat reads, which are not independent and not a new sample; air zero point and hazard weights remain unsourced.

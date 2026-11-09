@@ -97,6 +97,19 @@ class TestBuckets(unittest.TestCase):
         self.assertFalse(f[4]["lively"])
 
 
+class TestActivity(unittest.TestCase):
+    def test_count_is_independent_venues_inside_the_radius(self):
+        vs = [v("cafe", 100), v("bar", 1201), v("restaurant", 500, "Chipotle"), v("gallery", 1200)]
+        self.assertEqual(ls.independent_venue_count(vs), 2)
+
+    def test_tiers(self):
+        self.assertEqual(ls.activity_bucket(71), "High")
+        self.assertEqual(ls.activity_bucket(70), "Some")
+        self.assertEqual(ls.activity_bucket(13), "Some")
+        self.assertEqual(ls.activity_bucket(12), "Low")
+        self.assertIsNone(ls.activity_bucket(None))
+
+
 class TestBoundary(unittest.TestCase):
     def test_boundary_facts_count_every_venue_given_and_have_no_pin_fields(self):
         venues = [v("gallery"), v("cafe"), v("bar"), v("restaurant"), v("bookstore", brand="Barnes & Noble")]

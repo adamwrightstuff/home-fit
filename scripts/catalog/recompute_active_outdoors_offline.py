@@ -109,7 +109,7 @@ def recompute_row(row: dict) -> tuple[bool, str]:
     breakdown = ao.get("breakdown", {})
     area_type = (ao.get("area_classification") or {}).get("area_type", "suburban")
 
-    baseline_context = get_baseline_context(area_type=area_type, form_context=None, pillar_name="active_outdoors")
+    baseline_context = get_baseline_context(area_type=area_type, pillar_name="active_outdoors")
     expectations = get_contextual_expectations(baseline_context, "active_outdoors") or {}
 
     stored_water = float(breakdown.get("waterfront_lifestyle") or 0.0)

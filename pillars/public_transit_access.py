@@ -836,11 +836,9 @@ def get_public_transit_score(
                     })
     
     # Get baseline context for expectation lookup (pillar-specific mapping)
-    # Note: transit doesn't use form_context, so pass None
     # Pass has_heavy_rail flag for commuter_rail_suburb detection
     baseline_context = get_baseline_context(
         area_type=area_type or "suburban",
-        form_context=None,  # transit doesn't need architectural classification
         pillar_name='public_transit_access',
         has_heavy_rail=is_commuter_rail_suburb  # Pass detection result
     )

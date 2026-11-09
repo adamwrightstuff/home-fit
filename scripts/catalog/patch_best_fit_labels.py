@@ -1,5 +1,5 @@
 """
-Add best-fit preference labels to natural_beauty and built_environment breakdowns.
+Add best-fit preference labels to natural_beauty breakdowns.
 
 Pure computation from existing summary fields — no API calls, no GEE.
 
@@ -59,35 +59,6 @@ _BB_DENSITY_LABELS = {
     "Spread out": "Spread out / rural",
 }
 
-_BB_CHARACTER_LABELS = {
-    "Historic": "Historic",
-    "Contemporary": "Contemporary",
-    "Mixed era": "Mixed era",
-}
-
-
-def _bb_best_fit(summary: dict) -> tuple[str, str]:
-    label = (summary.get("built_form_label") or "").lower()
-    year = summary.get("median_year_built")
-    heritage = int(summary.get("heritage_count") or 0)
-
-    if "urban" in label:
-        density = "Dense urban"
-    elif "suburban" in label:
-        density = "Walkable suburban"
-    else:
-        density = "Spread out"
-
-    if (year and year < 1942) or heritage >= 4:
-        character = "Historic"
-    elif year and year > 1990:
-        character = "Contemporary"
-    else:
-        character = "Mixed era"
-
-    return density, character
-
-
 def patch(input_path: Path, in_place: bool, no_backup: bool) -> None:
     lines = input_path.read_text(encoding="utf-8").splitlines()
     out_lines = []
@@ -114,14 +85,6 @@ def patch(input_path: Path, in_place: bool, no_backup: bool) -> None:
             nb_bd["nb_best_fit"] = fit
             nb_bd["nb_best_fit_label"] = _NB_LABELS[fit]
             patched += 1
-
-        bb = pillars.get("built_environment") or {}
-        bb_summary = bb.get("summary") or {}
-        if bb_summary:
-            bb_bd = bb.setdefault("breakdown", {})
-            density, character = _bb_best_fit(bb_summary)
-            bb_bd["bb_best_fit_density"] = density
-            bb_bd["bb_best_fit_character"] = character
 
         out_lines.append(json.dumps(obj, ensure_ascii=False))
 

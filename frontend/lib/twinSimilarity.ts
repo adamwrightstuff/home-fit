@@ -31,7 +31,7 @@ function pillarScoreOrNull(place: CatalogMapPlace, k: PillarKey): number | null 
 /**
  * Euclidean distance over selected pillars.
  * Pillars where either query or candidate has no data are skipped entirely
- * so missing-data gaps don't unfairly penalize candidates (e.g. SF built_environment=null).
+ * so missing-data gaps don't unfairly penalize candidates (e.g. a pillar with no stored score).
  * Normalization uses the count of pillars that were actually compared.
  * When includeScene is true, local_scene_score is added as an extra dimension.
  */

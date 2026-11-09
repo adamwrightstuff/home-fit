@@ -55,10 +55,15 @@ def main():
                 facts = ls.boundary_facts(boundary[bkey]["venues"], boundary[bkey]["area_km2"])
             else:
                 facts = ls.place_facts(read["venues"] if read else [], radius)
+            facts["independent_venues_1200m"] = ls.independent_venue_count(read["venues"]) if read else None
+            facts["bucket"] = ls.activity_bucket(facts["independent_venues_1200m"])
             apa = (((s.get("livability_pillars") or {}).get("active_outdoors") or {}).get("dpv2_recompute") or {}).get("activity_per_acre")
             facts["activity_per_acre"] = round(apa, 2) if isinstance(apa, (int, float)) else None
             refs.append((path, i, facts, read is not None))
-    ls.apply_reading([f for _, _, f, _ in refs], [f["activity_per_acre"] for _, _, f, _ in refs])
+    keep = {id(f): (f["independent_venues_1200m"], f["bucket"]) for _, _, f, _ in refs}
+    ls.apply_reading([f for _, _, f, _ in refs], [f["activity_per_acre"] for _, _, f, _ in refs])  # mix facts, stored but not the tag
+    for _, _, f, _ in refs:
+        f["independent_venues_1200m"], f["bucket"] = keep[id(f)]  # the tag comes from activity, not the mix
     n = lively = nodata = 0
     for path, i, facts, had_read in refs:
         sc = files[path][i]["score"]

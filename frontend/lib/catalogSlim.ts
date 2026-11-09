@@ -30,7 +30,6 @@ const KEEP_PATHS: Record<string, string[][]> = {
   housing_value: [['breakdown', 'space'], ['breakdown', 'value_efficiency']],
   political_lean: [['breakdown', 'lean_2024'], ['breakdown', 'dem_pct_2024']],
   social_fabric: [['breakdown', 'social_capital']],
-  built_environment: [['breakdown', 'effective_area_type'], ['details', 'effective_area_type']],
   natural_beauty: [
     ['v9_breakdown', 'gvi_score'],
     ['v9_breakdown', 'canopy_score'],
