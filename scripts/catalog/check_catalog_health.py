@@ -14,7 +14,7 @@ Checks:
   8b. Zero subcomponents — breakdown key present but =0 when that indicates data failure
   9. Missing catalog metadata — null lat/lon, empty search_query, null lean_2024
  10. No area type — area_classification empty and score.area_type null
- 11. Composite drift — stored happiness/longevity vs recomputed from breakdown
+ 11. Composite drift — stored happiness vs recomputed from breakdown
  12. Shared community_safety rate — >= 4 neighborhoods on one agency rate (no incident-level feed)
 
 Usage:
@@ -306,14 +306,6 @@ def recompute_happiness(breakdown: Dict[str, Any]) -> Optional[float]:
     return round(total, 2)
 
 
-def recompute_longevity(breakdown: Dict[str, Any]) -> Optional[float]:
-    """Longevity breakdown stores pre-weighted contributions — just sum them."""
-    if not breakdown:
-        return None
-    total = sum(v for v in breakdown.values() if isinstance(v, (int, float)))
-    return round(total, 2) if total else None
-
-
 def compute_outliers(
     rows: List[Dict[str, Any]],
     pillar_filter: Optional[str] = None,
@@ -452,15 +444,6 @@ def check_row(
             computed_h = recompute_happiness(hb)
             if computed_h is not None and abs(stored_h - computed_h) > 1.0:
                 place_flags.append(f"happiness_drift:{stored_h:.1f}vs{computed_h:.1f}")
-
-        stored_l = sc.get("longevity_index")
-        lb = sc.get("longevity_index_breakdown") or {}
-        if stored_l is None:
-            place_flags.append("missing:longevity_index")
-        elif lb:
-            computed_l = recompute_longevity(lb)
-            if computed_l is not None and abs(stored_l - computed_l) > 1.0:
-                place_flags.append(f"longevity_drift:{stored_l:.1f}vs{computed_l:.1f}")
 
         # status_signal drift — breakdown.composite_score should match top-level
         stored_ss = sc.get("status_signal")
@@ -644,7 +627,7 @@ def main() -> int:
                 composite_drifts[key].append(f"{name} ({f.split(':',1)[1]})")
             elif f.startswith("missing:") and f[8:] in (
                 "total_score", "status_signal", "happiness_index",
-                "longevity_index", "lean_2024",
+                "lean_2024",
             ):
                 missing_composites[f[8:]].append(name)
 
@@ -750,7 +733,7 @@ def main() -> int:
 
     # ── Section 7c: Composite drift / missing composites ─────────────────
     if composite_drifts or missing_composites:
-        print("\n── COMPOSITE DRIFT / MISSING (total_score, status_signal, happiness, longevity) ─")
+        print("\n── COMPOSITE DRIFT / MISSING (total_score, status_signal, happiness) ─")
         for key in sorted(missing_composites):
             places = missing_composites[key]
             truncated = ', '.join(places[:6]) + (f' +{len(places)-6} more' if len(places) > 6 else '')

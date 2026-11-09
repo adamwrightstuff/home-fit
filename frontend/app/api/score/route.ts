@@ -132,7 +132,6 @@ export async function GET(req: NextRequest) {
           if (status === 'queued' || status === 'running') {
             const partialPayload: Record<string, unknown> = { job_id: parsed?.job_id || jobId, status };
             if (parsed?.partial) partialPayload.partial = parsed.partial;
-            if (parsed?.partial_longevity_index != null) partialPayload.partial_longevity_index = parsed.partial_longevity_index;
             return NextResponse.json(
               partialPayload,
               {

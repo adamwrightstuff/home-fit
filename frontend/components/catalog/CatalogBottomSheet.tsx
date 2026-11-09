@@ -14,7 +14,7 @@ import {
   statusArchetypeNumeral600,
 } from '@/lib/indexColorSystem'
 import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
-import { HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
+import { HOMEFIT_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 
@@ -22,17 +22,15 @@ export type CatalogSheetSnap = 'peek' | 'expanded'
 
 const INDEX_TABS: { id: CatalogMapIndexMode; label: string; tooltip: string }[] = [
   { id: 'homefit', label: 'Trovamo', tooltip: HOMEFIT_COPY.tooltip },
-  { id: 'longevity', label: 'Longevity', tooltip: LONGEVITY_COPY.tooltip },
   { id: 'happiness', label: 'Happiness', tooltip: HAPPINESS_INDEX_COPY.tooltip },
   { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
 ]
 
-type CompositeIndexMode = 'homefit' | 'longevity' | 'happiness'
+type CompositeIndexMode = 'homefit' | 'happiness'
 
 /** CSS token pairs for peek score strip (composite index columns only). */
 const PEEK_RAMP_CSS: Record<CompositeIndexMode, { c400: string; c600: string }> = {
   homefit: { c400: 'var(--c-purple-400)', c600: 'var(--c-purple-600)' },
-  longevity: { c400: 'var(--c-teal-400)', c600: 'var(--c-teal-600)' },
   happiness: { c400: 'var(--c-blue-400)', c600: 'var(--c-blue-600)' },
 }
 
@@ -82,7 +80,6 @@ export default function CatalogBottomSheet({
     if (!allIdx) return null
     switch (id) {
       case 'homefit': return allIdx.homefit
-      case 'longevity': return allIdx.longevity
       case 'happiness': return allIdx.happiness
       case 'status': return allIdx.statusSignal
       default: return null

@@ -9,10 +9,9 @@ import PillarCard from './PillarCard'
 import CatalogWeightPanel from '@/components/catalog/CatalogWeightPanel'
 import WhyNotHigher from './WhyNotHigher'
 import InteractiveMap, { type PillarPoi } from './InteractiveMap'
-import LongevityInfo from './LongevityInfo'
 import HappinessInfo from './HappinessInfo'
 import StatusArchetypeCompass from './StatusArchetypeCompass'
-import { PILLAR_META, PILLAR_ORDER, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, getScoreBandLabel, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, HAPPINESS_INDEX_COPY, getScoreBandLabel, type PillarKey } from '@/lib/pillars'
 import { homefitPillarBarFill, scoreNumeralOnLight } from '@/lib/indexColorSystem'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -96,7 +95,7 @@ interface ScoreDisplayProps {
   hideSummaryCard?: boolean
   /** When true, hide the NOT INCLUDED IN YOUR SCORE section entirely. */
   hideNotIncluded?: boolean
-  /** When true, hide longevity index, happiness index, and status signal cards (e.g. vacation mode). */
+  /** When true, hide happiness index and status signal cards (e.g. vacation mode). */
   hideCompositeIndices?: boolean
   /**
    * When true, importance selectors are hidden on all pillar cards even if onPrioritiesChange is provided.
@@ -153,7 +152,6 @@ export default function ScoreDisplay({
   const { openAuthModal } = useAuth()
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const isLoading = Boolean(loading)
-  const longevity_index = !hideCompositeIndices && typeof data.longevity_index === 'number' ? data.longevity_index : null
   const happiness_index = !hideCompositeIndices && typeof data.happiness_index === 'number' ? data.happiness_index : null
 
   const [mapActivePillar, setMapActivePillar] = useState<string | null>(null)
@@ -219,7 +217,6 @@ export default function ScoreDisplay({
     const lines = [
       `Trovamo score: ${locationDisplayName}`,
       `Total Score: ${total_score.toFixed(1)}/100`,
-      ...(typeof longevity_index === 'number' ? [`Longevity Index: ${longevity_index.toFixed(1)}/100`] : []),
       ...(typeof happiness_index === 'number' ? [`Happiness Index: ${happiness_index.toFixed(1)}/100`] : []),
       '',
       'Pillar Scores:',
@@ -471,26 +468,10 @@ export default function ScoreDisplay({
         </div>
 
         <div
-          className={`hf-score-summary-grid ${longevity_index != null && happiness_index != null ? 'hf-score-summary-grid-4' : (longevity_index != null || happiness_index != null) ? 'hf-score-summary-grid-3' : ''}`}
+          className={`hf-score-summary-grid ${happiness_index != null ? 'hf-score-summary-grid-3' : ''}`}
           style={{ marginTop: '2rem' }}
         >
           <TotalScore score={total_score} confidence={overall_confidence} loading={isLoading} />
-          {longevity_index != null && (
-            <div className="tr-panel">
-              <div style={{ padding: '0.5rem 0' }}>
-                <div className="tabular-nums" style={{ fontSize: '3.25rem', fontWeight: 800, color: 'var(--c-teal-600)' }}>
-                  {longevity_index.toFixed(1)}
-                </div>
-                <div className="tr-muted" style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.5rem', fontWeight: 600 }}>
-                  Longevity Index (0–100)
-                  <LongevityInfo />
-                </div>
-              </div>
-              <div className="tr-muted" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
-                {LONGEVITY_COPY.short}
-              </div>
-            </div>
-          )}
           {happiness_index != null && (
             <div className="tr-panel">
               <div style={{ padding: '0.5rem 0' }}>

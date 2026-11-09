@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import InfoSheet from '@/components/catalog/InfoSheet'
 import { INDEX_COPY } from '@/lib/catalogInfoCopy'
 
-type IndexId = 'homefit' | 'longevity' | 'happiness' | 'status' | 'trajectory'
+type IndexId = 'homefit' | 'happiness' | 'status' | 'trajectory'
 
 interface IndexInfoButtonProps {
   indexId: IndexId
@@ -12,7 +12,6 @@ interface IndexInfoButtonProps {
 
 const INDEX_KEY_MAP: Record<IndexId, string | null> = {
   homefit:    'homefit',
-  longevity:  'longevity',
   happiness:  'happiness',
   status:     null, // handled by ArchetypeBadge / StatusSignalInfo
   trajectory: null, // handled by TrajectoryChip

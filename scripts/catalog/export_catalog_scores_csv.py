@@ -28,16 +28,6 @@ from pillar_registry import SCORED_PILLARS  # noqa: E402
 # Column order for pillar scores (frontend display order).
 PILLAR_KEYS: List[str] = list(SCORED_PILLARS)
 
-LONGEVITY_CONTRIB_KEYS = [
-    "social_fabric",
-    "neighborhood_amenities",
-    "active_outdoors",
-    "natural_beauty",
-    "climate_risk",
-    "quality_education",
-]
-
-
 def _default_jsonl() -> Path:
     raw = os.getenv("HOMEFIT_AGENT_CATALOG_JSONL", "").strip()
     if raw:
@@ -82,10 +72,6 @@ def build_row(cat: Dict[str, Any], score: Dict[str, Any]) -> Dict[str, Any]:
     if not isinstance(iv, dict):
         iv = {}
 
-    lic = score.get("longevity_index_contributions")
-    if not isinstance(lic, dict):
-        lic = {}
-
     row: Dict[str, Any] = {
         "name": cat.get("name", ""),
         "type": cat.get("type", ""),
@@ -96,11 +82,9 @@ def build_row(cat: Dict[str, Any], score: Dict[str, Any]) -> Dict[str, Any]:
         "lon": cat.get("lon", ""),
         "search_query": cat.get("search_query", ""),
         "total_score": _num(score.get("total_score")),
-        "longevity_index": _num(score.get("longevity_index")),
         "happiness_index": _num(score.get("happiness_index")),
         "status_signal": _num(score.get("status_signal")),
         "overall_confidence": _num(score.get("overall_confidence")),
-        "indices_version_longevity": iv.get("longevity", ""),
         "indices_version_status_signal": iv.get("status_signal", ""),
         "indices_version_happiness": iv.get("happiness", ""),
     }
@@ -108,9 +92,6 @@ def build_row(cat: Dict[str, Any], score: Dict[str, Any]) -> Dict[str, Any]:
     for pk in PILLAR_KEYS:
         row[f"pillar_{pk}_score"] = _pillar_score(lp, pk)
         row[f"pillar_{pk}_status"] = _pillar_status(lp, pk)
-
-    for lk in LONGEVITY_CONTRIB_KEYS:
-        row[f"longevity_contrib_{lk}"] = _num(lic.get(lk))
 
     return row
 
@@ -126,19 +107,15 @@ def fieldnames() -> List[str]:
         "lon",
         "search_query",
         "total_score",
-        "longevity_index",
         "happiness_index",
         "status_signal",
         "overall_confidence",
-        "indices_version_longevity",
         "indices_version_status_signal",
         "indices_version_happiness",
     ]
     for pk in PILLAR_KEYS:
         base.append(f"pillar_{pk}_score")
         base.append(f"pillar_{pk}_status")
-    for lk in LONGEVITY_CONTRIB_KEYS:
-        base.append(f"longevity_contrib_{lk}")
     return base
 
 

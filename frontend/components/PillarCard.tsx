@@ -7,9 +7,7 @@ import {
   getScoreBandLabel,
   getPillarFailureType,
   PILLAR_LONG_DESCRIPTIONS,
-  isLongevityPillar,
   isHappinessPillar,
-  LONGEVITY_COPY,
   type PillarKey,
 } from '@/lib/pillars'
 import { RAMP_HEX, homefitPillarBarFill, scoreNumeralOnLight } from '@/lib/indexColorSystem'
@@ -315,24 +313,6 @@ export default function PillarCard({
               <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)' }}>{meta.name}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-              {isLongevityPillar(pillar_key) && (
-                <span
-                  className="inline-flex items-center gap-1.5"
-                  title={pillarNarrative ?? LONGEVITY_COPY.tooltip}
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    padding: '0.2rem 0.45rem',
-                    borderRadius: 6,
-                    background: 'var(--hf-hover-bg)',
-                    color: 'var(--hf-text-secondary)',
-                    border: '1px solid var(--hf-border)',
-                  }}
-                >
-                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: RAMP_HEX.teal[400] }} aria-hidden />
-                  Longevity
-                </span>
-              )}
               {isHappinessPillar(pillar_key) && (
                 <span
                   className="inline-flex items-center gap-1.5"
