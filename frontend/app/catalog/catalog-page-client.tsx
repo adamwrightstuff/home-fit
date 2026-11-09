@@ -1570,6 +1570,22 @@ export default function CatalogPageClient({
           </div>
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
+            {/* Priorities pill (mobile: always reachable next to Filters) */}
+            {catalogMode === 'explorer' && indexMode === 'homefit' && (
+              <button
+                type="button"
+                className="flex items-center gap-1.5 rounded-full border border-[var(--hf-border)] bg-white px-3 h-[var(--hf-control-h-touch)] text-xs font-semibold text-[var(--hf-text-primary)] shadow-sm"
+                onClick={() => setWeightOpen(true)}
+                aria-label="Priorities"
+              >
+                Priorities
+                {priorityBadgeCount > 0 && (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
+                    {priorityBadgeCount}
+                  </span>
+                )}
+              </button>
+            )}
             {/* Filters pill */}
             <button
               type="button"
@@ -1735,15 +1751,6 @@ export default function CatalogPageClient({
                 >A–Z</button>
               </div>
               </div>
-              {indexMode === 'homefit' && !sortByName && (
-                <button
-                  type="button"
-                  onClick={() => setWeightOpen(true)}
-                  aria-label="Priorities"
-                  className="pointer-events-auto shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
-                  style={{ background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }}
-                >⚖ Priorities{priorityBadgeCount > 0 ? ` (${priorityBadgeCount})` : ''}</button>
-              )}
             </div>
           )}
 
