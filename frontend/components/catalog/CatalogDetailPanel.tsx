@@ -21,7 +21,7 @@ import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import AuraBadge from '@/components/catalog/AuraBadge'
 
 const INDEX_TABS: { id: CatalogMapIndexMode; label: string; tooltip: string }[] = [
-  { id: 'homefit', label: 'Trovamo', tooltip: HOMEFIT_COPY.tooltip },
+  { id: 'homefit', label: 'HomeFit', tooltip: HOMEFIT_COPY.tooltip },
   { id: 'longevity', label: 'Longevity', tooltip: LONGEVITY_COPY.tooltip },
   { id: 'happiness', label: 'Happiness', tooltip: HAPPINESS_INDEX_COPY.tooltip },
   { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
@@ -168,10 +168,14 @@ export default function CatalogDetailPanel({
                     {tab.label}
                   </div>
                   {tab.id !== 'status' ? (
-                    <span className="tabular-nums" style={scoreNumeralStyle(tab.id, active)}>{fmt(v)}</span>
+                    v == null || !Number.isFinite(v) ? (
+                      <span style={{ fontSize: '0.6rem', lineHeight: 1.2, textAlign: 'center', color: 'var(--hf-text-secondary)' }}>No data<br />not enough source data</span>
+                    ) : (
+                      <span className="tabular-nums" style={scoreNumeralStyle(tab.id, active)}>{fmt(v)}</span>
+                    )
                   ) : (
                     <span style={{ fontSize: '0.65rem', fontWeight: 600, color: active ? statusArchetypeNumeral400(allIdx?.archetype ?? null) : statusArchetypeNumeral600(allIdx?.archetype ?? null) }}>
-                      {allIdx?.archetype ? allIdx.archetype.split(' ')[0] : '—'}
+                      {allIdx?.archetype ? allIdx.archetype.split(' ')[0] : 'No data'}
                     </span>
                   )}
                 </button>

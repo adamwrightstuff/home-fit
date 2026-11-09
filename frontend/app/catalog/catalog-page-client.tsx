@@ -1601,6 +1601,7 @@ export default function CatalogPageClient({
         {/* Twin mode second row: search + controls */}
         {catalogMode === 'twin' && (
           <div className="md:hidden flex flex-col gap-1.5 border-t border-[var(--hf-border)] px-3 py-2">
+            {!twinControlsLocked && (
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -1630,6 +1631,7 @@ export default function CatalogPageClient({
                 Pillars ({twinPillarList.length})
               </button>
             </div>
+            )}
             <div className="relative">
               <input
                 type="text"
