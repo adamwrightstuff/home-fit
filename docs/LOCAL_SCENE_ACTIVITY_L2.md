@@ -114,3 +114,12 @@ Done offline: 2a, 2b, all-places, section 6. Not run: 2c, 2d (need raters; sheet
 
 ## 8. Sign-off
 Level 1 (Specified), signed off by the owner (Adam Wright), 2026-11-08, for the local scene activity tag (independent named venues within 1,200 m; Quiet under 13, Some 13 to 70, Vibrant 71 or more) and for the Aura and-rule (Vibrant, mix reading 65 or more with 15 or more venues, Affluent or Elite class, not a job center), with gaps A1 to A8 accepted as open, A3 (unflagged sparse-map Quiet) accepted as an exception to principle 9, and every parameter recorded as an unsourced judgment. Level 2 not passed (section 4: Aura pin-shift and launch pairs failed; labels not yet collected); "validated" may not be claimed.
+
+## 9. Rater 1 (returned 2026-11-08; identity not stated, counts toward 2c only if neither the owner nor the builder)
+Sheet: 45 places answered, 31 "well" or "a bit" known per row as marked (all 45 answered), 31 Vibrant, 13 Some, 1 Quiet. Scored against the stored independent count and tier at 1,200 m, criteria as fixed in section 2c.
+- (1) Spearman between answer and count: 0.35, limit 0.70, FAIL (the rater used one Quiet, so ties limit the ceiling, but the criterion was fixed before this result and is not changed).
+- (2) Pairs with different answers ranked correctly by count: 308 of 428 = 72.0%, limit 80%, FAIL.
+- (3) Two-tier misses: 0 of 45, limit 10%, pass. Exact tier match 31 of 45.
+Rater read higher than the tag: Echo Park 57, Silver Lake 60, Venice 65, Hermosa Beach 66, Manhattan Beach 33, Montclair 30 (all Vibrant by the rater, Some by the tag); Rye 7, Hastings-on-Hudson 11, Pelham Bay 11 (Some by the rater, Quiet by the tag). Rater read lower than the tag: Battery Park City 349, Kips Bay 575, Carnegie Hill 291, Sunnyside 156, Murray Hill 628 (Some by the rater, Vibrant by the tag).
+2d, indicative only (needs at least two raters per place): 14 stored-Aura places are on the list; this rater called all 14 Vibrant, and 13 of 14 "yes" on F (SoHo "no").
+Status: 2c and 2d are not complete. One rater of the required three; this one fails two of three criteria. Level 2 stays unpassed.
