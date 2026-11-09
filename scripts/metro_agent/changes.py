@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 REPO = Path(__file__).resolve().parents[2]
-COMPOSITES = ("status_signal", "happiness_index", "longevity_index", "total_score")
+COMPOSITES = ("status_signal", "happiness_index", "total_score")
 
 
 def _key(r: Dict[str, Any]) -> Tuple:

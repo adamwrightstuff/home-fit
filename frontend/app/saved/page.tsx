@@ -32,15 +32,14 @@ function homeFitTotalFromRow(row: SavedScoreRow): number {
   }
 }
 
-/** Longevity / Happiness / archetype index from saved payload; 0 and invalid values are treated as missing (—). */
+/** Happiness / archetype index from saved payload; 0 and invalid values are treated as missing (—). */
 function indexTripletFromPayload(score_payload: unknown): {
-  longevity: number | null
   happiness: number | null
   statusSignal: number | null
 } {
   const p = score_payload as Record<string, unknown> | null | undefined
   if (!p || typeof p !== 'object') {
-    return { longevity: null, happiness: null, statusSignal: null }
+    return { happiness: null, statusSignal: null }
   }
   const parse = (raw: unknown): number | null => {
     if (raw === null || raw === undefined) return null
@@ -49,7 +48,6 @@ function indexTripletFromPayload(score_payload: unknown): {
     return n
   }
   return {
-    longevity: parse(p.longevity_index),
     happiness: parse(p.happiness_index),
     statusSignal: parse(p.status_signal),
   }
@@ -161,9 +159,8 @@ function placeDisplayName(row: SavedScoreRow): string {
 }
 
 function SavedPlaceIndexRow({ score_payload }: { score_payload: unknown }) {
-  const { longevity, happiness } = indexTripletFromPayload(score_payload)
+  const { happiness } = indexTripletFromPayload(score_payload)
   const items = [
-    { label: 'Lon' as const, value: longevity, numeralColor: 'var(--c-teal-600)' },
     { label: 'Hap' as const, value: happiness, numeralColor: 'var(--c-blue-600)' },
   ]
   return (

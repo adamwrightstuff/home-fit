@@ -6,13 +6,12 @@ import { useParams } from 'next/navigation'
 import type { ScoreResponse } from '@/types/api'
 import type { SavedScoreRow } from '@/lib/savedScores'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
-import { longevityIndexFromLivabilityPillars, HOMEFIT_COPY } from '@/lib/pillars'
+import { HOMEFIT_COPY } from '@/lib/pillars'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import ScoreDisplay from '@/components/ScoreDisplay'
 import InteractiveMap from '@/components/InteractiveMap'
 import HomeFitInfo from '@/components/HomeFitInfo'
-import LongevityInfo from '@/components/LongevityInfo'
 import StatusSignalInfo from '@/components/StatusSignalInfo'
 import HappinessInfo from '@/components/HappinessInfo'
 import ArchetypeTrajectoryInfo from '@/components/ArchetypeTrajectoryInfo'
@@ -61,10 +60,7 @@ export default function PublicPlacePage() {
   const displayData = useMemo(() => {
     if (!rawPayload) return null
     const rew = reweightScoreResponseFromPriorities(rawPayload, priorities)
-    const li = longevityIndexFromLivabilityPillars(
-      rew.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
-    )
-    return li != null ? { ...rew, longevity_index: li } : rew
+    return rew
   }, [rawPayload, priorities])
 
   if (loading) {
@@ -104,7 +100,6 @@ export default function PublicPlacePage() {
 
   const coordinates = rawPayload?.coordinates ?? row.coordinates
   const totalScore = displayData.total_score
-  const longevityIndex = typeof displayData.longevity_index === 'number' ? displayData.longevity_index : null
   const happinessIndex = typeof displayData.happiness_index === 'number' ? displayData.happiness_index : null
   const { location_info } = displayData
 
@@ -234,13 +229,6 @@ export default function PublicPlacePage() {
                 color: 'var(--hf-text-secondary)',
               }}
             >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span className="tr-muted">Longevity</span>
-                <span style={{ fontWeight: 600, color: longevityIndex != null ? 'var(--c-teal-600)' : 'var(--hf-text-secondary)' }}>
-                  {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
-                </span>
-                <LongevityInfo />
-              </span>
               {/* Archetype pill + Trajectory pill + combined ? — no detail modals on public; pill pair wrapper keeps pills together */}
               {(displayData.status_signal_breakdown?.status_label || (displayData.status_signal_breakdown as any)?.trajectory) && (
                 <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>

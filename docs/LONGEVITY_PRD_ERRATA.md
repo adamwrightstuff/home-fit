@@ -1,5 +1,7 @@
 # HomeFit Longevity PRD — Errata and Feasibility Corrections
 
+> **Retired 2026-11-08.** The longevity index was removed after it failed DPv2 Level 2 validation. See `docs/LONGEVITY_INDEX_SPEC.md`. Kept as a historical record only.
+
 This document records corrections to the Longevity PRD (homefit-longevity-prd) for accuracy and feasibility. Apply these when revising the PRD or implementing.
 
 ---

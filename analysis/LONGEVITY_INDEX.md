@@ -1,7 +1,9 @@
 # Longevity Index
 
+> **Retired 2026-11-08.** The longevity index was removed after it failed DPv2 Level 2 validation. See `docs/LONGEVITY_INDEX_SPEC.md`. Kept as a historical record only.
+
 **Version:** 5 (2026-10-08)
-**Status:** Implemented. Separate from the user-priority total score.
+**Status:** Retired 2026-11-08 (see above).
 
 ---
 

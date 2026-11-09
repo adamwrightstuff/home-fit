@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Recompute longevity_index, status_signal, happiness_index from stored catalog JSONL
+Recompute status_signal, happiness_index from stored catalog JSONL
 without re-running pillars (uses current data/status_signal_baselines.json, etc.).
 
 Input lines match batch_score_place_catalog / merged JSONL: { catalog, success, score?, ... }.
@@ -45,9 +45,6 @@ DEFAULT_INPUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.json
 DEFAULT_OUTPUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.jsonl"
 
 _COMPOSITE_KEYS = (
-    "longevity_index",
-    "longevity_index_contributions",
-    "longevity_index_breakdown",
     "status_signal",
     "status_signal_breakdown",
     "happiness_index",

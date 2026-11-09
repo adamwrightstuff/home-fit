@@ -261,7 +261,7 @@ export async function getScoreSinglePillar(
   return getScore({ ...params, only: params.pillar });
 }
 
-/** Recompute longevity_index, status_signal, happiness_index from existing pillar data (no pillar re-run). */
+/** Recompute status_signal, happiness_index from existing pillar data (no pillar re-run). */
 export async function recomputeComposites(payload: RecomputePayload): Promise<RecomputeResponse> {
   const res = await fetch(`${API_BASE_URL}/api/score/recompute-composites`, {
     method: 'POST',
@@ -316,10 +316,7 @@ export interface GetScoreWithProgressOptions {
  * Job-based scoring with progress. Creates a job then polls until done.
  * Avoids Vercel 60s limit; each request is short. onProgress(partial) is called on each poll when partial is present.
  */
-export type ScoreProgressMeta = {
-  /** Backend-computed longevity while job pillars complete (matches token weights). */
-  partialLongevityIndex?: number;
-};
+export type ScoreProgressMeta = Record<string, never>;
 
 export async function getScoreWithProgress(
   params: ScoreRequestParams,
@@ -441,13 +438,8 @@ export async function getScoreWithProgress(
     }
 
     const partialRaw = pollPayload?.partial;
-    const pli = pollPayload?.partial_longevity_index;
-    const meta: ScoreProgressMeta | undefined =
-      typeof pli === 'number' && Number.isFinite(pli) ? { partialLongevityIndex: pli } : undefined;
     if (partialRaw && typeof partialRaw === 'object') {
-      onProgress(partialRaw as PartialPillars, meta);
-    } else if (meta) {
-      onProgress({}, meta);
+      onProgress(partialRaw as PartialPillars);
     }
 
     // Proxy returns 200 with body = result only (no wrapper); backend returns { status, result }

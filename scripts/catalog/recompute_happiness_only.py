@@ -2,7 +2,7 @@
 """
 Recompute ONLY the happiness index (and its breakdown and version stamp) from stored pillar scores.
 
-Offline: no API, Census or Overpass calls. Touches nothing else in a row (no total score, longevity or
+Offline: no API, Census or Overpass calls. Touches nothing else in a row (no total score or
 status signal), unlike recompute_catalog_composites.py, which also applies stored-data corrections.
 Preserves each file's existing JSON formatting (compact or default).
 

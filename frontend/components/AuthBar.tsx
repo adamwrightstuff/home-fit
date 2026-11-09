@@ -104,9 +104,11 @@ export default function AuthBar() {
                 TravelFit
               </Link>
             </div>
+            {pathname !== searchHref && (
             <Link href={searchHref} className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e', fontSize: '0.875rem' }}>
               Search any place
             </Link>
+            )}
           </nav>
 
           {/* Desktop account nav — hidden on mobile */}
@@ -145,9 +147,11 @@ export default function AuthBar() {
           <Link href="/vacation/explorer" className="hf-auth-bar-btn" aria-current={travelMode ? 'page' : undefined} style={{ textDecoration: 'none', color: '#92400E', fontWeight: travelMode ? 700 : 500 }} onClick={closeMobileMenu}>
             TravelFit
           </Link>
+          {pathname !== searchHref && (
           <Link href={searchHref} className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e', fontSize: '0.9rem' }} onClick={closeMobileMenu}>
             Search any place
           </Link>
+          )}
           {accountNav}
         </nav>
       </header>
