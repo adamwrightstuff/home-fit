@@ -381,6 +381,8 @@ Nothing outside `docs/UX_AUDIT.md` and `docs/ux_audit_screens/` was modified. `n
 
 - 2026-11-05, R2-6 (live-scoring card selectors): the scenery, built-environment, life-stage and chain-business selectors on result and saved cards stay on the card. They are inputs to that one live-scored number and trigger a rescore of it, so they are accepted as an exception to Rule 2. The catalog side keeps the weights panel and filter sheet as its homes.
 
+- 2026-11-05 to 2026-11-06, shipped to `main` after owner approval, each type-checked and built: Filters and Priorities (Filters sheet hides places, Priorities panel ranks; one-line explainer on each; same right-side drawer on desktop; "Hide places with" choices sit under their own priority; count badges; Reset priorities), R6-1 partial (catalog side only); polish batch: R3-7 (search button always enabled, empty submit focuses the input), R5-2 partial (income quick picks on the profile), mobile "Show list" no longer overlaps the bottom sheet, live-progress badge removed on stored places. Still not marked fixed until a different agent re-runs the checks (Level 2).
+
 ### Still open
 
-R2-4 (search place screen importance buttons), R2-7 (premium code in two places), R2-9 (quiz as initializer, treated as such), R3-7 (greyed search button), R5-2 (profile suggestions), R6-1 (weights and preferences on the search place screen), CA-2 (15 vs 12 pillars copy), mobile "Show list" overlap, signed-in and backend-only screens not rendered.
+R2-4 and R6-1 (search place screen importance buttons and weights, preferences and settings editing after a search), R2-7 (premium code in two places), R2-9 (quiz as initializer, treated as such), CA-2 (15 vs 12 pillars copy), signed-in and backend-only screens not rendered (saved, compare, in-catalog quiz modal). Level 2 re-check by a different agent has not run; the owner paused it on 2026-11-05 until all pillars are DPv2 L2 certified.
