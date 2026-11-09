@@ -842,11 +842,15 @@ def query_nature_features(
 
 
 # --- Trail destinations (clean trail count, owner-approved 2026-11-03; see docs/ACTIVE_OUTDOORS_TRAIL_COUNT_DEFINITION.md) ---
-# A destination is one of: a hiking route (cycle routes excluded), or one named park, nature reserve or protected area of
-# at least TRAIL_DESTINATION_MIN_HA (bounding box), counted once per name. Street, bike, golf, pier, beach and bridge
+# A destination is one named park, nature reserve or protected area of at least TRAIL_DESTINATION_MIN_HA (bounding box),
+# counted once per name (hiking routes are counted only when TRAIL_DESTINATION_INCLUDE_ROUTES, off since 2026-11-10). Street, bike, golf, pier, beach and bridge
 # features are dropped by name, historic districts by tag or name. Distance is to the nearest bounding box edge.
 # No area type input.
 TRAIL_DESTINATION_MIN_HA = 100.0  # TODO unsourced: chosen by correlation with PAD-US protected land (2026-11-03)
+# Hiking route relations are NOT counted (owner decision 2026-11-10, regional bias audit): route counts differ about 26 to 1
+# (median, Northeast and Chicago vs other metros) while USGS trails show 23 vs 15.5 and PAD-US protected land agrees with the
+# parks-only count (docs/PILLAR_ACTIVE_OUTDOORS.md). Set True only to reproduce the pre-2026-11-10 count.
+TRAIL_DESTINATION_INCLUDE_ROUTES = False
 _TRAIL_NAME_EXCLUDE = re.compile(
     r"golf|country club|\bclub\b|pier\b|beach|bridge|greenway|cycle|bike|bicycle|walkway|promenade|esplanade|"
     r"avenue|boulevard|parkway|\bdrive\b|\broad\b|\bstreet\b|\bpath\b|\btrail\b",  # TODO unsourced word list
@@ -878,13 +882,16 @@ def _distance_to_bbox_m(lat: float, lon: float, bounds: Optional[Dict[str, float
 
 
 def build_trail_destinations(elements: List[Dict], lat: float, lon: float,
-                             min_ha: float = TRAIL_DESTINATION_MIN_HA) -> List[Dict]:
+                             min_ha: float = TRAIL_DESTINATION_MIN_HA,
+                             include_routes: Optional[bool] = None) -> List[Dict]:
     """Distinct trail destinations from Overpass elements read with `out tags bb`.
 
     Returns [{"type": "hiking_route" | "trail_area", "name", "distance_m"}], distance to the nearest edge of the
     bounding box. A route with the same name as an area already counted, and an unnamed outline of about the same size
     at about the same distance as a counted area, are the same place and are not counted again.
     """
+    if include_routes is None:
+        include_routes = TRAIL_DESTINATION_INCLUDE_ROUTES
     seen = set()
     out: List[Dict] = []
     areas: List[Tuple[float, float]] = []  # (ha, distance) of counted areas, for unnamed duplicates
@@ -899,6 +906,8 @@ def build_trail_destinations(elements: List[Dict], lat: float, lon: float,
         dist = round(dist) if dist is not None else None
         name = tags.get("name")
         if tags.get("route") == "hiking":
+            if not include_routes:
+                continue
             if (tags.get("bicycle") or "").lower() in ("yes", "designated", "official"):
                 continue
             if (tags.get("network") or "").lower() in _CYCLE_NETWORKS:
@@ -929,12 +938,12 @@ def build_trail_destinations(elements: List[Dict], lat: float, lon: float,
 @safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=40)
 def query_trail_destinations(lat: float, lon: float, radius_m: int = 15000) -> Optional[Dict]:
-    """One Overpass read of hiking routes, parks, nature reserves and protected areas around the pin, reduced to
-    distinct trail destinations. Returns {"hiking": [...], "_overpass_outcome": ...}."""
+    """One Overpass read of parks, nature reserves and protected areas around the pin (hiking route relations only when
+    TRAIL_DESTINATION_INCLUDE_ROUTES), reduced to distinct trail destinations. Returns {"hiking": [...], "_overpass_outcome": ...}."""
     query = (
         f"[out:json][timeout:{_overpass_timeout(35)}];("
-        f'relation["route"="hiking"](around:{radius_m},{lat},{lon});'
-        f'nwr["leisure"~"^(park|nature_reserve)$"](around:{radius_m},{lat},{lon});'
+        + (f'relation["route"="hiking"](around:{radius_m},{lat},{lon});' if TRAIL_DESTINATION_INCLUDE_ROUTES else "")
+        + f'nwr["leisure"~"^(park|nature_reserve)$"](around:{radius_m},{lat},{lon});'
         f'nwr["boundary"~"^(protected_area|national_park)$"](around:{radius_m},{lat},{lon});'
         ");out tags bb;"
     )

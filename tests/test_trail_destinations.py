@@ -18,8 +18,13 @@ def test_hiking_routes_count_and_cycle_routes_do_not():
         _el(2, {"route": "hiking", "name": "Bike", "bicycle": "designated"}),
         _el(3, {"route": "hiking", "name": "NCN", "network": "ncn"}),
     ]
-    out = build_trail_destinations(els, LAT, LON)
+    out = build_trail_destinations(els, LAT, LON, include_routes=True)
     assert [d["name"] for d in out] == ["Blue Trail"] and out[0]["type"] == "hiking_route"
+
+
+def test_hiking_routes_are_not_counted_by_default():
+    els = [_el(1, {"route": "hiking", "name": "Blue Trail"}), _el(2, {"leisure": "nature_reserve", "name": "Marsh Reserve"}, ha=300)]
+    assert [d["name"] for d in build_trail_destinations(els, LAT, LON)] == ["Marsh Reserve"]
 
 
 def test_large_named_parks_count_once_small_ones_do_not():
@@ -64,5 +69,5 @@ def test_a_route_named_like_a_counted_area_and_an_unnamed_outline_of_it_are_not_
         _el(3, {"leisure": "nature_reserve"}, ha=200, dlat=0.05),
     ]
     for order in (els, list(reversed(els))):
-        out = build_trail_destinations(order, LAT, LON)
+        out = build_trail_destinations(order, LAT, LON, include_routes=True)
         assert [d["name"] for d in out] == ["Fort Woods"]

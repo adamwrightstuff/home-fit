@@ -40,7 +40,7 @@ def main() -> None:
                 near.append(n)
 
     doc = {
-        "measure": "distinct trail destinations within 15 km and within 5 km of the pin (osm_api.build_trail_destinations)",
+        "measure": "distinct trail destinations within 15 km and within 5 km of the pin (osm_api.build_trail_destinations): named parks, nature reserves and protected areas of at least 100 ha, once per name; hiking routes are not counted (2026-11-10)",
         "expected_trails_15km": statistics.median(total),
         "expected_trails_5km": statistics.median(near),
         "budget_trails_15km": 25.0,   # TODO unsourced
@@ -50,7 +50,7 @@ def main() -> None:
         "camping_decay_per_m": 0.00005,   # TODO unsourced
         "n_places": len(total),
         "min_area_ha": 100,   # TODO unsourced (osm_api.TRAIL_DESTINATION_MIN_HA)
-        "status": "expected values are catalog medians, not a published standard; budgets and camping limits unsourced",
+        "status": "expected values are catalog medians of the parks-and-protected-areas count (routes removed 2026-11-10), not a published standard; budgets and camping limits unsourced",
     }
     with open(args.out, "w") as f:
         json.dump(doc, f, indent=2)
