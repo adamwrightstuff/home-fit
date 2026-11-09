@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Re-fetch pillar scores from production API into the canonical merged JSONLs, then refresh
-# composite indices (longevity / status / happiness) in place — no timestamped .bak files.
+# composite indices (status / happiness) in place — no timestamped .bak files.
 #
 # Requires:
 #   export HOMEFIT_API_BASE="https://your-service.up.railway.app"

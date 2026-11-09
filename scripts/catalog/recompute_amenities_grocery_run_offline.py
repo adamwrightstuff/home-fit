@@ -5,7 +5,7 @@ Offline: apply the supermarket-only grocery rule to stored neighborhood amenitie
 Convenience stores and greengrocers no longer earn grocery-run credit in essentials proximity. Uses only the
 stored business_list: new proximity, home walkability and score = min(100, 0.6 x home + stored location
 quality). A row is skipped (and reported) if its stored proximity does not reproduce from its list under the
-old rule. Composites (total, happiness, longevity, aura) are then cascaded for the printed search queries with
+old rule. Composites (total, happiness, aura) are then cascaded for the printed search queries with
 recompute_catalog_composites.py --no-census.
 
   PYTHONPATH=. python3 scripts/catalog/recompute_amenities_grocery_run_offline.py                  # dry run

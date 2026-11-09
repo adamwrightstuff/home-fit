@@ -1,5 +1,7 @@
 # HomeFit Longevity — Implementation Plan
 
+> **Retired 2026-11-08.** The longevity index was removed after it failed DPv2 Level 2 validation. See `docs/LONGEVITY_INDEX_SPEC.md`. Kept as a historical record only.
+
 **Purpose:** Turn the Longevity PRD into an executable roadmap with feasibility corrections and performance considerations.  
 **Assumptions:** Existing HomeFit stack (FastAPI, Next.js, Census, OSM, GEE, Redis cache). No PostGIS or FEMA today.
 

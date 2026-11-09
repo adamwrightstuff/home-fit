@@ -12,7 +12,7 @@ so volunteering is recovered as v = 2 s - irs_slot (irs_slot is the slot for a r
 area-type baseline) and the new participation is 0.65 v + 0.35 atlas. The stability score is recovered from the
 stored pillar score and weights_used. A place is skipped (and listed) if its stored rate is not 0, if the atlas
 score is missing, or if the recovered volunteering is outside 0-100. Run recompute_catalog_composites.py
---no-census on the changed rows afterwards (longevity, happiness, aura).
+--no-census on the changed rows afterwards (happiness, aura).
 
   PYTHONPATH=. python3 scripts/catalog/recompute_social_fabric_irs_coverage_offline.py                 # dry run
   PYTHONPATH=. python3 scripts/catalog/recompute_social_fabric_irs_coverage_offline.py --write --backup-dir <dir>

@@ -8,8 +8,7 @@ contribution. A place whose flood component cannot be measured (zone D, no mappe
 and is stored as null) loses the flood component: the score is built from the components that remain and the pillar is
 marked degraded, as pillars/climate_risk.py does. A place whose pin is not in the snapshot is left as stored.
 
-Then, per changed place: total_score_breakdown, total_score (by the change in the summed contributions) and the longevity
-index follow. The happiness index is recomputed afterwards with recompute_happiness_only.py on the written files. Nothing is
+Then, per changed place: total_score_breakdown, total_score (by the change in the summed contributions). The happiness index is recomputed afterwards with recompute_happiness_only.py on the written files. Nothing is
 written in place; the input files are never modified. No API, Census or Overpass call.
 
   cd /Users/adamwright/Dev/home-fit/.claude/worktrees/dpv2-climate-risk

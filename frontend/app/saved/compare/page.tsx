@@ -381,7 +381,7 @@ function CompareContent() {
             <span className="tr-muted" style={{ fontSize: '0.85rem' }}>
               vs
             </span>
-            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--hf-longevity-purple)', whiteSpace: 'nowrap' }}>
+            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--hf-compare-b-accent)', whiteSpace: 'nowrap' }}>
               {placeNameB}
             </span>
           </div>
@@ -465,7 +465,7 @@ function CompareContent() {
                     flex: 1,
                     background:
                       homefitWinner === 'b'
-                        ? 'var(--hf-longevity-purple)'
+                        ? 'var(--hf-compare-b-accent)'
                         : 'color-mix(in srgb, var(--hf-border) 70%, transparent)',
                   }}
                 />
@@ -519,7 +519,7 @@ function CompareContent() {
                   <div className="tr-label" style={{ marginBottom: '0.25rem', fontSize: '0.8rem' }}>
                     {placeNameB.toUpperCase()}
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--hf-longevity-purple)' }}>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--hf-compare-b-accent)' }}>
                     {homefitB != null ? homefitB.toFixed(1) : '—'}
                   </div>
                   <div className="tr-muted" style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>
@@ -607,7 +607,7 @@ function CompareContent() {
                   )}
                   {specB && (
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--hf-longevity-purple)', marginBottom: 4 }}>{placeNameB}</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--hf-compare-b-accent)', marginBottom: 4 }}>{placeNameB}</div>
                       <RelocationEquivalent dest={specB} fallbackOrigin={specA ?? undefined} />
                     </div>
                   )}
@@ -633,7 +633,7 @@ function CompareContent() {
                   {placeNameA.toUpperCase()}
                 </div>
                 <div />
-                <div style={{ textAlign: 'center', color: 'var(--hf-longevity-purple)', fontWeight: 600 }}>
+                <div style={{ textAlign: 'center', color: 'var(--hf-compare-b-accent)', fontWeight: 600 }}>
                   {placeNameB.toUpperCase()}
                 </div>
               </div>
@@ -804,7 +804,7 @@ function CompareContent() {
                                   style={{
                                     width: `${fillPct}%`,
                                     height: '100%',
-                                    background: 'var(--hf-longevity-purple)',
+                                    background: 'var(--hf-compare-b-accent)',
                                   }}
                                 />
                               )}
@@ -820,7 +820,7 @@ function CompareContent() {
                           paddingRight: '0.5rem',
                           borderRight:
                             winner === 'b'
-                              ? '3px solid var(--hf-longevity-purple)'
+                              ? '3px solid var(--hf-compare-b-accent)'
                               : '3px solid transparent',
                         }}
                       >
@@ -893,7 +893,7 @@ function CompareContent() {
                 <strong style={{ color: 'var(--hf-homefit-green)' }}>{placeNameA}</strong> leads on{' '}
                 {summary.aLeads.length ? summary.aLeads.join(', ') : 'no pillars yet'}.
                 {' '}
-                <strong style={{ color: 'var(--hf-longevity-purple)' }}>{placeNameB}</strong> leads on{' '}
+                <strong style={{ color: 'var(--hf-compare-b-accent)' }}>{placeNameB}</strong> leads on{' '}
                 {summary.bLeads.length ? summary.bLeads.join(', ') : 'no pillars yet'}.
                 {(summary.aUnscored > 0 || summary.bUnscored > 0) && (
                   <>

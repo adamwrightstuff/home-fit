@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 Recompute neighborhood_amenities (v3 amenity-access model) from each catalog place's
-stored business_list and cascade into total_score + longevity_index. No network: the
+stored business_list and cascade into total_score. No network: the
 OSM query is unchanged, so the stored business_list is valid input; only the scoring
 math changed. Writes to a NEW file for review.
 
-Cascades (both linear, verified): total contribution = score*weight/100;
-longevity factor = stored_contribution/score (constant ~0.2551). Amenities does not
-feed a happiness component, so happiness_index is untouched.
+Cascade (linear, verified): total contribution = score*weight/100. Amenities does not
+feed a happiness component, so happiness_index is untouched. (This script once also
+cascaded the longevity index, which was retired 2026-11-08.)
 """
 from __future__ import annotations
 
