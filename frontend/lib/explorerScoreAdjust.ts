@@ -1,5 +1,9 @@
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
+import { withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
+import { commuteToZone, findWorkZone, haversineMiles, minutesForMode, noRouteToZone, type WorkCommute } from '@/lib/workZones'
+import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
+import type { CommuteMode } from '@/lib/userProfile'
 /** Explorer filters that rewrite pillar scores (as opposed to filters that only hide places). */
 export type SchoolLevel = 'elementary' | 'middle' | 'high'
 export const ALL_SCHOOL_LEVELS: SchoolLevel[] = ['elementary', 'middle', 'high']
@@ -114,6 +118,46 @@ export interface CompareContext {
   householdIncome?: number | null
   /** "Current home" monthly-cost override, applied only to the place with this catalog name. */
   currentHome?: { name: string; monthlyCost: number | null } | null
+  /** Commute and nearby-people inputs: the Explorer adds those two pillars before weighting. */
+  workZoneId?: string | null
+  commuteMode?: CommuteMode | null
+  officeDays?: number | null
+  people?: SocialConnectionPerson[]
+}
+
+/**
+ * Add the commute-time and social-connection pillars to one place, exactly as the Explorer does,
+ * so a place scores the same in Compare as it did on the map.
+ */
+export function applyCommuteAndPeople(
+  score: ScoreResponse,
+  place: { workCommute?: WorkCommute | null; lat?: number | string | null; lon?: number | string | null },
+  ctx: Pick<CompareContext, 'workZoneId' | 'commuteMode' | 'officeDays' | 'people'>
+): ScoreResponse {
+  let out = score
+  const workZone = findWorkZone(ctx.workZoneId)
+  if (workZone) {
+    const commute = commuteToZone(place.workCommute, workZone)
+    if (commute) {
+      out = withCommuteTimePillar(
+        out,
+        minutesForMode(commute, workZone, ctx.commuteMode ?? null),
+        ctx.officeDays,
+        noRouteToZone(place.workCommute, workZone, ctx.commuteMode ?? null)
+      )
+    }
+  }
+  if (ctx.officeDays === 0) out = withCommuteTimePillar(out, null, 0)
+  const lat = Number(place.lat)
+  const lon = Number(place.lon)
+  const people = ctx.people ?? []
+  if (people.length > 0 && Number.isFinite(lat) && Number.isFinite(lon)) {
+    out = withSocialConnectionPillar(
+      out,
+      people.map((p) => ({ tier: p.tier, miles: haversineMiles(p.lat, p.lon, lat, lon), label: p.label }))
+    )
+  }
+  return out
 }
 
 const COMPARE_CONTEXT_KEY = 'homefit_compare_context'
@@ -146,6 +190,10 @@ export function readCompareContext(): CompareContext | null {
         filterNbTypes: Array.isArray(f.filterNbTypes) ? f.filterNbTypes : [],
         filterAoTypes: Array.isArray(f.filterAoTypes) ? f.filterAoTypes : [],
       },
+      workZoneId: typeof f.workZoneId === 'string' ? f.workZoneId : null,
+      commuteMode: opts.commute_mode === 'auto' || opts.commute_mode === 'transit' || opts.commute_mode === 'active' ? opts.commute_mode : null,
+      officeDays: typeof opts.office_days === 'number' ? opts.office_days : null,
+      people: loadPeople(),
     }
   } catch {
     return null

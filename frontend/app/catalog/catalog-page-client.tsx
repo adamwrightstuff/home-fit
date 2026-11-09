@@ -661,8 +661,12 @@ export default function CatalogPageClient({
       filters: { filterSchoolType, filterSchoolLevels, filterNbTypes, filterAoTypes },
       householdIncome,
       currentHome: currentHomeMatch ? { name: currentHomeMatch, monthlyCost: currentHomeMonthlyCost } : null,
+      workZoneId,
+      commuteMode,
+      officeDays,
+      people,
     })
-  }, [priorities, filterSchoolType, filterSchoolLevels, filterNbTypes, filterAoTypes, householdIncome, currentHomeMatch, currentHomeMonthlyCost])
+  }, [priorities, filterSchoolType, filterSchoolLevels, filterNbTypes, filterAoTypes, householdIncome, currentHomeMatch, currentHomeMonthlyCost, workZoneId, commuteMode, officeDays, people])
 
   const effectivePriorities = useMemo(
     () => priorities,

@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getSavedScore, type SavedScoreRow } from '@/lib/savedScores'
 import type { CatalogMapPlaceWithMetro } from '@/lib/catalogMapTypes'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
+import type { WorkCommute } from '@/lib/workZones'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/lib/reweight'
 import { PILLAR_META, PILLAR_ORDER, isHappinessPillar, type PillarKey } from '@/lib/pillars'
 import type { ScoreResponse } from '@/types/api'
@@ -14,7 +15,7 @@ import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOp
 import PillarInfoIcon from '@/components/PillarInfoIcon'
 import RelocationEquivalent from '@/components/RelocationEquivalent'
 import type { PlaceSpec } from '@/lib/relocation'
-import { applyExplorerScoreAdjustments, readCompareContext, type CompareContext } from '@/lib/explorerScoreAdjust'
+import { applyCommuteAndPeople, applyExplorerScoreAdjustments, readCompareContext, type CompareContext } from '@/lib/explorerScoreAdjust'
 
 type ScoreMode = 'yours' | 'catalog'
 
@@ -49,6 +50,10 @@ async function loadRowForId(id: string): Promise<SavedScoreRow> {
     input: name,
     location_info: { city: place.catalog.name, state: place.catalog.state_abbr } as Record<string, unknown>,
     score_payload: place.score as unknown as Record<string, unknown>,
+    // Not part of the saved-row shape: kept so Compare can add the commute and people pillars.
+    work_commute: place.work_commute ?? null,
+    lat: place.catalog.lat,
+    lon: place.catalog.lon,
     priorities: null,
     created_at: '',
     updated_at: '',
@@ -219,6 +224,15 @@ function CompareContent() {
     const isCurrentHome = !!home && isCatalogKey(row.id) && row.id.split('|')[0] === home.name
     let out = householdIncome ? applyUserIncomeToScore(raw, householdIncome, isCurrentHome ? home.monthlyCost : null) : raw
     if (compareContext) out = applyExplorerScoreAdjustments(out, compareContext.filters)
+    if (compareContext) {
+      const extra = row as unknown as { work_commute?: WorkCommute | null; lat?: number | string; lon?: number | string }
+      const coords = (row.score_payload as { coordinates?: { lat?: number; lon?: number } } | undefined)?.coordinates
+      out = applyCommuteAndPeople(
+        out,
+        { workCommute: extra.work_commute ?? null, lat: extra.lat ?? coords?.lat, lon: extra.lon ?? coords?.lon },
+        compareContext
+      )
+    }
     return out
   }
 
