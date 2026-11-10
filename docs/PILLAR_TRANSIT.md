@@ -185,7 +185,7 @@ Mean 39.25 before and after by construction. 670 of 1,476 places move more than 
 
 ### Known limits
 - Route counts do not see frequency. Transitland returned no departures for New York bus stops on three dates, so frequency cannot be added uniformly; the stored schedule bonuses exist for few places.
-- Ferry (route type 4) is not counted anywhere in the pillar. Astoria has two ferry routes within 1,200 m.
+- Ferries (route type 4) are excluded by design (owner decision 2026-11-10): the pillar does not count them, and this is not a gap or a Level 2 blocker. Astoria has two ferry routes within 1,200 m that are not counted.
 - Route type 2 includes intercity rail such as Amtrak.
 - The summary route counts stored on each row are still the old-radius counts; the area scoring is in `area_sample` on the pillar.
 - Radius sensitivity is not measured: counts exist only at 800 m and 1,200 m, so a different radius needs a re-fetch. A pin-shift test is not the right check for an area average.
@@ -207,4 +207,4 @@ The bus and commuter rail weights move the catalog mean most among the weights (
 
 ## Level 2 sign-off (owner, 2026-11-06)
 
-Level 2 accepted with recorded gaps. Pin-shift p95 is 9.6 points against the 5-point gate (known limitation). The radii and mode weights are judgments. Ferry service and route frequency are not measured. Validation is against tract commute share (Spearman 0.691), a proxy and not a direct measure.
+Level 2 accepted with recorded gaps. Pin-shift p95 is 9.6 points against the 5-point gate (known limitation). The radii and mode weights are judgments. Ferries are excluded by design (owner decision 2026-11-10, not a gap). Route frequency is not measured. Validation is against tract commute share (Spearman 0.691), a proxy and not a direct measure.
