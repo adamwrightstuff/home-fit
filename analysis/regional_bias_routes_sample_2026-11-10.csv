@@ -1,0 +1,61 @@
+metro,name,state,lat,lon,A,t
+boston,Marblehead,MA,42.4956,-70.8358,1,0
+nyc,Hastings-on-Hudson,NY,40.9943,-73.8782,1,0
+boston,Natick,MA,42.2836,-71.347,1,0
+boston,Lexington,MA,42.4452,-71.23,1,0
+boston,Milton,MA,42.2501,-71.0656,1,0
+nyc,Roslyn,NY,40.7993,-73.6496,1,0
+boston,Dover,MA,42.2467,-71.2681,1,0
+boston,Hingham,MA,42.2417669,-70.8897676,1,0
+boston,Weston,MA,42.3668,-71.3031,1,0
+boston,Bedford,MA,42.4917,-71.2818,1,0
+boston,Burlington,MA,42.5032,-71.2017,1,1
+nyc,Tuckahoe,NY,40.9504,-73.826,1,1
+philadelphia,Doylestown,PA,40.31,-75.1305,1,1
+boston,Norwood,MA,42.194543,-71.1994976,1,1
+philadelphia,Mount Airy,PA,40.0652,-75.1912,1,1
+boston,Framingham,MA,42.2773177,-71.4165905,1,1
+boston,Wakefield,MA,42.5044,-71.0641,1,1
+philadelphia,Phoenixville,PA,40.1339,-75.5173,1,1
+boston,Arlington,MA,42.4187,-71.1639,1,1
+boston,Needham,MA,42.2816,-71.2424,1,1
+philadelphia,Kingsessing,PA,39.9368,-75.2296,1,2
+nyc,Hamilton Heights,NY,40.8231,-73.9495,1,2
+nyc,Financial District,NY,40.7074,-74.0113,1,2
+nyc,Brighton Beach,NY,40.5774,-73.9613,1,2
+philadelphia,Media,PA,39.9168,-75.3877,1,2
+boston,Fenway,MA,42.3452,-71.1046,1,2
+nyc,East Village,NY,40.7265,-73.9815,1,2
+nyc,Ditmas Park,NY,40.6399,-73.9655,1,2
+nyc,Pelham Bay,NY,40.8527,-73.827,1,2
+philadelphia,Graduate Hospital,PA,39.9424,-75.1792,1,2
+charlotte,Monroe,NC,34.9854,-80.5495,0,0
+tampa,Odessa,FL,28.19,-82.5756,0,0
+denver,Evergreen,CO,39.6356,-105.3381,0,0
+tampa,Wesley Chapel,FL,28.2397,-82.3279,0,0
+tampa,Tampa Palms,FL,28.0861,-82.359,0,0
+tampa,Spring Hill,FL,28.4635,-82.5364,0,0
+miami,Plantation,FL,26.1276,-80.2331,0,0
+tampa,Lutz,FL,28.1511,-82.4615,0,0
+orlando,Lady Lake,FL,28.9198,-81.9328,0,0
+tampa,Ruskin,FL,27.7206,-82.434,0,0
+miami,Lake Worth Beach,FL,26.6197,-80.0587,0,1
+miami,North Miami,FL,25.8901,-80.1867,0,1
+tampa,Town 'n' Country,FL,28.0102,-82.5772,0,1
+miami,Coral Gables,FL,25.7331,-80.2585,0,1
+orlando,Baldwin Park,FL,28.5699,-81.3275,0,1
+miami,Lauderhill,FL,26.1404,-80.2134,0,1
+denver,Roxborough Park,CO,39.4754,-105.075,0,1
+miami,Doral,FL,25.816,-80.3576,0,1
+miami,Wellington,FL,26.655,-80.2375,0,1
+tampa,New Port Richey,FL,28.2466,-82.7175,0,1
+denver,Cherry Creek,CO,39.7166,-104.9525,0,2
+orlando,Thornton Park,FL,28.5403,-81.3675,0,2
+denver,Downtown Denver,CO,39.7468,-104.9949,0,2
+miami,Sweetwater,FL,25.7634,-80.3731,0,2
+denver,Highland,CO,39.762,-105.0112,0,2
+denver,Observatory Park,CO,39.6757,-104.953,0,2
+miami,Brickell,FL,25.7615,-80.1929,0,2
+miami,Mid-Beach,FL,25.8125,-80.1219,0,2
+miami,Midtown Miami,FL,25.8083,-80.1935,0,2
+tampa,Downtown Tampa,FL,27.9453,-82.4568,0,2

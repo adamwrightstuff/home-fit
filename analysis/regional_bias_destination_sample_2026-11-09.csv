@@ -1,0 +1,61 @@
+metro,name,state,lat,lon,A,t
+philadelphia,Bristol,PA,40.1229,-74.8645,1,0
+nyc,Rye,NY,40.9807,-73.6874,1,0
+chicago,Lisle,IL,41.8012,-88.0748,1,0
+philadelphia,Exton,PA,40.0299755,-75.6290436,1,0
+philadelphia,Voorhees,NJ,39.8512,-74.962,1,0
+chicago,Oak Brook,IL,41.8327,-87.9484,1,0
+chicago,Chesterton,IN,41.6107,-87.0523,1,0
+chicago,Yorkville,IL,41.6411,-88.4473,1,0
+chicago,Lake Forest,IL,42.2586,-87.8407,1,0
+nyc,Southport,CT,41.1196,-73.2907,1,0
+nyc,Harrison,NY,40.9759,-73.7129,1,1
+nyc,Leonia,NJ,40.8618,-73.9874,1,1
+chicago,Naperville,IL,41.7729,-88.1479,1,1
+nyc,Ossining,NY,41.1629,-73.8618,1,1
+philadelphia,Collingswood,NJ,39.9182,-75.0713,1,1
+chicago,Western Springs,IL,41.8096,-87.9007,1,1
+nyc,Howard Beach,NY,40.6573,-73.8479,1,1
+nyc,Bloomfield,NJ,40.8068,-74.1874,1,1
+chicago,Tinley Park,IL,41.5734,-87.7845,1,1
+philadelphia,East Falls,PA,40.0176,-75.1893,1,1
+nyc,Carroll Gardens,NY,40.68,-73.9997,1,2
+nyc,Sheepshead Bay,NY,40.5921,-73.9449,1,2
+philadelphia,Kensington,PA,39.9859,-75.1318,1,2
+nyc,Yonkers,NY,40.9312,-73.8988,1,2
+chicago,Hyde Park,IL,41.7944,-87.5939,1,2
+philadelphia,Washington Square West,PA,39.9475,-75.1584,1,2
+philadelphia,Brewerytown,PA,39.9771,-75.1818,1,2
+chicago,Gold Coast,IL,41.9049,-87.6287,1,2
+nyc,Cedarhurst,NY,40.624,-73.7268,1,2
+chicago,Lincoln Square,IL,41.9686,-87.6885,1,2
+houston,Clear Lake,TX,29.5777,-95.1307,0,0
+sf,Fairfax,CA,37.9863,-122.5888,0,0
+dallas,Westlake,TX,32.991226,-97.1943701,0,0
+sacramento,Placerville,CA,38.7311,-120.7977,0,0
+austin,Tarrytown,TX,30.3031,-97.7705,0,0
+san_antonio,Shavano Park,TX,29.5844,-98.5562,0,0
+dallas,Burleson,TX,32.5421,-97.3208,0,0
+san_antonio,Sandy Oaks,TX,29.1817,-98.4092,0,0
+dallas,Allen,TX,33.1097,-96.673,0,0
+houston,Spring,TX,30.0796,-95.4188,0,0
+sf,Evergreen,CA,37.30966,-121.78356,0,1
+austin,Leander,TX,30.5736,-97.8567,0,1
+san_antonio,Beacon Hill,TX,29.4563,-98.5101,0,1
+houston,Shenandoah,TX,30.184,-95.4557,0,1
+sf,Rose Garden,CA,37.3302,-121.9236,0,1
+la,Mount Washington,CA,34.09884,-118.22111,0,1
+austin,Wells Branch,TX,30.4256,-97.6772,0,1
+la,Arcadia,CA,34.1397,-118.0353,0,1
+dallas,Irving,TX,32.8295,-96.9442,0,1
+houston,West University Place,TX,29.7154,-95.4316,0,1
+sf,Glen Park,CA,37.7332,-122.4353,0,2
+la,Pico-Robertson,CA,34.0502,-118.3883,0,2
+la,Westwood,CA,34.0625,-118.4457,0,2
+la,Marina del Rey,CA,33.98,-118.4517,0,2
+houston,Medical Center,TX,29.7101,-95.3973,0,2
+sf,Newark,CA,37.5296593,-122.0402399,0,2
+houston,Washington Avenue,TX,29.7709,-95.4203,0,2
+sf,Inner Richmond,CA,37.7802,-122.4678,0,2
+sf,Albany,CA,37.8869,-122.2977,0,2
+la,West LA,CA,34.0367,-118.4408,0,2

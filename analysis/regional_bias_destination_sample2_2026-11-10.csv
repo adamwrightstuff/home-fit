@@ -1,0 +1,41 @@
+metro,name,state,lat,lon,A,t
+boston,Canton,MA,42.1584324,-71.1447732,1,0
+boston,Wenham,MA,42.6046209,-70.8873511,1,0
+boston,Westwood,MA,42.2187,-71.2234,1,0
+boston,Beverly,MA,42.5489744,-70.8781883,1,1
+boston,Winthrop,MA,42.3746525,-70.9825807,1,1
+boston,Swampscott,MA,42.4699,-70.9172,1,1
+boston,Brookline,MA,42.3329,-71.1188,1,2
+boston,Downtown Boston,MA,42.3558,-71.0556,1,2
+boston,Cambridge,MA,42.3656,-71.104,1,2
+boston,South Boston,MA,42.3334,-71.0495,1,2
+raleigh,Clayton,NC,35.6581,-78.446,0,0
+charlotte,Mineral Springs,NC,34.9379,-80.6687,0,0
+tampa,Wesley Chapel,FL,28.2397,-82.3279,0,0
+phoenix,Peoria,AZ,33.5806,-112.2373,0,0
+denver,Foxfield,CO,39.5881,-104.7857,0,0
+atlanta,Kennesaw,GA,34.0272,-84.6171,0,0
+atlanta,Palmetto,GA,33.5179,-84.6697,0,0
+raleigh,Hayes Barton,NC,35.8033,-78.6514,0,0
+raleigh,Zebulon,NC,35.8295,-78.3142,0,0
+atlanta,Milton,GA,34.1134,-84.2694,0,0
+charlotte,Concord,NC,35.4094,-80.58,0,1
+miami,Miramar,FL,25.9873,-80.2323,0,1
+las_vegas,Rhodes Ranch,NV,36.0824,-115.2924,0,1
+denver,Park Hill,CO,39.68,-105.025,0,1
+miami,Lauderhill,FL,26.1404,-80.2134,0,1
+miami,North Miami,FL,25.8901,-80.1867,0,1
+atlanta,Inman Park,GA,33.7576,-84.3627,0,1
+miami,Boca Raton,FL,26.3587,-80.0831,0,1
+phoenix,Alhambra,AZ,33.5236,-112.1109,0,1
+denver,Sheridan,CO,39.6478,-105.0175,0,1
+las_vegas,Arts District,NV,36.1595,-115.1513,0,2
+tampa,Harbour Island,FL,27.9384,-82.4517,0,2
+las_vegas,Downtown Las Vegas,NV,36.1692,-115.1407,0,2
+phoenix,Coronado,AZ,33.473,-112.0564,0,2
+tampa,Hyde Park,FL,27.9353,-82.4732,0,2
+raleigh,Glenwood South,NC,35.7854,-78.6474,0,2
+atlanta,Old Fourth Ward,GA,33.7641,-84.3718,0,2
+miami,Key Biscayne,FL,25.6907,-80.1656,0,2
+charlotte,South End,NC,35.2126,-80.8588,0,2
+phoenix,Mesa,AZ,33.4151,-111.8315,0,2

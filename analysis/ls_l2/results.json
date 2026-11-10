@@ -1,0 +1,936 @@
+{
+ "n_catalog_scored": 1476,
+ "n_with_read": 1476,
+ "stored_vs_recomputed_1200_mismatches": 0,
+ "stored_vs_recomputed_examples": [],
+ "max_distance_discrepancy_m": 0.5,
+ "rule_on_1200_counts": {
+  "median": 13.0,
+  "p85_ceil": 71
+ },
+ "cuts_1000": {
+  "quiet_below": 10.0,
+  "vibrant_from": 58
+ },
+ "pin_shift_covered_1000m": {
+  "shifts": 5904,
+  "tier_unchanged_pct": 89.1,
+  "vibrant_retention_pct": 86.2,
+  "two_tier_jump_pct": 0.05,
+  "by_baseline_tier": {
+   "Quiet": {
+    "shifts": 2864,
+    "unchanged_pct": 94.0
+   },
+   "Some": {
+    "shifts": 2140,
+    "unchanged_pct": 83.7
+   },
+   "Vibrant": {
+    "shifts": 900,
+    "unchanged_pct": 86.2
+   }
+  },
+  "median_abs_change": 2.0,
+  "p95_abs_change": 40.0,
+  "median_rel_change": 0.142,
+  "p95_rel_change": 1.0,
+  "places_changing_in_2plus_shifts": 188,
+  "baseline_tier_counts": {
+   "Quiet": 716,
+   "Some": 535,
+   "Vibrant": 225
+  }
+ },
+ "pin_shift_gates": {
+  "g1_tier_unchanged_ge_85": true,
+  "g2_vibrant_retention_ge_80": true,
+  "g3_two_tier_jumps_le_1": true
+ },
+ "pin_shift_secondary_1200m_truncated": {
+  "shifts": 5904,
+  "tier_unchanged_pct": 92.5,
+  "changed_direction": {
+   "down": 307,
+   "up": 138
+  }
+ },
+ "aura": {
+  "baseline_aura_1000m": 50,
+  "stored_aura": 49,
+  "overlap": 44,
+  "only_stored": [
+   [
+    "denver",
+    "Downtown Denver"
+   ],
+   [
+    "la",
+    "Arts District"
+   ],
+   [
+    "nyc",
+    "Long Island City"
+   ],
+   [
+    "nyc",
+    "West Village"
+   ],
+   [
+    "sf",
+    "Inner Sunset"
+   ]
+  ],
+  "only_baseline": [
+   [
+    "atlanta",
+    "Ansley Park"
+   ],
+   [
+    "atlanta",
+    "Decatur"
+   ],
+   [
+    "philadelphia",
+    "Society Hill"
+   ],
+   [
+    "seattle",
+    "Kirkland"
+   ],
+   [
+    "sf",
+    "Alamo Square"
+   ],
+   [
+    "sf",
+    "Lower Haight"
+   ]
+  ],
+  "retention_pct": 75.0,
+  "retention_by_place": {
+   "Alamo Square": "3/4",
+   "Albany": "2/4",
+   "Ansley Park": "1/4",
+   "Back Bay": "4/4",
+   "Beacon Hill": "3/4",
+   "Berkeley": "1/4",
+   "Boerum Hill": "4/4",
+   "Brooklyn Heights": "3/4",
+   "Bucktown": "3/4",
+   "Cambridge": "4/4",
+   "Carroll Gardens": "4/4",
+   "Chelsea": "4/4",
+   "Cobble Hill": "4/4",
+   "Cole Valley": "3/4",
+   "Culver City": "4/4",
+   "DUMBO": "4/4",
+   "Decatur": "2/4",
+   "Dogpatch": "2/4",
+   "Fitler Square": "1/4",
+   "Fort Greene": "4/4",
+   "Gowanus": "4/4",
+   "Greenpoint": "3/4",
+   "Greenwich Village": "2/4",
+   "Haight-Ashbury": "4/4",
+   "Hayes Valley": "2/4",
+   "Hoboken": "4/4",
+   "Hyde Park": "2/4",
+   "Kirkland": "2/4",
+   "Lakeview": "2/4",
+   "Lower Haight": "3/4",
+   "Mission Bay": "3/4",
+   "Mountain View": "2/4",
+   "NoHo": "4/4",
+   "Nob Hill": "4/4",
+   "North Center": "3/4",
+   "Northern Liberties": "3/4",
+   "Old Town Scottsdale": "4/4",
+   "Park Slope": "4/4",
+   "Potrero Hill": "3/4",
+   "Prospect Heights": "4/4",
+   "Roscoe Village": "3/4",
+   "Russian Hill": "1/4",
+   "SoHo": "4/4",
+   "SoMa": "4/4",
+   "Society Hill": "2/4",
+   "The Castro": "1/4",
+   "Tribeca": "3/4",
+   "Ukrainian Village": "4/4",
+   "Wicker Park": "4/4",
+   "Windsor Terrace": "2/4"
+  },
+  "gainers": [
+   [
+    [
+     "austin",
+     "Bouldin Creek"
+    ],
+    1
+   ],
+   [
+    [
+     "austin",
+     "Clarksville"
+    ],
+    1
+   ],
+   [
+    [
+     "boston",
+     "Somerville"
+    ],
+    1
+   ],
+   [
+    [
+     "chicago",
+     "Lincoln Square"
+    ],
+    3
+   ],
+   [
+    [
+     "chicago",
+     "The Loop"
+    ],
+    2
+   ],
+   [
+    [
+     "houston",
+     "Midtown"
+    ],
+    1
+   ],
+   [
+    [
+     "nyc",
+     "Gramercy Park"
+    ],
+    1
+   ],
+   [
+    [
+     "nyc",
+     "West Village"
+    ],
+    1
+   ],
+   [
+    [
+     "orlando",
+     "Lake Eola Heights"
+    ],
+    2
+   ],
+   [
+    [
+     "philadelphia",
+     "Bella Vista"
+    ],
+    1
+   ],
+   [
+    [
+     "philadelphia",
+     "Queen Village"
+    ],
+    2
+   ],
+   [
+    [
+     "sf",
+     "Elmwood"
+    ],
+    3
+   ],
+   [
+    [
+     "sf",
+     "Grand Lake"
+    ],
+    1
+   ],
+   [
+    [
+     "sf",
+     "Jack London Square"
+    ],
+    1
+   ],
+   [
+    [
+     "sf",
+     "Mission District"
+    ],
+    2
+   ],
+   [
+    [
+     "sf",
+     "Noe Valley"
+    ],
+    1
+   ],
+   [
+    [
+     "sf",
+     "Palo Alto"
+    ],
+    1
+   ],
+   [
+    [
+     "sf",
+     "Rockridge"
+    ],
+    1
+   ]
+  ],
+  "n_gainers": 18
+ },
+ "aura_gates": {
+  "g1_retention_ge_80": false,
+  "g2_gainers_le_10": false
+ },
+ "named": {
+  "Sunnyside": [
+   {
+    "metro": "denver",
+    "b_n": 21,
+    "b_tier": "Some",
+    "stored_n": 34,
+    "stored_bucket": "Some",
+    "shifts": {
+     "N": [
+      15,
+      "Some"
+     ],
+     "S": [
+      32,
+      "Some"
+     ],
+     "E": [
+      26,
+      "Some"
+     ],
+     "W": [
+      28,
+      "Some"
+     ]
+    }
+   },
+   {
+    "metro": "nyc",
+    "b_n": 135,
+    "b_tier": "Vibrant",
+    "stored_n": 156,
+    "stored_bucket": "High",
+    "shifts": {
+     "N": [
+      150,
+      "Vibrant"
+     ],
+     "S": [
+      130,
+      "Vibrant"
+     ],
+     "E": [
+      154,
+      "Vibrant"
+     ],
+     "W": [
+      134,
+      "Vibrant"
+     ]
+    }
+   }
+  ],
+  "Atwater Village": [
+   {
+    "metro": "la",
+    "b_n": 29,
+    "b_tier": "Some",
+    "stored_n": 36,
+    "stored_bucket": "Some",
+    "shifts": {
+     "N": [
+      35,
+      "Some"
+     ],
+     "S": [
+      27,
+      "Some"
+     ],
+     "E": [
+      24,
+      "Some"
+     ],
+     "W": [
+      25,
+      "Some"
+     ]
+    }
+   }
+  ],
+  "Echo Park": [
+   {
+    "metro": "la",
+    "b_n": 46,
+    "b_tier": "Some",
+    "stored_n": 57,
+    "stored_bucket": "Some",
+    "shifts": {
+     "N": [
+      45,
+      "Some"
+     ],
+     "S": [
+      42,
+      "Some"
+     ],
+     "E": [
+      42,
+      "Some"
+     ],
+     "W": [
+      48,
+      "Some"
+     ]
+    }
+   }
+  ],
+  "Los Feliz": [
+   {
+    "metro": "la",
+    "b_n": 62,
+    "b_tier": "Vibrant",
+    "stored_n": 97,
+    "stored_bucket": "High",
+    "shifts": {
+     "N": [
+      22,
+      "Some"
+     ],
+     "S": [
+      103,
+      "Vibrant"
+     ],
+     "E": [
+      62,
+      "Vibrant"
+     ],
+     "W": [
+      49,
+      "Some"
+     ]
+    }
+   }
+  ],
+  "Santa Monica": [
+   {
+    "metro": "la",
+    "b_n": 105,
+    "b_tier": "Vibrant",
+    "stored_n": 129,
+    "stored_bucket": "High",
+    "shifts": {
+     "N": [
+      78,
+      "Vibrant"
+     ],
+     "S": [
+      116,
+      "Vibrant"
+     ],
+     "E": [
+      60,
+      "Vibrant"
+     ],
+     "W": [
+      105,
+      "Vibrant"
+     ]
+    }
+   }
+  ],
+  "Silver Lake": [
+   {
+    "metro": "la",
+    "b_n": 46,
+    "b_tier": "Some",
+    "stored_n": 60,
+    "stored_bucket": "Some",
+    "shifts": {
+     "N": [
+      42,
+      "Some"
+     ],
+     "S": [
+      45,
+      "Some"
+     ],
+     "E": [
+      33,
+      "Some"
+     ],
+     "W": [
+      59,
+      "Vibrant"
+     ]
+    }
+   }
+  ],
+  "Battery Park City": [
+   {
+    "metro": "nyc",
+    "b_n": 296,
+    "b_tier": "Vibrant",
+    "stored_n": 349,
+    "stored_bucket": "High",
+    "shifts": {
+     "N": [
+      226,
+      "Vibrant"
+     ],
+     "S": [
+      225,
+      "Vibrant"
+     ],
+     "E": [
+      392,
+      "Vibrant"
+     ],
+     "W": [
+      66,
+      "Vibrant"
+     ]
+    }
+   }
+  ],
+  "Bay Ridge": [
+   {
+    "metro": "nyc",
+    "b_n": 105,
+    "b_tier": "Vibrant",
+    "stored_n": 144,
+    "stored_bucket": "High",
+    "shifts": {
+     "N": [
+      80,
+      "Vibrant"
+     ],
+     "S": [
+      126,
+      "Vibrant"
+     ],
+     "E": [
+      137,
+      "Vibrant"
+     ],
+     "W": [
+      86,
+      "Vibrant"
+     ]
+    }
+   }
+  ],
+  "Bronxville": [
+   {
+    "metro": "nyc",
+    "b_n": 34,
+    "b_tier": "Some",
+    "stored_n": 34,
+    "stored_bucket": "Some",
+    "shifts": {
+     "N": [
+      35,
+      "Some"
+     ],
+     "S": [
+      36,
+      "Some"
+     ],
+     "E": [
+      32,
+      "Some"
+     ],
+     "W": [
+      34,
+      "Some"
+     ]
+    }
+   }
+  ],
+  "Hastings-on-Hudson": [
+   {
+    "metro": "nyc",
+    "b_n": 10,
+    "b_tier": "Some",
+    "stored_n": 11,
+    "stored_bucket": "Low",
+    "shifts": {
+     "N": [
+      10,
+      "Some"
+     ],
+     "S": [
+      10,
+      "Some"
+     ],
+     "E": [
+      9,
+      "Quiet"
+     ],
+     "W": [
+      10,
+      "Some"
+     ]
+    }
+   }
+  ],
+  "Hell's Kitchen": [
+   {
+    "metro": "nyc",
+    "b_n": 523,
+    "b_tier": "Vibrant",
+    "stored_n": 652,
+    "stored_bucket": "High",
+    "shifts": {
+     "N": [
+      344,
+      "Vibrant"
+     ],
+     "S": [
+      651,
+      "Vibrant"
+     ],
+     "E": [
+      608,
+      "Vibrant"
+     ],
+     "W": [
+      271,
+      "Vibrant"
+     ]
+    }
+   }
+  ],
+  "Larchmont": [
+   {
+    "metro": "nyc",
+    "b_n": 39,
+    "b_tier": "Some",
+    "stored_n": 41,
+    "stored_bucket": "Some",
+    "shifts": {
+     "N": [
+      40,
+      "Some"
+     ],
+     "S": [
+      23,
+      "Some"
+     ],
+     "E": [
+      20,
+      "Some"
+     ],
+     "W": [
+      41,
+      "Some"
+     ]
+    }
+   }
+  ],
+  "Murray Hill": [
+   {
+    "metro": "nyc",
+    "b_n": 467,
+    "b_tier": "Vibrant",
+    "stored_n": 628,
+    "stored_bucket": "High",
+    "shifts": {
+     "N": [
+      493,
+      "Vibrant"
+     ],
+     "S": [
+      332,
+      "Vibrant"
+     ],
+     "E": [
+      246,
+      "Vibrant"
+     ],
+     "W": [
+      647,
+      "Vibrant"
+     ]
+    }
+   }
+  ],
+  "Pelham": [
+   {
+    "metro": "nyc",
+    "b_n": 18,
+    "b_tier": "Some",
+    "stored_n": 18,
+    "stored_bucket": "Some",
+    "shifts": {
+     "N": [
+      18,
+      "Some"
+     ],
+     "S": [
+      18,
+      "Some"
+     ],
+     "E": [
+      18,
+      "Some"
+     ],
+     "W": [
+      18,
+      "Some"
+     ]
+    }
+   }
+  ],
+  "Rye": [
+   {
+    "metro": "nyc",
+    "b_n": 7,
+    "b_tier": "Quiet",
+    "stored_n": 7,
+    "stored_bucket": "Low",
+    "shifts": {
+     "N": [
+      7,
+      "Quiet"
+     ],
+     "S": [
+      5,
+      "Quiet"
+     ],
+     "E": [
+      7,
+      "Quiet"
+     ],
+     "W": [
+      7,
+      "Quiet"
+     ]
+    }
+   }
+  ]
+ },
+ "launch_pairs": {
+  "passed": 3,
+  "of": 6,
+  "pass_rule_ge_5": false,
+  "detail": [
+   {
+    "pair": "West Village over Pelham Bay",
+    "first": {
+     "n": 818,
+     "bucket": "High",
+     "n1000": 644
+    },
+    "second": {
+     "n": 11,
+     "bucket": "Low",
+     "n1000": 9
+    },
+    "passed": true
+   },
+   {
+    "pair": "Tribeca over Battery Park City",
+    "first": {
+     "n": 669,
+     "bucket": "High",
+     "n1000": 464
+    },
+    "second": {
+     "n": 349,
+     "bucket": "High",
+     "n1000": 296
+    },
+    "passed": false
+   },
+   {
+    "pair": "Carroll Gardens over Pelham",
+    "first": {
+     "n": 213,
+     "bucket": "High",
+     "n1000": 153
+    },
+    "second": {
+     "n": 18,
+     "bucket": "Some",
+     "n1000": 18
+    },
+    "passed": true
+   },
+   {
+    "pair": "Bronxville over Pelham Manor",
+    "first": {
+     "n": 34,
+     "bucket": "Some",
+     "n1000": 34
+    },
+    "second": {
+     "n": 8,
+     "bucket": "Low",
+     "n1000": 2
+    },
+    "passed": true
+   },
+   {
+    "pair": "Silver Lake over Sunnyside",
+    "first": {
+     "n": 60,
+     "bucket": "Some",
+     "n1000": 46
+    },
+    "second": {
+     "n": 156,
+     "bucket": "High",
+     "n1000": 135
+    },
+    "passed": false
+   },
+   {
+    "pair": "Park Slope over Bay Ridge",
+    "first": {
+     "n": 361,
+     "bucket": "High",
+     "n1000": 275
+    },
+    "second": {
+     "n": 144,
+     "bucket": "High",
+     "n1000": 105
+    },
+    "passed": false
+   }
+  ]
+ },
+ "all_places_stored_tiers": {
+  "overall": {
+   "Low": 732,
+   "Some": 520,
+   "High": 224
+  },
+  "no_read": 0,
+  "by_metro": {
+   "atlanta": {
+    "Low": 42,
+    "Some": 27,
+    "High": 7
+   },
+   "austin": {
+    "Low": 27,
+    "Some": 29,
+    "High": 2
+   },
+   "boston": {
+    "Low": 42,
+    "High": 11,
+    "Some": 28
+   },
+   "charlotte": {
+    "Some": 12,
+    "Low": 25,
+    "High": 4
+   },
+   "chicago": {
+    "Some": 34,
+    "High": 24,
+    "Low": 45
+   },
+   "dallas": {
+    "Some": 30,
+    "Low": 47,
+    "High": 4
+   },
+   "denver": {
+    "Some": 21,
+    "Low": 33,
+    "High": 8
+   },
+   "houston": {
+    "Low": 57,
+    "Some": 15,
+    "High": 2
+   },
+   "la": {
+    "Some": 51,
+    "Low": 37,
+    "High": 17
+   },
+   "las_vegas": {
+    "Low": 22,
+    "Some": 7,
+    "High": 1
+   },
+   "miami": {
+    "Some": 24,
+    "Low": 39,
+    "High": 4
+   },
+   "nyc": {
+    "Low": 56,
+    "High": 62,
+    "Some": 75
+   },
+   "orlando": {
+    "Low": 34,
+    "Some": 7,
+    "High": 2
+   },
+   "philadelphia": {
+    "Some": 39,
+    "High": 21,
+    "Low": 32
+   },
+   "phoenix": {
+    "Low": 37,
+    "Some": 21,
+    "High": 6
+   },
+   "raleigh": {
+    "Low": 21,
+    "High": 3,
+    "Some": 7
+   },
+   "sacramento": {
+    "High": 4,
+    "Low": 43,
+    "Some": 11
+   },
+   "san_antonio": {
+    "Low": 41,
+    "Some": 6,
+    "High": 2
+   },
+   "seattle": {
+    "Some": 3,
+    "High": 1,
+    "Low": 1
+   },
+   "sf": {
+    "High": 35,
+    "Low": 22,
+    "Some": 56
+   },
+   "tampa": {
+    "Low": 29,
+    "Some": 17,
+    "High": 4
+   }
+  },
+  "zero_count": 144
+ }
+}
