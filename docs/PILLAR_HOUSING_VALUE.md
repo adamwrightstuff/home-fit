@@ -35,7 +35,7 @@ Expensive areas score *low* here (low affordability); that's by design.
 
 ## DPv2 spec sheet (2026-10-30)
 
-**Status: DPv2 certified 2026-10-30, with recorded judgments (owner accepted the pin-swing gate). Weights, point steps and efficiency thresholds are labeled judgments with sensitivity, not sourced values. Re-validate by 2027-04-30.**
+**Level: 2 (Verified) with a recorded gap, numbered by the owner 2026-11-10. Status: DPv2 certified 2026-10-30, with recorded judgments (owner accepted the pin-swing gate). Weights, point steps and efficiency thresholds are labeled judgments with sensitivity, not sourced values. Re-validate by 2027-04-30.**
 
 - **Construct:** how affordable and roomy a home is for the area's own typical income (price or rent against income, rooms, rooms per dollar), not desirability. Expensive places score low by design.
 - **Reference frame:** fixed standards. Evidence tier 1 for the anchors only: HUD cost burden at 30% and severe at 50% of income, Demographia price-to-income "affordable" at 3.0 and bands at 4.0 and 5.0. All point values between anchors are judgment (research 2026-10-30, Muse; quotes not independently verified).
@@ -50,3 +50,6 @@ Expensive areas score *low* here (low affordability); that's by design.
 - **Fail loud:** no income means no data; missing rooms leave space and efficiency out; no owner value leaves efficiency out and rescales (not degraded); nothing invented.
 - **Known data limits:** tract medians are survey estimates (median sampling sd 5.4 points single tract, 3.3 pooled); pooled values are weighted means of tract medians, not a true pooled median; breakdown sub-scores for pooled places stay single-tract (summary.pooling holds the pooled inputs).
 - **Last re-validated:** 2026-10-30. **Next re-validation:** 2027-04-30 (rerun the cost-burden validation and the pin-shift test; check for newer ACS releases).
+
+## Level 2 numbered (owner, 2026-11-10)
+Housing value was certified on 2026-10-30 under the older wording with no numbered level. It is now recorded as Level 2 (Verified) with recorded gaps. Independent validation is only partly independent: the check uses the share of households not paying 30 percent or more of income on housing from the same ACS survey (Spearman 0.67 across all places, 0.55 within metro, 495 pin tracts); rent-to-income alone scores higher at 0.72. Weights, point steps and efficiency thresholds are labeled judgments with sensitivity, not sourced values. Pin-shift was accepted by the owner under the noise-based gate. Re-validate by 2027-04-30. Copy must not call this pillar validated.

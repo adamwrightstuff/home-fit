@@ -1,6 +1,6 @@
 # Pillar Deep-Dive: Natural Beauty
 
-Level: 1 (Converted), recorded by the owner 2026-11-06. See the level section at the end.
+Level: 1 (Converted), recorded by the owner 2026-11-06 and final as of 2026-11-10 (Level 2 not pursued). See the level sections at the end.
 
 How `pillars/natural_beauty.py` scores a location today: the two-part model (2026-10) plus the scenery preference.
 Evidence, judgment calls and open gaps are in `analysis/natural_beauty_two_part_proposal_2026-10-24.md` (local file).
@@ -400,3 +400,6 @@ The catalog stores the neutral score plus `details.v9_breakdown` (component scor
 ## Level 1 sign-off (owner, 2026-11-06)
 
 Level 1 accepted. Level 2 is not reached because pin-shift fails at 500 m (it passes at 250 m) and validation is partial and below the 0.7 gate (streets vs Place Pulse r 0.37, blend unvalidated). Gaps: judgments signed off 2026-10-29, the water classification limit, desert places with no rating data, and the blend left open (P7).
+
+## Level 1 is final (owner, 2026-11-10)
+Decision: natural beauty stays at Level 1 (Converted). Level 2 is not pursued. Accepted as recorded gaps: pin-shift passes at the 250 m gate you set and fails at 500 m (nearest-water label flips river to ocean at Midtown East; green view is steep from 15 to 25 percent in places like Southport CT); independent validation is partial and below the 0.7 gate (streets against Place Pulse r about 0.37, terrain 0.41 against ScenicOrNot and 0.66 against USDA topography, water 0.30); the blend of the two parts has no outside check; deserts (Phoenix, Las Vegas, Denver) have no human rating data, so the regional medians stay as an unsourced judgment; the tidal-strait question for ocean stays open. The tree-lined street signal was tested 2026-10-31 and closed (no clear gain over green view). Copy must not call this pillar validated.
