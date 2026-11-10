@@ -25,8 +25,6 @@ Documentation for the home-fit scoring backend and catalog. Start here.
   tract geo-fallback fabricated-0 bug.
 - **[PILLAR_COMMUNITY_SAFETY.md](PILLAR_COMMUNITY_SAFETY.md)** — FBI CDE crime rates,
   area-relative scoring, and the COMING_SOON coverage gap (null ≠ unsafe).
-- **[PILLAR_BUILT_BEAUTY.md](PILLAR_BUILT_BEAUTY.md)** — architectural diversity + historic
-  coherence; the coverage-0 fabricated-floor issue and pending backfill.
 - **[PILLAR_HEALTHCARE_ACCESS.md](PILLAR_HEALTHCARE_ACCESS.md)** — facility count + proximity; saturates at the ceiling in dense metros.
 - **[PILLAR_QUALITY_EDUCATION.md](PILLAR_QUALITY_EDUCATION.md)** — nearby school ratings; the schools-gating Live-vs-Explorer divergence.
 - **[PILLAR_SOCIAL_FABRIC.md](PILLAR_SOCIAL_FABRIC.md)** — stability + civic engagement +
@@ -39,7 +37,6 @@ Documentation for the home-fit scoring backend and catalog. Start here.
 
 ## Pillar references (data sources & methodology)
 - [economic_security_pillar_data_reference.md](economic_security_pillar_data_reference.md)
-- [beauty_area_type_reference.md](beauty_area_type_reference.md)
 - [SOCIAL_FABRIC_PRD.md](SOCIAL_FABRIC_PRD.md)
 - [HOMEFIT_LONGEVITY_IMPLEMENTATION_PLAN.md](HOMEFIT_LONGEVITY_IMPLEMENTATION_PLAN.md) ·
   [LONGEVITY_PRD_ERRATA.md](LONGEVITY_PRD_ERRATA.md)

@@ -56,11 +56,6 @@ The Explorer weight panel splits `neighborhood_beauty` into two independently we
 - **`natural_beauty`** — the stored `natural_beauty_score` sub-score from the NB breakdown,
   optionally re-biased by scenery preference (mountains/ocean/etc.). Feeds the
   Happiness index.
-- **`built_environment`** — a client-computed area-type **match score** (0–100) based on how
-  closely the place's `effective_area_type` matches the user's preferred neighborhood type
-  (Urban Core / Urban Neighborhood / Suburban / Exurban / Rural). Uses an asymmetric distance
-  penalty: being denser than preferred is penalized harder (60/30/5) than being sparser
-  (75/50/20). `historic_urban` maps to index 4 (same as `urban_core`).
 - The original `neighborhood_beauty` pillar is zeroed out in the catalog composite so it
   doesn't double-count. The live scorer still returns the merged `neighborhood_beauty` score
   and is unaffected.
@@ -88,47 +83,8 @@ floor). A full live run can differ because:
 - **public_transit_access:** the live Transitland fetch is **noisy** — it can undercount
   routes (Astoria → 2 subway lines on a bad fetch). The catalog uses stable stored counts.
   See [[transit-fetch-noisy]]. So live transit can differ run-to-run and from the catalog.
-- **built_environment:** ~34% of catalog places carry stale coverage-0 scores; live has the
-  reliability guard. See [[built-beauty-backfill-todo]].
-- **built_environment confidence — RESOLVED 2026-06-16:** catalog `confidence` was frozen at
-  build time (mostly 90) and never re-derived after `assess_pillar_data_quality()` added
-  its `data_warning`-based discount (3% for `suspiciously_low_height_diversity` /
-  `low_building_coverage`, 12% for real failures like `api_error`). Recomputed from
-  already-stored `architectural_analysis` data (no OSM re-fetch) via
-  `scripts/recompute_built_environment_confidence.py`: 282/292 places corrected (179 NYC, 103 LA).
-  Confidence is metadata only — doesn't cascade into score/total_score.
-
-### 6. Built Environment form-metric non-determinism — RESOLVED 2026-06-21
-`compute_block_grain` had `@cached(ttl_seconds=CACHE_TTL['osm_queries'])`; `compute_
-streetwall_continuity`, `compute_setback_consistency`, and `compute_facade_rhythm` did not,
-despite a comment at the call site stating the 15s timeout relied on "caching handles
-retries." Verified: calling the same place twice with caches cleared produced different
-built_environment scores minutes apart (Bronxville 71.4 → 86.6) purely from live OSM/Overpass
-timing variance on the uncached calls. Fixed by adding the missing decorator to all three
-(matching `compute_block_grain`'s existing pattern). Live scores for a fixed place should now
-be stable across requests within the 6h TTL.
-
-### 7. Built Environment height_diversity fabrication trigger — RESOLVED 2026-06-21
-The GHSL height-substitution fallback (`get_building_height_diversity_ghsl`, already wired
-into `compute_arch_diversity`) only fired when `levels_entropy < 5.0 AND >85%` of buildings
-were untagged. The entropy threshold tested the unreliable *outcome*, not the actual cause —
-a handful of real outlier buildings among mostly-untagged ones can push the fabricated entropy
-to a misleadingly "plausible" value (7-9) that's still mostly fabrication, so borderline cases
-slipped past the fix. Confirmed live for Bronxville/Manhattan Beach (~97% of buildings
-untagged in both, entropy landing at 9.0/10.9 — both above the old 5.0 cutoff). Fixed by
-dropping the entropy condition; trigger is now the untagged-ratio alone.
-
-### 8. Built Environment form-metric confidence formula — fixed, but does not affect score
-`coverage_confidence` for setback/facade_rhythm multiplied two fractional ratios (segment
-coverage × per-segment building-count validity), which compounds punitively — verified
-catalog-wide this reads ~0.02 on 100% of places, every area type, a structural property of
-the formula rather than a real reflection of data quality anywhere. Fixed to a single
-completeness ratio. **Caveat discovered during verification:** the production scoring path
-(`HOMEFIT_USE_CALIBRATED_BUILT_BEAUTY=1`, default on) never reads this confidence value at
-all — only the raw setback/facade/block_grain/streetwall *values* feed the calibrated model,
-never their confidence. The fix is correct and real, but it only affects an internal
-diagnostic field today; it does not move any live score unless the legacy (non-calibrated)
-path is ever re-enabled.
+### 6 to 8. Built environment items
+Retired with the built environment pillar. History is in git.
 
 ### 9. active_outdoors scored under stale pre-pillar area_type — RESOLVED 2026-06-21
 Pillars run on a pre-pillar area_type estimate (OSM-only business count, 35s timeout); the
@@ -152,12 +108,12 @@ Fixed: now raises, routing through the existing pillar-failure path (`status='fa
 excluded from the headline total) instead of fabricating a number.
 
 ### 11. neighborhood_beauty catalog merge — offline, verified surgical
-The built_environment/natural_beauty → neighborhood_beauty schema merge was applied to all 292
+The (now retired) built_environment/natural_beauty → neighborhood_beauty schema merge was applied to all 292
 LA/NYC catalog places offline (no live scoring), blending each row's already-stored sub-scores
 with the validated density+area-type formula. Verified zero pillar-score drift on every other
 pillar. A first pass also accidentally over-recomputed `status_signal`/`happiness_index` for
 *every* row (via an unconditional `recompute_composites_from_payload` call) even though
-`status_signal` doesn't depend on built_environment/natural_beauty/neighborhood_beauty at all —
+`status_signal` doesn't depend on natural_beauty/neighborhood_beauty at all —
 reverted to last-known-good except for the rows whose `area_type` genuinely changed (where
 recomputing is legitimate, since `status_signal` does consume `area_type`).
 
@@ -169,8 +125,7 @@ Catalog rescores used stored sub-components rather than a full live run, e.g.:
 
 ## How to reconcile (the real fix)
 The clean way to eliminate Drift is to **rebuild the catalog by running places through the
-live `main.py` scorer** (the "faithful backfill through main.py context" — same caveat noted
-for Built Environment in [[built-beauty-backfill-todo]]). Offline rescores are faster but
+live `main.py` scorer** (the "faithful backfill through main.py context"). Offline rescores are faster but
 accumulate drift. Until then, treat live as source of truth for scoring *logic* and the
 catalog as a precomputed snapshot.
 
@@ -178,7 +133,6 @@ catalog as a precomputed snapshot.
 - [x] Decide whether the Explorer default should match live on **schools** — both ON as of 2026-06-16.
 - [ ] Single-source the NB-preference math (currently Python + a TS mirror).
 - [ ] Faithful catalog rebuild through main.py to clear accumulated offline-rescore drift.
-- [ ] Built Environment catalog backfill (stale coverage-0 places).
 - [ ] 5 places with broken/stale density (Fort Greene, Maspeth, Southport, Glendale [Queens],
   Pelham Bay) — Fort Greene's stored `density=0.0` is confirmed stale (fresh Census lookup
   returned 61,732/sq mi); the other 4 need the same check. Feeds wrong input into both

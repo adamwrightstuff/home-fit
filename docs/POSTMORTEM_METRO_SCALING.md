@@ -64,7 +64,6 @@ Ranked by how much time each would have saved.
 
 - Seattle (Ballard, Kirkland) and Philadelphia need Overpass.
 - Nine withheld values (SF 4, NYC 5) need a rescore when Overpass is back.
-- Ridgewood (Queens) built environment fails repeatedly; cause unknown.
 - 2024 political lean for IL, IN and DE (three options were laid out; the labelled 2020 value is the interim choice).
 - The Overpass remark bug may have affected catalogs scored before it was fixed; the live metros were re-audited, but the full extent is unknown.
 - Climate profiles, work-commute hubs and `cbd_transit_minutes` are missing for the new metros; Seattle has no incident-level crime source.

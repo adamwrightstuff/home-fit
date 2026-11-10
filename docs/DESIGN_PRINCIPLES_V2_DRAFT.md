@@ -72,7 +72,7 @@ Read-only audit, output is a gap table per pillar with recommended fix and expec
 1. Pillars reading a single tract at the pin: housing value, diversity, social fabric.
 2. Pillars with known unsourced weights: amenities (60/40 split), economic security (0.40/0.15/0.20/0.25), education bonuses, social fabric (1.2 multipliers).
 3. Access pillars: transit, healthcare, active outdoors, amenities (measurement area check).
-4. Remaining pillars: climate risk, natural beauty, built environment, air travel.
+4. Remaining pillars: climate risk, natural beauty, air travel.
 5. Community safety last, since it already went through most of this process and serves as the worked example.
 
 ## Part 4: Provisional reference frames (for owner approval)

@@ -42,8 +42,8 @@ two, both served by data already in the pipeline:**
   preference" means today.
 - *"Walking the street feels green"* — genuinely unserved today. Add as a distinct,
   separately-selectable preference, fed by NLCD TCC sampled only within a buffer of the
-  street/sidewalk right-of-way (reuse OSM road geometry `street_geometry.py` already fetches
-  for built_environment) instead of the whole radius. Same national dataset already in the
+  street/sidewalk right-of-way (reuse OSM road geometry `street_geometry.py` already fetches)
+  instead of the whole radius. Same national dataset already in the
   pipeline, no new API, no per-metro dependency — just a different geometry passed into the
   existing GEE canopy call.
 

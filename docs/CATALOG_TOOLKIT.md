@@ -47,7 +47,6 @@ PYTHONPATH=. python3 scripts/catalog/recompute_catalog_composites.py \
 | `report_catalog_confidence_below.py` | Count places under a confidence threshold per pillar. |
 | `audit_pillar_confidence_staleness.py` | Audit for stale confidence/data_warning fields. |
 | `verify_rescore_pillar.py` | E2E check that single-pillar rescore flow works. |
-| `analyze_built_environment_patterns.py` | Cross-catalog built environment pattern analysis. |
 | `analyze_vibe_vs_status.py` | Scatter: vibe score vs status signal across NYC + LA. |
 
 **Canonical health check:** `PYTHONPATH=. python -m scripts.metro_agent health` (all metros, with fixes via `--fix`). The per-pillar scan it builds on:
@@ -127,7 +126,6 @@ PYTHONPATH=. python3 scripts/catalog/rescore_catalog_pillar.py \
 | Script | What it targets |
 |--------|----------------|
 | `rescore_ao_waterfront.py` | AO places with known waterfront data issues. |
-| `rescore_built_environment_full.py` | Full built environment rescore for both catalog files. |
 | `rescore_social_fabric_targeted.py` | Social fabric places with known data issues. |
 | `rescore_political_lean.py` | Add/refresh political_lean data. |
 | `rescore_housing_blend.py` | Housing value — tenure-weighted blend update. |
@@ -144,7 +142,6 @@ These re-derive scores from numbers already in the JSONL. No external calls.
 |--------|-------------------|
 | `recompute_catalog_composites.py` | status_signal (Socioeconomic Standing), happiness_index. **Run after every API rescore.** |
 | `recompute_active_outdoors_offline.py` | AO score from stored OSM summary data. |
-| `recompute_built_environment_offline.py` | Built environment from stored form metrics. |
 | `recompute_social_fabric_v15_offline.py` | Social fabric v16 (no API calls). |
 | `recompute_social_fabric_engagement.py` | SF engagement component only. |
 | `recompute_stability_blend.py` | SF stability scores from new blend logic. |
@@ -154,9 +151,7 @@ These re-derive scores from numbers already in the JSONL. No external calls.
 | `rescore_natural_beauty_v9_offline.py` | Natural beauty component scores from stored GEE/canopy data (re-derives the inputs). |
 | `recompute_natural_beauty_two_part_offline.py` | Natural beauty two-part score from stored component scores, no API calls. Run `recompute_catalog_composites.py` after. |
 | `scripts/baselines/build_natural_beauty_two_part_scale.py` | Percentile table that maps the two-part blend onto the old score distribution (also writes `frontend/lib/nbTwoPartScale.ts`). |
-| `rescore_built_environment_offline.py` | Built environment offline (preview-safe). |
 | `recalibrate_waterfront_offline.py` | Waterfront scores from revised base values. |
-| `_merge_neighborhood_beauty_offline.py` | Merge built_environment + natural_beauty → neighborhood_beauty. |
 
 ---
 
@@ -168,7 +163,7 @@ Inject or correct a specific field without re-running any scoring.
 |--------|----------------|
 | `patch_ao_water_winner.py` | Inject best_feature_type / best_feature_dist_m into AO summary. |
 | `patch_ao_waterfront.py` | Targeted AO waterfront corrections. |
-| `patch_best_fit_labels.py` | Add best-fit preference labels to NB and built_environment breakdowns. |
+| `patch_best_fit_labels.py` | Add best-fit preference labels to NB breakdowns. |
 | `patch_school_charter_flag.py` | Add is_charter_school onto school arrays. |
 | `patch_school_radius_bleed.py` | Fix school radius bleed (e.g. Westchester pulling Bronx schools). |
 | `patch_transit_stable_commute.py` | Patch transit commute_time using stable multi-tract Census lookup. |
@@ -176,7 +171,6 @@ Inject or correct a specific field without re-running any scoring.
 | `backfill_housing_stock.py` | Inject Census ACS B25024 housing stock type. |
 | `backfill_river_waterfront.py` | Inject river/waterway scores where AO waterfront_lifestyle=0. |
 | `backfill_zip_codes.py` | Backfill missing ZIP codes via Nominatim reverse geocode. |
-| `apply_v3_beauty_to_catalog.py` | Apply built_environment_v3 from stored form metrics. |
 | `rescore_social_fabric_area_type.py` | Patch SF effective_area_type correction offline. |
 
 ---
@@ -186,7 +180,6 @@ Inject or correct a specific field without re-running any scoring.
 | Script | What it does |
 |--------|-------------|
 | `export_catalog_scores_csv.py` | JSONL → wide CSV (one row per place, all pillars as columns). |
-| `merge_refetch_into_preview.py` | Merge live-refetched built_environment into offline-rescored preview catalogs. |
 
 ---
 

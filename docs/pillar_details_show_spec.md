@@ -64,23 +64,6 @@ When a user taps **Show details** on a pillar card on the Place Results screen, 
 
 ---
 
-## 4. Built Environment
-
-**Top line:** "Street and building design, diversity, and human scale."
-
-| # | Label | Source | Format |
-|---|--------|--------|--------|
-| 1 | Architecture diversity | Component | **%** or **qualitative:** "High" / "Moderate" / "Low" |
-| 2 | Street character | Streetwall/setback/facade | **Qualitative:** "Strong" / "Moderate" / "Limited" |
-| 3 | Building mix | Types / footprint variety | Count or **qualitative** tier |
-| 4 | Character preference | `built_character_preference` / density | Text: "Weighted for: Historic / Contemporary / …" |
-
-Do **not** add a row that is only "Design score" or "Built beauty score" (same as pillar score).
-
-**Degraded only:** "Limited data: some built environment data were unavailable."
-
----
-
 ## 5. Healthcare Access
 
 **Top line:** "Access to hospitals, urgent care, clinics, and pharmacies."

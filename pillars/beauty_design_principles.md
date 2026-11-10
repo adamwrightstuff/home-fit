@@ -1,6 +1,6 @@
 # Beauty Pillar Design Principles
 
-This document outlines shared design principles for the `built_environment` and `natural_beauty` pillars to ensure consistency, maintainability, and scalability.
+This document outlines shared design principles for the `natural_beauty` pillar to ensure consistency, maintainability, and scalability.
 
 ## Core Principles
 
@@ -11,7 +11,6 @@ This document outlines shared design principles for the `built_environment` and 
 - More predictable and debuggable
 - Easier to tune individual components
 - Prevents compounding effects that lead to extreme values
-- Consistent with built environment's approach
 
 **Implementation:**
 ```python
@@ -64,8 +63,6 @@ score = f(observed_canopy / expected_canopy)
 # ❌ Bad: Adjust scores directly
 score = base_score * climate_multiplier
 ```
-
-**Note:** Built beauty may not need climate adjustments (architecture is more universal), but the principle applies where relevant.
 
 ---
 
@@ -158,11 +155,6 @@ details = {
 
 ## Bonus Magnitude Guidelines
 
-### Built Environment
-- **Component score:** 0-50 (native range)
-- **Enhancer bonus:** 0-8.0 (BUILT_ENHANCER_CAP)
-- **Total raw:** 0-100 (component * 2.0 + enhancer)
-
 ### Natural Beauty
 - **Component score:** 0-50 (native range)
 - **Enhancer bonus:** 0-18.0 (NATURAL_ENHANCER_CAP)
@@ -245,5 +237,4 @@ if location in SPECIAL_LOCATIONS:
 4. Does this have a rollback plan?
 5. Is this documented with clear rationale?
 6. Have regression tests been run?
-7. Does this maintain consistency with built environment?
 

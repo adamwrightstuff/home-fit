@@ -252,7 +252,7 @@ export default function FilterSheet({
 
           {/* Area type */}
           <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Built environment</div>
+            <div style={LABEL_STYLE}>Area type</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {AREA_TYPE_OPTIONS.map(({ value, label }) =>
                 chip(filterAreaTypes.includes(value), label, () => toggleAreaType(value))

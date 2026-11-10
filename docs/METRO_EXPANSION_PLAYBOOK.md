@@ -141,7 +141,7 @@ Check: `cd frontend && npx tsc --noEmit`.
 | 4 | ZIP codes | Nominatim reverse geocode | Agent recommendations |
 | 5 | Political lean | Local precinct JSON files | `political_lean` |
 | 6 | Local scene bucket | Stored business_list data | Explorer local-scene filter |
-| 7 | Best-fit preference labels | Stored NB/built_env data | NB + built_environment UI |
+| 7 | Best-fit preference labels | Stored NB data | NB UI |
 | 8 | Charter school flag | NCES school data | Education filter |
 | 9 | Archetype summaries | Claude API (~$5–15) | Agent recommendations |
 | 10 | Composite recompute | Stored pillar scores (no API) | `total_score`, happiness |
