@@ -19,13 +19,19 @@ export interface BudgetFilter {
   beds: Beds[]
   /** Maximum all-in monthly cost; null means no budget filter. */
   max: number | null
-  /** Cash down payment. */
-  down: number
+  /** Cash down payment; null means the suggested 20% of each home's price (the visitor has not typed an amount). */
+  down: number | null
   /** True once the visitor has picked a bedroom count, a cap or a down payment. Until then no cost is shown anywhere. */
   chosen: boolean
 }
 
-export const DEFAULT_BUDGET: BudgetFilter = { beds: [4], max: null, down: 600000, chosen: false }
+export const DOWN_SHARE_DEFAULT = 0.2
+export const DEFAULT_BUDGET: BudgetFilter = { beds: [4], max: null, down: null, chosen: false }
+
+/** "20% down" or "$250,000 down" */
+export function downLabel(down: number | null): string {
+  return down == null ? `${Math.round(DOWN_SHARE_DEFAULT * 100)}% down` : `$${down.toLocaleString('en-US')} down`
+}
 export const MORTGAGE_RATE = 0.07
 export const INSURANCE_RATE = 0.004
 
@@ -59,11 +65,11 @@ export function toggleBed(budget: BudgetFilter, b: Beds): BudgetFilter {
   return { ...budget, beds: ALL_BEDS.filter(x => x === b || budget.beds.includes(x)) }
 }
 
-function costForBeds(hc: HousingCost | null | undefined, down: number, beds: Beds): MonthlyCost | null {
+function costForBeds(hc: HousingCost | null | undefined, down: number | null, beds: Beds): MonthlyCost | null {
   if (!hc || hc.tax == null) return null
   const value = hc.v[beds - 1]
   if (value == null) return null
-  const loan = Math.max(value - down, 0)
+  const loan = Math.max(value - (down ?? DOWN_SHARE_DEFAULT * value), 0)
   const r = MORTGAGE_RATE / 12
   const n = 360
   const principalInterest = loan > 0 ? (loan * r) / (1 - Math.pow(1 + r, -n)) : 0
@@ -120,6 +126,13 @@ export function bestCost(hc: HousingCost | null | undefined, budget: BudgetFilte
 export function zillowSearchUrl(name: string, stateAbbr: string, beds: number): string {
   const city = name.trim().replace(/\s+/g, '-')
   return `https://www.zillow.com/homes/for_sale/${encodeURIComponent(city)},-${encodeURIComponent(stateAbbr)}/${beds}-_beds/`
+}
+
+/** Short form of costGapReason for a narrow list column; the full reason goes in the tooltip. */
+export function costGapShort(hc: HousingCost | null | undefined, budget: BudgetFilter): string {
+  if (!hc) return 'no ZIP price data'
+  if (budget.beds.every(b => hc.v[b - 1] == null)) return 'too few sales'
+  return 'no ZIP tax data'
 }
 
 /** Why bestCost is null, in words for the card (so a missing number is never a blank). */

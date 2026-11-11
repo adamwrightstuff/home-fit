@@ -370,10 +370,11 @@ export default function FilterSheet({
                   type="text"
                   inputMode="numeric"
                   autoComplete="off"
-                  value={filterBudget.down.toLocaleString('en-US')}
+                  value={filterBudget.down == null ? '' : filterBudget.down.toLocaleString('en-US')}
+                  placeholder="20% of price"
                   onChange={(e) => {
                     const digits = e.target.value.replace(/[^0-9]/g, '')
-                    onFilterBudgetChange({ ...filterBudget, down: digits === '' ? 0 : parseInt(digits, 10), chosen: true })
+                    onFilterBudgetChange({ ...filterBudget, down: digits === '' ? null : parseInt(digits, 10), chosen: filterBudget.chosen || digits !== '' })
                   }}
                   style={{ display: 'block', width: 130, marginTop: 4, padding: '0 8px', height: 'var(--hf-control-h-touch)', border: '1px solid var(--hf-border)', borderRadius: 'var(--hf-control-radius)', fontSize: 14, color: 'var(--hf-text-primary)' }}
                 />

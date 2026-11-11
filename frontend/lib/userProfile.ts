@@ -12,7 +12,7 @@ export interface UserProfile {
   office_days: number | null
   people: SocialConnectionPerson[]
   /** Bedrooms needed and cash down payment, used for the Explorer's monthly cost estimates. */
-  home_budget: { beds: (1 | 2 | 3 | 4 | 5)[]; down: number } | null
+  home_budget: { beds: (1 | 2 | 3 | 4 | 5)[]; down: number | null } | null
 }
 
 const MODES: CommuteMode[] = ['auto', 'transit', 'active']
@@ -72,7 +72,7 @@ export function sanitizeProfile(raw: unknown): Partial<UserProfile> {
   if ('home_budget' in r) {
     const v = r.home_budget as any
     if (v === null) out.home_budget = null
-    else if (v && cleanBeds(v.beds).length > 0 && typeof v.down === 'number' && Number.isFinite(v.down) && v.down >= 0) {
+    else if (v && cleanBeds(v.beds).length > 0 && (v.down === null || (typeof v.down === 'number' && Number.isFinite(v.down) && v.down >= 0))) {
       out.home_budget = { beds: cleanBeds(v.beds), down: v.down }
     }
   }
@@ -105,7 +105,7 @@ export function readLocalProfile(): Partial<UserProfile> {
       out.current_home = { name: homeName, monthly_cost: typeof cost === 'number' && cost > 0 ? cost : null }
     }
     const fb = opts?.filters?.filterBudget
-    if (fb?.chosen === true && cleanBeds(fb.beds).length > 0 && typeof fb.down === 'number' && fb.down >= 0) {
+    if (fb?.chosen === true && cleanBeds(fb.beds).length > 0 && (fb.down === null || (typeof fb.down === 'number' && fb.down >= 0))) {
       out.home_budget = { beds: cleanBeds(fb.beds), down: fb.down }
     }
   } catch { /* ignore */ }

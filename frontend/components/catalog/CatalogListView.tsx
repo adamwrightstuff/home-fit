@@ -19,7 +19,7 @@ import { isPillarIndexMode, PILLAR_INDEX_MODES } from '@/lib/catalogMapTypes'
 import { CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import WhyNotHigher from '@/components/WhyNotHigher'
-import { bedLabel, bedsLabel, bestCost, costGapReason, zillowSearchUrl, type BudgetFilter } from '@/lib/budgetCost'
+import { bedLabel, bedsLabel, bestCost, costGapReason, costGapShort, downLabel, zillowSearchUrl, type BudgetFilter } from '@/lib/budgetCost'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
@@ -277,8 +277,11 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       const bc = bestCost(p.housing_cost, budget)
                       if (!bc) {
                         return (
-                          <div className="text-[0.65rem] text-[var(--hf-text-tertiary)]">
-                            No {bedsLabel(budget.beds)}-bed cost: {costGapReason(p.housing_cost, budget)}
+                          <div
+                            className="text-[0.65rem] text-[var(--hf-text-tertiary)]"
+                            title={`No ${bedsLabel(budget.beds)}-bed cost: ${costGapReason(p.housing_cost, budget)}`}
+                          >
+                            No cost · {costGapShort(p.housing_cost, budget)}
                           </div>
                         )
                       }
@@ -287,10 +290,10 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       return (
                         <div
                           className="text-[0.65rem] font-medium tabular-nums text-[var(--hf-text-secondary)]"
-                          title={`Estimate for a ${bedLabel(bc.beds)}-bedroom home at the ZIP median value of $${Math.round(mc.value).toLocaleString('en-US')}: principal and interest after $${budget.down.toLocaleString('en-US')} down, plus average property tax and insurance.`}
+                          title={`Estimate for a ${bedLabel(bc.beds)}-bedroom home at the ZIP median value of $${Math.round(mc.value).toLocaleString('en-US')}: principal and interest after ${downLabel(budget.down)}, plus average property tax and insurance.${bc.minBeds !== bc.maxBeds && budget.max == null ? ` Across your sizes it runs about $${Math.round(bc.low).toLocaleString('en-US')} to $${Math.round(bc.high).toLocaleString('en-US')}.` : ''}`}
                         >
                           {showRange
-                            ? `~$${Math.round(bc.low).toLocaleString('en-US')} to $${Math.round(bc.high).toLocaleString('en-US')}/mo · ${bedLabel(bc.minBeds)} to ${bedLabel(bc.maxBeds)} bed`
+                            ? `from ~$${Math.round(bc.low).toLocaleString('en-US')}/mo · ${bedLabel(bc.minBeds)}-${bedLabel(bc.maxBeds)} bed`
                             : `~$${Math.round(mc.total).toLocaleString('en-US')}/mo · ${bedLabel(bc.beds)} bed`}
                           {!bc.fits && !bc.unknownSize && (
                             <>

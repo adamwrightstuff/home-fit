@@ -4,7 +4,7 @@ Standard: `docs/UX_PRINCIPLES_DRAFT.md` (six owner rules plus Candidates A "say 
 
 **Conclusion (first pass, 2026-11-10): Level 0 (not certified).** 9 FAILs, none fixed, none owner-accepted. Rule 6 passes.
 
-**Re-audit 2026-11-11: still Level 0, now 1 open FAIL (G1) plus 3 findings. The nine original FAILs are closed. See the last section.**
+**Re-audit 2026-11-11: Level 0 at the time, 1 open FAIL (G1) plus 3 findings. G1 and the 375px wrap (G2) were fixed the same day; no FAIL is open now, but Level 1 still needs an independent re-check and the owner's sign-off. See the last section.**
 
 ## What was checked and how
 
@@ -118,3 +118,11 @@ Level 0 stands: G1 is an unfixed FAIL with no owner-accepted entry. All nine fir
 ### Verification statement
 
 Rendered in the browser: fresh-visitor list and filter sheet (desktop), list with a budget chosen and with a cap (desktop), expanded priced row (desktop), filter sheet and list at 375px, profile page signed out. Code only: map, bottom sheet, detail panel, compare tray, other pages. Not checked: signed-in save, the account profile with a list of sizes, a real phone. Nothing was changed by this re-audit except this document.
+
+### Fix log, 2026-11-11 (after the re-audit)
+
+- G1 fixed. The down payment is no longer pre-filled with $600,000: it starts empty with the placeholder "20% of price", and until the visitor types an amount every place is priced at 20% down, which the explainer bar says ("after 20% down"). Clearing the field returns to 20%. A visitor with no profile now gets a starting cap: once a bedroom count is chosen, a "Typical place $4,100" chip sets the cap to the median cost across all places at the chosen sizes (a fresh visitor with nothing chosen still sees no suggestions or costs). Saved down payments that were never chosen are dropped; saved ones the visitor chose are kept; the account profile accepts a null down payment.
+- G2 fixed. At 375px the multi-size line reads "from ~$7,293/mo · 3-4 bed" (2 lines, was 3; the full range is in the tooltip) and a place with no price reads "No cost · no ZIP price data" or "No cost · too few sales" (2 lines, was 4; the full reason is in the tooltip).
+- Checked in the browser (desktop and 375px): fresh sheet empty and no chips; "Typical place $4,100" cap gives 808 of 1,476 places at 3 bed; typing $250,000 changes the explainer to "after $250,000 down" and clearing returns to "after 20% down".
+- Still open (findings, not rule FAILs): G3 (last chip tap gives no feedback), G4 (map, bottom sheet, detail panel never show the cost). Not checked: signed-in save with a null down payment, a real phone.
+- Independence: G1 and G2 were fixed by the same session that built the multi-select change, so Level 1 needs someone else to re-run the rows above.

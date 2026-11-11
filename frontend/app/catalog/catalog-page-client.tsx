@@ -1,6 +1,6 @@
 'use client'
 
-import { DEFAULT_BUDGET, bedsLabel, normalizeBeds, overBudget, type BudgetFilter } from '@/lib/budgetCost'
+import { DEFAULT_BUDGET, bedsLabel, bestCost, downLabel, normalizeBeds, overBudget, type BudgetFilter } from '@/lib/budgetCost'
 import { normalizeSceneFilter, sceneFilterExcludes, type SceneFilter } from '@/lib/sceneLevels'
 import { neighborhoodHref } from '@/lib/neighborhoodPriorities'
 import { placeSlug } from '@/lib/neighborhoodSlug'
@@ -194,7 +194,7 @@ export default function CatalogPageClient({
       return {
         beds: normalizeBeds(f?.beds),
         max: typeof f?.max === 'number' && f.max > 0 ? f.max : null,
-        down: typeof f?.down === 'number' && f.down >= 0 ? f.down : DEFAULT_BUDGET.down,
+        down: f?.chosen === true && typeof f?.down === 'number' && f.down >= 0 ? f.down : DEFAULT_BUDGET.down,
         chosen: f?.chosen === true || (typeof f?.max === 'number' && f.max > 0),
       }
     } catch { return DEFAULT_BUDGET }
@@ -482,7 +482,7 @@ export default function CatalogPageClient({
             setFilterBudget({
               beds: normalizeBeds(b.beds),
               max: typeof b.max === 'number' && b.max > 0 ? b.max : null,
-              down: typeof b.down === 'number' && b.down >= 0 ? b.down : DEFAULT_BUDGET.down,
+              down: b.chosen === true && typeof b.down === 'number' && b.down >= 0 ? b.down : DEFAULT_BUDGET.down,
               chosen: b.chosen === true || (typeof b.max === 'number' && b.max > 0),
             })
           }
@@ -710,6 +710,19 @@ export default function CatalogPageClient({
     () => priorities,
     [priorities],
   )
+
+  // A starting cap for anyone (Rule 5): what the median place costs at the chosen bedroom counts and down payment.
+  const typicalMonthlyCost = useMemo(() => {
+    if (!filterBudget.chosen) return null
+    const totals: number[] = []
+    for (const p of adjustedPlaces) {
+      const bc = bestCost(p.housing_cost, { ...filterBudget, max: null })
+      if (bc) totals.push(bc.cost.total)
+    }
+    if (totals.length < 20) return null
+    totals.sort((a, b) => a - b)
+    return Math.round(totals[Math.floor(totals.length / 2)] / 100) * 100
+  }, [adjustedPlaces, filterBudget])
 
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
@@ -1740,7 +1753,7 @@ export default function CatalogPageClient({
           {filterBudget.chosen && viewMode === 'list' && (
             <>
               {' '}
-              Monthly cost: a {bedsLabel(filterBudget.beds)}-bedroom home at the ZIP median price, mortgage at 7% after ${filterBudget.down.toLocaleString('en-US')} down, plus property tax and insurance.
+              Monthly cost: a {bedsLabel(filterBudget.beds)}-bedroom home at the ZIP median price, mortgage at 7% after {downLabel(filterBudget.down)}, plus property tax and insurance.
             </>
           )}
         </p>
@@ -2103,6 +2116,7 @@ export default function CatalogPageClient({
         suggestedCaps={[
           ...(currentHomeMonthlyCost ? [{ label: 'Your current cost', value: Math.round(currentHomeMonthlyCost) }] : []),
           ...(householdIncome ? [{ label: '30% of your income', value: Math.round((householdIncome * 0.3) / 12) }] : []),
+          ...(typicalMonthlyCost ? [{ label: 'Typical place', value: typicalMonthlyCost }] : []),
         ]}
         filterTenure={filterTenure}
         onFilterTenureChange={setFilterTenure}
