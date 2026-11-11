@@ -19,6 +19,7 @@ import { isPillarIndexMode, PILLAR_INDEX_MODES } from '@/lib/catalogMapTypes'
 import { CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import WhyNotHigher from '@/components/WhyNotHigher'
+import { monthlyCost, type BudgetFilter } from '@/lib/budgetCost'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
@@ -175,9 +176,11 @@ interface CatalogListViewProps {
   /** When set (search mode), keyed by row key — lists filter/dealbreaker labels that exclude the place. */
   filteredOutReasons?: Record<string, string[]>
   dividerLabel?: string
+  /** Bedrooms and down payment for the estimated monthly cost shown under each place name. */
+  budget?: BudgetFilter
 }
 
-export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle, onRowExpand, filteredOutReasons, dividerLabel = 'Outside your filters' }: CatalogListViewProps) {
+export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle, onRowExpand, filteredOutReasons, dividerLabel = 'Outside your filters', budget }: CatalogListViewProps) {
   const pillarMode = isPillarIndexMode(indexMode)
   const activePillarMeta = pillarMode ? PILLAR_INDEX_MODES.find(p => p.id === indexMode) : null
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
@@ -269,6 +272,18 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                     <div className="text-[0.6rem] text-[var(--hf-text-tertiary)]">
                       {p.catalog.county_borough}, {p.catalog.state_abbr}
                     </div>
+                    {budget && (() => {
+                      const mc = monthlyCost(p.housing_cost, budget)
+                      if (!mc) return null
+                      return (
+                        <div
+                          className="text-[0.65rem] font-medium tabular-nums text-[var(--hf-text-secondary)]"
+                          title={`Estimate for a ${budget.beds === 5 ? '5+' : budget.beds}-bedroom home at the ZIP median value of $${Math.round(mc.value).toLocaleString('en-US')}: principal and interest after $${budget.down.toLocaleString('en-US')} down, plus average property tax and insurance.`}
+                        >
+                          ~${Math.round(mc.total).toLocaleString('en-US')}/mo · {budget.beds === 5 ? '5+' : budget.beds} bed
+                        </div>
+                      )
+                    })()}
                     {isFilteredOut && (
                       <div className="mt-0.5 flex flex-wrap gap-1">
                         {failReasons.map((r) => (

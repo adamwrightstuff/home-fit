@@ -1912,6 +1912,7 @@ export default function CatalogPageClient({
             compareIds={compareIds}
             onCompareToggle={handleCompareToggle}
             onRowExpand={setSelectedKey}
+            budget={filterBudget}
           />
         </div>
       )}
