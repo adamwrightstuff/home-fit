@@ -20,7 +20,7 @@ Phases (all run unless --skip-* flags used):
   3. housing   — Census ACS B25024 housing stock (housing-type filter)
   4. zips      — Nominatim ZIP code backfill
   5. lean      — political lean data
-  6. scene     — local_scene_score + ladder level from stored local_scene_v2 facts
+  6. scene     — ladder level from stored local_scene_v2 facts
   7. labels    — best-fit preference labels on NB
   8. schools   — charter/public flag on school arrays
   9. archs     — Claude-based archetype summaries (costs ~$5-15, requires ANTHROPIC_API_KEY)
@@ -258,7 +258,7 @@ def phase_lean(out_path: Path) -> None:
 
 
 def phase_scene(out_path: Path) -> None:
-    from scripts.catalog.apply_local_scene_score import process
+    from scripts.catalog.apply_local_scene_level import process
     process(out_path)
 
 

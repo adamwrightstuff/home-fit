@@ -2,12 +2,12 @@
 """
 Aura flag, offline (owner decision 2026-11-06, replaces the weighted score and the top-5% quota).
 
+Rebuilt on the local scene ladder 2026-11-11 (owner decision: Aura is built on whatever the ladder is).
 score["aura"] is True only when ALL of these hold for the stored place:
-  1. Vibrant activity: local_scene_v2.independent_venues_1200m >= AURA_MIN_VENUES (the top-volume cut of the ladder);
-  2. independent-venue mix: local_scene_v2.combined >= AURA_MIN_MIX and the place has at least 15 venues;
-  3. status class (status_signal_breakdown.archetype) is Affluent or Elite;
+  1. the local scene ladder level is buzzing (score.local_scene_level; see docs/LOCAL_SCENE_LADDER_DPV2.md);
+  2. status class (status_signal_breakdown.archetype) is Affluent or Elite;
   and it is not a job center (more than AURA_MAX_JOBS_PER_RESIDENT workers per resident in the stored LODES radius).
-No weights, no quota. Only score["aura"] and score["aura_excluded"] are written; the stored local scene score (twin finder) is left as is.
+No weights, no quota. Only score["aura"] and score["aura_excluded"] are written.
 
 Usage: PYTHONPATH=. python3 scripts/catalog/apply_aura.py            (every metro)
        PYTHONPATH=. python3 scripts/catalog/apply_aura.py nyc la
@@ -19,8 +19,6 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "catalog"))
 
-AURA_MIN_VENUES = 71  # top-volume cut of the ladder (docs/LOCAL_SCENE_LADDER_DPV2.md)
-AURA_MIN_MIX = 65.0   # judgment call, not researched: the mix reading that separated Tribeca (70) from Battery Park City (50)
 AURA_CLASSES = ("Affluent", "Elite")
 # Judgment call: above ~5 workers per resident a place is a job center, not a neighborhood scene.
 # Residential places tested at 0.1 to 1.3; office cores at 7 to 22. Only applied when LODES jobs data
@@ -38,12 +36,8 @@ def jobs_per_resident(s: dict):
 
 def qualifies(s: dict) -> tuple:
     """(is_aura, excluded_reason) from the stored score."""
-    v = s.get("local_scene_v2") or {}
-    n, mix = v.get("independent_venues_1200m"), v.get("combined")
     cls = (s.get("status_signal_breakdown") or {}).get("archetype")
-    if not (isinstance(n, (int, float)) and n >= AURA_MIN_VENUES):
-        return False, None
-    if not (isinstance(mix, (int, float)) and mix >= AURA_MIN_MIX and not v.get("few_venues")):
+    if s.get("local_scene_level") != "buzzing":
         return False, None
     if cls not in AURA_CLASSES:
         return False, None

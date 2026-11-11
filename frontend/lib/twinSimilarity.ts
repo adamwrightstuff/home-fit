@@ -30,14 +30,15 @@ function pillarScoreOrNull(place: CatalogMapPlace, k: PillarKey): number | null 
  * Pillars where either query or candidate has no data are skipped entirely
  * so missing-data gaps don't unfairly penalize candidates (e.g. a pillar with no stored score).
  * Normalization uses the count of pillars that were actually compared.
- * When includeScene is true, local_scene_score is added as an extra dimension.
+ * When includeScene is true, the Local Scene mix reading (local_scene_v2.combined, 0 to 100) is added as an extra dimension;
+ * it is skipped for the pair when either place has no reading, like a pillar with no score.
  */
 export function twinDistance(
   query: CatalogMapPlace,
   candidate: CatalogMapPlace,
   pillars: PillarKey[],
   includeScene = false,
-): { distance: number; compared: PillarKey[] } {
+): { distance: number; compared: PillarKey[]; sceneCompared: boolean } {
   let sum = 0
   const compared: PillarKey[] = []
   for (const k of pillars) {
@@ -47,17 +48,16 @@ export function twinDistance(
     sum += (a - b) ** 2
     compared.push(k)
   }
+  let sceneCompared = false
   if (includeScene) {
-    type WithScene = { local_scene_score?: number }
-    const qs = query.score as WithScene
-    const cs = candidate.score as WithScene
-    const qa = qs.local_scene_score
-    const ca = cs.local_scene_score
+    const qa = query.score.local_scene_v2?.combined
+    const ca = candidate.score.local_scene_v2?.combined
     if (typeof qa === 'number' && typeof ca === 'number') {
       sum += (qa - ca) ** 2
+      sceneCompared = true
     }
   }
-  return { distance: Math.sqrt(sum), compared }
+  return { distance: Math.sqrt(sum), compared, sceneCompared }
 }
 
 /** Normalize distance by max possible (100 * sqrt(N)) so match% is meaningful with any number of pillars. */
@@ -86,9 +86,9 @@ export function rankTwinMatches(
   const out: TwinMatchResult[] = []
   for (const place of candidates) {
     if (sameBandOnly && queryBand && placeSesBand(place) !== queryBand) continue
-    const { distance, compared } = twinDistance(query, place, pillarKeys, true)
+    const { distance, compared, sceneCompared } = twinDistance(query, place, pillarKeys, true)
     if (compared.length < 5) continue
-    const effectivePillarCount = compared.length + 1
+    const effectivePillarCount = compared.length + (sceneCompared ? 1 : 0)
     out.push({
       key: keyFn(place),
       place,

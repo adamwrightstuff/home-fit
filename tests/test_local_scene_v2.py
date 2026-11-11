@@ -140,19 +140,3 @@ class TestBoundary(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
-class TestSceneScore(unittest.TestCase):
-    def test_tier_cuts_land_on_the_thirds(self):
-        self.assertEqual(ls.scene_score(0), 0.0)
-        self.assertEqual(ls.scene_score(ls.QUIET_BELOW), 33.3)
-        self.assertEqual(ls.scene_score(ls.TOP_VOLUME_FROM), 66.7)
-        self.assertEqual(ls.scene_score(ls.SCORE_CAP_COUNT), 100.0)
-
-    def test_capped_and_monotonic(self):
-        self.assertEqual(ls.scene_score(10_000), 100.0)
-        vals = [ls.scene_score(c) for c in range(0, 200)]
-        self.assertEqual(vals, sorted(vals))
-
-    def test_no_read_is_none(self):
-        self.assertIsNone(ls.scene_score(None))

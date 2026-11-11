@@ -13,7 +13,9 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "catalog"))
 from pillars import local_scene_v2 as ls  # noqa: E402
-from apply_aura import AURA_CLASSES, AURA_MAX_JOBS_PER_RESIDENT, AURA_MIN_MIX, jobs_per_resident  # noqa: E402
+from apply_aura import AURA_CLASSES, AURA_MAX_JOBS_PER_RESIDENT, jobs_per_resident  # noqa: E402
+
+AURA_MIN_MIX = 65.0  # the mix cut of the retired Aura rule (until 2026-11-11), kept so this check still audits that rule
 
 SHIFT_M = 500.0
 COVER_M = 1000          # gated radius: shifted circle stays inside the 1,500 m reads

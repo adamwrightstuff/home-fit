@@ -29,7 +29,6 @@ METHOD = "culture_hangout_mix_v1"
 # Activity tiers (the tag users see, owner decision 2026-11-06): independent named venues of the seven types within
 # ACTIVITY_RADIUS_M of the pin. Cuts are the catalog's median (13) and 85th percentile (71) on that date: unsourced.
 ACTIVITY_RADIUS_M = 1200
-QUIET_BELOW = 13
 TOP_VOLUME_FROM = 71
 
 
@@ -177,23 +176,3 @@ def scene_level(facts: Dict[str, Any]) -> Optional[str]:
     if combined is None or combined < LEVEL_MIX_CUT:
         return "low_key"
     return "buzzing" if n >= TOP_VOLUME_FROM else "lively"
-
-
-# 0-100 Local Scene score (replaces the retired name-guessing score): a piecewise-linear scale on the independent venue count,
-# anchored so the tier cuts land on the thirds: low-volume cut (13) = 33.3, top-volume cut (71) = 66.7, and 100 at twice the top-volume cut.
-# Used by twin matching. The anchors are unsourced product choices, like the cuts.
-SCORE_CAP_COUNT = 2 * TOP_VOLUME_FROM
-
-
-def scene_score(count: Optional[int]) -> Optional[float]:
-    """0-100 from the independent venue count; None when the place has no venue read."""
-    if count is None:
-        return None
-    c = max(0, count)
-    if c < QUIET_BELOW:
-        v = 100.0 / 3 * c / QUIET_BELOW
-    elif c < TOP_VOLUME_FROM:
-        v = 100.0 / 3 + 100.0 / 3 * (c - QUIET_BELOW) / (TOP_VOLUME_FROM - QUIET_BELOW)
-    else:
-        v = 200.0 / 3 + 100.0 / 3 * min(c - TOP_VOLUME_FROM, SCORE_CAP_COUNT - TOP_VOLUME_FROM) / (SCORE_CAP_COUNT - TOP_VOLUME_FROM)
-    return round(v, 1)
