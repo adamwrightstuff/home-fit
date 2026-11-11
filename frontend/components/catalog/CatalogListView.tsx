@@ -388,23 +388,6 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 {expanded && (
                   <tr className="border-b border-[var(--hf-border)] bg-[var(--hf-bg-subtle)]">
                     <td colSpan={5} className="p-0">
-                      {budget && (() => {
-                        const mc = monthlyCost(p.housing_cost, budget)
-                        if (!mc || (budget.max != null && mc.total > budget.max)) return null
-                        return (
-                          <div style={{ padding: '0.75rem 1rem 0' }}>
-                            <a
-                              href={zillowSearchUrl(p.catalog.name, p.catalog.state_abbr, budget.beds)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs font-bold text-[var(--hf-primary-1)] hover:underline"
-                            >
-                              See {budget.beds}+ bed homes on Zillow →
-                            </a>
-                            <span className="ml-2 text-[0.65rem] text-[var(--hf-text-tertiary)]">Zillow&apos;s filter means that many bedrooms or more.</span>
-                          </div>
-                        )
-                      })()}
                       <div style={{ padding: '0.75rem 1rem 0' }}>
                         <Link
                           href={neighborhoodHref(placeSlug(p.catalog), priorities)}
@@ -413,6 +396,23 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                           View full breakdown →
                         </Link>
                       </div>
+                      {budget && (() => {
+                        const mc = monthlyCost(p.housing_cost, budget)
+                        if (!mc || (budget.max != null && mc.total > budget.max)) return null
+                        return (
+                          <div style={{ padding: '0.5rem 1rem 0' }}>
+                            <a
+                              href={zillowSearchUrl(p.catalog.name, p.catalog.state_abbr, budget.beds)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[0.7rem] font-medium text-[var(--hf-text-secondary)] underline hover:text-[var(--hf-text-primary)]"
+                            >
+                              {budget.beds}+ bed homes on Zillow ↗
+                            </a>
+                            <span className="ml-2 text-[0.65rem] text-[var(--hf-text-tertiary)]">Zillow&apos;s filter means that many bedrooms or more.</span>
+                          </div>
+                        )
+                      })()}
                       {(p.score.local_scene_bucket || p.score.status_signal_breakdown?.llm_summary) && (
                         <div style={{ padding: '0.75rem 1rem 0' }}>
                           {p.score.local_scene_bucket && (
