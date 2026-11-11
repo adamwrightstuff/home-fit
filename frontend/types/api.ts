@@ -172,9 +172,7 @@ export interface ScoreResponse {
   local_scene_bucket?: 'High' | 'Some' | 'Low';
   /** Local Scene facts. `lively` is true when the culture/hangout mix ranks in the top quarter of similar-density places (at least 15 venues). Catalog-only. */
   local_scene_v2?: { lively?: boolean; independent_venues_1200m?: number | null; combined?: number | null };
-  /** Aura score (0–100): 50% local scene, 35% livability (non-overlapping pillars), 15% socioeconomic standing. Catalog-only. */
-  it_score?: number;
-  /** True when the place is in the top 5% of it_score within its metro. Drives the "Aura" badge. Catalog-only. */
+  /** Aura flag: Vibrant activity, high independent-venue mix, Affluent or Elite status class, not a job center. Drives the "Aura" badge. Catalog-only. */
   aura?: boolean;
   /** Happiness Index: commute (35%), social fabric (30%), housing value (20%), natural beauty (15%); renormalized if missing. Not a pillar. */
   happiness_index?: number;

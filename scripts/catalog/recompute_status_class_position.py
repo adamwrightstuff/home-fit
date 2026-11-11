@@ -4,7 +4,7 @@ Offline recompute of status_signal under the class-position method (DPv2, 2026-1
 
 For every place in every metro catalog it keeps the stored class label, computes the 0-100 class-position score
 from the stored housing_value summary and the class cutoffs, and refreshes the fields that read the score
-(signal strength, top drivers, aura it_score). Writes NEW files only, to --out-dir (default data/status_class_position/);
+(signal strength, top drivers). Writes NEW files only, to --out-dir (default data/status_class_position/);
 the originals are never touched.
 
 It also re-derives the class from the stored inputs and reports any place where that differs from the stored class,
@@ -38,7 +38,6 @@ def main() -> int:
     ap.add_argument("--ring-m", type=int, default=700, help="ring radius of the pooled file, recorded in the breakdown (350 is the label pool)")
     args = ap.parse_args()
 
-    from pillars.composite_indices import AURA_WEIGHTS
     from pillars import status_signal as ss
 
     baselines = json.load(open(REPO / "data" / "status_signal_baselines.json"))
@@ -155,14 +154,6 @@ def main() -> int:
                     summary["degraded_housing_cost_missing"] += 1
             bd["top_drivers"] = ss._build_top_drivers(bd.get("wealth"), bd.get("home_cost"), None, None, arch or "")
             bd["provisional_composite_score"] = None
-            s["it_score_old"] = s.get("it_score")
-            # Aura is linear in status_signal (weight AURA_WEIGHTS["status_signal"]). Apply only the status change to the
-            # stored aura so unrelated drift in other stored inputs does not leak into this diff.
-            old_it = s["it_score_old"]
-            if old_it is None or new is None or old is None:
-                s["it_score"] = None
-            else:
-                s["it_score"] = round(min(100.0, max(0.0, old_it + AURA_WEIGHTS["status_signal"] * (new - old))), 2)
             summary["places"] += 1
         out = out_dir / Path(path).name.replace(".composites_recomputed.jsonl", ".status_class_position.jsonl")
         out.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")

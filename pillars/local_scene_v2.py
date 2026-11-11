@@ -180,7 +180,7 @@ def activity_bucket(count: Optional[int]) -> Optional[str]:
 
 # 0-100 Local Scene score (replaces the retired name-guessing score): a piecewise-linear scale on the independent venue count,
 # anchored so the tier cuts land on the thirds: Quiet cut (13) = 33.3, Vibrant cut (71) = 66.7, and 100 at twice the Vibrant cut.
-# Used by twin matching, vibe matching and the hotness composite. The anchors are unsourced product choices, like the cuts.
+# Used by twin matching. The anchors are unsourced product choices, like the cuts.
 SCORE_CAP_COUNT = 2 * VIBRANT_FROM
 
 

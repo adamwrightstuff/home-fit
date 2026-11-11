@@ -11,7 +11,7 @@ Steps
   3  retry       retry what can be retried (resolver, through a local API on its own port)
   4  accept      record the remaining gaps that meet RULES T, H, P, E (evidence is written into the reason)
   5  status      apply the status-signal class and trajectory blend (scripts/catalog/recompute_status_class.py). It must run
-                 AFTER the last composites recompute, which otherwise overwrites status_signal and it_score
+                 AFTER the last composites recompute, which otherwise overwrites status_signal
   6  report      health verdict and what is still open
 
 Rules (DESIGN_PRINCIPLES.md: objective, reproducible, same for every place)
@@ -383,7 +383,7 @@ def finish(metro: str, *, dry_run: bool = False, api_base: str = "http://127.0.0
         log(f"   MAPPED BUT STILL NO CRIME DATA (left flagged, not accepted; the scorer rejected the agency): {', '.join(still_empty)}")
     accepted = accept_by_rules(metro, path, dry_run=dry_run, skip_crime=(mapped_places if dry_run else set(still_empty)), log=log)
 
-    log("\n== 5. status class and it_score blend (after the last composites recompute)")
+    log("\n== 5. status class and trajectory (after the last composites recompute)")
     if dry_run:
         log("   (dry run) would run recompute_status_class.py --write")
     else:

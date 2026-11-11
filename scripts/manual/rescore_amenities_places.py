@@ -41,9 +41,5 @@ for d in rows:
     old_total = s["total_score"]
     recompute_totals(s)
     _merge_composites_into_score(s, recompute_composites_from_payload(s))
-    if (det.get("places_fallback") or {}).get("used"):
-        s["local_scene_source"] = "google_places"
-    else:
-        s.pop("local_scene_source", None)
     print(f"{name}: amenities {old.get('score')} -> {score}; total {old_total} -> {s['total_score']}; businesses {len(bd['business_list'])}")
 PATH.write_text("\n".join(json.dumps(d, ensure_ascii=False) for d in rows) + "\n")

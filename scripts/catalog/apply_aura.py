@@ -7,8 +7,7 @@ score["aura"] is True only when ALL of these hold for the stored place:
   2. independent-venue mix: local_scene_v2.combined >= AURA_MIN_MIX and the place has at least 15 venues;
   3. status class (status_signal_breakdown.archetype) is Affluent or Elite;
   and it is not a job center (more than AURA_MAX_JOBS_PER_RESIDENT workers per resident in the stored LODES radius).
-No weights, no quota. Only score["aura"] and score["aura_excluded"] are written; the old local scene fields (twin finder and vibe
-matching still read them) are left as stored, and it_score is no longer written (the UI never read it; stored values are stale).
+No weights, no quota. Only score["aura"] and score["aura_excluded"] are written; the stored local scene score (twin finder) is left as is.
 
 Usage: PYTHONPATH=. python3 scripts/catalog/apply_aura.py            (every metro)
        PYTHONPATH=. python3 scripts/catalog/apply_aura.py nyc la

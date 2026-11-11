@@ -6,7 +6,7 @@ Apply the income-and-housing status_signal class (pillars.status_signal._classif
    stored housing_value used, and stores it in housing_value.summary.median_monthly_housing_cost.
 2. Classifies each place from the stored housing summary and the metro class cutoffs, then updates the class
    fields (archetype, archetype_rule, status_label, status_insight, top_drivers) and re-blends the composite
-   status_signal and it_score from the STORED wealth / home_cost / education / occupation, using the new class's
+   status_signal from the STORED wealth / home_cost / education / occupation, using the new class's
    weights. Also re-derives the direction-only trajectory (Up-and-Coming | Stable | Declining) from the stored
    price-momentum inputs. Nothing else on the row changes; no recompute of the inputs, so no drift from live lookups.
 
@@ -83,7 +83,7 @@ def main() -> int:
     ap.add_argument("--write", action="store_true")
     args = ap.parse_args()
 
-    from pillars.composite_indices import _area_type_from_payload, compute_hotness_score
+    from pillars.composite_indices import _area_type_from_payload
     from pillars.status_signal import (
         _build_top_drivers, _classify_class, _classify_trajectory, _composite_score_from_weights, _get_archetype_weights,
         _get_status_insight, _get_status_label, _signal_strength_band,
@@ -162,9 +162,6 @@ def main() -> int:
             ss_key, ss_label = _signal_strength_band(final)
             bd["composite_score"], bd["signal_strength"], bd["signal_strength_label"] = final, ss_key, ss_label
             s["status_signal"] = final
-            s["it_score"] = compute_hotness_score(
-                final, s.get("local_scene_score"), h if isinstance(h, (int, float)) else None,
-                s.get("happiness_index"), s.get("total_score"))
         s["status_signal_breakdown"] = bd
 
     print("  trajectory", dict(traj_c), f" | price history filled for {len(filled)} places")

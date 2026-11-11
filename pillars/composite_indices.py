@@ -10,93 +10,11 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 INDEX_VERSION_STATUS = "7"
 INDEX_VERSION_HAPPINESS = "5"
-INDEX_VERSION_HOTNESS = "1"
 
 INDICES_VERSION_METADATA = {
     "status_signal": INDEX_VERSION_STATUS,
     "happiness": INDEX_VERSION_HAPPINESS,
-    "hotness": INDEX_VERSION_HOTNESS,
 }
-
-# ---------------------------------------------------------------------------
-# Hotness Score — market desirability signal (status + scene + home cost + livability)
-# ---------------------------------------------------------------------------
-# Weights are intentionally velocity-free: velocity data is often missing or stale
-# in catalog snapshots, so the score is built from stored fundamentals only.
-HOTNESS_WEIGHTS = {
-    "status_signal": 0.30,   # wealth/credential concentration → demand ceiling
-    "local_scene": 0.25,     # cultural vibrancy → urban energy
-    "home_cost": 0.20,       # expensive = in-demand (home_cost from status breakdown)
-    "happiness_index": 0.15, # livability floor
-    "total_score": 0.10,     # broad pillar health
-}
-
-
-def compute_hotness_score(
-    status_signal: Optional[float],
-    local_scene_score: Optional[float],
-    home_cost: Optional[float],
-    happiness_index: Optional[float],
-    total_score: Optional[float],
-) -> Optional[float]:
-    """
-    Hotness Score 0–100: market desirability combining status, scene, home cost, and livability.
-    Returns None if fewer than 3 of the 5 inputs are available.
-    """
-    inputs = {
-        "status_signal": status_signal,
-        "local_scene": local_scene_score,
-        "home_cost": home_cost,
-        "happiness_index": happiness_index,
-        "total_score": total_score,
-    }
-    available = {k: v for k, v in inputs.items() if isinstance(v, (int, float))}
-    if len(available) < 3:
-        return None
-    total_w = sum(HOTNESS_WEIGHTS[k] for k in available)
-    if total_w <= 0:
-        return None
-    score = sum(float(v) * HOTNESS_WEIGHTS[k] / total_w for k, v in available.items())
-    return round(min(100.0, max(0.0, score)), 2)
-
-
-# Aura (stored as it_score): local scene dominates; livability is built only from pillars that do
-# not feed local scene (amenities, social fabric) or socioeconomic standing (education, housing,
-# economic opportunity), so no signal is counted twice.
-AURA_WEIGHTS = {"local_scene": 0.50, "livability": 0.35, "status_signal": 0.15}
-AURA_LIVABILITY_PILLARS = (
-    "active_outdoors", "air_travel_access", "public_transit_access", "healthcare_access",
-    "climate_risk", "diversity", "community_safety", "natural_beauty",
-)
-AURA_MIN_LIVABILITY_PILLARS = 6
-
-
-def compute_aura_livability(pillars: Optional[Dict[str, Any]]) -> Optional[float]:
-    """Equal-weighted mean of the non-overlapping livability pillars; None if fewer than 6 are scored."""
-    vals = []
-    for k in AURA_LIVABILITY_PILLARS:
-        p = (pillars or {}).get(k)
-        sc = p.get("score") if isinstance(p, dict) else None
-        if isinstance(sc, (int, float)):
-            vals.append(float(sc))
-    if len(vals) < AURA_MIN_LIVABILITY_PILLARS:
-        return None
-    return sum(vals) / len(vals)
-
-
-def compute_aura_score(
-    status_signal: Optional[float],
-    local_scene_score: Optional[float],
-    pillars: Optional[Dict[str, Any]],
-) -> Optional[float]:
-    """Aura score 0-100 (it_score). All three inputs are required; no renormalization over missing ones."""
-    livability = compute_aura_livability(pillars)
-    parts = {"local_scene": local_scene_score, "livability": livability, "status_signal": status_signal}
-    if not all(isinstance(v, (int, float)) for v in parts.values()):
-        return None
-    score = sum(float(parts[k]) * w for k, w in AURA_WEIGHTS.items())
-    return round(min(100.0, max(0.0, score)), 2)
-
 
 def _area_type_from_payload(payload: Dict[str, Any]) -> Optional[str]:
     """Morphological area_type from stored API score (data_quality_summary), if present."""
@@ -488,11 +406,5 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
         "rescore_available": True,
         "note": "These pillars had no data. Their weights were redistributed to scored pillars.",
     } if _all_gap_pillars else None
-
-    # Aura score (it_score) — computed last so it uses the freshly recomputed status_signal.
-    _local_scene = payload.get("local_scene_score")
-    if not isinstance(_local_scene, (int, float)):
-        _local_scene = None
-    out["it_score"] = compute_aura_score(out.get("status_signal"), _local_scene, payload.get("livability_pillars"))
 
     return out

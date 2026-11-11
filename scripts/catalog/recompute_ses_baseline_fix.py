@@ -2,7 +2,7 @@
 """
 Offline fix for mis-baselined Status Signal / Socioeconomic Standing scores.
 
-Recomputes only status_signal, status_signal_breakdown and it_score (hotness) from stored
+Recomputes only status_signal and status_signal_breakdown from stored
 pillar data, forcing the metro baseline via a synthetic tract (CBSA code) instead of a live
 Census lookup, so there is no tract-boundary drift. Only places whose stored education score
 does NOT reproduce under their file's metro baseline are touched (see --scope).
@@ -43,7 +43,7 @@ def main() -> int:
 
     from data_sources import census_api
     census_api.get_diversity_data = lambda *a, **k: {}  # no network
-    from pillars.composite_indices import _area_type_from_payload, compute_hotness_score
+    from pillars.composite_indices import _area_type_from_payload
     from pillars.status_signal import compute_status_signal_with_breakdown
 
     path = REPO / "data" / f"{args.metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
@@ -87,12 +87,6 @@ def main() -> int:
                     old_arch = bd.get("archetype")
                     s["status_signal"] = max(0.0, min(100.0, float(new)))
                     s["status_signal_breakdown"] = nbd
-                    hc = nbd.get("home_cost")
-                    s["it_score"] = compute_hotness_score(
-                        s["status_signal"], s.get("local_scene_score"),
-                        hc if isinstance(hc, (int, float)) else None,
-                        s.get("happiness_index"), s.get("total_score"),
-                    )
                     changes.append((name, r["catalog"]["state_abbr"], old, s["status_signal"], old_arch, nbd.get("archetype"), stored, nbd.get("education")))
         out_lines.append(json.dumps(r, ensure_ascii=False))
 
