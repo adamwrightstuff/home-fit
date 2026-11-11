@@ -173,8 +173,6 @@ NATURAL_BEAUTY_PREFERENCE_PROFILES = {
 WATER_TYPE_WEIGHTS_DEFAULT = {"coast": 0.60, "lake": 0.30, "river": 0.10}
 # OSM `natural=bay` (harbors, estuaries) maps to the "coast" preference bucket with this factor vs open ocean.
 BAY_WATER_PREFERENCE_FACTOR = 0.78
-# When landcover infers water with no OSM geometry, apply this extra scale in dense urban (with landcover confidence).
-LANDCOVER_FALLBACK_WATER_URBAN_SCALE = 0.42
 
 # Natural context scoring constants.
 # Updated: Increased topography max to better capture scenic mountain areas
@@ -199,9 +197,6 @@ CANOPY_UPLIFT_HI = 40.0
 
 # Phase 7 scenic dominance controls (cap applied to scenic_weighted before summation)
 SCENIC_CAP_BY_AREA_TYPE = {
-    "urban_core": 50.0,
-    "urban_core_lowrise": 52.0,
-    "historic_urban": 52.0,
     "urban_residential": 55.0,
     "suburban": 60.0,
     "exurban": 65.0,
@@ -339,9 +334,6 @@ MULTI_RADIUS_CANOPY = {
 
 # Legacy: Area-type-based expectations (deprecated - use climate-first approach)
 CANOPY_EXPECTATIONS = {
-    "urban_core": 18.0,
-    "urban_core_lowrise": 22.0,
-    "historic_urban": 26.0,
     "urban_residential": 28.0,
     "suburban": 32.0,
     "exurban": 36.0,
@@ -367,9 +359,6 @@ CLIMATE_CANOPY_EXPECTATIONS = CLIMATE_BASE_EXPECTATIONS
 # Area type adjustments within climate zones
 # Applied as multipliers to climate base expectations
 AREA_TYPE_ADJUSTMENTS = {
-    "urban_core": 0.75,         # Denser, less space for trees
-    "urban_core_lowrise": 0.80, # Slightly more space
-    "historic_urban": 0.85,     # Moderate density
     "urban_residential": 0.85,  # Moderate density
     "suburban": 1.0,            # Baseline
     "exurban": 1.15,            # More space, higher canopy
@@ -380,9 +369,6 @@ AREA_TYPE_ADJUSTMENTS = {
 # Base water expectations by area type (percentage)
 # Adjusted by climate: arid regions have lower natural water expectations
 WATER_EXPECTATIONS = {
-    "urban_core": 3.0,
-    "urban_core_lowrise": 3.5,
-    "historic_urban": 4.0,
     "urban_residential": 4.0,
     "suburban": 5.0,
     "exurban": 7.0,
@@ -391,20 +377,14 @@ WATER_EXPECTATIONS = {
 }
 
 GREEN_VIEW_WEIGHTS = {
-    "urban_core": 1.15,
-    "historic_urban": 1.2,
     "urban_residential": 1.05,
     "suburban": 1.0,
     "exurban": 0.9,
     "rural": 0.85,
-    "urban_core_lowrise": 1.1,
     "unknown": 1.0,
 }
 
 CONTEXT_SCALERS = {
-    "urban_core": 0.85,
-    "historic_urban": 0.95,
-    "urban_core_lowrise": 0.95,
     "urban_residential": 1.0,
     "suburban": 1.05,
     "exurban": 1.1,
@@ -428,21 +408,6 @@ BIODIVERSITY_WEIGHTS = {
 # Updated: Increased topography weights to better capture scenic beauty
 # Scenic features (topography, water, landcover) should matter more than tree coverage
 CONTEXT_BONUS_WEIGHTS = {
-    "urban_core": {
-        "topography": 0.5,   # Increased from 0.30 - scenic features matter in urban areas too
-        "landcover": 0.3,    # Decreased from 0.35
-        "water": 0.2         # Decreased from 0.35
-    },
-    "urban_core_lowrise": {
-        "topography": 0.5,   # Increased from 0.35
-        "landcover": 0.3,    # Decreased from 0.30
-        "water": 0.2         # Decreased from 0.35
-    },
-    "historic_urban": {
-        "topography": 0.5,   # Increased from 0.35
-        "landcover": 0.3,    # Maintained from 0.30
-        "water": 0.2         # Decreased from 0.35
-    },
     "urban_residential": {
         "topography": 0.5,   # Increased from 0.25 - scenic features matter
         "landcover": 0.3,    # Maintained from 0.30
@@ -978,8 +943,6 @@ def _calculate_street_tree_bonus(canopy_pct: float, street_tree_count: int, area
         bonus = (street_tree_count / 20.0) * STREET_TREE_BONUS_MAX
     
     # Apply area-type scaling: street trees matter more in dense urban areas
-    if area_type in ("urban_core", "urban_core_lowrise", "historic_urban"):
-        bonus = min(STREET_TREE_BONUS_MAX, bonus * 1.2)  # 20% boost in urban areas
     
     return bonus
 
@@ -1402,7 +1365,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         
         # Area-type bonus (additive, capped)
         area_bonus = 0.0
-        if context_area_type in ("historic_urban", "urban_core_lowrise", "suburban", "urban_residential"):
+        if context_area_type in ("suburban", "urban_residential"):
             area_bonus = 3.0  # Fixed bonus for these area types
         
         # Climate-calibrated water rarity/abundance bonus (additive, capped)
@@ -1538,68 +1501,12 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # NEW: Include proximity bonus in water scoring
         water_score = min(WATER_BONUS_MAX, base_water_score + coastal_bonus + area_bonus + rarity_bonus + visibility_bonus + proximity_bonus)
 
-        # Guardrail: In very dense urban contexts, large nearby water coverage (ocean/river) can otherwise
-        # dominate Natural Beauty even when the surrounding land cover is almost entirely hardscape.
-        # If the non-water natural index is extremely low, cap the water contribution.
-        if context_area_type in ("urban_core", "urban_core_lowrise", "historic_urban") and water_pct > 15.0:
-            # Park-aware cap: waterfront parks should still score well, but pure hardscape waterfront shouldn't.
-            local_green_score = None
-            park_count = None
-            if isinstance(park_data, dict):
-                try:
-                    local_green_score = float(park_data.get("local_green_score")) if park_data.get("local_green_score") is not None else None
-                except Exception:
-                    local_green_score = None
-                try:
-                    park_count = int(park_data.get("park_count")) if park_data.get("park_count") is not None else None
-                except Exception:
-                    park_count = None
-
-            cap_val = 24.0
-            if (local_green_score is not None and local_green_score >= 6.0) or (park_count is not None and park_count >= 2):
-                cap_val = 34.0
-            elif local_green_score is not None and local_green_score >= 4.0:
-                cap_val = 30.0
-
-            if natural_index < 0.12:
-                water_score = min(water_score, cap_val)
-                metrics["water_urban_guardrail"] = {
-                    "applied": True,
-                    "reason": "dense_urban_low_natural_index",
-                    "natural_index": round(natural_index, 3),
-                    "water_pct": round(water_pct, 2),
-                    "water_score_capped_at": cap_val,
-                    "park_local_green_score": local_green_score,
-                    "park_count_400m": park_count,
-                }
-            else:
-                metrics["water_urban_guardrail"] = {
-                    "applied": False,
-                    "natural_index": round(natural_index, 3),
-                    "water_pct": round(water_pct, 2),
-                    "park_local_green_score": local_green_score,
-                    "park_count_400m": park_count,
-                }
-        
         water_score_pre_source_confidence = water_score
         if proximity_source not in ("none", "osm"):
             # For synthesized proximity (landcover fallbacks), down-weight the full water contribution path
             # so saturation in other water terms cannot bypass source confidence.
             water_score *= proximity_confidence
         water_score = min(WATER_BONUS_MAX, max(0.0, water_score))
-        # Dense urban: landcover-inferred water must not match open-coast OSM (fixed scale; see LANDCOVER_FALLBACK_WATER_URBAN_SCALE).
-        if (
-            proximity_source in ("landcover_fallback", "landcover_coastal_inferred")
-            and context_area_type in ("urban_core", "historic_urban", "urban_core_lowrise")
-        ):
-            pre_urban_scale = water_score
-            water_score *= LANDCOVER_FALLBACK_WATER_URBAN_SCALE
-            metrics["landcover_fallback_urban_water_scale"] = {
-                "applied": True,
-                "scale": LANDCOVER_FALLBACK_WATER_URBAN_SCALE,
-                "water_score_before": round(pre_urban_scale, 2),
-                "water_score_after": round(water_score, 2),
-            }
 
         if water_proximity_data:
             metrics["water_source_confidence_adjustment"] = {
@@ -1751,31 +1658,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 logger.warning("GEE canopy lookup failed: %s, using None", gee_error)
                 gee_canopy = None
 
-        if False and location_scope != 'neighborhood' and gee_canopy is not None and gee_canopy < 25.0 and area_type == 'urban_core':  # retired
-            try:
-                gee_canopy_larger = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
-                if gee_canopy_larger is not None and gee_canopy_larger > gee_canopy:
-                    gee_canopy = gee_canopy_larger
-                    tree_radius_used = 2000
-                    if gee_canopy < 30.0:
-                        try:
-                            gee_canopy_3km = get_tree_canopy_gee(lat, lon, radius_m=3000, area_type=area_type)
-                            if gee_canopy_3km is not None and gee_canopy_3km > gee_canopy:
-                                gee_canopy = gee_canopy_3km
-                                tree_radius_used = 3000
-                        except Exception:
-                            pass  # Fallback to 2km result
-            except Exception:
-                pass  # Fallback to original gee_canopy
-        elif False and location_scope != 'neighborhood' and (gee_canopy is None or gee_canopy < 0.1) and area_type == 'urban_core':  # retired
-            try:
-                gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
-                if gee_canopy is not None and gee_canopy >= 0.1:
-                    tree_radius_used = 2000
-                    logger.debug("Larger radius (2km) found %.1f%% canopy", gee_canopy)
-            except Exception:
-                pass  # Keep original gee_canopy (None or < 0.1)
-
         # Lower threshold: accept any non-negative value (was >= 0.1)
         # This allows very small canopy values to be scored properly
         # Design principle: Objective and data-driven - use actual measured values, not arbitrary thresholds
@@ -1895,7 +1777,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                                   census_canopy, gee_canopy, diff)
                 # Also use Census/USFS if GEE is suspiciously low for the area type
                 elif (area_type == 'suburban' and gee_canopy < 30.0) or \
-                     (area_type in ['urban_core', 'urban_residential'] and gee_canopy < 20.0):
+                     (area_type == 'urban_residential' and gee_canopy < 20.0):
                     # If Census is higher (even slightly), prefer it for suspiciously low GEE values
                     if census_canopy > gee_canopy:
                         census_score = _score_tree_canopy(census_canopy)
@@ -2011,7 +1893,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     # Priority 3: Census USFS Tree Canopy
     try:
         from data_sources import census_api as _census_api
-        if score == 0.0 or (score < 20.0 and area_type in ['urban_core', 'urban_residential']):
+        if score == 0.0 or (score < 20.0 and area_type == 'urban_residential'):
             canopy_pct = _census_api.get_tree_canopy(lat, lon)
             if canopy_pct is not None and canopy_pct > 0:
                 canopy_score = _score_tree_canopy(canopy_pct)
@@ -2160,7 +2042,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         _wb_named = bool(_wb.get("name"))
         if _wb_type in ("river", "stream") and _wb_area < 0.5 and not _wb_named and _lc_water_pct >= 20.0 and _wb_dist <= 1.0:
             _area_key = area_type_key if area_type_key else ""
-            _inferred_type = "bay" if _area_key in ("urban_core", "historic_urban", "urban_core_lowrise") else "ocean"
+            _inferred_type = "ocean"
             water_proximity_data = {
                 "nearest_waterbody": {
                     "type": _inferred_type,
@@ -2188,7 +2070,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         )
         if water_pct > 25.0 or inferred_coastal_edge:
             # Dense urban: infer harbor/bay-scale water, not open ocean (matches OSM `natural=bay` semantics).
-            _lc_type = "bay" if area_type_key in ("urban_core", "historic_urban", "urban_core_lowrise") else "ocean"
+            _lc_type = "ocean"
             _lc_name = (
                 "Coastal water (landcover, dense urban)"
                 if _lc_type == "bay"
@@ -2280,7 +2162,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # URBAN_PARK detection: Quick check for urban areas with high park density
         # This is a best-effort check - we fetch park data only for urban areas to avoid extra API calls
         park_data_for_tags = None
-        if area_type_key in ("urban_core", "urban_core_lowrise", "historic_urban", "urban_residential", "suburban"):
+        if area_type_key in ("urban_residential", "suburban"):
             try:
                 # Quick park check: fetch park count within 400m for urban_park detection
                 local_green_score_for_tags, park_meta = _score_local_green_spaces(lat, lon, radius_m=400, area_type=area_type_key)
@@ -2399,7 +2281,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             nearest_water_km_for_weights is not None
             and nearest_water_km_for_weights <= 0.75
             and nearest_water_type_for_weights in ("river", "lake", "ocean", "bay")
-            and area_type_key in ("historic_urban", "urban_residential", "suburban", "urban_core_lowrise")
+            and area_type_key in ("urban_residential", "suburban")
             and (developed_pct_for_weights is None or developed_pct_for_weights < 85.0)
         ):
             base_topography = terrain_adjusted_weights.get("topography", context_weights.get("topography", 0.5))
