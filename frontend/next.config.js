@@ -28,6 +28,7 @@ const CATALOG_DATA_FILES = [
   'data/denver_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
   // END GENERATED files
   'data/catalog_climate_profiles.jsonl',
+  'data/catalog_housing_costs.json',
 ]
 
 /** @type {import('next').NextConfig} */
