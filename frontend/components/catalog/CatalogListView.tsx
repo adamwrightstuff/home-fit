@@ -345,7 +345,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                         compact
                       />
                       <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
-                      <LocalSceneChip bucket={p.score.local_scene_bucket ?? null} compact />
+                      <LocalSceneChip bucket={p.score.local_scene_bucket ?? null} lively={p.score.local_scene_v2?.lively === true} compact />
                       <AuraBadge aura={p.score.aura ?? null} compact />
                       {p.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
                         <span

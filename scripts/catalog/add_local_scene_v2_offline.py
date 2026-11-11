@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Offline: add `local_scene_v2` to each catalog place (score.local_scene_v2) from the brand-tag venue re-read
-(scripts/catalog/reread_brand_tags.py output). No API calls. Additive: the old local_scene_* fields, it_score and the Aura
-flag are untouched. Radius per place is the one its stored business list used (1,200 m when the farthest stored listing is
+(scripts/catalog/reread_brand_tags.py output). No API calls. Also writes score.local_scene_score (0-100 from the independent
+venue count) and removes the retired name-guessing fields (local_scene_breakdown, local_scene_bucket_v1). The Aura flag is untouched. Radius per place is the one its stored business list used (1,200 m when the farthest stored listing is
 within 1,210 m, else 1,500 m).
 
   python3 scripts/catalog/add_local_scene_v2_offline.py --reads <local_scene_brand_reads.jsonl>
@@ -69,9 +69,10 @@ def main():
         sc = files[path][i]["score"]
         sc["local_scene_v2"] = facts
         # the Explorer chip, filter and place card read local_scene_bucket: it now carries the v2 tier (None = too few venues or no density)
-        if "local_scene_bucket_v1" not in sc:
-            sc["local_scene_bucket_v1"] = sc.get("local_scene_bucket")
         sc["local_scene_bucket"] = facts["bucket"]
+        sc["local_scene_score"] = ls.scene_score(facts["independent_venues_1200m"])
+        sc.pop("local_scene_breakdown", None)
+        sc.pop("local_scene_bucket_v1", None)
         n += 1
         lively += facts["lively"]
         nodata += (facts["venues_total"] == 0)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { Wine } from 'lucide-react'
+import { Wine, Sparkles } from 'lucide-react'
 import InfoSheet from '@/components/catalog/InfoSheet'
 import { SCENE_COPY } from '@/lib/catalogInfoCopy'
 
@@ -27,9 +27,11 @@ const SCENE_BUCKET_KEY: Record<Bucket, string> = {
 
 export default function LocalSceneChip({
   bucket,
+  lively = false,
   compact = false,
 }: {
   bucket: string | null | undefined
+  lively?: boolean
   compact?: boolean
 }) {
   const [open, setOpen] = useState(false)
@@ -64,6 +66,24 @@ export default function LocalSceneChip({
           {LABEL[bucket as Bucket]}
         </span>
       </button>
+      {lively && (
+        <span
+          title="Lively: a high share of independent culture and hangout venues compared with places of similar density."
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: compact ? 4 : 5,
+            height: compact ? 20 : 28,
+            padding: compact ? '0 7px' : '0 10px',
+            borderRadius: 99,
+            background: compact ? '#f1f5f9' : '#ecfdf5',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Sparkles size={compact ? 10 : 13} style={{ flexShrink: 0, color: '#059669' }} />
+          <span style={{ fontSize: compact ? 11 : 13, fontWeight: 500, color: compact ? '#475569' : '#065f46' }}>Lively</span>
+        </span>
+      )}
       {open && copy && (
         <InfoSheet copy={copy} anchorRef={ref} onClose={() => setOpen(false)} />
       )}

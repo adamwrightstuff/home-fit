@@ -176,3 +176,23 @@ def activity_bucket(count: Optional[int]) -> Optional[str]:
     if count is None:
         return None
     return "High" if count >= VIBRANT_FROM else "Low" if count < QUIET_BELOW else "Some"
+
+
+# 0-100 Local Scene score (replaces the retired name-guessing score): a piecewise-linear scale on the independent venue count,
+# anchored so the tier cuts land on the thirds: Quiet cut (13) = 33.3, Vibrant cut (71) = 66.7, and 100 at twice the Vibrant cut.
+# Used by twin matching, vibe matching and the hotness composite. The anchors are unsourced product choices, like the cuts.
+SCORE_CAP_COUNT = 2 * VIBRANT_FROM
+
+
+def scene_score(count: Optional[int]) -> Optional[float]:
+    """0-100 from the independent venue count; None when the place has no venue read."""
+    if count is None:
+        return None
+    c = max(0, count)
+    if c < QUIET_BELOW:
+        v = 100.0 / 3 * c / QUIET_BELOW
+    elif c < VIBRANT_FROM:
+        v = 100.0 / 3 + 100.0 / 3 * (c - QUIET_BELOW) / (VIBRANT_FROM - QUIET_BELOW)
+    else:
+        v = 200.0 / 3 + 100.0 / 3 * min(c - VIBRANT_FROM, SCORE_CAP_COUNT - VIBRANT_FROM) / (SCORE_CAP_COUNT - VIBRANT_FROM)
+    return round(v, 1)

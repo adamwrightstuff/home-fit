@@ -166,10 +166,12 @@ export interface ScoreResponse {
   status_signal?: number;
   /** Detailed breakdown for archetype index (archetype, status_label, status_insight, top_drivers, analysis_radius_note). */
   status_signal_breakdown?: StatusSignalBreakdown;
-  /** Local Scene score (0–100): concentration of independent, experience-oriented businesses. Catalog-only; computed from business_list. */
+  /** Local Scene score (0–100): scaled from the independent venue count within 1,200 m (Quiet cut 13 = 33, Vibrant cut 71 = 67). Catalog-only. */
   local_scene_score?: number;
-  /** Local Scene bucket: 'High' | 'Some' | 'Low'. */
+  /** Local Scene tier from the same count: 'High' (Vibrant, 71+) | 'Some' (13–70) | 'Low' (Quiet, under 13). */
   local_scene_bucket?: 'High' | 'Some' | 'Low';
+  /** Local Scene facts. `lively` is true when the culture/hangout mix ranks in the top quarter of similar-density places (at least 15 venues). Catalog-only. */
+  local_scene_v2?: { lively?: boolean; independent_venues_1200m?: number | null; combined?: number | null };
   /** Aura score (0–100): 50% local scene, 35% livability (non-overlapping pillars), 15% socioeconomic standing. Catalog-only. */
   it_score?: number;
   /** True when the place is in the top 5% of it_score within its metro. Drives the "Aura" badge. Catalog-only. */

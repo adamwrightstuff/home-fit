@@ -59,8 +59,8 @@ interface FilterSheetProps {
   suggestedCaps?: { label: string; value: number }[]
   filterTenure: string[]
   onFilterTenureChange: (v: string[]) => void
-  filterLocalScene: 'all' | 'Some' | 'High'
-  onFilterLocalSceneChange: (v: 'all' | 'Some' | 'High') => void
+  filterLocalScene: 'all' | 'Some' | 'High' | 'Lively'
+  onFilterLocalSceneChange: (v: 'all' | 'Some' | 'High' | 'Lively') => void
   filterAura: boolean
   onFilterAuraChange: (v: boolean) => void
   /** Must-haves: places that fail any checked box are hidden. */
@@ -492,6 +492,7 @@ export default function FilterSheet({
               {chip(filterLocalScene === 'all', 'All', () => onFilterLocalSceneChange('all'))}
               {chip(filterLocalScene === 'Some', 'Some+', () => onFilterLocalSceneChange(filterLocalScene === 'Some' ? 'all' : 'Some'))}
               {chip(filterLocalScene === 'High', 'High only', () => onFilterLocalSceneChange(filterLocalScene === 'High' ? 'all' : 'High'))}
+              {chip(filterLocalScene === 'Lively', 'Lively only', () => onFilterLocalSceneChange(filterLocalScene === 'Lively' ? 'all' : 'Lively'))}
             </div>
           </div>
 

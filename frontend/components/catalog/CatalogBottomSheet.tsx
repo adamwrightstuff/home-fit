@@ -304,6 +304,25 @@ export default function CatalogBottomSheet({
                     {place.score.local_scene_bucket === 'High' ? 'Vibrant scene' : place.score.local_scene_bucket === 'Some' ? 'Some scene' : 'Quiet area'}
                   </span>
                 )}
+                {place.score.local_scene_v2?.lively === true && (
+                  <span
+                    title="A high share of independent culture and hangout venues compared with places of similar density."
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      height: 28,
+                      padding: '0 10px',
+                      borderRadius: 99,
+                      background: '#ecfdf5',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: '#065f46',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Lively
+                  </span>
+                )}
               </div>
             )}
 

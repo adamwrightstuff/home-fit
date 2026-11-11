@@ -220,11 +220,11 @@ export default function CatalogPageClient({
   })
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter' | 'both'>('any')
   const [filterSchoolLevels, setFilterSchoolLevels] = useState<SchoolLevel[]>(ALL_SCHOOL_LEVELS)
-  const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High'>(() => {
+  const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High' | 'Lively'>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       const v = f?.filterLocalScene
-      return v === 'Some' || v === 'High' ? v : 'all'
+      return v === 'Some' || v === 'High' || v === 'Lively' ? v : 'all'
     } catch { return 'all' }
   })
   const [filterAura, setFilterAura] = useState<boolean>(() => {
@@ -743,6 +743,7 @@ export default function CatalogPageClient({
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket !== 'High' && p.score.local_scene_bucket !== 'Some') return false
       if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false
+      if (filterLocalScene === 'Lively' && p.score.local_scene_v2?.lively !== true) return false
       if (filterAura && p.score.aura !== true) return false
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
@@ -915,6 +916,7 @@ export default function CatalogPageClient({
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket !== 'High' && p.score.local_scene_bucket !== 'Some') r.push('Local scene')
       if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
+      if (filterLocalScene === 'Lively' && p.score.local_scene_v2?.lively !== true) r.push('Local scene')
       if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
@@ -1034,6 +1036,7 @@ export default function CatalogPageClient({
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket !== 'High' && p.score.local_scene_bucket !== 'Some') r.push('Local scene')
       if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
+      if (filterLocalScene === 'Lively' && p.score.local_scene_v2?.lively !== true) r.push('Local scene')
       if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes

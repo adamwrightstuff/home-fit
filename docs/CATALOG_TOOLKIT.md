@@ -190,7 +190,7 @@ Not part of the fix pipeline — used for investigation or one-off generation.
 | Script | What it does |
 |--------|-------------|
 | `apply_preference_filters.py` | Mirror of filter + weight UI — all levers configurable, no hardcoded profile. |
-| `compute_local_scene.py` | Compute local_scene_score from stored business_list data. |
+| `apply_local_scene_score.py` | Write local_scene_score and bucket from the stored local_scene_v2 independent venue count (old name-guessing score retired). |
 | `generate_archetype_summaries.py` | Claude-based archetype classifications and neighborhood summaries. |
 
 ---
