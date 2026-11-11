@@ -287,20 +287,11 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                           title={`Estimate for a ${budget.beds === 5 ? '5+' : budget.beds}-bedroom home at the ZIP median value of $${Math.round(mc.value).toLocaleString('en-US')}: principal and interest after $${budget.down.toLocaleString('en-US')} down, plus average property tax and insurance.`}
                         >
                           ~${Math.round(mc.total).toLocaleString('en-US')}/mo · {budget.beds === 5 ? '5+' : budget.beds} bed
-                          {' · '}
-                          {budget.max != null && mc.total > budget.max ? (
-                            <span className="font-semibold text-amber-700">Over budget</span>
-                          ) : (
-                            <a
-                              href={zillowSearchUrl(p.catalog.name, p.catalog.state_abbr, budget.beds)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="font-semibold underline"
-                              title="Opens Zillow for sale listings in this place with this many bedrooms or more. Zillow's bedroom filter means that many or more, not exactly that many."
-                            >
-                              See {budget.beds}+ bed homes on Zillow
-                            </a>
+                          {budget.max != null && mc.total > budget.max && (
+                            <>
+                              {' · '}
+                              <span className="font-semibold text-amber-700">Over budget</span>
+                            </>
                           )}
                           <div className="font-normal text-[var(--hf-text-tertiary)]">
                             Mortgage at 7% after ${budget.down.toLocaleString('en-US')} down, tax and insurance; ZIP median price{p.catalog.state_abbr === 'CA' ? '; tax likely low (California)' : ''}
@@ -397,6 +388,23 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 {expanded && (
                   <tr className="border-b border-[var(--hf-border)] bg-[var(--hf-bg-subtle)]">
                     <td colSpan={5} className="p-0">
+                      {budget && (() => {
+                        const mc = monthlyCost(p.housing_cost, budget)
+                        if (!mc || (budget.max != null && mc.total > budget.max)) return null
+                        return (
+                          <div style={{ padding: '0.75rem 1rem 0' }}>
+                            <a
+                              href={zillowSearchUrl(p.catalog.name, p.catalog.state_abbr, budget.beds)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs font-bold text-[var(--hf-primary-1)] hover:underline"
+                            >
+                              See {budget.beds}+ bed homes on Zillow →
+                            </a>
+                            <span className="ml-2 text-[0.65rem] text-[var(--hf-text-tertiary)]">Zillow&apos;s filter means that many bedrooms or more.</span>
+                          </div>
+                        )
+                      })()}
                       <div style={{ padding: '0.75rem 1rem 0' }}>
                         <Link
                           href={neighborhoodHref(placeSlug(p.catalog), priorities)}

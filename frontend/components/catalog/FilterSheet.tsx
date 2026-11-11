@@ -1,6 +1,6 @@
 'use client'
 
-import { DEFAULT_BUDGET, INSURANCE_RATE, MORTGAGE_RATE, type BudgetFilter } from '@/lib/budgetCost'
+import { DEFAULT_BUDGET, MORTGAGE_RATE, type BudgetFilter } from '@/lib/budgetCost'
 import { useEffect } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
@@ -55,6 +55,8 @@ interface FilterSheetProps {
   onFilterHousingTypeChange: (v: string[]) => void
   filterBudget: BudgetFilter
   onFilterBudgetChange: (v: BudgetFilter) => void
+  /** One-tap caps built from the profile (current cost, 30% of income). */
+  suggestedCaps?: { label: string; value: number }[]
   filterTenure: string[]
   onFilterTenureChange: (v: string[]) => void
   filterLocalScene: 'all' | 'Some' | 'High'
@@ -114,6 +116,7 @@ export default function FilterSheet({
   onFilterHousingTypeChange,
   filterBudget,
   onFilterBudgetChange,
+  suggestedCaps = [],
   filterTenure,
   onFilterTenureChange,
   filterLocalScene,
@@ -351,12 +354,7 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Monthly Budget</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Estimated monthly cost of a typical home with this many bedrooms in each place: principal and interest at {Math.round(MORTGAGE_RATE * 100)}% over 30 years after your down payment, plus the ZIP&apos;s average property tax and insurance at {(INSURANCE_RATE * 100).toFixed(1)}% a year. Home values are Zillow ZIP medians for single-family and condo combined. Tax is the IRS average paid by owners in the ZIP, so it runs low in states that reassess on sale (California). Places with no data are not filtered out.
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-              {([1, 2, 3, 4, 5] as const).map((b) =>
-                chip(filterBudget.chosen && filterBudget.beds === b, b === 5 ? '5+ bed' : `${b} bed`, () => onFilterBudgetChange({ ...filterBudget, beds: b, chosen: true }))
-              )}
+              Estimated monthly cost of a typical home with your bedroom count in each place: mortgage at {Math.round(MORTGAGE_RATE * 100)}% over 30 years, property tax and insurance. Places with no data are not filtered out.
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <label style={{ fontSize: 12, color: '#6b7280' }}>
@@ -374,20 +372,18 @@ export default function FilterSheet({
                   style={{ display: 'block', width: 130, marginTop: 4, padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 }}
                 />
               </label>
-              <label style={{ fontSize: 12, color: '#6b7280' }}>
-                Down payment ($)
-                <input
-                  type="number"
-                  min={0}
-                  step={50000}
-                  value={filterBudget.down}
-                  onChange={(e) => {
-                    const n = Number(e.target.value)
-                    onFilterBudgetChange({ ...filterBudget, down: n >= 0 ? n : 0, chosen: true })
-                  }}
-                  style={{ display: 'block', width: 130, marginTop: 4, padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 }}
-                />
-              </label>
+            </div>
+            {suggestedCaps.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                {suggestedCaps.map((c) =>
+                  chip(filterBudget.max === c.value, `${c.label} $${c.value.toLocaleString('en-US')}`, () =>
+                    onFilterBudgetChange({ ...filterBudget, max: c.value, chosen: true }))
+                )}
+              </div>
+            )}
+            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 8 }}>
+              Using {filterBudget.beds === 5 ? '5+' : filterBudget.beds} bedrooms and ${filterBudget.down.toLocaleString('en-US')} down.{' '}
+              <a href="/profile" style={{ textDecoration: 'underline' }}>Change in your profile</a>
             </div>
           </div>
 

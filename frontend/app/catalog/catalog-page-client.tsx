@@ -497,6 +497,7 @@ export default function CatalogPageClient({
     fetchProfile().then((p) => {
       if (cancelled || !p) return
       if (p.household_income != null) setHouseholdIncome(p.household_income)
+      if (p.home_budget) setFilterBudget((b) => ({ ...b, beds: p.home_budget!.beds, down: p.home_budget!.down, chosen: true }))
       if (p.current_home) {
         setCurrentHomeMatch(p.current_home.name)
         setCurrentHomeMonthlyCost(p.current_home.monthly_cost)
@@ -2083,6 +2084,10 @@ export default function CatalogPageClient({
         onFilterHousingTypeChange={setFilterHousingType}
         filterBudget={filterBudget}
         onFilterBudgetChange={setFilterBudget}
+        suggestedCaps={[
+          ...(currentHomeMonthlyCost ? [{ label: 'Your current cost', value: Math.round(currentHomeMonthlyCost) }] : []),
+          ...(householdIncome ? [{ label: '30% of your income', value: Math.round((householdIncome * 0.3) / 12) }] : []),
+        ]}
         filterTenure={filterTenure}
         onFilterTenureChange={setFilterTenure}
         filterLocalScene={filterLocalScene}

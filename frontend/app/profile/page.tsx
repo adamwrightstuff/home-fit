@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Briefcase, Loader2, Trash2, Users, Wallet, X } from 'lucide-react'
+import { Briefcase, Home, Loader2, Trash2, Users, Wallet, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import WorkHubPicker, { type WorkAddressResult } from '@/components/catalog/WorkHubPicker'
 import PeopleYouKnowPicker from '@/components/catalog/PeopleYouKnowPicker'
@@ -54,6 +54,15 @@ function persistLocal(patch: Partial<UserProfile>) {
     if ('current_home' in patch) {
       opts.current_home_match = patch.current_home?.name ?? ''
       opts.current_home_monthly_cost = patch.current_home?.monthly_cost ?? null
+    }
+    if ('home_budget' in patch) {
+      const prev = opts.filters?.filterBudget ?? {}
+      opts.filters = {
+        ...(opts.filters ?? {}),
+        filterBudget: patch.home_budget
+          ? { beds: patch.home_budget.beds, down: patch.home_budget.down, max: prev.max ?? null, chosen: true }
+          : { beds: 4, down: 600000, max: prev.max ?? null, chosen: prev.max != null },
+      }
     }
     if ('commute_mode' in patch) opts.commute_mode = patch.commute_mode ?? null
     if ('office_days' in patch) opts.office_days = patch.office_days ?? null
@@ -145,6 +154,7 @@ export default function ProfilePage() {
 
   const [incomeInput, setIncomeInput] = useState('')
   const [costInput, setCostInput] = useState('')
+  const [downInput, setDownInput] = useState('')
   const [homeQuery, setHomeQuery] = useState('')
   const [homeOpen, setHomeOpen] = useState(false)
   const [homeOptions, setHomeOptions] = useState<HomeOption[]>([])
@@ -159,6 +169,7 @@ export default function ProfilePage() {
     setIncomeInput(p.household_income ? p.household_income.toLocaleString('en-US') : '')
     setCostInput(p.current_home?.monthly_cost ? p.current_home.monthly_cost.toLocaleString('en-US') : '')
     setHomeQuery(p.current_home?.name ?? '')
+    setDownInput(p.home_budget ? p.home_budget.down.toLocaleString('en-US') : '')
   }, [])
 
   // Local settings first so the page isn't empty, then the account profile over them.
@@ -230,6 +241,18 @@ export default function ProfilePage() {
     const n = digitsToNumber(incomeInput)
     setIncomeInput(n ? n.toLocaleString('en-US') : '')
     if (n !== (profile.household_income ?? null)) update({ household_income: n })
+  }
+
+  const commitDown = () => {
+    const raw = downInput.replace(/[^0-9]/g, '')
+    const n = raw === '' ? null : parseInt(raw, 10)
+    if (n === null) {
+      setDownInput('')
+      if (profile.home_budget) update({ home_budget: { beds: profile.home_budget.beds, down: 0 } })
+      return
+    }
+    setDownInput(n.toLocaleString('en-US'))
+    if (n !== (profile.home_budget?.down ?? null)) update({ home_budget: { beds: profile.home_budget?.beds ?? 4, down: n } })
   }
 
   const commitCost = () => {
@@ -441,6 +464,52 @@ export default function ProfilePage() {
                 </p>
               </div>
             )}
+          </Section>
+
+          <Section
+            icon={Home}
+            title="Home you need"
+            blurb="Used for the monthly cost estimate shown on each place in the Explorer."
+          >
+            <div>
+              <Label>Bedrooms</Label>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {([1, 2, 3, 4, 5] as const).map((b) => (
+                  <Chip
+                    key={b}
+                    active={profile.home_budget?.beds === b}
+                    onClick={() => {
+                      const down = profile.home_budget?.down ?? 600000
+                      if (!profile.home_budget) setDownInput(down.toLocaleString('en-US'))
+                      update({ home_budget: { beds: b, down } })
+                    }}
+                  >
+                    {b === 5 ? '5+' : String(b)}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="profile-down">Cash down payment</Label>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--hf-text-secondary)]">$</span>
+                <input
+                  id="profile-down"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  placeholder="e.g. 200,000"
+                  value={downInput}
+                  onChange={(e) => setDownInput(e.target.value)}
+                  onBlur={commitDown}
+                  onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+                  className={INPUT_CLASS + ' pl-7'}
+                />
+              </div>
+              <p className="m-0 mt-1.5 text-xs text-[var(--hf-text-secondary)]">
+                Pick a bedroom count to turn the estimate on. Set a monthly cap in the Explorer&apos;s filters.
+              </p>
+            </div>
           </Section>
 
           <Section
