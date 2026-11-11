@@ -1,3 +1,4 @@
+import type { HousingCost } from '@/lib/budgetCost'
 import { isCatalogMetro, type CatalogMetro } from '@/lib/catalogMetros'
 import type { WorkCommute } from './workZones'
 import type { ScoreResponse } from '@/types/api'
@@ -70,6 +71,8 @@ export interface ClimateIndicators {
 export interface CatalogMapPlace {
   catalog: CatalogRow
   score: ScoreResponse
+  /** Zillow ZIP values by bedroom count plus ZIP property tax; see lib/budgetCost.ts. */
+  housing_cost?: HousingCost | null
   climate?: ClimateIndicators
   cbd_transit_minutes?: number | null
   cbd_transit_dest?: 'gct' | 'penn' | null

@@ -1,5 +1,6 @@
 'use client'
 
+import { DEFAULT_BUDGET, overBudget, type BudgetFilter } from '@/lib/budgetCost'
 import { neighborhoodHref } from '@/lib/neighborhoodPriorities'
 import { placeSlug } from '@/lib/neighborhoodSlug'
 import { zeroMetroCounts, type CatalogMetro } from '@/lib/catalogMetros'
@@ -186,6 +187,17 @@ export default function CatalogPageClient({
       return Array.isArray(f?.filterHousingType) ? f.filterHousingType : []
     } catch { return [] }
   })
+  const [filterBudget, setFilterBudget] = useState<BudgetFilter>(() => {
+    try {
+      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters?.filterBudget
+      const beds = Number(f?.beds)
+      return {
+        beds: (beds >= 1 && beds <= 5 ? Math.round(beds) : DEFAULT_BUDGET.beds) as BudgetFilter['beds'],
+        max: typeof f?.max === 'number' && f.max > 0 ? f.max : null,
+        down: typeof f?.down === 'number' && f.down >= 0 ? f.down : DEFAULT_BUDGET.down,
+      }
+    } catch { return DEFAULT_BUDGET }
+  })
   const [filterTenure, setFilterTenure] = useState<string[]>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
@@ -360,6 +372,7 @@ export default function CatalogPageClient({
           filterNbTypes,
           filterAoTypes,
           filterHousingType,
+          filterBudget,
           filterTenure,
           filterSchoolType,
           filterSchoolLevels,
@@ -371,7 +384,7 @@ export default function CatalogPageClient({
         },
       }))
     } catch { /* ignore */ }
-  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
+  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
 
   useEffect(() => {
     const ac = new AbortController()
@@ -450,6 +463,14 @@ export default function CatalogPageClient({
           if (Array.isArray(f.filterNbTypes)) setFilterNbTypes(f.filterNbTypes)
           if (Array.isArray(f.filterAoTypes)) setFilterAoTypes(f.filterAoTypes)
           if (Array.isArray(f.filterHousingType)) setFilterHousingType(f.filterHousingType)
+          if (f.filterBudget && typeof f.filterBudget === 'object') {
+            const b = f.filterBudget
+            setFilterBudget({
+              beds: (b.beds >= 1 && b.beds <= 5 ? Math.round(b.beds) : DEFAULT_BUDGET.beds) as BudgetFilter['beds'],
+              max: typeof b.max === 'number' && b.max > 0 ? b.max : null,
+              down: typeof b.down === 'number' && b.down >= 0 ? b.down : DEFAULT_BUDGET.down,
+            })
+          }
           if (Array.isArray(f.filterTenure)) setFilterTenure(f.filterTenure)
           if (typeof f.filterSchoolType === 'string') setFilterSchoolType(f.filterSchoolType)
           if (Array.isArray(f.filterSchoolLevels)) {
@@ -506,6 +527,7 @@ export default function CatalogPageClient({
             filterAoTypes,
 
             filterHousingType,
+            filterBudget,
             filterTenure,
             filterSchoolType,
             filterSchoolLevels,
@@ -518,7 +540,7 @@ export default function CatalogPageClient({
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
+  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -725,6 +747,7 @@ export default function CatalogPageClient({
           if (!passesAny) return false
         }
       }
+      if (overBudget(p.housing_cost, filterBudget)) return false
       if (filterTenure.length > 0 && filterTenure.length < 3) {
         const renterPct = (p.score as any)?.livability_pillars?.housing_value?.summary?.renter_pct
         if (typeof renterPct === 'number') {
@@ -766,6 +789,7 @@ export default function CatalogPageClient({
     filterAura,
     filterCommuteMax,
     filterHousingType,
+    filterBudget,
     filterTenure,
     climatePrefs,
     indexMode,
@@ -846,7 +870,7 @@ export default function CatalogPageClient({
   // showing the count before mount made the Filters badge differ between server and client HTML.
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
+  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBudget.max != null ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
   // Priorities badge: pillars moved off the default level, plus Hide choices (which live in Priorities).
   const priorityBadgeCount = !mounted ? 0 : PILLAR_ORDER.filter((k) => priorities[k as keyof PillarPriorities] !== DEFAULT_PRIORITIES[k as keyof PillarPriorities]).length + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
   // Places blocked by regular filters — always shown in "Show excluded"
@@ -895,6 +919,7 @@ export default function CatalogPageClient({
           if (!passesAny) r.push('Housing type')
         }
       }
+      if (overBudget(p.housing_cost, filterBudget)) r.push('Budget')
       if (filterTenure.length > 0 && filterTenure.length < 3) {
         const renterPct = (p.score as any)?.livability_pillars?.housing_value?.summary?.renter_pct
         if (typeof renterPct === 'number') {
@@ -928,7 +953,7 @@ export default function CatalogPageClient({
       reasons[key] = r.length > 0 ? r : ['Filters']
     }
     return reasons
-  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterTenure, filterPoliticalLean, climatePrefs])
+  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterPoliticalLean, climatePrefs])
   const { gatedPlaces, excludedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) {
       return { gatedPlaces: filteredPlaces, excludedPlaces: metroFilterExcluded, dealbreakerExcludedCount: metroFilterExcluded.length, dealbreakerZeroSurvivors: false }
@@ -1013,6 +1038,7 @@ export default function CatalogPageClient({
           if (!passesAny) r.push('Housing type')
         }
       }
+      if (overBudget(p.housing_cost, filterBudget)) r.push('Budget')
       if (filterTenure.length > 0 && filterTenure.length < 3) {
         const renterPct = (p.score as any)?.livability_pillars?.housing_value?.summary?.renter_pct
         if (typeof renterPct === 'number') {
@@ -1043,7 +1069,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
@@ -2052,6 +2078,8 @@ export default function CatalogPageClient({
         onFilterLifeStageChange={setFilterLifeStage}
         filterHousingType={filterHousingType}
         onFilterHousingTypeChange={setFilterHousingType}
+        filterBudget={filterBudget}
+        onFilterBudgetChange={setFilterBudget}
         filterTenure={filterTenure}
         onFilterTenureChange={setFilterTenure}
         filterLocalScene={filterLocalScene}

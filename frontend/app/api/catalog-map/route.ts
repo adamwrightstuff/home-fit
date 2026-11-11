@@ -3,6 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import type { CatalogMapApiResponse, CatalogMapPlace, CatalogMapPlaceWithMetro, ClimateIndicators } from '@/lib/catalogMapTypes'
 import type { ScoreResponse } from '@/types/api'
+import type { HousingCost } from '@/lib/budgetCost'
 import { slimPlace } from '@/lib/catalogSlim'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
 import { CATALOG_METROS, isCatalogMetro, type CatalogMetro } from '@/lib/catalogMetros'
@@ -94,6 +95,19 @@ function loadClimateIndex(): Map<string, ClimateIndicators> {
   return index
 }
 
+let housingCostIndex: Record<string, HousingCost> | null = null
+/** data/catalog_housing_costs.json → map of "${metro}::${catalogRowKey}" → HousingCost */
+function loadHousingCosts(): Record<string, HousingCost> {
+  if (housingCostIndex) return housingCostIndex
+  housingCostIndex = {}
+  const filePath = findFile('catalog_housing_costs.json')
+  if (!filePath) return housingCostIndex
+  try {
+    housingCostIndex = (JSON.parse(fs.readFileSync(filePath, 'utf8')).places ?? {}) as Record<string, HousingCost>
+  } catch { /* file unreadable */ }
+  return housingCostIndex
+}
+
 function loadMetroFile(metro: CatalogMapMetro, climateIndex: Map<string, ClimateIndicators>): CatalogMapPlaceWithMetro[] {
   const filePath = findMergedJsonl(metro)
   if (!filePath) return []
@@ -112,6 +126,7 @@ function loadMetroFile(metro: CatalogMapMetro, climateIndex: Map<string, Climate
       const place: CatalogMapPlaceWithMetro = { catalog: row.catalog, score: row.score, metro, cbd_transit_minutes: (row as any).cbd_transit_minutes ?? null, cbd_transit_dest: (row as any).cbd_transit_dest ?? null, work_commute: (row as any).work_commute ?? null }
       const climate = climateIndex.get(`${METRO_TO_SOURCE[metro]}::${row.catalog.name}`)
       if (climate) place.climate = climate
+      place.housing_cost = loadHousingCosts()[`${metro}::${catalogRowKey(row.catalog)}`] ?? null
       places.push(place)
     } catch {
       // skip bad lines

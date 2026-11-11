@@ -1,5 +1,6 @@
 'use client'
 
+import { INSURANCE_RATE, MORTGAGE_RATE, type BudgetFilter } from '@/lib/budgetCost'
 import { useEffect } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
@@ -52,6 +53,8 @@ interface FilterSheetProps {
   onFilterLifeStageChange: (v: string[]) => void
   filterHousingType: string[]
   onFilterHousingTypeChange: (v: string[]) => void
+  filterBudget: BudgetFilter
+  onFilterBudgetChange: (v: BudgetFilter) => void
   filterTenure: string[]
   onFilterTenureChange: (v: string[]) => void
   filterLocalScene: 'all' | 'Some' | 'High'
@@ -109,6 +112,8 @@ export default function FilterSheet({
   onFilterLifeStageChange,
   filterHousingType,
   onFilterHousingTypeChange,
+  filterBudget,
+  onFilterBudgetChange,
   filterTenure,
   onFilterTenureChange,
   filterLocalScene,
@@ -149,6 +154,7 @@ export default function FilterSheet({
     (filterPoliticalLean.length > 0 ? 1 : 0) +
     (filterLifeStage.length > 0 ? 1 : 0) +
     (filterHousingType.length > 0 ? 1 : 0) +
+    (filterBudget.max != null ? 1 : 0) +
     (filterTenure.length > 0 ? 1 : 0) +
     (filterLocalScene !== 'all' ? 1 : 0) +
     (filterAura ? 1 : 0) +
@@ -163,6 +169,7 @@ export default function FilterSheet({
     onFilterPoliticalLeanChange([])
     onFilterLifeStageChange([])
     onFilterHousingTypeChange([])
+    onFilterBudgetChange({ ...filterBudget, max: null })
     onFilterTenureChange([])
     onFilterLocalSceneChange('all')
     onFilterAuraChange(false)
@@ -338,6 +345,50 @@ export default function FilterSheet({
                 Clear
               </button>
             )}
+          </div>
+
+          {/* Budget */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Monthly Budget</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+              Estimated monthly cost of a typical home with this many bedrooms in each place: principal and interest at {Math.round(MORTGAGE_RATE * 100)}% over 30 years after your down payment, plus the ZIP&apos;s average property tax and insurance at {(INSURANCE_RATE * 100).toFixed(1)}% a year. Home values are Zillow ZIP medians for single-family and condo combined. Tax is the IRS average paid by owners in the ZIP, so it runs low in states that reassess on sale (California). Places with no data are not filtered out.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+              {([1, 2, 3, 4, 5] as const).map((b) =>
+                chip(filterBudget.beds === b, b === 5 ? '5+ bed' : `${b} bed`, () => onFilterBudgetChange({ ...filterBudget, beds: b }))
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <label style={{ fontSize: 12, color: '#6b7280' }}>
+                Max per month ($)
+                <input
+                  type="number"
+                  min={0}
+                  step={500}
+                  value={filterBudget.max ?? ''}
+                  placeholder="No limit"
+                  onChange={(e) => {
+                    const n = Number(e.target.value)
+                    onFilterBudgetChange({ ...filterBudget, max: e.target.value !== '' && n > 0 ? n : null })
+                  }}
+                  style={{ display: 'block', width: 130, marginTop: 4, padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 }}
+                />
+              </label>
+              <label style={{ fontSize: 12, color: '#6b7280' }}>
+                Down payment ($)
+                <input
+                  type="number"
+                  min={0}
+                  step={50000}
+                  value={filterBudget.down}
+                  onChange={(e) => {
+                    const n = Number(e.target.value)
+                    onFilterBudgetChange({ ...filterBudget, down: n >= 0 ? n : 0 })
+                  }}
+                  style={{ display: 'block', width: 130, marginTop: 4, padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 }}
+                />
+              </label>
+            </div>
           </div>
 
           {/* Tenure Mix */}
