@@ -703,8 +703,9 @@ export default function CatalogPageClient({
       commuteMode,
       officeDays,
       people,
+      budget: filterBudget.chosen ? filterBudget : null,
     })
-  }, [priorities, filterSchoolType, filterSchoolLevels, filterNbTypes, filterAoTypes, householdIncome, currentHomeMatch, currentHomeMonthlyCost, workZoneId, commuteMode, officeDays, people])
+  }, [priorities, filterSchoolType, filterSchoolLevels, filterNbTypes, filterAoTypes, householdIncome, currentHomeMatch, currentHomeMonthlyCost, workZoneId, commuteMode, officeDays, people, filterBudget])
 
   const effectivePriorities = useMemo(
     () => priorities,

@@ -4,6 +4,7 @@ import { withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweigh
 import { commuteToZone, findWorkZone, haversineMiles, minutesForMode, noRouteToZone, type WorkCommute } from '@/lib/workZones'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import type { CommuteMode } from '@/lib/userProfile'
+import type { BudgetFilter } from '@/lib/budgetCost'
 /** Explorer filters that rewrite pillar scores (as opposed to filters that only hide places). */
 export type SchoolLevel = 'elementary' | 'middle' | 'high'
 export const ALL_SCHOOL_LEVELS: SchoolLevel[] = ['elementary', 'middle', 'high']
@@ -123,6 +124,8 @@ export interface CompareContext {
   commuteMode?: CommuteMode | null
   officeDays?: number | null
   people?: SocialConnectionPerson[]
+  /** Explorer's home budget (bedrooms, down payment, cap); only set once the visitor has chosen one. */
+  budget?: BudgetFilter | null
 }
 
 /**
