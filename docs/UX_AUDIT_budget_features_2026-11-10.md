@@ -2,7 +2,9 @@
 
 Standard: `docs/UX_PRINCIPLES_DRAFT.md` (six owner rules plus Candidates A "say what a number means where it appears" and B "no silent gaps", both counted as rules since the owner confirmed 2026-11-05). Same method as `docs/UX_AUDIT.md`. This covers only the four features shipped 2026-11-10 (commits ad87d5bb, 0848ac56, 41255419, 21578741).
 
-**Conclusion: Level 0 (not certified).** 9 FAILs, none fixed, none owner-accepted. Rule 6 passes.
+**Conclusion (first pass, 2026-11-10): Level 0 (not certified).** 9 FAILs, none fixed, none owner-accepted. Rule 6 passes.
+
+**Re-audit 2026-11-11: still Level 0, now 1 open FAIL (G1) plus 3 findings. The nine original FAILs are closed. See the last section.**
 
 ## What was checked and how
 
@@ -63,3 +65,56 @@ Rendered in the browser: desktop list and 375px list with empty storage, the 375
 - 2026-11-10, owner decision (asked and answered "all in the sheet"): bedrooms, down payment and the monthly cap are now set together in the Explorer's filter sheet, which resolves the split across two screens (F2 closed as owner-decided). The profile page keeps income and current cost and shows the home budget as a read-only summary with a link to the Explorer. A change in the sheet is still written to the profile (local settings, and the account profile when signed in, debounced), so other screens read the same value. Checked in the desktop browser: sheet down-payment input formats with commas and is 40px tall, profile summary reads "3 bedrooms, $250,000 down". Not checked: signed-in account save, phone width.
 - 2026-11-10, owner approved: in the expanded row, "View full breakdown" comes first as the primary action and the Zillow link follows as a quieter secondary link ("4+ bed homes on Zillow ↗", secondary text color, smaller), so the in-app action is the one obvious next step (Rule 1). Checked in the desktop browser on Glen Rock: link order and Zillow URL correct.
 - 2026-11-11, owner request: bedrooms are now pick-one-or-more. With a monthly cap a place stays if any chosen size fits and its row shows the biggest chosen size that fits (a 5-bed for the price of a 4-bed wins); a place with no price for one of the chosen sizes is kept, so adding a size never removes a place. With no cap a row shows the range across the chosen sizes ("~$4,623 to $6,495/mo · 3 to 4 bed"). The last chip cannot be unselected; Clear all resets. Saved single counts still load. Checked in the desktop browser (4 bed 1,250; 4 or 5+ 1,273; 3, 4 or 5+ 1,370; 3 only 1,321 at a $8,000 cap). Not checked: signed-in save of a list of sizes, phone width. This audit's headline (Level 0) was never updated after the fixes above and no re-audit has been run.
+
+
+---
+
+## Re-audit 2026-11-11
+
+Standard and method as above. Run in a headless browser against the current `main` (multi-select bedrooms included) on the dev server; desktop 1300px, phone 375px.
+
+**Independence.** The multi-select bedroom change (commit 6f5d433) was built in this same session, so the rows it touches (Rule 3, Rule 5, G2, G3) are not graded independently. Level 1 needs a re-check of those rows by someone who did not build them, and the owner's sign-off on the owner-decided rows (Rule 2, Rule 3 chips in the sheet).
+
+### What was checked and how
+
+| View | Result | How |
+|---|---|---|
+| Catalog list, desktop, empty storage (fresh visitor) | 0 cost lines, 0 Zillow links, no explainer bar (1,476 rows) | Browser, DOM count |
+| Filter sheet, desktop, before any choice | No bedroom chip selected; down payment field already reads 600,000; max per month empty; no suggested caps | Browser, DOM |
+| List with bedrooms 3 and 4 chosen, no cap | 1,334 rows with a cost, 142 with a stated reason, 0 blank; explainer bar present; 241 California cards say tax likely low | Browser, DOM count |
+| Same, cap $3,000 | 1,116 rows (360 removed); 973 with a cost, 142 with a reason; 0 "Over budget" tags (over-budget places are removed, not tagged) | Browser, DOM count |
+| Expanded row, desktop (priced place, 3 bed, cap $7,000) | "View full breakdown" first, "3+ bed homes on Zillow" below it, quieter | Browser, element order |
+| Filter sheet and list, 375px | No horizontal overflow; sheet and chips usable; cost line and no-data line wrap (see G2) | Browser, screenshots |
+| Profile page, signed out | Shows "Not set yet" and says bedrooms, down payment and cap are set in the Explorer's filters, with a link | Browser, text |
+| Map markers, mobile bottom sheet, detail panel, compare tray | No cost anywhere | Code only: budget identifiers appear only in the catalog page, list view, filter sheet, API route, profile page and types |
+| Signed-in save of a list of sizes, other pages | Not checked | No account available |
+
+### Per-rule results
+
+| Rule | Result | Evidence |
+|---|---|---|
+| 1. One primary action per state | PASS | Expanded row: "View full breakdown" above the Zillow link, which is smaller and secondary; no Zillow link on any list row. |
+| 2. One home per action | PASS (owner-decided) | Bedrooms, down payment and cap are set only in the filter sheet; profile shows a read-only summary and links back. Owner decision 2026-11-10 ("all in the sheet"). |
+| 3. Controls follow selection | PASS (owner-decided) | Chips and fields are visible before a choice by owner decision; no chip is pre-selected and nothing is applied until a choice. See G1 for the pre-filled number. |
+| 4. Quiet by default | PASS | Fresh visitor sees no cost line, Zillow link or explainer; the California caveat shows only on California cards; reasons show only after a choice. |
+| 5. Start from a suggestion | FAIL (G1) | Suggested caps ("Your current cost", "30% of your income") only appear when a profile has income or a current cost. A fresh visitor faces an empty cap and a down payment already set to $600,000, the owner's own scenario, with no stated basis. |
+| 6. Search finds, panels edit | PASS | Budget is edited only in the filter sheet. |
+| A. Say what a number means | PASS | The basis (rate, down payment, tax, insurance, ZIP median, and the sizes chosen) shows once in the explainer bar when a budget is chosen; the sheet text repeats it. |
+| B. No silent gaps | PASS | With 3 and 4 chosen every row shows a cost or a reason: 1,334 plus 142 equals 1,476. |
+
+### Findings
+
+| ID | Rule | Finding | Smallest fix |
+|---|---|---|---|
+| G1 | 5 (and 4) | Down payment is pre-filled with 600,000 and no cap suggestion exists for a visitor with no profile. | Leave the down payment empty until chosen, or label the default ("example") and offer a one-tap cap from the visitor's chosen bedrooms (for example the metro median monthly cost for that size). |
+| G2 | none (layout) | At 375px the multi-size range ("~$4,623 to $6,495/mo · 3 to 4 bed") wraps to 3 lines and the no-data line ("No 3 or 4-bed cost: no price data for this ZIP") to 4, in the narrow place column. | Show "from ~$4,623/mo · 3 to 4 bed" (cheapest only) and shorten the no-data line to "No price data". |
+| G3 | none (feedback) | Tapping the last selected bedroom chip does nothing and says nothing. | Keep it selected but show the helper line "Pick at least one" or let the last chip clear the choice back to the unchosen state. |
+| G4 | A | The map, bottom sheet, detail panel and compare tray filter by the budget but never show the number (unchanged from the first audit's coverage gap). | Show the cost line in the bottom sheet and detail panel. |
+
+### Level
+
+Level 0 stands: G1 is an unfixed FAIL with no owner-accepted entry. All nine first-pass FAILs are closed and Rules 1, 2, 3, 4, 6, A and B pass. Closing G1, or an owner-accepted entry for it, would reach Level 1 for these features, subject to the independence note above.
+
+### Verification statement
+
+Rendered in the browser: fresh-visitor list and filter sheet (desktop), list with a budget chosen and with a cap (desktop), expanded priced row (desktop), filter sheet and list at 375px, profile page signed out. Code only: map, bottom sheet, detail panel, compare tray, other pages. Not checked: signed-in save, the account profile with a list of sizes, a real phone. Nothing was changed by this re-audit except this document.
