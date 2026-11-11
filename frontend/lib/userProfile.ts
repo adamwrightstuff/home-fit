@@ -12,10 +12,16 @@ export interface UserProfile {
   office_days: number | null
   people: SocialConnectionPerson[]
   /** Bedrooms needed and cash down payment, used for the Explorer's monthly cost estimates. */
-  home_budget: { beds: 1 | 2 | 3 | 4 | 5; down: number } | null
+  home_budget: { beds: (1 | 2 | 3 | 4 | 5)[]; down: number } | null
 }
 
 const MODES: CommuteMode[] = ['auto', 'transit', 'active']
+
+/** Bedroom counts 1 to 5, ascending and unique, from a list or from a single count saved before multi-select. */
+function cleanBeds(v: unknown): (1 | 2 | 3 | 4 | 5)[] {
+  const raw = Array.isArray(v) ? v : [v]
+  return ([1, 2, 3, 4, 5] as const).filter(b => raw.some(x => Number(x) === b))
+}
 
 function isPerson(p: any): p is SocialConnectionPerson {
   return (
@@ -66,8 +72,8 @@ export function sanitizeProfile(raw: unknown): Partial<UserProfile> {
   if ('home_budget' in r) {
     const v = r.home_budget as any
     if (v === null) out.home_budget = null
-    else if (v && Number.isInteger(v.beds) && v.beds >= 1 && v.beds <= 5 && typeof v.down === 'number' && Number.isFinite(v.down) && v.down >= 0) {
-      out.home_budget = { beds: v.beds, down: v.down }
+    else if (v && cleanBeds(v.beds).length > 0 && typeof v.down === 'number' && Number.isFinite(v.down) && v.down >= 0) {
+      out.home_budget = { beds: cleanBeds(v.beds), down: v.down }
     }
   }
   if ('people' in r && Array.isArray(r.people)) {
@@ -99,8 +105,8 @@ export function readLocalProfile(): Partial<UserProfile> {
       out.current_home = { name: homeName, monthly_cost: typeof cost === 'number' && cost > 0 ? cost : null }
     }
     const fb = opts?.filters?.filterBudget
-    if (fb?.chosen === true && Number.isInteger(fb.beds) && fb.beds >= 1 && fb.beds <= 5 && typeof fb.down === 'number' && fb.down >= 0) {
-      out.home_budget = { beds: fb.beds, down: fb.down }
+    if (fb?.chosen === true && cleanBeds(fb.beds).length > 0 && typeof fb.down === 'number' && fb.down >= 0) {
+      out.home_budget = { beds: cleanBeds(fb.beds), down: fb.down }
     }
   } catch { /* ignore */ }
   const people = loadPeople()

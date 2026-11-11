@@ -19,7 +19,7 @@ import { isPillarIndexMode, PILLAR_INDEX_MODES } from '@/lib/catalogMapTypes'
 import { CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import WhyNotHigher from '@/components/WhyNotHigher'
-import { costGapReason, monthlyCost, zillowSearchUrl, type BudgetFilter } from '@/lib/budgetCost'
+import { bedLabel, bedsLabel, bestCost, costGapReason, zillowSearchUrl, type BudgetFilter } from '@/lib/budgetCost'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
@@ -274,21 +274,25 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       {p.catalog.county_borough}, {p.catalog.state_abbr}
                     </div>
                     {budget && (() => {
-                      const mc = monthlyCost(p.housing_cost, budget)
-                      if (!mc) {
+                      const bc = bestCost(p.housing_cost, budget)
+                      if (!bc) {
                         return (
                           <div className="text-[0.65rem] text-[var(--hf-text-tertiary)]">
-                            No {budget.beds === 5 ? '5+' : budget.beds}-bed cost: {costGapReason(p.housing_cost, budget)}
+                            No {bedsLabel(budget.beds)}-bed cost: {costGapReason(p.housing_cost, budget)}
                           </div>
                         )
                       }
+                      const mc = bc.cost
+                      const showRange = budget.max == null && bc.minBeds !== bc.maxBeds
                       return (
                         <div
                           className="text-[0.65rem] font-medium tabular-nums text-[var(--hf-text-secondary)]"
-                          title={`Estimate for a ${budget.beds === 5 ? '5+' : budget.beds}-bedroom home at the ZIP median value of $${Math.round(mc.value).toLocaleString('en-US')}: principal and interest after $${budget.down.toLocaleString('en-US')} down, plus average property tax and insurance.`}
+                          title={`Estimate for a ${bedLabel(bc.beds)}-bedroom home at the ZIP median value of $${Math.round(mc.value).toLocaleString('en-US')}: principal and interest after $${budget.down.toLocaleString('en-US')} down, plus average property tax and insurance.`}
                         >
-                          ~${Math.round(mc.total).toLocaleString('en-US')}/mo · {budget.beds === 5 ? '5+' : budget.beds} bed
-                          {budget.max != null && mc.total > budget.max && (
+                          {showRange
+                            ? `~$${Math.round(bc.low).toLocaleString('en-US')} to $${Math.round(bc.high).toLocaleString('en-US')}/mo · ${bedLabel(bc.minBeds)} to ${bedLabel(bc.maxBeds)} bed`
+                            : `~$${Math.round(mc.total).toLocaleString('en-US')}/mo · ${bedLabel(bc.beds)} bed`}
+                          {!bc.fits && !bc.unknownSize && (
                             <>
                               {' · '}
                               <span className="font-semibold text-trovamo-score-low">Over budget</span>
@@ -398,17 +402,17 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                         </Link>
                       </div>
                       {budget && (() => {
-                        const mc = monthlyCost(p.housing_cost, budget)
-                        if (!mc || (budget.max != null && mc.total > budget.max)) return null
+                        const bc = bestCost(p.housing_cost, budget)
+                        if (!bc || !bc.fits) return null
                         return (
                           <div style={{ padding: '0.5rem 1rem 0' }}>
                             <a
-                              href={zillowSearchUrl(p.catalog.name, p.catalog.state_abbr, budget.beds)}
+                              href={zillowSearchUrl(p.catalog.name, p.catalog.state_abbr, bc.beds)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-[0.7rem] font-medium text-[var(--hf-text-secondary)] underline hover:text-[var(--hf-text-primary)]"
                             >
-                              {budget.beds}+ bed homes on Zillow ↗
+                              {bc.beds}+ bed homes on Zillow ↗
                             </a>
                             <span className="ml-2 text-[0.65rem] text-[var(--hf-text-tertiary)]">Zillow&apos;s filter means that many bedrooms or more.</span>
                           </div>

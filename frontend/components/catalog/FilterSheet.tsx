@@ -1,6 +1,6 @@
 'use client'
 
-import { DEFAULT_BUDGET, MORTGAGE_RATE, type BudgetFilter } from '@/lib/budgetCost'
+import { ALL_BEDS, DEFAULT_BUDGET, MORTGAGE_RATE, bedLabel, toggleBed, type BudgetFilter } from '@/lib/budgetCost'
 import { SCENE_LABEL, SCENE_LEVELS, toggleSceneLevel, type SceneFilter } from '@/lib/sceneLevels'
 import { useEffect } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -355,12 +355,12 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Monthly Budget</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Estimated monthly cost of a typical home with your bedroom count in each place: mortgage at {Math.round(MORTGAGE_RATE * 100)}% over 30 years, property tax and insurance. Places with no data are not filtered out.
+              Estimated monthly cost of a typical home with your bedroom count in each place. With a monthly cap, a place stays if any size you picked fits, and shows the biggest one that does: mortgage at {Math.round(MORTGAGE_RATE * 100)}% over 30 years, property tax and insurance. Places with no data are not filtered out.
             </div>
-            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Bedrooms</div>
+            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Bedrooms (pick one or more)</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-              {([1, 2, 3, 4, 5] as const).map((b) =>
-                chip(filterBudget.chosen && filterBudget.beds === b, b === 5 ? '5+' : String(b), () => onFilterBudgetChange({ ...filterBudget, beds: b, chosen: true }))
+              {ALL_BEDS.map((b) =>
+                chip(filterBudget.chosen && filterBudget.beds.includes(b), bedLabel(b), () => onFilterBudgetChange(toggleBed(filterBudget, b)))
               )}
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>

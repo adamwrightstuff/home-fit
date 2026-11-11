@@ -1,6 +1,6 @@
 'use client'
 
-import { DEFAULT_BUDGET, overBudget, type BudgetFilter } from '@/lib/budgetCost'
+import { DEFAULT_BUDGET, bedsLabel, normalizeBeds, overBudget, type BudgetFilter } from '@/lib/budgetCost'
 import { normalizeSceneFilter, sceneFilterExcludes, type SceneFilter } from '@/lib/sceneLevels'
 import { neighborhoodHref } from '@/lib/neighborhoodPriorities'
 import { placeSlug } from '@/lib/neighborhoodSlug'
@@ -191,9 +191,8 @@ export default function CatalogPageClient({
   const [filterBudget, setFilterBudget] = useState<BudgetFilter>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters?.filterBudget
-      const beds = Number(f?.beds)
       return {
-        beds: (beds >= 1 && beds <= 5 ? Math.round(beds) : DEFAULT_BUDGET.beds) as BudgetFilter['beds'],
+        beds: normalizeBeds(f?.beds),
         max: typeof f?.max === 'number' && f.max > 0 ? f.max : null,
         down: typeof f?.down === 'number' && f.down >= 0 ? f.down : DEFAULT_BUDGET.down,
         chosen: f?.chosen === true || (typeof f?.max === 'number' && f.max > 0),
@@ -204,7 +203,7 @@ export default function CatalogPageClient({
   // profile so it is the same value the profile page shows and the next load does not undo it.
   const budgetSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const handleBudgetChange = useCallback((next: BudgetFilter) => {
-    if (user && (next.beds !== filterBudget.beds || next.down !== filterBudget.down)) {
+    if (user && (next.beds.join() !== filterBudget.beds.join() || next.down !== filterBudget.down)) {
       // Debounced so typing a down payment saves once, not per keystroke.
       if (budgetSaveTimer.current) clearTimeout(budgetSaveTimer.current)
       budgetSaveTimer.current = setTimeout(() => {
@@ -481,7 +480,7 @@ export default function CatalogPageClient({
           if (f.filterBudget && typeof f.filterBudget === 'object') {
             const b = f.filterBudget
             setFilterBudget({
-              beds: (b.beds >= 1 && b.beds <= 5 ? Math.round(b.beds) : DEFAULT_BUDGET.beds) as BudgetFilter['beds'],
+              beds: normalizeBeds(b.beds),
               max: typeof b.max === 'number' && b.max > 0 ? b.max : null,
               down: typeof b.down === 'number' && b.down >= 0 ? b.down : DEFAULT_BUDGET.down,
               chosen: b.chosen === true || (typeof b.max === 'number' && b.max > 0),
@@ -511,7 +510,7 @@ export default function CatalogPageClient({
     fetchProfile().then((p) => {
       if (cancelled || !p) return
       if (p.household_income != null) setHouseholdIncome(p.household_income)
-      if (p.home_budget) setFilterBudget((b) => ({ ...b, beds: p.home_budget!.beds, down: p.home_budget!.down, chosen: true }))
+      if (p.home_budget) setFilterBudget((b) => ({ ...b, beds: normalizeBeds(p.home_budget!.beds), down: p.home_budget!.down, chosen: true }))
       if (p.current_home) {
         setCurrentHomeMatch(p.current_home.name)
         setCurrentHomeMonthlyCost(p.current_home.monthly_cost)
@@ -1741,7 +1740,7 @@ export default function CatalogPageClient({
           {filterBudget.chosen && viewMode === 'list' && (
             <>
               {' '}
-              Monthly cost: a {filterBudget.beds === 5 ? '5+' : filterBudget.beds}-bedroom home at the ZIP median price, mortgage at 7% after ${filterBudget.down.toLocaleString('en-US')} down, plus property tax and insurance.
+              Monthly cost: a {bedsLabel(filterBudget.beds)}-bedroom home at the ZIP median price, mortgage at 7% after ${filterBudget.down.toLocaleString('en-US')} down, plus property tax and insurance.
             </>
           )}
         </p>

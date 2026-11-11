@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { bedsLabel } from '@/lib/budgetCost'
 import Link from 'next/link'
 import { Briefcase, Home, Loader2, Trash2, Users, Wallet, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -61,7 +62,7 @@ function persistLocal(patch: Partial<UserProfile>) {
         ...(opts.filters ?? {}),
         filterBudget: patch.home_budget
           ? { beds: patch.home_budget.beds, down: patch.home_budget.down, max: prev.max ?? null, chosen: true }
-          : { beds: 4, down: 600000, max: prev.max ?? null, chosen: prev.max != null },
+          : { beds: [4], down: 600000, max: prev.max ?? null, chosen: prev.max != null },
       }
     }
     if ('commute_mode' in patch) opts.commute_mode = patch.commute_mode ?? null
@@ -459,7 +460,7 @@ export default function ProfilePage() {
           >
             <p className="m-0 text-sm text-[var(--hf-text-secondary)]">
               {profile.home_budget
-                ? `${profile.home_budget.beds === 5 ? '5+' : profile.home_budget.beds} bedrooms, $${profile.home_budget.down.toLocaleString('en-US')} down. `
+                ? `${bedsLabel(profile.home_budget.beds)} bedrooms, $${profile.home_budget.down.toLocaleString('en-US')} down. `
                 : 'Not set yet. '}
               Bedrooms, down payment and your monthly cap are set together in the Explorer&apos;s filters.{' '}
               <Link href="/catalog" className="font-semibold text-[var(--hf-primary-1)] hover:underline">Open the Explorer</Link>
