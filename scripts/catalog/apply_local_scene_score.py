@@ -4,8 +4,8 @@ Offline: retire the old name-guessing Local Scene everywhere in the catalog and 
 
 From each place's stored score.local_scene_v2.independent_venues_1200m it writes:
   score.local_scene_score   0-100 (pillars.local_scene_v2.scene_score), read by twin matching
-  score.local_scene_bucket  the same tier the Explorer shows (High / Some / Low)
-and removes local_scene_breakdown and local_scene_bucket_v1. Places with no venue read get score and bucket None (the old values are cleared, not kept).
+  score.local_scene_level   the ladder level the Explorer shows (quiet / low_key / lively / buzzing, None = no data)
+and removes local_scene_breakdown, local_scene_bucket, local_scene_bucket_v1 and the retired lively flag and v2 bucket. Places with no venue read get score and level None (the old values are cleared, not kept).
 
   python3 scripts/catalog/apply_local_scene_score.py            # dry run
   python3 scripts/catalog/apply_local_scene_score.py --write
@@ -29,7 +29,12 @@ def process(path, write=True):
         # no venue read yet: the old score is retired too, so the place simply has no local scene until it is read
         count = (s.get("local_scene_v2") or {}).get("independent_venues_1200m")
         s["local_scene_score"] = ls.scene_score(count)
-        s["local_scene_bucket"] = ls.activity_bucket(count)
+        v2 = s.get("local_scene_v2")
+        s["local_scene_level"] = ls.scene_level(v2) if isinstance(v2, dict) else None
+        s.pop("local_scene_bucket", None)
+        if isinstance(v2, dict):
+            v2.pop("lively", None)
+            v2.pop("bucket", None)
         s.pop("local_scene_breakdown", None)
         s.pop("local_scene_bucket_v1", None)
         changed += 1

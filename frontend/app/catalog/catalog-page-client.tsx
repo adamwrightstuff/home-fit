@@ -1,6 +1,7 @@
 'use client'
 
 import { DEFAULT_BUDGET, overBudget, type BudgetFilter } from '@/lib/budgetCost'
+import { normalizeSceneFilter, sceneFilterExcludes, type SceneFilter } from '@/lib/sceneLevels'
 import { neighborhoodHref } from '@/lib/neighborhoodPriorities'
 import { placeSlug } from '@/lib/neighborhoodSlug'
 import { zeroMetroCounts, type CatalogMetro } from '@/lib/catalogMetros'
@@ -220,11 +221,11 @@ export default function CatalogPageClient({
   })
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter' | 'both'>('any')
   const [filterSchoolLevels, setFilterSchoolLevels] = useState<SchoolLevel[]>(ALL_SCHOOL_LEVELS)
-  const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High' | 'Lively'>(() => {
+  const [filterLocalScene, setFilterLocalScene] = useState<SceneFilter>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       const v = f?.filterLocalScene
-      return v === 'Some' || v === 'High' || v === 'Lively' ? v : 'all'
+      return normalizeSceneFilter(v)
     } catch { return 'all' }
   })
   const [filterAura, setFilterAura] = useState<boolean>(() => {
@@ -492,7 +493,7 @@ export default function CatalogPageClient({
             const lv = f.filterSchoolLevels.filter((l: string) => (ALL_SCHOOL_LEVELS as string[]).includes(l)) as SchoolLevel[]
             if (lv.length) setFilterSchoolLevels(lv)
           }
-          if (typeof f.filterLocalScene === 'string') setFilterLocalScene(f.filterLocalScene)
+          if (typeof f.filterLocalScene === 'string') setFilterLocalScene(normalizeSceneFilter(f.filterLocalScene))
           if (typeof f.filterAura === 'boolean') setFilterAura(f.filterAura)
           if (typeof f.filterCommuteMax === 'string') setFilterCommuteMax(f.filterCommuteMax)
           if (f.climatePrefs && typeof f.climatePrefs === 'object') setClimatePrefs(normalizeClimatePrefs(f.climatePrefs))
@@ -741,9 +742,7 @@ export default function CatalogPageClient({
         })
         if (!matchesAny) return false
       }
-      if (filterLocalScene === 'Some' && p.score.local_scene_bucket !== 'High' && p.score.local_scene_bucket !== 'Some') return false
-      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false
-      if (filterLocalScene === 'Lively' && p.score.local_scene_v2?.lively !== true) return false
+      if (sceneFilterExcludes(p.score.local_scene_level, filterLocalScene)) return false
       if (filterAura && p.score.aura !== true) return false
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
@@ -914,9 +913,7 @@ export default function CatalogPageClient({
         const tr = normalizeTrajectory(p.score.status_signal_breakdown?.trajectory)
         if (tr && tr !== filterTrajectory) r.push('Trajectory')
       }
-      if (filterLocalScene === 'Some' && p.score.local_scene_bucket !== 'High' && p.score.local_scene_bucket !== 'Some') r.push('Local scene')
-      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
-      if (filterLocalScene === 'Lively' && p.score.local_scene_v2?.lively !== true) r.push('Local scene')
+      if (sceneFilterExcludes(p.score.local_scene_level, filterLocalScene)) r.push('Local scene')
       if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
@@ -1034,9 +1031,7 @@ export default function CatalogPageClient({
         })
         if (!matchesAny) r.push('Political lean')
       }
-      if (filterLocalScene === 'Some' && p.score.local_scene_bucket !== 'High' && p.score.local_scene_bucket !== 'Some') r.push('Local scene')
-      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
-      if (filterLocalScene === 'Lively' && p.score.local_scene_v2?.lively !== true) r.push('Local scene')
+      if (sceneFilterExcludes(p.score.local_scene_level, filterLocalScene)) r.push('Local scene')
       if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
@@ -1288,7 +1283,7 @@ export default function CatalogPageClient({
           setFilterNbTypes(payload.filterNbTypes)
           setFilterHousingType(payload.filterHousingType)
           setFilterTenure(payload.filterTenure)
-          setFilterLocalScene(payload.filterLocalScene ?? 'all')
+          setFilterLocalScene(normalizeSceneFilter(payload.filterLocalScene))
           setFilterPoliticalLean(payload.filterPoliticalLean)
           setFilterTrajectory(normalizeTrajectory(payload.filterTrajectory) ?? 'all')
           setFilterCommuteMax((payload.filterCommuteMax || 'all') as typeof filterCommuteMax)

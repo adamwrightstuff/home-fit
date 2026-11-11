@@ -1,6 +1,6 @@
 # Local scene ladder: Level 1 spec sheet and Level 2 plan (written 2026-11-11, before any Level 2 result was run)
 
-Status: design and spec only. Nothing here changes scoring yet. No "validated" claim is allowed. This replaces the 3-tier activity tag in `docs/LOCAL_SCENE_ACTIVITY_L2.md` once built (a change to a signed-off measure drops it back to Level 1, DPv2 adoption rule section 2). Written by the session that designed the ladder, so it must not grade it: the Level 2 checks in section 3 are to be run by a different session, against the pass criteria in this file, which are fixed by this commit.
+Status: built 2026-11-11 (variant B). The ladder is stored as score.local_scene_level (quiet, low_key, lively, buzzing; None = no data) in all 21 catalog files, replaces the 3-tier tag and the lively flag in the Explorer, and Aura is unchanged. Level 1 is not signed off. No "validated" claim is allowed. This replaces the 3-tier activity tag in `docs/LOCAL_SCENE_ACTIVITY_L2.md` once built (a change to a signed-off measure drops it back to Level 1, DPv2 adoption rule section 2). Written by the session that designed the ladder, so it must not grade it: the Level 2 checks in section 3 are to be run by a different session, against the pass criteria in this file, which are fixed by this commit.
 
 Level names are working names. The owner is choosing the final words; the checks refer to levels 0 to 3.
 

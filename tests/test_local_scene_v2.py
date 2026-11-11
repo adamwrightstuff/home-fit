@@ -1,4 +1,4 @@
-"""Local scene v2: culture and hangout mix facts and the lively flag (docs/VIBE_VALIDATION.md)."""
+"""Local scene v2: culture and hangout mix facts and the ladder level (docs/LOCAL_SCENE_LADDER_DPV2.md)."""
 
 import unittest
 
@@ -43,20 +43,17 @@ class TestReading(unittest.TestCase):
             out.append({"culture_share": cshare, "hangout_share": hshare, "few_venues": venues < ls.MIN_VENUES})
         return out
 
-    def test_top_quarter_is_lively_and_small_samples_never_are(self):
-        data = [(i * 1.0, i * 1.0, 100) for i in range(1, 21)] + [(100.0, 100.0, 3)]
+    def test_combined_ranks_within_the_group_and_missing_shares_give_none(self):
+        data = [(i * 1.0, i * 1.0, 100) for i in range(1, 21)]
         f = self.facts(data)
         ls.apply_reading(f)
-        top = [x for x in f[:20] if x["lively"]]
-        self.assertTrue(all(x["combined"] >= max(y["combined"] for y in f[:20]) - 25 for x in top))
-        self.assertFalse(f[20]["lively"])  # highest share but only 3 venues
-        self.assertGreater(len(top), 0)
+        self.assertEqual(f[19]["combined"], max(x["combined"] for x in f))
+        self.assertEqual(f[0]["combined"], min(x["combined"] for x in f))
 
-    def test_places_without_data_are_not_lively_and_have_no_combined(self):
+    def test_places_without_data_have_no_combined(self):
         f = [{"culture_share": None, "hangout_share": None, "few_venues": True}, {"culture_share": 5.0, "hangout_share": 40.0, "few_venues": False}]
         ls.apply_reading(f)
         self.assertIsNone(f[0]["combined"])
-        self.assertFalse(f[0]["lively"])
 
 
 class TestDensityBands(unittest.TestCase):
@@ -85,7 +82,6 @@ class TestBuckets(unittest.TestCase):
         f.append({"culture_share": 9.0, "hangout_share": 60.0, "few_venues": False})
         ls.apply_reading(f, [1.0, 2.0, 3.0, 4.0, None])
         self.assertIsNone(f[4]["combined"])
-        self.assertFalse(f[4]["lively"])
 
 
 class TestActivity(unittest.TestCase):
@@ -93,12 +89,32 @@ class TestActivity(unittest.TestCase):
         vs = [v("cafe", 100), v("bar", 1201), v("restaurant", 500, "Chipotle"), v("gallery", 1200)]
         self.assertEqual(ls.independent_venue_count(vs), 2)
 
-    def test_tiers(self):
-        self.assertEqual(ls.activity_bucket(71), "High")
-        self.assertEqual(ls.activity_bucket(70), "Some")
-        self.assertEqual(ls.activity_bucket(13), "Some")
-        self.assertEqual(ls.activity_bucket(12), "Low")
-        self.assertIsNone(ls.activity_bucket(None))
+
+
+class TestLevels(unittest.TestCase):
+    def facts(self, total, n, combined):
+        return {"venues_total": total, "independent_venues_1200m": n, "combined": combined}
+
+    def test_no_data_is_none_never_quiet(self):
+        self.assertIsNone(ls.scene_level(self.facts(0, 0, None)))
+        self.assertIsNone(ls.scene_level(self.facts(None, None, None)))
+        self.assertIsNone(ls.scene_level(self.facts(40, None, 80.0)))  # no venue read at the pin
+
+    def test_floor_is_the_measured_area_venue_count(self):
+        self.assertEqual(ls.scene_level(self.facts(14, 90, 99.0)), "quiet")  # thin base never outranks, whatever the mix
+        self.assertEqual(ls.scene_level(self.facts(15, 3, 99.0)), "lively")  # a town whose main street is off the pin keeps its level
+
+    def test_mix_cut_splits_low_key_from_lively(self):
+        self.assertEqual(ls.scene_level(self.facts(40, 20, 54.9)), "low_key")
+        self.assertEqual(ls.scene_level(self.facts(40, 20, 55.0)), "lively")
+
+    def test_top_volume_makes_buzzing(self):
+        self.assertEqual(ls.scene_level(self.facts(200, 70, 80.0)), "lively")
+        self.assertEqual(ls.scene_level(self.facts(200, 71, 80.0)), "buzzing")
+        self.assertEqual(ls.scene_level(self.facts(700, 600, 38.0)), "low_key")  # busy but restaurant-heavy
+
+    def test_no_density_figure_is_low_key_not_a_guess(self):
+        self.assertEqual(ls.scene_level(self.facts(60, 40, None)), "low_key")
 
 
 class TestBoundary(unittest.TestCase):
@@ -130,7 +146,7 @@ class TestSceneScore(unittest.TestCase):
     def test_tier_cuts_land_on_the_thirds(self):
         self.assertEqual(ls.scene_score(0), 0.0)
         self.assertEqual(ls.scene_score(ls.QUIET_BELOW), 33.3)
-        self.assertEqual(ls.scene_score(ls.VIBRANT_FROM), 66.7)
+        self.assertEqual(ls.scene_score(ls.TOP_VOLUME_FROM), 66.7)
         self.assertEqual(ls.scene_score(ls.SCORE_CAP_COUNT), 100.0)
 
     def test_capped_and_monotonic(self):
@@ -138,8 +154,5 @@ class TestSceneScore(unittest.TestCase):
         vals = [ls.scene_score(c) for c in range(0, 200)]
         self.assertEqual(vals, sorted(vals))
 
-    def test_no_read_is_none_and_tier_matches_score_band(self):
+    def test_no_read_is_none(self):
         self.assertIsNone(ls.scene_score(None))
-        for c in (0, 12, 13, 70, 71, 150):
-            s, b = ls.scene_score(c), ls.activity_bucket(c)
-            self.assertEqual(b, "High" if s >= 66.7 else "Low" if s < 33.3 else "Some")

@@ -23,6 +23,7 @@ import { costGapReason, monthlyCost, zillowSearchUrl, type BudgetFilter } from '
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
+import { SCENE_LABEL } from '@/lib/sceneLevels'
 import AuraBadge from '@/components/catalog/AuraBadge'
 
 function MetroDot({ metro }: { metro: CatalogMetro }) {
@@ -345,7 +346,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                         compact
                       />
                       <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
-                      <LocalSceneChip bucket={p.score.local_scene_bucket ?? null} lively={p.score.local_scene_v2?.lively === true} compact />
+                      <LocalSceneChip level={p.score.local_scene_level ?? null} compact />
                       <AuraBadge aura={p.score.aura ?? null} compact />
                       {p.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
                         <span
@@ -413,11 +414,11 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                           </div>
                         )
                       })()}
-                      {(p.score.local_scene_bucket || p.score.status_signal_breakdown?.llm_summary) && (
+                      {(p.score.local_scene_level || p.score.status_signal_breakdown?.llm_summary) && (
                         <div style={{ padding: '0.75rem 1rem 0' }}>
-                          {p.score.local_scene_bucket && (
+                          {p.score.local_scene_level && (
                             <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--hf-text-tertiary)', display: 'block', marginBottom: '0.25rem' }}>
-                              {p.score.local_scene_bucket === 'High' ? 'Vibrant scene' : p.score.local_scene_bucket === 'Some' ? 'Some scene' : 'Quiet area'}
+                              {SCENE_LABEL[p.score.local_scene_level]}
                             </span>
                           )}
                           {p.score.status_signal_breakdown?.llm_summary && (

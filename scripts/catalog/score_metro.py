@@ -20,7 +20,7 @@ Phases (all run unless --skip-* flags used):
   3. housing   — Census ACS B25024 housing stock (housing-type filter)
   4. zips      — Nominatim ZIP code backfill
   5. lean      — political lean data
-  6. scene     — local_scene_score + bucket from stored local_scene_v2 venue count
+  6. scene     — local_scene_score + ladder level from stored local_scene_v2 facts
   7. labels    — best-fit preference labels on NB
   8. schools   — charter/public flag on school arrays
   9. archs     — Claude-based archetype summaries (costs ~$5-15, requires ANTHROPIC_API_KEY)
@@ -66,7 +66,7 @@ def _coverage(path: Path) -> None:
     checks = {
         "housing_stock.pct_low_density": 0,
         "political_lean.lean_2024": 0,
-        "local_scene_bucket": 0,
+        "local_scene_level": 0,
         "zip_code": 0,
         "archetype": 0,
     }
@@ -93,8 +93,8 @@ def _coverage(path: Path) -> None:
             pl = pillars.get("political_lean") or {}
             if (pl.get("breakdown") or {}).get("lean_2024") is not None:
                 checks["political_lean.lean_2024"] += 1
-            if s.get("local_scene_bucket") is not None:
-                checks["local_scene_bucket"] += 1
+            if s.get("local_scene_level") is not None:
+                checks["local_scene_level"] += 1
             if cat.get("zip_code") or s.get("zip_code") or (s.get("location_info") or {}).get("zip"):
                 checks["zip_code"] += 1
             ss = s.get("status_signal_breakdown") or {}

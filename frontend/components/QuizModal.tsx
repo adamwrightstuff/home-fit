@@ -13,7 +13,7 @@ export interface QuizPayload {
   workZoneId?: string | null
   commuteMode?: 'transit' | null
   officeDays?: number | null
-  filterLocalScene?: 'all' | 'Some' | 'High' | 'Lively'
+  filterLocalScene?: 'all' | 'Lively' | 'Buzzing'
   filterPoliticalLean: string[]
   filterTrajectory: string
   filterCommuteMax: string

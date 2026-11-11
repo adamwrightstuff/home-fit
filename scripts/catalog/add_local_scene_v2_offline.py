@@ -56,26 +56,28 @@ def main():
             else:
                 facts = ls.place_facts(read["venues"] if read else [], radius)
             facts["independent_venues_1200m"] = ls.independent_venue_count(read["venues"]) if read else None
-            facts["bucket"] = ls.activity_bucket(facts["independent_venues_1200m"])
             apa = (((s.get("livability_pillars") or {}).get("active_outdoors") or {}).get("dpv2_recompute") or {}).get("activity_per_acre")
             facts["activity_per_acre"] = round(apa, 2) if isinstance(apa, (int, float)) else None
             refs.append((path, i, facts, read is not None))
-    ls.apply_reading([f for _, _, f, _ in refs], [f["activity_per_acre"] for _, _, f, _ in refs])  # mix facts: combined, density band, lively
-    n = lively = nodata = 0
+    ls.apply_reading([f for _, _, f, _ in refs], [f["activity_per_acre"] for _, _, f, _ in refs])  # mix facts: combined, density band
+    n = nodata = 0
+    from collections import Counter
+    levels = Counter()
     for path, i, facts, had_read in refs:
         sc = files[path][i]["score"]
         sc["local_scene_v2"] = facts
-        # the Explorer chip, filter and place card read local_scene_bucket: it now carries the v2 tier (None = too few venues or no density)
-        sc["local_scene_bucket"] = facts["bucket"]
+        # the Explorer chip, filter and place card read local_scene_level (None = no venue data)
+        sc["local_scene_level"] = ls.scene_level(facts)
+        sc.pop("local_scene_bucket", None)
         sc["local_scene_score"] = ls.scene_score(facts["independent_venues_1200m"])
         sc.pop("local_scene_breakdown", None)
         sc.pop("local_scene_bucket_v1", None)
         n += 1
-        lively += facts["lively"]
+        levels[sc["local_scene_level"]] += 1
         nodata += (facts["venues_total"] == 0)
     for path, rows in files.items():
         Path(path).write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
-    print(f"local_scene_v2 added for {n} places: lively {lively}, no venue data {nodata}")
+    print(f"local_scene_v2 added for {n} places: levels {dict(levels)}, no venue data {nodata}")
 
 
 if __name__ == "__main__":

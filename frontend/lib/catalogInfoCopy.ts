@@ -51,27 +51,32 @@ export const TRAJECTORY_COPY: Record<string, InfoCopy> = {
 }
 
 export const SCENE_COPY: Record<string, InfoCopy> = {
-  High: {
-    title: 'Vibrant Scene',
-    body: 'A lot is going on within a short walk: many independent cafes, bars, restaurants, galleries, bookstores and theaters. Expect plenty to do close to home and busy streets.',
-    detail: 'Based on the number of independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters within about 0.75 miles, from OpenStreetMap. Vibrant is 71 or more, roughly the top 15% of places we score. It measures how much is going on, not what kind of places they are. The cut-offs are rough and not validated.',
+  buzzing: {
+    title: 'Buzzing',
+    body: 'A lot is going on within a short walk, and a good share of it is places to linger: independent cafes, bars, galleries, bookstores and theaters, not just restaurants.',
+    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Buzzing means a strong mix of cafes, bars and culture venues compared with places of similar density, and 71 or more independent venues within about 0.75 miles. The cut-offs are rough and not validated.',
   },
-  Some: {
-    title: 'Some Scene',
-    body: 'There is enough local activity to give the area character, but it is not buzzing from block to block. You will find places to go without the constant energy of a major destination.',
-    detail: 'Based on the number of independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters within about 0.75 miles, from OpenStreetMap. Some is 13 to 70. The cut-offs are rough and not validated; places with few mapped venues can read lower than they feel.',
+  lively: {
+    title: 'Lively',
+    body: 'A real local scene at town or main-street scale: a strong mix of independent places to linger, with fewer places overall than a big downtown.',
+    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Lively means a strong mix of cafes, bars and culture venues compared with places of similar density, with fewer than 71 independent venues within about 0.75 miles. Towns are measured across the whole town. The cut-offs are rough and not validated.',
   },
-  Low: {
-    title: 'Quiet Area',
-    body: 'This is mostly a place to live rather than a place people go out. Streets tend to be quieter, with few independent places to go nearby.',
-    detail: 'Based on the number of independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters within about 0.75 miles, from OpenStreetMap. Quiet is under 13. Places with few mapped venues can read lower than they feel.',
+  low_key: {
+    title: 'Low-key',
+    body: 'There are places to go, but compared with similar places more of them are restaurants, with fewer cafes, bars and culture venues. It can be busy without having much of a scene.',
+    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Low-key means 15 or more venues but a mix of cafes, bars and culture venues below what similar places have. The cut-offs are rough and not validated.',
+  },
+  quiet: {
+    title: 'Quiet',
+    body: 'This is mostly a place to live rather than a place people go out. There are few places to go nearby.',
+    detail: 'Based on the named cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Quiet means fewer than 15 within the measured area. Places with few mapped venues can read lower than they feel. The cut-offs are rough and not validated.',
   },
 }
 
 export const AURA_COPY: InfoCopy = {
   title: 'Aura',
   body: 'Aura marks a neighborhood with a lot going on, a strong mix of independent cafes, bars and culture, and an affluent or elite resident profile. It is rare.',
-  detail: 'A place gets Aura only if it has a Vibrant local scene (71 or more independent venues within about 0.75 miles), a high mix of independent culture and hangout venues compared with places of similar density, and a status class of Affluent or Elite. Job centers with more than five workers per resident are excluded. The cut-offs are rough judgments and not validated.',
+  detail: 'A place gets Aura only if it has 71 or more independent venues within about 0.75 miles, a high mix of independent culture and hangout venues compared with places of similar density, and a status class of Affluent or Elite. Job centers with more than five workers per resident are excluded. The cut-offs are rough judgments and not validated.',
 }
 
 export const INDEX_COPY: Record<string, InfoCopy> = {

@@ -1,6 +1,7 @@
 'use client'
 
 import { DEFAULT_BUDGET, MORTGAGE_RATE, type BudgetFilter } from '@/lib/budgetCost'
+import { SCENE_LABEL, type SceneFilter } from '@/lib/sceneLevels'
 import { useEffect } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
@@ -59,8 +60,8 @@ interface FilterSheetProps {
   suggestedCaps?: { label: string; value: number }[]
   filterTenure: string[]
   onFilterTenureChange: (v: string[]) => void
-  filterLocalScene: 'all' | 'Some' | 'High' | 'Lively'
-  onFilterLocalSceneChange: (v: 'all' | 'Some' | 'High' | 'Lively') => void
+  filterLocalScene: SceneFilter
+  onFilterLocalSceneChange: (v: SceneFilter) => void
   filterAura: boolean
   onFilterAuraChange: (v: boolean) => void
   /** Must-haves: places that fail any checked box are hidden. */
@@ -486,13 +487,12 @@ export default function FilterSheet({
               <div style={LABEL_STYLE}>Local Scene</div>
             </div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              How much independent activity is within a short walk: cafés, bars, restaurants, galleries, bookstores and theaters.
+              How much of a scene there is nearby: independent cafés, bars, galleries, bookstores and theaters, compared with similar places.
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterLocalScene === 'all', 'All', () => onFilterLocalSceneChange('all'))}
-              {chip(filterLocalScene === 'Some', 'Some+', () => onFilterLocalSceneChange(filterLocalScene === 'Some' ? 'all' : 'Some'))}
-              {chip(filterLocalScene === 'High', 'High only', () => onFilterLocalSceneChange(filterLocalScene === 'High' ? 'all' : 'High'))}
-              {chip(filterLocalScene === 'Lively', 'Lively only', () => onFilterLocalSceneChange(filterLocalScene === 'Lively' ? 'all' : 'Lively'))}
+              {chip(filterLocalScene === 'Lively', `${SCENE_LABEL.lively} and up`, () => onFilterLocalSceneChange(filterLocalScene === 'Lively' ? 'all' : 'Lively'))}
+              {chip(filterLocalScene === 'Buzzing', `${SCENE_LABEL.buzzing} only`, () => onFilterLocalSceneChange(filterLocalScene === 'Buzzing' ? 'all' : 'Buzzing'))}
             </div>
           </div>
 

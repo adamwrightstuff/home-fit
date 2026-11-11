@@ -17,6 +17,7 @@ import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
 import { HOMEFIT_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
+import { SCENE_LABEL } from '@/lib/sceneLevels'
 
 export type CatalogSheetSnap = 'peek' | 'expanded'
 
@@ -253,7 +254,7 @@ export default function CatalogBottomSheet({
             </div>
 
             {/* Archetype + Trajectory + Local Scene + Commute N/A pill row */}
-            {(allIdx?.archetype || allIdx?.trajectory || place.score.local_scene_bucket ||
+            {(allIdx?.archetype || allIdx?.trajectory || place.score.local_scene_level ||
               (place.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None')) && (
               <div className="mb-2" style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', whiteSpace: 'nowrap' }}>
                 {(statusBadge || allIdx?.archetype) && (
@@ -284,7 +285,7 @@ export default function CatalogBottomSheet({
                     Commute: N/A
                   </span>
                 )}
-                {place.score.local_scene_bucket && (
+                {place.score.local_scene_level && (
                   <span
                     title="Reflects the presence of independent places to spend time, like cafés, bookstores, bars, and galleries."
                     style={{
@@ -301,26 +302,7 @@ export default function CatalogBottomSheet({
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {place.score.local_scene_bucket === 'High' ? 'Vibrant scene' : place.score.local_scene_bucket === 'Some' ? 'Some scene' : 'Quiet area'}
-                  </span>
-                )}
-                {place.score.local_scene_v2?.lively === true && (
-                  <span
-                    title="A high share of independent culture and hangout venues compared with places of similar density."
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      height: 28,
-                      padding: '0 10px',
-                      borderRadius: 99,
-                      background: '#ecfdf5',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: '#065f46',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    Lively
+                    {SCENE_LABEL[place.score.local_scene_level]}
                   </span>
                 )}
               </div>
