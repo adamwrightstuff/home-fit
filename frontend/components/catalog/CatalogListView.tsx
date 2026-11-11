@@ -19,7 +19,7 @@ import { isPillarIndexMode, PILLAR_INDEX_MODES } from '@/lib/catalogMapTypes'
 import { CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import WhyNotHigher from '@/components/WhyNotHigher'
-import { monthlyCost, zillowSearchUrl, type BudgetFilter } from '@/lib/budgetCost'
+import { costGapReason, monthlyCost, zillowSearchUrl, type BudgetFilter } from '@/lib/budgetCost'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
@@ -274,7 +274,13 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                     </div>
                     {budget && (() => {
                       const mc = monthlyCost(p.housing_cost, budget)
-                      if (!mc) return null
+                      if (!mc) {
+                        return (
+                          <div className="text-[0.65rem] text-[var(--hf-text-tertiary)]">
+                            No {budget.beds === 5 ? '5+' : budget.beds}-bed cost: {costGapReason(p.housing_cost, budget)}
+                          </div>
+                        )
+                      }
                       return (
                         <div
                           className="text-[0.65rem] font-medium tabular-nums text-[var(--hf-text-secondary)]"
@@ -296,6 +302,9 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                               See {budget.beds}+ bed homes on Zillow
                             </a>
                           )}
+                          <div className="font-normal text-[var(--hf-text-tertiary)]">
+                            Mortgage at 7% after ${budget.down.toLocaleString('en-US')} down, tax and insurance; ZIP median price{p.catalog.state_abbr === 'CA' ? '; tax likely low (California)' : ''}
+                          </div>
                         </div>
                       )
                     })()}

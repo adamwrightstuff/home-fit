@@ -50,3 +50,9 @@ The budget filter removes places from the map and the list, but the map, the mob
 ## Verification statement
 
 Rendered in the browser: desktop list and 375px list with empty storage, the 375px filter sheet, and the DOM count of cost lines and Zillow links. Everything under "Code only" is from searching the frontend for the three identifiers above; no screen was rendered for it. The Zillow link was checked only for its URL (Pelham matches the tested pattern in the ticket); it was not opened. Nothing was changed by this audit.
+
+## Fix log
+
+- 2026-11-10, c06c16c5: F5 fixed (cost line and Zillow link only after the visitor chooses a bedroom count, cap or down payment; no chip is pre-selected; Clear all resets bedrooms and down payment). Also resolves part of F4 and the Clear all half of F2.
+- 2026-11-10, next commit: F8 fixed (the card states its basis in words: mortgage rate, down payment, tax and insurance, ZIP median price). F9 fixed (rows with no cost say why: no price data for the ZIP, too few Zillow sales of that size, or no property tax data). F6 fixed (California cards say tax likely low). Checked in the desktop browser: 223 rows now show a reason instead of a blank.
+- Still open: F1 (Zillow link on every row), F2 (profile is not the one home for down payment and bedrooms), F3 and the rest of F4 (controls before selection), F7 (no suggested cap).
