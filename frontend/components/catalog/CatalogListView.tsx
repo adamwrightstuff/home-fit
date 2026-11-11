@@ -290,12 +290,12 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                           {budget.max != null && mc.total > budget.max && (
                             <>
                               {' · '}
-                              <span className="font-semibold text-amber-700">Over budget</span>
+                              <span className="font-semibold text-trovamo-score-low">Over budget</span>
                             </>
                           )}
-                          <div className="font-normal text-[var(--hf-text-tertiary)]">
-                            Mortgage at 7% after ${budget.down.toLocaleString('en-US')} down, tax and insurance; ZIP median price{p.catalog.state_abbr === 'CA' ? '; tax likely low (California)' : ''}
-                          </div>
+                          {p.catalog.state_abbr === 'CA' && (
+                            <div className="font-normal text-[var(--hf-text-tertiary)]">Tax likely low (California)</div>
+                          )}
                         </div>
                       )
                     })()}

@@ -356,6 +356,12 @@ export default function FilterSheet({
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
               Estimated monthly cost of a typical home with your bedroom count in each place: mortgage at {Math.round(MORTGAGE_RATE * 100)}% over 30 years, property tax and insurance. Places with no data are not filtered out.
             </div>
+            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Bedrooms</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+              {([1, 2, 3, 4, 5] as const).map((b) =>
+                chip(filterBudget.chosen && filterBudget.beds === b, b === 5 ? '5+' : String(b), () => onFilterBudgetChange({ ...filterBudget, beds: b, chosen: true }))
+              )}
+            </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <label style={{ fontSize: 12, color: '#6b7280' }}>
                 Max per month ($)
@@ -369,7 +375,7 @@ export default function FilterSheet({
                     const n = Number(e.target.value)
                     onFilterBudgetChange({ ...filterBudget, max: e.target.value !== '' && n > 0 ? n : null, chosen: true })
                   }}
-                  style={{ display: 'block', width: 130, marginTop: 4, padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 }}
+                  style={{ display: 'block', width: 130, marginTop: 4, padding: '0 8px', height: 'var(--hf-control-h-touch)', border: '1px solid var(--hf-border)', borderRadius: 'var(--hf-control-radius)', fontSize: 14, color: 'var(--hf-text-primary)' }}
                 />
               </label>
             </div>
@@ -382,8 +388,8 @@ export default function FilterSheet({
               </div>
             )}
             <div style={{ fontSize: 11, color: '#6b7280', marginTop: 8 }}>
-              Using {filterBudget.beds === 5 ? '5+' : filterBudget.beds} bedrooms and ${filterBudget.down.toLocaleString('en-US')} down.{' '}
-              <a href="/profile" style={{ textDecoration: 'underline' }}>Change in your profile</a>
+              Bedrooms and down payment are saved to your profile. Using ${filterBudget.down.toLocaleString('en-US')} down.{' '}
+              <a href="/profile" style={{ textDecoration: 'underline' }}>Change down payment</a>
             </div>
           </div>
 

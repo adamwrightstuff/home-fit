@@ -40,7 +40,7 @@ import {
 } from '@/lib/catalogMapTypes'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
-import { fetchProfile, type CommuteMode } from '@/lib/userProfile'
+import { fetchProfile, saveProfile, type CommuteMode } from '@/lib/userProfile'
 import { ALL_SCHOOL_LEVELS, applyExplorerScoreAdjustments, writeCompareContext, type SchoolLevel } from '@/lib/explorerScoreAdjust'
 import { climateMustHaveFails, hasClimateMustHaves, normalizeClimatePrefs, type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
@@ -199,6 +199,14 @@ export default function CatalogPageClient({
       }
     } catch { return DEFAULT_BUDGET }
   })
+  // Bedrooms and down payment are profile settings: a change here is written through to the account
+  // profile so it is the same value the profile page shows and the next load does not undo it.
+  const handleBudgetChange = useCallback((next: BudgetFilter) => {
+    if (user && (next.beds !== filterBudget.beds || next.down !== filterBudget.down)) {
+      void saveProfile({ home_budget: { beds: next.beds, down: next.down } })
+    }
+    setFilterBudget(next)
+  }, [user, filterBudget])
   const [filterTenure, setFilterTenure] = useState<string[]>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
@@ -1727,6 +1735,12 @@ export default function CatalogPageClient({
       {catalogMode === 'explorer' && (
         <p className="m-0 shrink-0 border-b border-[var(--hf-border)] bg-white px-4 py-1 text-[0.7rem] text-[var(--hf-text-secondary)]">
           {scoreBasisLine(indexMode, priorities)}
+          {filterBudget.chosen && viewMode === 'list' && (
+            <>
+              {' '}
+              Monthly cost: a {filterBudget.beds === 5 ? '5+' : filterBudget.beds}-bedroom home at the ZIP median price, mortgage at 7% after ${filterBudget.down.toLocaleString('en-US')} down, plus property tax and insurance.
+            </>
+          )}
         </p>
       )}
 
@@ -2083,7 +2097,7 @@ export default function CatalogPageClient({
         filterHousingType={filterHousingType}
         onFilterHousingTypeChange={setFilterHousingType}
         filterBudget={filterBudget}
-        onFilterBudgetChange={setFilterBudget}
+        onFilterBudgetChange={handleBudgetChange}
         suggestedCaps={[
           ...(currentHomeMonthlyCost ? [{ label: 'Your current cost', value: Math.round(currentHomeMonthlyCost) }] : []),
           ...(householdIncome ? [{ label: '30% of your income', value: Math.round((householdIncome * 0.3) / 12) }] : []),
