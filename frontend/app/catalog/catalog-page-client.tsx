@@ -195,6 +195,7 @@ export default function CatalogPageClient({
         beds: (beds >= 1 && beds <= 5 ? Math.round(beds) : DEFAULT_BUDGET.beds) as BudgetFilter['beds'],
         max: typeof f?.max === 'number' && f.max > 0 ? f.max : null,
         down: typeof f?.down === 'number' && f.down >= 0 ? f.down : DEFAULT_BUDGET.down,
+        chosen: f?.chosen === true || (typeof f?.max === 'number' && f.max > 0),
       }
     } catch { return DEFAULT_BUDGET }
   })
@@ -469,6 +470,7 @@ export default function CatalogPageClient({
               beds: (b.beds >= 1 && b.beds <= 5 ? Math.round(b.beds) : DEFAULT_BUDGET.beds) as BudgetFilter['beds'],
               max: typeof b.max === 'number' && b.max > 0 ? b.max : null,
               down: typeof b.down === 'number' && b.down >= 0 ? b.down : DEFAULT_BUDGET.down,
+              chosen: b.chosen === true || (typeof b.max === 'number' && b.max > 0),
             })
           }
           if (Array.isArray(f.filterTenure)) setFilterTenure(f.filterTenure)
@@ -870,7 +872,7 @@ export default function CatalogPageClient({
   // showing the count before mount made the Filters badge differ between server and client HTML.
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBudget.max != null ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
+  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBudget.chosen ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
   // Priorities badge: pillars moved off the default level, plus Hide choices (which live in Priorities).
   const priorityBadgeCount = !mounted ? 0 : PILLAR_ORDER.filter((k) => priorities[k as keyof PillarPriorities] !== DEFAULT_PRIORITIES[k as keyof PillarPriorities]).length + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
   // Places blocked by regular filters — always shown in "Show excluded"
@@ -1912,7 +1914,7 @@ export default function CatalogPageClient({
             compareIds={compareIds}
             onCompareToggle={handleCompareToggle}
             onRowExpand={setSelectedKey}
-            budget={filterBudget}
+            budget={filterBudget.chosen ? filterBudget : undefined}
           />
         </div>
       )}

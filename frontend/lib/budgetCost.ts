@@ -17,9 +17,11 @@ export interface BudgetFilter {
   max: number | null
   /** Cash down payment. */
   down: number
+  /** True once the visitor has picked a bedroom count, a cap or a down payment. Until then no cost is shown anywhere. */
+  chosen: boolean
 }
 
-export const DEFAULT_BUDGET: BudgetFilter = { beds: 4, max: null, down: 600000 }
+export const DEFAULT_BUDGET: BudgetFilter = { beds: 4, max: null, down: 600000, chosen: false }
 export const MORTGAGE_RATE = 0.07
 export const INSURANCE_RATE = 0.004
 

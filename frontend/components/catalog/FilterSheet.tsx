@@ -1,6 +1,6 @@
 'use client'
 
-import { INSURANCE_RATE, MORTGAGE_RATE, type BudgetFilter } from '@/lib/budgetCost'
+import { DEFAULT_BUDGET, INSURANCE_RATE, MORTGAGE_RATE, type BudgetFilter } from '@/lib/budgetCost'
 import { useEffect } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
@@ -154,7 +154,7 @@ export default function FilterSheet({
     (filterPoliticalLean.length > 0 ? 1 : 0) +
     (filterLifeStage.length > 0 ? 1 : 0) +
     (filterHousingType.length > 0 ? 1 : 0) +
-    (filterBudget.max != null ? 1 : 0) +
+    (filterBudget.chosen ? 1 : 0) +
     (filterTenure.length > 0 ? 1 : 0) +
     (filterLocalScene !== 'all' ? 1 : 0) +
     (filterAura ? 1 : 0) +
@@ -169,7 +169,7 @@ export default function FilterSheet({
     onFilterPoliticalLeanChange([])
     onFilterLifeStageChange([])
     onFilterHousingTypeChange([])
-    onFilterBudgetChange({ ...filterBudget, max: null })
+    onFilterBudgetChange(DEFAULT_BUDGET)
     onFilterTenureChange([])
     onFilterLocalSceneChange('all')
     onFilterAuraChange(false)
@@ -355,7 +355,7 @@ export default function FilterSheet({
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
               {([1, 2, 3, 4, 5] as const).map((b) =>
-                chip(filterBudget.beds === b, b === 5 ? '5+ bed' : `${b} bed`, () => onFilterBudgetChange({ ...filterBudget, beds: b }))
+                chip(filterBudget.chosen && filterBudget.beds === b, b === 5 ? '5+ bed' : `${b} bed`, () => onFilterBudgetChange({ ...filterBudget, beds: b, chosen: true }))
               )}
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -369,7 +369,7 @@ export default function FilterSheet({
                   placeholder="No limit"
                   onChange={(e) => {
                     const n = Number(e.target.value)
-                    onFilterBudgetChange({ ...filterBudget, max: e.target.value !== '' && n > 0 ? n : null })
+                    onFilterBudgetChange({ ...filterBudget, max: e.target.value !== '' && n > 0 ? n : null, chosen: true })
                   }}
                   style={{ display: 'block', width: 130, marginTop: 4, padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 }}
                 />
@@ -383,7 +383,7 @@ export default function FilterSheet({
                   value={filterBudget.down}
                   onChange={(e) => {
                     const n = Number(e.target.value)
-                    onFilterBudgetChange({ ...filterBudget, down: n >= 0 ? n : 0 })
+                    onFilterBudgetChange({ ...filterBudget, down: n >= 0 ? n : 0, chosen: true })
                   }}
                   style={{ display: 'block', width: 130, marginTop: 4, padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 }}
                 />
