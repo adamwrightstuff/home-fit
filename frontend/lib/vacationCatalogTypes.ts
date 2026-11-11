@@ -17,10 +17,6 @@ export interface VacationPlace {
   allocation_type: string | null
 }
 
-export interface VacationCatalogApiResponse {
-  places: VacationPlace[]
-}
-
 export const TRIP_TYPE_LABEL: Record<TripType, string> = {
   beach: 'Beach',
   mountain: 'Mountain',

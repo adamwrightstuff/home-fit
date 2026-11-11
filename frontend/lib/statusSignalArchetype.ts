@@ -91,13 +91,6 @@ const ARCHETYPE_ONE_LINERS: Record<SESBand, string> = {
   Struggling: 'Low income, low education attainment, and limited economic opportunity.',
 }
 
-/** Trajectory badge one-liners — lifecycle dimension separate from class band. */
-const TRAJECTORY_ONE_LINERS: Record<TrajectoryBadge, string> = {
-  'Up-and-Coming':  'Housing market running ahead of resident wealth — a neighborhood in active transition.',
-  'Stable':         'Not in active transition — steady character with no strong momentum signal.',
-  'Declining':      'Home prices have fallen over the past three years — the market is moving away from this neighborhood.',
-}
-
 export interface TrajectoryExplainer {
   headline: string
   body: string
@@ -126,16 +119,6 @@ export const TRAJECTORY_EXPLAINERS: Record<TrajectoryBadge, TrajectoryExplainer>
 /** Character overlays — legacy field, kept for backwards compat. */
 const OVERLAY_ONE_LINERS: Record<CharacterOverlay, string> = {
   'Up-and-Coming': 'Housing market runs hot relative to resident wealth — a neighborhood in active transition.',
-}
-
-export function trajectoryOneLiner(trajectory: string | null | undefined): string {
-  const t = normalizeTrajectory(trajectory)
-  return (t && TRAJECTORY_ONE_LINERS[t]) ?? 'Trajectory data unavailable for this area.'
-}
-
-export function trajectoryExplainer(trajectory: string | null | undefined): TrajectoryExplainer | null {
-  const t = normalizeTrajectory(trajectory)
-  return t ? TRAJECTORY_EXPLAINERS[t] ?? null : null
 }
 
 /** Legacy / fallback one-liners for any remaining old API archetype strings. */
@@ -329,8 +312,4 @@ export function archetypeOneLiner(archetype: string | null | undefined): string 
   const ses = ARCHETYPE_ONE_LINERS[a as SESBand]
   if (ses) return ses
   return API_ARCHETYPE_ONE_LINERS[a] ?? 'A distinct status profile for this area.'
-}
-
-export function getLeanThresholdPct(): number {
-  return LEAN_GAP_THRESHOLD_PCT
 }

@@ -80,20 +80,11 @@ class TestDensityBands(unittest.TestCase):
 
 
 class TestBuckets(unittest.TestCase):
-    def test_bucket_cuts_and_missing_values(self):
-        self.assertEqual(ls.bucket_for(65.0, False), "High")
-        self.assertEqual(ls.bucket_for(64.9, False), "Some")
-        self.assertEqual(ls.bucket_for(45.0, False), "Some")
-        self.assertIsNone(ls.bucket_for(44.9, False))  # no "quiet area" label
-        self.assertIsNone(ls.bucket_for(90.0, True))   # fewer than MIN_VENUES: no tier
-        self.assertIsNone(ls.bucket_for(None, False))
-
     def test_place_with_no_density_gets_no_reading_instead_of_a_tiny_peer_group(self):
         f = [{"culture_share": 5.0, "hangout_share": 40.0, "few_venues": False} for _ in range(4)]
         f.append({"culture_share": 9.0, "hangout_share": 60.0, "few_venues": False})
         ls.apply_reading(f, [1.0, 2.0, 3.0, 4.0, None])
         self.assertIsNone(f[4]["combined"])
-        self.assertIsNone(f[4]["bucket"])
         self.assertFalse(f[4]["lively"])
 
 

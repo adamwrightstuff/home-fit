@@ -10,102 +10,6 @@
 
 export type NbPreference = 'mountains' | 'ocean' | 'lakes_rivers' | 'canopy'
 
-export const NB_PREFERENCE_LABELS: Record<NbPreference, string> = {
-  mountains: 'Mountains',
-  ocean: 'Ocean / Bay',
-  lakes_rivers: 'Lakes & Rivers',
-  canopy: 'Tree Canopy',
-}
-
-// Mirrors NATURAL_BEAUTY_PREFERENCE_PROFILES in natural_beauty.py
-// area_key: 'rural' | 'suburban' | 'urban_core'
-type ContextWeights = { topography: number; landcover: number; water: number }
-type WaterTypeWeights = { coast: number; lake: number; river: number } | null
-
-interface PrefProfile {
-  context_weights: Record<string, ContextWeights>
-  water_type_weights: WaterTypeWeights
-}
-
-const PREFERENCE_PROFILES: Record<NbPreference, PrefProfile> = {
-  mountains: {
-    context_weights: {
-      rural:      { topography: 0.75, landcover: 0.15, water: 0.10 },
-      suburban:   { topography: 0.68, landcover: 0.20, water: 0.12 },
-      urban_core: { topography: 0.68, landcover: 0.20, water: 0.12 },
-    },
-    water_type_weights: null,
-  },
-  ocean: {
-    context_weights: {
-      rural:      { topography: 0.25, landcover: 0.15, water: 0.60 },
-      suburban:   { topography: 0.20, landcover: 0.15, water: 0.65 },
-      urban_core: { topography: 0.20, landcover: 0.15, water: 0.65 },
-    },
-    water_type_weights: { coast: 0.80, lake: 0.10, river: 0.10 },
-  },
-  lakes_rivers: {
-    context_weights: {
-      rural:      { topography: 0.28, landcover: 0.17, water: 0.55 },
-      suburban:   { topography: 0.22, landcover: 0.18, water: 0.60 },
-      urban_core: { topography: 0.22, landcover: 0.18, water: 0.60 },
-    },
-    water_type_weights: { coast: 0.15, lake: 0.55, river: 0.30 },
-  },
-  canopy: {
-    context_weights: {
-      rural:      { topography: 0.40, landcover: 0.45, water: 0.15 },
-      suburban:   { topography: 0.35, landcover: 0.50, water: 0.15 },
-      urban_core: { topography: 0.35, landcover: 0.50, water: 0.15 },
-    },
-    water_type_weights: null,
-  },
-}
-
-// Default water-type weights (mirrors WATER_TYPE_WEIGHTS_DEFAULT)
-const DEFAULT_WATER_TYPE: WaterTypeWeights = { coast: 0.60, lake: 0.30, river: 0.10 }
-
-// Mirrors NATURAL_ENHANCER_CAP = 25.0
-const NATURAL_ENHANCER_CAP = 25.0
-
-function waterTypeMult(waterType: string | undefined, weights: WaterTypeWeights): number {
-  if (!weights || !waterType) return 1.0
-  const t = waterType.toLowerCase()
-  if (t === 'coast' || t === 'ocean' || t === 'coastline' || t === 'bay' || t === 'harbor' || t === 'sea') {
-    return (weights.coast ?? 0.60) / (DEFAULT_WATER_TYPE?.coast ?? 0.60)
-  }
-  if (t === 'lake' || t === 'reservoir') {
-    return (weights.lake ?? 0.30) / (DEFAULT_WATER_TYPE?.lake ?? 0.30)
-  }
-  // river, stream, canal, etc.
-  return (weights.river ?? 0.10) / (DEFAULT_WATER_TYPE?.river ?? 0.10)
-}
-
-function contextUplift(contextBonus: number): number {
-  if (contextBonus >= 20.0) return 15.0
-  if (contextBonus >= 10.0) return 5.0 + ((contextBonus - 10.0) / 10.0) * 10.0
-  return 0.0
-}
-
-function areaKey(areaType: string | undefined): string {
-  const t = (areaType || '').toLowerCase()
-  if (t.includes('rural') || t.includes('exurban')) return 'rural'
-  if (t.includes('suburban')) return 'suburban'
-  return 'urban_core'
-}
-
-export interface NbBreakdown {
-  tree_score_0_50?: number
-  enhancer_bonus_raw?: number
-  nb_topo_raw?: number
-  nb_topo_base?: number
-  nb_landcover_raw?: number
-  nb_landcover?: number
-  nb_water_raw?: number
-  nb_water?: number
-  nb_scenic_cap?: number
-}
-
 // ── Two-part natural beauty preference (current model) ───────────────────────
 // Mirrors pillars/natural_beauty.py nb_two_part. Natural beauty is a streets part (green view,
 // canopy) and a scenic-setting part (terrain, water), each 0.7 x stronger + 0.3 x weaker, blended
@@ -207,12 +111,4 @@ function blendToScore(blend: number): number {
     else hi = mid
   }
   return ys[lo] + ((ys[hi] - ys[lo]) * (blend - xs[lo])) / (xs[hi] - xs[lo])
-}
-
-/** @deprecated use applyNbPreferencesV9 */
-export function applyNbPreferenceV9(
-  v9: V9Breakdown | undefined | null,
-  preference: NbPreference,
-): number | null {
-  return applyNbPreferencesV9(v9, [preference])
 }

@@ -13,48 +13,6 @@ const DIVISION_LABELS: Record<string, string> = {
   west_south_central: 'West South Central U.S.',
 }
 
-export function getNaturalBeautyNarrative(
-  placeLabel: string,
-  pillar: Record<string, unknown>
-): string {
-  const treeScore = getPillarValue(pillar, 'summary.natural_beauty.tree_score')
-  const localCanopy = getPillarValue(pillar, 'summary.natural_beauty.local_canopy_pct')
-  const neighborhoodCanopy = getPillarValue(pillar, 'summary.natural_beauty.neighborhood_canopy_pct')
-
-  let greeneryPhrase = 'a mix of greenery and harder surfaces'
-  if (typeof treeScore === 'number') {
-    if (treeScore >= 70) greeneryPhrase = 'strong tree cover and natural greenery'
-    else if (treeScore <= 30) greeneryPhrase = 'limited tree cover and greenery'
-  } else if (typeof neighborhoodCanopy === 'number') {
-    if (neighborhoodCanopy >= 50) greeneryPhrase = 'many trees in the surrounding neighborhood'
-    else if (neighborhoodCanopy <= 20) greeneryPhrase = 'very few trees in the surrounding neighborhood'
-  }
-
-  let blockPhrase = ''
-  if (typeof localCanopy === 'number') {
-    if (localCanopy >= 40) blockPhrase = ' right around your block'
-    else if (localCanopy <= 15) blockPhrase = ' even right around your block'
-  }
-
-  const streets = getPillarValue(pillar, 'details.v9_breakdown.streets_score') ?? getPillarValue(pillar, 'v9_breakdown.streets_score')
-  const scenery = getPillarValue(pillar, 'details.v9_breakdown.scenery_score') ?? getPillarValue(pillar, 'v9_breakdown.scenery_score')
-  if (typeof streets === 'number') {
-    if (streets >= 70) greeneryPhrase = 'leafy, green streets'
-    else if (streets <= 25) greeneryPhrase = 'few trees and little greenery'
-  }
-  let sceneryPhrase = ''
-  if (typeof scenery === 'number') {
-    if (scenery >= 60) sceneryPhrase = ' It also sits in a scenic setting of hills, mountains or water.'
-    else if (scenery <= 20) sceneryPhrase = ' The setting itself is flat and open, without notable hills or water.'
-  }
-
-  const locationSentence = `${placeLabel} has ${greeneryPhrase}${blockPhrase}.${sceneryPhrase}`
-  const genericSentence =
-    'Nearby trees, water, and natural views are linked to lower stress, better mental health, and more time spent walking outside.'
-
-  return `${locationSentence} ${genericSentence}`
-}
-
 
 export function getNeighborhoodAmenitiesNarrative(
   placeLabel: string,

@@ -1,7 +1,6 @@
 import type { ScoreResponse } from '@/types/api'
-import { PILLAR_ORDER, SCORE_BANDS, type PillarKey, computeHappinessIndex } from '@/lib/pillars'
+import { PILLAR_ORDER, type PillarKey, computeHappinessIndex } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
-import { haversineMiles } from '@/lib/workZones'
 import { socialConnectionScore, type SocialConnectionTier } from '@/lib/socialProximity'
 export { closeTieProximityScore, acquaintanceProximityScore, socialConnectionScore } from '@/lib/socialProximity'
 export type { SocialConnectionTier, SocialConnectionPoint } from '@/lib/socialProximity'
@@ -500,12 +499,6 @@ function scoreAffordabilityRatio(ratio: number): number {
   if (ratio <= 6.0) return 15
   if (ratio <= 7.0) return 10
   return 5
-}
-
-/** Mirror of Python _score_local_affordability — step function on price-to-income ratio (0–50 pts). */
-function scoreLocalAffordability(homeValue: number, income: number): number {
-  if (!homeValue || !income) return 0
-  return scoreAffordabilityRatio(homeValue / income)
 }
 
 /**

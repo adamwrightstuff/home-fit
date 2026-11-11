@@ -28,10 +28,6 @@ WALK_5MIN_M = 400
 MIN_VENUES = 15
 LIVELY_PERCENTILE = 75.0
 METHOD = "culture_hangout_mix_v1"
-# Tiers on the combined reading (mean of the two within-peer ranks). Cuts read off the owner's labels (docs/VIBE_VALIDATION.md,
-# 2026-11-06); unsourced judgments, not research values. High = strong scene, Some = has a scene.
-HIGH_READING = 65.0
-SOME_READING = 45.0
 # Activity tiers (the tag users see, owner decision 2026-11-06): independent named venues of the seven types within
 # ACTIVITY_RADIUS_M of the pin. Cuts are the catalog's median (13) and 85th percentile (71) on that date: unsourced.
 ACTIVITY_RADIUS_M = 1200
@@ -106,7 +102,7 @@ def apply_reading(facts: List[Dict[str, Any]], densities: Optional[List[Optional
     groups: Dict[Any, List[int]] = {}
     for i, b in enumerate(bands):
         # towns (boundary measure) and neighborhoods (pin circle) are different units: each is ranked only against its own kind
-        facts[i].update({"combined": None, "density_band": None, "lively": False, "bucket": None})
+        facts[i].update({"combined": None, "density_band": None, "lively": False})
         if b is None:
             continue  # no density figure: no reading (ranking it against a handful of other density-less places gave Mar Vista 80)
         groups.setdefault((facts[i].get("geography", "pin_circle"), b), []).append(i)
@@ -120,14 +116,6 @@ def apply_reading(facts: List[Dict[str, Any]], densities: Optional[List[Optional
             f["combined"] = round(c, 1) if c is not None else None
             f["density_band"] = b + 1
             f["lively"] = bool(p is not None and p >= LIVELY_PERCENTILE and not f["few_venues"])
-            f["bucket"] = bucket_for(f["combined"], f["few_venues"])
-
-
-def bucket_for(combined: Optional[float], few_venues: bool) -> Optional[str]:
-    """High (strong scene) or Some (has a scene); None below the Some cut, with no reading, or with fewer than MIN_VENUES venues (no "quiet" label)."""
-    if combined is None or few_venues:
-        return None
-    return "High" if combined >= HIGH_READING else "Some" if combined >= SOME_READING else None
 
 
 def boundary_facts(venues: Iterable[Dict[str, Any]], area_km2: float) -> Dict[str, Any]:

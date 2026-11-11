@@ -9,9 +9,6 @@ export type TwinMatchResult = {
   comparedPillars: PillarKey[]
 }
 
-/** Unchecked by default in Twin Finder. */
-export const TWIN_PILLAR_DEFAULT_UNCHECKED: PillarKey[] = []
-
 /** Default: all pillars on. */
 export function defaultTwinPillarSet(): Set<PillarKey> {
   return new Set(PILLAR_ORDER)
@@ -118,13 +115,3 @@ export function pillarDiffs(
   return rows
 }
 
-/** Up to 6 pillar diff bars, largest |diff| first (typically 4–6 when enough pillars are selected). */
-export function topPillarDiffsByMagnitude(
-  query: CatalogMapPlace,
-  twin: CatalogMapPlace,
-  pillars: PillarKey[]
-): { key: PillarKey; diff: number; query: number; twin: number }[] {
-  const rows = pillarDiffs(query, twin, pillars)
-  rows.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff))
-  return rows.slice(0, Math.min(6, rows.length))
-}

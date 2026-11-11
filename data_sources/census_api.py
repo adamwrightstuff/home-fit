@@ -11,7 +11,7 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 from dotenv import load_dotenv
 from .cache import cached, CACHE_TTL
-from .error_handling import with_fallback, safe_api_call, handle_api_timeout, check_api_credentials
+from .error_handling import safe_api_call, handle_api_timeout, check_api_credentials
 
 # Load environment variables from .env file
 load_dotenv()

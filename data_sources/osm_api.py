@@ -15,7 +15,7 @@ import random
 import json
 from typing import Dict, List, Tuple, Optional, Any
 from .cache import cached, CACHE_TTL, _generate_cache_key, _get_redis_client, _cache, _cache_ttl
-from .error_handling import with_fallback, safe_api_call, handle_api_timeout
+from .error_handling import safe_api_call, handle_api_timeout
 from .utils import haversine_distance, get_way_center
 from .retry_config import RetryConfig, get_retry_config, RetryProfile
 from logging_config import get_logger

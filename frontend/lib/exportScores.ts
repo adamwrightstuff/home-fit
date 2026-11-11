@@ -3,7 +3,7 @@
  * Only includes pillars that have a score; omits incomplete pillars.
  */
 
-import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
+import { PILLAR_ORDER } from '@/lib/pillars'
 
 type Importance = 'None' | 'Low' | 'Medium' | 'High'
 

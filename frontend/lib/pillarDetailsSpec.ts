@@ -5,8 +5,6 @@
 
 import type { PillarKey } from './pillars'
 
-export type DetailFormat = 'percent' | 'count' | 'distance' | 'elevation' | 'temperatureDelta' | 'qualitative' | 'text'
-
 /** Bands for converting a numeric value to a qualitative label (e.g. median_distance_m -> "Very close" / "Short walk"). */
 export interface QualitativeBand {
   max: number
@@ -142,12 +140,6 @@ const AMENITIES_DISTANCE_BANDS: QualitativeBand[] = [
   { max: 400, label: 'Short walk (3–6 min)' },
   { max: 800, label: 'Moderate walk (6–10 min)' },
   { max: 10000, label: 'Further (10+ min)' },
-]
-
-const TRANSIT_DISTANCE_BANDS: QualitativeBand[] = [
-  { max: 0.5, label: 'Under 10 min walk' },
-  { max: 1.5, label: '10–20 min walk' },
-  { max: 100, label: 'Further' },
 ]
 
 export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {

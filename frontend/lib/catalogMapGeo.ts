@@ -102,35 +102,6 @@ export function buildCatalogFeatureCollection(
   return { type: 'FeatureCollection' as const, features }
 }
 
-/** Top pillar names for peek card (by absolute contribution when HomeFit reweighted; else by raw pillar score). */
-export function topPillarCallouts(
-  place: CatalogMapPlace,
-  mode: CatalogMapIndexMode,
-  priorities: PillarPriorities,
-  limit: number
-): string[] {
-  const rw =
-    mode === 'homefit'
-      ? reweightScoreResponseFromPriorities(place.score, priorities)
-      : place.score
-  const pillars = rw.livability_pillars as unknown as Record<
-    string,
-    { score?: number; contribution?: number } | undefined
-  >
-  const ranked = PILLAR_ORDER.map((k) => {
-    const pl = pillars[k]
-    const score = typeof pl?.score === 'number' ? pl.score : NaN
-    const contribution = typeof pl?.contribution === 'number' ? Math.abs(pl.contribution) : 0
-    return { k, score, contribution }
-  })
-    .filter((x) => Number.isFinite(x.score))
-    .sort((a, b) => {
-      if (mode === 'homefit') return b.contribution - a.contribution
-      return b.score - a.score
-    })
-  return ranked.slice(0, limit).map((r) => PILLAR_META[r.k as PillarKey].name)
-}
-
 /** All four index values for catalog peek UI (scores colored per index ramp). */
 export function getAllCatalogIndexDisplay(
   place: CatalogMapPlace,
@@ -222,34 +193,6 @@ export function getStandoutPillarChips(
     }
   }
   return out
-}
-
-export function displayIndexValue(
-  place: CatalogMapPlace,
-  mode: CatalogMapIndexMode,
-  priorities: PillarPriorities
-): { label: string; value: string; sub?: string } {
-  const { v } = displayScoreForMode(place, mode, priorities)
-  if (mode === 'status') {
-    const badge = getStatusBadgeModel(
-      place.score.status_signal_breakdown ?? null,
-      typeof place.score.status_signal === 'number' ? place.score.status_signal : null
-    )
-    return {
-      label: 'Archetype',
-      value: v != null && Number.isFinite(v) ? v.toFixed(1) : '—',
-      sub: badge.text,
-    }
-  }
-  const labels: Record<'homefit' | 'happiness' | 'status', string> = {
-    homefit: 'Trovamo',
-    happiness: 'Happiness',
-    status: 'Archetype',
-  }
-  return {
-    label: labels[mode],
-    value: v != null && Number.isFinite(v) ? v.toFixed(1) : '—',
-  }
 }
 
 /** Twin mode: bubbles colored by match % on coral ramp; top twin gets purple stroke. */

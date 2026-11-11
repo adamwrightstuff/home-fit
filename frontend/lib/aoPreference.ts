@@ -1,18 +1,6 @@
 export type AoPreference = 'local_parks' | 'trails_regional' | 'waterfront'
 
-export const AO_PREFERENCE_LABELS: Record<AoPreference, string> = {
-  local_parks: 'Local Parks',
-  trails_regional: 'Trails & Regional Parks',
-  waterfront: 'Waterfront',
-}
-
 export type WaterfrontSubPreference = 'ocean_beach' | 'lake_river' | 'bay_harbor'
-
-export const WATERFRONT_SUB_LABELS: Record<WaterfrontSubPreference, string> = {
-  ocean_beach: 'Ocean & Beach',
-  lake_river: 'Lakes & Rivers',
-  bay_harbor: 'Bays & Harbors',
-}
 
 export interface WaterfrontBreakdown {
   ocean_beach?: number

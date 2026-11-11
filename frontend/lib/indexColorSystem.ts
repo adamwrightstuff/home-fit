@@ -186,15 +186,6 @@ export function statusArchetypeNumeral400(archetype: string | null | undefined):
   return STATUS_ARCHETYPE_RAMP[key][400]
 }
 
-/** Text on colored fill (badges, high band on dark fill). */
-export function scoreBandTextOnFill(ramp: IndexRampKey, score: number): string {
-  const s = Math.max(0, Math.min(100, score))
-  const r = RAMP_HEX[ramp]
-  if (s < 50) return r[600]
-  if (s < 75) return r[800]
-  return r[50]
-}
-
 /** Score numeral on white / light background (readable). */
 export function scoreNumeralOnLight(ramp: IndexRampKey, score: number): string {
   const s = Math.max(0, Math.min(100, score))
@@ -202,11 +193,6 @@ export function scoreNumeralOnLight(ramp: IndexRampKey, score: number): string {
   if (s < 50) return r[600]
   if (s < 75) return r[800]
   return r[400]
-}
-
-/** Fixed ramp-600 for index score numerals in tab cards / headers when banding not used. */
-export function indexNumeral600(ramp: IndexRampKey): string {
-  return RAMP_HEX[ramp][600]
 }
 
 /** Catalog map bubble stroke: ramp-600 @ 60% opacity. */

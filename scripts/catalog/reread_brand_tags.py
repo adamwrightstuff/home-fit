@@ -87,7 +87,7 @@ def main() -> int:
         todo = todo[: args.limit]
 
     from data_sources import osm_api
-    from pillars.local_scene import VENUE_TYPES, normalize_name
+    from pillars.local_scene_v2 import VENUE_TYPES
 
     fn = inspect.unwrap(osm_api.query_local_businesses)  # bypass the disk cache, which holds results without brand tags
     t0 = time.time()
@@ -115,7 +115,7 @@ def main() -> int:
                 {k: b.get(k) for k in ("name", "type", "distance_m", "lat", "lon", "osm_id", "brand", "brand_wikidata")}
                 for tier in ("tier1_daily", "tier2_social", "tier3_culture", "tier4_services")
                 for b in (res.get(tier) or [])
-                if b.get("type") in VENUE_TYPES and normalize_name(b.get("name"))
+                if b.get("type") in VENUE_TYPES and (b.get("name") or "").strip()
             ]
             fh.write(json.dumps({"key": coord_key(p["lat"], p["lon"]), "metro": p["metro"], "name": p["name"],
                                  "state": p["state"], "lat": p["lat"], "lon": p["lon"], "radius_m": RADIUS_M,
