@@ -364,6 +364,20 @@ export default function FilterSheet({
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <label style={{ fontSize: 12, color: '#6b7280' }}>
+                Down payment ($)
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={filterBudget.down.toLocaleString('en-US')}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/[^0-9]/g, '')
+                    onFilterBudgetChange({ ...filterBudget, down: digits === '' ? 0 : parseInt(digits, 10), chosen: true })
+                  }}
+                  style={{ display: 'block', width: 130, marginTop: 4, padding: '0 8px', height: 'var(--hf-control-h-touch)', border: '1px solid var(--hf-border)', borderRadius: 'var(--hf-control-radius)', fontSize: 14, color: 'var(--hf-text-primary)' }}
+                />
+              </label>
+              <label style={{ fontSize: 12, color: '#6b7280' }}>
                 Max per month ($)
                 <input
                   type="number"
@@ -387,10 +401,6 @@ export default function FilterSheet({
                 )}
               </div>
             )}
-            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 8 }}>
-              Bedrooms and down payment are saved to your profile. Using ${filterBudget.down.toLocaleString('en-US')} down.{' '}
-              <a href="/profile" style={{ textDecoration: 'underline' }}>Change down payment</a>
-            </div>
           </div>
 
           {/* Tenure Mix */}

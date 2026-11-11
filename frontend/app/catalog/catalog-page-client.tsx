@@ -201,9 +201,14 @@ export default function CatalogPageClient({
   })
   // Bedrooms and down payment are profile settings: a change here is written through to the account
   // profile so it is the same value the profile page shows and the next load does not undo it.
+  const budgetSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const handleBudgetChange = useCallback((next: BudgetFilter) => {
     if (user && (next.beds !== filterBudget.beds || next.down !== filterBudget.down)) {
-      void saveProfile({ home_budget: { beds: next.beds, down: next.down } })
+      // Debounced so typing a down payment saves once, not per keystroke.
+      if (budgetSaveTimer.current) clearTimeout(budgetSaveTimer.current)
+      budgetSaveTimer.current = setTimeout(() => {
+        void saveProfile({ home_budget: { beds: next.beds, down: next.down } })
+      }, 600)
     }
     setFilterBudget(next)
   }, [user, filterBudget])
