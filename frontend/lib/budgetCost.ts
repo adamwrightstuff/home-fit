@@ -44,6 +44,15 @@ export function monthlyCost(hc: HousingCost | null | undefined, budget: BudgetFi
   return { value, principalInterest, tax, insurance, total: principalInterest + tax + insurance }
 }
 
+/**
+ * Zillow for-sale search for a place with N or more bedrooms, no API:
+ * https://www.zillow.com/homes/for_sale/Pelham,-NY/4-_beds/ (Zillow's filter is N or more, not exactly N).
+ */
+export function zillowSearchUrl(name: string, stateAbbr: string, beds: number): string {
+  const city = name.trim().replace(/\s+/g, '-')
+  return `https://www.zillow.com/homes/for_sale/${encodeURIComponent(city)},-${encodeURIComponent(stateAbbr)}/${beds}-_beds/`
+}
+
 /** True when the place has a cost and it is over the budget cap. Places with no data are not excluded. */
 export function overBudget(hc: HousingCost | null | undefined, budget: BudgetFilter): boolean {
   if (budget.max == null) return false

@@ -19,7 +19,7 @@ import { isPillarIndexMode, PILLAR_INDEX_MODES } from '@/lib/catalogMapTypes'
 import { CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import WhyNotHigher from '@/components/WhyNotHigher'
-import { monthlyCost, type BudgetFilter } from '@/lib/budgetCost'
+import { monthlyCost, zillowSearchUrl, type BudgetFilter } from '@/lib/budgetCost'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
@@ -281,6 +281,21 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                           title={`Estimate for a ${budget.beds === 5 ? '5+' : budget.beds}-bedroom home at the ZIP median value of $${Math.round(mc.value).toLocaleString('en-US')}: principal and interest after $${budget.down.toLocaleString('en-US')} down, plus average property tax and insurance.`}
                         >
                           ~${Math.round(mc.total).toLocaleString('en-US')}/mo · {budget.beds === 5 ? '5+' : budget.beds} bed
+                          {' · '}
+                          {budget.max != null && mc.total > budget.max ? (
+                            <span className="font-semibold text-amber-700">Over budget</span>
+                          ) : (
+                            <a
+                              href={zillowSearchUrl(p.catalog.name, p.catalog.state_abbr, budget.beds)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="font-semibold underline"
+                              title="Opens Zillow for sale listings in this place with this many bedrooms or more. Zillow's bedroom filter means that many or more, not exactly that many."
+                            >
+                              See {budget.beds}+ bed homes on Zillow
+                            </a>
+                          )}
                         </div>
                       )
                     })()}
