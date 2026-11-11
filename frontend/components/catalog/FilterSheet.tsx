@@ -1,7 +1,7 @@
 'use client'
 
 import { DEFAULT_BUDGET, MORTGAGE_RATE, type BudgetFilter } from '@/lib/budgetCost'
-import { SCENE_LABEL, type SceneFilter } from '@/lib/sceneLevels'
+import { SCENE_LABEL, SCENE_LEVELS, toggleSceneLevel, type SceneFilter } from '@/lib/sceneLevels'
 import { useEffect } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
@@ -160,7 +160,7 @@ export default function FilterSheet({
     (filterHousingType.length > 0 ? 1 : 0) +
     (filterBudget.chosen ? 1 : 0) +
     (filterTenure.length > 0 ? 1 : 0) +
-    (filterLocalScene !== 'all' ? 1 : 0) +
+    (filterLocalScene.length > 0 ? 1 : 0) +
     (filterAura ? 1 : 0) +
     (filterCommuteMax !== 'all' ? 1 : 0) +
     0
@@ -175,7 +175,7 @@ export default function FilterSheet({
     onFilterHousingTypeChange([])
     onFilterBudgetChange(DEFAULT_BUDGET)
     onFilterTenureChange([])
-    onFilterLocalSceneChange('all')
+    onFilterLocalSceneChange([])
     onFilterAuraChange(false)
     onFilterCommuteMaxChange('all')
   }
@@ -487,12 +487,10 @@ export default function FilterSheet({
               <div style={LABEL_STYLE}>Local Scene</div>
             </div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              How much of a scene there is nearby: independent cafés, bars, galleries, bookstores and theaters, compared with similar places.
+              How much of a scene there is nearby: independent cafés, bars, galleries, bookstores and theaters, compared with similar places. Pick any levels; none picked shows everything.
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {chip(filterLocalScene === 'all', 'All', () => onFilterLocalSceneChange('all'))}
-              {chip(filterLocalScene === 'Lively', `${SCENE_LABEL.lively} and up`, () => onFilterLocalSceneChange(filterLocalScene === 'Lively' ? 'all' : 'Lively'))}
-              {chip(filterLocalScene === 'Buzzing', `${SCENE_LABEL.buzzing} only`, () => onFilterLocalSceneChange(filterLocalScene === 'Buzzing' ? 'all' : 'Buzzing'))}
+              {SCENE_LEVELS.map(level => chip(filterLocalScene.includes(level), SCENE_LABEL[level], () => onFilterLocalSceneChange(toggleSceneLevel(filterLocalScene, level))))}
             </div>
           </div>
 

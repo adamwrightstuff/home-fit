@@ -27,7 +27,7 @@ export default function QuizPage() {
           filterHousingType: payload.filterHousingType,
           filterTenure: payload.filterTenure,
           ...(payload.workZoneId ? { workZoneId: payload.workZoneId } : {}),
-          filterLocalScene: payload.filterLocalScene ?? 'all',
+          filterLocalScene: payload.filterLocalScene ?? [],
           filterPoliticalLean: payload.filterPoliticalLean,
           filterTrajectory: payload.filterTrajectory,
           filterCommuteMax: payload.filterCommuteMax,

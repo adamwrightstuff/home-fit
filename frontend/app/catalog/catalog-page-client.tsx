@@ -226,7 +226,7 @@ export default function CatalogPageClient({
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       const v = f?.filterLocalScene
       return normalizeSceneFilter(v)
-    } catch { return 'all' }
+    } catch { return [] }
   })
   const [filterAura, setFilterAura] = useState<boolean>(() => {
     try {
@@ -493,7 +493,7 @@ export default function CatalogPageClient({
             const lv = f.filterSchoolLevels.filter((l: string) => (ALL_SCHOOL_LEVELS as string[]).includes(l)) as SchoolLevel[]
             if (lv.length) setFilterSchoolLevels(lv)
           }
-          if (typeof f.filterLocalScene === 'string') setFilterLocalScene(normalizeSceneFilter(f.filterLocalScene))
+          if (f.filterLocalScene !== undefined) setFilterLocalScene(normalizeSceneFilter(f.filterLocalScene))
           if (typeof f.filterAura === 'boolean') setFilterAura(f.filterAura)
           if (typeof f.filterCommuteMax === 'string') setFilterCommuteMax(f.filterCommuteMax)
           if (f.climatePrefs && typeof f.climatePrefs === 'object') setClimatePrefs(normalizeClimatePrefs(f.climatePrefs))
@@ -886,7 +886,7 @@ export default function CatalogPageClient({
   // showing the count before mount made the Filters badge differ between server and client HTML.
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBudget.chosen ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
+  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBudget.chosen ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene.length > 0 ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
   // Priorities badge: pillars moved off the default level, plus Hide choices (which live in Priorities).
   const priorityBadgeCount = !mounted ? 0 : PILLAR_ORDER.filter((k) => priorities[k as keyof PillarPriorities] !== DEFAULT_PRIORITIES[k as keyof PillarPriorities]).length + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
   // Places blocked by regular filters — always shown in "Show excluded"
@@ -1318,7 +1318,7 @@ export default function CatalogPageClient({
                 ...(payload.workZoneId ? { workZoneId: payload.workZoneId } : {}),
                 ...(payload.commuteMode ? { commuteMode: payload.commuteMode } : {}),
                 ...(payload.officeDays ? { officeDays: payload.officeDays } : {}),
-                filterLocalScene: payload.filterLocalScene ?? 'all',
+                filterLocalScene: normalizeSceneFilter(payload.filterLocalScene),
                 filterPoliticalLean: payload.filterPoliticalLean,
                 filterTrajectory: payload.filterTrajectory,
                 filterCommuteMax: payload.filterCommuteMax,

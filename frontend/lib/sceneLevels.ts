@@ -16,19 +16,23 @@ export function isSceneLevel(v: unknown): v is SceneLevel {
   return typeof v === 'string' && (SCENE_LEVELS as string[]).includes(v)
 }
 
-/** Explorer filter: 'all', 'Lively' (lively and buzzing) or 'Buzzing' (buzzing only). */
-export type SceneFilter = 'all' | 'Lively' | 'Buzzing'
+/** Explorer filter: the levels a person picked. Empty means no filter. */
+export type SceneFilter = SceneLevel[]
 
-/** Reads a saved filter value, including values saved before the ladder existed (Some, High). */
+/** Reads a saved filter value: a list of levels, or a value saved before multi-select (all, Some, Lively, High, Buzzing). */
 export function normalizeSceneFilter(v: unknown): SceneFilter {
-  if (v === 'Buzzing' || v === 'High') return 'Buzzing'
-  if (v === 'Lively' || v === 'Some') return 'Lively'
-  return 'all'
+  if (Array.isArray(v)) return SCENE_LEVELS.filter(l => v.includes(l))
+  if (v === 'Buzzing' || v === 'High') return ['buzzing']
+  if (v === 'Lively' || v === 'Some') return ['lively', 'buzzing']
+  return []
 }
 
-/** True when a place with this level is left out by the filter. A place with no level (no data) is always left out. */
+/** True when a place with this level is left out by the filter. With a filter on, a place with no level (no data) is left out. */
 export function sceneFilterExcludes(level: unknown, filter: SceneFilter): boolean {
-  if (filter === 'all') return false
-  if (filter === 'Buzzing') return level !== 'buzzing'
-  return level !== 'lively' && level !== 'buzzing'
+  if (filter.length === 0) return false
+  return !(isSceneLevel(level) && filter.includes(level))
+}
+
+export function toggleSceneLevel(filter: SceneFilter, level: SceneLevel): SceneFilter {
+  return filter.includes(level) ? filter.filter(l => l !== level) : SCENE_LEVELS.filter(l => l === level || filter.includes(l))
 }
