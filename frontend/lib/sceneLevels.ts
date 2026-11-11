@@ -1,12 +1,13 @@
 // Local Scene ladder (docs/LOCAL_SCENE_LADDER_DPV2.md). The keys match score.local_scene_level in the catalog.
-// The display words are working names: change them here and in SCENE_COPY (lib/catalogInfoCopy.ts) and nowhere else.
+// Display words (owner decision 2026-11-11): Sleepy, Flat, Lively, Buzzing. Change them here and in SCENE_COPY (lib/catalogInfoCopy.ts) only;
+// the stored keys (quiet, low_key, ...) stay as they are so the catalog files do not change.
 export type SceneLevel = 'quiet' | 'low_key' | 'lively' | 'buzzing'
 
 export const SCENE_LEVELS: SceneLevel[] = ['quiet', 'low_key', 'lively', 'buzzing']
 
 export const SCENE_LABEL: Record<SceneLevel, string> = {
-  quiet: 'Quiet',
-  low_key: 'Low-key',
+  quiet: 'Sleepy',
+  low_key: 'Flat',
   lively: 'Lively',
   buzzing: 'Buzzing',
 }

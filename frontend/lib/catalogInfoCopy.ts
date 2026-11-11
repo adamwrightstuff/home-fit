@@ -62,14 +62,14 @@ export const SCENE_COPY: Record<string, InfoCopy> = {
     detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Lively means a strong mix of cafes, bars and culture venues compared with places of similar density, with fewer than 71 independent venues within about 0.75 miles. Towns are measured across the whole town. The cut-offs are rough and not validated.',
   },
   low_key: {
-    title: 'Low-key',
+    title: 'Flat',
     body: 'There are places to go, but compared with similar places more of them are restaurants, with fewer cafes, bars and culture venues. It can be busy without having much of a scene.',
-    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Low-key means 15 or more venues but a mix of cafes, bars and culture venues below what similar places have. The cut-offs are rough and not validated.',
+    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Flat means 15 or more venues but a mix of cafes, bars and culture venues below what similar places have. The cut-offs are rough and not validated.',
   },
   quiet: {
-    title: 'Quiet',
+    title: 'Sleepy',
     body: 'This is mostly a place to live rather than a place people go out. There are few places to go nearby.',
-    detail: 'Based on the named cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Quiet means fewer than 15 within the measured area. Places with few mapped venues can read lower than they feel. The cut-offs are rough and not validated.',
+    detail: 'Based on the named cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Sleepy means fewer than 15 within the measured area. Places with few mapped venues can read lower than they feel. The cut-offs are rough and not validated.',
   },
 }
 
