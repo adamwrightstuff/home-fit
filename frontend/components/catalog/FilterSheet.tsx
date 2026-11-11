@@ -487,9 +487,10 @@ export default function FilterSheet({
               <div style={LABEL_STYLE}>Local Scene</div>
             </div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              How much of a scene there is nearby: independent cafés, bars, galleries, bookstores and theaters, compared with similar places. Pick any levels; none picked shows everything.
+              How much of a scene there is nearby: independent cafés, bars, galleries, bookstores and theaters, compared with similar places. Pick any levels, or All.
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {chip(filterLocalScene.length === 0, 'All', () => onFilterLocalSceneChange([]))}
               {SCENE_LEVELS.map(level => chip(filterLocalScene.includes(level), SCENE_LABEL[level], () => onFilterLocalSceneChange(toggleSceneLevel(filterLocalScene, level))))}
             </div>
           </div>
@@ -500,7 +501,7 @@ export default function FilterSheet({
               <div style={LABEL_STYLE}>Aura</div>
             </div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              The top 5% of places in each metro: a standout local scene backed by strong everyday livability.
+              A Buzzing local scene in a neighborhood with an affluent or elite resident profile. Rare.
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(!filterAura, 'All', () => onFilterAuraChange(false))}
