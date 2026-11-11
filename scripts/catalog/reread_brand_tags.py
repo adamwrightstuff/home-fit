@@ -12,6 +12,7 @@ A state outside both lists is skipped and reported, never sent to a public serve
 
   PYTHONPATH=. python3 scripts/catalog/reread_brand_tags.py --dry-run          # counts only, no network
   PYTHONPATH=. python3 scripts/catalog/reread_brand_tags.py --limit 5          # small trial
+  PYTHONPATH=. python3 scripts/catalog/reread_brand_tags.py --metro nyc        # one metro only (about 10 minutes for NYC)
   PYTHONPATH=. caffeinate -i python3 scripts/catalog/reread_brand_tags.py      # the full run (about 75 minutes)
 """
 from __future__ import annotations
@@ -58,10 +59,13 @@ def main() -> int:
     ap.add_argument("--port-b", type=int, default=12346)
     ap.add_argument("--out", default=str(REPO / "data" / "local_scene_brand_reads.jsonl"))
     ap.add_argument("--limit", type=int, default=None, help="read at most this many new places")
+    ap.add_argument("--metro", default=None, help="read only this metro (for example nyc), as named in the catalog file name")
     ap.add_argument("--dry-run", action="store_true", help="count places and ports, no network")
     args = ap.parse_args()
 
     places = load_places()
+    if args.metro:
+        places = [p for p in places if p["metro"] == args.metro]
     out = Path(args.out)
     done = set()
     if out.exists():
