@@ -1599,7 +1599,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         if precomputed_tree_canopy_5km is not None and radius_m == 5000:
             gee_canopy = precomputed_tree_canopy_5km
             logger.debug("Using pre-computed tree canopy (5km): %.1f%%", gee_canopy)
-        elif True:  # one path for every place; the urban-core-only branch below is retired (area type no longer reads differently)
+        else:  # one path for every place (the old urban-core-only branch is retired: area type no longer reads differently)
             # Non-urban-core fast path: fire all canopy radii + census + GVI in one batch.
             # No conditional fallbacks apply here, so we know the full fetch set upfront.
             _gvi_r_pre = min(1200, radius_m)
@@ -1651,12 +1651,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 tree_radius_used = radius_m
             logger.debug("Non-urban-core parallel prefetch: gee_canopy=%s canopy_multi=%s",
                          f"{gee_canopy:.1f}%" if gee_canopy is not None else "None", canopy_multi)
-        else:
-            try:
-                gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=radius_m, area_type=area_type)
-            except Exception as gee_error:
-                logger.warning("GEE canopy lookup failed: %s, using None", gee_error)
-                gee_canopy = None
 
         # Lower threshold: accept any non-negative value (was >= 0.1)
         # This allows very small canopy values to be scored properly
