@@ -4,6 +4,8 @@ Standard: `docs/UX_PRINCIPLES_DRAFT.md` (six owner rules plus Candidates A "say 
 
 **Conclusion (first pass, 2026-11-10): Level 0 (not certified).** 9 FAILs, none fixed, none owner-accepted. Rule 6 passes.
 
+**Latest re-audit 2026-11-12: all eight rules pass, no FAIL open, two minor findings (G5, G6). Level 1 candidate, not certified (graded by the builder; two rows are owner-decided). See the last section.**
+
 **Re-audit 2026-11-11: Level 0 at the time, 1 open FAIL (G1) plus 3 findings. G1, the 375px wrap (G2), the silent last-chip tap (G3) and the cost missing from the map panels (G4) were fixed the same day; no FAIL or finding is open now except the compare views, and Level 1 still needs an independent re-check and the owner's sign-off. See the last section.**
 
 ## What was checked and how
@@ -141,3 +143,63 @@ Rendered in the browser: fresh-visitor list and filter sheet (desktop), list wit
 - Bug fixed on `/saved/compare`: after the down payment became optional the basis line would have read "$0 down" for a visitor on the default 20%; it now reads "20% down" (checked: "Basis: 7% mortgage, 20% down, ZIP average property tax ... and 0.4% insurance").
 - Bug fixed: a compare context saved in a browser tab before multi-select stored one bedroom count; reading it would have thrown. It is now normalized on read (checked by injecting the old shape: the compare page renders and shows "$600,000 down" for a down payment the visitor had chosen).
 - Checked in the browser: tray without a budget shows names only; with 3 bed chosen the Pelham chip shows its cost; the compare page for Larchmont and Pelham shows "Same metro: estimated monthly cost for a 3-bedroom home · Pelham is $1,971/mo lower". Not checked: pairs in different metros (they use the existing relocation estimate, not the budget), signed-in save, a real phone.
+
+
+---
+
+## Re-audit 2026-11-12 (after G1 to G4, multi-select bedrooms and the compare views)
+
+Same standard and method. Run in a headless browser against current `main` on the dev server with the browser cache disabled (the sandbox cannot cache the 40 MB catalog response); desktop 1300px, tablet 700px, phone 375px.
+
+**Independence.** The builder of the multi-select, G1 to G4 and compare changes (this session) ran this audit, so it cannot certify. Level 1 needs someone else to re-run the rows marked with an asterisk below and the owner's sign-off on the two owner-decided rows (Rule 2, Rule 3 chips in the sheet).
+
+### What was checked and how
+
+| View | Result | How |
+|---|---|---|
+| Fresh visitor, desktop list | 0 cost lines, 0 Zillow links, no explainer, across 1,476 rows | Browser, DOM count |
+| Fresh visitor, filter sheet | No bedroom chip selected, down payment empty with "20% of price", no suggested caps | Browser, DOM |
+| After choosing 3 bed | "Typical place $4,100" appears; tapping it sets the cap | Browser |
+| Multi-select, cap $8,000 | 3 only 1,233; 3 and 4 1,273; 3, 4 and 5+ 1,296 (never fewer when a size is added) | Browser, counts |
+| Clear all | Count back to 1,476, cap and down payment empty, no chip selected, no Typical chip | Browser |
+| List, 3 and 4 chosen | 1,334 rows with a cost + 142 with a reason = 1,476, none blank, 0 Zillow links | Browser, DOM count |
+| Explainer bar | "Monthly cost: a 3 or 4-bedroom home at the ZIP median price, mortgage at 7% after 20% down, plus property tax and insurance." | Browser |
+| Expanded priced row | "View full breakdown" above "3+ bed homes on Zillow" | Browser, element order |
+| Persistence | After reload: 3 and 5+ selected, cap 6,000, down payment 300,000, 1,231 results | Browser |
+| Old saved shape (one bedroom count, fixed down payment) | Loads without error; keeps a chosen $600,000 down | Browser, injected storage |
+| Desktop detail panel | Larchmont shows "~$10,976/mo · 3 bed" | Browser |
+| Bottom sheet (700px, bubble tap) | Shows "~$3,839/mo · 3 bed" | Browser |
+| Compare tray | Names only without a budget; "Pelham · ~$9,005/mo" with one | Browser |
+| `/saved/compare` | Same-metro pair shows the monthly cost and the basis "20% down" (checked 2026-11-12) | Browser |
+| 375px sheet and list | No horizontal overflow; cost line 2 lines (was 3), no-cost line 2 lines (was 4) | Browser |
+| 375px control sizes | Bedroom chips 28px high, 31 to 41px wide; both inputs 40px | Browser, bounding boxes |
+| Profile, signed out | "Not set yet. Bedrooms, down payment and your monthly cap are set together in the Explorer's filters" with a link | Browser |
+| Different-metro compare pairs, signed-in save of a list of sizes or a blank down payment, a real phone | Not checked | No account or device |
+
+### Per-rule results
+
+| Rule | Result | Evidence |
+|---|---|---|
+| 1. One primary action per state | PASS | Expanded row: "View full breakdown" first, Zillow link below and quieter; no Zillow link on rows. |
+| 2. One home per action | PASS (owner-decided) | All three settings live only in the filter sheet; the profile shows a read-only note with a link; Clear all resets all three. |
+| 3. Controls follow selection | PASS (owner-decided)* | Controls are visible before a choice by owner decision; nothing is pre-selected or pre-filled. |
+| 4. Quiet by default | PASS | Fresh visitor sees no cost, link, explainer or suggestion anywhere (list, sheet, panels, tray). |
+| 5. Start from a suggestion | PASS* | Down payment starts at a stated 20%; "Typical place" cap appears once a size is chosen; "Your current cost" and "30% of your income" appear with a profile. |
+| 6. Search finds, panels edit | PASS | Budget is edited only in the filter sheet. |
+| A. Say what a number means | PASS | Basis in the explainer bar and on the compare page; tooltip on every cost line. |
+| B. No silent gaps | PASS | 1,334 + 142 = 1,476; the tray says "no cost"; the last-chip tap now explains itself. |
+
+### Findings (not rule FAILs)
+
+| ID | Finding | Smallest fix |
+|---|---|---|
+| G5 | At 375px the bedroom chips are 28px high and 31 to 41px wide, below the 40px touch control the inputs use. Every chip in the filter sheet shares this size, so it is a sheet-wide issue, not specific to the budget. | Raise the sheet's chip height to the touch token at phone width. |
+| G6 | In the compare tray a place hidden by the current search shows its raw key (for example "Larchmont|Westchester|NY") and no cost. Existing behavior, not new. | Look the name up in the full place list, not the filtered one. |
+
+### Level
+
+Level 1 candidate. All eight rules pass and no FAIL is open. Not certified: the same session built and graded these features, two rows rest on owner decisions, and signed-in saving and a real phone were not checked.
+
+### Verification statement
+
+Rendered in a browser: every row in the table above marked as browser. Nothing was changed by this re-audit except this document.
