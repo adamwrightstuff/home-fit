@@ -622,7 +622,14 @@ def summary_extras(breakdown: Dict) -> Dict[str, Optional[str]]:
             for lv, v in levels.items() if v.get("top_options") and (v.get("pool") or {}).get("scope") != "citywide"]
     sels = [f"{lv.capitalize()} screened by grades, test or audition: " + "; ".join(_opt(e) for e in v["selective"])
             for lv, v in levels.items() if v.get("selective")]
+    est = {}
+    for v in levels.values():
+        for e in v.get("schools") or []:
+            if e.get("estimated") and e.get("rating") is not None:
+                est[e["name"]] = round(e["rating"])
     return {
+        **({"estimated_ratings": "; ".join(f"{n} ({r})" for n, r in est.items())
+            + ": estimated from NYSED Regents results, not a SchoolDigger rating"} if est else {}),
         "level_access": "; ".join(access),
         **({"best_options": " | ".join(tops + sels)} if tops or sels else {}),
         "level_sources": "; ".join(srcs),

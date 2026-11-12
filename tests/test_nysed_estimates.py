@@ -41,3 +41,15 @@ def test_estimates_stay_out_of_choice_pool_averages():
              "isCharterSchool": "No"} for i in range(3)]
     est = next(x for x in snap["schools"] if x["schoolName"] == "Babylon Junior-Senior High School")
     assert choice_pool_average(real + [est], "high") == choice_pool_average(real, "high")
+
+
+def test_details_say_which_ratings_are_estimated():
+    from pillars.schools import summary_extras
+    bd = {"model": "zoned_v1", "levels": {
+        "elementary": {"source": "zone", "score": 64.0, "schools": [{"name": "Memorial", "rating": 64.0}]},
+        "high": {"source": "zone", "score": 86.74, "zone": None,
+                 "schools": [{"name": "Babylon Junior-Senior High School", "rating": 86.74, "estimated": "nysed_regents"}]}}}
+    assert summary_extras(bd)["estimated_ratings"] == \
+        "Babylon Junior-Senior High School (87): estimated from NYSED Regents results, not a SchoolDigger rating"
+    bd["levels"]["high"]["schools"][0].pop("estimated")
+    assert "estimated_ratings" not in summary_extras(bd)
