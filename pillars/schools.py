@@ -545,7 +545,9 @@ def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
             continue
         if z:
             res["zone"] = {"name": z["name"], "vintage": z["vintage"], "caveat": z["caveat"], "matched": False}
-            if z.get("nces_id"):
+            if z.get("tied"):
+                ms = []   # identical outlines: the zone does not say which school; see the fallback below
+            elif z.get("nces_id"):
                 from data_sources.school_snapshot import school_by_id
                 one = school_by_id(z["nces_id"])
                 ms = [one] if one else []
@@ -566,13 +568,23 @@ def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
                              and float(sc["distance"]) <= WIDEN_CAP_MILES), key=lambda sc: float(sc["distance"]))
                 if cc:
                     res.update(source="charter_only", schools=[_entry(sc, "nearest_charter") for sc in cc[:NEAREST_PER_LEVEL]])
+                elif z and z.get("tied"):
+                    # no district school near enough: the schools that share the identical zone are all there is to go on
+                    from data_sources.school_snapshot import school_by_id
+                    found = []
+                    for nid in z.get("tied_nces") or []:
+                        m = school_by_id(nid)
+                        if m and _is_rated_school(m) and school_rating(m) is not None and m not in found:
+                            found.append(m)
+                    if found:
+                        res.update(source="zone_tied", schools=[_entry(m, "zoned_tied") for m in found])
         ratings = [e["rating"] for e in res["schools"] if e["rating"] is not None]
         res["score"] = round(sum(ratings) / len(ratings), 2) if ratings else None
         out[level] = res
     return out
 
 
-_SOURCE_LABEL = {"zone": "zoned school", "nearest": "nearest in district", "district_far": "district's nearest",
+_SOURCE_LABEL = {"zone": "zoned school", "zone_tied": "schools sharing one zone outline", "nearest": "nearest in district", "district_far": "district's nearest",
                  "charter_only": "nearby charter", "choice": "choice by application, not scored",
                  "choice_avg": "choice by application, pool average"}
 

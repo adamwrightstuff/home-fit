@@ -257,8 +257,14 @@ def zoned_schools(lat: float, lon: float) -> List[Dict[str, Any]]:
                 smallest = min(h["_geom"].area for h in hits)
                 tied = [h for h in hits if h["_geom"].area == smallest]
                 # identical outlines (the 2015-16 survey gives every school in a district the same polygon) say
-                # nothing about which school a point is assigned to: no zone, so the nearest schools are used
-                hits = tied if len(tied) == 1 else []
+                # nothing about which school a point is assigned to: the level uses the nearest schools, and only
+                # when there are none the tied schools themselves (marked tied)
+                if len(tied) == 1:
+                    hits = tied
+                else:   # one entry that carries every tied school, so a level with no nearby school can still use them
+                    hits = [dict(tied[0], tied=True, names=[n for h in tied for n in h["names"]],
+                                 tied_schools=[h["name"] for h in tied],
+                                 tied_nces=[h["nces_id"] for h in tied if h.get("nces_id")])]
             out.extend(hits)
         return out
 
