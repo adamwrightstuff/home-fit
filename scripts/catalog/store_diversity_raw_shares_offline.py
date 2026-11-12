@@ -52,7 +52,7 @@ def main():
             if not l.strip(): continue
             r = json.loads(l); nm = r["catalog"].get("name"); dv = (r["score"].get("livability_pillars") or {}).get("diversity") or {}
             bd = dv.get("breakdown") or {}
-            if dv.get("status") == "no_data" or dv.get("score") is None: continue
+            if dv.get("status") == "no_data": continue  # score is None for every record now (no life stage preference), so do not skip on it
             key = ov.get(f"{metro}|{nm}"); k = tuple(key) if key else None
             if k is None:
                 # Records stored by an earlier run already carry the geography; reuse it instead of re-matching.
