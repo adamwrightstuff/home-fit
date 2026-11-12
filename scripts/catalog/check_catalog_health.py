@@ -95,7 +95,6 @@ EXPECTED_BREAKDOWN: Dict[str, List[str]] = {
     "housing_value":          ["local_affordability", "space", "value_efficiency"],
     "climate_risk":           ["heat_exposure_pts", "air_quality_pts", "flood_zone_pts", "climate_trend_pts"],
     "social_fabric":          ["participation", "social_capital", "peer_civic", "rootedness"],
-    "diversity":              ["race_entropy", "income_entropy", "age_entropy"],
     "community_safety":       ["violent_per_1k", "property_per_1k"],
 }
 

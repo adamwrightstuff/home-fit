@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Offline: join the household type pull to catalog places by the Census geography the diversity read used
-(analysis/diversity_geography_identified.jsonl, from diversity_identify_geography_offline.py). Output keys are
+(analysis/diversity_geography_identified.jsonl, from scripts/catalog/archive/diversity_identify_geography_offline.py). Output keys are
 metro|name|state_fips because a metro can hold two places with one name (Ridgewood NJ and Ridgewood NY). No API calls.
 
   python3 scripts/catalog/join_household_type_offline.py --pull <pull_dir> --identified <diversity_geography_identified.jsonl> --out <pull_dir>/household_type_by_place.json
