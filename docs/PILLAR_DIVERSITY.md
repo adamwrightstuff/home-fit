@@ -16,8 +16,11 @@ entropy) is retired. Nothing filters, ranks, scores or displays by race or incom
   chosen cohorts. No preference means no score and no contribution (default weight 0, `parse_token_allocation`). The weight is the user's
   (None, Low, Medium, High; choosing a cohort sets Medium).
 - **One setting.** The catalog "Life stage" filter and the search options use the same saved value
-  (`homefit_search_options.diversity_preference`). The catalog filter keeps places in the top third of US tracts (percentile 67 or more)
-  for any chosen cohort.
+  (`homefit_search_options.diversity_preference`). The catalog filter keeps places whose share ranks in the top third of the catalog places (not of US tracts) for any chosen cohort.
+  Cohorts: families with kids (under 18), young professionals (25 to 34), older adults (65 and over). Why catalog-relative: the catalog
+  skews young and urban, so the national 67th percentile passed 648 of 1,472 places for 25 to 34 (44%), 394 for under 18 and 312 for 65+.
+  The one-third cutoff is a judgment with no published source (range 25 to 50 percent of places; Niche publishes no age-share cutoff
+  either). Working-age (18 to 64) was dropped from the filter because it covers nearly everyone; the pillar still accepts it.
 - **Neutral description.** Neighborhood pages show the age mix (under 18, 18 to 64, 65 and over) with no score.
 - **Data kept.** Each catalog record keeps `diversity.raw_shares` (race and Hispanic origin, 16 income brackets, age, geography, total
   population), `diversity.age_percentiles`, and the education and self-employment values status signal reads.

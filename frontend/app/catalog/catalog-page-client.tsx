@@ -104,12 +104,32 @@ function sortPlaces(
   return out
 }
 
-/** Life-stage filter: a place matches a cohort when its share is in the top third of US tracts (percentile 67 or more). */
-const LIFE_STAGE_TOP_PERCENTILE = 67
-function lifeStageMatches(p: any, selected: string[]): boolean {
+/** Life-stage filter: a place matches a cohort when its share ranks in the top third of the catalog places (not of all US tracts).
+ *  Ranking is on the stored national age percentile, which preserves share order. The catalog skews young and urban, so a national
+ *  cutoff passed far more than a third of it (young professionals: 44% at the 67th national percentile). */
+const LIFE_STAGE_TOP_SHARE = 1 / 3
+const LIFE_STAGE_COHORTS = ['children', 'young_professionals', 'older'] as const
+type LifeStageCutoffs = Record<string, number>
+
+function lifeStageCutoffs(places: any[]): LifeStageCutoffs {
+  const out: LifeStageCutoffs = {}
+  for (const c of LIFE_STAGE_COHORTS) {
+    const vals: number[] = []
+    for (const p of places) {
+      const v = p?.score?.livability_pillars?.diversity?.age_percentiles?.[c]
+      if (typeof v === 'number') vals.push(v)
+    }
+    if (vals.length === 0) continue
+    vals.sort((a, b) => a - b)
+    out[c] = vals[Math.min(vals.length - 1, Math.floor(vals.length * (1 - LIFE_STAGE_TOP_SHARE)))]
+  }
+  return out
+}
+
+function lifeStageMatches(p: any, selected: string[], cutoffs: LifeStageCutoffs): boolean {
   const pcts = p?.score?.livability_pillars?.diversity?.age_percentiles
   if (!pcts) return false
-  return selected.some((c) => typeof pcts[c] === 'number' && pcts[c] >= LIFE_STAGE_TOP_PERCENTILE)
+  return selected.some((c) => typeof pcts[c] === 'number' && typeof cutoffs[c] === 'number' && pcts[c] >= cutoffs[c])
 }
 
 export default function CatalogPageClient({
@@ -725,6 +745,8 @@ export default function CatalogPageClient({
     return Math.round(totals[Math.floor(totals.length / 2)] / 100) * 100
   }, [adjustedPlaces, filterBudget])
 
+  const lifeStageCut = useMemo(() => lifeStageCutoffs(places), [places])
+
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
     let list = adjustedPlaces.filter((p) => {
@@ -741,7 +763,7 @@ export default function CatalogPageClient({
         const tr = normalizeTrajectory(p.score.status_signal_breakdown?.trajectory)
         if (tr && tr !== filterTrajectory) return false
       }
-      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage)) return false
+      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage, lifeStageCut)) return false
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         if (typeof lean !== 'number') return false
@@ -813,6 +835,7 @@ export default function CatalogPageClient({
     filterTrajectory,
     filterPoliticalLean,
     filterLifeStage,
+    lifeStageCut,
     filterSchoolType,
     filterLocalScene,
     filterAura,
@@ -960,7 +983,7 @@ export default function CatalogPageClient({
           if (!passesAny) r.push('Tenure')
         }
       }
-      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage)) r.push('Life stage')
+      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage, lifeStageCut)) r.push('Life stage')
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         if (typeof lean === 'number') {
@@ -981,7 +1004,7 @@ export default function CatalogPageClient({
       reasons[key] = r.length > 0 ? r : ['Filters']
     }
     return reasons
-  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterPoliticalLean, climatePrefs])
+  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterPoliticalLean, filterLifeStage, lifeStageCut, climatePrefs])
   const { gatedPlaces, excludedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) {
       return { gatedPlaces: filteredPlaces, excludedPlaces: metroFilterExcluded, dealbreakerExcludedCount: metroFilterExcluded.length, dealbreakerZeroSurvivors: false }
@@ -1031,7 +1054,7 @@ export default function CatalogPageClient({
         const tr = normalizeTrajectory(p.score.status_signal_breakdown?.trajectory)
         if (tr && tr !== filterTrajectory) r.push('Trajectory')
       }
-      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage)) r.push('Life stage')
+      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage, lifeStageCut)) r.push('Life stage')
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         const matchesAny = typeof lean === 'number' && filterPoliticalLean.some((pref) => {
@@ -1096,7 +1119,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, lifeStageCut, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
