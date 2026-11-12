@@ -407,6 +407,19 @@ def _level_of(school: Dict) -> Optional[str]:
     return None
 
 
+def _serves(school: Dict, level: str) -> bool:
+    """True when the school counts for the level: its label, or `_serves` for schools whose label is no level
+    (an estimated NY junior-senior high serves middle and high)."""
+    return _level_of(school) == level or level in (school.get("_serves") or [])
+
+
+def _is_estimated(school: Dict) -> bool:
+    """True for a rating estimated from state test results, not SchoolDigger's own. Estimates stand in for the school
+    when it is the assigned or nearest one; they stay out of pool averages, which are SchoolDigger ratings only."""
+    rh = school.get("rankHistory") or []
+    return bool(rh) and bool(rh[0].get("_estimated"))
+
+
 def _entry(school: Dict, role: str) -> Dict:
     rh = (school.get("rankHistory") or [{}])[0] if school.get("rankHistory") else {}
     return {
@@ -417,6 +430,7 @@ def _entry(school: Dict, role: str) -> Dict:
         "is_charter_school": school.get("isCharterSchool") == "Yes",
         "distance_mi": round(float(school["distance"]), 2) if school.get("distance") is not None else None,
         "role": role,
+        **({"estimated": "nysed_regents"} if (rh.get("_estimated")) else {}),
     }
 
 
@@ -440,7 +454,7 @@ def _nearest_in_district(pool: List[Dict], level: str, base_radius_miles: float)
 
     elem_factor = 2.1 / 3.2   # NHTS 2017 median trip: elementary 2.1 mi vs middle 3.2 mi
     cand = sorted(
-        (sc for sc in pool if _level_of(sc) == level and _is_rated_school(sc) and not sc.get("_k8_magnet")
+        (sc for sc in pool if _serves(sc, level) and _is_rated_school(sc) and not sc.get("_k8_magnet")
          and sc.get("isCharterSchool") != "Yes" and sc.get("distance") is not None),
         key=lambda sc: float(sc["distance"]))
     base = base_radius_miles * (elem_factor if level == "elementary" else 1.0)
@@ -468,9 +482,10 @@ def choice_pool_average(schools: List[Dict], level: str) -> Optional[Tuple[float
 
     rated = [(school_rating(sc), (((sc.get("schoolYearlyDetails") or [{}])[0] or {}).get("numberOfStudents")) or 1)
              for sc in schools
-             if _level_of(sc) == level and _is_rated_school(sc) and not sc.get("isPrivate")
+             if _serves(sc, level) and _is_rated_school(sc) and not sc.get("isPrivate")
              and sc.get("_dir_class") != "selective" and not sc.get("_k8_magnet")
-             and sc.get("isCharterSchool") != "Yes" and school_rating(sc) is not None]
+             and sc.get("isCharterSchool") != "Yes" and school_rating(sc) is not None
+             and not _is_estimated(sc)]
     if len(rated) < MIN_CHOICE_POOL:
         return None
     total = sum(n for _, n in rated)
@@ -530,7 +545,9 @@ def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
             continue
         if z:
             res["zone"] = {"name": z["name"], "vintage": z["vintage"], "caveat": z["caveat"], "matched": False}
-            if z.get("nces_id"):
+            if z.get("tied"):
+                ms = []   # identical outlines: the zone does not say which school; see the fallback below
+            elif z.get("nces_id"):
                 from data_sources.school_snapshot import school_by_id
                 one = school_by_id(z["nces_id"])
                 ms = [one] if one else []
@@ -551,13 +568,23 @@ def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
                              and float(sc["distance"]) <= WIDEN_CAP_MILES), key=lambda sc: float(sc["distance"]))
                 if cc:
                     res.update(source="charter_only", schools=[_entry(sc, "nearest_charter") for sc in cc[:NEAREST_PER_LEVEL]])
+                elif z and z.get("tied"):
+                    # no district school near enough: the schools that share the identical zone are all there is to go on
+                    from data_sources.school_snapshot import school_by_id
+                    found = []
+                    for nid in z.get("tied_nces") or []:
+                        m = school_by_id(nid)
+                        if m and _is_rated_school(m) and school_rating(m) is not None and m not in found:
+                            found.append(m)
+                    if found:
+                        res.update(source="zone_tied", schools=[_entry(m, "zoned_tied") for m in found])
         ratings = [e["rating"] for e in res["schools"] if e["rating"] is not None]
         res["score"] = round(sum(ratings) / len(ratings), 2) if ratings else None
         out[level] = res
     return out
 
 
-_SOURCE_LABEL = {"zone": "zoned school", "nearest": "nearest in district", "district_far": "district's nearest",
+_SOURCE_LABEL = {"zone": "zoned school", "zone_tied": "schools sharing one zone outline", "nearest": "nearest in district", "district_far": "district's nearest",
                  "charter_only": "nearby charter", "choice": "choice by application, not scored",
                  "choice_avg": "choice by application, pool average"}
 
@@ -607,7 +634,14 @@ def summary_extras(breakdown: Dict) -> Dict[str, Optional[str]]:
             for lv, v in levels.items() if v.get("top_options") and (v.get("pool") or {}).get("scope") != "citywide"]
     sels = [f"{lv.capitalize()} screened by grades, test or audition: " + "; ".join(_opt(e) for e in v["selective"])
             for lv, v in levels.items() if v.get("selective")]
+    est = {}
+    for v in levels.values():
+        for e in v.get("schools") or []:
+            if e.get("estimated") and e.get("rating") is not None:
+                est[e["name"]] = round(e["rating"])
     return {
+        **({"estimated_ratings": "; ".join(f"{n} ({r})" for n, r in est.items())
+            + ": estimated from NYSED Regents results, not a SchoolDigger rating"} if est else {}),
         "level_access": "; ".join(access),
         **({"best_options": " | ".join(tops + sels)} if tops or sels else {}),
         "level_sources": "; ".join(srcs),

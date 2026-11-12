@@ -254,7 +254,17 @@ def zoned_schools(lat: float, lon: float) -> List[Dict[str, Any]]:
                     "_geom": row.geometry,
                 })
             if layer.fallback and len(hits) > 1:      # overlapping zones: the most local (smallest) one
-                hits = [min(hits, key=lambda h: h["_geom"].area)]
+                smallest = min(h["_geom"].area for h in hits)
+                tied = [h for h in hits if h["_geom"].area == smallest]
+                # identical outlines (the 2015-16 survey gives every school in a district the same polygon) say
+                # nothing about which school a point is assigned to: the level uses the nearest schools, and only
+                # when there are none the tied schools themselves (marked tied)
+                if len(tied) == 1:
+                    hits = tied
+                else:   # one entry that carries every tied school, so a level with no nearby school can still use them
+                    hits = [dict(tied[0], tied=True, names=[n for h in tied for n in h["names"]],
+                                 tied_schools=[h["name"] for h in tied],
+                                 tied_nces=[h["nces_id"] for h in tied if h.get("nces_id")])]
             out.extend(hits)
         return out
 
@@ -298,7 +308,7 @@ def match_zoned_to_schools(zoned: Dict[str, Any], schools: List[Dict[str, Any]])
     for s in schools:
         lvl = (s.get("schoolLevel") or "").lower()
         lvl_ok = any(l in lvl for l in levels) or (
-            "elementary" in levels and ("primary" in lvl)) or not lvl
+            "elementary" in levels and ("primary" in lvl)) or not lvl or bool(levels & set(s.get("_serves") or []))
         if not lvl_ok or s.get("isPrivate"):
             continue
         have = _tokens(s.get("schoolName", ""))
@@ -340,7 +350,8 @@ def match_zone_by_location(zoned: Dict[str, Any], schools: List[Dict[str, Any]])
         lvl = (s.get("schoolLevel") or "").lower()
         if s.get("isPrivate") or not (s.get("rankHistory") or []):
             continue
-        if not any(l in lvl for l in levels) and not ("elementary" in levels and "primary" in lvl):
+        if (not any(l in lvl for l in levels) and not ("elementary" in levels and "primary" in lvl)
+                and not (levels & set(s.get("_serves") or []))):
             continue
         pt = _school_point(s)
         if pt is None or not geom.contains(pt):
