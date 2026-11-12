@@ -52,7 +52,7 @@ import QuizModal, { type QuizPayload } from '@/components/QuizModal'
 const INDEXES: { id: 'homefit' | 'happiness' | 'status'; label: string; tooltip: string }[] = [
   { id: 'homefit', label: 'HomeFit', tooltip: HOMEFIT_COPY.tooltip },
   { id: 'happiness', label: 'Happiness', tooltip: HAPPINESS_INDEX_COPY.tooltip },
-  { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
+  { id: 'status', label: 'Status signal', tooltip: STATUS_SIGNAL_COPY.tooltip },
 ]
 
 /** One-line basis for the score being shown, so a number is never read without knowing what it is. */
@@ -64,7 +64,7 @@ function scoreBasisLine(mode: CatalogMapIndexMode, priorities: PillarPriorities)
       : 'HomeFit: average of the 12 pillars, equal weights. Adjust priorities to personalize.'
   }
   if (mode === 'happiness') return 'Happiness: ' + HAPPINESS_INDEX_COPY.tooltip
-  if (mode === 'status') return 'Archetype: social character from income, education, occupation and housing data.'
+  if (mode === 'status') return 'Status signal: social character from income, education, occupation and housing data.'
   const meta = PILLAR_META[mode as PillarKey]
   return meta ? `${meta.name}: this pillar's own 0 to 100 score, not your weighted total.` : ''
 }
@@ -1790,7 +1790,7 @@ export default function CatalogPageClient({
                 className="flex gap-1.5 overflow-x-auto px-3 pb-1 pointer-events-auto"
                 style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
               >
-                {INDEXES.map((x) => {
+                {INDEXES.filter(x => x.id !== 'status').map((x) => {
                   const active = indexMode === x.id && !sortByName
                   const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
                   return (

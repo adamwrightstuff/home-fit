@@ -25,7 +25,7 @@ import type { BudgetFilter } from '@/lib/budgetCost'
 const INDEX_TABS: { id: CatalogMapIndexMode; label: string; tooltip: string }[] = [
   { id: 'homefit', label: 'HomeFit', tooltip: HOMEFIT_COPY.tooltip },
   { id: 'happiness', label: 'Happiness', tooltip: HAPPINESS_INDEX_COPY.tooltip },
-  { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
+  { id: 'status', label: 'Status signal', tooltip: STATUS_SIGNAL_COPY.tooltip },
 ]
 
 type CompositeIndexMode = 'homefit' | 'happiness'
