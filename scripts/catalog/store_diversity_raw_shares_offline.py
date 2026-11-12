@@ -3,7 +3,7 @@
 Store the raw continuous shares behind the diversity pillar in each catalog record (no score change).
 
 Adds diversity.raw_shares: race_ethnicity (8 groups, percent), income_brackets (16 ACS B19001 brackets, percent), age
-(under 18, 18 to 64, 65 and over, percent), geo_level, geoid, total_population. The geography is found per record by matching
+(under 18, 18 to 64, 65 and over, plus 25 to 34 as a subset of 18 to 64, percent), geo_level, geoid, total_population. The geography is found per record by matching
 its stored 25+ population, 16-bracket income entropy and age entropy to the Census cache (so same-name places cannot collide);
 places whose stored population is from another geography use --override. Unmatched places are listed and skipped.
 
@@ -71,8 +71,11 @@ def main():
             s = sum(g.get(f"B01001_{j:03d}E", 0) for j in list(range(20, 26)) + list(range(44, 50)))
             rs, ins, ags = shares(H[k]), shares([g.get(f"B19001_{j:03d}E", 0) for j in range(2, 18)]), shares([y, p, s])
             if not (rs and ins and ags): skipped.append((metro, nm, "empty counts")); continue
+            # 25 to 34 share of all residents (B01001_011, 012, 035, 036), a subset of the 18-64 band.
+            yp = sum(g.get(f"B01001_{j:03d}E", 0) for j in (11, 12, 35, 36))
+            yp_share = round(yp / (y + p + s) * 100, 1)
             dv["raw_shares"] = {"race_ethnicity": dict(zip(RACE_KEYS, rs)), "income_brackets": ins,
-                                "age": dict(zip(["under_18", "age_18_64", "age_65_plus"], ags)),
+                                "age": {**dict(zip(["under_18", "age_18_64", "age_65_plus"], ags)), "age_25_34": yp_share},
                                 "geo_level": {"tract": "tract", "place": "place", "cousub": "county_subdivision"}[k[0]], "geoid": k[1],
                                 "total_population": int(sum(H[k])), "source": "ACS 2022 5-year: B03002, B19001, B01001"}
             lines[i] = json.dumps(r, ensure_ascii=False); ch = True; done += 1
