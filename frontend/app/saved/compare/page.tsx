@@ -14,6 +14,8 @@ import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import PillarInfoIcon from '@/components/PillarInfoIcon'
 import RelocationEquivalent from '@/components/RelocationEquivalent'
+import InMetroPrice, { type PriceRow } from '@/components/InMetroPrice'
+import type { HousingCost } from '@/lib/budgetCost'
 import type { PlaceSpec } from '@/lib/relocation'
 import { applyCommuteAndPeople, applyExplorerScoreAdjustments, readCompareContext, type CompareContext } from '@/lib/explorerScoreAdjust'
 
@@ -54,6 +56,8 @@ async function loadRowForId(id: string): Promise<SavedScoreRow> {
     work_commute: place.work_commute ?? null,
     lat: place.catalog.lat,
     lon: place.catalog.lon,
+    metro: listed.metro,
+    housing_cost: listed.housing_cost ?? null,
     priorities: null,
     created_at: '',
     updated_at: '',
@@ -610,6 +614,15 @@ function CompareContent() {
             {idA && idB && (() => {
               const specA = relocationSpec(idA, rowA)
               const specB = relocationSpec(idB, rowB)
+              const priceOf = (row: SavedScoreRow | null, name: string): PriceRow | null => {
+                const x = row as unknown as { metro?: string; housing_cost?: HousingCost | null } | null
+                return x?.metro ? { name, metro: x.metro, cost: x.housing_cost ?? null } : null
+              }
+              const pa = priceOf(rowA, placeNameA)
+              const pb = priceOf(rowB, placeNameB)
+              if (pa && pb && pa.metro === pb.metro) {
+                return <InMetroPrice a={pa} b={pb} budget={compareContext?.budget ?? null} income={householdIncome} />
+              }
               if (!specA && !specB) return null
               return (
                 <section aria-label="Cost of living" style={{ marginTop: '0.75rem', display: 'grid', gap: '0.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>

@@ -300,10 +300,10 @@ def passes_hard_filters(row: dict, cfg: dict) -> tuple[bool, str]:
 
     local_scene = cfg.get("local_scene")
     if local_scene and local_scene != "all":
-        ls = score.get("local_scene_bucket")
-        if local_scene == "High" and ls != "High":  # None (too few venues or below the cut) is not a scene
+        ls = score.get("local_scene_level")
+        if local_scene == "Buzzing" and ls != "buzzing":  # None (no data) and quiet are not a scene
             return False, f"local_scene={ls}"
-        if local_scene == "Some" and ls not in ("High", "Some"):
+        if local_scene == "Lively" and ls not in ("buzzing", "lively"):
             return False, f"local_scene={ls}"
 
     political_lean = cfg.get("political_lean", [])
@@ -382,7 +382,7 @@ def score_row(row: dict, weights: dict[str, int], nb_prefs: list[str], ao_prefs:
         "ao_adjusted":    round(ao_adjusted, 1) if ao_adjusted is not None else None,
         "archetype":      ss.get("archetype") if isinstance(ss, dict) else None,
         "trajectory":     ss.get("trajectory") if isinstance(ss, dict) else None,
-        "local_scene":    score.get("local_scene_bucket"),
+        "local_scene":    score.get("local_scene_level"),
         "pct_low_density": pct_ld,
         "housing_type":   housing_type_for(pct_ld),
         "water_type":     water_type,
@@ -485,8 +485,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Allow archetype (Elite, Affluent, …). Repeatable. Empty = all.")
     p.add_argument("--trajectory", action="append", default=[], metavar="NAME",
                    help="Allow trajectory (Up-and-Coming, Stable, Declining). Repeatable. Empty = all.")
-    p.add_argument("--local-scene", default=None, choices=["all", "Some", "High"],
-                   help="Local scene minimum (all/Some/High)")
+    p.add_argument("--local-scene", default=None, choices=["all", "Lively", "Buzzing"],
+                   help="Local scene minimum (all/Lively/Buzzing)")
     p.add_argument("--political-lean", action="append", default=[], metavar="LABEL",
                    help="Allow political lean (strong_d/lean_d/moderate/lean_r/strong_r). Repeatable. Empty = all.")
     p.add_argument("--housing", action="append", default=[], metavar="TYPE",

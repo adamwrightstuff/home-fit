@@ -399,7 +399,13 @@ export function getCommunitySafetyNarrative(
 }
 
 export function getDiversityNarrative(placeLabel: string, pillar: Record<string, unknown>): string {
-  const locationSentence = `${placeLabel}'s age mix comes from Census tract-level distributions.`
+  const score = getPillarValue(pillar, 'summary.diversity_entropy_score')
+  let mixPhrase = 'a moderate mix of households'
+  if (typeof score === 'number') {
+    if (score >= 70) mixPhrase = 'a wide mix of households across race, income, and age'
+    else if (score <= 35) mixPhrase = 'a more uniform community profile'
+  }
+  const locationSentence = `${placeLabel} shows ${mixPhrase} in Census tract-level distributions.`
   const genericSentence =
     'Exposure to varied neighbors and life stages is one lens on everyday community texture—distinct from architecture or building style.'
   return `${locationSentence} ${genericSentence}`

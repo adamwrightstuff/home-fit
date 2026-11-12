@@ -201,7 +201,9 @@ const METRIC_EXPLAINERS: Record<string, string> = {
   'social_fabric:Civic places (non-commercial)':
     'Libraries, community centers, worship, town halls, etc., from OpenStreetMap, or Google Places when OSM is unavailable.',
   'social_fabric:Modeled voter turnout (tract)': 'Estimated participation rate used for engagement (0–100% shown).',
+  'diversity:Mix dimensions scored': 'Which Census mix dimensions (race, income, age) had data for this tract.',
   'diversity:Self-employed (tract %)': 'Share of workers who are self-employed in this tract (Census).',
+  'diversity:Race & ethnicity spread': 'How residents are spread across Census race and ethnicity groups. A descriptive measure, not a quality score.',
   'community_safety:Violent crime (per 1k)': 'Murder, rape, robbery, and aggravated assault per 1,000 residents in the last full year—after any commuter-denominator adjustment.',
   'community_safety:Property crime (per 1k)': 'Burglary, theft, and vehicle theft per 1,000 residents in the last full year.',
   'community_safety:Violent slot (0–100)': 'Share of places Americans live with more violent crime than here (60 = safer than 60%).',

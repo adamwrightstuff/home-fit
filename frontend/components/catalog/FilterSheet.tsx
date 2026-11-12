@@ -1,7 +1,8 @@
 'use client'
 
-import { DEFAULT_BUDGET, MORTGAGE_RATE, type BudgetFilter } from '@/lib/budgetCost'
-import { useEffect } from 'react'
+import { ALL_BEDS, DEFAULT_BUDGET, MORTGAGE_RATE, bedLabel, toggleBed, type BudgetFilter } from '@/lib/budgetCost'
+import { SCENE_LABEL, SCENE_LEVELS, toggleSceneLevel, type SceneFilter } from '@/lib/sceneLevels'
+import { useEffect, useState } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
@@ -59,8 +60,8 @@ interface FilterSheetProps {
   suggestedCaps?: { label: string; value: number }[]
   filterTenure: string[]
   onFilterTenureChange: (v: string[]) => void
-  filterLocalScene: 'all' | 'Some' | 'High' | 'Lively'
-  onFilterLocalSceneChange: (v: 'all' | 'Some' | 'High' | 'Lively') => void
+  filterLocalScene: SceneFilter
+  onFilterLocalSceneChange: (v: SceneFilter) => void
   filterAura: boolean
   onFilterAuraChange: (v: boolean) => void
   /** Must-haves: places that fail any checked box are hidden. */
@@ -136,6 +137,7 @@ export default function FilterSheet({
   onClimatePrefsChange,
   resultCount,
 }: FilterSheetProps) {
+  const [bedHint, setBedHint] = useState(false)
   type TrajectoryOption = 'all' | 'Up-and-Coming' | 'Stable' | 'Declining'
   useEffect(() => {
     if (open) {
@@ -159,7 +161,7 @@ export default function FilterSheet({
     (filterHousingType.length > 0 ? 1 : 0) +
     (filterBudget.chosen ? 1 : 0) +
     (filterTenure.length > 0 ? 1 : 0) +
-    (filterLocalScene !== 'all' ? 1 : 0) +
+    (filterLocalScene.length > 0 ? 1 : 0) +
     (filterAura ? 1 : 0) +
     (filterCommuteMax !== 'all' ? 1 : 0) +
     0
@@ -174,7 +176,7 @@ export default function FilterSheet({
     onFilterHousingTypeChange([])
     onFilterBudgetChange(DEFAULT_BUDGET)
     onFilterTenureChange([])
-    onFilterLocalSceneChange('all')
+    onFilterLocalSceneChange([])
     onFilterAuraChange(false)
     onFilterCommuteMaxChange('all')
   }
@@ -194,6 +196,7 @@ export default function FilterSheet({
         type="button"
         title={title}
         onClick={onClick}
+        className="hf-sheet-chip"
         style={{
           ...CHIP_BASE,
           background: active ? 'var(--hf-primary-1)' : 'var(--hf-hover-bg)',
@@ -354,14 +357,23 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Monthly Budget</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Estimated monthly cost of a typical home (single-family and condo mix, not tied to the housing type chips above) with your bedroom count in each place: mortgage at {Math.round(MORTGAGE_RATE * 100)}% over 30 years, property tax and insurance. Places with no data are not filtered out.
+              Estimated monthly cost of a typical home (single-family and condo mix, not tied to the housing type chips above) with your bedroom count in each place. With a monthly cap, a place stays if any size you picked fits, and shows the biggest one that does: mortgage at {Math.round(MORTGAGE_RATE * 100)}% over 30 years, property tax and insurance. Places with no data are not filtered out.
             </div>
-            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Bedrooms</div>
+            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Bedrooms (pick one or more)</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-              {([1, 2, 3, 4, 5] as const).map((b) =>
-                chip(filterBudget.chosen && filterBudget.beds === b, b === 5 ? '5+' : String(b), () => onFilterBudgetChange({ ...filterBudget, beds: b, chosen: true }))
+              {ALL_BEDS.map((b) =>
+                chip(filterBudget.chosen && filterBudget.beds.includes(b), bedLabel(b), () => {
+                  const next = toggleBed(filterBudget, b)
+                  setBedHint(next === filterBudget)
+                  onFilterBudgetChange(next)
+                })
               )}
             </div>
+            {bedHint && (
+              <div style={{ fontSize: 11, color: '#b45309', marginTop: -6, marginBottom: 8 }}>
+                Keep at least one size while a cap or down payment is set. Clear them to turn the budget off.
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <label style={{ fontSize: 12, color: '#6b7280' }}>
                 Down payment ($)
@@ -369,10 +381,11 @@ export default function FilterSheet({
                   type="text"
                   inputMode="numeric"
                   autoComplete="off"
-                  value={filterBudget.down.toLocaleString('en-US')}
+                  value={filterBudget.down == null ? '' : filterBudget.down.toLocaleString('en-US')}
+                  placeholder="20% of price"
                   onChange={(e) => {
                     const digits = e.target.value.replace(/[^0-9]/g, '')
-                    onFilterBudgetChange({ ...filterBudget, down: digits === '' ? 0 : parseInt(digits, 10), chosen: true })
+                    onFilterBudgetChange({ ...filterBudget, down: digits === '' ? null : parseInt(digits, 10), chosen: filterBudget.chosen || digits !== '' })
                   }}
                   style={{ display: 'block', width: 130, marginTop: 4, padding: '0 8px', height: 'var(--hf-control-h-touch)', border: '1px solid var(--hf-border)', borderRadius: 'var(--hf-control-radius)', fontSize: 14, color: 'var(--hf-text-primary)' }}
                 />
@@ -486,13 +499,11 @@ export default function FilterSheet({
               <div style={LABEL_STYLE}>Local Scene</div>
             </div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              How much independent activity is within a short walk: cafés, bars, restaurants, galleries, bookstores and theaters.
+              How much of a scene there is nearby: independent cafés, bars, galleries, bookstores and theaters, compared with similar places. Pick any levels, or All.
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {chip(filterLocalScene === 'all', 'All', () => onFilterLocalSceneChange('all'))}
-              {chip(filterLocalScene === 'Some', 'Some+', () => onFilterLocalSceneChange(filterLocalScene === 'Some' ? 'all' : 'Some'))}
-              {chip(filterLocalScene === 'High', 'High only', () => onFilterLocalSceneChange(filterLocalScene === 'High' ? 'all' : 'High'))}
-              {chip(filterLocalScene === 'Lively', 'Lively only', () => onFilterLocalSceneChange(filterLocalScene === 'Lively' ? 'all' : 'Lively'))}
+              {chip(filterLocalScene.length === 0, 'All', () => onFilterLocalSceneChange([]))}
+              {SCENE_LEVELS.map(level => chip(filterLocalScene.includes(level), SCENE_LABEL[level], () => onFilterLocalSceneChange(toggleSceneLevel(filterLocalScene, level))))}
             </div>
           </div>
 
@@ -502,7 +513,7 @@ export default function FilterSheet({
               <div style={LABEL_STYLE}>Aura</div>
             </div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              The top 5% of places in each metro: a standout local scene backed by strong everyday livability.
+              A Buzzing local scene in a neighborhood with an affluent or elite resident profile. Rare.
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(!filterAura, 'All', () => onFilterAuraChange(false))}

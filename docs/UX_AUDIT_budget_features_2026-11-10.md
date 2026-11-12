@@ -2,7 +2,11 @@
 
 Standard: `docs/UX_PRINCIPLES_DRAFT.md` (six owner rules plus Candidates A "say what a number means where it appears" and B "no silent gaps", both counted as rules since the owner confirmed 2026-11-05). Same method as `docs/UX_AUDIT.md`. This covers only the four features shipped 2026-11-10 (commits ad87d5bb, 0848ac56, 41255419, 21578741).
 
-**Conclusion: Level 0 (not certified).** 9 FAILs, none fixed, none owner-accepted. Rule 6 passes.
+**Conclusion (first pass, 2026-11-10): Level 0 (not certified).** 9 FAILs, none fixed, none owner-accepted. Rule 6 passes.
+
+**Latest re-audit 2026-11-12: all eight rules pass, no FAIL open; the two minor findings (G5, G6) were fixed the same day. Level 1 candidate, not certified (graded by the builder; two rows are owner-decided). See the last section.**
+
+**Re-audit 2026-11-11: Level 0 at the time, 1 open FAIL (G1) plus 3 findings. G1, the 375px wrap (G2), the silent last-chip tap (G3) and the cost missing from the map panels (G4) were fixed the same day; no FAIL or finding is open now except the compare views, and Level 1 still needs an independent re-check and the owner's sign-off. See the last section.**
 
 ## What was checked and how
 
@@ -62,4 +66,153 @@ Rendered in the browser: desktop list and 375px list with empty storage, the 375
 - Not an owner decision (corrected): the owner said only that having to go to the profile to change bedrooms is a hassle, as an observation, not a choice. Claude then added bedroom chips to the filter sheet as well as the profile page, which departs from Rule 2 (one home per action) and is NOT owner-accepted; it stays an open FAIL until the owner decides. The value is still stored once: a change in the sheet is written to the profile (local settings, and the account profile when signed in), so both screens show the same number. Down payment is still edited only on the profile page. Signed-in write-through was not tested in a browser (no account available).
 - 2026-11-10, owner decision (asked and answered "all in the sheet"): bedrooms, down payment and the monthly cap are now set together in the Explorer's filter sheet, which resolves the split across two screens (F2 closed as owner-decided). The profile page keeps income and current cost and shows the home budget as a read-only summary with a link to the Explorer. A change in the sheet is still written to the profile (local settings, and the account profile when signed in, debounced), so other screens read the same value. Checked in the desktop browser: sheet down-payment input formats with commas and is 40px tall, profile summary reads "3 bedrooms, $250,000 down". Not checked: signed-in account save, phone width.
 - 2026-11-10, owner approved: in the expanded row, "View full breakdown" comes first as the primary action and the Zillow link follows as a quieter secondary link ("4+ bed homes on Zillow ↗", secondary text color, smaller), so the in-app action is the one obvious next step (Rule 1). Checked in the desktop browser on Glen Rock: link order and Zillow URL correct.
-- 2026-11-11, owner approved rounding, home-type label and quiz question (cost sort dropped by the owner's context argument: the sort row already has five options and the cap plus HomeFit sort answers "best fit I can afford"). Row cost rounds to the nearest $100 (it is a ZIP-median estimate, so no false precision). The explainer bar and filter sheet say the cost is a single-family and condo mix and is not tied to the housing type chips. The quiz asks bedrooms and a monthly cap only when the visitor said price matters ("best value" or "pay more for the right place"), and the answers set the same budget the filter sheet edits; the down payment is not asked (it stays at the shown default and is editable in the sheet). Checked in the browser: all 1,253 row costs are multiples of $100, and quiz logic shows the two questions only for the price-matters answers and emits the right payload. Not checked: the two quiz screens rendered visually, and the signed-in quiz-to-profile save.
+- 2026-11-11, owner request: bedrooms are now pick-one-or-more. With a monthly cap a place stays if any chosen size fits and its row shows the biggest chosen size that fits (a 5-bed for the price of a 4-bed wins); a place with no price for one of the chosen sizes is kept, so adding a size never removes a place. With no cap a row shows the range across the chosen sizes ("~$4,623 to $6,495/mo · 3 to 4 bed"). The last chip cannot be unselected; Clear all resets. Saved single counts still load. Checked in the desktop browser (4 bed 1,250; 4 or 5+ 1,273; 3, 4 or 5+ 1,370; 3 only 1,321 at a $8,000 cap). Not checked: signed-in save of a list of sizes, phone width. This audit's headline (Level 0) was never updated after the fixes above and no re-audit has been run.
+
+
+---
+
+## Re-audit 2026-11-11
+
+Standard and method as above. Run in a headless browser against the current `main` (multi-select bedrooms included) on the dev server; desktop 1300px, phone 375px.
+
+**Independence.** The multi-select bedroom change (commit 6f5d433) was built in this same session, so the rows it touches (Rule 3, Rule 5, G2, G3) are not graded independently. Level 1 needs a re-check of those rows by someone who did not build them, and the owner's sign-off on the owner-decided rows (Rule 2, Rule 3 chips in the sheet).
+
+### What was checked and how
+
+| View | Result | How |
+|---|---|---|
+| Catalog list, desktop, empty storage (fresh visitor) | 0 cost lines, 0 Zillow links, no explainer bar (1,476 rows) | Browser, DOM count |
+| Filter sheet, desktop, before any choice | No bedroom chip selected; down payment field already reads 600,000; max per month empty; no suggested caps | Browser, DOM |
+| List with bedrooms 3 and 4 chosen, no cap | 1,334 rows with a cost, 142 with a stated reason, 0 blank; explainer bar present; 241 California cards say tax likely low | Browser, DOM count |
+| Same, cap $3,000 | 1,116 rows (360 removed); 973 with a cost, 142 with a reason; 0 "Over budget" tags (over-budget places are removed, not tagged) | Browser, DOM count |
+| Expanded row, desktop (priced place, 3 bed, cap $7,000) | "View full breakdown" first, "3+ bed homes on Zillow" below it, quieter | Browser, element order |
+| Filter sheet and list, 375px | No horizontal overflow; sheet and chips usable; cost line and no-data line wrap (see G2) | Browser, screenshots |
+| Profile page, signed out | Shows "Not set yet" and says bedrooms, down payment and cap are set in the Explorer's filters, with a link | Browser, text |
+| Map markers, mobile bottom sheet, detail panel, compare tray | No cost anywhere | Code only: budget identifiers appear only in the catalog page, list view, filter sheet, API route, profile page and types |
+| Signed-in save of a list of sizes, other pages | Not checked | No account available |
+
+### Per-rule results
+
+| Rule | Result | Evidence |
+|---|---|---|
+| 1. One primary action per state | PASS | Expanded row: "View full breakdown" above the Zillow link, which is smaller and secondary; no Zillow link on any list row. |
+| 2. One home per action | PASS (owner-decided) | Bedrooms, down payment and cap are set only in the filter sheet; profile shows a read-only summary and links back. Owner decision 2026-11-10 ("all in the sheet"). |
+| 3. Controls follow selection | PASS (owner-decided) | Chips and fields are visible before a choice by owner decision; no chip is pre-selected and nothing is applied until a choice. See G1 for the pre-filled number. |
+| 4. Quiet by default | PASS | Fresh visitor sees no cost line, Zillow link or explainer; the California caveat shows only on California cards; reasons show only after a choice. |
+| 5. Start from a suggestion | FAIL (G1) | Suggested caps ("Your current cost", "30% of your income") only appear when a profile has income or a current cost. A fresh visitor faces an empty cap and a down payment already set to $600,000, the owner's own scenario, with no stated basis. |
+| 6. Search finds, panels edit | PASS | Budget is edited only in the filter sheet. |
+| A. Say what a number means | PASS | The basis (rate, down payment, tax, insurance, ZIP median, and the sizes chosen) shows once in the explainer bar when a budget is chosen; the sheet text repeats it. |
+| B. No silent gaps | PASS | With 3 and 4 chosen every row shows a cost or a reason: 1,334 plus 142 equals 1,476. |
+
+### Findings
+
+| ID | Rule | Finding | Smallest fix |
+|---|---|---|---|
+| G1 | 5 (and 4) | Down payment is pre-filled with 600,000 and no cap suggestion exists for a visitor with no profile. | Leave the down payment empty until chosen, or label the default ("example") and offer a one-tap cap from the visitor's chosen bedrooms (for example the metro median monthly cost for that size). |
+| G2 | none (layout) | At 375px the multi-size range ("~$4,623 to $6,495/mo · 3 to 4 bed") wraps to 3 lines and the no-data line ("No 3 or 4-bed cost: no price data for this ZIP") to 4, in the narrow place column. | Show "from ~$4,623/mo · 3 to 4 bed" (cheapest only) and shorten the no-data line to "No price data". |
+| G3 | none (feedback) | Tapping the last selected bedroom chip does nothing and says nothing. | Keep it selected but show the helper line "Pick at least one" or let the last chip clear the choice back to the unchosen state. |
+| G4 | A | The map, bottom sheet, detail panel and compare tray filter by the budget but never show the number (unchanged from the first audit's coverage gap). | Show the cost line in the bottom sheet and detail panel. |
+
+### Level
+
+Level 0 stands: G1 is an unfixed FAIL with no owner-accepted entry. All nine first-pass FAILs are closed and Rules 1, 2, 3, 4, 6, A and B pass. Closing G1, or an owner-accepted entry for it, would reach Level 1 for these features, subject to the independence note above.
+
+### Verification statement
+
+Rendered in the browser: fresh-visitor list and filter sheet (desktop), list with a budget chosen and with a cap (desktop), expanded priced row (desktop), filter sheet and list at 375px, profile page signed out. Code only: map, bottom sheet, detail panel, compare tray, other pages. Not checked: signed-in save, the account profile with a list of sizes, a real phone. Nothing was changed by this re-audit except this document.
+
+### Fix log, 2026-11-11 (after the re-audit)
+
+- G1 fixed. The down payment is no longer pre-filled with $600,000: it starts empty with the placeholder "20% of price", and until the visitor types an amount every place is priced at 20% down, which the explainer bar says ("after 20% down"). Clearing the field returns to 20%. A visitor with no profile now gets a starting cap: once a bedroom count is chosen, a "Typical place $4,100" chip sets the cap to the median cost across all places at the chosen sizes (a fresh visitor with nothing chosen still sees no suggestions or costs). Saved down payments that were never chosen are dropped; saved ones the visitor chose are kept; the account profile accepts a null down payment.
+- G2 fixed. At 375px the multi-size line reads "from ~$7,293/mo · 3-4 bed" (2 lines, was 3; the full range is in the tooltip) and a place with no price reads "No cost · no ZIP price data" or "No cost · too few sales" (2 lines, was 4; the full reason is in the tooltip).
+- Checked in the browser (desktop and 375px): fresh sheet empty and no chips; "Typical place $4,100" cap gives 808 of 1,476 places at 3 bed; typing $250,000 changes the explainer to "after $250,000 down" and clearing returns to "after 20% down".
+- Still open (findings, not rule FAILs): G3 (last chip tap gives no feedback), G4 (map, bottom sheet, detail panel never show the cost). Not checked: signed-in save with a null down payment, a real phone.
+- Independence: G1 and G2 were fixed by the same session that built the multi-select change, so Level 1 needs someone else to re-run the rows above.
+
+### Fix log, 2026-11-12 (G3 and G4)
+
+- G3 fixed. Tapping the last selected bedroom chip with nothing else set (no cap, no typed down payment) clears the budget back to the unchosen state: no cost on any row, no "Typical place" chip. With a cap or down payment set the chip stays selected and a line under the chips says "Keep at least one size while a cap or down payment is set. Clear them to turn the budget off."; choosing another size clears the line.
+- G4 fixed for the places the budget filters on the map. One shared component (BudgetCostLine) now draws the cost line on list rows, the desktop detail panel and the mobile bottom sheet, with the same words, tooltip, over-budget tag and California note. Checked in the browser: desktop detail panel for Larchmont reads "~$10,976/mo · 3 bed"; the bottom sheet (tablet width 700px, tapping a bubble) shows "~$3,839/mo · 3 bed" under Chelsea, MA. Not shown before a budget is chosen.
+- Still open: the compare tray and `/saved/compare` do not show the cost (they never filtered by budget). Not checked: the bottom sheet on a real phone (reached at 700px because the search box is hidden below that), signed-in save with a blank down payment.
+- Independence: same session built and fixed these, so Level 1 needs someone else to re-run the rows.
+
+### Correction and fix log, 2026-11-12 (compare views)
+
+- Correction to the audit. The "Code only" row for the compare views said no cost appears there. That was wrong for `/saved/compare`: for two places in the same metro it already shows an estimated monthly cost for each (the InMetroPrice block), using the Explorer's budget. My search looked for four identifiers and that block imports the budget types without matching them. The compare tray in the Explorer did not show a cost.
+- Compare tray. Each chip now ends with the place's cost ("Pelham · ~$9,005/mo", or "from ~$X/mo" for several sizes, or "no cost"), with the bedroom count and reason in the tooltip; shown only once a budget is chosen. A place hidden by the current search still shows its raw key without a cost (an existing quirk of the tray, not changed).
+- Bug fixed on `/saved/compare`: after the down payment became optional the basis line would have read "$0 down" for a visitor on the default 20%; it now reads "20% down" (checked: "Basis: 7% mortgage, 20% down, ZIP average property tax ... and 0.4% insurance").
+- Bug fixed: a compare context saved in a browser tab before multi-select stored one bedroom count; reading it would have thrown. It is now normalized on read (checked by injecting the old shape: the compare page renders and shows "$600,000 down" for a down payment the visitor had chosen).
+- Checked in the browser: tray without a budget shows names only; with 3 bed chosen the Pelham chip shows its cost; the compare page for Larchmont and Pelham shows "Same metro: estimated monthly cost for a 3-bedroom home · Pelham is $1,971/mo lower". Not checked: pairs in different metros (they use the existing relocation estimate, not the budget), signed-in save, a real phone.
+
+
+---
+
+## Re-audit 2026-11-12 (after G1 to G4, multi-select bedrooms and the compare views)
+
+Same standard and method. Run in a headless browser against current `main` on the dev server with the browser cache disabled (the sandbox cannot cache the 40 MB catalog response); desktop 1300px, tablet 700px, phone 375px.
+
+**Independence.** The builder of the multi-select, G1 to G4 and compare changes (this session) ran this audit, so it cannot certify. Level 1 needs someone else to re-run the rows marked with an asterisk below and the owner's sign-off on the two owner-decided rows (Rule 2, Rule 3 chips in the sheet).
+
+### What was checked and how
+
+| View | Result | How |
+|---|---|---|
+| Fresh visitor, desktop list | 0 cost lines, 0 Zillow links, no explainer, across 1,476 rows | Browser, DOM count |
+| Fresh visitor, filter sheet | No bedroom chip selected, down payment empty with "20% of price", no suggested caps | Browser, DOM |
+| After choosing 3 bed | "Typical place $4,100" appears; tapping it sets the cap | Browser |
+| Multi-select, cap $8,000 | 3 only 1,233; 3 and 4 1,273; 3, 4 and 5+ 1,296 (never fewer when a size is added) | Browser, counts |
+| Clear all | Count back to 1,476, cap and down payment empty, no chip selected, no Typical chip | Browser |
+| List, 3 and 4 chosen | 1,334 rows with a cost + 142 with a reason = 1,476, none blank, 0 Zillow links | Browser, DOM count |
+| Explainer bar | "Monthly cost: a 3 or 4-bedroom home at the ZIP median price, mortgage at 7% after 20% down, plus property tax and insurance." | Browser |
+| Expanded priced row | "View full breakdown" above "3+ bed homes on Zillow" | Browser, element order |
+| Persistence | After reload: 3 and 5+ selected, cap 6,000, down payment 300,000, 1,231 results | Browser |
+| Old saved shape (one bedroom count, fixed down payment) | Loads without error; keeps a chosen $600,000 down | Browser, injected storage |
+| Desktop detail panel | Larchmont shows "~$10,976/mo · 3 bed" | Browser |
+| Bottom sheet (700px, bubble tap) | Shows "~$3,839/mo · 3 bed" | Browser |
+| Compare tray | Names only without a budget; "Pelham · ~$9,005/mo" with one | Browser |
+| `/saved/compare` | Same-metro pair shows the monthly cost and the basis "20% down" (checked 2026-11-12) | Browser |
+| 375px sheet and list | No horizontal overflow; cost line 2 lines (was 3), no-cost line 2 lines (was 4) | Browser |
+| 375px control sizes | Bedroom chips 28px high, 31 to 41px wide; both inputs 40px | Browser, bounding boxes |
+| Profile, signed out | "Not set yet. Bedrooms, down payment and your monthly cap are set together in the Explorer's filters" with a link | Browser |
+| Different-metro compare pairs, signed-in save of a list of sizes or a blank down payment, a real phone | Not checked | No account or device |
+
+### Per-rule results
+
+| Rule | Result | Evidence |
+|---|---|---|
+| 1. One primary action per state | PASS | Expanded row: "View full breakdown" first, Zillow link below and quieter; no Zillow link on rows. |
+| 2. One home per action | PASS (owner-decided) | All three settings live only in the filter sheet; the profile shows a read-only note with a link; Clear all resets all three. |
+| 3. Controls follow selection | PASS (owner-decided)* | Controls are visible before a choice by owner decision; nothing is pre-selected or pre-filled. |
+| 4. Quiet by default | PASS | Fresh visitor sees no cost, link, explainer or suggestion anywhere (list, sheet, panels, tray). |
+| 5. Start from a suggestion | PASS* | Down payment starts at a stated 20%; "Typical place" cap appears once a size is chosen; "Your current cost" and "30% of your income" appear with a profile. |
+| 6. Search finds, panels edit | PASS | Budget is edited only in the filter sheet. |
+| A. Say what a number means | PASS | Basis in the explainer bar and on the compare page; tooltip on every cost line. |
+| B. No silent gaps | PASS | 1,334 + 142 = 1,476; the tray says "no cost"; the last-chip tap now explains itself. |
+
+### Findings (not rule FAILs)
+
+| ID | Finding | Smallest fix |
+|---|---|---|
+| G5 | At 375px the bedroom chips are 28px high and 31 to 41px wide, below the 40px touch control the inputs use. Every chip in the filter sheet shares this size, so it is a sheet-wide issue, not specific to the budget. | Raise the sheet's chip height to the touch token at phone width. |
+| G6 | In the compare tray a place hidden by the current search shows its raw key (for example "Larchmont|Westchester|NY") and no cost. Existing behavior, not new. | Look the name up in the full place list, not the filtered one. |
+
+### Level
+
+Level 1 candidate. All eight rules pass and no FAIL is open. Not certified: the same session built and graded these features, two rows rest on owner decisions, and signed-in saving and a real phone were not checked.
+
+### Verification statement
+
+Rendered in a browser: every row in the table above marked as browser. Nothing was changed by this re-audit except this document.
+
+### Fix log, 2026-11-12 (G5 and G6)
+
+- G5 fixed. At phone width (768px and below) every chip in the filter sheet uses the page's touch chip size (36px, `--hf-chip-h-touch`), including the bedroom chips (were 28px high and 31 to 41px wide). Checked at 375px: all 40 sheet chips at least 36px, no horizontal overflow. Desktop is unchanged (28px).
+- G6 fixed. The compare tray looks a chip's name and cost up in the full place list, so a place hidden by the current search keeps both. Checked: Larchmont added, then a "Pelham" search, tray reads "Larchmont · ~$10,976/mo" and "Pelham · ~$9,005/mo" (the raw key showed before).
+- Open: none from this audit. Not checked: signed-in save, pairs in different metros on the compare page, a real phone. Same-session build and grading, so Level 1 still needs an independent re-run and the owner's sign-off.
+
+### Fix log, 2026-11-11 (owner approved: rounding, home-type label, quiz question)
+
+- Row cost shows to the nearest $100 (it is a ZIP-median estimate, so no false precision). Checked in a browser: all 1,253 row costs are multiples of $100.
+- The explainer bar and the filter sheet say the cost is a single-family and condo mix, not tied to the housing type chips.
+- The quiz asks bedrooms and a monthly cap only when the visitor said price matters ("best value" or "pay more for the right place"); the answers set the same budget the filter sheet edits (one bedroom count, the cap; the down payment stays as it was, default 20%). Checked by running the quiz's own result function: both questions show only for those two answers, and the payload carries the bedrooms and cap (null otherwise). Not checked: the two quiz screens rendered visually, and the signed-in quiz-to-profile save.
+- The owner also asked whether Archetype should be renamed Status signal and removed as a sort; not changed, waiting for the owner's decision.

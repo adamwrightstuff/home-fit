@@ -29,7 +29,7 @@ from scripts.catalog.apply_preference_filters import (
     PRIORITY_TO_NUMERIC,
 )
 
-NYC_CATALOG = Path("data/nyc_metro_place_catalog_scores_merged.jsonl")
+NYC_CATALOG = Path("data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl")
 
 
 # ---------------------------------------------------------------------------
@@ -243,13 +243,13 @@ def test_passes_political_strong_r_excluded():
 # Hard filter
 # ---------------------------------------------------------------------------
 
-def _make_row(archetype="Affluent", trajectory="Arrived", local_scene="High",
+def _make_row(archetype="Affluent", trajectory="Arrived", local_scene="buzzing",
                lean_2024=0.3, pct_low=0.50) -> dict:
     return {
         "success": True,
         "score": {
             "status_signal_breakdown": {"archetype": archetype, "trajectory": trajectory},
-            "local_scene_bucket": local_scene,
+            "local_scene_level": local_scene,
             "housing_stock": {"pct_low_density": pct_low},
             "livability_pillars": {
                 "political_lean": {"breakdown": {"lean_2024": lean_2024, "label": "lean_d"}},
@@ -263,7 +263,7 @@ def test_passes_all_filters():
     cfg = {
         "archetypes": ["Affluent", "Elite"],
         "trajectories": ["Arrived"],
-        "local_scene": "High",
+        "local_scene": "Buzzing",
         "political_lean": ["lean_d", "moderate"],
         "housing": ["sf_townhouse"],
     }
@@ -286,8 +286,8 @@ def test_fails_trajectory():
 
 
 def test_fails_local_scene():
-    row = _make_row(local_scene="Low")
-    ok, reason = passes_hard_filters(row, {"local_scene": "High"})
+    row = _make_row(local_scene="quiet")
+    ok, reason = passes_hard_filters(row, {"local_scene": "Buzzing"})
     assert not ok
 
 
@@ -304,7 +304,7 @@ def test_fails_housing():
 
 
 def test_empty_filters_pass_everything():
-    row = _make_row(archetype="Struggling", trajectory="Declining", local_scene="Low",
+    row = _make_row(archetype="Struggling", trajectory="Declining", local_scene="quiet",
                     lean_2024=-0.95, pct_low=0.01)
     ok, _ = passes_hard_filters(row, {})
     assert ok
@@ -319,8 +319,8 @@ def test_empty_filters_pass_everything():
 def test_integration_filter_count():
     cfg = {
         "archetypes": ["Elite", "Affluent"],
-        "trajectories": ["Arrived"],
-        "local_scene": "High",
+        "trajectories": ["Stable", "Up-and-Coming"],
+        "local_scene": "Buzzing",
         "political_lean": ["lean_d", "moderate"],
         "housing": ["sf_townhouse"],
         "nb_prefs": ["ocean", "canopy"],
@@ -342,8 +342,8 @@ def test_integration_filter_count():
 @pytest.mark.integration
 @pytest.mark.skipif(not NYC_CATALOG.exists(), reason="NYC catalog not found")
 def test_integration_scores_in_range():
-    cfg = {"archetypes": ["Affluent", "Elite"], "trajectories": ["Arrived"],
-           "local_scene": "High", "nb_prefs": ["ocean", "canopy"],
+    cfg = {"archetypes": ["Affluent", "Elite"], "trajectories": ["Stable", "Up-and-Coming"],
+           "local_scene": "Lively", "nb_prefs": ["ocean", "canopy"],
            "ao_prefs": ["local_parks", "waterfront"]}
     weights = resolve_weights({"community_safety": "High", "social_fabric": "High",
                                "natural_beauty": "Medium", "active_outdoors": "Low"})
@@ -356,8 +356,8 @@ def test_integration_scores_in_range():
 @pytest.mark.integration
 @pytest.mark.skipif(not NYC_CATALOG.exists(), reason="NYC catalog not found")
 def test_integration_ranking_stable():
-    cfg = {"archetypes": ["Affluent", "Elite"], "trajectories": ["Arrived"],
-           "local_scene": "High", "nb_prefs": ["ocean", "canopy"],
+    cfg = {"archetypes": ["Affluent", "Elite"], "trajectories": ["Stable", "Up-and-Coming"],
+           "local_scene": "Lively", "nb_prefs": ["ocean", "canopy"],
            "ao_prefs": ["local_parks", "waterfront"]}
     weights = resolve_weights({"community_safety": "High", "quality_education": "High",
                                "social_fabric": "High", "neighborhood_amenities": "Medium",

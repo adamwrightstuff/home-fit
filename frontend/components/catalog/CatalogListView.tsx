@@ -19,10 +19,12 @@ import { isPillarIndexMode, PILLAR_INDEX_MODES } from '@/lib/catalogMapTypes'
 import { CATALOG_METRO_META, type CatalogMetro } from '@/lib/catalogMetros'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import WhyNotHigher from '@/components/WhyNotHigher'
-import { costGapReason, monthlyCost, zillowSearchUrl, type BudgetFilter } from '@/lib/budgetCost'
+import { bestCost, zillowSearchUrl, type BudgetFilter } from '@/lib/budgetCost'
+import BudgetCostLine from '@/components/catalog/BudgetCostLine'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
+import { SCENE_LABEL } from '@/lib/sceneLevels'
 import AuraBadge from '@/components/catalog/AuraBadge'
 
 function MetroDot({ metro }: { metro: CatalogMetro }) {
@@ -272,33 +274,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                     <div className="text-[0.6rem] text-[var(--hf-text-tertiary)]">
                       {p.catalog.county_borough}, {p.catalog.state_abbr}
                     </div>
-                    {budget && (() => {
-                      const mc = monthlyCost(p.housing_cost, budget)
-                      if (!mc) {
-                        return (
-                          <div className="text-[0.65rem] text-[var(--hf-text-tertiary)]">
-                            No {budget.beds === 5 ? '5+' : budget.beds}-bed cost: {costGapReason(p.housing_cost, budget)}
-                          </div>
-                        )
-                      }
-                      return (
-                        <div
-                          className="text-[0.65rem] font-medium tabular-nums text-[var(--hf-text-secondary)]"
-                          title={`Estimate for a ${budget.beds === 5 ? '5+' : budget.beds}-bedroom home at the ZIP median value of $${Math.round(mc.value).toLocaleString('en-US')}: principal and interest after $${budget.down.toLocaleString('en-US')} down, plus average property tax and insurance.`}
-                        >
-                          ~${(Math.round(mc.total / 100) * 100).toLocaleString('en-US')}/mo · {budget.beds === 5 ? '5+' : budget.beds} bed
-                          {budget.max != null && mc.total > budget.max && (
-                            <>
-                              {' · '}
-                              <span className="font-semibold text-trovamo-score-low">Over budget</span>
-                            </>
-                          )}
-                          {p.catalog.state_abbr === 'CA' && (
-                            <div className="font-normal text-[var(--hf-text-tertiary)]">Tax likely low (California)</div>
-                          )}
-                        </div>
-                      )
-                    })()}
+                    {budget && <BudgetCostLine housingCost={p.housing_cost} stateAbbr={p.catalog.state_abbr} budget={budget} />}
                     {isFilteredOut && (
                       <div className="mt-0.5 flex flex-wrap gap-1">
                         {failReasons.map((r) => (
@@ -345,7 +321,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                         compact
                       />
                       <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
-                      <LocalSceneChip bucket={p.score.local_scene_bucket ?? null} lively={p.score.local_scene_v2?.lively === true} compact />
+                      <LocalSceneChip level={p.score.local_scene_level ?? null} compact />
                       <AuraBadge aura={p.score.aura ?? null} compact />
                       {p.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
                         <span
@@ -397,27 +373,27 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                         </Link>
                       </div>
                       {budget && (() => {
-                        const mc = monthlyCost(p.housing_cost, budget)
-                        if (!mc || (budget.max != null && mc.total > budget.max)) return null
+                        const bc = bestCost(p.housing_cost, budget)
+                        if (!bc || !bc.fits) return null
                         return (
                           <div style={{ padding: '0.5rem 1rem 0' }}>
                             <a
-                              href={zillowSearchUrl(p.catalog.name, p.catalog.state_abbr, budget.beds)}
+                              href={zillowSearchUrl(p.catalog.name, p.catalog.state_abbr, bc.beds)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-[0.7rem] font-medium text-[var(--hf-text-secondary)] underline hover:text-[var(--hf-text-primary)]"
                             >
-                              {budget.beds}+ bed homes on Zillow ↗
+                              {bc.beds}+ bed homes on Zillow ↗
                             </a>
                             <span className="ml-2 text-[0.65rem] text-[var(--hf-text-tertiary)]">Zillow&apos;s filter means that many bedrooms or more.</span>
                           </div>
                         )
                       })()}
-                      {(p.score.local_scene_bucket || p.score.status_signal_breakdown?.llm_summary) && (
+                      {(p.score.local_scene_level || p.score.status_signal_breakdown?.llm_summary) && (
                         <div style={{ padding: '0.75rem 1rem 0' }}>
-                          {p.score.local_scene_bucket && (
+                          {p.score.local_scene_level && (
                             <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--hf-text-tertiary)', display: 'block', marginBottom: '0.25rem' }}>
-                              {p.score.local_scene_bucket === 'High' ? 'Vibrant scene' : p.score.local_scene_bucket === 'Some' ? 'Some scene' : 'Quiet area'}
+                              {SCENE_LABEL[p.score.local_scene_level]}
                             </span>
                           )}
                           {p.score.status_signal_breakdown?.llm_summary && (

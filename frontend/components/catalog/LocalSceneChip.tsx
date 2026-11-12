@@ -1,46 +1,31 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { Wine, Sparkles } from 'lucide-react'
+import { Wine } from 'lucide-react'
 import InfoSheet from '@/components/catalog/InfoSheet'
 import { SCENE_COPY } from '@/lib/catalogInfoCopy'
+import { SCENE_LABEL, isSceneLevel, type SceneLevel } from '@/lib/sceneLevels'
 
-type Bucket = 'High' | 'Some' | 'Low'
-
-const STYLE: Record<Bucket, { bg: string; fg: string; icon: string }> = {
-  High: { bg: '#fef3c7', fg: '#92400e', icon: '#d97706' },
-  Some: { bg: '#f1f5f9', fg: '#334155', icon: '#64748b' },
-  Low:  { bg: '#f8fafc', fg: '#94a3b8', icon: '#cbd5e1' },
-}
-
-const LABEL: Record<Bucket, string> = {
-  High: 'Vibrant Scene',
-  Some: 'Some Scene',
-  Low:  'Quiet Area',
-}
-
-const SCENE_BUCKET_KEY: Record<Bucket, string> = {
-  High: 'High',
-  Some: 'Some',
-  Low:  'Low',
+const STYLE: Record<SceneLevel, { bg: string; fg: string; icon: string }> = {
+  buzzing: { bg: '#fef3c7', fg: '#92400e', icon: '#d97706' },
+  lively: { bg: '#fef9c3', fg: '#854d0e', icon: '#ca8a04' },
+  low_key: { bg: '#f1f5f9', fg: '#334155', icon: '#64748b' },
+  quiet: { bg: '#f8fafc', fg: '#94a3b8', icon: '#cbd5e1' },
 }
 
 export default function LocalSceneChip({
-  bucket,
-  lively = false,
+  level,
   compact = false,
 }: {
-  bucket: string | null | undefined
-  lively?: boolean
+  level: string | null | undefined
   compact?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLButtonElement>(null)
 
-  if (!bucket) return null
-  const style = STYLE[bucket as Bucket]
-  if (!style) return null
-  const copy = SCENE_COPY[SCENE_BUCKET_KEY[bucket as Bucket]]
+  if (!isSceneLevel(level)) return null
+  const style = STYLE[level]
+  const copy = SCENE_COPY[level]
 
   return (
     <>
@@ -63,27 +48,9 @@ export default function LocalSceneChip({
       >
         <Wine size={compact ? 10 : 13} style={{ flexShrink: 0, color: style.icon }} />
         <span style={{ fontSize: compact ? 11 : 13, fontWeight: 500, color: compact ? '#475569' : style.fg }}>
-          {LABEL[bucket as Bucket]}
+          {SCENE_LABEL[level]}
         </span>
       </button>
-      {lively && (
-        <span
-          title="Lively: a high share of independent culture and hangout venues compared with places of similar density."
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: compact ? 4 : 5,
-            height: compact ? 20 : 28,
-            padding: compact ? '0 7px' : '0 10px',
-            borderRadius: 99,
-            background: compact ? '#f1f5f9' : '#ecfdf5',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <Sparkles size={compact ? 10 : 13} style={{ flexShrink: 0, color: '#059669' }} />
-          <span style={{ fontSize: compact ? 11 : 13, fontWeight: 500, color: compact ? '#475569' : '#065f46' }}>Lively</span>
-        </span>
-      )}
       {open && copy && (
         <InfoSheet copy={copy} anchorRef={ref} onClose={() => setOpen(false)} />
       )}

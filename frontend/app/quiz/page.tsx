@@ -29,13 +29,13 @@ export default function QuizPage() {
           filterHousingType: payload.filterHousingType,
           filterTenure: payload.filterTenure,
           ...(payload.workZoneId ? { workZoneId: payload.workZoneId } : {}),
-          filterLocalScene: payload.filterLocalScene ?? 'all',
+          filterLocalScene: payload.filterLocalScene ?? [],
           filterPoliticalLean: payload.filterPoliticalLean,
           filterTrajectory: payload.filterTrajectory,
           filterCommuteMax: payload.filterCommuteMax,
           climatePrefs: payload.climatePrefs,
           ...(payload.homeBudget
-            ? { filterBudget: { beds: payload.homeBudget.beds, max: payload.homeBudget.max, down: opts.filters?.filterBudget?.down ?? DEFAULT_BUDGET.down, chosen: true } }
+            ? { filterBudget: { beds: [payload.homeBudget.beds], max: payload.homeBudget.max, down: opts.filters?.filterBudget?.down ?? DEFAULT_BUDGET.down, chosen: true } }
             : {}),
         },
         dealbreakers: payload.dealbreakers,
@@ -43,9 +43,9 @@ export default function QuizPage() {
     } catch { /* ignore */ }
     // Signed in: keep the account profile in step so its saved bedrooms do not override the quiz answer.
     if (payload.homeBudget) {
-      let down: number = DEFAULT_BUDGET.down
+      let down: number | null = DEFAULT_BUDGET.down
       try { down = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters?.filterBudget?.down ?? down } catch { /* ignore */ }
-      void saveProfile({ home_budget: { beds: payload.homeBudget.beds, down } })
+      void saveProfile({ home_budget: { beds: [payload.homeBudget.beds], down } })
     }
     router.push('/catalog')
   }

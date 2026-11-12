@@ -8,12 +8,11 @@ within the place's amenities radius (1,200 or 1,500 m):
   hangout_share    cafes, bars, galleries, bookstores, record stores and theaters as a percent of all those venues
   hangouts_5min    cafes and bars within 400 m of the pin
 Reading: each share is ranked among catalog places of similar density (activity per acre, five bands; owner decision 2026-11-05), and combined is the mean of the two ranks;
-lively is true when combined is in the top quarter of its density band and there are at least MIN_VENUES venues. The flag only drives the
-Explorer switch; the place page shows the facts. Old local_scene_* fields are left untouched (Aura, twin finder and vibe
+the ladder level (scene_level below) turns the venue count and that reading into four levels. Old local_scene_* fields are left untouched (Aura, twin finder and vibe
 matching still read them).
 
 Geography: places measured as a town or city (Census place or county subdivision with a boundary within a 6 km search circle) use every venue inside the boundary; neighborhoods and larger places use the pin circle. Each kind is ranked only against its own kind. Known limits: the pin may sit off a town's main street (Rye, Hastings-on-Hudson), counts depend on OpenStreetMap coverage,
-MIN_VENUES (15, carried over from the old formula) and the top-quarter cut are unsourced product choices, and the combination
+MIN_VENUES (15, carried over from the old formula) and the level cuts are unsourced product choices, and the combination
 was found on the same places it was checked against (hold-out: 6 of 6 pairs, n=5).
 """
 
@@ -26,13 +25,11 @@ HANGOUT_TYPES = frozenset({"cafe", "bar", "gallery", "bookstore", "records", "th
 VENUE_TYPES = frozenset({"cafe", "bar", "restaurant", "gallery", "bookstore", "records", "theater"})
 WALK_5MIN_M = 400
 MIN_VENUES = 15
-LIVELY_PERCENTILE = 75.0
 METHOD = "culture_hangout_mix_v1"
 # Activity tiers (the tag users see, owner decision 2026-11-06): independent named venues of the seven types within
 # ACTIVITY_RADIUS_M of the pin. Cuts are the catalog's median (13) and 85th percentile (71) on that date: unsourced.
 ACTIVITY_RADIUS_M = 1200
-QUIET_BELOW = 13
-VIBRANT_FROM = 71
+TOP_VOLUME_FROM = 71
 
 
 def _has_brand(v: Dict[str, Any]) -> bool:
@@ -93,16 +90,16 @@ def density_bands(densities: List[Optional[float]], n_bands: int = 5) -> List[Op
 
 def apply_reading(facts: List[Dict[str, Any]], densities: Optional[List[Optional[float]]] = None) -> None:
     """
-    Add combined and lively to each place's facts, in place. Each share is ranked among places in the same density band
-    (activity per acre quintile; places with no density are ranked across all places), the two ranks are averaged, and that
-    average is ranked again within the band: lively is the top quarter of its band with at least MIN_VENUES venues.
+    Add combined (the mix reading) and density_band to each place's facts, in place. Each share is ranked among places in the
+    same density band (activity per acre quintile; places with no density get no reading) and the same kind of geography
+    (town or pin circle), and the two ranks are averaged.
     """
     n = len(facts)
     bands = density_bands(densities) if densities is not None else [0] * n  # no densities given at all: one band
     groups: Dict[Any, List[int]] = {}
     for i, b in enumerate(bands):
         # towns (boundary measure) and neighborhoods (pin circle) are different units: each is ranked only against its own kind
-        facts[i].update({"combined": None, "density_band": None, "lively": False})
+        facts[i].update({"combined": None, "density_band": None})
         if b is None:
             continue  # no density figure: no reading (ranking it against a handful of other density-less places gave Mar Vista 80)
         groups.setdefault((facts[i].get("geography", "pin_circle"), b), []).append(i)
@@ -111,11 +108,9 @@ def apply_reading(facts: List[Dict[str, Any]], densities: Optional[List[Optional
         cs = percentile_ranks([f["culture_share"] for f in sub])
         hs = percentile_ranks([f["hangout_share"] for f in sub])
         combined = [(a + c) / 2 if a is not None and c is not None else None for a, c in zip(cs, hs)]
-        cp = percentile_ranks(combined)
-        for f, c, p in zip(sub, combined, cp):
+        for f, c in zip(sub, combined):
             f["combined"] = round(c, 1) if c is not None else None
             f["density_band"] = b + 1
-            f["lively"] = bool(p is not None and p >= LIVELY_PERCENTILE and not f["few_venues"])
 
 
 def boundary_facts(venues: Iterable[Dict[str, Any]], area_km2: float) -> Dict[str, Any]:
@@ -159,28 +154,35 @@ def independent_venue_count(venues: Iterable[Dict[str, Any]], radius_m: int = AC
     )
 
 
-def activity_bucket(count: Optional[int]) -> Optional[str]:
-    """High (Vibrant), Some or Low (Quiet) from the independent venue count; None when the place has no venue read."""
-    if count is None:
+# Ladder (docs/LOCAL_SCENE_LADDER_DPV2.md, built 2026-11-11). Four levels from the mix reading and a volume floor:
+#   quiet    fewer than MIN_VENUES named venues in the measured area
+#   low_key  enough venues, mix reading below the cut for its size (restaurant-heavy compared with similar places), or no density figure
+#   lively   a strong mix (at least LEVEL_MIX_CUT) with fewer than TOP_VOLUME_FROM independent venues at the pin, OR a large place
+#            (TOP_VOLUME_FROM or more) with an average-or-better mix (at least LARGE_PLACE_MIX_CUT, under LEVEL_MIX_CUT)
+#   buzzing  a strong mix (at least LEVEL_MIX_CUT) with TOP_VOLUME_FROM or more independent venues at the pin
+# The large-place Lively tier (2026-11-12) makes a dense place move one level at a time when its mix wobbles; without it a dense place
+# near LEVEL_MIX_CUT jumped from Flat to Buzzing and skipped Lively (docs/LOCAL_SCENE_LADDER_DPV2.md section 5). The mix reading is a
+# percentile within a density band, so 50 is the median place for its density; that is why LARGE_PLACE_MIX_CUT is 50.
+# None when the place has no venue read or no named venue in the measured area: no data, never Quiet (principle 9).
+# LEVEL_MIX_CUT was chosen on the owner's labels (in-sample, unsourced); both cuts are judgments.
+LEVEL_MIX_CUT = 55.0
+LARGE_PLACE_MIX_CUT = 50.0
+LEVELS = ("quiet", "low_key", "lively", "buzzing")
+
+
+def scene_level(facts: Dict[str, Any]) -> Optional[str]:
+    """Ladder level from a place's stored local_scene_v2 facts (venues_total, combined, independent_venues_1200m)."""
+    total, n = facts.get("venues_total"), facts.get("independent_venues_1200m")
+    if not total or n is None:
         return None
-    return "High" if count >= VIBRANT_FROM else "Low" if count < QUIET_BELOW else "Some"
-
-
-# 0-100 Local Scene score (replaces the retired name-guessing score): a piecewise-linear scale on the independent venue count,
-# anchored so the tier cuts land on the thirds: Quiet cut (13) = 33.3, Vibrant cut (71) = 66.7, and 100 at twice the Vibrant cut.
-# Used by twin matching. The anchors are unsourced product choices, like the cuts.
-SCORE_CAP_COUNT = 2 * VIBRANT_FROM
-
-
-def scene_score(count: Optional[int]) -> Optional[float]:
-    """0-100 from the independent venue count; None when the place has no venue read."""
-    if count is None:
-        return None
-    c = max(0, count)
-    if c < QUIET_BELOW:
-        v = 100.0 / 3 * c / QUIET_BELOW
-    elif c < VIBRANT_FROM:
-        v = 100.0 / 3 + 100.0 / 3 * (c - QUIET_BELOW) / (VIBRANT_FROM - QUIET_BELOW)
-    else:
-        v = 200.0 / 3 + 100.0 / 3 * min(c - VIBRANT_FROM, SCORE_CAP_COUNT - VIBRANT_FROM) / (SCORE_CAP_COUNT - VIBRANT_FROM)
-    return round(v, 1)
+    if total < MIN_VENUES:
+        return "quiet"
+    combined = facts.get("combined")
+    if combined is None:
+        return "low_key"
+    large = n >= TOP_VOLUME_FROM
+    if combined >= LEVEL_MIX_CUT:
+        return "buzzing" if large else "lively"
+    if large and combined >= LARGE_PLACE_MIX_CUT:
+        return "lively"
+    return "low_key"

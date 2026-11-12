@@ -1225,3 +1225,11 @@ body:has(.hf-catalog-root) .hf-api-version-footer {
   color: var(--tr-muted);
 }
 
+
+/* Filter sheet chips: at phone width they use the touch chip size (the other touch chips on the page already do). */
+@media (max-width: 768px) {
+  .hf-sheet-chip {
+    min-height: var(--hf-chip-h-touch);
+    min-width: var(--hf-chip-h-touch);
+  }
+}

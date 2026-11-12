@@ -930,7 +930,7 @@ function renderResults() {
   const sceneryNote = sceneryPicks.map(p => sceneryLabels[p]).filter(Boolean).join(' · ')
   const housingLabels = { single_family: 'Single-family', rowhouse: 'Rowhouse/Townhouse', condo: 'Apartment/Condo' }
   const housingNote = housingPicks.map(p => housingLabels[p]).filter(Boolean).join(' or ')
-  const sceneNote = { real: 'Local scene: high', some: 'Local scene: some or better' }[answers.scene] || ''
+  const sceneNote = { real: 'Local scene: Lively or Buzzing', some: 'Local scene: Flat or better' }[answers.scene] || ''
   const budgetNote = shown('bedrooms')
     ? `${answers.bedrooms === '5' ? '5+' : answers.bedrooms} bedrooms` + (/^\d+$/.test(ans('budget_cap') || '') ? `, up to $${Number(answers.budget_cap).toLocaleString('en-US')}/mo` : '')
     : ''
@@ -970,7 +970,7 @@ function applyAndClose() {
   if (housingPicks.includes('condo')) filterHousingType.push('apartment')
 
   const filterTenure = []
-  const filterLocalScene = { real: 'High', some: 'Some' }[answers.scene] || 'all'
+  const filterLocalScene = { real: ['lively', 'buzzing'], some: ['low_key', 'lively', 'buzzing'] }[answers.scene] || []
   const workZoneId = shown('work_hub') && WORK_HUBS[answers.work_metro].some(h => h.id === answers.work_hub) ? answers.work_hub : null
   // Commute only counts toward the score once a hub is chosen (the Explorer ignores it otherwise)
   // How much commute matters follows the max-commute answer: a tight cap means it matters most

@@ -11,17 +11,27 @@ export interface HousingCost {
   tax: number | null
 }
 
+export type Beds = 1 | 2 | 3 | 4 | 5
+export const ALL_BEDS: Beds[] = [1, 2, 3, 4, 5]
+
 export interface BudgetFilter {
-  beds: 1 | 2 | 3 | 4 | 5
+  /** Bedroom counts the visitor would take, ascending (5 means 5 or more). With a cap, a place passes if any of them fits. */
+  beds: Beds[]
   /** Maximum all-in monthly cost; null means no budget filter. */
   max: number | null
-  /** Cash down payment. */
-  down: number
+  /** Cash down payment; null means the suggested 20% of each home's price (the visitor has not typed an amount). */
+  down: number | null
   /** True once the visitor has picked a bedroom count, a cap or a down payment. Until then no cost is shown anywhere. */
   chosen: boolean
 }
 
-export const DEFAULT_BUDGET: BudgetFilter = { beds: 4, max: null, down: 600000, chosen: false }
+export const DOWN_SHARE_DEFAULT = 0.2
+export const DEFAULT_BUDGET: BudgetFilter = { beds: [4], max: null, down: null, chosen: false }
+
+/** "20% down" or "$250,000 down" */
+export function downLabel(down: number | null): string {
+  return down == null ? `${Math.round(DOWN_SHARE_DEFAULT * 100)}% down` : `$${down.toLocaleString('en-US')} down`
+}
 export const MORTGAGE_RATE = 0.07
 export const INSURANCE_RATE = 0.004
 
@@ -33,17 +43,88 @@ export interface MonthlyCost {
   total: number
 }
 
-export function monthlyCost(hc: HousingCost | null | undefined, budget: BudgetFilter): MonthlyCost | null {
+/** Reads a saved bedroom value: a list of counts, or a single count saved before multi-select. */
+export function normalizeBeds(v: unknown): Beds[] {
+  const raw = Array.isArray(v) ? v : [v]
+  const out = ALL_BEDS.filter(b => raw.some(x => Number(x) === b))
+  return out.length ? out : DEFAULT_BUDGET.beds
+}
+
+export const bedLabel = (n: number): string => (n >= 5 ? '5+' : String(n))
+
+/** "4", "3 or 4", "3, 4 or 5+" */
+export function bedsLabel(beds: Beds[]): string {
+  const l = beds.map(bedLabel)
+  return l.length <= 1 ? (l[0] ?? '') : `${l.slice(0, -1).join(', ')} or ${l[l.length - 1]}`
+}
+
+/**
+ * Taps a bedroom chip: the first tap chooses it, later taps add or remove it. Removing the last chip clears the budget back to the
+ * unchosen state when nothing else was set (no cap, no typed down payment); with a cap or down payment set the last chip stays, and
+ * the same object comes back so the caller can tell and say why.
+ */
+export function toggleBed(budget: BudgetFilter, b: Beds): BudgetFilter {
+  if (!budget.chosen) return { ...budget, beds: [b], chosen: true }
+  if (budget.beds.includes(b)) {
+    if (budget.beds.length > 1) return { ...budget, beds: budget.beds.filter(x => x !== b) }
+    if (budget.max == null && budget.down == null) return { ...budget, beds: DEFAULT_BUDGET.beds, chosen: false }
+    return budget
+  }
+  return { ...budget, beds: ALL_BEDS.filter(x => x === b || budget.beds.includes(x)) }
+}
+
+function costForBeds(hc: HousingCost | null | undefined, down: number | null, beds: Beds): MonthlyCost | null {
   if (!hc || hc.tax == null) return null
-  const value = hc.v[budget.beds - 1]
+  const value = hc.v[beds - 1]
   if (value == null) return null
-  const loan = Math.max(value - budget.down, 0)
+  const loan = Math.max(value - (down ?? DOWN_SHARE_DEFAULT * value), 0)
   const r = MORTGAGE_RATE / 12
   const n = 360
   const principalInterest = loan > 0 ? (loan * r) / (1 - Math.pow(1 + r, -n)) : 0
   const tax = hc.tax / 12
   const insurance = (value * INSURANCE_RATE) / 12
   return { value, principalInterest, tax, insurance, total: principalInterest + tax + insurance }
+}
+
+export interface BestCost {
+  /** The bedroom count this place is shown at. */
+  beds: Beds
+  cost: MonthlyCost
+  /** False when a cap is set and none of the chosen sizes that have a price fits under it. */
+  fits: boolean
+  /** True when at least one chosen size has no price here, so a size we cannot price might still fit. */
+  unknownSize: boolean
+  /** Lowest and highest total across the chosen sizes that have data, and the smallest and largest of those sizes. */
+  low: number
+  high: number
+  minBeds: Beds
+  maxBeds: Beds
+}
+
+/**
+ * Cost of a place across the chosen bedroom counts. With a cap, the biggest chosen size that fits under it (so a 5-bed for the
+ * price of a 4-bed wins); if none fits, the cheapest. With no cap, the smallest chosen size, and low to high shows the range.
+ * Null when no chosen size has a price (or the ZIP has no tax figure).
+ */
+export function bestCost(hc: HousingCost | null | undefined, budget: BudgetFilter): BestCost | null {
+  const options = budget.beds.map(n => ({ n, c: costForBeds(hc, budget.down, n) })).filter((o): o is { n: Beds; c: MonthlyCost } => o.c != null)
+  if (options.length === 0) return null
+  const totals = options.map(o => o.c.total)
+  const low = Math.min(...totals)
+  const high = Math.max(...totals)
+  const minBeds = options[0].n
+  const maxBeds = options[options.length - 1].n
+  let pick = options[0]
+  let fits = true
+  if (budget.max != null) {
+    const fitting = options.filter(o => o.c.total <= budget.max!)
+    if (fitting.length > 0) pick = fitting[fitting.length - 1]
+    else {
+      pick = options.reduce((a, b) => (b.c.total < a.c.total ? b : a))
+      fits = false
+    }
+  }
+  return { beds: pick.n, cost: pick.c, fits, unknownSize: options.length < budget.beds.length, low, high, minBeds, maxBeds }
 }
 
 /**
@@ -55,16 +136,34 @@ export function zillowSearchUrl(name: string, stateAbbr: string, beds: number): 
   return `https://www.zillow.com/homes/for_sale/${encodeURIComponent(city)},-${encodeURIComponent(stateAbbr)}/${beds}-_beds/`
 }
 
-/** Why monthlyCost is null, in words for the card (so a missing number is never a blank). */
+/** One short phrase for a narrow spot such as the compare tray: "~$4,100/mo", "from ~$4,100/mo" or "no cost". */
+export function costSummary(hc: HousingCost | null | undefined, budget: BudgetFilter): string {
+  const bc = bestCost(hc, budget)
+  if (!bc) return 'no cost'
+  const range = budget.max == null && bc.minBeds !== bc.maxBeds
+  return `${range ? 'from ' : ''}~$${Math.round(range ? bc.low : bc.cost.total).toLocaleString('en-US')}/mo`
+}
+
+/** Short form of costGapReason for a narrow list column; the full reason goes in the tooltip. */
+export function costGapShort(hc: HousingCost | null | undefined, budget: BudgetFilter): string {
+  if (!hc) return 'no ZIP price data'
+  if (budget.beds.every(b => hc.v[b - 1] == null)) return 'too few sales'
+  return 'no ZIP tax data'
+}
+
+/** Why bestCost is null, in words for the card (so a missing number is never a blank). */
 export function costGapReason(hc: HousingCost | null | undefined, budget: BudgetFilter): string {
   if (!hc) return 'no price data for this ZIP'
-  if (hc.v[budget.beds - 1] == null) return 'Zillow has too few sales of this size in the ZIP'
+  if (budget.beds.every(b => hc.v[b - 1] == null)) return 'Zillow has too few sales of this size in the ZIP'
   return 'no property tax data for this ZIP'
 }
 
-/** True when the place has a cost and it is over the budget cap. Places with no data are not excluded. */
+/**
+ * True only when every chosen size has a price and none is under the cap. A place with no price for one of the chosen sizes is kept
+ * (that size might fit), so adding a bedroom count never removes a place.
+ */
 export function overBudget(hc: HousingCost | null | undefined, budget: BudgetFilter): boolean {
   if (budget.max == null) return false
-  const c = monthlyCost(hc, budget)
-  return c != null && c.total > budget.max
+  const c = bestCost(hc, budget)
+  return c != null && !c.fits && !c.unknownSize
 }

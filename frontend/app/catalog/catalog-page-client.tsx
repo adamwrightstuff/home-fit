@@ -1,6 +1,7 @@
 'use client'
 
-import { DEFAULT_BUDGET, overBudget, type BudgetFilter } from '@/lib/budgetCost'
+import { DEFAULT_BUDGET, bedsLabel, bestCost, downLabel, normalizeBeds, overBudget, type BudgetFilter } from '@/lib/budgetCost'
+import { normalizeSceneFilter, sceneFilterExcludes, type SceneFilter } from '@/lib/sceneLevels'
 import { neighborhoodHref } from '@/lib/neighborhoodPriorities'
 import { placeSlug } from '@/lib/neighborhoodSlug'
 import { zeroMetroCounts, type CatalogMetro } from '@/lib/catalogMetros'
@@ -51,7 +52,7 @@ import QuizModal, { type QuizPayload } from '@/components/QuizModal'
 const INDEXES: { id: 'homefit' | 'happiness' | 'status'; label: string; tooltip: string }[] = [
   { id: 'homefit', label: 'HomeFit', tooltip: HOMEFIT_COPY.tooltip },
   { id: 'happiness', label: 'Happiness', tooltip: HAPPINESS_INDEX_COPY.tooltip },
-  { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
+  { id: 'status', label: 'Status signal', tooltip: STATUS_SIGNAL_COPY.tooltip },
 ]
 
 /** One-line basis for the score being shown, so a number is never read without knowing what it is. */
@@ -63,7 +64,7 @@ function scoreBasisLine(mode: CatalogMapIndexMode, priorities: PillarPriorities)
       : 'HomeFit: average of the 12 pillars, equal weights. Adjust priorities to personalize.'
   }
   if (mode === 'happiness') return 'Happiness: ' + HAPPINESS_INDEX_COPY.tooltip
-  if (mode === 'status') return 'Archetype: social character from income, education, occupation and housing data.'
+  if (mode === 'status') return 'Status signal: social character from income, education, occupation and housing data.'
   const meta = PILLAR_META[mode as PillarKey]
   return meta ? `${meta.name}: this pillar's own 0 to 100 score, not your weighted total.` : ''
 }
@@ -190,11 +191,10 @@ export default function CatalogPageClient({
   const [filterBudget, setFilterBudget] = useState<BudgetFilter>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters?.filterBudget
-      const beds = Number(f?.beds)
       return {
-        beds: (beds >= 1 && beds <= 5 ? Math.round(beds) : DEFAULT_BUDGET.beds) as BudgetFilter['beds'],
+        beds: normalizeBeds(f?.beds),
         max: typeof f?.max === 'number' && f.max > 0 ? f.max : null,
-        down: typeof f?.down === 'number' && f.down >= 0 ? f.down : DEFAULT_BUDGET.down,
+        down: f?.chosen === true && typeof f?.down === 'number' && f.down >= 0 ? f.down : DEFAULT_BUDGET.down,
         chosen: f?.chosen === true || (typeof f?.max === 'number' && f.max > 0),
       }
     } catch { return DEFAULT_BUDGET }
@@ -203,7 +203,7 @@ export default function CatalogPageClient({
   // profile so it is the same value the profile page shows and the next load does not undo it.
   const budgetSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const handleBudgetChange = useCallback((next: BudgetFilter) => {
-    if (user && (next.beds !== filterBudget.beds || next.down !== filterBudget.down)) {
+    if (user && (next.beds.join() !== filterBudget.beds.join() || next.down !== filterBudget.down)) {
       // Debounced so typing a down payment saves once, not per keystroke.
       if (budgetSaveTimer.current) clearTimeout(budgetSaveTimer.current)
       budgetSaveTimer.current = setTimeout(() => {
@@ -220,12 +220,12 @@ export default function CatalogPageClient({
   })
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter' | 'both'>('any')
   const [filterSchoolLevels, setFilterSchoolLevels] = useState<SchoolLevel[]>(ALL_SCHOOL_LEVELS)
-  const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High' | 'Lively'>(() => {
+  const [filterLocalScene, setFilterLocalScene] = useState<SceneFilter>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
       const v = f?.filterLocalScene
-      return v === 'Some' || v === 'High' || v === 'Lively' ? v : 'all'
-    } catch { return 'all' }
+      return normalizeSceneFilter(v)
+    } catch { return [] }
   })
   const [filterAura, setFilterAura] = useState<boolean>(() => {
     try {
@@ -480,9 +480,9 @@ export default function CatalogPageClient({
           if (f.filterBudget && typeof f.filterBudget === 'object') {
             const b = f.filterBudget
             setFilterBudget({
-              beds: (b.beds >= 1 && b.beds <= 5 ? Math.round(b.beds) : DEFAULT_BUDGET.beds) as BudgetFilter['beds'],
+              beds: normalizeBeds(b.beds),
               max: typeof b.max === 'number' && b.max > 0 ? b.max : null,
-              down: typeof b.down === 'number' && b.down >= 0 ? b.down : DEFAULT_BUDGET.down,
+              down: b.chosen === true && typeof b.down === 'number' && b.down >= 0 ? b.down : DEFAULT_BUDGET.down,
               chosen: b.chosen === true || (typeof b.max === 'number' && b.max > 0),
             })
           }
@@ -492,7 +492,7 @@ export default function CatalogPageClient({
             const lv = f.filterSchoolLevels.filter((l: string) => (ALL_SCHOOL_LEVELS as string[]).includes(l)) as SchoolLevel[]
             if (lv.length) setFilterSchoolLevels(lv)
           }
-          if (typeof f.filterLocalScene === 'string') setFilterLocalScene(f.filterLocalScene)
+          if (f.filterLocalScene !== undefined) setFilterLocalScene(normalizeSceneFilter(f.filterLocalScene))
           if (typeof f.filterAura === 'boolean') setFilterAura(f.filterAura)
           if (typeof f.filterCommuteMax === 'string') setFilterCommuteMax(f.filterCommuteMax)
           if (f.climatePrefs && typeof f.climatePrefs === 'object') setClimatePrefs(normalizeClimatePrefs(f.climatePrefs))
@@ -510,7 +510,7 @@ export default function CatalogPageClient({
     fetchProfile().then((p) => {
       if (cancelled || !p) return
       if (p.household_income != null) setHouseholdIncome(p.household_income)
-      if (p.home_budget) setFilterBudget((b) => ({ ...b, beds: p.home_budget!.beds, down: p.home_budget!.down, chosen: true }))
+      if (p.home_budget) setFilterBudget((b) => ({ ...b, beds: normalizeBeds(p.home_budget!.beds), down: p.home_budget!.down, chosen: true }))
       if (p.current_home) {
         setCurrentHomeMatch(p.current_home.name)
         setCurrentHomeMonthlyCost(p.current_home.monthly_cost)
@@ -703,13 +703,27 @@ export default function CatalogPageClient({
       commuteMode,
       officeDays,
       people,
+      budget: filterBudget.chosen ? filterBudget : null,
     })
-  }, [priorities, filterSchoolType, filterSchoolLevels, filterNbTypes, filterAoTypes, householdIncome, currentHomeMatch, currentHomeMonthlyCost, workZoneId, commuteMode, officeDays, people])
+  }, [priorities, filterSchoolType, filterSchoolLevels, filterNbTypes, filterAoTypes, householdIncome, currentHomeMatch, currentHomeMonthlyCost, workZoneId, commuteMode, officeDays, people, filterBudget])
 
   const effectivePriorities = useMemo(
     () => priorities,
     [priorities],
   )
+
+  // A starting cap for anyone (Rule 5): what the median place costs at the chosen bedroom counts and down payment.
+  const typicalMonthlyCost = useMemo(() => {
+    if (!filterBudget.chosen) return null
+    const totals: number[] = []
+    for (const p of adjustedPlaces) {
+      const bc = bestCost(p.housing_cost, { ...filterBudget, max: null })
+      if (bc) totals.push(bc.cost.total)
+    }
+    if (totals.length < 20) return null
+    totals.sort((a, b) => a - b)
+    return Math.round(totals[Math.floor(totals.length / 2)] / 100) * 100
+  }, [adjustedPlaces, filterBudget])
 
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
@@ -741,9 +755,7 @@ export default function CatalogPageClient({
         })
         if (!matchesAny) return false
       }
-      if (filterLocalScene === 'Some' && p.score.local_scene_bucket !== 'High' && p.score.local_scene_bucket !== 'Some') return false
-      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false
-      if (filterLocalScene === 'Lively' && p.score.local_scene_v2?.lively !== true) return false
+      if (sceneFilterExcludes(p.score.local_scene_level, filterLocalScene)) return false
       if (filterAura && p.score.aura !== true) return false
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
@@ -887,7 +899,7 @@ export default function CatalogPageClient({
   // showing the count before mount made the Filters badge differ between server and client HTML.
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBudget.chosen ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
+  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBudget.chosen ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene.length > 0 ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
   // Priorities badge: pillars moved off the default level, plus Hide choices (which live in Priorities).
   const priorityBadgeCount = !mounted ? 0 : PILLAR_ORDER.filter((k) => priorities[k as keyof PillarPriorities] !== DEFAULT_PRIORITIES[k as keyof PillarPriorities]).length + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
   // Places blocked by regular filters — always shown in "Show excluded"
@@ -914,9 +926,7 @@ export default function CatalogPageClient({
         const tr = normalizeTrajectory(p.score.status_signal_breakdown?.trajectory)
         if (tr && tr !== filterTrajectory) r.push('Trajectory')
       }
-      if (filterLocalScene === 'Some' && p.score.local_scene_bucket !== 'High' && p.score.local_scene_bucket !== 'Some') r.push('Local scene')
-      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
-      if (filterLocalScene === 'Lively' && p.score.local_scene_v2?.lively !== true) r.push('Local scene')
+      if (sceneFilterExcludes(p.score.local_scene_level, filterLocalScene)) r.push('Local scene')
       if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
@@ -1034,9 +1044,7 @@ export default function CatalogPageClient({
         })
         if (!matchesAny) r.push('Political lean')
       }
-      if (filterLocalScene === 'Some' && p.score.local_scene_bucket !== 'High' && p.score.local_scene_bucket !== 'Some') r.push('Local scene')
-      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
-      if (filterLocalScene === 'Lively' && p.score.local_scene_v2?.lively !== true) r.push('Local scene')
+      if (sceneFilterExcludes(p.score.local_scene_level, filterLocalScene)) r.push('Local scene')
       if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
@@ -1288,7 +1296,7 @@ export default function CatalogPageClient({
           setFilterNbTypes(payload.filterNbTypes)
           setFilterHousingType(payload.filterHousingType)
           setFilterTenure(payload.filterTenure)
-          setFilterLocalScene(payload.filterLocalScene ?? 'all')
+          setFilterLocalScene(normalizeSceneFilter(payload.filterLocalScene))
           setFilterPoliticalLean(payload.filterPoliticalLean)
           setFilterTrajectory(normalizeTrajectory(payload.filterTrajectory) ?? 'all')
           setFilterCommuteMax((payload.filterCommuteMax || 'all') as typeof filterCommuteMax)
@@ -1299,7 +1307,7 @@ export default function CatalogPageClient({
           if (payload.officeDays) setOfficeDays(payload.officeDays)
           // Bedrooms and cap come from the quiz only when the visitor answered them; the down payment stays as it was
           if (payload.homeBudget) {
-            handleBudgetChange({ beds: payload.homeBudget.beds, max: payload.homeBudget.max, down: filterBudget.down, chosen: true })
+            handleBudgetChange({ beds: [payload.homeBudget.beds], max: payload.homeBudget.max, down: filterBudget.down, chosen: true })
           }
 
           // Dealbreakers: reset the ones the quiz owns, leave any others the user set by hand
@@ -1327,12 +1335,12 @@ export default function CatalogPageClient({
                 ...(payload.workZoneId ? { workZoneId: payload.workZoneId } : {}),
                 ...(payload.commuteMode ? { commuteMode: payload.commuteMode } : {}),
                 ...(payload.officeDays ? { officeDays: payload.officeDays } : {}),
-                filterLocalScene: payload.filterLocalScene ?? 'all',
+                filterLocalScene: normalizeSceneFilter(payload.filterLocalScene),
                 filterPoliticalLean: payload.filterPoliticalLean,
                 filterTrajectory: payload.filterTrajectory,
                 filterCommuteMax: payload.filterCommuteMax,
                 climatePrefs: payload.climatePrefs,
-                ...(payload.homeBudget ? { filterBudget: { beds: payload.homeBudget.beds, max: payload.homeBudget.max, down: filterBudget.down, chosen: true } } : {}),
+                ...(payload.homeBudget ? { filterBudget: { beds: [payload.homeBudget.beds], max: payload.homeBudget.max, down: filterBudget.down, chosen: true } } : {}),
               },
             }))
           } catch { /* ignore */ }
@@ -1751,7 +1759,7 @@ export default function CatalogPageClient({
           {filterBudget.chosen && viewMode === 'list' && (
             <>
               {' '}
-              Monthly cost: a {filterBudget.beds === 5 ? '5+' : filterBudget.beds}-bedroom home (single-family and condo mix) at the ZIP median price, mortgage at 7% after ${filterBudget.down.toLocaleString('en-US')} down, plus property tax and insurance.
+              Monthly cost: a {bedsLabel(filterBudget.beds)}-bedroom home (single-family and condo mix) at the ZIP median price, mortgage at 7% after {downLabel(filterBudget.down)}, plus property tax and insurance.
             </>
           )}
         </p>
@@ -1782,7 +1790,7 @@ export default function CatalogPageClient({
                 className="flex gap-1.5 overflow-x-auto px-3 pb-1 pointer-events-auto"
                 style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
               >
-                {INDEXES.map((x) => {
+                {INDEXES.filter(x => x.id !== 'status').map((x) => {
                   const active = indexMode === x.id && !sortByName
                   const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
                   return (
@@ -1894,6 +1902,7 @@ export default function CatalogPageClient({
                 priorities={priorities}
                 onClose={clearSelection}
                 onFullBreakdown={handleFullBreakdown}
+                budget={filterBudget.chosen ? filterBudget : undefined}
               />
             </div>
           )}
@@ -1994,6 +2003,7 @@ export default function CatalogPageClient({
           onSnapChange={setSnap}
           onClose={clearSelection}
           onFullBreakdown={handleFullBreakdown}
+          budget={filterBudget.chosen ? filterBudget : undefined}
         />
         </div>
       )}
@@ -2085,8 +2095,10 @@ export default function CatalogPageClient({
       />
 
       <CompareTray
+        budget={filterBudget.chosen ? filterBudget : undefined}
         compareIds={compareIds}
         places={gatedPlaces}
+        lookupPlaces={adjustedPlaces}
         onRemove={(key) => setCompareIds((prev) => prev.filter((k) => k !== key))}
         onClear={() => setCompareIds([])}
       />
@@ -2114,6 +2126,7 @@ export default function CatalogPageClient({
         suggestedCaps={[
           ...(currentHomeMonthlyCost ? [{ label: 'Your current cost', value: Math.round(currentHomeMonthlyCost) }] : []),
           ...(householdIncome ? [{ label: '30% of your income', value: Math.round((householdIncome * 0.3) / 12) }] : []),
+          ...(typicalMonthlyCost ? [{ label: 'Typical place', value: typicalMonthlyCost }] : []),
         ]}
         filterTenure={filterTenure}
         onFilterTenureChange={setFilterTenure}

@@ -1,5 +1,7 @@
 # Local scene label sheet for independent raters (fixed 2026-11-08, before any result was looked at)
 
+> **SUPERSEDED 2026-11-11.** The shipped Local Scene is now a four-level ladder: Sleepy, Flat, Lively, Buzzing (stored as quiet, low_key, lively, buzzing). See `docs/LOCAL_SCENE_LADDER_DPV2.md`. This file describes the retired three-tier activity tag (Quiet, Some, Vibrant) and is kept as history. If you are reading it to learn what the app does, it is out of date.
+
 Thank you for helping. This takes about 20 minutes. Please work alone, from your own knowledge, and do not look anything up.
 
 ## What we are asking

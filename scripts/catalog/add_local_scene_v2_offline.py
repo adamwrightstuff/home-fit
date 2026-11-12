@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Offline: add `local_scene_v2` to each catalog place (score.local_scene_v2) from the brand-tag venue re-read
-(scripts/catalog/reread_brand_tags.py output). No API calls. Also writes score.local_scene_score (0-100 from the independent
-venue count) and removes the retired name-guessing fields (local_scene_breakdown, local_scene_bucket_v1). The Aura flag is untouched. Radius per place is the one its stored business list used (1,200 m when the farthest stored listing is
+(scripts/catalog/reread_brand_tags.py output). No API calls. Also writes score.local_scene_level (the ladder) and removes the retired fields (local_scene_score, local_scene_breakdown,
+local_scene_bucket, local_scene_bucket_v1). The Aura flag is untouched. Radius per place is the one its stored business list used (1,200 m when the farthest stored listing is
 within 1,210 m, else 1,500 m).
 
   python3 scripts/catalog/add_local_scene_v2_offline.py --reads <local_scene_brand_reads.jsonl>
@@ -53,29 +53,37 @@ def main():
             bkey = f"{metro}|{c['name']}|{STATE_FIPS.get(c.get('state_abbr'))}"
             if bkey in boundary:
                 facts = ls.boundary_facts(boundary[bkey]["venues"], boundary[bkey]["area_km2"])
+                if facts["venues_total"] == 0 and read:
+                    # the town boundary held no named venue (a main street just outside it, or a thin boundary read): measure the pin circle instead
+                    pin = ls.place_facts(read["venues"], radius)
+                    if pin["venues_total"] > 0:
+                        facts = pin
+                        facts["measured_by_fallback"] = True
             else:
                 facts = ls.place_facts(read["venues"] if read else [], radius)
             facts["independent_venues_1200m"] = ls.independent_venue_count(read["venues"]) if read else None
-            facts["bucket"] = ls.activity_bucket(facts["independent_venues_1200m"])
             apa = (((s.get("livability_pillars") or {}).get("active_outdoors") or {}).get("dpv2_recompute") or {}).get("activity_per_acre")
             facts["activity_per_acre"] = round(apa, 2) if isinstance(apa, (int, float)) else None
             refs.append((path, i, facts, read is not None))
-    ls.apply_reading([f for _, _, f, _ in refs], [f["activity_per_acre"] for _, _, f, _ in refs])  # mix facts: combined, density band, lively
-    n = lively = nodata = 0
+    ls.apply_reading([f for _, _, f, _ in refs], [f["activity_per_acre"] for _, _, f, _ in refs])  # mix facts: combined, density band
+    n = nodata = 0
+    from collections import Counter
+    levels = Counter()
     for path, i, facts, had_read in refs:
         sc = files[path][i]["score"]
         sc["local_scene_v2"] = facts
-        # the Explorer chip, filter and place card read local_scene_bucket: it now carries the v2 tier (None = too few venues or no density)
-        sc["local_scene_bucket"] = facts["bucket"]
-        sc["local_scene_score"] = ls.scene_score(facts["independent_venues_1200m"])
+        # the Explorer chip, filter and place card read local_scene_level (None = no venue data)
+        sc["local_scene_level"] = ls.scene_level(facts)
+        sc.pop("local_scene_bucket", None)
+        sc.pop("local_scene_score", None)
         sc.pop("local_scene_breakdown", None)
         sc.pop("local_scene_bucket_v1", None)
         n += 1
-        lively += facts["lively"]
+        levels[sc["local_scene_level"]] += 1
         nodata += (facts["venues_total"] == 0)
     for path, rows in files.items():
         Path(path).write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
-    print(f"local_scene_v2 added for {n} places: lively {lively}, no venue data {nodata}")
+    print(f"local_scene_v2 added for {n} places: levels {dict(levels)}, no venue data {nodata}")
 
 
 if __name__ == "__main__":

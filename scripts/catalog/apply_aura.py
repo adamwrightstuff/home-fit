@@ -2,12 +2,12 @@
 """
 Aura flag, offline (owner decision 2026-11-06, replaces the weighted score and the top-5% quota).
 
+Rebuilt on the local scene ladder 2026-11-11 (owner decision: Aura is built on whatever the ladder is).
 score["aura"] is True only when ALL of these hold for the stored place:
-  1. Vibrant activity: local_scene_v2.independent_venues_1200m >= AURA_MIN_VENUES (the Vibrant tier);
-  2. independent-venue mix: local_scene_v2.combined >= AURA_MIN_MIX and the place has at least 15 venues;
-  3. status class (status_signal_breakdown.archetype) is Affluent or Elite;
+  1. the local scene ladder level is buzzing (score.local_scene_level; see docs/LOCAL_SCENE_LADDER_DPV2.md);
+  2. status class (status_signal_breakdown.archetype) is Affluent or Elite;
   and it is not a job center (more than AURA_MAX_JOBS_PER_RESIDENT workers per resident in the stored LODES radius).
-No weights, no quota. Only score["aura"] and score["aura_excluded"] are written; the stored local scene score (twin finder) is left as is.
+No weights, no quota. Only score["aura"] and score["aura_excluded"] are written.
 
 Usage: PYTHONPATH=. python3 scripts/catalog/apply_aura.py            (every metro)
        PYTHONPATH=. python3 scripts/catalog/apply_aura.py nyc la
@@ -19,35 +19,49 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "catalog"))
 
-AURA_MIN_VENUES = 71  # Vibrant activity tier (docs/LOCAL_SCENE.md, 2026-11-06)
-AURA_MIN_MIX = 65.0   # judgment call, not researched: the mix reading that separated Tribeca (70) from Battery Park City (50)
 AURA_CLASSES = ("Affluent", "Elite")
 # Judgment call: above ~5 workers per resident a place is a job center, not a neighborhood scene.
-# Residential places tested at 0.1 to 1.3; office cores at 7 to 22. Only applied when LODES jobs data
-# exists for the place (the table covers only the NYC area, SF Bay and LA).
+# Residential places tested at 0.1 to 1.3; office cores at 7 to 22. Computed for every place from the national LODES grid.
 AURA_MAX_JOBS_PER_RESIDENT = 5.0
 
 
-def jobs_per_resident(s: dict):
+_warned = False
+
+
+def jobs_per_resident(s: dict, catalog: dict = None):
+    """Workers per resident around the place. Uses the stored community-safety denominator when it has one; otherwise (the
+    NYC area, SF Bay, LA and a few others only) computes it offline from the national LODES jobs grid and the tract table in
+    data_sources/surrounding_density.py at the same 600 m radius (checked against the stored values on 61 places: median ratio
+    0.98, rank correlation 0.97). None when it cannot be measured, and then the place is not excluded."""
     den = (((s.get("livability_pillars") or {}).get("community_safety") or {}).get("breakdown") or {}).get("population_denominator") or {}
     jobs, res = den.get("workplace_jobs_in_radius"), den.get("residents_in_radius")
-    if not isinstance(jobs, (int, float)) or not isinstance(res, (int, float)) or res <= 0:
-        return None  # no jobs data: do not exclude
-    return jobs / res
+    if isinstance(jobs, (int, float)) and isinstance(res, (int, float)) and res > 0:
+        return jobs / res
+    if not catalog:
+        return None
+    global _warned
+    try:
+        from data_sources.surrounding_density import surrounding_stats
+        st = surrounding_stats(float(catalog["lat"]), float(catalog["lon"]), radius_m=600)
+        if st is None or st.jobs is None or not st.people_density:
+            return None
+        residents = st.people_density * math.pi * (600 / 1609.344) ** 2
+        return st.jobs / residents if residents > 0 else None
+    except Exception as e:  # missing optional packages (pyarrow, h3) or files: say so once, do not guess
+        if not _warned:
+            print(f"WARNING: jobs-per-resident fallback unavailable ({e}); places without a stored denominator are not checked for job centers")
+            _warned = True
+        return None
 
 
-def qualifies(s: dict) -> tuple:
+def qualifies(s: dict, catalog: dict = None) -> tuple:
     """(is_aura, excluded_reason) from the stored score."""
-    v = s.get("local_scene_v2") or {}
-    n, mix = v.get("independent_venues_1200m"), v.get("combined")
     cls = (s.get("status_signal_breakdown") or {}).get("archetype")
-    if not (isinstance(n, (int, float)) and n >= AURA_MIN_VENUES):
-        return False, None
-    if not (isinstance(mix, (int, float)) and mix >= AURA_MIN_MIX and not v.get("few_venues")):
+    if s.get("local_scene_level") != "buzzing":
         return False, None
     if cls not in AURA_CLASSES:
         return False, None
-    jpr = jobs_per_resident(s)
+    jpr = jobs_per_resident(s, catalog)
     if jpr is not None and jpr > AURA_MAX_JOBS_PER_RESIDENT:
         return False, "job_center"
     return True, None
@@ -61,7 +75,7 @@ def process(metro: str) -> None:
         s = d.get("score")
         if not d.get("success") or not isinstance(s, dict):
             continue
-        ok, why = qualifies(s)
+        ok, why = qualifies(s, d.get("catalog"))
         s["aura"] = ok
         s.pop("aura_excluded", None)
         if why:
