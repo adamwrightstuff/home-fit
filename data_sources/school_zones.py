@@ -254,7 +254,11 @@ def zoned_schools(lat: float, lon: float) -> List[Dict[str, Any]]:
                     "_geom": row.geometry,
                 })
             if layer.fallback and len(hits) > 1:      # overlapping zones: the most local (smallest) one
-                hits = [min(hits, key=lambda h: h["_geom"].area)]
+                smallest = min(h["_geom"].area for h in hits)
+                tied = [h for h in hits if h["_geom"].area == smallest]
+                # identical outlines (the 2015-16 survey gives every school in a district the same polygon) say
+                # nothing about which school a point is assigned to: no zone, so the nearest schools are used
+                hits = tied if len(tied) == 1 else []
             out.extend(hits)
         return out
 
