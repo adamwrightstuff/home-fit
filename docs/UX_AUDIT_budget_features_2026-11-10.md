@@ -4,7 +4,7 @@ Standard: `docs/UX_PRINCIPLES_DRAFT.md` (six owner rules plus Candidates A "say 
 
 **Conclusion (first pass, 2026-11-10): Level 0 (not certified).** 9 FAILs, none fixed, none owner-accepted. Rule 6 passes.
 
-**Re-audit 2026-11-11: Level 0 at the time, 1 open FAIL (G1) plus 3 findings. G1 and the 375px wrap (G2) were fixed the same day; no FAIL is open now, but Level 1 still needs an independent re-check and the owner's sign-off. See the last section.**
+**Re-audit 2026-11-11: Level 0 at the time, 1 open FAIL (G1) plus 3 findings. G1, the 375px wrap (G2), the silent last-chip tap (G3) and the cost missing from the map panels (G4) were fixed the same day; no FAIL or finding is open now except the compare views, and Level 1 still needs an independent re-check and the owner's sign-off. See the last section.**
 
 ## What was checked and how
 
@@ -126,3 +126,10 @@ Rendered in the browser: fresh-visitor list and filter sheet (desktop), list wit
 - Checked in the browser (desktop and 375px): fresh sheet empty and no chips; "Typical place $4,100" cap gives 808 of 1,476 places at 3 bed; typing $250,000 changes the explainer to "after $250,000 down" and clearing returns to "after 20% down".
 - Still open (findings, not rule FAILs): G3 (last chip tap gives no feedback), G4 (map, bottom sheet, detail panel never show the cost). Not checked: signed-in save with a null down payment, a real phone.
 - Independence: G1 and G2 were fixed by the same session that built the multi-select change, so Level 1 needs someone else to re-run the rows above.
+
+### Fix log, 2026-11-12 (G3 and G4)
+
+- G3 fixed. Tapping the last selected bedroom chip with nothing else set (no cap, no typed down payment) clears the budget back to the unchosen state: no cost on any row, no "Typical place" chip. With a cap or down payment set the chip stays selected and a line under the chips says "Keep at least one size while a cap or down payment is set. Clear them to turn the budget off."; choosing another size clears the line.
+- G4 fixed for the places the budget filters on the map. One shared component (BudgetCostLine) now draws the cost line on list rows, the desktop detail panel and the mobile bottom sheet, with the same words, tooltip, over-budget tag and California note. Checked in the browser: desktop detail panel for Larchmont reads "~$10,976/mo · 3 bed"; the bottom sheet (tablet width 700px, tapping a bubble) shows "~$3,839/mo · 3 bed" under Chelsea, MA. Not shown before a budget is chosen.
+- Still open: the compare tray and `/saved/compare` do not show the cost (they never filtered by budget). Not checked: the bottom sheet on a real phone (reached at 700px because the search box is hidden below that), signed-in save with a blank down payment.
+- Independence: same session built and fixed these, so Level 1 needs someone else to re-run the rows.

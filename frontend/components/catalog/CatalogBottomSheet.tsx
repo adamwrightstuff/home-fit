@@ -18,6 +18,8 @@ import { HOMEFIT_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pi
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import { SCENE_LABEL } from '@/lib/sceneLevels'
+import BudgetCostLine from '@/components/catalog/BudgetCostLine'
+import type { BudgetFilter } from '@/lib/budgetCost'
 
 export type CatalogSheetSnap = 'peek' | 'expanded'
 
@@ -49,6 +51,8 @@ interface CatalogBottomSheetProps {
   onSnapChange: (s: CatalogSheetSnap) => void
   onClose: () => void
   onFullBreakdown: (place: CatalogMapPlace) => void
+  /** Set once the visitor has chosen a budget; the cost line shows only then. */
+  budget?: BudgetFilter
 }
 
 export default function CatalogBottomSheet({
@@ -60,6 +64,7 @@ export default function CatalogBottomSheet({
   onSnapChange,
   onClose,
   onFullBreakdown,
+  budget,
 }: CatalogBottomSheetProps) {
   const expanded_vh = 58
 
@@ -181,6 +186,7 @@ export default function CatalogBottomSheet({
                 >
                   {place.catalog.county_borough}, {place.catalog.state_abbr}
                 </div>
+                {budget && <BudgetCostLine housingCost={place.housing_cost} stateAbbr={place.catalog.state_abbr} budget={budget} large />}
                 {place.commute_text ? (
                   <div style={{ fontSize: '0.7rem', color: 'var(--hf-text-secondary)', marginTop: 2 }}>
                     {place.commute_text}

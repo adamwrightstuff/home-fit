@@ -1897,6 +1897,7 @@ export default function CatalogPageClient({
                 priorities={priorities}
                 onClose={clearSelection}
                 onFullBreakdown={handleFullBreakdown}
+                budget={filterBudget.chosen ? filterBudget : undefined}
               />
             </div>
           )}
@@ -1997,6 +1998,7 @@ export default function CatalogPageClient({
           onSnapChange={setSnap}
           onClose={clearSelection}
           onFullBreakdown={handleFullBreakdown}
+          budget={filterBudget.chosen ? filterBudget : undefined}
         />
         </div>
       )}

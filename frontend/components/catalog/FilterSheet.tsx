@@ -2,7 +2,7 @@
 
 import { ALL_BEDS, DEFAULT_BUDGET, MORTGAGE_RATE, bedLabel, toggleBed, type BudgetFilter } from '@/lib/budgetCost'
 import { SCENE_LABEL, SCENE_LEVELS, toggleSceneLevel, type SceneFilter } from '@/lib/sceneLevels'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
@@ -137,6 +137,7 @@ export default function FilterSheet({
   onClimatePrefsChange,
   resultCount,
 }: FilterSheetProps) {
+  const [bedHint, setBedHint] = useState(false)
   type TrajectoryOption = 'all' | 'Up-and-Coming' | 'Stable' | 'Declining'
   useEffect(() => {
     if (open) {
@@ -360,9 +361,18 @@ export default function FilterSheet({
             <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Bedrooms (pick one or more)</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
               {ALL_BEDS.map((b) =>
-                chip(filterBudget.chosen && filterBudget.beds.includes(b), bedLabel(b), () => onFilterBudgetChange(toggleBed(filterBudget, b)))
+                chip(filterBudget.chosen && filterBudget.beds.includes(b), bedLabel(b), () => {
+                  const next = toggleBed(filterBudget, b)
+                  setBedHint(next === filterBudget)
+                  onFilterBudgetChange(next)
+                })
               )}
             </div>
+            {bedHint && (
+              <div style={{ fontSize: 11, color: '#b45309', marginTop: -6, marginBottom: 8 }}>
+                Keep at least one size while a cap or down payment is set. Clear them to turn the budget off.
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <label style={{ fontSize: 12, color: '#6b7280' }}>
                 Down payment ($)

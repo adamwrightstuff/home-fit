@@ -58,10 +58,18 @@ export function bedsLabel(beds: Beds[]): string {
   return l.length <= 1 ? (l[0] ?? '') : `${l.slice(0, -1).join(', ')} or ${l[l.length - 1]}`
 }
 
-/** Taps a bedroom chip: the first tap chooses it, later taps add or remove it, and the last one cannot be removed. */
+/**
+ * Taps a bedroom chip: the first tap chooses it, later taps add or remove it. Removing the last chip clears the budget back to the
+ * unchosen state when nothing else was set (no cap, no typed down payment); with a cap or down payment set the last chip stays, and
+ * the same object comes back so the caller can tell and say why.
+ */
 export function toggleBed(budget: BudgetFilter, b: Beds): BudgetFilter {
   if (!budget.chosen) return { ...budget, beds: [b], chosen: true }
-  if (budget.beds.includes(b)) return budget.beds.length > 1 ? { ...budget, beds: budget.beds.filter(x => x !== b) } : budget
+  if (budget.beds.includes(b)) {
+    if (budget.beds.length > 1) return { ...budget, beds: budget.beds.filter(x => x !== b) }
+    if (budget.max == null && budget.down == null) return { ...budget, beds: DEFAULT_BUDGET.beds, chosen: false }
+    return budget
+  }
   return { ...budget, beds: ALL_BEDS.filter(x => x === b || budget.beds.includes(x)) }
 }
 

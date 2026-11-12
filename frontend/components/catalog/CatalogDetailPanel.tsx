@@ -19,6 +19,8 @@ import { HOMEFIT_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pi
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import AuraBadge from '@/components/catalog/AuraBadge'
+import BudgetCostLine from '@/components/catalog/BudgetCostLine'
+import type { BudgetFilter } from '@/lib/budgetCost'
 
 const INDEX_TABS: { id: CatalogMapIndexMode; label: string; tooltip: string }[] = [
   { id: 'homefit', label: 'HomeFit', tooltip: HOMEFIT_COPY.tooltip },
@@ -45,6 +47,8 @@ interface CatalogDetailPanelProps {
   priorities: PillarPriorities
   onClose: () => void
   onFullBreakdown: (place: CatalogMapPlace) => void
+  /** Set once the visitor has chosen a budget; the cost line shows only then. */
+  budget?: BudgetFilter
 }
 
 export default function CatalogDetailPanel({
@@ -54,6 +58,7 @@ export default function CatalogDetailPanel({
   priorities,
   onClose,
   onFullBreakdown,
+  budget,
 }: CatalogDetailPanelProps) {
   const [climateProfile, setClimateProfile] = useState<ClimateProfile | null>(null)
 
@@ -119,6 +124,7 @@ export default function CatalogDetailPanel({
             <div style={{ fontSize: '0.8rem', color: 'var(--hf-text-secondary)', marginTop: 2 }}>
               {place.catalog.county_borough}, {place.catalog.state_abbr}
             </div>
+            {budget && <div style={{ marginTop: 2 }}><BudgetCostLine housingCost={place.housing_cost} stateAbbr={place.catalog.state_abbr} budget={budget} large /></div>}
             {place.commute_text ? (
               <div style={{ fontSize: '0.7rem', color: 'var(--hf-text-secondary)', marginTop: 2 }}>
                 {place.commute_text}
