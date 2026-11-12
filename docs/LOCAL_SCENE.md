@@ -1,5 +1,7 @@
 # Local scene, DPv2 spec sheet (Level 1 candidate, 2026-11-05)
 
+> **SUPERSEDED 2026-11-11.** The shipped Local Scene is now a four-level ladder: Sleepy, Flat, Lively, Buzzing (stored as quiet, low_key, lively, buzzing). See `docs/LOCAL_SCENE_LADDER_DPV2.md`. This file describes the retired three-tier activity tag (Quiet, Some, Vibrant) and is kept as history. If you are reading it to learn what the app does, it is out of date.
+
 Status: Level 1 signed off 2026-11-05 for the pin-circle measure and again for the hybrid measure (section 16, towns on the boundary). Not in the live catalog, not shown in the app. No "validated" claim is allowed until Level 2 passes (section 8). Display decisions (a switch, labels on the list, a place page section, the cut-off) are open and not covered here; this sheet is about the measure. Supersedes the earlier audit of the old formula and the independent-share option, which did not separate the owner's places (docs/VIBE_VALIDATION.md).
 
 ## 1. Job and construct

@@ -1,5 +1,7 @@
 # Local scene activity tag: Level 1 spec sheet and Level 2 plan (written 2026-11-08, before any Level 2 result was run)
 
+> **SUPERSEDED 2026-11-11.** The shipped Local Scene is now a four-level ladder: Sleepy, Flat, Lively, Buzzing (stored as quiet, low_key, lively, buzzing). See `docs/LOCAL_SCENE_LADDER_DPV2.md`. This file describes the retired three-tier activity tag (Quiet, Some, Vibrant) and is kept as history. If you are reading it to learn what the app does, it is out of date.
+
 Status: nothing here changes scoring. No "validated" claim is allowed. Written by a session that did not build the tag (DPv2 adoption rule, section 2), but that read the 2026-11-06 decision notes first, which matters for the launch pairs (section 2b).
 
 ## 0. The Level 1 sign-off covers a different measure than the one that ships
