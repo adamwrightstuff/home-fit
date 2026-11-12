@@ -53,6 +53,12 @@ def main():
             bkey = f"{metro}|{c['name']}|{STATE_FIPS.get(c.get('state_abbr'))}"
             if bkey in boundary:
                 facts = ls.boundary_facts(boundary[bkey]["venues"], boundary[bkey]["area_km2"])
+                if facts["venues_total"] == 0 and read:
+                    # the town boundary held no named venue (a main street just outside it, or a thin boundary read): measure the pin circle instead
+                    pin = ls.place_facts(read["venues"], radius)
+                    if pin["venues_total"] > 0:
+                        facts = pin
+                        facts["measured_by_fallback"] = True
             else:
                 facts = ls.place_facts(read["venues"] if read else [], radius)
             facts["independent_venues_1200m"] = ls.independent_venue_count(read["venues"]) if read else None

@@ -43,8 +43,10 @@ Shared inputs with other pillars: the seven types overlap the amenities pillar's
 Pin-shift sensitivity: not run (Level 2 a). Prior result for the mix on the pin circle: 95th percentile change 28 points (failed).
 Independent validation: none yet (Level 2 d).
 All-places check (2026-11-11, n 1,476, variant B): level 0 572, level 1 488, level 2 289, level 3 127. Variant A: 732, 384, 233, 127.
-Fail-loud conditions: a place with no venue read must be None, not level 0. 73 places have no named venue in the measured area; the
-  stored rule must give them None. OPEN: confirm the build does this before sign-off.
+Fail-loud conditions: a place with no venue read must be None, not level 0. Built and confirmed 2026-11-11: 69 places have no named venue in
+  the measured area and show no level. 4 towns whose boundary held none but whose pin circle did (Golden Beach FL, Terrell Hills TX, Belvedere CA,
+  Hillsborough CA) are measured at the pin circle instead (2026-11-12; flagged measured_by_fallback; from the stored business list, so culture
+  venues are not filtered to independent ones until a full rebuild from the brand reads): three read level 0, Hillsborough level 1.
 Launch check pairs: section 3 (b).
 Known data limits: OSM coverage (Rye 8 venues, Hastings-on-Hudson 11); seven types miss independent clothing, music venues and clubs
   (Silver Lake, Venice, Hell's Kitchen read low); restaurants-heavy dense places read level 1 whatever their feel (Upper West Side);
