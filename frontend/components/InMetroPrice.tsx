@@ -28,7 +28,7 @@ export default function InMetroPrice({ a, b, budget, income }: { a: PriceRow; b:
       const share = income ? ` · ${Math.round((bc.cost.total * 12 / income) * 100)}% of income` : ''
       return {
         main,
-        sub: `${bedLabel(bc.beds)}-bed, ZIP median ${usd(bc.cost.value)}${share}${bc.unknownSize ? ' · some chosen sizes have no price here' : ''}${chosen.max != null && !bc.fits ? ' · over your cap' : ''}`,
+        sub: `${bedLabel(bc.beds)}-bed, ZIP median ${usd(bc.cost.value)}${share}${bc.unknownSize ? ' · a smaller size you picked has no price here' : ''}${chosen.max != null && !bc.fits ? ' · over your cap' : ''}`,
         n: bc.cost.total,
       }
     }

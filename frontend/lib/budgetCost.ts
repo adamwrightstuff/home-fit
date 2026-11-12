@@ -98,7 +98,7 @@ export interface BestCost {
   cost: MonthlyCost
   /** False when a cap is set and none of the chosen sizes that have a price fits under it. */
   fits: boolean
-  /** True when at least one chosen size has no price here, so a size we cannot price might still fit. */
+  /** True when a chosen size SMALLER than the smallest priced one has no price here, so it might still fit. A larger size with no price cannot be cheaper, so it does not count. */
   unknownSize: boolean
   /** Lowest and highest total across the chosen sizes that have data, and the smallest and largest of those sizes. */
   low: number
@@ -130,7 +130,7 @@ export function bestCost(hc: HousingCost | null | undefined, budget: BudgetFilte
       fits = false
     }
   }
-  return { beds: pick.n, cost: pick.c, fits, unknownSize: options.length < budget.beds.length, low, high, minBeds, maxBeds }
+  return { beds: pick.n, cost: pick.c, fits, unknownSize: budget.beds.some(b => b < options[0].n), low, high, minBeds, maxBeds }
 }
 
 /**
@@ -165,8 +165,8 @@ export function costGapReason(hc: HousingCost | null | undefined, budget: Budget
 }
 
 /**
- * True only when every chosen size has a price and none is under the cap. A place with no price for one of the chosen sizes is kept
- * (that size might fit), so adding a bedroom count never removes a place.
+ * True when every priced chosen size is over the cap and no smaller chosen size is unpriced. A larger size with no price is assumed to
+ * cost more than the priced ones, so it cannot fit either; a smaller unpriced size might, so such a place is kept.
  */
 export function overBudget(hc: HousingCost | null | undefined, budget: BudgetFilter): boolean {
   if (budget.max == null) return false
