@@ -17,7 +17,7 @@ from logging_config import get_logger
 logger = get_logger(__name__)
 
 # Life-stage preference (owner decision 2026-10-28): which age cohorts the user wants more of. No preference means no score.
-VALID_DIVERSITY_PREFERENCE: Tuple[str, ...] = ("children", "working_age", "older")
+VALID_DIVERSITY_PREFERENCE: Tuple[str, ...] = ("children", "working_age", "older", "young_professionals")
 
 
 def parse_diversity_preference(raw: Optional[Any]) -> Optional[List[str]]:
@@ -47,13 +47,13 @@ def parse_diversity_preference(raw: Optional[Any]) -> Optional[List[str]]:
 
 
 _AGE_TABLE: Optional[Dict[str, List[float]]] = None
-_TRACT_AGE_COUNTS: Optional[Dict[str, Tuple[int, int, int]]] = None
+_TRACT_AGE_COUNTS: Optional[Dict[str, Tuple[int, int, int, Optional[int]]]] = None
 # Tract-level places pool the age counts of every tract whose center is within this radius (plus the place's own tract), because a
 # single tract moved a median 2 to 4 and a 95th percentile of about 60 percentile points under a 500 m pin shift (pooled: about 20).
 AGE_POOL_RADIUS_M = 1400
 
 
-def _tract_age_counts() -> Dict[str, Tuple[int, int, int]]:
+def _tract_age_counts() -> Dict[str, Tuple[int, int, int, Optional[int]]]:
     global _TRACT_AGE_COUNTS
     if _TRACT_AGE_COUNTS is None:
         import os
@@ -61,14 +61,15 @@ def _tract_age_counts() -> Dict[str, Tuple[int, int, int]]:
         try:
             import pyarrow.parquet as pq
             t = pq.read_table(path).to_pydict()
-            _TRACT_AGE_COUNTS = {g: (y, p, s) for g, y, p, s in zip(t["geoid"], t["youth"], t["prime"], t["seniors"])}
+            yp = t.get("age_25_34") or [None] * len(t["geoid"])  # 25 to 34, a subset of prime; None if the parquet predates it
+            _TRACT_AGE_COUNTS = {g: (y, p, s, a) for g, y, p, s, a in zip(t["geoid"], t["youth"], t["prime"], t["seniors"], yp)}
         except Exception:
             _TRACT_AGE_COUNTS = {}
     return _TRACT_AGE_COUNTS
 
 
 def pooled_age_counts(lat: float, lon: float, own_geoid: Optional[str] = None, radius_m: float = AGE_POOL_RADIUS_M):
-    """(youth, prime, seniors, n_tracts) summed over tracts within radius_m of the pin plus the pin's own tract, or None."""
+    """(youth, prime, seniors, n_tracts, age_25_34 or None) summed over tracts within radius_m of the pin plus the pin's own tract, or None."""
     counts = _tract_age_counts()
     if not counts:
         return None
@@ -84,13 +85,14 @@ def pooled_age_counts(lat: float, lon: float, own_geoid: Optional[str] = None, r
     ids = {geoids[i] for i in np.where(d <= radius_m)[0]}
     if own_geoid:
         ids.add(own_geoid)
-    tot, n = [0, 0, 0], 0
+    tot, n, yp = [0, 0, 0], 0, 0
     for g in ids:
         c = counts.get(g)
         if c:
             tot = [tot[0] + c[0], tot[1] + c[1], tot[2] + c[2]]
+            yp = None if (yp is None or c[3] is None) else yp + c[3]
             n += 1
-    return (tot[0], tot[1], tot[2], n) if sum(tot) > 0 else None
+    return (tot[0], tot[1], tot[2], n, yp) if sum(tot) > 0 else None
 
 
 
@@ -124,7 +126,7 @@ def get_diversity_score(
     """
     Returns (score_0_100, details) with education_attainment / self_employed_pct for Status Signal.
 
-    diversity_preference: optional list of "children", "working_age", "older". The score is the mean age-share percentile of the
+    diversity_preference: optional list of "children", "working_age", "older", "young_professionals" (25 to 34). The score is the mean age-share percentile of the
     chosen cohorts. None = no score (score is None, summary.diversity_score_mode is "no_preference").
     """
     tract = census_api.get_census_tract(lat, lon)
@@ -138,13 +140,14 @@ def get_diversity_score(
         raise RuntimeError(f"No Census diversity data available for ({lat}, {lon})")
     age = diversity_data.get("age_counts") or {}
     youth, prime, seniors = age.get("youth", 0), age.get("prime", 0), age.get("seniors", 0)
+    young_pros = age.get("young_professionals")
     breakdown: Dict = {}
     pooled_note = None
     if diversity_data.get("geo_level") == "tract":
         own = (tract or {}).get("geoid") if isinstance(tract, dict) else None
         pooled = pooled_age_counts(lat, lon, own)
         if pooled:
-            youth, prime, seniors = pooled[0], pooled[1], pooled[2]
+            youth, prime, seniors, young_pros = pooled[0], pooled[1], pooled[2], pooled[4]
             breakdown["age_pooled_tracts"] = pooled[3]
         else:
             pooled_note = "age_pooling_unavailable: single tract used"
@@ -153,6 +156,8 @@ def get_diversity_score(
     score: Optional[float] = None
     if total_age > 0:
         shares = {"children": youth / total_age * 100.0, "working_age": prime / total_age * 100.0, "older": seniors / total_age * 100.0}
+        if young_pros is not None:
+            shares["young_professionals"] = young_pros / total_age * 100.0
         pcts = {k: _age_percentile(k, v) for k, v in shares.items()}
         breakdown["age_shares"] = {k: round(v, 1) for k, v in shares.items()}
         breakdown["age_percentiles"] = {k: round(v, 1) for k, v in pcts.items() if v is not None}
