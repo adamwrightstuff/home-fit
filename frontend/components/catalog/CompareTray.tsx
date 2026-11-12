@@ -8,23 +8,26 @@ import { bedsLabel, costGapReason, costSummary, type BudgetFilter } from '@/lib/
 interface CompareTrayProps {
   compareIds: string[]
   places: CatalogMapPlace[]
+  /** Every place, unfiltered; used to find a chip's name and cost when the place is hidden by the current search or filters. */
+  lookupPlaces?: CatalogMapPlace[]
   onRemove: (key: string) => void
   onClear: () => void
   /** Set once the visitor has chosen a budget; each chip then shows the place's monthly cost. */
   budget?: BudgetFilter
 }
 
-export default function CompareTray({ compareIds, places, onRemove, onClear, budget }: CompareTrayProps) {
+export default function CompareTray({ compareIds, places, lookupPlaces, onRemove, onClear, budget }: CompareTrayProps) {
   if (compareIds.length === 0) return null
+  const pool = lookupPlaces ?? places
 
   function getPlaceName(key: string): string {
-    const found = places.find((p) => catalogRowKey(p.catalog) === key)
+    const found = pool.find((p) => catalogRowKey(p.catalog) === key)
     return found ? found.catalog.name : key
   }
 
   function getPlaceCost(key: string): { text: string; title: string } | null {
     if (!budget) return null
-    const found = places.find((p) => catalogRowKey(p.catalog) === key)
+    const found = pool.find((p) => catalogRowKey(p.catalog) === key)
     if (!found) return null
     const text = costSummary(found.housing_cost, budget)
     const title = text === 'no cost'

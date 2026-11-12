@@ -4,7 +4,7 @@ Standard: `docs/UX_PRINCIPLES_DRAFT.md` (six owner rules plus Candidates A "say 
 
 **Conclusion (first pass, 2026-11-10): Level 0 (not certified).** 9 FAILs, none fixed, none owner-accepted. Rule 6 passes.
 
-**Latest re-audit 2026-11-12: all eight rules pass, no FAIL open, two minor findings (G5, G6). Level 1 candidate, not certified (graded by the builder; two rows are owner-decided). See the last section.**
+**Latest re-audit 2026-11-12: all eight rules pass, no FAIL open; the two minor findings (G5, G6) were fixed the same day. Level 1 candidate, not certified (graded by the builder; two rows are owner-decided). See the last section.**
 
 **Re-audit 2026-11-11: Level 0 at the time, 1 open FAIL (G1) plus 3 findings. G1, the 375px wrap (G2), the silent last-chip tap (G3) and the cost missing from the map panels (G4) were fixed the same day; no FAIL or finding is open now except the compare views, and Level 1 still needs an independent re-check and the owner's sign-off. See the last section.**
 
@@ -203,3 +203,9 @@ Level 1 candidate. All eight rules pass and no FAIL is open. Not certified: the 
 ### Verification statement
 
 Rendered in a browser: every row in the table above marked as browser. Nothing was changed by this re-audit except this document.
+
+### Fix log, 2026-11-12 (G5 and G6)
+
+- G5 fixed. At phone width (768px and below) every chip in the filter sheet uses the page's touch chip size (36px, `--hf-chip-h-touch`), including the bedroom chips (were 28px high and 31 to 41px wide). Checked at 375px: all 40 sheet chips at least 36px, no horizontal overflow. Desktop is unchanged (28px).
+- G6 fixed. The compare tray looks a chip's name and cost up in the full place list, so a place hidden by the current search keeps both. Checked: Larchmont added, then a "Pelham" search, tray reads "Larchmont · ~$10,976/mo" and "Pelham · ~$9,005/mo" (the raw key showed before).
+- Open: none from this audit. Not checked: signed-in save, pairs in different metros on the compare page, a real phone. Same-session build and grading, so Level 1 still needs an independent re-run and the owner's sign-off.

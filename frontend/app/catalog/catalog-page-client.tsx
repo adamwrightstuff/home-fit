@@ -2093,6 +2093,7 @@ export default function CatalogPageClient({
         budget={filterBudget.chosen ? filterBudget : undefined}
         compareIds={compareIds}
         places={gatedPlaces}
+        lookupPlaces={adjustedPlaces}
         onRemove={(key) => setCompareIds((prev) => prev.filter((k) => k !== key))}
         onClear={() => setCompareIds([])}
       />

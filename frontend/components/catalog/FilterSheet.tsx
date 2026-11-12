@@ -196,6 +196,7 @@ export default function FilterSheet({
         type="button"
         title={title}
         onClick={onClick}
+        className="hf-sheet-chip"
         style={{
           ...CHIP_BASE,
           background: active ? 'var(--hf-primary-1)' : 'var(--hf-hover-bg)',
