@@ -274,11 +274,9 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
       'Limited data: Census mobility, civic places (OpenStreetMap / Places), or other community sources failed or were unavailable.',
   },
   diversity: {
-    topLine: 'Which Census mix dimensions we could score, self-employment, and race/ethnic spread (entropy).',
+    topLine: 'Self-employment. Diversity is an opt-in life-stage preference, not a scored pillar.',
     metrics: [
-      { label: 'Mix dimensions scored', path: 'summary.components_included', format: 'text' },
       { label: 'Self-employed (tract %)', path: 'self_employed_pct', format: 'percent', max: 100 },
-      { label: 'Race & ethnicity spread', path: 'breakdown.race_entropy', format: 'percent', max: 100 },
     ],
     degradedMessage: 'Limited data: Census diversity tables were unavailable.',
   },

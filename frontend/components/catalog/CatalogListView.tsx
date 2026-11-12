@@ -286,7 +286,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                           className="text-[0.65rem] font-medium tabular-nums text-[var(--hf-text-secondary)]"
                           title={`Estimate for a ${budget.beds === 5 ? '5+' : budget.beds}-bedroom home at the ZIP median value of $${Math.round(mc.value).toLocaleString('en-US')}: principal and interest after $${budget.down.toLocaleString('en-US')} down, plus average property tax and insurance.`}
                         >
-                          ~${Math.round(mc.total).toLocaleString('en-US')}/mo · {budget.beds === 5 ? '5+' : budget.beds} bed
+                          ~${(Math.round(mc.total / 100) * 100).toLocaleString('en-US')}/mo · {budget.beds === 5 ? '5+' : budget.beds} bed
                           {budget.max != null && mc.total > budget.max && (
                             <>
                               {' · '}

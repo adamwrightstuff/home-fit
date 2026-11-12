@@ -1297,6 +1297,10 @@ export default function CatalogPageClient({
           if (payload.workZoneId) setWorkZoneId(payload.workZoneId)
           if (payload.commuteMode) setCommuteMode(payload.commuteMode)
           if (payload.officeDays) setOfficeDays(payload.officeDays)
+          // Bedrooms and cap come from the quiz only when the visitor answered them; the down payment stays as it was
+          if (payload.homeBudget) {
+            handleBudgetChange({ beds: payload.homeBudget.beds, max: payload.homeBudget.max, down: filterBudget.down, chosen: true })
+          }
 
           // Dealbreakers: reset the ones the quiz owns, leave any others the user set by hand
           setDealbreakers(prev => {
@@ -1328,6 +1332,7 @@ export default function CatalogPageClient({
                 filterTrajectory: payload.filterTrajectory,
                 filterCommuteMax: payload.filterCommuteMax,
                 climatePrefs: payload.climatePrefs,
+                ...(payload.homeBudget ? { filterBudget: { beds: payload.homeBudget.beds, max: payload.homeBudget.max, down: filterBudget.down, chosen: true } } : {}),
               },
             }))
           } catch { /* ignore */ }
@@ -1746,7 +1751,7 @@ export default function CatalogPageClient({
           {filterBudget.chosen && viewMode === 'list' && (
             <>
               {' '}
-              Monthly cost: a {filterBudget.beds === 5 ? '5+' : filterBudget.beds}-bedroom home at the ZIP median price, mortgage at 7% after ${filterBudget.down.toLocaleString('en-US')} down, plus property tax and insurance.
+              Monthly cost: a {filterBudget.beds === 5 ? '5+' : filterBudget.beds}-bedroom home (single-family and condo mix) at the ZIP median price, mortgage at 7% after ${filterBudget.down.toLocaleString('en-US')} down, plus property tax and insurance.
             </>
           )}
         </p>
