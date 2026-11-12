@@ -87,3 +87,34 @@ Level 2 is passed only if (a) to (d) all pass. If any fails, the failure is reco
 2. DONE 2026-11-11: Aura is level 3 plus status class plus not a job center (62 places; 13 gained: Alamo Square, Ansley Park, Bella Vista, Bernal Heights, Lincoln Square, Lower Haight, Marina District, Mission District, Noe Valley, Palo Alto, Society Hill, The Loop, Wrigleyville).
 3. Whether the old lively flag is retired (the new level 2 is a different definition and would collide with the name).
 4. Sign-off line for Level 1 once the None rule is confirmed.
+
+
+---
+
+## 5. Level 2 run, 2026-11-12 (criteria as fixed in section 3; not changed)
+
+**Independence.** Run by the session that built the ladder, so it is indicative and cannot certify; the checks should be repeated by another session. Everything is offline from stored data and the NYC brand reads; no live call.
+
+| Check | Result | Verdict |
+|---|---|---|
+| (a) Pin-shift | See below | FAIL (one of three gates) |
+| (b) Launch pairs | 6 of 6 (Larchmont over Pelham; Carroll Gardens over Sunnyside; Tribeca over Murray Hill; Park Slope over Bay Ridge; Bronxville over Pelham Manor; Fort Greene over Flushing). Pairs 2 to 6 use owner labels the cut was tuned on. | PASS (needs 5) |
+| (c) All-places | Sleepy 34%, Flat 33%, Lively 20%, Buzzing 9%, no label 5% (n 1,476). No level above Sleepy holds more than 45%. No density band has more than 80% in one level (sparsest band is 73% Sleepy). | PASS |
+| (d) Independent raters | Not run. The two raters from 2026-11-08 answered with the three old words and their per-place answers are not in the repo; the criteria need at least three raters answering with the final four names. | NOT RUN |
+| (e) Owner labels, reported only | Has-it at Lively or Buzzing 19 of 25; does-not at Sleepy or Flat 14 of 14; pairs 271 of 350 = 0.77. Misses: Rye, Silver Lake, Venice, Rittenhouse Square, Hell's Kitchen, Upper West Side. | reported |
+
+**(a) Pin-shift detail.** Only the NYC places have brand reads, so this covers the 121 NYC pin-circle places (the 72 NYC town-boundary places are skipped: their measure does not move with the pin). Each pin shifted 500 m north, south, east and west; venues counted within 1,000 m of the shifted pin from the stored 1,500 m reads; the top-volume cut scaled by area to 49 (71 at 1,200 m); each place ranked against every stored pin-circle place in its density band (the production pool). That baseline equals the shipped level for 109 of the 121 places. 452 shifts:
+- Level unchanged in 86.5% of shifts (needs 85%): pass.
+- Lively or Buzzing places stay Lively or Buzzing in 91.1% of 124 shifts (needs 80%): pass.
+- Two-level jumps in 5.97% of shifts (needs 1% or less): FAIL. 27 jumps: Flat to or from Buzzing 22, Sleepy to or from Lively 5.
+- By baseline level, unchanged: Sleepy 94%, Buzzing 91%, Flat 85%, Lively 56% (of 16 shifts). 18 places change level in at least 2 of 4 shifts (for example Battery Park City, Greenwich Village, Long Island City, Red Hook, West Village).
+
+Why the jumps. In a dense place the mix reading is the only thing separating Flat from Buzzing, so a place near the 55 cut flips two levels at once, skipping Lively (Lively exists only for places under 71 venues). That is built into the shape of the ladder, not noise: any dense place sitting near the cut will fail a one-level-at-a-time criterion. An earlier run that ranked places only against the other NYC places gave a different baseline for Tribeca and West Village than production; the production pool is the fair one and is what is reported above.
+
+Limits of this run: NYC only (121 places), a 1,000 m radius instead of the shipped 1,200 or 1,500 m, an area-scaled volume cut, shifts of 500 m only. A complete check needs the brand reads for all 1,476 places (about 75 minutes on the private server).
+
+**Level 2 is not passed** (section 3: all of (a) to (d) are required; (a) fails a gate and (d) was not run). The ladder stays "not validated".
+
+**Level 1.** The one open item from section 1 is closed: places with no named venue show no level (69 places), and four towns whose boundary held none are measured at the pin circle. Level 1 is ready for the owner's sign-off line with the gaps in section 2 accepted.
+
+**Options for the jump failure (not decided, criteria not changed).** (1) Leave as built and record the failure. (2) Accept Flat and Buzzing as adjacent for dense places and rewrite the criterion before the next run (a change made after seeing this result, so it would be labeled as such). (3) Add a Lively tier for large places, so the ladder moves one level at a time.
