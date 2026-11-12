@@ -20,7 +20,7 @@ entropy) is retired. Nothing filters, ranks, scores or displays by race or incom
   for any chosen cohort.
 - **Neutral description.** Neighborhood pages show the age mix (under 18, 18 to 64, 65 and over) with no score.
 - **Data kept.** Each catalog record keeps `diversity.raw_shares` (race and Hispanic origin, 16 income brackets, age, geography, total
-  population), `diversity.age_percentiles`, the legacy entropy fields, and the education and self-employment values status signal reads.
+  population), `diversity.age_percentiles`, and the education and self-employment values status signal reads.
 
 ## Geography
 Place data unless the place has more than 200,000 adults (unsourced), then the tract. A failed place lookup or fetch is no data, not a

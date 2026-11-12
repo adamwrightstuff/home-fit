@@ -1,13 +1,14 @@
 """
-Diversity pillar: race, income, and age mix (entropy) at tract level.
-Formerly part of Social Fabric; standalone for weighting and Status Signal inputs.
+Diversity opt-in filter (not a scored pillar, see pillar_registry.FILTER_PILLARS): a life-stage preference scored as the
+percentile of the place's age-cohort share among US tracts. No preference means no score. Also returns the education and
+self-employment values Status Signal reads. The old race, income and age entropy headline is retired.
 """
 
 from __future__ import annotations
 
 import json
 import math
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from data_sources import census_api, data_quality
 from data_sources.place_context import resolve_place_context
@@ -43,39 +44,6 @@ def parse_diversity_preference(raw: Optional[Any]) -> Optional[List[str]]:
         if key in VALID_DIVERSITY_PREFERENCE and key not in out:
             out.append(key)
     return out if out else None
-
-
-# ACS B02001: six single-race groups plus "two or more races" (_008). _009 and _010 split _008.
-RACE_CATEGORY_COUNT = 7
-# Race and ethnicity term (owner decision 2026-10-28): ACS B03002, Hispanic origin plus seven non-Hispanic race groups.
-ETHNICITY_CATEGORY_COUNT = 8
-# Income term (owner decision 2026-10-28): ACS B19001 has 16 household income brackets; entropy is normalized by all 16,
-# not by the number of non-empty ones, so a bracket that is empty in a small area cannot swing the score.
-INCOME_BRACKET_COUNT = 16
-RACE_SUBSET_KEYS: Tuple[str, ...] = ("B02001_009E", "B02001_010E")
-
-
-def _entropy(counts: Iterable[int]) -> float:
-    total = sum(c for c in counts if c is not None)
-    if total <= 0:
-        return 0.0
-    h = 0.0
-    for c in counts:
-        if c is None or c <= 0:
-            continue
-        p = c / total
-        h -= p * math.log(p)
-    return h
-
-
-def _normalized_entropy(counts: Iterable[int], n_categories: int) -> float:
-    if n_categories <= 1:
-        return 0.0
-    h = _entropy(counts)
-    h_max = math.log(n_categories)
-    if h_max <= 0:
-        return 0.0
-    return max(0.0, min(100.0, (h / h_max) * 100.0))
 
 
 _AGE_TABLE: Optional[Dict[str, List[float]]] = None
@@ -156,8 +124,8 @@ def get_diversity_score(
     """
     Returns (score_0_100, details) with education_attainment / self_employed_pct for Status Signal.
 
-    diversity_preference: optional list of "race", "income", "age" to weight the headline score
-    (mean of selected dimensions that have data). None = average all available (legacy behavior).
+    diversity_preference: optional list of "children", "working_age", "older". The score is the mean age-share percentile of the
+    chosen cohorts. None = no score (score is None, summary.diversity_score_mode is "no_preference").
     """
     tract = census_api.get_census_tract(lat, lon)
     ctx = resolve_place_context(lat, lon, place_context=place_context, area_type=area_type, density=density, city=city, need_density=True)
