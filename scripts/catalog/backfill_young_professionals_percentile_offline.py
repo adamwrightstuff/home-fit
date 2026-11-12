@@ -31,7 +31,11 @@ def main():
             if not rs or not dv.get("age_percentiles"): continue
             share = None
             if rs.get("geo_level") == "tract":
-                pooled = diversity.pooled_age_counts(r["catalog"]["lat"], r["catalog"]["lon"], rs.get("geoid"))
+                try:
+                    lat, lon = float(r["catalog"]["lat"]), float(r["catalog"]["lon"])  # stored as strings in the catalog
+                except (TypeError, ValueError):
+                    skipped.append((path.name.split("_metro")[0], nm, "no coordinates")); continue
+                pooled = diversity.pooled_age_counts(lat, lon, rs.get("geoid"))
                 if pooled and pooled[4] is not None:
                     share = pooled[4] / (pooled[0] + pooled[1] + pooled[2]) * 100.0
             else:
