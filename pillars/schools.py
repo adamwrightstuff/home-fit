@@ -407,6 +407,12 @@ def _level_of(school: Dict) -> Optional[str]:
     return None
 
 
+def _serves(school: Dict, level: str) -> bool:
+    """True when the school counts for the level: its label, or `_serves` for schools whose label is no level
+    (an estimated NY junior-senior high serves middle and high)."""
+    return _level_of(school) == level or level in (school.get("_serves") or [])
+
+
 def _entry(school: Dict, role: str) -> Dict:
     rh = (school.get("rankHistory") or [{}])[0] if school.get("rankHistory") else {}
     return {
@@ -417,6 +423,7 @@ def _entry(school: Dict, role: str) -> Dict:
         "is_charter_school": school.get("isCharterSchool") == "Yes",
         "distance_mi": round(float(school["distance"]), 2) if school.get("distance") is not None else None,
         "role": role,
+        **({"estimated": "nysed_regents"} if (rh.get("_estimated")) else {}),
     }
 
 
@@ -440,7 +447,7 @@ def _nearest_in_district(pool: List[Dict], level: str, base_radius_miles: float)
 
     elem_factor = 2.1 / 3.2   # NHTS 2017 median trip: elementary 2.1 mi vs middle 3.2 mi
     cand = sorted(
-        (sc for sc in pool if _level_of(sc) == level and _is_rated_school(sc) and not sc.get("_k8_magnet")
+        (sc for sc in pool if _serves(sc, level) and _is_rated_school(sc) and not sc.get("_k8_magnet")
          and sc.get("isCharterSchool") != "Yes" and sc.get("distance") is not None),
         key=lambda sc: float(sc["distance"]))
     base = base_radius_miles * (elem_factor if level == "elementary" else 1.0)
@@ -468,7 +475,7 @@ def choice_pool_average(schools: List[Dict], level: str) -> Optional[Tuple[float
 
     rated = [(school_rating(sc), (((sc.get("schoolYearlyDetails") or [{}])[0] or {}).get("numberOfStudents")) or 1)
              for sc in schools
-             if _level_of(sc) == level and _is_rated_school(sc) and not sc.get("isPrivate")
+             if _serves(sc, level) and _is_rated_school(sc) and not sc.get("isPrivate")
              and sc.get("_dir_class") != "selective" and not sc.get("_k8_magnet")
              and sc.get("isCharterSchool") != "Yes" and school_rating(sc) is not None]
     if len(rated) < MIN_CHOICE_POOL:
