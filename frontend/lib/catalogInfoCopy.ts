@@ -54,12 +54,12 @@ export const SCENE_COPY: Record<string, InfoCopy> = {
   buzzing: {
     title: 'Buzzing',
     body: 'A lot is going on within a short walk, and a good share of it is places to linger: independent cafes, bars, galleries, bookstores and theaters, not just restaurants.',
-    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Buzzing means a strong mix of cafes, bars and culture venues compared with places of similar density, and 71 or more independent venues within about 0.75 miles. The cut-offs are rough and not validated.',
+    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Buzzing means 71 or more independent venues within about 0.75 miles and a strong mix of cafes, bars and culture venues compared with places of similar density. The cut-offs are rough and not validated.',
   },
   lively: {
     title: 'Lively',
-    body: 'A real local scene at town or main-street scale: a strong mix of independent places to linger, with fewer places overall than a big downtown.',
-    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Lively means a strong mix of cafes, bars and culture venues compared with places of similar density, with fewer than 71 independent venues within about 0.75 miles. Towns are measured across the whole town. The cut-offs are rough and not validated.',
+    body: 'A real local scene: either a strong mix of independent places to linger at town or main-street scale, or a big, busy area with an average-or-better mix.',
+    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Lively means a strong mix of cafes, bars and culture venues compared with places of similar density with fewer than 71 independent venues within about 0.75 miles, or 71 or more venues with a mix at or above the typical place for its density. Towns are measured across the whole town. The cut-offs are rough and not validated.',
   },
   low_key: {
     title: 'Flat',

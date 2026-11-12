@@ -156,12 +156,17 @@ def independent_venue_count(venues: Iterable[Dict[str, Any]], radius_m: int = AC
 
 # Ladder (docs/LOCAL_SCENE_LADDER_DPV2.md, built 2026-11-11). Four levels from the mix reading and a volume floor:
 #   quiet    fewer than MIN_VENUES named venues in the measured area
-#   low_key  enough venues, mix reading below LEVEL_MIX_CUT (restaurant-heavy compared with similar places), or no density figure
-#   lively   mix reading at least LEVEL_MIX_CUT, fewer than TOP_VOLUME_FROM independent venues at the pin
-#   buzzing  mix reading at least LEVEL_MIX_CUT, TOP_VOLUME_FROM or more independent venues at the pin
+#   low_key  enough venues, mix reading below the cut for its size (restaurant-heavy compared with similar places), or no density figure
+#   lively   a strong mix (at least LEVEL_MIX_CUT) with fewer than TOP_VOLUME_FROM independent venues at the pin, OR a large place
+#            (TOP_VOLUME_FROM or more) with an average-or-better mix (at least LARGE_PLACE_MIX_CUT, under LEVEL_MIX_CUT)
+#   buzzing  a strong mix (at least LEVEL_MIX_CUT) with TOP_VOLUME_FROM or more independent venues at the pin
+# The large-place Lively tier (2026-11-12) makes a dense place move one level at a time when its mix wobbles; without it a dense place
+# near LEVEL_MIX_CUT jumped from Flat to Buzzing and skipped Lively (docs/LOCAL_SCENE_LADDER_DPV2.md section 5). The mix reading is a
+# percentile within a density band, so 50 is the median place for its density; that is why LARGE_PLACE_MIX_CUT is 50.
 # None when the place has no venue read or no named venue in the measured area: no data, never Quiet (principle 9).
 # LEVEL_MIX_CUT was chosen on the owner's labels (in-sample, unsourced); both cuts are judgments.
 LEVEL_MIX_CUT = 55.0
+LARGE_PLACE_MIX_CUT = 50.0
 LEVELS = ("quiet", "low_key", "lively", "buzzing")
 
 
@@ -173,6 +178,11 @@ def scene_level(facts: Dict[str, Any]) -> Optional[str]:
     if total < MIN_VENUES:
         return "quiet"
     combined = facts.get("combined")
-    if combined is None or combined < LEVEL_MIX_CUT:
+    if combined is None:
         return "low_key"
-    return "buzzing" if n >= TOP_VOLUME_FROM else "lively"
+    large = n >= TOP_VOLUME_FROM
+    if combined >= LEVEL_MIX_CUT:
+        return "buzzing" if large else "lively"
+    if large and combined >= LARGE_PLACE_MIX_CUT:
+        return "lively"
+    return "low_key"

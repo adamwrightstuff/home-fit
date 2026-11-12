@@ -108,6 +108,18 @@ class TestLevels(unittest.TestCase):
         self.assertEqual(ls.scene_level(self.facts(40, 20, 54.9)), "low_key")
         self.assertEqual(ls.scene_level(self.facts(40, 20, 55.0)), "lively")
 
+    def test_large_place_with_an_average_mix_is_lively_not_flat(self):
+        self.assertEqual(ls.scene_level(self.facts(200, 71, 49.9)), "low_key")
+        self.assertEqual(ls.scene_level(self.facts(200, 71, 50.0)), "lively")
+        self.assertEqual(ls.scene_level(self.facts(200, 71, 54.9)), "lively")
+        self.assertEqual(ls.scene_level(self.facts(200, 71, 55.0)), "buzzing")
+        self.assertEqual(ls.scene_level(self.facts(40, 70, 52.0)), "low_key")  # a small place needs the strong mix
+
+    def test_a_dense_place_near_the_mix_cut_moves_one_level_at_a_time(self):
+        order = {"quiet": 0, "low_key": 1, "lively": 2, "buzzing": 3}
+        levels = [ls.scene_level(self.facts(300, 150, m)) for m in range(30, 80)]
+        self.assertTrue(all(abs(order[a] - order[b]) <= 1 for a, b in zip(levels, levels[1:])))
+
     def test_top_volume_makes_buzzing(self):
         self.assertEqual(ls.scene_level(self.facts(200, 70, 80.0)), "lively")
         self.assertEqual(ls.scene_level(self.facts(200, 71, 80.0)), "buzzing")

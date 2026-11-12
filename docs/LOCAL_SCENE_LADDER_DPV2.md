@@ -31,18 +31,21 @@ Parameters (all unsourced, so all are TODOs under principle 4):
   density bands | 5 equal bands | judgment | 3 to 8 | not run
   character cut (Lively and above) | mix reading at least 55 | chosen 2026-11-11 on the owner's labels (in-sample); must exceed Pelham 53.1 | 45 to 65 | label pairs 0.82 at 45, 0.79 at 55 to 60, 0.75 at 65
   top-volume cut (level 3) | 71 independent venues at the pin | catalog 85th percentile 2026-11-06 | unknown | not run
+  large-place mix cut (level 2 for large places) | mix reading at least 50 | 50 is the median place for its density band (the mix is a percentile); checked on the owner's labels 2026-11-12 (in-sample): cuts of 40 to 52.5 give 20 to 22 of 25 has-it and 13 or 14 of 14 does-not; 50 keeps all 14 | 40 to 52.5 | pin-shift section 6
   floor | fewer than 15 named venues in the measured area is Quiet | consistent with the minimum above | 10 to 20 | not run
   independence rule | no OSM brand tag | OSM convention | misses untagged chains (6.2% of NYC venues carry a tag) | not run
 Rule (variant B, recommended): fewer than 15 named venues in the measured area gives level 0 (Quiet). No density figure gives level 1.
-  Otherwise a mix reading below 55 gives level 1 (mostly restaurants, few cafes, bars or culture venues). A mix reading of 55 or more
-  gives level 2, or level 3 when the pin has 71 or more independent venues.
+  Otherwise: a mix reading of 55 or more gives level 2, or level 3 when the pin has 71 or more independent venues. A LARGE place (71 or more
+  independent venues) with a mix of 50 or more but under 55 is also level 2 (added 2026-11-12, see section 6). Anything else is level 1
+  (mostly restaurants, few cafes, bars or culture venues compared with similar places).
   Variant A (floor on the independent count at the pin) was tested and rejected: it reads 126 of 552 towns as Quiet at the pin even
   though each has 15 or more venues in the town (Cornelius 6 and 19, Dunwoody 8 and 58).
 Shared inputs with other pillars: the seven types overlap the amenities pillar's types (acceptable, the ladder is not scored,
   principle 5). Aura reads the ladder.
 Pin-shift sensitivity: not run (Level 2 a). Prior result for the mix on the pin circle: 95th percentile change 28 points (failed).
 Independent validation: none yet (Level 2 d).
-All-places check (2026-11-11, n 1,476, variant B): level 0 572, level 1 488, level 2 289, level 3 127. Variant A: 732, 384, 233, 127.
+All-places check (2026-11-12, n 1,476, with the large-place level 2): level 0 502, level 1 474, level 2 304, level 3 127, no level 69.
+  (2026-11-11, before the large-place tier: 502, 489, 289, 127, 69.)
 Fail-loud conditions: a place with no venue read must be None, not level 0. Built and confirmed 2026-11-11: 69 places have no named venue in
   the measured area and show no level. 4 towns whose boundary held none but whose pin circle did (Golden Beach FL, Terrell Hills TX, Belvedere CA,
   Hillsborough CA) are measured at the pin circle instead (2026-11-12; flagged measured_by_fallback; from the stored business list, so culture
@@ -118,3 +121,28 @@ Limits of this run: NYC only (121 places), a 1,000 m radius instead of the shipp
 **Level 1.** The one open item from section 1 is closed: places with no named venue show no level (69 places), and four towns whose boundary held none are measured at the pin circle. Level 1 is ready for the owner's sign-off line with the gaps in section 2 accepted.
 
 **Options for the jump failure (not decided, criteria not changed).** (1) Leave as built and record the failure. (2) Accept Flat and Buzzing as adjacent for dense places and rewrite the criterion before the next run (a change made after seeing this result, so it would be labeled as such). (3) Add a Lively tier for large places, so the ladder moves one level at a time.
+
+
+---
+
+## 6. Large-place Lively tier, 2026-11-12 (owner decision after the section 5 failure)
+
+**Change.** A place with 71 or more independent venues and a mix reading of 50 or more but under 55 is now Lively (it was Flat). Everything else is as before, so Buzzing and Aura do not change (127 Buzzing, 58 Aura). The goal: a dense place whose mix wobbles around the cut moves one level at a time (Flat to Lively to Buzzing) instead of jumping from Flat to Buzzing. 50 is the median place for its density band; the owner's labels were used to check it (in-sample, so a judgment, not a finding): of cuts from 40 to 52.5, 50 is the lowest that keeps all 14 "does not" places at Sleepy or Flat (45 and below pull Battery Park City up to Lively).
+
+**Effect on the catalog.** Flat 489 to 474, Lively 289 to 304 (15 large places moved up: South End, Andersonville, South Loop, Hollywood, Downtown Las Vegas, Rittenhouse Square, Cow Hollow, Redwood City and others).
+
+**Effect on the owner labels (reported only).** Has-it at Lively or Buzzing 19 to 20 of 25 (Rittenhouse Square now reads Lively); does-not at Sleepy or Flat still 14 of 14; pairs 0.77 to 0.81.
+
+**Level 2 re-run with the new rule (same method as section 5, so the criteria are unchanged; the rule changed after seeing the result, so this is not a clean pre-registered pass).**
+
+| Gate | Section 5 (before) | After | Needs |
+|---|---|---|---|
+| Level unchanged under a 500 m shift | 86.5% | 84.1% | 85% |
+| Lively or Buzzing stay Lively or Buzzing | 91.1% | 87.5% | 80% |
+| Two-level jumps | 5.97% (27) | 3.54% (16) | 1% or less |
+
+Launch pairs still 6 of 6; no density band has more than 80% in one level. Jumps now: Flat to or from Buzzing 11, Sleepy to or from Lively 5. By baseline level, unchanged: Sleepy 94%, Buzzing 91%, Flat 87%, Lively 31% (of 36 shifts).
+
+**Reading.** The new tier cuts the two-level jumps by more than a third but does not reach 1%, and it makes things slightly worse on the other gate: a narrow Lively band for large places (mix 50 to 55) is crossed easily, so Lively is the least stable level. The remaining Flat to Buzzing jumps are shifts where the mix moves by 5 or more points at once (a shifted circle picks up a different block), which no tier boundary can absorb. The mix reading itself, a rank within a band, is what moves under a shift. Level 2 is still not passed.
+
+**Options now (not decided).** (1) Accept this and record that the one-level criterion is likely unreachable for a rank-based mix at a 500 m shift. (2) Rewrite the jump criterion before the next run (a post-hoc change, to be labeled). (3) Make the mix steadier before ranking it (pool venues across the shifted circles, or shrink small samples toward the band average); both were tried on the old pin-circle measure and failed (docs/VIBE_VALIDATION.md sections 12 and 13), so this is the least promising.
