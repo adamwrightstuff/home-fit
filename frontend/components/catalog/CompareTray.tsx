@@ -3,20 +3,34 @@
 import Link from 'next/link'
 import type { CatalogMapPlace } from '@/lib/catalogMapTypes'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
+import { bedsLabel, costGapReason, costSummary, type BudgetFilter } from '@/lib/budgetCost'
 
 interface CompareTrayProps {
   compareIds: string[]
   places: CatalogMapPlace[]
   onRemove: (key: string) => void
   onClear: () => void
+  /** Set once the visitor has chosen a budget; each chip then shows the place's monthly cost. */
+  budget?: BudgetFilter
 }
 
-export default function CompareTray({ compareIds, places, onRemove, onClear }: CompareTrayProps) {
+export default function CompareTray({ compareIds, places, onRemove, onClear, budget }: CompareTrayProps) {
   if (compareIds.length === 0) return null
 
   function getPlaceName(key: string): string {
     const found = places.find((p) => catalogRowKey(p.catalog) === key)
     return found ? found.catalog.name : key
+  }
+
+  function getPlaceCost(key: string): { text: string; title: string } | null {
+    if (!budget) return null
+    const found = places.find((p) => catalogRowKey(p.catalog) === key)
+    if (!found) return null
+    const text = costSummary(found.housing_cost, budget)
+    const title = text === 'no cost'
+      ? `No ${bedsLabel(budget.beds)}-bed cost: ${costGapReason(found.housing_cost, budget)}`
+      : `Estimated monthly cost for a ${bedsLabel(budget.beds)}-bedroom home, from your budget settings`
+    return { text, title }
   }
 
   return (
@@ -54,6 +68,10 @@ export default function CompareTray({ compareIds, places, onRemove, onClear }: C
             }}
           >
             {getPlaceName(id)}
+            {(() => {
+              const c = getPlaceCost(id)
+              return c ? <span title={c.title} style={{ fontWeight: 500, color: '#6b7280' }}>· {c.text}</span> : null
+            })()}
             <button
               type="button"
               aria-label={`Remove ${getPlaceName(id)}`}

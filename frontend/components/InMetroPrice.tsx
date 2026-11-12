@@ -1,6 +1,6 @@
 'use client'
 
-import { bedLabel, bedsLabel, bestCost, costGapReason, DEFAULT_BUDGET, type BudgetFilter, type HousingCost } from '@/lib/budgetCost'
+import { bedLabel, bedsLabel, bestCost, costGapReason, DEFAULT_BUDGET, downLabel, type BudgetFilter, type HousingCost } from '@/lib/budgetCost'
 
 export interface PriceRow {
   name: string
@@ -59,7 +59,7 @@ export default function InMetroPrice({ a, b, budget, income }: { a: PriceRow; b:
       </div>
       <div className="mt-1 opacity-80">
         {chosen
-          ? `Basis: 7% mortgage, ${usd(chosen.down)} down, ZIP average property tax (IRS itemizers; low in California) and 0.4% insurance, on Zillow's ZIP median for the size. Single-family and condos combined.`
+          ? `Basis: 7% mortgage, ${downLabel(chosen.down)}, ZIP average property tax (IRS itemizers; low in California) and 0.4% insurance, on Zillow's ZIP median for the size. Single-family and condos combined.`
           : 'Set bedrooms and a down payment in the Explorer to see a monthly cost here. Zillow ZIP values, single-family and condos combined.'}
       </div>
     </section>

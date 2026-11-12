@@ -136,6 +136,14 @@ export function zillowSearchUrl(name: string, stateAbbr: string, beds: number): 
   return `https://www.zillow.com/homes/for_sale/${encodeURIComponent(city)},-${encodeURIComponent(stateAbbr)}/${beds}-_beds/`
 }
 
+/** One short phrase for a narrow spot such as the compare tray: "~$4,100/mo", "from ~$4,100/mo" or "no cost". */
+export function costSummary(hc: HousingCost | null | undefined, budget: BudgetFilter): string {
+  const bc = bestCost(hc, budget)
+  if (!bc) return 'no cost'
+  const range = budget.max == null && bc.minBeds !== bc.maxBeds
+  return `${range ? 'from ' : ''}~$${Math.round(range ? bc.low : bc.cost.total).toLocaleString('en-US')}/mo`
+}
+
 /** Short form of costGapReason for a narrow list column; the full reason goes in the tooltip. */
 export function costGapShort(hc: HousingCost | null | undefined, budget: BudgetFilter): string {
   if (!hc) return 'no ZIP price data'

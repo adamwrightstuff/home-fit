@@ -2090,6 +2090,7 @@ export default function CatalogPageClient({
       />
 
       <CompareTray
+        budget={filterBudget.chosen ? filterBudget : undefined}
         compareIds={compareIds}
         places={gatedPlaces}
         onRemove={(key) => setCompareIds((prev) => prev.filter((k) => k !== key))}

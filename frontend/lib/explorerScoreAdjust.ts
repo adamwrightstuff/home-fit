@@ -4,7 +4,7 @@ import { withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweigh
 import { commuteToZone, findWorkZone, haversineMiles, minutesForMode, noRouteToZone, type WorkCommute } from '@/lib/workZones'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import type { CommuteMode } from '@/lib/userProfile'
-import type { BudgetFilter } from '@/lib/budgetCost'
+import { normalizeBeds, type BudgetFilter } from '@/lib/budgetCost'
 /** Explorer filters that rewrite pillar scores (as opposed to filters that only hide places). */
 export type SchoolLevel = 'elementary' | 'middle' | 'high'
 export const ALL_SCHOOL_LEVELS: SchoolLevel[] = ['elementary', 'middle', 'high']
@@ -176,7 +176,13 @@ export function readCompareContext(): CompareContext | null {
     const raw = sessionStorage.getItem(COMPARE_CONTEXT_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed?.priorities && parsed?.filters) return parsed as CompareContext
+      if (parsed?.priorities && parsed?.filters) {
+        const b = parsed.budget
+        parsed.budget = b && typeof b === 'object'
+          ? { beds: normalizeBeds(b.beds), max: typeof b.max === 'number' && b.max > 0 ? b.max : null, down: b.chosen === true && typeof b.down === 'number' && b.down >= 0 ? b.down : null, chosen: b.chosen === true }
+          : null
+        return parsed as CompareContext
+      }
     }
     // Fallback: saved search options (quiz / search page) when Explore hasn't been opened this session.
     const opts = JSON.parse(localStorage.getItem('homefit_search_options') ?? 'null')
