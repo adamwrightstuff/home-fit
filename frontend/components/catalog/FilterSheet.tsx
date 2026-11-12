@@ -481,7 +481,7 @@ export default function FilterSheet({
             <div style={LABEL_STYLE}>Life stage</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterLifeStage.length === 0, 'All', () => onFilterLifeStageChange([]))}
-              {([['children', 'More families with kids'], ['working_age', 'More working-age adults'], ['older', 'More older adults']] as const).map(([val, label]) =>
+              {([['children', 'Families with kids'], ['working_age', 'Working-age adults'], ['older', 'Older adults']] as const).map(([val, label]) =>
                 chip(
                   filterLifeStage.includes(val),
                   label,
