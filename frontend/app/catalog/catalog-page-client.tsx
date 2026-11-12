@@ -157,7 +157,7 @@ export default function CatalogPageClient({
     try {
       const o = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')
       const v = Array.isArray(o?.diversity_preference) ? o.diversity_preference : Array.isArray(o?.filters?.filterLifeStage) ? o.filters.filterLifeStage : []
-      return v.filter((c: unknown) => ['children', 'working_age', 'older'].includes(c as string))
+      return v.filter((c: unknown) => ['children', 'young_professionals', 'older'].includes(c as string))
     } catch { return [] }
   })
   useEffect(() => {
