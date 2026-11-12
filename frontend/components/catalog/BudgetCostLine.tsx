@@ -44,10 +44,18 @@ export default function BudgetCostLine({
       {showRange
         ? `from ~$${round100(bc.low).toLocaleString('en-US')}/mo · ${bedLabel(bc.minBeds)}+ bed`
         : `~$${round100(mc.total).toLocaleString('en-US')}/mo · ${bedLabel(bc.beds)} bed`}
-      {!bc.fits && !bc.unknownSize && (
+      {budget.max != null && bc.fits && (
         <>
           {' · '}
-          <span className="font-semibold text-trovamo-score-low">Over budget</span>
+          <span className="font-normal text-[var(--hf-text-tertiary)]">
+            {bc.beds < bc.maxBeds ? 'biggest under' : 'under'} your ${budget.max.toLocaleString('en-US')} cap
+          </span>
+        </>
+      )}
+      {budget.max != null && !bc.fits && !bc.unknownSize && (
+        <>
+          {' · '}
+          <span className="font-semibold text-trovamo-score-low">Over your ${budget.max.toLocaleString('en-US')} cap</span>
         </>
       )}
       {stateAbbr === 'CA' && <div className="font-normal text-[var(--hf-text-tertiary)]">Tax likely low (California)</div>}
