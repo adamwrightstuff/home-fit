@@ -1,6 +1,6 @@
 'use client'
 
-import { bedLabel, bedsLabel, bestCost, costGapReason, costGapShort, downLabel, type BudgetFilter, type HousingCost } from '@/lib/budgetCost'
+import { bedLabel, bestCost, minBeds, costGapReason, costGapShort, downLabel, type BudgetFilter, type HousingCost } from '@/lib/budgetCost'
 
 /** The figure is a ZIP-median estimate, so it is shown to the nearest $100 (no false precision). */
 const round100 = (n: number) => Math.round(n / 100) * 100
@@ -27,7 +27,7 @@ export default function BudgetCostLine({
     return (
       <div
         className={`${size} text-[var(--hf-text-tertiary)]`}
-        title={`No ${bedsLabel(budget.beds)}-bed cost: ${costGapReason(housingCost, budget)}`}
+        title={`No ${bedLabel(minBeds(budget.beds))}+ bed cost: ${costGapReason(housingCost, budget)}`}
       >
         No cost · {costGapShort(housingCost, budget)}
       </div>
@@ -42,7 +42,7 @@ export default function BudgetCostLine({
       title={`Estimate for a ${bedLabel(bc.beds)}-bedroom home at the ZIP median value of $${Math.round(mc.value).toLocaleString('en-US')}: principal and interest after ${downLabel(budget.down)}, plus average property tax and insurance.${across}`}
     >
       {showRange
-        ? `from ~$${round100(bc.low).toLocaleString('en-US')}/mo · ${bedLabel(bc.minBeds)}-${bedLabel(bc.maxBeds)} bed`
+        ? `from ~$${round100(bc.low).toLocaleString('en-US')}/mo · ${bedLabel(bc.minBeds)}+ bed`
         : `~$${round100(mc.total).toLocaleString('en-US')}/mo · ${bedLabel(bc.beds)} bed`}
       {!bc.fits && !bc.unknownSize && (
         <>

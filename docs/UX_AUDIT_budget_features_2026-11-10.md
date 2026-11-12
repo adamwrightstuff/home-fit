@@ -216,3 +216,9 @@ Rendered in a browser: every row in the table above marked as browser. Nothing w
 - The explainer bar and the filter sheet say the cost is a single-family and condo mix, not tied to the housing type chips.
 - The quiz asks bedrooms and a monthly cap only when the visitor said price matters ("best value" or "pay more for the right place"); the answers set the same budget the filter sheet edits (one bedroom count, the cap; the down payment stays as it was, default 20%). Checked by running the quiz's own result function: both questions show only for those two answers, and the payload carries the bedrooms and cap (null otherwise). Not checked: the two quiz screens rendered visually, and the signed-in quiz-to-profile save.
 - The owner also asked whether Archetype should be renamed Status signal and removed as a sort; not changed, waiting for the owner's decision.
+
+### Fix log, 2026-11-11 (owner approved: bedrooms as one "or more" minimum)
+
+- The bedroom chips are now a single minimum, like Zillow's and Airbnb's: tapping 3 selects "3 or more" and highlights 3+, 4+ and 5+ together. Several separate sizes (such as 3 and 5 without 4) are no longer possible, and the row label no longer shows a range like "3-5 bed": it reads "from ~$7,300/mo · 3+ bed". Older saves that held separate sizes read as their smallest size or more. The quiz asks "What is the fewest bedrooms that would work?" with "1 or more" to "5 or more".
+- Checked in a browser: a saved 3-and-5 selection loads as "3 or more bedrooms" and rows read "3+ bed"; tapping 2+ highlights 2+ to 5+ and saves [2, 3, 4, 5]. Not checked: the quiz screens rendered, signed-in save, the compare tray and in-metro price panel wording.
+- Behavior change to know: a saved single size such as 4 now reads as "4 or more", so with a monthly cap a place can show a 5-bedroom cost where it fits.

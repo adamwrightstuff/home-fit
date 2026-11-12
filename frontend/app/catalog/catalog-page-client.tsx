@@ -1,6 +1,6 @@
 'use client'
 
-import { DEFAULT_BUDGET, bedsLabel, bestCost, downLabel, normalizeBeds, overBudget, type BudgetFilter } from '@/lib/budgetCost'
+import { DEFAULT_BUDGET, bedsFrom, bedsPhrase, bestCost, downLabel, normalizeBeds, overBudget, type BudgetFilter } from '@/lib/budgetCost'
 import { normalizeSceneFilter, sceneFilterExcludes, type SceneFilter } from '@/lib/sceneLevels'
 import { neighborhoodHref } from '@/lib/neighborhoodPriorities'
 import { placeSlug } from '@/lib/neighborhoodSlug'
@@ -1307,7 +1307,7 @@ export default function CatalogPageClient({
           if (payload.officeDays) setOfficeDays(payload.officeDays)
           // Bedrooms and cap come from the quiz only when the visitor answered them; the down payment stays as it was
           if (payload.homeBudget) {
-            handleBudgetChange({ beds: [payload.homeBudget.beds], max: payload.homeBudget.max, down: filterBudget.down, chosen: true })
+            handleBudgetChange({ beds: bedsFrom(payload.homeBudget.beds), max: payload.homeBudget.max, down: filterBudget.down, chosen: true })
           }
 
           // Dealbreakers: reset the ones the quiz owns, leave any others the user set by hand
@@ -1340,7 +1340,7 @@ export default function CatalogPageClient({
                 filterTrajectory: payload.filterTrajectory,
                 filterCommuteMax: payload.filterCommuteMax,
                 climatePrefs: payload.climatePrefs,
-                ...(payload.homeBudget ? { filterBudget: { beds: [payload.homeBudget.beds], max: payload.homeBudget.max, down: filterBudget.down, chosen: true } } : {}),
+                ...(payload.homeBudget ? { filterBudget: { beds: bedsFrom(payload.homeBudget.beds), max: payload.homeBudget.max, down: filterBudget.down, chosen: true } } : {}),
               },
             }))
           } catch { /* ignore */ }
@@ -1759,7 +1759,7 @@ export default function CatalogPageClient({
           {filterBudget.chosen && viewMode === 'list' && (
             <>
               {' '}
-              Monthly cost: a {bedsLabel(filterBudget.beds)}-bedroom home (single-family and condo mix) at the ZIP median price, mortgage at 7% after {downLabel(filterBudget.down)}, plus property tax and insurance.
+              Monthly cost: a home with {bedsPhrase(filterBudget.beds)} (single-family and condo mix) at the ZIP median price, mortgage at 7% after {downLabel(filterBudget.down)}, plus property tax and insurance.
             </>
           )}
         </p>

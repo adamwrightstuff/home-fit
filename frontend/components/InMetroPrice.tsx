@@ -1,6 +1,6 @@
 'use client'
 
-import { bedLabel, bedsLabel, bestCost, costGapReason, DEFAULT_BUDGET, downLabel, type BudgetFilter, type HousingCost } from '@/lib/budgetCost'
+import { bedLabel, bedsPhrase, bestCost, costGapReason, DEFAULT_BUDGET, downLabel, type BudgetFilter, type HousingCost } from '@/lib/budgetCost'
 
 export interface PriceRow {
   name: string
@@ -45,7 +45,7 @@ export default function InMetroPrice({ a, b, budget, income }: { a: PriceRow; b:
   return (
     <section aria-label="Housing price within the metro" className={box} style={{ marginTop: '0.75rem' }}>
       <div className="font-semibold text-[var(--hf-text-primary)]">
-        Same metro: {chosen ? `estimated monthly cost for a ${bedsLabel(chosen.beds)}-bedroom home` : 'ZIP median home value'}
+        Same metro: {chosen ? `estimated monthly cost for a home with ${bedsPhrase(chosen.beds)}` : 'ZIP median home value'}
         {cheaper && diff != null && <> · {cheaper} is {chosen ? `${usd(diff)}/mo` : usd(diff)} lower</>}
       </div>
       <div style={{ display: 'grid', gap: '0.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginTop: 6 }}>

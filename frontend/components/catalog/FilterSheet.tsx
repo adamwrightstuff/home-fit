@@ -1,6 +1,6 @@
 'use client'
 
-import { ALL_BEDS, DEFAULT_BUDGET, MORTGAGE_RATE, bedLabel, toggleBed, type BudgetFilter } from '@/lib/budgetCost'
+import { ALL_BEDS, DEFAULT_BUDGET, MORTGAGE_RATE, bedLabel, minBeds, setMinBed, type BudgetFilter } from '@/lib/budgetCost'
 import { SCENE_LABEL, SCENE_LEVELS, toggleSceneLevel, type SceneFilter } from '@/lib/sceneLevels'
 import { useEffect, useState } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -357,13 +357,13 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Monthly Budget</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Estimated monthly cost of a typical home (single-family and condo mix, not tied to the housing type chips above) with your bedroom count in each place. With a monthly cap, a place stays if any size you picked fits, and shows the biggest one that does: mortgage at {Math.round(MORTGAGE_RATE * 100)}% over 30 years, property tax and insurance. Places with no data are not filtered out.
+              Estimated monthly cost of a typical home (single-family and condo mix, not tied to the housing type chips above) with at least your bedrooms in each place. With a monthly cap, a place stays if any size from your minimum up fits, and shows the biggest one that does: mortgage at {Math.round(MORTGAGE_RATE * 100)}% over 30 years, property tax and insurance. Places with no data are not filtered out.
             </div>
-            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Bedrooms (pick one or more)</div>
+            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Bedrooms (at least)</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
               {ALL_BEDS.map((b) =>
-                chip(filterBudget.chosen && filterBudget.beds.includes(b), bedLabel(b), () => {
-                  const next = toggleBed(filterBudget, b)
+                chip(filterBudget.chosen && filterBudget.beds.includes(b), `${bedLabel(b)}${b < 5 ? '+' : ''}`, () => {
+                  const next = setMinBed(filterBudget, b)
                   setBedHint(next === filterBudget)
                   onFilterBudgetChange(next)
                 })
@@ -371,7 +371,7 @@ export default function FilterSheet({
             </div>
             {bedHint && (
               <div style={{ fontSize: 11, color: '#b45309', marginTop: -6, marginBottom: 8 }}>
-                Keep at least one size while a cap or down payment is set. Clear them to turn the budget off.
+                Your minimum stays at {bedLabel(minBeds(filterBudget.beds))}+ while a cap or down payment is set. Clear them to turn the budget off.
               </div>
             )}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>

@@ -15,7 +15,7 @@ export type Beds = 1 | 2 | 3 | 4 | 5
 export const ALL_BEDS: Beds[] = [1, 2, 3, 4, 5]
 
 export interface BudgetFilter {
-  /** Bedroom counts the visitor would take, ascending (5 means 5 or more). With a cap, a place passes if any of them fits. */
+  /** The bedroom sizes for "N or more", ascending to 5 (5 means 5 or more); always one minimum. With a cap, a place passes if any of them fits. */
   beds: Beds[]
   /** Maximum all-in monthly cost; null means no budget filter. */
   max: number | null
@@ -26,7 +26,7 @@ export interface BudgetFilter {
 }
 
 export const DOWN_SHARE_DEFAULT = 0.2
-export const DEFAULT_BUDGET: BudgetFilter = { beds: [4], max: null, down: null, chosen: false }
+export const DEFAULT_BUDGET: BudgetFilter = { beds: [4, 5], max: null, down: null, chosen: false }
 
 /** "20% down" or "$250,000 down" */
 export function downLabel(down: number | null): string {
@@ -43,34 +43,40 @@ export interface MonthlyCost {
   total: number
 }
 
-/** Reads a saved bedroom value: a list of counts, or a single count saved before multi-select. */
+/** The bedroom sizes for "N or more": N up to 5+ (the bedrooms setting is always one minimum, like Zillow's "3+"). */
+export function bedsFrom(n: number): Beds[] {
+  return ALL_BEDS.filter(b => b >= n)
+}
+
+/**
+ * Reads a saved bedroom value. Older saves could hold several separate sizes (even 3 and 5 without 4) or one size; both become
+ * "smallest saved size or more".
+ */
 export function normalizeBeds(v: unknown): Beds[] {
   const raw = Array.isArray(v) ? v : [v]
   const out = ALL_BEDS.filter(b => raw.some(x => Number(x) === b))
-  return out.length ? out : DEFAULT_BUDGET.beds
+  return out.length ? bedsFrom(out[0]) : DEFAULT_BUDGET.beds
 }
 
 export const bedLabel = (n: number): string => (n >= 5 ? '5+' : String(n))
 
-/** "4", "3 or 4", "3, 4 or 5+" */
-export function bedsLabel(beds: Beds[]): string {
-  const l = beds.map(bedLabel)
-  return l.length <= 1 ? (l[0] ?? '') : `${l.slice(0, -1).join(', ')} or ${l[l.length - 1]}`
+/** The one minimum the setting stands for: 3 for [3, 4, 5]. */
+export const minBeds = (beds: Beds[]): Beds => beds[0] ?? DEFAULT_BUDGET.beds[0]
+
+/** "3 or more bedrooms" (5 means 5 or more) */
+export function bedsPhrase(beds: Beds[]): string {
+  return `${minBeds(beds)} or more bedrooms`
 }
 
 /**
- * Taps a bedroom chip: the first tap chooses it, later taps add or remove it. Removing the last chip clears the budget back to the
- * unchosen state when nothing else was set (no cap, no typed down payment); with a cap or down payment set the last chip stays, and
- * the same object comes back so the caller can tell and say why.
+ * Taps a bedroom chip: it sets the minimum, so 3 means 3, 4 and 5+. Tapping the current minimum again clears the budget back to
+ * the unchosen state when nothing else was set (no cap, no typed down payment); with a cap or down payment set the minimum stays,
+ * and the same object comes back so the caller can tell and say why.
  */
-export function toggleBed(budget: BudgetFilter, b: Beds): BudgetFilter {
-  if (!budget.chosen) return { ...budget, beds: [b], chosen: true }
-  if (budget.beds.includes(b)) {
-    if (budget.beds.length > 1) return { ...budget, beds: budget.beds.filter(x => x !== b) }
-    if (budget.max == null && budget.down == null) return { ...budget, beds: DEFAULT_BUDGET.beds, chosen: false }
-    return budget
-  }
-  return { ...budget, beds: ALL_BEDS.filter(x => x === b || budget.beds.includes(x)) }
+export function setMinBed(budget: BudgetFilter, b: Beds): BudgetFilter {
+  if (!budget.chosen || minBeds(budget.beds) !== b) return { ...budget, beds: bedsFrom(b), chosen: true }
+  if (budget.max == null && budget.down == null) return { ...budget, beds: DEFAULT_BUDGET.beds, chosen: false }
+  return budget
 }
 
 function costForBeds(hc: HousingCost | null | undefined, down: number | null, beds: Beds): MonthlyCost | null {
