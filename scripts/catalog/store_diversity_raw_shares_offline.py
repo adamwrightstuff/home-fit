@@ -55,6 +55,12 @@ def main():
             if dv.get("status") == "no_data" or dv.get("score") is None: continue
             key = ov.get(f"{metro}|{nm}"); k = tuple(key) if key else None
             if k is None:
+                # Records stored by an earlier run already carry the geography; reuse it instead of re-matching.
+                prev = dv.get("raw_shares") or {}
+                kind = {"tract": "tract", "place": "place", "county_subdivision": "cousub"}.get(prev.get("geo_level"))
+                if kind and (kind, prev.get("geoid")) in geo and (kind, prev.get("geoid")) in H:
+                    k = (kind, prev["geoid"])
+            if k is None:
                 pop = (dv.get("education_attainment") or {}).get("population_25_plus")
                 hits = []
                 for c in by_pop.get(int(pop or -1), []):
