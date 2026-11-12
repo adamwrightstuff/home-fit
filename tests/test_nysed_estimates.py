@@ -32,3 +32,12 @@ def test_zone_and_nearest_find_the_estimated_school_despite_its_alternative_labe
         _, picked = _nearest_in_district(pool, level, 2.0)
         assert [p["schoolName"] for p in picked] == ["Babylon Junior-Senior High School"]
     assert _nearest_in_district(pool, "elementary", 2.0)[1][0]["schoolName"] == "Babylon Memorial Grade School"
+
+
+def test_estimates_stay_out_of_choice_pool_averages():
+    from pillars.schools import choice_pool_average
+    snap = _ny()
+    real = [{"schoolName": f"R{i}", "schoolLevel": "High", "rankHistory": [{"rankStatewidePercentage": 40.0}],
+             "isCharterSchool": "No"} for i in range(3)]
+    est = next(x for x in snap["schools"] if x["schoolName"] == "Babylon Junior-Senior High School")
+    assert choice_pool_average(real + [est], "high") == choice_pool_average(real, "high")

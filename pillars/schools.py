@@ -413,6 +413,13 @@ def _serves(school: Dict, level: str) -> bool:
     return _level_of(school) == level or level in (school.get("_serves") or [])
 
 
+def _is_estimated(school: Dict) -> bool:
+    """True for a rating estimated from state test results, not SchoolDigger's own. Estimates stand in for the school
+    when it is the assigned or nearest one; they stay out of pool averages, which are SchoolDigger ratings only."""
+    rh = school.get("rankHistory") or []
+    return bool(rh) and bool(rh[0].get("_estimated"))
+
+
 def _entry(school: Dict, role: str) -> Dict:
     rh = (school.get("rankHistory") or [{}])[0] if school.get("rankHistory") else {}
     return {
@@ -477,7 +484,8 @@ def choice_pool_average(schools: List[Dict], level: str) -> Optional[Tuple[float
              for sc in schools
              if _serves(sc, level) and _is_rated_school(sc) and not sc.get("isPrivate")
              and sc.get("_dir_class") != "selective" and not sc.get("_k8_magnet")
-             and sc.get("isCharterSchool") != "Yes" and school_rating(sc) is not None]
+             and sc.get("isCharterSchool") != "Yes" and school_rating(sc) is not None
+             and not _is_estimated(sc)]
     if len(rated) < MIN_CHOICE_POOL:
         return None
     total = sum(n for _, n in rated)
