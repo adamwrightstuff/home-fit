@@ -357,7 +357,7 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Monthly Budget</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-              Estimated monthly cost of a typical home with your bedroom count in each place. With a monthly cap, a place stays if any size you picked fits, and shows the biggest one that does: mortgage at {Math.round(MORTGAGE_RATE * 100)}% over 30 years, property tax and insurance. Places with no data are not filtered out.
+              Estimated monthly cost of a typical home (single-family and condo mix, not tied to the housing type chips above) with your bedroom count in each place. With a monthly cap, a place stays if any size you picked fits, and shows the biggest one that does: mortgage at {Math.round(MORTGAGE_RATE * 100)}% over 30 years, property tax and insurance. Places with no data are not filtered out.
             </div>
             <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Bedrooms (pick one or more)</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>

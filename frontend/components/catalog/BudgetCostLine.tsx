@@ -2,6 +2,9 @@
 
 import { bedLabel, bedsLabel, bestCost, costGapReason, costGapShort, downLabel, type BudgetFilter, type HousingCost } from '@/lib/budgetCost'
 
+/** The figure is a ZIP-median estimate, so it is shown to the nearest $100 (no false precision). */
+const round100 = (n: number) => Math.round(n / 100) * 100
+
 /**
  * The monthly cost estimate for a place under the visitor's budget settings: the same line on the list row, the map bottom sheet
  * and the desktop detail panel. Only render it when a budget has been chosen (nothing is shown before that).
@@ -39,8 +42,8 @@ export default function BudgetCostLine({
       title={`Estimate for a ${bedLabel(bc.beds)}-bedroom home at the ZIP median value of $${Math.round(mc.value).toLocaleString('en-US')}: principal and interest after ${downLabel(budget.down)}, plus average property tax and insurance.${across}`}
     >
       {showRange
-        ? `from ~$${Math.round(bc.low).toLocaleString('en-US')}/mo · ${bedLabel(bc.minBeds)}-${bedLabel(bc.maxBeds)} bed`
-        : `~$${Math.round(mc.total).toLocaleString('en-US')}/mo · ${bedLabel(bc.beds)} bed`}
+        ? `from ~$${round100(bc.low).toLocaleString('en-US')}/mo · ${bedLabel(bc.minBeds)}-${bedLabel(bc.maxBeds)} bed`
+        : `~$${round100(mc.total).toLocaleString('en-US')}/mo · ${bedLabel(bc.beds)} bed`}
       {!bc.fits && !bc.unknownSize && (
         <>
           {' · '}

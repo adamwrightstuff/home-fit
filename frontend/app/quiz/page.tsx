@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import QuizModal, { type QuizPayload } from '@/components/QuizModal'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import type { PillarPriorities } from '@/components/SearchOptions'
+import { DEFAULT_BUDGET } from '@/lib/budgetCost'
+import { saveProfile } from '@/lib/userProfile'
 
 export default function QuizPage() {
   const router = useRouter()
@@ -32,10 +34,19 @@ export default function QuizPage() {
           filterTrajectory: payload.filterTrajectory,
           filterCommuteMax: payload.filterCommuteMax,
           climatePrefs: payload.climatePrefs,
+          ...(payload.homeBudget
+            ? { filterBudget: { beds: [payload.homeBudget.beds], max: payload.homeBudget.max, down: opts.filters?.filterBudget?.down ?? DEFAULT_BUDGET.down, chosen: true } }
+            : {}),
         },
         dealbreakers: payload.dealbreakers,
       }))
     } catch { /* ignore */ }
+    // Signed in: keep the account profile in step so its saved bedrooms do not override the quiz answer.
+    if (payload.homeBudget) {
+      let down: number | null = DEFAULT_BUDGET.down
+      try { down = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters?.filterBudget?.down ?? down } catch { /* ignore */ }
+      void saveProfile({ home_budget: { beds: [payload.homeBudget.beds], down } })
+    }
     router.push('/catalog')
   }
 

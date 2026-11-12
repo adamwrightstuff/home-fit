@@ -18,6 +18,8 @@ export interface QuizPayload {
   filterTrajectory: string
   filterCommuteMax: string
   climatePrefs: ClimatePreferences
+  /** Bedrooms and monthly cap, only when the visitor said price matters; null leaves their budget as it is. */
+  homeBudget?: { beds: 1 | 2 | 3 | 4 | 5; max: number | null } | null
   dealbreakers: Partial<Record<string, boolean>>
 }
 

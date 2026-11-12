@@ -209,3 +209,10 @@ Rendered in a browser: every row in the table above marked as browser. Nothing w
 - G5 fixed. At phone width (768px and below) every chip in the filter sheet uses the page's touch chip size (36px, `--hf-chip-h-touch`), including the bedroom chips (were 28px high and 31 to 41px wide). Checked at 375px: all 40 sheet chips at least 36px, no horizontal overflow. Desktop is unchanged (28px).
 - G6 fixed. The compare tray looks a chip's name and cost up in the full place list, so a place hidden by the current search keeps both. Checked: Larchmont added, then a "Pelham" search, tray reads "Larchmont · ~$10,976/mo" and "Pelham · ~$9,005/mo" (the raw key showed before).
 - Open: none from this audit. Not checked: signed-in save, pairs in different metros on the compare page, a real phone. Same-session build and grading, so Level 1 still needs an independent re-run and the owner's sign-off.
+
+### Fix log, 2026-11-11 (owner approved: rounding, home-type label, quiz question)
+
+- Row cost shows to the nearest $100 (it is a ZIP-median estimate, so no false precision). Checked in a browser: all 1,253 row costs are multiples of $100.
+- The explainer bar and the filter sheet say the cost is a single-family and condo mix, not tied to the housing type chips.
+- The quiz asks bedrooms and a monthly cap only when the visitor said price matters ("best value" or "pay more for the right place"); the answers set the same budget the filter sheet edits (one bedroom count, the cap; the down payment stays as it was, default 20%). Checked by running the quiz's own result function: both questions show only for those two answers, and the payload carries the bedrooms and cap (null otherwise). Not checked: the two quiz screens rendered visually, and the signed-in quiz-to-profile save.
+- The owner also asked whether Archetype should be renamed Status signal and removed as a sort; not changed, waiting for the owner's decision.

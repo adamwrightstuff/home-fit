@@ -637,6 +637,36 @@ const QUESTIONS = [
     }
   },
 
+  // Budget follow-ups: only asked when price matters (answers to 'budget' above)
+  {
+    id: 'bedrooms',
+    showIf: () => answers.budget === 'value' || answers.budget === 'balanced',
+    q: 'How many bedrooms do you need?',
+    sub: 'Used to estimate what a home costs in each place.',
+    opts: [
+      { id: '1', icon: '🛏️', label: '1 bedroom',    desc: '' },
+      { id: '2', icon: '🛏️', label: '2 bedrooms',   desc: '' },
+      { id: '3', icon: '🛏️', label: '3 bedrooms',   desc: '' },
+      { id: '4', icon: '🛏️', label: '4 bedrooms',   desc: '' },
+      { id: '5', icon: '🛏️', label: '5 or more',    desc: '' },
+    ],
+    apply() { /* filter only */ }
+  },
+  {
+    id: 'budget_cap',
+    showIf: () => answers.budget === 'value' || answers.budget === 'balanced',
+    q: 'What is the most you would want to pay a month for housing?',
+    sub: 'Mortgage, property tax and insurance together. You can change this later in the filters.',
+    opts: [
+      { id: '5000',  icon: '💵', label: 'Up to $5,000',  desc: '' },
+      { id: '7500',  icon: '💵', label: 'Up to $7,500',  desc: '' },
+      { id: '10000', icon: '💵', label: 'Up to $10,000', desc: '' },
+      { id: '15000', icon: '💵', label: 'Up to $15,000', desc: '' },
+      { id: 'none',  icon: '—',  label: 'No limit',      desc: '' },
+    ],
+    apply() { /* filter only */ }
+  },
+
   // Dimension 6 — Stability vs. upside
   {
     id: 'stability',
@@ -901,7 +931,10 @@ function renderResults() {
   const housingLabels = { single_family: 'Single-family', rowhouse: 'Rowhouse/Townhouse', condo: 'Apartment/Condo' }
   const housingNote = housingPicks.map(p => housingLabels[p]).filter(Boolean).join(' or ')
   const sceneNote = { real: 'Local scene: high', some: 'Local scene: some or better' }[answers.scene] || ''
-  const filterNotes = [politicalNote, commuteNote, stabilityNote, sceneNote, outdoorsNote, sceneryNote, housingNote, ...weatherNotes].filter(Boolean)
+  const budgetNote = shown('bedrooms')
+    ? `${answers.bedrooms === '5' ? '5+' : answers.bedrooms} bedrooms` + (/^\d+$/.test(ans('budget_cap') || '') ? `, up to $${Number(answers.budget_cap).toLocaleString('en-US')}/mo` : '')
+    : ''
+  const filterNotes = [politicalNote, commuteNote, stabilityNote, sceneNote, outdoorsNote, sceneryNote, housingNote, budgetNote, ...weatherNotes].filter(Boolean)
 
   document.getElementById('qwrap').innerHTML = `
     <div class="results-wrap">
@@ -974,6 +1007,10 @@ function applyAndClose() {
     filterTrajectory,
     filterCommuteMax,
     climatePrefs,
+    // Only when price matters and bedrooms were answered; null leaves the visitor's budget untouched
+    homeBudget: shown('bedrooms') && answers.bedrooms
+      ? { beds: Number(answers.bedrooms), max: /^\d+$/.test(ans('budget_cap') || '') ? Number(answers.budget_cap) : null }
+      : null,
   }
 
   const dealbreakers = {}
