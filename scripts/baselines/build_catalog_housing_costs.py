@@ -29,6 +29,8 @@ MIN_ITEMIZERS = 100
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--soi', default=None)
+    ap.add_argument('--city-values', nargs='*', default=[], metavar='NAME|ST',
+                    help='places that take the Zillow CITY bedroom values (data/zillow_zhvi_city_bedrooms.json) instead of the ZIP values')
     a = ap.parse_args()
     soi = a.soi
     if not soi:
@@ -44,6 +46,7 @@ def main() -> None:
         amt[z] += float(r['A18500'] or 0)  # thousands of dollars
 
     zh = json.load(open(os.path.join(ROOT, 'data', 'zillow_zhvi_zip_bedrooms.json')))
+    city = json.load(open(os.path.join(ROOT, 'data', 'zillow_zhvi_city_bedrooms.json')))['cities'] if a.city_values else {}
     places = {}
     for f in sorted(glob.glob(os.path.join(ROOT, 'data', '*_metro_place_catalog_scores_merged.composites_recomputed.jsonl'))):
         metro = os.path.basename(f).split('_metro_')[0]
@@ -54,6 +57,9 @@ def main() -> None:
             if z == '00000':
                 continue
             vals = [zh['bedrooms'][str(b)].get(z) for b in range(1, 6)]
+            ckey = f"{c.get('name')}|{c.get('state_abbr')}"
+            if ckey in a.city_values and ckey in city:
+                vals = [cv if cv is not None else zv for cv, zv in zip(city[ckey], vals)]  # city value where Zillow has one, else the ZIP value
             tax = round(amt[z] * 1000 / n_item[z]) if n_item[z] >= MIN_ITEMIZERS else None
             if all(v is None for v in vals) and tax is None:
                 continue
