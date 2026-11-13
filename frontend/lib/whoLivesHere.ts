@@ -91,6 +91,7 @@ export function buildWhoLivesHere(pillars: any): { groups: WhoLivesHereGroup[]; 
   }
 
   const ages = ageMixWholePercents(div.raw_shares?.age)
+  const yp = div.raw_shares?.age?.age_25_34
   if (ages) {
     groups.push({
       title: 'Age',
@@ -98,6 +99,7 @@ export function buildWhoLivesHere(pillars: any): { groups: WhoLivesHereGroup[]; 
         { label: 'Under 18', value: `${ages[0]}%` },
         { label: '18 to 64', value: `${ages[1]}%` },
         { label: '65 and over', value: `${ages[2]}%` },
+        ...(typeof yp === 'number' ? [{ label: 'Ages 25 to 34 (included in 18 to 64)', value: `${Math.round(yp)}%` }] : []),
       ],
     })
   }
