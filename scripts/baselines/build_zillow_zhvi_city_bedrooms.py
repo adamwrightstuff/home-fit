@@ -1,10 +1,10 @@
 """
 Build data/zillow_zhvi_city_bedrooms.json: Zillow ZHVI by bedroom count (1, 2, 3, 4, 5+) at CITY level,
-middle tier, SFR+condo, same series as the ZIP file. Kept only for cities whose name and state match a
+middle tier, SFR+condo, same series as the ZIP file. Kept only for cities whose name, state AND county match a
 catalog place, so the file stays small. Used where a catalog place is an incorporated place that shares
 its ZIP with other towns (e.g. Bronxville village inside ZIP 10708).
 
-Output: {"as_of": "...", "cities": {"Bronxville|NY": [v1, v2, v3, v4, v5], ...}}  (null = no value)
+Output: {"as_of": "...", "cities": {"Bronxville|NY|westchester": [v1, v2, v3, v4, v5], ...}}  (null = no value)
 
 Run from repo root:
   PYTHONPATH=. python3 scripts/baselines/build_zillow_zhvi_city_bedrooms.py
@@ -19,6 +19,15 @@ import os
 import urllib.request
 
 ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
+
+
+def norm_county(name: str) -> str:
+    """'Westchester County' / 'Orleans Parish' / 'Westchester' -> 'westchester'"""
+    n = (name or '').strip().lower()
+    for suf in (' county', ' parish', ' borough', ' census area', ' city and borough', ' municipio'):
+        if n.endswith(suf):
+            n = n[: -len(suf)]
+    return n.replace('.', '').replace("'", '')
 URL = ("https://files.zillowstatic.com/research/public_csvs/zhvi/"
        "City_zhvi_bdrmcnt_{n}_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv")
 
@@ -28,7 +37,7 @@ def main() -> None:
     for f in glob.glob(os.path.join(ROOT, 'data', '*_metro_place_catalog_scores_merged.composites_recomputed.jsonl')):
         for line in open(f):
             c = json.loads(line).get('catalog') or {}
-            wanted.add(f"{c.get('name')}|{c.get('state_abbr')}")
+            wanted.add(f"{c.get('name')}|{c.get('state_abbr')}|{norm_county(c.get('county_borough'))}")
     cities: dict[str, list] = {}
     as_of = None
     for n in range(1, 6):
@@ -37,7 +46,7 @@ def main() -> None:
         latest = sorted(k for k in rows[0] if len(k) == 10 and k[4] == '-' and k[7] == '-')[-1]
         as_of = max(as_of or latest, latest)
         for r in rows:
-            key = f"{r['RegionName']}|{r['State']}"
+            key = f"{r['RegionName']}|{r['State']}|{norm_county(r['CountyName'])}"
             if key not in wanted:
                 continue
             raw = (r.get(latest) or '').strip()
