@@ -1460,6 +1460,10 @@ _NY_COUNTY_PD_POPULATIONS: Dict[str, int] = {
 # town_population is the full agency service population so per-1k rates are correct.
 _NY_VILLAGE_TO_TOWN_PD: Dict[str, tuple] = {
     "nyack": ("Orangetown", "Rockland", 50_000),  # Nyack Village is within Town of Orangetown
+    # Edgemont is an unincorporated hamlet policed by Greenburgh Town PD. Service population is the Town of
+    # Greenburgh (ACS 2022: 94,259) minus the five villages with their own PD that report to the state
+    # (Ardsley 5,013, Dobbs Ferry 11,431, Elmsford 5,192, Hastings-on-Hudson 8,456, Irvington 6,590) = 57,577.
+    "edgemont": ("Greenburgh", "Westchester", 57_577),
 }
 
 
