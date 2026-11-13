@@ -142,15 +142,7 @@ def get_diversity_score(
     youth, prime, seniors = age.get("youth", 0), age.get("prime", 0), age.get("seniors", 0)
     young_pros = age.get("young_professionals")
     breakdown: Dict = {}
-    pooled_note = None
-    if diversity_data.get("geo_level") == "tract":
-        own = (tract or {}).get("geoid") if isinstance(tract, dict) else None
-        pooled = pooled_age_counts(lat, lon, own)
-        if pooled:
-            youth, prime, seniors, young_pros = pooled[0], pooled[1], pooled[2], pooled[4]
-            breakdown["age_pooled_tracts"] = pooled[3]
-        else:
-            pooled_note = "age_pooling_unavailable: single tract used"
+    pooled_note = None  # age shares rank the place's own geography (the tract itself for tract-level places), no pooling
     total_age = youth + prime + seniors
     pref = parse_diversity_preference(diversity_preference)
     score: Optional[float] = None

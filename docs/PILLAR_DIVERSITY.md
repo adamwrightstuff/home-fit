@@ -43,6 +43,7 @@ buckets; weight set to 0 and removed from the weight panel, cards and pillar lis
 Audit: `analysis/audit_diversity_d3_d5_2026-10-27.md`. Scripts: `scripts/catalog/` (identify, raw shares, age percentiles, weight zero).
 
 ## DPv2 checks for the life-stage preference (2026-10-28)
+- **2026-11-12 change: pooling retired.** Tract-level places now rank their own tract (owner decision), live and catalog, so the filter matches the Who lives here card. Glen Ridge children moved 51.5 to 89.1. The P6 pin-shift sensitivity below (one tract: 95th percentile 55 to 63 points) is therefore back in force and disclosed. Rank: `scripts/catalog/rank_tract_age_percentiles_offline.py`.
 - **P6 sensitivity (500 m pin shift, 582 tract-level places, nearest-tract-center approximation).** One tract: median 2 to 4, 95th percentile
   55 to 63 percentile points (30 to 41 percent of shifts over 10). Pooled over 0.44 mile: 95th percentile about 38. Pooled over 0.87 mile
   (shipped, `AGE_POOL_RADIUS_M` = 1,400 m): median 1.5 to 3.6, 95th percentile 19 to 22, 13 to 19 percent over 10 points. Not under a
