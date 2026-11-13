@@ -166,7 +166,7 @@ export interface ScoreResponse {
   status_signal?: number;
   /** Detailed breakdown for archetype index (archetype, status_label, status_insight, top_drivers, analysis_radius_note). */
   status_signal_breakdown?: StatusSignalBreakdown;
-  /** Local Scene ladder level: 'quiet' | 'low_key' | 'lively' | 'buzzing'. null means no venue data. See docs/LOCAL_SCENE_LADDER_DPV2.md. Catalog-only. */
+  /** Local Scene ladder level: 'quiet' (shown as Limited data, fewer than 15 mapped venues) | 'low_key' | 'lively' | 'buzzing'. null means no venue data. See docs/LOCAL_SCENE_LADDER_DPV2.md. Catalog-only. */
   local_scene_level?: 'quiet' | 'low_key' | 'lively' | 'buzzing' | null;
   /** Local Scene facts behind the level. `combined` is the culture and hangout mix reading (0 to 100, ranked among places of similar density). Catalog-only. */
   local_scene_v2?: { independent_venues_1200m?: number | null; venues_total?: number | null; combined?: number | null };

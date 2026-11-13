@@ -67,9 +67,9 @@ export const SCENE_COPY: Record<string, InfoCopy> = {
     detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Flat means 15 or more venues but a mix of cafes, bars and culture venues below what similar places have. The cut-offs are rough and not validated.',
   },
   quiet: {
-    title: 'Sleepy',
-    body: 'This is mostly a place to live rather than a place people go out. There are few places to go nearby.',
-    detail: 'Based on the named cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Sleepy means fewer than 15 within the measured area. Places with few mapped venues can read lower than they feel. The cut-offs are rough and not validated.',
+    title: 'Limited data',
+    body: 'Too few venues are mapped here to read the local scene. It may be quiet, or just thinly mapped.',
+    detail: 'Fewer than 15 named cafes, bars, restaurants, galleries, bookstores, record stores and theaters are mapped in the measured area, from OpenStreetMap. That is too few to read a scene from, so this is a gap in the data and not a finding that the place is sleepy. The cut-off is a rough judgment and not validated.',
   },
 }
 

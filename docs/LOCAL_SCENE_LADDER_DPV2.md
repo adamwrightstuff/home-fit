@@ -3,6 +3,7 @@
 Status: built 2026-11-11 (variant B). The ladder is stored as score.local_scene_level (quiet, low_key, lively, buzzing; None = no data) in all 21 catalog files, replaces the 3-tier tag and the lively flag in the Explorer, Aura is rebuilt on it (Buzzing, Affluent or Elite, not a job center: 62 places, was 49; all 49 kept) and the twin finder reads the mix reading. Level 1 is not signed off. No "validated" claim is allowed. This replaces the 3-tier activity tag in `docs/LOCAL_SCENE_ACTIVITY_L2.md` once built (a change to a signed-off measure drops it back to Level 1, DPv2 adoption rule section 2). Written by the session that designed the ladder, so it must not grade it: the Level 2 checks in section 3 are to be run by a different session, against the pass criteria in this file, which are fixed by this commit.
 
 Level names (owner decision 2026-11-11): level 0 Sleepy, level 1 Flat, level 2 Lively, level 3 Buzzing. Stored keys stay quiet, low_key, lively, buzzing. The checks refer to levels 0 to 3.
+UPDATE 2026-11-13 (owner decision): level 0 is defined only by having fewer than 15 mapped venues, so it is thin data and not a finding. The Explorer now shows it as "Limited data" and does not offer it as a filter choice; "Sleepy" is retired as a display word. The stored key stays quiet and no catalog file changes. A place with enough mapped venues and a weak mix reads Flat.
 
 ## 1. Level 1 spec sheet
 

@@ -1,16 +1,21 @@
 // Local Scene ladder (docs/LOCAL_SCENE_LADDER_DPV2.md). The keys match score.local_scene_level in the catalog.
 // Display words (owner decision 2026-11-11): Sleepy, Flat, Lively, Buzzing. Change them here and in SCENE_COPY (lib/catalogInfoCopy.ts) only;
 // the stored keys (quiet, low_key, ...) stay as they are so the catalog files do not change.
+// Owner decision 2026-11-13: the stored level 'quiet' is defined only by having fewer than 15 mapped venues, which is thin data, not a
+// finding that a place is sleepy, so it is shown as 'Limited data' and is not offered as a filter choice.
 export type SceneLevel = 'quiet' | 'low_key' | 'lively' | 'buzzing'
 
 export const SCENE_LEVELS: SceneLevel[] = ['quiet', 'low_key', 'lively', 'buzzing']
 
 export const SCENE_LABEL: Record<SceneLevel, string> = {
-  quiet: 'Sleepy',
+  quiet: 'Limited data',
   low_key: 'Flat',
   lively: 'Lively',
   buzzing: 'Buzzing',
 }
+
+/** Levels a person can filter by: 'quiet' (shown as Limited data) is a data gap, not a choice. */
+export const SCENE_FILTER_LEVELS: SceneLevel[] = ['low_key', 'lively', 'buzzing']
 
 export function isSceneLevel(v: unknown): v is SceneLevel {
   return typeof v === 'string' && (SCENE_LEVELS as string[]).includes(v)

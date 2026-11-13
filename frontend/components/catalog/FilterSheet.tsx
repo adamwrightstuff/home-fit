@@ -1,7 +1,7 @@
 'use client'
 
 import { ALL_BEDS, DEFAULT_BUDGET, MORTGAGE_RATE, bedLabel, minBeds, setMinBed, type BudgetFilter } from '@/lib/budgetCost'
-import { SCENE_LABEL, SCENE_LEVELS, toggleSceneLevel, type SceneFilter } from '@/lib/sceneLevels'
+import { SCENE_LABEL, SCENE_FILTER_LEVELS, toggleSceneLevel, type SceneFilter } from '@/lib/sceneLevels'
 import { useEffect, useState } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
@@ -503,7 +503,7 @@ export default function FilterSheet({
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterLocalScene.length === 0, 'All', () => onFilterLocalSceneChange([]))}
-              {SCENE_LEVELS.map(level => chip(filterLocalScene.includes(level), SCENE_LABEL[level], () => onFilterLocalSceneChange(toggleSceneLevel(filterLocalScene, level))))}
+              {SCENE_FILTER_LEVELS.map(level => chip(filterLocalScene.includes(level), SCENE_LABEL[level], () => onFilterLocalSceneChange(toggleSceneLevel(filterLocalScene, level))))}
             </div>
           </div>
 
