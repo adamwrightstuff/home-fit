@@ -54,29 +54,29 @@ export const SCENE_COPY: Record<string, InfoCopy> = {
   buzzing: {
     title: 'Buzzing',
     body: 'A lot is going on within a short walk, and a good share of it is places to linger: independent cafes, bars, galleries, bookstores and theaters, not just restaurants.',
-    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Buzzing means 71 or more independent venues within about 0.75 miles and a strong mix of cafes, bars and culture venues compared with places of similar density. The cut-offs are rough and not validated.',
+    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, counted from Overture Maps, with venue types from OpenStreetMap where it has enough data. Buzzing means 126 or more independent venues within about 0.75 miles and a strong mix of cafes, bars and culture venues compared with places of similar density. The cut-offs are rough and not validated. Venue data: Overture Maps Foundation and OpenStreetMap contributors.',
   },
   lively: {
     title: 'Lively',
     body: 'A real local scene: either a strong mix of independent places to linger at town or main-street scale, or a big, busy area with an average-or-better mix.',
-    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Lively means a strong mix of cafes, bars and culture venues compared with places of similar density with fewer than 71 independent venues within about 0.75 miles, or 71 or more venues with a mix at or above the typical place for its density. Towns are measured across the whole town. The cut-offs are rough and not validated.',
+    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, counted from Overture Maps, with venue types from OpenStreetMap where it has enough data. Lively means a strong mix of cafes, bars and culture venues compared with places of similar density with fewer than 126 independent venues within about 0.75 miles, or 126 or more venues with a mix at or above the typical place for its density. Towns are measured across the whole town. The cut-offs are rough and not validated. Venue data: Overture Maps Foundation and OpenStreetMap contributors.',
   },
   low_key: {
     title: 'Flat',
     body: 'There are places to go, but compared with similar places more of them are restaurants, with fewer cafes, bars and culture venues. It can be busy without having much of a scene.',
-    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, from OpenStreetMap. Flat means 15 or more venues but a mix of cafes, bars and culture venues below what similar places have. The cut-offs are rough and not validated.',
+    detail: 'Based on the independent (non-chain) cafes, bars, restaurants, galleries, bookstores, record stores and theaters near the place, counted from Overture Maps, with venue types from OpenStreetMap where it has enough data. Flat means 30 or more venues but a mix of cafes, bars and culture venues below what similar places have. The cut-offs are rough and not validated. Venue data: Overture Maps Foundation and OpenStreetMap contributors.',
   },
   quiet: {
     title: 'Limited data',
     body: 'Too few venues are mapped here to read the local scene. It may be quiet, or just thinly mapped.',
-    detail: 'Fewer than 15 named cafes, bars, restaurants, galleries, bookstores, record stores and theaters are mapped in the measured area, from OpenStreetMap. That is too few to read a scene from, so this is a gap in the data and not a finding that the place is sleepy. The cut-off is a rough judgment and not validated.',
+    detail: 'Fewer than 30 named cafes, bars, restaurants, galleries, bookstores, record stores and theaters are mapped in the measured area, counted from Overture Maps. That is too few to read a scene from, so this is a gap in the data and not a finding that the place is sleepy. The cut-off is a rough judgment and not validated. Venue data: Overture Maps Foundation and OpenStreetMap contributors.',
   },
 }
 
 export const AURA_COPY: InfoCopy = {
   title: 'Aura',
   body: 'Aura marks a neighborhood with a big local scene, a strong mix of independent cafes, bars and culture, and an affluent or elite resident profile. It is rare.',
-  detail: 'A place gets Aura only if its Local Scene is Buzzing (a strong mix of independent cafes, bars and culture venues compared with places of similar density, and 71 or more independent venues within about 0.75 miles) and its status class is Affluent or Elite. Job centers with more than five workers per resident are excluded. The cut-offs are rough judgments and not validated.',
+  detail: 'A place gets Aura only if its Local Scene is Buzzing (a strong mix of independent cafes, bars and culture venues compared with places of similar density, and 126 or more independent venues within about 0.75 miles) and its status class is Affluent or Elite. Job centers with more than five workers per resident are excluded. The cut-offs are rough judgments and not validated.',
 }
 
 export const INDEX_COPY: Record<string, InfoCopy> = {
