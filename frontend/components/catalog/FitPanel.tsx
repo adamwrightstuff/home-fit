@@ -151,7 +151,7 @@ function Pill({ on, onClick, children, title }: { on: boolean; onClick: () => vo
       title={title}
       aria-pressed={on}
       onClick={onClick}
-      className={`rounded-full px-2.5 py-1 text-[0.72rem] font-semibold ${on ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+      className={`hf-sheet-chip rounded-full px-2.5 py-1 text-[0.72rem] font-semibold ${on ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
       style={on ? { background: 'var(--hf-primary-1)' } : undefined}
     >
       {children}
@@ -483,7 +483,7 @@ export default function FitPanel(p: FitPanelProps) {
               key={lv}
               type="button"
               aria-pressed={current === lv}
-              className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${current === lv ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+              className={`hf-sheet-chip rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${current === lv ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
               style={current === lv ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : undefined}
               onClick={() => setLevel(keyName, lv)}
             >
@@ -531,10 +531,10 @@ export default function FitPanel(p: FitPanelProps) {
                 <span>
                   {REQ_NAME[id]}
                   {active[id] && failCount(id) > 0 && (
-                    <span className="ml-2 text-[0.7rem] font-normal text-[var(--hf-text-secondary)]">Hides {failCount(id)} places</span>
+                    <span className="ml-2 text-[0.7rem] font-normal text-[var(--hf-text-secondary)]">Hides {failCount(id).toLocaleString('en-US')} places</span>
                   )}
                 </span>
-                <button type="button" aria-label={`Remove ${REQ_NAME[id]}`} className="rounded p-1 text-[var(--hf-text-secondary)] hover:bg-[var(--hf-hover-bg)]" onClick={() => removeReq(id)}>
+                <button type="button" aria-label={`Remove ${REQ_NAME[id]}`} className="hf-sheet-chip flex items-center justify-center rounded p-1 text-[var(--hf-text-secondary)] hover:bg-[var(--hf-hover-bg)]" onClick={() => removeReq(id)}>
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -554,12 +554,12 @@ export default function FitPanel(p: FitPanelProps) {
                   </div>
                 )
               })}
-              <button type="button" className="text-xs font-semibold text-[var(--hf-text-secondary)]" onClick={() => setMenuOpen(false)}>Cancel</button>
+              <button type="button" className="py-2 text-xs font-semibold text-[var(--hf-text-secondary)]" onClick={() => setMenuOpen(false)}>Cancel</button>
             </div>
           ) : (
             <button
               type="button"
-              className="rounded-full border border-[var(--hf-border-strong)] px-3 py-1 text-xs font-semibold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
+              className="hf-sheet-chip rounded-full border border-[var(--hf-border-strong)] px-3 py-1 text-xs font-semibold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
               onClick={() => setMenuOpen(true)}
             >
               + Add a requirement
@@ -573,29 +573,21 @@ export default function FitPanel(p: FitPanelProps) {
               </div>
               <div className="mb-2 flex flex-wrap gap-x-3">
                 {prioritiesChanged && (
-                  <button type="button" className="text-xs font-semibold text-[var(--hf-primary-1)]" onClick={() => p.onPrioritiesChange({ ...DEFAULT_PRIORITIES })}>
+                  <button type="button" className="py-2 text-xs font-semibold text-[var(--hf-primary-1)]" onClick={() => p.onPrioritiesChange({ ...DEFAULT_PRIORITIES })}>
                     Reset priorities
                   </button>
                 )}
                 {p.onTakeQuiz && (
-                  <button type="button" className="text-xs font-semibold text-[var(--hf-primary-1)]" onClick={p.onTakeQuiz}>
+                  <button type="button" className="py-2.5 text-xs font-semibold text-[var(--hf-primary-1)]" onClick={p.onTakeQuiz}>
                     Not sure what matters to you? Take the quiz →
                   </button>
                 )}
               </div>
 
               {GROUPS.map((g) => (
-                <details key={g.title} className="mb-2 rounded-xl border border-[var(--hf-border)]">
+                <details key={g.title} className="mb-2 rounded-xl border border-[var(--hf-border)]" open>
                   <summary className="cursor-pointer select-none px-3 py-2 text-sm font-bold text-[var(--hf-text-primary)]">
                     {g.title}
-                    <span className="ml-2 text-[0.7rem] font-normal text-[var(--hf-text-secondary)]">
-                      {(() => {
-                        const changed = g.keys.filter((k) => p.priorities[k] !== DEFAULT_PRIORITIES[k])
-                        if (changed.length === 0) return 'All at Medium'
-                        const shown = changed.slice(0, 2).map((k) => `${PILLAR_META[k].name} ${p.priorities[k]}`).join(', ')
-                        return changed.length > 2 ? `${shown} +${changed.length - 2} more` : shown
-                      })()}
-                    </span>
                   </summary>
                   <div className="space-y-3 border-t border-[var(--hf-border)] px-3 pb-3 pt-2">
                     {g.keys.map((key) => {
@@ -680,7 +672,7 @@ export default function FitPanel(p: FitPanelProps) {
             style={{ background: '#1a1a2e' }}
             onClick={p.onClose}
           >
-            Show {p.resultCount} places
+            Show {p.resultCount.toLocaleString('en-US')} places
           </button>
         </div>
       </div>

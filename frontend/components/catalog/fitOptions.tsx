@@ -87,7 +87,7 @@ export function KindChips({ label, options, selected, onToggle }: {
             key={o.value}
             type="button"
             onClick={() => onToggle(o.value)}
-            className={`rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${selected.includes(o.value) ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+            className={`hf-sheet-chip rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${selected.includes(o.value) ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
             style={selected.includes(o.value) ? { background: 'var(--hf-primary-1)' } : undefined}
           >
             {o.label}
