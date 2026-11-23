@@ -1375,6 +1375,47 @@ export default function CatalogPageClient({
     )
   }
 
+  const indexPillStrip = (
+    <>
+              <div className="relative min-w-0 flex-1">
+              {/* Right-edge fade hint */}
+              <div className="absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.7))' }} />
+              <div
+                className="flex gap-1.5 overflow-x-auto px-3 pb-1 pointer-events-auto"
+                style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+              >
+                {INDEXES.filter(x => x.id !== 'status').map((x) => {
+                  const active = indexMode === x.id && !sortByName
+                  const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
+                  return (
+                    <button
+                      key={x.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setIndexModeAndListSort(x.id)}
+                      className="shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
+                      style={active
+                        ? { ...activeStyle, border: 'none' }
+                        : { background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }
+                      }
+                    >{x.label}</button>
+                  )
+                })}
+                <button
+                  type="button"
+                  aria-pressed={sortByName}
+                  onClick={() => setSortByName(true)}
+                  className="shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
+                  style={sortByName
+                    ? { background: 'var(--hf-primary-1)', color: '#fff', border: 'none' }
+                    : { background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }
+                  }
+                >A–Z</button>
+              </div>
+              </div>
+    </>
+  )
+
   return (
     <div className="hf-viewport hf-catalog-root flex min-h-0 flex-col">
       <HeroBand />
@@ -1806,42 +1847,7 @@ export default function CatalogPageClient({
           {/* Mobile floating score + sort strip */}
           {catalogMode === 'explorer' && (
             <div className="md:hidden absolute top-2 left-0 right-0 z-10 pointer-events-none flex items-start gap-1.5 pr-3">
-              <div className="relative min-w-0 flex-1">
-              {/* Right-edge fade hint */}
-              <div className="absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.7))' }} />
-              <div
-                className="flex gap-1.5 overflow-x-auto px-3 pb-1 pointer-events-auto"
-                style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
-              >
-                {INDEXES.filter(x => x.id !== 'status').map((x) => {
-                  const active = indexMode === x.id && !sortByName
-                  const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
-                  return (
-                    <button
-                      key={x.id}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => setIndexModeAndListSort(x.id)}
-                      className="shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
-                      style={active
-                        ? { ...activeStyle, border: 'none' }
-                        : { background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }
-                      }
-                    >{x.label}</button>
-                  )
-                })}
-                <button
-                  type="button"
-                  aria-pressed={sortByName}
-                  onClick={() => setSortByName(true)}
-                  className="shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
-                  style={sortByName
-                    ? { background: 'var(--hf-primary-1)', color: '#fff', border: 'none' }
-                    : { background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }
-                  }
-                >A–Z</button>
-              </div>
-              </div>
+              {indexPillStrip}
             </div>
           )}
 
@@ -1954,6 +1960,7 @@ export default function CatalogPageClient({
 
       {viewMode === 'list' && catalogMode === 'explorer' && (
         <div className={`flex min-h-0 flex-1 flex-col pb-20 md:pb-0${dealbreakerZeroSurvivors && !searchResults ? ' opacity-60' : ''}`}>
+          <div className="md:hidden flex shrink-0 border-b border-[var(--hf-border)] bg-white py-2">{indexPillStrip}</div>
           <CatalogListView
             places={searchResults ? searchResults.hits : showExcluded && excludedPlaces.length > 0 ? (dealbreakerZeroSurvivors ? excludedPlaces : [...gatedPlaces, ...excludedPlaces]) : gatedPlaces}
             filteredOutReasons={searchResults ? searchResults.reasons : showExcluded && excludedPlaces.length > 0 ? {

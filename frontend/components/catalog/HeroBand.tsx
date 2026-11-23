@@ -13,7 +13,7 @@ export default function HeroBand() {
 
   if (dismissed) {
     return (
-      <div className="flex items-center justify-end border-b border-gray-100 bg-white px-4 py-2">
+      <div className="hidden md:flex items-center justify-end border-b border-gray-100 bg-white px-4 py-2">
         <Link
           href="/quiz"
           style={{
@@ -31,7 +31,7 @@ export default function HeroBand() {
 
   return (
     <div
-      className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3"
+      className="hidden md:flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3"
       style={{ gap: '1rem' }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
