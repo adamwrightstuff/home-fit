@@ -40,7 +40,7 @@ import {
   type CatalogMapPlace,
   type CatalogMapPlaceWithMetro,
 } from '@/lib/catalogMapTypes'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesQualityEducationLevelFloor, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { fetchProfile, saveProfile, type CommuteMode } from '@/lib/userProfile'
 import { ALL_SCHOOL_LEVELS, applyExplorerScoreAdjustments, writeCompareContext, type SchoolLevel } from '@/lib/explorerScoreAdjust'
@@ -873,7 +873,11 @@ export default function CatalogPageClient({
       const qe = (p.score.livability_pillars as any)?.quality_education
       if (qe?.status === 'fallback' || qe?.status === 'no_data') return true
       const score = typeof qe?.score === 'number' ? qe.score : null
-      return passesQualityEducationDealbreaker(score)
+      if (!passesQualityEducationDealbreaker(score)) return false
+      if (filterSchoolType === 'any' || filterSchoolType === 'public_only') {
+        return passesQualityEducationLevelFloor(qe?.breakdown?.levels, filterSchoolLevels)
+      }
+      return true
     },
     community_safety: (p) => {
       const cs = (p.score.livability_pillars as any)?.community_safety

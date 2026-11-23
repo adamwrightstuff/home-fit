@@ -438,6 +438,23 @@ export function passesQualityEducationDealbreaker(score: number | null | undefin
   return score >= QUALITY_EDUCATION_DEALBREAKER_SCORE
 }
 
+/**
+ * Per-level floor for the same gate: every picked grade level (elementary, middle, high) that has a rated
+ * school must clear the same state-median bar on its own, so a strong elementary score cannot carry weak
+ * middle or high schools past the blended-average check. A level with no rated school is skipped.
+ */
+export function passesQualityEducationLevelFloor(
+  levels: Partial<Record<string, { score?: number | null }>> | null | undefined,
+  picked: readonly string[],
+): boolean {
+  if (!levels) return true
+  for (const l of picked) {
+    const s = levels[l]?.score
+    if (typeof s === 'number' && s < QUALITY_EDUCATION_DEALBREAKER_SCORE) return false
+  }
+  return true
+}
+
 
 /**
  * Deal-breaker gate for community_safety: pillar score must clear 25. Safety scores are
