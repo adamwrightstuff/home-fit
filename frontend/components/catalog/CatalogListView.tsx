@@ -419,6 +419,22 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                     </td>
                   </tr>
                 )}
+                {i === 2 && (
+                  <tr className="md:hidden">
+                    <td colSpan={5} className="py-3">
+                      <Link
+                        href="/quiz"
+                        className="flex items-center justify-between gap-3 rounded-xl border border-[var(--hf-border)] bg-[var(--hf-bg-subtle)] px-4 py-3"
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-[var(--hf-text-primary)]">Not sure what to prioritize?</span>
+                          <span className="block text-xs text-[var(--hf-text-secondary)]">Take the 2-minute quiz to tailor these scores.</span>
+                        </span>
+                        <span className="shrink-0 text-xs font-bold text-[var(--hf-primary-1)]">Take quiz →</span>
+                      </Link>
+                    </td>
+                  </tr>
+                )}
               </Fragment>
             )
           })}
