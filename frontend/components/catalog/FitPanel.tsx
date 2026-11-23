@@ -145,6 +145,7 @@ export interface FitPanelProps {
   onTakeQuiz?: () => void
   hasWorkHub: boolean
   hasPeople: boolean
+  peopleCount: number
   workZoneLabel: string | null
   householdIncome: number | null
 
@@ -604,7 +605,17 @@ export default function FitPanel(p: FitPanelProps) {
                 {PERSONAL_ROWS.map((row) => {
                   const available = row.key === 'commute_time' ? p.hasWorkHub : p.hasPeople
                   return available ? (
-                    <LevelRow key={row.key} keyName={row.key} label={row.name} icon={row.icon} />
+                    <div key={row.key} className="mb-2">
+                      <LevelRow keyName={row.key} label={row.name} icon={row.icon} />
+                      <p className="m-0 text-[0.7rem] text-[var(--hf-text-secondary)]">
+                        {row.key === 'commute_time'
+                          ? `To ${p.workZoneLabel ?? 'your work address'}. `
+                          : `${p.peopleCount} ${p.peopleCount === 1 ? 'person' : 'people'} you want to live near. `}
+                        <Link href="/profile" className="font-semibold text-[var(--hf-primary-1)]">
+                          {row.key === 'commute_time' ? 'Change in your profile' : 'Edit in your profile'}
+                        </Link>
+                      </p>
+                    </div>
                   ) : (
                     <p key={row.key} className="m-0 mb-1 text-xs text-[var(--hf-text-secondary)]">
                       {row.icon} {row.needs}{' '}

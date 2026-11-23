@@ -2100,6 +2100,7 @@ export default function CatalogPageClient({
         onTakeQuiz={() => { setFitOpen(false); setShowQuiz(true) }}
         hasWorkHub={Boolean(findWorkZone(workZoneId))}
         hasPeople={people.length > 0}
+        peopleCount={people.length}
         workZoneLabel={findWorkZone(workZoneId)?.label ?? null}
         householdIncome={householdIncome}
         filterNbTypes={filterNbTypes}
