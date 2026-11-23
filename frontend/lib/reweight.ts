@@ -433,24 +433,28 @@ export function passesAirTravelDealbreaker(
  */
 export const QUALITY_EDUCATION_DEALBREAKER_SCORE = 50
 
-export function passesQualityEducationDealbreaker(score: number | null | undefined): boolean {
+export function passesQualityEducationDealbreaker(
+  score: number | null | undefined,
+  min: number = QUALITY_EDUCATION_DEALBREAKER_SCORE,
+): boolean {
   if (score === null || score === undefined) return true
-  return score >= QUALITY_EDUCATION_DEALBREAKER_SCORE
+  return score >= min
 }
 
 /**
  * Per-level floor for the same gate: every picked grade level (elementary, middle, high) that has a rated
- * school must clear the same state-median bar on its own, so a strong elementary score cannot carry weak
+ * school must clear the visitor's minimum (default: the state-median bar) on its own, so a strong elementary score cannot carry weak
  * middle or high schools past the blended-average check. A level with no rated school is skipped.
  */
 export function passesQualityEducationLevelFloor(
   levels: Partial<Record<string, { score?: number | null }>> | null | undefined,
   picked: readonly string[],
+  min: number = QUALITY_EDUCATION_DEALBREAKER_SCORE,
 ): boolean {
   if (!levels) return true
   for (const l of picked) {
     const s = levels[l]?.score
-    if (typeof s === 'number' && s < QUALITY_EDUCATION_DEALBREAKER_SCORE) return false
+    if (typeof s === 'number' && s < min) return false
   }
   return true
 }

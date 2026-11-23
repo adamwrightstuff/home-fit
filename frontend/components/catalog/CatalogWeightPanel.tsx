@@ -61,6 +61,9 @@ interface CatalogWeightPanelProps {
   /** Hide-places choices live beside the priority they belong to. */
   dealbreakers?: Partial<Record<PillarKey, boolean>>
   onDealbreakerToggle?: (key: PillarKey) => void
+  /** Schools dealbreaker: minimum state percentile every selected grade level must reach. */
+  schoolMinScore?: number
+  onSchoolMinScoreChange?: (v: number) => void
   dealbreakerFailCounts?: Partial<Record<PillarKey, number>>
   climatePrefs?: ClimatePreferences
   onClimatePrefsChange?: (v: ClimatePreferences) => void
@@ -108,6 +111,13 @@ function schoolTypeFromSelected(sel: ('public' | 'charter')[]): 'any' | 'charter
   if (pub && ch) return 'both'
   return ch ? 'charter' : 'any'
 }
+
+const SCHOOL_QUALITY_OPTIONS: { value: number; label: string }[] = [
+  { value: 0, label: 'Any' },
+  { value: 50, label: 'Above state average' },
+  { value: 75, label: 'Top 25% in state' },
+  { value: 90, label: 'Top 10% in state' },
+]
 
 function KindChips({ label, options, selected, onToggle }: {
   label: string
@@ -158,12 +168,13 @@ function HideChips({ items }: { items: { on: boolean; label: string; title: stri
   )
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, filterNbTypes = [], onFilterNbTypesChange, filterAoTypes = [], onFilterAoTypesChange, filterSchoolType = 'any', onFilterSchoolTypeChange, filterSchoolLevels = ['elementary', 'middle', 'high'], onFilterSchoolLevelsChange, dealbreakers, onDealbreakerToggle, dealbreakerFailCounts, climatePrefs, onClimatePrefsChange, climateMustHaveFailCounts }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, currentHomeName = '', currentHomeMonthlyCost, hasWorkHub = false, hasPeople = false, filterNbTypes = [], onFilterNbTypesChange, filterAoTypes = [], onFilterAoTypesChange, filterSchoolType = 'any', onFilterSchoolTypeChange, filterSchoolLevels = ['elementary', 'middle', 'high'], onFilterSchoolLevelsChange, dealbreakers, onDealbreakerToggle, schoolMinScore = 0, onSchoolMinScoreChange, dealbreakerFailCounts, climatePrefs, onClimatePrefsChange, climateMustHaveFailCounts }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function resetAll() {
     onChange({ ...DEFAULT_PRIORITIES })
-    MUST_HAVE_KEYS.forEach((k) => { if (dealbreakers?.[k]) onDealbreakerToggle?.(k) })
+    MUST_HAVE_KEYS.forEach((k) => { if (k !== 'quality_education' && dealbreakers?.[k]) onDealbreakerToggle?.(k) })
+    if (schoolMinScore > 0) onSchoolMinScoreChange?.(0)
     onClimatePrefsChange?.({ ...(climatePrefs ?? {}), must_haves: {} })
   }
 
@@ -263,7 +274,7 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           </button>
                         ))}
                       </div>
-                      {current !== 'None' && MUST_HAVE_LABELS[key] && onDealbreakerToggle && (key !== 'housing_value' || householdIncome) && (
+                      {current !== 'None' && key !== 'quality_education' && MUST_HAVE_LABELS[key] && onDealbreakerToggle && (key !== 'housing_value' || householdIncome) && (
                         <HideChips
                           items={[{
                             on: Boolean(dealbreakers?.[key]),
@@ -272,6 +283,32 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                             toggle: () => onDealbreakerToggle(key),
                           }]}
                         />
+                      )}
+                      {key === 'quality_education' && current !== 'None' && onSchoolMinScoreChange && (
+                        <div className="mt-1.5">
+                          <div className="mb-1 text-[0.7rem] text-[var(--hf-text-secondary)]">
+                            Hide towns where any grade you picked ranks below this, among all schools in its state
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {SCHOOL_QUALITY_OPTIONS.map((o) => (
+                              <button
+                                key={o.value}
+                                type="button"
+                                aria-pressed={schoolMinScore === o.value}
+                                onClick={() => onSchoolMinScoreChange(o.value)}
+                                className={`rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${schoolMinScore === o.value ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+                                style={schoolMinScore === o.value ? { background: 'var(--hf-primary-1)' } : undefined}
+                              >
+                                {o.label}
+                              </button>
+                            ))}
+                          </div>
+                          {schoolMinScore > 0 && (dealbreakerFailCounts?.quality_education ?? 0) > 0 && (
+                            <div className="mt-1 text-[0.7rem] text-[var(--hf-text-secondary)]">
+                              Hides {dealbreakerFailCounts?.quality_education} places
+                            </div>
+                          )}
+                        </div>
                       )}
                       {key === 'climate_risk' && current !== 'None' && climatePrefs && onClimatePrefsChange && (
                         <HideChips

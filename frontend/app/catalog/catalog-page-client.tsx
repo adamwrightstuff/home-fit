@@ -40,7 +40,7 @@ import {
   type CatalogMapPlace,
   type CatalogMapPlaceWithMetro,
 } from '@/lib/catalogMapTypes'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesQualityEducationLevelFloor, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesQualityEducationLevelFloor, QUALITY_EDUCATION_DEALBREAKER_SCORE, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { fetchProfile, saveProfile, type CommuteMode } from '@/lib/userProfile'
 import { ALL_SCHOOL_LEVELS, applyExplorerScoreAdjustments, writeCompareContext, type SchoolLevel } from '@/lib/explorerScoreAdjust'
@@ -301,6 +301,21 @@ export default function CatalogPageClient({
       return parsed?.dealbreakers && typeof parsed.dealbreakers === 'object' ? parsed.dealbreakers : {}
     } catch { return {} }
   })
+  // One minimum for the Schools dealbreaker, applied to every selected grade level (state percentile, 0-100).
+  const [schoolMinScore, setSchoolMinScore] = useState<number>(() => {
+    try {
+      const v = Number(JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.schoolMinScore)
+      if (Number.isFinite(v) && v >= 0 && v <= 100) return v
+      // Saved before the minimum existed: the old on/off dealbreaker meant the state median.
+      const old = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.dealbreakers?.quality_education
+      return old ? QUALITY_EDUCATION_DEALBREAKER_SCORE : 0
+    } catch { return 0 }
+  })
+  // The pick (0 = Any) is the whole control; the dealbreaker flag just follows it.
+  const pickSchoolMin = useCallback((v: number) => {
+    setSchoolMinScore(v)
+    setDealbreakers((prev) => ({ ...prev, quality_education: v > 0 }))
+  }, [])
   const toggleDealbreaker = useCallback((key: PillarKey) => {
     setDealbreakers((prev) => ({ ...prev, [key]: !prev[key] }))
   }, [])
@@ -397,6 +412,7 @@ export default function CatalogPageClient({
         ...opts,
         priorities,
         dealbreakers,
+        schoolMinScore,
         filters: {
           ...(opts.filters ?? {}),
           filterAreaTypes,
@@ -419,7 +435,7 @@ export default function CatalogPageClient({
         },
       }))
     } catch { /* ignore */ }
-  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
+  }, [user, priorities, dealbreakers, schoolMinScore, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
 
   useEffect(() => {
     const ac = new AbortController()
@@ -488,6 +504,8 @@ export default function CatalogPageClient({
           setPriorities(merged)
         }
         if (opts.dealbreakers && typeof opts.dealbreakers === 'object') setDealbreakers(opts.dealbreakers)
+        if (typeof opts.schoolMinScore === 'number' && opts.schoolMinScore >= 0 && opts.schoolMinScore <= 100) setSchoolMinScore(opts.schoolMinScore)
+        else if (opts.dealbreakers?.quality_education) setSchoolMinScore(QUALITY_EDUCATION_DEALBREAKER_SCORE)
         const f = opts.filters
         if (f && typeof f === 'object') {
           if (Array.isArray(f.filterAreaTypes)) setFilterAreaTypes(f.filterAreaTypes)
@@ -554,6 +572,7 @@ export default function CatalogPageClient({
         body: JSON.stringify({
           priorities,
           dealbreakers,
+          schoolMinScore,
           filters: {
             filterAreaTypes,
             filterArchetypes,
@@ -577,7 +596,7 @@ export default function CatalogPageClient({
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
+  }, [user, priorities, dealbreakers, schoolMinScore, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -873,9 +892,9 @@ export default function CatalogPageClient({
       const qe = (p.score.livability_pillars as any)?.quality_education
       if (qe?.status === 'fallback' || qe?.status === 'no_data') return true
       const score = typeof qe?.score === 'number' ? qe.score : null
-      if (!passesQualityEducationDealbreaker(score)) return false
+      if (!passesQualityEducationDealbreaker(score, schoolMinScore)) return false
       if (filterSchoolType === 'any' || filterSchoolType === 'public_only') {
-        return passesQualityEducationLevelFloor(qe?.breakdown?.levels, filterSchoolLevels)
+        return passesQualityEducationLevelFloor(qe?.breakdown?.levels, filterSchoolLevels, schoolMinScore)
       }
       return true
     },
@@ -920,7 +939,7 @@ export default function CatalogPageClient({
     }
     return out
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredPlaces, householdIncome])
+  }, [filteredPlaces, householdIncome, schoolMinScore, filterSchoolType, filterSchoolLevels])
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])
   const dealbreakerActive = activeDealbreakerKeys.length > 0
   // Saved filters are read from localStorage on the client only, so the server render has none;
@@ -1027,7 +1046,7 @@ export default function CatalogPageClient({
       dealbreakerZeroSurvivors: false,
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredPlaces, metroFilterExcluded, activeDealbreakerKeys.join(','), householdIncome])
+  }, [filteredPlaces, metroFilterExcluded, activeDealbreakerKeys.join(','), householdIncome, schoolMinScore, filterSchoolType, filterSchoolLevels])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setShowExcluded(false), [activeDealbreakerKeys.join(',')])
 
@@ -2115,6 +2134,8 @@ export default function CatalogPageClient({
         onFilterSchoolLevelsChange={(v) => setFilterSchoolLevels(v as SchoolLevel[])}
         dealbreakers={dealbreakers}
         onDealbreakerToggle={toggleDealbreaker}
+        schoolMinScore={schoolMinScore}
+        onSchoolMinScoreChange={pickSchoolMin}
         dealbreakerFailCounts={dealbreakerFailCounts}
         climatePrefs={climatePrefs}
         onClimatePrefsChange={setClimatePrefs}
