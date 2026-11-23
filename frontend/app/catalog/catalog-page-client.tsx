@@ -293,7 +293,7 @@ export default function CatalogPageClient({
   // doesn't reset every visit the way search filters should.
   const [people, setPeople] = useState<SocialConnectionPerson[]>([])
   useEffect(() => { setPeople(loadPeople()) }, [])
-/** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
+/** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see FitPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>(() => {
     try {
       const parsed = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')
@@ -887,7 +887,7 @@ export default function CatalogPageClient({
    * Deal-breaker gates: excludes places that fail any active dealbreaker, independent of
    * importance weight. Never silently empties the list — if nothing survives, fall back to
    * the unfiltered set rather than showing a blank screen. Add a pillar by adding an entry
-   * here and to DEALBREAKER_PILLARS in CatalogWeightPanel.
+   * here and to GATE in FitPanel.
    */
   const DEALBREAKER_CHECKS: Partial<Record<PillarKey, (p: CatalogMapPlace) => boolean>> = {
     air_travel_access: (p) => {

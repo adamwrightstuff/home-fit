@@ -6,7 +6,7 @@ import { ScoreResponse } from '@/types/api'
 import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
 import TotalScore from './TotalScore'
 import PillarCard from './PillarCard'
-import CatalogWeightPanel from '@/components/catalog/CatalogWeightPanel'
+import PrioritiesPanel from '@/components/PrioritiesPanel'
 import WhyNotHigher from './WhyNotHigher'
 import InteractiveMap, { type PillarPoi } from './InteractiveMap'
 import HappinessInfo from './HappinessInfo'
@@ -369,7 +369,7 @@ export default function ScoreDisplay({
               Adjust priorities
             </button>
           </div>
-          <CatalogWeightPanel
+          <PrioritiesPanel
             open={weightsOpen}
             onClose={() => setWeightsOpen(false)}
             priorities={priorities}
@@ -634,7 +634,7 @@ export default function ScoreDisplay({
           // social_connection is a synthetic, client-side pillar (see lib/reweight.ts) -- not
           // in PILLAR_ORDER, so it never appears in the loop above. Only show it here once it's
           // actually contributing to the total (weight > 0), matching how the People You Know
-          // priority chips in FilterSheet only appear once someone's been added.
+          // priority chips in the Fit panel only appear once someone's been added.
           const sc = (livability_pillars as any)?.social_connection
           if (!sc || typeof sc.weight !== 'number' || sc.weight <= 0) return null
           const score = typeof sc.score === 'number' ? sc.score : null

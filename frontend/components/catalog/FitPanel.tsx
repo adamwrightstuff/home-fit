@@ -10,12 +10,12 @@ import { ALL_BEDS, DEFAULT_BUDGET, MORTGAGE_RATE, bedLabel, minBeds, setMinBed, 
 import { SCENE_LABEL, SCENE_FILTER_LEVELS, toggleSceneLevel, type SceneFilter } from '@/lib/sceneLevels'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import type { ClimatePreferences } from '@/lib/climatePreferences'
-import { CLIMATE_MUST_HAVES } from '@/components/catalog/FilterSheet'
 import { GATE_DEFAULT_LEVEL } from '@/lib/reweight'
 import {
   GROUPS, LEVELS, PERSONAL_ROWS, NB_TYPE_OPTIONS, AO_TYPE_OPTIONS, SCHOOL_LEVEL_OPTIONS, SCHOOL_TYPE_OPTIONS,
   schoolTypeSelected, schoolTypeFromSelected, KindChips,
-} from '@/components/catalog/CatalogWeightPanel'
+  CLIMATE_MUST_HAVES,
+} from '@/components/catalog/fitOptions'
 
 /**
  * One panel for everything that shapes the list. Two sections with different verbs:
@@ -597,9 +597,12 @@ export default function FitPanel(p: FitPanelProps) {
                   <summary className="cursor-pointer select-none px-3 py-2 text-sm font-bold text-[var(--hf-text-primary)]">
                     {g.title}
                     <span className="ml-2 text-[0.7rem] font-normal text-[var(--hf-text-secondary)]">
-                      {g.keys.filter((k) => p.priorities[k] !== DEFAULT_PRIORITIES[k]).length > 0
-                        ? `${g.keys.filter((k) => p.priorities[k] !== DEFAULT_PRIORITIES[k]).length} changed`
-                        : `${g.keys.length} pillars`}
+                      {(() => {
+                        const changed = g.keys.filter((k) => p.priorities[k] !== DEFAULT_PRIORITIES[k])
+                        if (changed.length === 0) return 'All at Medium'
+                        const shown = changed.slice(0, 2).map((k) => `${PILLAR_META[k].name} ${p.priorities[k]}`).join(', ')
+                        return changed.length > 2 ? `${shown} +${changed.length - 2} more` : shown
+                      })()}
                     </span>
                   </summary>
                   <div className="space-y-3 border-t border-[var(--hf-border)] px-3 pb-3 pt-2">
