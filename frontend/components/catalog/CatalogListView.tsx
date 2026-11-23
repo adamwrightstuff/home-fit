@@ -291,12 +291,13 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                   } ${isFilteredOut ? 'opacity-50' : ''}`}
                   onClick={() => toggleRow(key)}
                 >
-                  <td className="py-3 md:py-2 pr-2">
+                  <td className="py-2 pr-2">
                     <div className="text-sm font-semibold text-[var(--hf-text-primary)]">{p.catalog.name}</div>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <div className="text-[0.6rem] text-[var(--hf-text-tertiary)]">
                       {p.catalog.county_borough}, {p.catalog.state_abbr}
                     </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5 md:hidden">
+                    <div className="flex flex-wrap items-center gap-1.5 md:hidden">
                       <ArchetypeBadge
                         archetype={p.score.status_signal_breakdown?.archetype ?? null}
                         breakdown={p.score.status_signal_breakdown ?? null}
@@ -304,6 +305,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                         compact
                       />
                       <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
+                    </div>
                     </div>
                     {budget && <BudgetCostLine housingCost={p.housing_cost} stateAbbr={p.catalog.state_abbr} budget={budget} />}
                     {isFilteredOut && (
@@ -363,7 +365,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       )}
                       <button
                         type="button"
-                        className="rounded border border-[var(--hf-border)] whitespace-nowrap px-2.5 py-1.5 md:px-1.5 md:py-0.5 text-xs md:text-[0.65rem] font-bold text-[var(--hf-primary-1)]"
+                        className="rounded border border-[var(--hf-border)] whitespace-nowrap px-2.5 py-1 md:px-1.5 md:py-0.5 text-xs md:text-[0.65rem] font-bold text-[var(--hf-primary-1)]"
                         onClick={(e) => { e.stopPropagation(); onTwinRow(key) }}
                       >
                         Twin →
