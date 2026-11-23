@@ -39,7 +39,7 @@ import {
   type CatalogMapPlace,
   type CatalogMapPlaceWithMetro,
 } from '@/lib/catalogMapTypes'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesQualityEducationLevelFloor, QUALITY_EDUCATION_DEALBREAKER_SCORE, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesQualityEducationLevelFloor, GATE_DEFAULT_LEVEL, QUALITY_EDUCATION_DEALBREAKER_SCORE, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { fetchProfile, saveProfile, type CommuteMode } from '@/lib/userProfile'
 import { ALL_SCHOOL_LEVELS, applyExplorerScoreAdjustments, writeCompareContext, type SchoolLevel } from '@/lib/explorerScoreAdjust'
@@ -310,6 +310,18 @@ export default function CatalogPageClient({
       return old ? QUALITY_EDUCATION_DEALBREAKER_SCORE : 0
     } catch { return 0 }
   })
+  // Strictness of the other gates (0 = Any). A gate switched on in an older session has no level here and keeps
+  // its original cutoff (GATE_DEFAULT_LEVEL).
+  const [gateLevels, setGateLevels] = useState<Record<string, number>>(() => {
+    try {
+      const g = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.gateLevels
+      return g && typeof g === 'object' ? g : {}
+    } catch { return {} }
+  })
+  const pickGate = useCallback((key: PillarKey, level: number) => {
+    setGateLevels((prev) => ({ ...prev, [key]: level }))
+    setDealbreakers((prev) => ({ ...prev, [key]: level > 0 }))
+  }, [])
   // The pick (0 = Any) is the whole control; the dealbreaker flag just follows it.
   const pickSchoolMin = useCallback((v: number) => {
     setSchoolMinScore(v)
@@ -411,6 +423,7 @@ export default function CatalogPageClient({
         priorities,
         dealbreakers,
         schoolMinScore,
+        gateLevels,
         filters: {
           ...(opts.filters ?? {}),
           filterAreaTypes,
@@ -433,7 +446,7 @@ export default function CatalogPageClient({
         },
       }))
     } catch { /* ignore */ }
-  }, [user, priorities, dealbreakers, schoolMinScore, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
+  }, [user, priorities, dealbreakers, schoolMinScore, gateLevels, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
 
   useEffect(() => {
     const ac = new AbortController()
@@ -504,6 +517,7 @@ export default function CatalogPageClient({
         if (opts.dealbreakers && typeof opts.dealbreakers === 'object') setDealbreakers(opts.dealbreakers)
         if (typeof opts.schoolMinScore === 'number' && opts.schoolMinScore >= 0 && opts.schoolMinScore <= 100) setSchoolMinScore(opts.schoolMinScore)
         else if (opts.dealbreakers?.quality_education) setSchoolMinScore(QUALITY_EDUCATION_DEALBREAKER_SCORE)
+        if (opts.gateLevels && typeof opts.gateLevels === 'object') setGateLevels(opts.gateLevels)
         const f = opts.filters
         if (f && typeof f === 'object') {
           if (Array.isArray(f.filterAreaTypes)) setFilterAreaTypes(f.filterAreaTypes)
@@ -571,6 +585,7 @@ export default function CatalogPageClient({
           priorities,
           dealbreakers,
           schoolMinScore,
+          gateLevels,
           filters: {
             filterAreaTypes,
             filterArchetypes,
@@ -594,7 +609,7 @@ export default function CatalogPageClient({
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, schoolMinScore, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
+  }, [user, priorities, dealbreakers, schoolMinScore, gateLevels, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -875,16 +890,11 @@ export default function CatalogPageClient({
    * here and to DEALBREAKER_PILLARS in CatalogWeightPanel.
    */
   const DEALBREAKER_CHECKS: Partial<Record<PillarKey, (p: CatalogMapPlace) => boolean>> = {
-    housing_value: (p) => {
-      const hv = (p.score.livability_pillars as any)?.housing_value
-      const medianHomeValue = Number(hv?.summary?.median_home_value ?? 0) || null
-      return passesHousingValueDealbreaker(medianHomeValue, householdIncome)
-    },
     air_travel_access: (p) => {
       const ata = (p.score.livability_pillars as any)?.air_travel_access
       const nearestAirportKm = Number(ata?.summary?.nearest_airport_km ?? 0) || null
       const areaType = ata?.area_classification?.area_type ?? null
-      return passesAirTravelDealbreaker(nearestAirportKm, areaType)
+      return passesAirTravelDealbreaker(nearestAirportKm, areaType, gateLevels.air_travel_access || GATE_DEFAULT_LEVEL.air_travel_access)
     },
     quality_education: (p) => {
       const qe = (p.score.livability_pillars as any)?.quality_education
@@ -900,20 +910,20 @@ export default function CatalogPageClient({
       const cs = (p.score.livability_pillars as any)?.community_safety
       if (cs?.status === 'fallback' || cs?.status === 'no_data') return true
       const score = typeof cs?.score === 'number' ? cs.score : null
-      return passesCommunitySafetyDealbreaker(score)
+      return passesCommunitySafetyDealbreaker(score, gateLevels.community_safety || GATE_DEFAULT_LEVEL.community_safety)
     },
     healthcare_access: (p) => {
       const ha = (p.score.livability_pillars as any)?.healthcare_access
       const nearestHospitalKm = Number(ha?.summary?.nearest_hospital_km ?? 0) || null
       const areaType = ha?.area_classification?.area_type ?? null
-      return passesHealthcareAccessDealbreaker(nearestHospitalKm, areaType)
+      return passesHealthcareAccessDealbreaker(nearestHospitalKm, areaType, gateLevels.healthcare_access || GATE_DEFAULT_LEVEL.healthcare_access)
     },
     public_transit_access: (p) => {
       const ts = (p.score.livability_pillars as any)?.public_transit_access?.summary
       if (!ts) return true
       const rail = (Number(ts.heavy_rail_stops) || 0) + (Number(ts.light_rail_stops) || 0)
       const bus = typeof ts.bus_stops === 'number' ? ts.bus_stops : null
-      return passesPublicTransitDealbreaker(rail, bus)
+      return passesPublicTransitDealbreaker(rail, bus, gateLevels.public_transit_access || GATE_DEFAULT_LEVEL.public_transit_access)
     },
   }
   const commuteFailCount = useMemo(() => {
@@ -937,7 +947,7 @@ export default function CatalogPageClient({
     }
     return out
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredPlaces, householdIncome, schoolMinScore, filterSchoolType, filterSchoolLevels])
+  }, [filteredPlaces, householdIncome, schoolMinScore, gateLevels, filterSchoolType, filterSchoolLevels])
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])
   const dealbreakerActive = activeDealbreakerKeys.length > 0
   // Saved filters are read from localStorage on the client only, so the server render has none;
@@ -951,7 +961,7 @@ export default function CatalogPageClient({
     setFilterAreaTypes([]); setFilterArchetypes([]); setFilterTrajectory('all'); setFilterPoliticalLean([])
     setFilterLifeStage([]); setFilterHousingType([]); handleBudgetChange(DEFAULT_BUDGET); setFilterTenure([])
     setFilterLocalScene([]); setFilterAura(false); setFilterCommuteMax('all')
-    setDealbreakers({}); setSchoolMinScore(0); setClimatePrefs((prev) => ({ ...prev, must_haves: {} }))
+    setDealbreakers({}); setGateLevels({}); setSchoolMinScore(0); setClimatePrefs((prev) => ({ ...prev, must_haves: {} }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const fitBadgeCount = filterBadgeCount + (indexMode === 'homefit' ? priorityBadgeCount : activeDealbreakerKeys.length)
@@ -1052,7 +1062,7 @@ export default function CatalogPageClient({
       dealbreakerZeroSurvivors: false,
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredPlaces, metroFilterExcluded, activeDealbreakerKeys.join(','), householdIncome, schoolMinScore, filterSchoolType, filterSchoolLevels])
+  }, [filteredPlaces, metroFilterExcluded, activeDealbreakerKeys.join(','), householdIncome, schoolMinScore, gateLevels, filterSchoolType, filterSchoolLevels])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setShowExcluded(false), [activeDealbreakerKeys.join(',')])
 
@@ -2102,7 +2112,6 @@ export default function CatalogPageClient({
         hasPeople={people.length > 0}
         peopleCount={people.length}
         workZoneLabel={findWorkZone(workZoneId)?.label ?? null}
-        householdIncome={householdIncome}
         filterNbTypes={filterNbTypes}
         onFilterNbTypesChange={setFilterNbTypes}
         filterAoTypes={filterAoTypes}
@@ -2116,6 +2125,8 @@ export default function CatalogPageClient({
         dealbreakerFailCounts={dealbreakerFailCounts}
         schoolMinScore={schoolMinScore}
         onSchoolMinScoreChange={pickSchoolMin}
+        gateLevels={gateLevels}
+        onGateLevelChange={pickGate}
         filterCommuteMax={filterCommuteMax}
         onFilterCommuteMaxChange={setFilterCommuteMax}
         commuteFailCount={commuteFailCount}

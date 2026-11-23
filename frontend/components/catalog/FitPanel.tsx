@@ -11,6 +11,7 @@ import { SCENE_LABEL, SCENE_FILTER_LEVELS, toggleSceneLevel, type SceneFilter } 
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import type { ClimatePreferences } from '@/lib/climatePreferences'
 import { CLIMATE_MUST_HAVES } from '@/components/catalog/FilterSheet'
+import { GATE_DEFAULT_LEVEL } from '@/lib/reweight'
 import {
   GROUPS, LEVELS, PERSONAL_ROWS, NB_TYPE_OPTIONS, AO_TYPE_OPTIONS, SCHOOL_LEVEL_OPTIONS, SCHOOL_TYPE_OPTIONS,
   schoolTypeSelected, schoolTypeFromSelected, KindChips,
@@ -26,7 +27,7 @@ import {
  */
 
 type ReqId =
-  | 'schools' | 'safety' | 'commute' | 'transit' | 'airport' | 'health' | 'price' | 'budget'
+  | 'schools' | 'safety' | 'commute' | 'transit' | 'airport' | 'health' | 'budget'
   | 'area' | 'stock' | 'tenure' | 'climate' | 'scene' | 'aura' | 'trajectory' | 'class' | 'politics' | 'life'
 
 const AREA_TYPE_OPTIONS = [
@@ -74,7 +75,7 @@ const SCHOOL_MIN_OPTIONS = [
 const REQ_GROUPS: { title: string; ids: ReqId[] }[] = [
   { title: 'Schools and safety', ids: ['schools', 'safety'] },
   { title: 'Getting around', ids: ['commute', 'transit', 'airport', 'health'] },
-  { title: 'Money', ids: ['price', 'budget'] },
+  { title: 'Money', ids: ['budget'] },
   { title: 'The place itself', ids: ['area', 'stock', 'tenure', 'climate', 'scene', 'aura', 'trajectory', 'class'] },
   { title: 'About the people', ids: ['politics', 'life'] },
 ]
@@ -86,7 +87,6 @@ const REQ_NAME: Record<ReqId, string> = {
   transit: 'Public transit',
   airport: 'Airport',
   health: 'Hospital',
-  price: 'Home price vs income',
   budget: 'Monthly cost',
   area: 'Area type',
   stock: 'Housing stock',
@@ -100,13 +100,49 @@ const REQ_NAME: Record<ReqId, string> = {
   life: 'Life stage',
 }
 
-// One-choice requirements that map to a pillar's existing pass/fail gate.
-const GATE: Partial<Record<ReqId, { key: PillarKey; label: string; cap?: string }>> = {
-  safety: { key: 'community_safety', label: 'Not in the highest-crime quarter nationally' },
-  transit: { key: 'public_transit_access', label: 'Has rail or several bus stops' },
-  airport: { key: 'air_travel_access', label: 'Within 60 min drive of an airport', cap: 'Dense multi-airport metros use the same bar.' },
-  health: { key: 'healthcare_access', label: 'Within 30 min drive of a hospital' },
-  price: { key: 'housing_value', label: 'Home price up to 3x your household income' },
+// Graded requirements that map to a pillar's existing pass/fail gate. Options run loosest to strictest; value 0 is Any.
+// Only the first option of each is the original cutoff; the stricter ones are not evidence-backed and are the owner's call.
+const GATE: Partial<Record<ReqId, { key: PillarKey; cap?: string; options: { value: number; label: string }[] }>> = {
+  safety: {
+    key: 'community_safety',
+    cap: 'Compared with places nationwide. Stricter levels hide most city neighborhoods.',
+    options: [
+      { value: 0, label: 'Any' },
+      { value: 25, label: 'Not in the highest-crime quarter' },
+      { value: 50, label: 'Safer than half of places' },
+      { value: 75, label: 'Safer than 3 in 4 places' },
+    ],
+  },
+  health: {
+    key: 'healthcare_access',
+    cap: 'Estimated drive time to the nearest hospital.',
+    options: [
+      { value: 0, label: 'Any' },
+      { value: 45, label: 'Within 45 min' },
+      { value: 30, label: 'Within 30 min' },
+      { value: 20, label: 'Within 20 min' },
+      { value: 15, label: 'Within 15 min' },
+    ],
+  },
+  airport: {
+    key: 'air_travel_access',
+    cap: 'Estimated drive time to the nearest airport.',
+    options: [
+      { value: 0, label: 'Any' },
+      { value: 90, label: 'Within 90 min' },
+      { value: 60, label: 'Within 60 min' },
+      { value: 45, label: 'Within 45 min' },
+      { value: 30, label: 'Within 30 min' },
+    ],
+  },
+  transit: {
+    key: 'public_transit_access',
+    options: [
+      { value: 0, label: 'Any' },
+      { value: 1, label: 'Rail or several bus stops' },
+      { value: 2, label: 'Rail nearby' },
+    ],
+  },
 }
 
 function Pill({ on, onClick, children, title }: { on: boolean; onClick: () => void; children: ReactNode; title?: string }) {
@@ -147,7 +183,6 @@ export interface FitPanelProps {
   hasPeople: boolean
   peopleCount: number
   workZoneLabel: string | null
-  householdIncome: number | null
 
   filterNbTypes: string[]
   onFilterNbTypesChange: (v: string[]) => void
@@ -163,6 +198,8 @@ export interface FitPanelProps {
   dealbreakerFailCounts: Partial<Record<PillarKey, number>>
   schoolMinScore: number
   onSchoolMinScoreChange: (v: number) => void
+  gateLevels: Record<string, number>
+  onGateLevelChange: (key: PillarKey, level: number) => void
 
   filterCommuteMax: 'all' | '15' | '30' | '45' | '60'
   onFilterCommuteMaxChange: (v: 'all' | '15' | '30' | '45' | '60') => void
@@ -220,9 +257,15 @@ export default function FitPanel(p: FitPanelProps) {
 
   const must = p.climatePrefs.must_haves ?? {}
   const gateOn = (id: ReqId) => Boolean(GATE[id] && p.dealbreakers[GATE[id]!.key])
-  const setGate = (id: ReqId, on: boolean) => {
+  // The selected level; a gate switched on in an older session has none stored and keeps its original cutoff.
+  const gateLevel = (id: ReqId): number => {
     const g = GATE[id]
-    if (g && Boolean(p.dealbreakers[g.key]) !== on) p.onDealbreakerToggle(g.key)
+    if (!g || !gateOn(id)) return 0
+    return p.gateLevels[g.key] || GATE_DEFAULT_LEVEL[g.key] || 0
+  }
+  const setGate = (id: ReqId, level: number) => {
+    const g = GATE[id]
+    if (g) p.onGateLevelChange(g.key, level)
   }
 
   const active: Record<ReqId, boolean> = {
@@ -232,7 +275,6 @@ export default function FitPanel(p: FitPanelProps) {
     transit: gateOn('transit'),
     airport: gateOn('airport'),
     health: gateOn('health'),
-    price: gateOn('price'),
     budget: p.filterBudget.chosen,
     area: p.filterAreaTypes.length > 0,
     stock: p.filterHousingType.length > 0,
@@ -250,7 +292,7 @@ export default function FitPanel(p: FitPanelProps) {
   function clearReq(id: ReqId) {
     switch (id) {
       case 'schools': p.onSchoolMinScoreChange(0); break
-      case 'safety': case 'transit': case 'airport': case 'health': case 'price': setGate(id, false); break
+      case 'safety': case 'transit': case 'airport': case 'health': setGate(id, 0); break
       case 'commute': p.onFilterCommuteMaxChange('all'); break
       case 'budget': p.onFilterBudgetChange(DEFAULT_BUDGET); break
       case 'area': p.onFilterAreaTypesChange([]); break
@@ -305,17 +347,16 @@ export default function FitPanel(p: FitPanelProps) {
             </div>
           </>
         )
-      case 'safety': case 'transit': case 'airport': case 'health': case 'price': {
+      case 'safety': case 'transit': case 'airport': case 'health': {
         const g = GATE[id]!
-        if (id === 'price' && !p.householdIncome) {
-          return <Cap>Needs your household income. <Link href="/profile" className="font-semibold text-[var(--hf-primary-1)]">Add it in your profile</Link></Cap>
-        }
+        const cur = gateLevel(id)
         return (
           <>
             {g.cap && <Cap>{g.cap}</Cap>}
             <PillRow>
-              <Pill on={!gateOn(id)} onClick={() => setGate(id, false)}>Any</Pill>
-              <Pill on={gateOn(id)} onClick={() => setGate(id, true)}>{g.label}</Pill>
+              {g.options.map((o) => (
+                <Pill key={o.value} on={cur === o.value} onClick={() => setGate(id, o.value)}>{o.label}</Pill>
+              ))}
             </PillRow>
           </>
         )
