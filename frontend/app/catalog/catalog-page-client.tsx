@@ -1733,7 +1733,17 @@ export default function CatalogPageClient({
         {/* Row 2: metro picker */}
           {catalogMode === 'explorer' && (
             <div className="flex items-center gap-2 px-3 pb-2 pt-0">
-              <div className="min-w-0 flex-1"><MetroPicker value={filterMetro} onChange={setFilterMetro} counts={metroResultCounts} /></div>
+              <div className="w-[46%] shrink-0"><MetroPicker value={filterMetro} onChange={setFilterMetro} counts={metroResultCounts} /></div>
+              <input
+                type="search"
+                inputMode="search"
+                enterKeyHint="search"
+                placeholder="Search places"
+                aria-label="Search neighborhoods"
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                className="h-[var(--hf-control-h-touch)] min-w-0 flex-1 rounded-full border border-[var(--hf-border)] bg-white px-4 text-base"
+              />
             </div>
           )}
         </div>
