@@ -12,14 +12,13 @@ import { LayoutGrid, List, SlidersHorizontal, X } from 'lucide-react'
 import CatalogMapView from '@/components/catalog/CatalogMapView'
 import CatalogBottomSheet, { findPlaceByKey, type CatalogSheetSnap } from '@/components/catalog/CatalogBottomSheet'
 import CatalogDetailPanel from '@/components/catalog/CatalogDetailPanel'
-import CatalogWeightPanel from '@/components/catalog/CatalogWeightPanel'
+import FitPanel from '@/components/catalog/FitPanel'
 import PillarTwinDrawer from '@/components/catalog/PillarTwinDrawer'
 import TwinFinderPanel from '@/components/catalog/TwinFinderPanel'
 import TwinCandidateDetailContent from '@/components/catalog/TwinCandidateDetailContent'
 import CatalogListView from '@/components/catalog/CatalogListView'
 import Link from 'next/link'
 import HeroBand from '@/components/catalog/HeroBand'
-import FilterSheet from '@/components/catalog/FilterSheet'
 import MetroPicker from '@/components/catalog/MetroPicker'
 import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, haversineMiles, minutesForMode, noRouteToZone } from '@/lib/workZones'
 import IndexInfoButton from '@/components/catalog/IndexInfoButton'
@@ -322,7 +321,7 @@ export default function CatalogPageClient({
   const [showExcluded, setShowExcluded] = useState(false)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [snap, setSnap] = useState<CatalogSheetSnap>('peek')
-  const [weightOpen, setWeightOpen] = useState(false)
+  const [fitOpen, setFitOpen] = useState(false)
   const [showQuiz, setShowQuiz] = useState(false)
   const [twinPillarOpen, setTwinPillarOpen] = useState(false)
   const [layoutVersion, setLayoutVersion] = useState(0)
@@ -358,7 +357,6 @@ export default function CatalogPageClient({
     return null
   })
   const [compareIds, setCompareIds] = useState<string[]>([])
-  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [hoverInfo, setHoverInfo] = useState<{ key: string; x: number; y: number } | null>(null)
 
   const handleCompareToggle = useCallback((key: string) => {
@@ -949,6 +947,14 @@ export default function CatalogPageClient({
   const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBudget.chosen ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene.length > 0 ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
   // Priorities badge: pillars moved off the default level, plus Hide choices (which live in Priorities).
   const priorityBadgeCount = !mounted ? 0 : PILLAR_ORDER.filter((k) => priorities[k as keyof PillarPriorities] !== DEFAULT_PRIORITIES[k as keyof PillarPriorities]).length + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
+  const clearRequirements = useCallback(() => {
+    setFilterAreaTypes([]); setFilterArchetypes([]); setFilterTrajectory('all'); setFilterPoliticalLean([])
+    setFilterLifeStage([]); setFilterHousingType([]); handleBudgetChange(DEFAULT_BUDGET); setFilterTenure([])
+    setFilterLocalScene([]); setFilterAura(false); setFilterCommuteMax('all')
+    setDealbreakers({}); setSchoolMinScore(0); setClimatePrefs((prev) => ({ ...prev, must_haves: {} }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const fitBadgeCount = filterBadgeCount + (indexMode === 'homefit' ? priorityBadgeCount : activeDealbreakerKeys.length)
   // Places blocked by regular filters — always shown in "Show excluded"
   const metroFilterExcluded = useMemo(() => {
     const filteredSet = new Set(filteredPlaces)
@@ -1282,7 +1288,6 @@ export default function CatalogPageClient({
   }, [snap])
 
   useEffect(() => {
-    if (indexMode !== 'homefit') setWeightOpen(false)
   }, [indexMode])
 
   const handleFullBreakdown = useCallback(
@@ -1581,29 +1586,17 @@ export default function CatalogPageClient({
               <>
                 <button
                   type="button"
-                  className="flex h-[var(--hf-control-h)] items-center gap-1 rounded-[var(--hf-control-radius)] border border-[var(--hf-border)] px-2.5 text-[length:var(--hf-control-text)] font-semibold text-[var(--hf-text-secondary)] hover:bg-[var(--hf-hover-bg)]"
-                  onClick={() => setFilterSheetOpen(true)}
+                  className="flex h-[var(--hf-control-h)] items-center gap-1 rounded-[var(--hf-control-radius)] border border-[var(--hf-border-strong)] px-2.5 text-[length:var(--hf-control-text)] font-bold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
+                  onClick={() => setFitOpen(true)}
                 >
                   <span>⚙</span>
-                  Filters
-                  {filterBadgeCount > 0 && (
+                  Your fit
+                  {fitBadgeCount > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {filterBadgeCount}
+                      {fitBadgeCount}
                     </span>
                   )}
                 </button>
-                {indexMode === 'homefit' && <button
-                  type="button"
-                  title={undefined}
-                  className="h-[var(--hf-control-h)] rounded-[var(--hf-control-radius)] border border-[var(--hf-border-strong)] px-2.5 text-[length:var(--hf-control-text)] font-bold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
-                  style={{ opacity: indexMode !== 'homefit' ? 0.4 : 1, pointerEvents: indexMode !== 'homefit' ? 'none' : 'auto' }}
-                  onClick={() => setWeightOpen(true)}
-                >
-                  Priorities
-                  {priorityBadgeCount > 0 && (
-                    <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>{priorityBadgeCount}</span>
-                  )}
-                </button>}
               </>
             )}
             <div className="h-4 w-px bg-[var(--hf-border)]" />
@@ -1720,34 +1713,18 @@ export default function CatalogPageClient({
           </div>
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
-            {/* Priorities pill (mobile: always reachable next to Filters) */}
-            {catalogMode === 'explorer' && indexMode === 'homefit' && (
-              <button
-                type="button"
-                className="flex items-center gap-1.5 rounded-full border border-[var(--hf-border)] bg-white px-3 h-[var(--hf-control-h-touch)] text-xs font-semibold text-[var(--hf-text-primary)] shadow-sm"
-                onClick={() => setWeightOpen(true)}
-                aria-label="Priorities"
-              >
-                Priorities
-                {priorityBadgeCount > 0 && (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                    {priorityBadgeCount}
-                  </span>
-                )}
-              </button>
-            )}
-            {/* Filters pill */}
+            {/* One entry point for requirements and priorities */}
             <button
               type="button"
               className="flex items-center gap-1.5 rounded-full border border-[var(--hf-border)] bg-white px-3 h-[var(--hf-control-h-touch)] text-xs font-semibold text-[var(--hf-text-primary)] shadow-sm"
-              onClick={() => setFilterSheetOpen(true)}
-              aria-label="Filters"
+              onClick={() => setFitOpen(true)}
+              aria-label="Your fit"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              Filters
-              {filterBadgeCount > 0 && (
+              Your fit
+              {fitBadgeCount > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {filterBadgeCount}
+                  {fitBadgeCount}
                 </span>
               )}
             </button>
@@ -2112,18 +2089,19 @@ export default function CatalogPageClient({
         </div>
       )}
 
-      <CatalogWeightPanel
-        open={weightOpen && indexMode === 'homefit'}
-        onClose={() => setWeightOpen(false)}
+      <FitPanel
+        open={fitOpen}
+        onClose={() => setFitOpen(false)}
+        showMatters={indexMode === 'homefit'}
+        resultCount={gatedPlaces.length}
+        onClearRequirements={clearRequirements}
         priorities={priorities}
-        onChange={setPriorities}
-
-        onTakeQuiz={() => { setWeightOpen(false); setShowQuiz(true) }}
-        householdIncome={householdIncome}
-        currentHomeName={currentHomeMatch}
-        currentHomeMonthlyCost={currentHomeMonthlyCost}
+        onPrioritiesChange={setPriorities}
+        onTakeQuiz={() => { setFitOpen(false); setShowQuiz(true) }}
         hasWorkHub={Boolean(findWorkZone(workZoneId))}
         hasPeople={people.length > 0}
+        workZoneLabel={findWorkZone(workZoneId)?.label ?? null}
+        householdIncome={householdIncome}
         filterNbTypes={filterNbTypes}
         onFilterNbTypesChange={setFilterNbTypes}
         filterAoTypes={filterAoTypes}
@@ -2134,12 +2112,41 @@ export default function CatalogPageClient({
         onFilterSchoolLevelsChange={(v) => setFilterSchoolLevels(v as SchoolLevel[])}
         dealbreakers={dealbreakers}
         onDealbreakerToggle={toggleDealbreaker}
+        dealbreakerFailCounts={dealbreakerFailCounts}
         schoolMinScore={schoolMinScore}
         onSchoolMinScoreChange={pickSchoolMin}
-        dealbreakerFailCounts={dealbreakerFailCounts}
+        filterCommuteMax={filterCommuteMax}
+        onFilterCommuteMaxChange={setFilterCommuteMax}
+        commuteFailCount={commuteFailCount}
+        filterBudget={filterBudget}
+        onFilterBudgetChange={handleBudgetChange}
+        suggestedCaps={[
+          ...(currentHomeMonthlyCost ? [{ label: 'Your current cost', value: Math.round(currentHomeMonthlyCost) }] : []),
+          ...(householdIncome ? [{ label: '30% of your income', value: Math.round((householdIncome * 0.3) / 12) }] : []),
+          ...(typicalMonthlyCost ? [{ label: 'Typical place', value: typicalMonthlyCost }] : []),
+        ]}
+        filterAreaTypes={filterAreaTypes}
+        onFilterAreaTypesChange={setFilterAreaTypes}
+        filterHousingType={filterHousingType}
+        onFilterHousingTypeChange={setFilterHousingType}
+        filterTenure={filterTenure}
+        onFilterTenureChange={setFilterTenure}
         climatePrefs={climatePrefs}
         onClimatePrefsChange={setClimatePrefs}
-        climateMustHaveFailCounts={climateMustHaveFailCounts}
+        climateMustHaveFailCounts={climateMustHaveFailCounts as Record<string, number> | undefined}
+        filterLocalScene={filterLocalScene}
+        onFilterLocalSceneChange={setFilterLocalScene}
+        filterAura={filterAura}
+        onFilterAuraChange={setFilterAura}
+        filterTrajectory={filterTrajectory}
+        onFilterTrajectoryChange={setFilterTrajectory}
+        filterArchetypes={filterArchetypes}
+        onFilterArchetypesChange={setFilterArchetypes}
+        archetypes={archetypes}
+        filterPoliticalLean={filterPoliticalLean}
+        onFilterPoliticalLeanChange={setFilterPoliticalLean}
+        filterLifeStage={filterLifeStage}
+        onFilterLifeStageChange={setFilterLifeStage}
       />
 
       <PillarTwinDrawer
@@ -2157,51 +2164,6 @@ export default function CatalogPageClient({
         lookupPlaces={adjustedPlaces}
         onRemove={(key) => setCompareIds((prev) => prev.filter((k) => k !== key))}
         onClear={() => setCompareIds([])}
-      />
-
-      <FilterSheet
-        open={filterSheetOpen}
-        onClose={() => setFilterSheetOpen(false)}
-        filterMetro={filterMetro}
-        onFilterMetroChange={setFilterMetro}
-        filterAreaTypes={filterAreaTypes}
-        onFilterAreaTypesChange={setFilterAreaTypes}
-        filterArchetypes={filterArchetypes}
-        onFilterArchetypesChange={setFilterArchetypes}
-        archetypes={archetypes}
-        filterTrajectory={filterTrajectory}
-        onFilterTrajectoryChange={setFilterTrajectory}
-        filterPoliticalLean={filterPoliticalLean}
-        onFilterPoliticalLeanChange={setFilterPoliticalLean}
-        filterLifeStage={filterLifeStage}
-        onFilterLifeStageChange={setFilterLifeStage}
-        filterHousingType={filterHousingType}
-        onFilterHousingTypeChange={setFilterHousingType}
-        filterBudget={filterBudget}
-        onFilterBudgetChange={handleBudgetChange}
-        suggestedCaps={[
-          ...(currentHomeMonthlyCost ? [{ label: 'Your current cost', value: Math.round(currentHomeMonthlyCost) }] : []),
-          ...(householdIncome ? [{ label: '30% of your income', value: Math.round((householdIncome * 0.3) / 12) }] : []),
-          ...(typicalMonthlyCost ? [{ label: 'Typical place', value: typicalMonthlyCost }] : []),
-        ]}
-        filterTenure={filterTenure}
-        onFilterTenureChange={setFilterTenure}
-        filterLocalScene={filterLocalScene}
-        onFilterLocalSceneChange={setFilterLocalScene}
-        filterAura={filterAura}
-        onFilterAuraChange={setFilterAura}
-        dealbreakers={dealbreakers}
-        onDealbreakerToggle={toggleDealbreaker}
-        dealbreakerFailCounts={dealbreakerFailCounts}
-        householdIncome={householdIncome}
-        filterCommuteMax={filterCommuteMax}
-        onFilterCommuteMaxChange={setFilterCommuteMax}
-        workZoneLabel={findWorkZone(workZoneId)?.label ?? null}
-        commuteFailCount={commuteFailCount}
-        climateMustHaveFailCounts={climateMustHaveFailCounts}
-        climatePrefs={climatePrefs}
-        onClimatePrefsChange={setClimatePrefs}
-        resultCount={gatedPlaces.length}
       />
 
       {loading && (

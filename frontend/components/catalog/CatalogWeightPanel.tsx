@@ -9,7 +9,7 @@ import { DEFAULT_PRIORITIES, type PillarPriorities, type PriorityLevel } from '@
 import { MUST_HAVE_LABELS, CLIMATE_MUST_HAVES } from '@/components/catalog/FilterSheet'
 import type { ClimatePreferences, ClimateMustHaves } from '@/lib/climatePreferences'
 
-const GROUPS: { title: string; keys: PillarKey[] }[] = [
+export const GROUPS: { title: string; keys: PillarKey[] }[] = [
   {
     title: 'Lifestyle',
     keys: ['natural_beauty', 'active_outdoors', 'neighborhood_amenities'],
@@ -30,10 +30,10 @@ const GROUPS: { title: string; keys: PillarKey[] }[] = [
 
 const MUST_HAVE_KEYS = Object.keys(MUST_HAVE_LABELS) as PillarKey[]
 
-const LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
+export const LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
 
 type PersonalKey = 'commute_time' | 'social_connection'
-const PERSONAL_ROWS: { key: PersonalKey; icon: string; name: string; needs: string }[] = [
+export const PERSONAL_ROWS: { key: PersonalKey; icon: string; name: string; needs: string }[] = [
   { key: 'commute_time', icon: '🚆', name: 'Your commute', needs: 'Add a work hub to weigh your commute.' },
   { key: 'social_connection', icon: '💛', name: 'Closeness to people you know', needs: 'Add people you want to live near to weigh this.' },
 ]
@@ -73,14 +73,14 @@ interface CatalogWeightPanelProps {
 }
 
 /** Pillars with a deal-breaker gate wired up. Independent axis from importance — see housing_value MVP. */
-const NB_TYPE_OPTIONS: { value: string; label: string }[] = [
+export const NB_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'mountains', label: 'Mountains' },
   { value: 'ocean', label: 'Ocean / Bay' },
   { value: 'lakes_rivers', label: 'Lakes & Rivers' },
   { value: 'canopy', label: 'Tree Canopy' },
 ]
 
-const AO_TYPE_OPTIONS: { value: string; label: string }[] = [
+export const AO_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'local_parks', label: 'Local Parks' },
   { value: 'trails_regional', label: 'Trails & Regional Parks' },
   { value: 'waterfront', label: 'Waterfront' },
@@ -89,24 +89,24 @@ const AO_TYPE_OPTIONS: { value: string; label: string }[] = [
 // Multi-select. "Public" is the score's own basis (assigned or nearest district schools); "Charter" scores the nearby
 // charters; both selected averages the two (only when 3+ charters are rated nearby). The stored value stays one string:
 // 'any' = public, 'charter' = charter, 'both' = both ('public_only' from older sessions behaves like 'any').
-const SCHOOL_LEVEL_OPTIONS: { value: string; label: string }[] = [
+export const SCHOOL_LEVEL_OPTIONS: { value: string; label: string }[] = [
   { value: 'elementary', label: 'Elementary' },
   { value: 'middle', label: 'Middle' },
   { value: 'high', label: 'High' },
 ]
 
-const SCHOOL_TYPE_OPTIONS: { value: 'public' | 'charter'; label: string }[] = [
+export const SCHOOL_TYPE_OPTIONS: { value: 'public' | 'charter'; label: string }[] = [
   { value: 'public', label: 'Public' },
   { value: 'charter', label: 'Charter' },
 ]
 
-function schoolTypeSelected(v?: string): ('public' | 'charter')[] {
+export function schoolTypeSelected(v?: string): ('public' | 'charter')[] {
   if (v === 'charter') return ['charter']
   if (v === 'both') return ['public', 'charter']
   return ['public']
 }
 
-function schoolTypeFromSelected(sel: ('public' | 'charter')[]): 'any' | 'charter' | 'both' {
+export function schoolTypeFromSelected(sel: ('public' | 'charter')[]): 'any' | 'charter' | 'both' {
   const pub = sel.includes('public'), ch = sel.includes('charter')
   if (pub && ch) return 'both'
   return ch ? 'charter' : 'any'
@@ -119,7 +119,7 @@ const SCHOOL_QUALITY_OPTIONS: { value: number; label: string }[] = [
   { value: 90, label: 'Top 10% in state' },
 ]
 
-function KindChips({ label, options, selected, onToggle }: {
+export function KindChips({ label, options, selected, onToggle }: {
   label: string
   options: { value: string; label: string }[]
   selected: string[]
