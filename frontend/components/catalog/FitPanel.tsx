@@ -461,7 +461,13 @@ export default function FitPanel(p: FitPanelProps) {
     }
   }
 
-  const shown = REQ_GROUPS.flatMap((g) => g.ids).filter((id) => visible(id) && !(id === 'class' && p.archetypes.length === 0))
+  // Requirements already active when the panel opened keep the menu's order; each one added since goes at the bottom,
+  // in the order it was added.
+  const usable = (id: ReqId) => !(id === 'class' && p.archetypes.length === 0)
+  const shown = [
+    ...REQ_GROUPS.flatMap((g) => g.ids).filter((id) => active[id] && !added.includes(id) && usable(id)),
+    ...added.filter((id) => usable(id)),
+  ]
   const activeCount = Object.values(active).filter(Boolean).length
 
   function setLevel(key: string, level: PriorityLevel) {

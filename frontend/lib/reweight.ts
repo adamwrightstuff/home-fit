@@ -508,11 +508,11 @@ export const PUBLIC_TRANSIT_DEALBREAKER_MAX_BUS_STOPS = 10
 export function passesPublicTransitDealbreaker(
   railStops: number | null | undefined,
   busStops: number | null | undefined,
-  /** 1 = rail or more than a handful of bus stops (the original gate); 2 = rail only. */
+  /** 1 = rail or more than a handful of bus stops (the original gate); 2 = rail only. `railStops` is the count of rail routes. */
   level: number = 1,
 ): boolean {
+  if (level >= 2) return railStops === null || railStops === undefined ? true : railStops > 0
   if (railStops === null || railStops === undefined || busStops === null || busStops === undefined) return true
-  if (level >= 2) return railStops > 0
   return railStops > 0 || busStops > PUBLIC_TRANSIT_DEALBREAKER_MAX_BUS_STOPS
 }
 

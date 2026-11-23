@@ -911,7 +911,9 @@ export default function CatalogPageClient({
     public_transit_access: (p) => {
       const ts = (p.score.livability_pillars as any)?.public_transit_access?.summary
       if (!ts) return true
-      const rail = (Number(ts.heavy_rail_stops) || 0) + (Number(ts.light_rail_stops) || 0)
+      // Rail service is read from the route counts (heavy, light and commuter). The stop counts are 0 for almost every
+      // place, including Brooklyn Heights, Hoboken and Montclair, so they cannot tell a rail town from a bus-only one.
+      const rail = (Number(ts.heavy_rail_routes) || 0) + (Number(ts.light_rail_routes) || 0) + (Number(ts.commuter_rail_routes) || 0)
       const bus = typeof ts.bus_stops === 'number' ? ts.bus_stops : null
       return passesPublicTransitDealbreaker(rail, bus, gateLevels.public_transit_access || GATE_DEFAULT_LEVEL.public_transit_access)
     },
