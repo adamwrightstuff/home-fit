@@ -13,7 +13,6 @@ OSM counts and the Overture facts stay as they are. A place with no Overture ven
 
   python3 scripts/catalog/apply_local_scene_hybrid.py            # dry run
   python3 scripts/catalog/apply_local_scene_hybrid.py --write
-Then re-run scripts/catalog/apply_aura.py (Aura reads the level).
 """
 import argparse, glob, json, math, os, sys
 from collections import Counter

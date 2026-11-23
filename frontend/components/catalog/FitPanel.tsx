@@ -28,7 +28,7 @@ import {
 
 type ReqId =
   | 'schools' | 'safety' | 'commute' | 'transit' | 'airport' | 'health' | 'budget'
-  | 'area' | 'stock' | 'tenure' | 'climate' | 'scene' | 'aura' | 'trajectory' | 'class' | 'politics' | 'life'
+  | 'area' | 'stock' | 'tenure' | 'climate' | 'scene' | 'trajectory' | 'class' | 'politics' | 'life'
 
 const AREA_TYPE_OPTIONS = [
   { value: 'urban_residential', label: 'Urban Neighborhood' },
@@ -76,7 +76,7 @@ const REQ_GROUPS: { title: string; ids: ReqId[] }[] = [
   { title: 'Schools and safety', ids: ['schools', 'safety'] },
   { title: 'Getting around', ids: ['commute', 'transit', 'airport', 'health'] },
   { title: 'Money', ids: ['budget'] },
-  { title: 'The place itself', ids: ['area', 'stock', 'tenure', 'climate', 'scene', 'aura', 'trajectory', 'class'] },
+  { title: 'The place itself', ids: ['area', 'stock', 'tenure', 'climate', 'scene', 'trajectory', 'class'] },
   { title: 'About the people', ids: ['politics', 'life'] },
 ]
 
@@ -93,7 +93,6 @@ const REQ_NAME: Record<ReqId, string> = {
   tenure: 'Tenure mix',
   climate: 'Climate',
   scene: 'Local scene',
-  aura: 'Aura',
   trajectory: 'Trajectory',
   class: 'Class',
   politics: 'Political lean',
@@ -220,8 +219,6 @@ export interface FitPanelProps {
   climateMustHaveFailCounts?: Record<string, number>
   filterLocalScene: SceneFilter
   onFilterLocalSceneChange: (v: SceneFilter) => void
-  filterAura: boolean
-  onFilterAuraChange: (v: boolean) => void
   filterTrajectory: 'all' | 'Up-and-Coming' | 'Stable' | 'Declining'
   onFilterTrajectoryChange: (v: 'all' | 'Up-and-Coming' | 'Stable' | 'Declining') => void
   filterArchetypes: string[]
@@ -281,7 +278,6 @@ export default function FitPanel(p: FitPanelProps) {
     tenure: p.filterTenure.length > 0,
     climate: Object.values(must).some(Boolean),
     scene: p.filterLocalScene.length > 0,
-    aura: p.filterAura,
     trajectory: p.filterTrajectory !== 'all',
     class: p.filterArchetypes.length > 0,
     politics: p.filterPoliticalLean.length > 0,
@@ -300,7 +296,6 @@ export default function FitPanel(p: FitPanelProps) {
       case 'tenure': p.onFilterTenureChange([]); break
       case 'climate': p.onClimatePrefsChange({ ...p.climatePrefs, must_haves: {} }); break
       case 'scene': p.onFilterLocalSceneChange([]); break
-      case 'aura': p.onFilterAuraChange(false); break
       case 'trajectory': p.onFilterTrajectoryChange('all'); break
       case 'class': p.onFilterArchetypesChange([]); break
       case 'politics': p.onFilterPoliticalLeanChange([]); break
@@ -453,9 +448,6 @@ export default function FitPanel(p: FitPanelProps) {
       case 'scene':
         return (<><Cap>How much of a scene there is nearby (independent cafés, bars, galleries, bookstores, theaters), compared with similar places. Pick any levels.</Cap>
           <PillRow>{SCENE_FILTER_LEVELS.map((lv) => <Pill key={lv} on={p.filterLocalScene.includes(lv)} onClick={() => p.onFilterLocalSceneChange(toggleSceneLevel(p.filterLocalScene, lv))}>{SCENE_LABEL[lv]}</Pill>)}</PillRow></>)
-      case 'aura':
-        return (<><Cap>A Buzzing local scene in a neighborhood with an affluent or elite resident profile. Rare.</Cap>
-          <PillRow><Pill on={p.filterAura} onClick={() => p.onFilterAuraChange(!p.filterAura)}>Aura only</Pill></PillRow></>)
       case 'trajectory':
         return <PillRow>{TRAJECTORY_OPTIONS.map((o) => <Pill key={o.value} on={p.filterTrajectory === o.value} onClick={() => p.onFilterTrajectoryChange(p.filterTrajectory === o.value ? 'all' : (o.value as 'Up-and-Coming' | 'Stable' | 'Declining'))}>{o.label}</Pill>)}</PillRow>
       case 'class':

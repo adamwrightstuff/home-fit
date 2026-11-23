@@ -25,7 +25,6 @@ import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
 import { SCENE_LABEL } from '@/lib/sceneLevels'
-import AuraBadge from '@/components/catalog/AuraBadge'
 
 function MetroDot({ metro }: { metro: CatalogMetro }) {
   return <span className="inline-block h-2 w-2 rounded-full" style={{ background: CATALOG_METRO_META[metro].color }} title={CATALOG_METRO_META[metro].label} />
@@ -262,7 +261,6 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       />
                       <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
                       <LocalSceneChip level={p.score.local_scene_level ?? null} compact />
-                      <AuraBadge aura={p.score.aura ?? null} compact />
                       {p.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
                         <span
                           title="No commute data to your work hub from here (different metro) -- this place isn't scored on commute time, and isn't being helped or hurt by that weight."

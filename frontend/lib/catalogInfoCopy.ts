@@ -73,12 +73,6 @@ export const SCENE_COPY: Record<string, InfoCopy> = {
   },
 }
 
-export const AURA_COPY: InfoCopy = {
-  title: 'Aura',
-  body: 'Aura marks a neighborhood with a big local scene, a strong mix of independent cafes, bars and culture, and an affluent or elite resident profile. It is rare.',
-  detail: 'A place gets Aura only if its Local Scene is Buzzing (a strong mix of independent cafes, bars and culture venues compared with places of similar density, and 126 or more independent venues within about 0.75 miles) and its status class is Affluent or Elite. Job centers with more than five workers per resident are excluded. The cut-offs are rough judgments and not validated.',
-}
-
 export const INDEX_COPY: Record<string, InfoCopy> = {
   homefit: {
     title: 'HomeFit Score',

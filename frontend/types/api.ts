@@ -170,8 +170,6 @@ export interface ScoreResponse {
   local_scene_level?: 'quiet' | 'low_key' | 'lively' | 'buzzing' | null;
   /** Local Scene facts behind the level. `combined` is the culture and hangout mix reading (0 to 100, ranked among places of similar density). Catalog-only. */
   local_scene_v2?: { independent_venues_1200m?: number | null; venues_total?: number | null; combined?: number | null };
-  /** Aura flag: Buzzing local scene, Affluent or Elite status class, not a job center. Drives the "Aura" badge. Catalog-only. */
-  aura?: boolean;
   /** Happiness Index: commute (35%), social fabric (30%), housing value (20%), natural beauty (15%); renormalized if missing. Not a pillar. */
   happiness_index?: number;
   happiness_index_breakdown?: Record<string, unknown>;

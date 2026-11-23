@@ -172,4 +172,4 @@ Known limits: the Overture area for towns is an equal-area circle, not the town 
 
 Open owner decisions: the five Aura places the owner ruled out on 2026-11-06 (Battery Park City, Carnegie Hill, Upper East Side, and Venice now) enter Aura under this rule; Aura follows the data per the owner's 2026-11-13 principle that the data is the source of truth when it is good data.
 
-Order to rebuild after a new OSM read or Overture release: `add_local_scene_overture_facts.py --write`, then `apply_local_scene_hybrid.py --write`, then `apply_aura.py`. `apply_local_scene_level.py` skips places that carry Overture facts.
+Order to rebuild after a new OSM read or Overture release: `add_local_scene_overture_facts.py --write`, then `apply_local_scene_hybrid.py --write`. `apply_local_scene_level.py` skips places that carry Overture facts.

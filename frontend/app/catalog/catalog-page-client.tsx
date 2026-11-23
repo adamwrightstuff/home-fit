@@ -247,12 +247,6 @@ export default function CatalogPageClient({
       return normalizeSceneFilter(v)
     } catch { return [] }
   })
-  const [filterAura, setFilterAura] = useState<boolean>(() => {
-    try {
-      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
-      return f?.filterAura === true
-    } catch { return false }
-  })
   const [filterCommuteMax, setFilterCommuteMax] = useState<'all' | '15' | '30' | '45' | '60'>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
@@ -439,14 +433,13 @@ export default function CatalogPageClient({
           filterSchoolType,
           filterSchoolLevels,
           filterLocalScene,
-          filterAura,
           filterCommuteMax,
           workZoneId,
           climatePrefs,
         },
       }))
     } catch { /* ignore */ }
-  }, [user, priorities, dealbreakers, schoolMinScore, gateLevels, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
+  }, [user, priorities, dealbreakers, schoolMinScore, gateLevels, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterCommuteMax, workZoneId, climatePrefs])
 
   useEffect(() => {
     const ac = new AbortController()
@@ -544,7 +537,6 @@ export default function CatalogPageClient({
             if (lv.length) setFilterSchoolLevels(lv)
           }
           if (f.filterLocalScene !== undefined) setFilterLocalScene(normalizeSceneFilter(f.filterLocalScene))
-          if (typeof f.filterAura === 'boolean') setFilterAura(f.filterAura)
           if (typeof f.filterCommuteMax === 'string') setFilterCommuteMax(f.filterCommuteMax)
           if (f.climatePrefs && typeof f.climatePrefs === 'object') setClimatePrefs(normalizeClimatePrefs(f.climatePrefs))
         }
@@ -601,7 +593,6 @@ export default function CatalogPageClient({
             filterSchoolType,
             filterSchoolLevels,
             filterLocalScene,
-            filterAura,
             filterCommuteMax,
             climatePrefs,
           },
@@ -609,7 +600,7 @@ export default function CatalogPageClient({
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, schoolMinScore, gateLevels, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
+  }, [user, priorities, dealbreakers, schoolMinScore, gateLevels, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterCommuteMax, climatePrefs])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -811,7 +802,6 @@ export default function CatalogPageClient({
         if (!matchesAny) return false
       }
       if (sceneFilterExcludes(p.score.local_scene_level, filterLocalScene)) return false
-      if (filterAura && p.score.aura !== true) return false
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) return false
@@ -871,7 +861,7 @@ export default function CatalogPageClient({
     lifeStageCut,
     filterSchoolType,
     filterLocalScene,
-    filterAura,
+   
     filterCommuteMax,
     filterHousingType,
     filterBudget,
@@ -954,13 +944,13 @@ export default function CatalogPageClient({
   // showing the count before mount made the Filters badge differ between server and client HTML.
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBudget.chosen ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene.length > 0 ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
+  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBudget.chosen ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene.length > 0 ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
   // Priorities badge: pillars moved off the default level, plus Hide choices (which live in Priorities).
   const priorityBadgeCount = !mounted ? 0 : PILLAR_ORDER.filter((k) => priorities[k as keyof PillarPriorities] !== DEFAULT_PRIORITIES[k as keyof PillarPriorities]).length + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
   const clearRequirements = useCallback(() => {
     setFilterAreaTypes([]); setFilterArchetypes([]); setFilterTrajectory('all'); setFilterPoliticalLean([])
     setFilterLifeStage([]); setFilterHousingType([]); handleBudgetChange(DEFAULT_BUDGET); setFilterTenure([])
-    setFilterLocalScene([]); setFilterAura(false); setFilterCommuteMax('all')
+    setFilterLocalScene([]); setFilterCommuteMax('all')
     setDealbreakers({}); setGateLevels({}); setSchoolMinScore(0); setClimatePrefs((prev) => ({ ...prev, must_haves: {} }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -990,7 +980,6 @@ export default function CatalogPageClient({
         if (tr && tr !== filterTrajectory) r.push('Trajectory')
       }
       if (sceneFilterExcludes(p.score.local_scene_level, filterLocalScene)) r.push('Local scene')
-      if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) r.push('Commute')
@@ -1044,7 +1033,7 @@ export default function CatalogPageClient({
       reasons[key] = r.length > 0 ? r : ['Filters']
     }
     return reasons
-  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterPoliticalLean, filterLifeStage, lifeStageCut, climatePrefs])
+  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterPoliticalLean, filterLifeStage, lifeStageCut, climatePrefs])
   const { gatedPlaces, excludedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) {
       return { gatedPlaces: filteredPlaces, excludedPlaces: metroFilterExcluded, dealbreakerExcludedCount: metroFilterExcluded.length, dealbreakerZeroSurvivors: false }
@@ -1108,7 +1097,6 @@ export default function CatalogPageClient({
         if (!matchesAny) r.push('Political lean')
       }
       if (sceneFilterExcludes(p.score.local_scene_level, filterLocalScene)) r.push('Local scene')
-      if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) r.push('Commute')
@@ -1159,7 +1147,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, lifeStageCut, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, lifeStageCut, filterLocalScene, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
@@ -2148,8 +2136,6 @@ export default function CatalogPageClient({
         climateMustHaveFailCounts={climateMustHaveFailCounts as Record<string, number> | undefined}
         filterLocalScene={filterLocalScene}
         onFilterLocalSceneChange={setFilterLocalScene}
-        filterAura={filterAura}
-        onFilterAuraChange={setFilterAura}
         filterTrajectory={filterTrajectory}
         onFilterTrajectoryChange={setFilterTrajectory}
         filterArchetypes={filterArchetypes}
