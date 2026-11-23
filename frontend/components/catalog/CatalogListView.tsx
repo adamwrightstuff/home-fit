@@ -271,6 +271,8 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                         >
                           Commute: N/A
                         </span>
+                      )}
+                    </span>
             )
             return (
               <Fragment key={key}>
@@ -335,8 +337,6 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                   })()}
                   <td className="hidden md:table-cell py-2 px-1 align-top">
                     {profileChips}
-                      )}
-                    </span>
                   </td>
                   <td className="py-2 pl-1">
                     <div className="flex items-center gap-1">
