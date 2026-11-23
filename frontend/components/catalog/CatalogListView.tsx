@@ -218,7 +218,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 )}
               </th>
             )}
-            <th className="py-2 px-1 font-semibold">Profile</th>
+            <th className="hidden md:table-cell py-2 px-1 font-semibold">Profile</th>
             <th className="py-2 pl-1"> </th>
           </tr>
         </thead>
@@ -250,6 +250,28 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 </div>
               )
             }
+            const profileChips = (
+                    <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', whiteSpace: 'nowrap' }}>
+                      <ArchetypeBadge
+                        archetype={p.score.status_signal_breakdown?.archetype ?? null}
+                        breakdown={p.score.status_signal_breakdown ?? null}
+                        compositeScore={
+                          typeof p.score.status_signal === 'number' ? p.score.status_signal : null
+                        }
+                        compact
+                      />
+                      <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
+                      <LocalSceneChip level={p.score.local_scene_level ?? null} compact />
+                      <AuraBadge aura={p.score.aura ?? null} compact />
+                      {p.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
+                        <span
+                          title="No commute data to your work hub from here (different metro) -- this place isn't scored on commute time, and isn't being helped or hurt by that weight."
+                          className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[0.65rem] font-medium"
+                          style={{ background: '#f1f5f9', border: '1px dashed #cbd5e1', color: '#64748b' }}
+                        >
+                          Commute: N/A
+                        </span>
+            )
             return (
               <Fragment key={key}>
                 {showDivider && (
@@ -269,11 +291,12 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                   } ${isFilteredOut ? 'opacity-50' : ''}`}
                   onClick={() => toggleRow(key)}
                 >
-                  <td className="py-2 pr-2">
+                  <td className="py-3 md:py-2 pr-2">
                     <div className="text-sm font-semibold text-[var(--hf-text-primary)]">{p.catalog.name}</div>
                     <div className="text-[0.6rem] text-[var(--hf-text-tertiary)]">
                       {p.catalog.county_borough}, {p.catalog.state_abbr}
                     </div>
+                    <div className="mt-1 md:hidden">{profileChips}</div>
                     {budget && <BudgetCostLine housingCost={p.housing_cost} stateAbbr={p.catalog.state_abbr} budget={budget} />}
                     {isFilteredOut && (
                       <div className="mt-0.5 flex flex-wrap gap-1">
@@ -310,27 +333,8 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       </td>
                     )
                   })()}
-                  <td className="py-2 px-1 align-top">
-                    <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', whiteSpace: 'nowrap' }}>
-                      <ArchetypeBadge
-                        archetype={p.score.status_signal_breakdown?.archetype ?? null}
-                        breakdown={p.score.status_signal_breakdown ?? null}
-                        compositeScore={
-                          typeof p.score.status_signal === 'number' ? p.score.status_signal : null
-                        }
-                        compact
-                      />
-                      <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
-                      <LocalSceneChip level={p.score.local_scene_level ?? null} compact />
-                      <AuraBadge aura={p.score.aura ?? null} compact />
-                      {p.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
-                        <span
-                          title="No commute data to your work hub from here (different metro) -- this place isn't scored on commute time, and isn't being helped or hurt by that weight."
-                          className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[0.65rem] font-medium"
-                          style={{ background: '#f1f5f9', border: '1px dashed #cbd5e1', color: '#64748b' }}
-                        >
-                          Commute: N/A
-                        </span>
+                  <td className="hidden md:table-cell py-2 px-1 align-top">
+                    {profileChips}
                       )}
                     </span>
                   </td>
@@ -341,7 +345,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                           type="button"
                           aria-label={`Add ${p.catalog.name} to comparison`}
                           aria-pressed={compareIds.includes(key)}
-                          className={`rounded border px-1.5 py-0.5 text-[0.65rem] font-bold opacity-0 transition-opacity group-hover/row:opacity-100 focus:opacity-100 ${
+                          className={`hidden md:inline-block rounded border px-1.5 py-0.5 text-[0.65rem] font-bold opacity-0 transition-opacity group-hover/row:opacity-100 focus:opacity-100 ${
                             compareIds.includes(key) ? 'border-gray-200 text-gray-300' : 'border-gray-200 text-gray-500'
                           }`}
                           disabled={!compareIds.includes(key) && compareIds.length >= 2}
@@ -353,7 +357,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       )}
                       <button
                         type="button"
-                        className="rounded border border-[var(--hf-border)] px-1.5 py-0.5 text-[0.65rem] font-bold text-[var(--hf-primary-1)]"
+                        className="rounded border border-[var(--hf-border)] px-2.5 py-1.5 md:px-1.5 md:py-0.5 text-xs md:text-[0.65rem] font-bold text-[var(--hf-primary-1)]"
                         onClick={(e) => { e.stopPropagation(); onTwinRow(key) }}
                       >
                         Twin →
