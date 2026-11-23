@@ -1824,7 +1824,7 @@ export default function CatalogPageClient({
       </header>
 
       {catalogMode === 'explorer' && (
-        <p className={`m-0 shrink-0 border-b border-[var(--hf-border)] bg-white px-4 py-1 text-[0.7rem] text-[var(--hf-text-secondary)]${viewMode === 'map' ? ' hidden md:block' : ''}`}>
+        <p className={`m-0 shrink-0 border-b border-[var(--hf-border)] bg-white px-4 py-1 text-[0.7rem] text-[var(--hf-text-secondary)] hidden md:block`}>
           {scoreBasisLine(indexMode, priorities)}
           {filterBudget.chosen && viewMode === 'list' && (
             <>
