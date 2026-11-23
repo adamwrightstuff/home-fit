@@ -1679,7 +1679,7 @@ export default function CatalogPageClient({
         {/* ── Mobile header: single compact row ── */}
         <div className="md:hidden flex flex-col">
           {/* Row 1: mode tabs + view controls */}
-          <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 min-h-[48px]">
+          <div className="flex items-center gap-1.5 px-3 py-2 min-h-[48px]">
           {/* Mode tabs */}
           <div className="flex items-center gap-1 shrink-0">
             <button
@@ -1697,7 +1697,6 @@ export default function CatalogPageClient({
           </div>
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
-            <Link href="/quiz" className="flex items-center rounded-full px-3 h-[var(--hf-control-h-touch)] text-xs font-bold text-white shadow-sm" style={{ background: 'var(--hf-primary-1)' }}>Quiz</Link>
             {/* Priorities pill (mobile: always reachable next to Filters) */}
             {catalogMode === 'explorer' && indexMode === 'homefit' && (
               <button
@@ -1733,8 +1732,9 @@ export default function CatalogPageClient({
         </div>
         {/* Row 2: metro picker */}
           {catalogMode === 'explorer' && (
-            <div className="px-3 pb-2 pt-0">
-              <MetroPicker value={filterMetro} onChange={setFilterMetro} counts={metroResultCounts} />
+            <div className="flex items-center gap-2 px-3 pb-2 pt-0">
+              <div className="min-w-0 flex-1"><MetroPicker value={filterMetro} onChange={setFilterMetro} counts={metroResultCounts} /></div>
+              <Link href="/quiz" className="flex shrink-0 items-center rounded-full border border-[var(--hf-border)] bg-white px-3 h-[var(--hf-control-h-touch)] text-xs font-semibold text-[var(--hf-text-primary)] shadow-sm">Quiz</Link>
             </div>
           )}
         </div>
