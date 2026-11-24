@@ -9,12 +9,18 @@ from typing import Dict, Optional, Tuple
 # mobility) takes 0.20; the four earlier components keep their proportions (0.60/0.20/0.10/0.10 x 0.80).
 # The 0.20 is a judgment call with plausible range 0.15 to 0.45, not a sourced value (docs/PILLAR_SOCIAL_FABRIC.md).
 EC_WEIGHT = 0.20
+# v20 (2026-11-24): OSM civic gathering spots are shown but not scored (weight 0). Against CDC PLACES felt-connection
+# measures (analysis/social_fabric_felt_validation_2026-11-24.md) they showed no relation (support +0.06, loneliness
+# -0.06) and dropping them from the blend raised the match slightly. The other four v18 weights keep their proportions
+# (0.48 / 0.16 / 0.08 / 0.20 divided by 0.92). Judgment call, not a sourced value.
+_V18_WEIGHTS = {"participation": 0.48, "cohesion": 0.16, "rootedness": 0.08, "economic_connectedness": 0.20}
+_V18_SCORED_SUM = sum(_V18_WEIGHTS.values())
 SF_BASE_WEIGHTS = {
-    "participation": round(0.60 * (1 - EC_WEIGHT), 4),
-    "cohesion": round(0.20 * (1 - EC_WEIGHT), 4),
-    "rootedness": round(0.10 * (1 - EC_WEIGHT), 4),
-    "civic": round(0.10 * (1 - EC_WEIGHT), 4),
-    "economic_connectedness": EC_WEIGHT,
+    "participation": round(_V18_WEIGHTS["participation"] / _V18_SCORED_SUM, 4),
+    "cohesion": round(_V18_WEIGHTS["cohesion"] / _V18_SCORED_SUM, 4),
+    "rootedness": round(_V18_WEIGHTS["rootedness"] / _V18_SCORED_SUM, 4),
+    "civic": 0.0,
+    "economic_connectedness": round(_V18_WEIGHTS["economic_connectedness"] / _V18_SCORED_SUM, 4),
 }
 
 
@@ -35,8 +41,10 @@ def blend_social_fabric(
     values = {"participation": participation, "cohesion": cohesion, "rootedness": rootedness, "civic": civic,
               "economic_connectedness": economic_connectedness}
     present = {k: float(v) for k, v in values.items() if v is not None}
-    missing = [k for k in SF_BASE_WEIGHTS if k not in present]
-    if "participation" not in present or len(present) < 2:
+    # A component with weight 0 (civic since v20) is a diagnostic: its absence is not a data gap.
+    missing = [k for k in SF_BASE_WEIGHTS if k not in present and SF_BASE_WEIGHTS[k] > 0]
+    scored = [k for k in present if SF_BASE_WEIGHTS[k] > 0]
+    if "participation" not in present or len(scored) < 2:
         raise RuntimeError(f"Social fabric: not enough components to score (missing: {', '.join(missing)})")
     total = sum(SF_BASE_WEIGHTS[k] for k in present)
     weights = {k: SF_BASE_WEIGHTS[k] / total for k in present}

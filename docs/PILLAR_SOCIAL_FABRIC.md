@@ -231,3 +231,20 @@ Level 2 status: signed off by the owner with recorded gaps (not a clean pass): t
 file, modeled data, 58 percent of places, with PA, CO and OR in neither CDC release; the county-level test failed; two of three
 "should differ" launch pairs failed under v18 (Dogpatch/Gary, Parker/Clarkston); pin-shift covers tract parts only; weights are
 design judgments; the mobility test (Atlas) passed but is not this pillar's goal.
+
+### v20 (2026-11-24): IRS nonprofits out of participation, civic spots at weight 0
+
+Final blend: economic connectedness 0.2174, participation 0.5217, cohesion 0.1739, rootedness 0.0870, civic 0 (the v18 weights
+divided by 0.92). Participation is Atlas ZIP volunteering (CPS state fallback), then 65/35 with the Atlas civic-organization
+score; the IRS registered-nonprofit rate stays in the summary as a diagnostic. OSM civic gathering spots stay in the breakdown
+(`peer_civic`) as a diagnostic and no longer mark the pillar degraded.
+
+Evidence (`analysis/social_fabric_felt_validation_2026-11-24.md`, `analysis/social_fabric_ablation_2026-11-24.md`): against CDC
+PLACES ZIP-level loneliness and lack of social and emotional support (612 places), IRS nonprofits ran the wrong way (-0.12 and
+-0.18) and civic nodes showed no relation (+0.06 and -0.06); removing both raised the match from 0.682 to 0.711 (support) and
+0.518 to 0.553 (loneliness). The weights themselves remain a judgment call: weights fitted to the same outcome with whole metros
+held out did no better than the v18 weights.
+
+Scope: the pillar is a ZIP-level, Atlas-driven read of felt connection. It cannot see differences between blocks inside a ZIP,
+and no data in the repo measures how connected one neighborhood feels to its residents. Catalog files are not yet recomputed;
+run `scripts/catalog/recompute_social_fabric_v20_offline.py` into a new directory, then `recompute_catalog_composites.py`.
