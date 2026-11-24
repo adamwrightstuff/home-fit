@@ -80,10 +80,19 @@ Configure build/start per Railway UI if needed (`npm run build` / `npm start`).
 
 ### Netlify
 
-- Base directory: `frontend`
-- Build: `npm run build`
-- Publish: `frontend/.next` (or per Netlify Next.js docs)
-- Env: `NEXT_PUBLIC_API_URL`
+The repo root `netlify.toml` sets base directory `frontend`, build command `npm install && npm run build` and Node 20, so a Netlify site connected to this repo needs no build settings in the dashboard.
+
+Set these in Site configuration, then Environment variables, **before the first build** (a placeholder such as `PASTE_URL` breaks the build; leave a variable out instead):
+
+| Variable | Notes |
+|----------|-------|
+| `RAILWAY_API_BASE_URL` | The Railway API URL. Required at build time: the catalog rewrites in `frontend/next.config.js` are resolved when the app is built. |
+| `HOMEFIT_PROXY_SECRET` | Must equal the secret on the Railway API, or scoring requests are rejected. |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Optional; without them sign-in is hidden. |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Optional; without them `/api/score` is not rate limited. |
+| `GOOGLE_PLACES_API_KEY` | Optional; used by the family services panel. |
+
+Production should be publicly visible. Netlify can require a team login for visitors; check Site configuration, then Visitor access, and leave production open.
 
 ### Self-hosted (Docker)
 
