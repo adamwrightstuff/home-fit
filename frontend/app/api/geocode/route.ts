@@ -33,7 +33,8 @@ export async function GET(req: NextRequest) {
             : 'Geocode failed';
       return NextResponse.json({ detail }, { status: res.status });
     }
-    return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } });
+    // The same address always geocodes to the same point: cache successful lookups at the CDN for a day.
+    return NextResponse.json(data, { headers: { 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800' } });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json(

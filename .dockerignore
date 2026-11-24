@@ -12,6 +12,9 @@ node_modules
 frontend
 analysis
 *.jsonl
+# The catalog is served by the API (catalog_api.py); the image needs these files to build and serve it.
+!data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl
+!data/catalog_climate_profiles.jsonl
 *.webm
 *.png
 .env

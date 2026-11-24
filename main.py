@@ -15,6 +15,7 @@ import hashlib
 import uuid
 from logging_config import get_logger
 from agent_recommend import router as agent_recommend_router
+from catalog_api import router as catalog_router
 
 logger = get_logger(__name__)
 
@@ -1106,6 +1107,8 @@ app.add_middleware(
 )
 
 app.include_router(agent_recommend_router, dependencies=[Depends(require_proxy_auth)])
+# Public catalog list/detail (the frontend rewrites /api/catalog-map* to these; see catalog_api.py).
+app.include_router(catalog_router)
 
 
 @app.get("/")

@@ -1,17 +1,22 @@
 """
-Social Fabric pillar (current model v16b weights, fail-loud blend since 2026-10-24).
+Social Fabric pillar (v20, 2026-11-24; fail-loud blend since 2026-10-24).
 
-score = blend of five components, each 0-100 (v18, DPv2: economic connectedness added at 0.20, others x0.80), base weights
-    economic_connectedness 0.20  Atlas ec_zip on a national scale (the Chetty 2022 predictor of upward mobility)
-    participation 0.60   engagement: IRS BMF organizations per 1k and volunteering (50/50), then 65/35 with the
-                         Social Capital Atlas civic-organization rate (community_participation + social_capital_cohesion)
-    cohesion      0.20   Social Capital Atlas clustering and support, peer-normalized by area type
-    rootedness    0.10   residential stability: 0.8 x B25038 long-tenure + 0.2 x B07003 same-house, blended 0.7 tract /
-                         0.3 place, scored against regional bands (above-85% penalty suppressed when home values >= $350k)
-    civic         0.10   OSM/Places civic gathering nodes, peer-normalized by area type (radius 600 / 1200 / 3000 m by density)
-A component that cannot be measured is left out and the remaining weights are scaled proportionally (see
+score = blend of four scored components, each 0-100; the v18 weights (0.48 / 0.16 / 0.08 / 0.20) divided by 0.92
+    economic_connectedness 0.2174  Atlas ec_zip on a national scale (the Chetty 2022 predictor of upward mobility)
+    participation 0.5217   volunteering (Atlas ZIP rate, CPS state fallback), then 65/35 with the Social Capital Atlas
+                           civic-organization rate. The IRS registered-nonprofit rate is a diagnostic, not scored.
+    cohesion      0.1739   Social Capital Atlas clustering and support, peer-normalized by area type
+    rootedness    0.0870   residential stability: 0.8 x B25038 long-tenure + 0.2 x B07003 same-house, blended 0.7 tract /
+                           0.3 place, scored against regional bands (above-85% penalty suppressed when home values >= $350k)
+    civic         0        OSM/Places civic gathering nodes, peer-normalized by area type (radius 600 / 1200 / 3000 m by
+                           density). Shown in the breakdown as a diagnostic; weight 0 since v20.
+Why v20: against CDC PLACES felt-connection measures (loneliness, lack of social and emotional support), IRS nonprofits
+and civic nodes showed no relation and removing them raised the match slightly; see
+analysis/social_fabric_felt_validation_2026-11-24.md. Scope: this is a ZIP-level, Atlas-driven read of felt connection.
+It cannot see differences between blocks inside a ZIP.
+A scored component that cannot be measured is left out and the remaining weights are scaled proportionally (see
 blend_social_fabric); the pillar is then marked degraded with the reason. Nothing is scored as zero because it is
-missing. Civic nodes found to be zero are treated as "no civic data" and also left out (disclosed in the summary).
+missing.
 
 About 60% of the score comes from one source (the Social Capital Atlas), and the base weights were chosen by
 validating against that same Atlas (circular; see analysis/pillar_audit_tracker_v2.md, D7). Treat them as a
@@ -497,6 +502,9 @@ def get_social_fabric_score(
     civic_orgs_score = social_capital_cohesion.get_civic_orgs_score(zip_code, area_type)
     if civic_orgs_score is not None and e is not None:
         e = 0.65 * e + 0.35 * civic_orgs_score
+    elif e is None and civic_orgs_score is not None:
+        # v20: with IRS out of the score, a place with no volunteering value rests on the Atlas civic-organization rate.
+        e = float(civic_orgs_score)
 
     # ------------------------------------------------------------------
     # Two-morphology composite. Social fabric is expressed two ways:
@@ -530,6 +538,7 @@ def get_social_fabric_score(
     if stability_pct is None:
         sf_missing_reasons["rootedness"] = "no_tract_or_place_mobility_data"
     if civic_score <= 0:
+        # Disclosed only: civic gathering spots have weight 0 in the blend since v20 (diagnostic, not a data gap).
         sf_missing_reasons["civic"] = "osm_error" if civic_osm_status == "error" else "no_civic_nodes_found"
     score, sf_weights, _sf_left_out = blend_social_fabric(
         participation=e,
@@ -650,12 +659,8 @@ def get_social_fabric_score(
     )
     # Missing data (not a genuine zero) marks the pillar degraded; "no civic nodes found" on a good OSM read
     # is disclosed in components_missing but is not a data failure.
-    _degraded = [f"social_fabric_{k}_missing: {v}" for k, v in sf_missing_reasons.items()
-                 if not (k == "civic" and v == "no_civic_nodes_found")]
-    if irs_status != "ok":
-        _degraded.append(f"social_fabric_irs_bmf_unavailable: {irs_status} (state FIPS {(tract or {}).get('state_fips')})")
-    if civic.get("civic_reliability") == "suspect_thin" and "civic" not in sf_missing_reasons:
-        _degraded.append("social_fabric_civic_suspect_thin: OSM civic count implausibly low for the density")
+    # v20: civic spots and the IRS rate are diagnostics (weight 0 / not scored), so neither marks the pillar degraded.
+    _degraded = [f"social_fabric_{k}_missing: {v}" for k, v in sf_missing_reasons.items() if k != "civic"]
     if _degraded:
         quality_metrics["degraded"] = True
         quality_metrics["degraded_reasons"] = list(quality_metrics.get("degraded_reasons") or []) + _degraded
