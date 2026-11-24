@@ -448,7 +448,7 @@ export default function CatalogPageClient({
     setPlaces([])
     ;(async () => {
       try {
-        const r = await fetch('/api/catalog-map?metro=all', { signal: ac.signal })
+        const r = await fetch('/api/catalog-map/all', { signal: ac.signal })
         if (ac.signal.aborted) return
         const j = (await r.json()) as {
           places?: CatalogMapPlaceWithMetro[]

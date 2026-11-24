@@ -70,6 +70,7 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/:path*'],
+  // Only /api/score is rate limited; matching every API route made each request pay for a middleware run.
+  matcher: ['/api/score'],
 };
 

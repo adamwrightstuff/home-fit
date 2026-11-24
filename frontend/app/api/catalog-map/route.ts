@@ -1,145 +1,27 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
 import path from 'path'
-import type { CatalogMapApiResponse, CatalogMapPlace, CatalogMapPlaceWithMetro, ClimateIndicators } from '@/lib/catalogMapTypes'
-import type { ScoreResponse } from '@/types/api'
-import type { HousingCost } from '@/lib/budgetCost'
+import type { CatalogMapApiResponse, CatalogMapPlace } from '@/lib/catalogMapTypes'
 import { slimPlace } from '@/lib/catalogSlim'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
-import { CATALOG_METROS, isCatalogMetro, type CatalogMetro } from '@/lib/catalogMetros'
+import { CATALOG_METROS, isCatalogMetro } from '@/lib/catalogMetros'
+import {
+  CACHE_HEADERS,
+  buildAllPayload,
+  findMergedJsonl,
+  getClimateIndex,
+  loadMetroFile,
+  missingDetail,
+  type CatalogMapMetro,
+} from '@/lib/catalogMapServer'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
-// Catalog data only changes on deploy, and Vercel's CDN cache is per deployment,
-// so a long shared cache keeps repeat visits off the origin.
-const CACHE_HEADERS = { 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800' }
-
-export type CatalogMapMetro = CatalogMetro
-
-/** Single canonical file per metro (composites live inside each row's `score`). */
-const METRO_FILES = Object.fromEntries(
-  CATALOG_METROS.map((m) => [m, [`${m}_metro_place_catalog_scores_merged.composites_recomputed.jsonl`]]),
-) as unknown as Record<CatalogMapMetro, readonly string[]>
-
-function dataRoots(): string[] {
-  // Vercel: build copies the catalogs into frontend/data; reading ../data would bundle the whole repo data folder.
-  return process.env.VERCEL
-    ? [path.join(process.cwd(), 'data')]
-    : [path.join(process.cwd(), '..', 'data'), path.join(process.cwd(), 'data')]
-}
-
-function findFile(name: string): string | null {
-  for (const base of dataRoots()) {
-    const p = path.join(base, name)
-    try { if (fs.existsSync(p)) return p } catch { /* ignore */ }
-  }
-  return null
-}
-
-function findMergedJsonl(metro: CatalogMapMetro): string | null {
-  for (const name of METRO_FILES[metro]) {
-    const p = findFile(name)
-    if (p) return p
-  }
-  return null
-}
-
-function missingDetail(metro: CatalogMapMetro): string {
-  const names = METRO_FILES[metro].join(' or ')
-  return `Catalog file not found for ${metro.toUpperCase()}. Add repo data/${names} (or copy into frontend/data).`
-}
-
-const METRO_TO_SOURCE = Object.fromEntries(
-  CATALOG_METROS.map((m) => [m, `${m}_metro`]),
-) as Record<CatalogMapMetro, string>
-
-/** Load catalog_climate_profiles.jsonl → map of "${source}::${name}" → ClimateIndicators */
-function loadClimateIndex(): Map<string, ClimateIndicators> {
-  const filePath = findFile('catalog_climate_profiles.jsonl')
-  const index = new Map<string, ClimateIndicators>()
-  if (!filePath) return index
-  try {
-    const raw = fs.readFileSync(filePath, 'utf8')
-    for (const line of raw.split('\n')) {
-      const trimmed = line.trim()
-      if (!trimmed) continue
-      try {
-        const row = JSON.parse(trimmed) as {
-          name: string
-          source?: string
-          climate?: { months?: Array<{ month: number; avg_temp_f: number; avg_precip_in: number; solar_kwh_m2_day: number }> }
-        }
-        if (!row.source || !row.name) continue
-        const months = row.climate?.months
-        if (!months?.length) continue
-        const byMonth = Object.fromEntries(months.map((m) => [m.month, m]))
-        const jan = byMonth[1]
-        const jul = byMonth[7]
-        if (!jan?.avg_temp_f || !jul?.avg_temp_f) continue
-        const annual_precip_in = months.reduce((s, m) => s + (m.avg_precip_in ?? 0), 0)
-        const solar_vals = months.map((m) => m.solar_kwh_m2_day).filter((v) => v != null)
-        const avg_solar = solar_vals.length ? solar_vals.reduce((a, b) => a + b, 0) / solar_vals.length : 4.5
-        index.set(`${row.source}::${row.name}`, {
-          jan_f: jan.avg_temp_f,
-          jul_f: jul.avg_temp_f,
-          swing_f: jul.avg_temp_f - jan.avg_temp_f,
-          months_below_freezing: months.filter((m) => m.avg_temp_f < 32).length,
-          coldest_month_f: Math.min(...months.map((m) => m.avg_temp_f)),
-          annual_precip_in: Math.round(annual_precip_in * 10) / 10,
-          avg_solar: Math.round(avg_solar * 100) / 100,
-        })
-      } catch { /* skip bad lines */ }
-    }
-  } catch { /* file unreadable */ }
-  return index
-}
-
-let housingCostIndex: Record<string, HousingCost> | null = null
-/** data/catalog_housing_costs.json → map of "${metro}::${catalogRowKey}" → HousingCost */
-function loadHousingCosts(): Record<string, HousingCost> {
-  if (housingCostIndex) return housingCostIndex
-  housingCostIndex = {}
-  const filePath = findFile('catalog_housing_costs.json')
-  if (!filePath) return housingCostIndex
-  try {
-    housingCostIndex = (JSON.parse(fs.readFileSync(filePath, 'utf8')).places ?? {}) as Record<string, HousingCost>
-  } catch { /* file unreadable */ }
-  return housingCostIndex
-}
-
-function loadMetroFile(metro: CatalogMapMetro, climateIndex: Map<string, ClimateIndicators>): CatalogMapPlaceWithMetro[] {
-  const filePath = findMergedJsonl(metro)
-  if (!filePath) return []
-  const rawFile = fs.readFileSync(filePath, 'utf8')
-  const places: CatalogMapPlaceWithMetro[] = []
-  for (const line of rawFile.split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed) continue
-    try {
-      const row = JSON.parse(trimmed) as {
-        success?: boolean
-        catalog?: CatalogMapPlace['catalog']
-        score?: ScoreResponse
-      }
-      if (!row.success || !row.catalog || !row.score) continue
-      const place: CatalogMapPlaceWithMetro = { catalog: row.catalog, score: row.score, metro, cbd_transit_minutes: (row as any).cbd_transit_minutes ?? null, cbd_transit_dest: (row as any).cbd_transit_dest ?? null, work_commute: (row as any).work_commute ?? null }
-      const climate = climateIndex.get(`${METRO_TO_SOURCE[metro]}::${row.catalog.name}`)
-      if (climate) place.climate = climate
-      place.housing_cost = loadHousingCosts()[`${metro}::${catalogRowKey(row.catalog)}`] ?? null
-      places.push(place)
-    } catch {
-      // skip bad lines
-    }
-  }
-  return places
-}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const raw = (searchParams.get('metro') ?? 'nyc').toLowerCase()
 
-  const climateIndex = loadClimateIndex()
+  const climateIndex = getClimateIndex()
 
   // Full (unslimmed) detail for one place; the list payload below drops per-pillar detail.
   const key = searchParams.get('key')
@@ -151,16 +33,8 @@ export async function GET(request: Request) {
   }
 
   if (raw === 'all') {
-    const loaded = CATALOG_METROS.map((m) => [m, loadMetroFile(m, climateIndex)] as const)
-    const places: CatalogMapPlaceWithMetro[] = loaded.flatMap(([, rows]) => rows.map(slimPlace))
-    const sources = loaded.filter(([, rows]) => rows.length).map(([m]) => m).join('+') || 'missing'
-    return NextResponse.json(
-      {
-        places,
-        source: sources === 'missing' ? 'missing' : `all:${sources}`,
-      } satisfies CatalogMapApiResponse & { detail?: string },
-      sources === 'missing' ? undefined : { headers: CACHE_HEADERS }
-    )
+    const { body, found } = buildAllPayload()
+    return NextResponse.json(body, found ? { headers: CACHE_HEADERS } : undefined)
   }
 
   if (!isCatalogMetro(raw)) {

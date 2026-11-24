@@ -39,7 +39,7 @@ let placesPromise: Promise<CatalogMapPlaceWithMetro[]> | null = null
 /** All catalog places, fetched once per page load (same endpoint the profile home picker uses). */
 export function loadCatalogPlaces(): Promise<CatalogMapPlaceWithMetro[]> {
   if (!placesPromise) {
-    placesPromise = fetch('/api/catalog-map?metro=all')
+    placesPromise = fetch('/api/catalog-map/all')
       .then((r) => (r.ok ? r.json() : { places: [] }))
       .then((j) => (Array.isArray(j?.places) ? (j.places as CatalogMapPlaceWithMetro[]) : []))
       .catch(() => [])

@@ -29,7 +29,7 @@ let homeOptionsCache: HomeOption[] | null = null
 async function loadHomeOptions(): Promise<HomeOption[]> {
   if (homeOptionsCache) return homeOptionsCache
   try {
-    const res = await fetch('/api/catalog-map?metro=all')
+    const res = await fetch('/api/catalog-map/all')
     const json = await res.json()
     const places: any[] = Array.isArray(json?.places) ? json.places : []
     homeOptionsCache = places
