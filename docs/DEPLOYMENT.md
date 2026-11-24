@@ -118,3 +118,15 @@ Example pattern: multi-stage Node build, `output: 'standalone'` in `next.config`
 - **Build fails**: Run `npm run build` locally in `frontend/`.
 - **API errors**: Check `NEXT_PUBLIC_API_URL`, CORS, and that the Railway API is up.
 - **Styles**: Confirm Tailwind and `globals.css` in `layout.tsx`.
+
+
+## Catalog served by the API (since 2026-11-24)
+
+The ~111 MB catalog is no longer bundled into the Vercel frontend. `catalog_api.py` serves it from the API:
+
+- `GET /catalog/list` returns the slimmed list of every live-metro place (what `/api/catalog-map?metro=all` used to return). It is built at image build time by `scripts/catalog/build_catalog_list.py` into `data_cache/catalog_list.json` and `.json.gz` (about 18 MB, 1.9 MB gzipped) and served as a static file; if the build step did not run, the first request builds it.
+- `GET /catalog/place?metro=nyc&key=<name>|<county>|<state>` returns the full detail for one place.
+- The frontend keeps calling `/api/catalog-map/all` and `/api/catalog-map?metro=X&key=Y`; `frontend/next.config.js` rewrites them to the API using `RAILWAY_API_BASE_URL` (falling back to `NEXT_PUBLIC_API_URL`). **That variable must be set for the Vercel build, not only at runtime**, because rewrites are resolved when the app is built.
+- The API image needs the catalog files: `data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl`, `data/catalog_climate_profiles.jsonl`, `data/catalog_housing_costs.json` and `data/metro_registry.json`. When the catalog changes, redeploy the API so the list is rebuilt.
+- The slimming rules (heavy per-pillar detail, and key names nothing in the frontend reads) live in `catalog_api.py` (`UNUSED_KEYS`, `KEEP_PATHS`). Before adding a read of one of those names in a list-level view, remove it from `UNUSED_KEYS`.
+- Static neighborhood pages and the sitemap still read the catalog at build time (`frontend/vercel.json` copies it into `frontend/data` before `next build`), but no deployed server function bundles it.
