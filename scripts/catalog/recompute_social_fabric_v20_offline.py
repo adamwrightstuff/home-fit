@@ -34,6 +34,25 @@ with open(ROOT / "data" / "social_capital_zip.csv", newline="", encoding="utf-8"
             _vol[str(_r["zip"]).zfill(5)] = float(_v)
 _M, _S = statistics.mean(_vol.values()), statistics.stdev(_vol.values())
 
+# CPS state-level volunteering fallback (same as data_sources.community_participation) for ZIPs not in the Atlas.
+_FIPS = {"AL": "01", "AK": "02", "AZ": "04", "AR": "05", "CA": "06", "CO": "08", "CT": "09", "DE": "10", "DC": "11", "FL": "12",
+         "GA": "13", "HI": "15", "ID": "16", "IL": "17", "IN": "18", "IA": "19", "KS": "20", "KY": "21", "LA": "22", "ME": "23",
+         "MD": "24", "MA": "25", "MI": "26", "MN": "27", "MS": "28", "MO": "29", "MT": "30", "NE": "31", "NV": "32", "NH": "33",
+         "NJ": "34", "NM": "35", "NY": "36", "NC": "37", "ND": "38", "OH": "39", "OK": "40", "OR": "41", "PA": "42", "RI": "44",
+         "SC": "45", "SD": "46", "TN": "47", "TX": "48", "UT": "49", "VT": "50", "VA": "51", "WA": "53", "WV": "54", "WI": "55", "WY": "56"}
+_cps = {str(k): float(v) for k, v in json.loads((ROOT / "data" / "cps_volunteering_state_rates.json").read_text()).items()
+        if isinstance(v, (int, float))}
+_CM = statistics.mean(_cps.values())
+_CS = statistics.pstdev(_cps.values()) or 0.05
+
+
+def _cps_score(state_abbr):
+    r = _cps.get(_FIPS.get(str(state_abbr or "").upper(), ""))
+    if r is None:
+        return None
+    z = max(-2.5, min(2.5, (r - _CM) / _CS))
+    return (z + 2.5) / 5.0 * 100.0
+
 
 def _vol_score(zip_code):
     v = _vol.get(str(zip_code or "").split("-")[0].zfill(5))
@@ -43,12 +62,15 @@ def _vol_score(zip_code):
     return (z + 2.5) / 5.0 * 100.0
 
 
-def recompute(score: dict):
+def recompute(score: dict, state_abbr=None):
     sf = (score.get("livability_pillars") or {}).get("social_fabric")
     if not sf or not isinstance(sf.get("score"), (int, float)):
         return "no_social_fabric"
     b, s = sf.get("breakdown") or {}, sf.get("summary") or {}
     vol = _vol_score((score.get("location_info") or {}).get("zip"))
+    vol_src = "atlas_zip"
+    if vol is None:
+        vol, vol_src = _cps_score(state_abbr), "cps_state"
     atlas = s.get("atlas_civic_orgs_score")
     if vol is not None and atlas is not None:
         part = 0.65 * vol + 0.35 * atlas
@@ -63,11 +85,18 @@ def recompute(score: dict):
                                               rootedness=b.get("rootedness"), civic=b.get("peer_civic"),
                                               economic_connectedness=b.get("economic_connectedness"))
     except RuntimeError:
-        return "blend_failed"
+        # v20 needs participation plus one more scored component. Matching the live pillar (which raises), the place
+        # becomes no data in the stored-gap shape; the composites then redistribute its weight.
+        sf["score"], sf["status"], sf["contribution"] = None, "no_data", 0.0
+        s["social_fabric_version"] = "v20"
+        s["no_data_reason"] = "v20_needs_participation_and_one_other_scored_component"
+        sf["summary"] = s
+        return "set_to_no_data"
     old = sf["score"]
     b["participation"] = round(part, 1)
     s["weights_used"] = {k: round(v, 4) for k, v in weights.items()}
     s["participation_mix"] = "vol_atlas" if vol is not None and atlas is not None else ("vol_only" if vol is not None else "atlas_only")
+    s["volunteering_resolution"] = vol_src if vol is not None else None
     s["social_fabric_version"] = "v20"
     sf["breakdown"], sf["summary"] = b, s
     sf["score"] = new
@@ -92,7 +121,7 @@ def main():
             if not line.strip():
                 continue
             row = json.loads(line)
-            res = recompute(row.get("score") or {})
+            res = recompute(row.get("score") or {}, (row.get("catalog") or {}).get("state_abbr"))
             if isinstance(res, tuple):
                 cat = row.get("catalog") or {}
                 changes.append((os.path.basename(path).split("_metro")[0], cat.get("name"), cat.get("state_abbr"), *res))
