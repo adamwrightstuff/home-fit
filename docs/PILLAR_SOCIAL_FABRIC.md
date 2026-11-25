@@ -324,3 +324,8 @@ Decision (owner, 2026-11-25): the Potrero Hill / Dogpatch "similar" launch pair 
 (ZIP civic-organization score, pin-tract tenure), so expected similarity is not supported. Remaining launch pairs: similar Sunnyvale/Campbell
 (1.0, passes); differ Mission District/Homestead (11.4, passes), Dogpatch/Gary (1.1, fails), Parker/Clarkston (2.7, fails). The rule
 thresholds are unchanged. Dogpatch/Gary and Parker/Clarkston stay recorded gaps.
+
+Decision (owner, 2026-11-25): the Dogpatch / Gary "differ" launch pair is retired. Gary scores higher on cohesion (77.4 vs 10.4) and rootedness
+(97.9 vs 82.7), Dogpatch on economic connectedness (100 vs 34.7), and the pair carried no recorded expected direction, so required
+separation is not supported. Remaining launch pairs: similar Sunnyvale/Campbell (1.0, passes); differ Mission District/Homestead (11.4,
+passes) and Parker/Clarkston (2.7, fails, recorded gap).
