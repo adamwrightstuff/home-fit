@@ -319,3 +319,8 @@ rootedness, so the pair agreed by omission (3.5). The 6.9 gap comes from stored 
 37.2 vs 48.2 and rootedness at 82.7 vs 95.0. Cohesion (10.4 vs 11.4) and economic connectedness (100 and 100) match. Moving the pair
 together would mean changing a weight or curve to hit a target (principle 1); the pair's expected similarity is an owner call to confirm or
 retire, and the pass rule was fixed in advance so it stays as written. Result: this pair fails by 0.9.
+
+Decision (owner, 2026-11-25): the Potrero Hill / Dogpatch "similar" launch pair is retired. The two neighborhoods differ in measured inputs
+(ZIP civic-organization score, pin-tract tenure), so expected similarity is not supported. Remaining launch pairs: similar Sunnyvale/Campbell
+(1.0, passes); differ Mission District/Homestead (11.4, passes), Dogpatch/Gary (1.1, fails), Parker/Clarkston (2.7, fails). The rule
+thresholds are unchanged. Dogpatch/Gary and Parker/Clarkston stay recorded gaps.
