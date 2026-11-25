@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "Area-type quantile bands for Social Capital Atlas cohesion metrics (clustering, support ratio, civic organizations). Grades each place against its morphological peers so urban networks aren't penalized for structurally lower clustering.",
+  "description": "Area-type quantile bands for Social Capital Atlas cohesion metrics (clustering, support ratio, civic organizations, volunteering). Grades each place against its morphological peers so urban networks aren't penalized for structurally lower clustering.",
   "score_anchors": {
     "at_knot": [
       12,
@@ -35,6 +35,14 @@
         "p75": 0.018987,
         "p90": 0.028814,
         "n": 2264
+      },
+      "volunteering_rate_zip": {
+        "p10": 0.037368,
+        "p25": 0.05061,
+        "p50": 0.06483,
+        "p75": 0.0799,
+        "p90": 0.095522,
+        "n": 2269
       }
     },
     "rural": {
@@ -61,6 +69,14 @@
         "p75": 0.02303,
         "p90": 0.0331,
         "n": 16395
+      },
+      "volunteering_rate_zip": {
+        "p10": 0.039875,
+        "p25": 0.055975,
+        "p50": 0.075789,
+        "p75": 0.09984,
+        "p90": 0.128732,
+        "n": 16756
       }
     },
     "suburban": {
@@ -87,6 +103,14 @@
         "p75": 0.01717,
         "p90": 0.027344,
         "n": 2149
+      },
+      "volunteering_rate_zip": {
+        "p10": 0.033564,
+        "p25": 0.046743,
+        "p50": 0.06143,
+        "p75": 0.078225,
+        "p90": 0.096999,
+        "n": 2152
       }
     },
     "urban_core": {
@@ -113,6 +137,14 @@
         "p75": 0.01314,
         "p90": 0.026702,
         "n": 639
+      },
+      "volunteering_rate_zip": {
+        "p10": 0.02088,
+        "p25": 0.03103,
+        "p50": 0.0513,
+        "p75": 0.07526,
+        "p90": 0.09923,
+        "n": 641
       }
     },
     "urban_residential": {
@@ -139,6 +171,14 @@
         "p75": 0.01663,
         "p90": 0.028912,
         "n": 1203
+      },
+      "volunteering_rate_zip": {
+        "p10": 0.028116,
+        "p25": 0.040325,
+        "p50": 0.05632,
+        "p75": 0.078138,
+        "p90": 0.101827,
+        "n": 1204
       }
     }
   }

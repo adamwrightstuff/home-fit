@@ -20,7 +20,7 @@ import os
 import statistics
 from typing import Any, Dict, Optional, Tuple
 
-from data_sources import irs_bmf
+from data_sources import irs_bmf, social_capital_cohesion
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -125,12 +125,14 @@ def _bmf_z_from_result(
 def get_volunteering_score(
     zip_code: Optional[str],
     tract: Optional[Dict],
+    area_type: Optional[str] = None,
 ) -> Optional[Tuple[float, str]]:
     """
     Returns (score 0-100, resolution) for volunteering engagement.
 
     Priority:
-      1. Social Capital Atlas ZIP-level volunteering_rate_zip — neighborhood signal
+      1. Social Capital Atlas ZIP-level volunteering_rate_zip — neighborhood signal, scored against
+         density-band (area-type) peers when area_type is given and bands exist (v22), else the national z
       2. CPS state-level rate — fallback when ZIP missing from SCA
     """
     # 1. SCA ZIP-level (preferred)
@@ -138,6 +140,10 @@ def get_volunteering_score(
         key = str(zip_code).split("-")[0].zfill(5)
         rate = _sca_vol_by_zip.get(key)
         if rate is not None:
+            if area_type:
+                banded = social_capital_cohesion._score_metric(rate, area_type, "volunteering_rate_zip")
+                if banded is not None:
+                    return banded, "sca_zip_band"
             z = _rate_to_z_score(rate, _sca_vol_mean, max(_sca_vol_std, 1e-6))
             return z, "sca_zip"
 
@@ -219,7 +225,7 @@ def compute_participation_score(
     bmf_slot = None
     diag["bmf_in_score"] = False
 
-    vol = get_volunteering_score(zip_code, tract)
+    vol = get_volunteering_score(zip_code, tract, area_type)
     if vol:
         diag["volunteering_z"], diag["volunteering_resolution"] = vol[0], vol[1]
     z_vol = vol[0] if vol else None

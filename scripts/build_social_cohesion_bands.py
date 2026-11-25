@@ -11,7 +11,7 @@ Steps:
   1. ZCTA land area (sq mi) from the Census ZCTA->tract crosswalk.
   2. ZIP density = pop2018 / land_area -> area_type via classify_area_by_density.
   3. Per-area-type quantile bands for clustering_zip, support_ratio_zip,
-     civic_organizations_zip.
+     civic_organizations_zip, volunteering_rate_zip.
 
 Outputs data/social_cohesion_bands.json.
 """
@@ -75,7 +75,7 @@ def main() -> None:
     print(f"Loaded land area for {len(land)} ZCTAs")
 
     buckets: dict = {}  # area_type -> {metric -> [values]}
-    metrics = ("clustering_zip", "support_ratio_zip", "civic_organizations_zip")
+    metrics = ("clustering_zip", "support_ratio_zip", "civic_organizations_zip", "volunteering_rate_zip")
     matched = 0
     with open(_SCA, newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
@@ -99,7 +99,7 @@ def main() -> None:
         "schema_version": 1,
         "description": (
             "Area-type quantile bands for Social Capital Atlas cohesion metrics "
-            "(clustering, support ratio, civic organizations). Grades each place "
+            "(clustering, support ratio, civic organizations, volunteering). Grades each place "
             "against its morphological peers so urban networks aren't penalized "
             "for structurally lower clustering."
         ),
