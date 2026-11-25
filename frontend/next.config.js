@@ -1,50 +1,23 @@
 const path = require('path')
 
-// Pre-scored catalog JSONL files (copied into frontend/data/ by the Vercel
-// buildCommand before next build runs). Needed by any route that reads the
-// catalog at build/request time.
-const CATALOG_DATA_FILES = [
-  // BEGIN GENERATED files (scripts/metro_agent/registry.py; do not edit by hand)
-  'data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/la_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/seattle_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/austin_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/chicago_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/philadelphia_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/dallas_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/houston_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/phoenix_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/san_antonio_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/sacramento_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/las_vegas_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/orlando_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/tampa_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/miami_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/charlotte_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/raleigh_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/atlanta_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/boston_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  'data/denver_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-  // END GENERATED files
-  'data/catalog_climate_profiles.jsonl',
-  'data/catalog_housing_costs.json',
-]
+// The catalog list and per-place detail are served by the API (catalog_api.py on Railway), not bundled here: every
+// deployment used to carry ~111 MB of catalog JSONL, which pushed the Vercel Hobby team over its storage limits.
+// The browser still calls /api/catalog-map/all and /api/catalog-map?metro=X&key=Y; these rewrites forward them.
+const API_BASE = (process.env.RAILWAY_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  async rewrites() {
+    return [
+      { source: '/api/catalog-map/all', destination: `${API_BASE}/catalog/list` },
+      { source: '/api/catalog-map', destination: `${API_BASE}/catalog/place` },
+    ]
+  },
   experimental: {
     // Keep the repo-level data/ folder (backups, working files) out of the function bundles.
     outputFileTracingExcludes: {
       '*': ['../data/**/*'],
-    },
-    // Tell the file tracer to bundle the catalog JSONL files (copied into
-    // frontend/data/ by the Vercel buildCommand before next build runs).
-    outputFileTracingIncludes: {
-      '/api/catalog-map': CATALOG_DATA_FILES,
-      '/neighborhoods/[slug]': CATALOG_DATA_FILES,
-      '/sitemap.xml': CATALOG_DATA_FILES,
     },
   },
   eslint: {

@@ -19,9 +19,10 @@ const PREMIUM_CODES = (() => {
 
 export async function GET(req: NextRequest) {
   if (process.env.HOMEFIT_DISABLE_SCORE === '1') {
-    return new Response(JSON.stringify({ detail: 'Temporarily disabled' }), {
+    // Kill switch: HOMEFIT_DISABLE_SCORE=1 pauses live scoring; the message below is shown to visitors.
+    return new Response(JSON.stringify({ detail: 'Live scoring for any address is coming soon. Browse our scored neighborhoods in the meantime.' }), {
       status: 503,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
   }
 

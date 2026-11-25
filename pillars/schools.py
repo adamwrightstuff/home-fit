@@ -566,7 +566,12 @@ def build_levels(pool: List[Dict], zoned: List[Dict], base_radius_miles: float,
                 # charter): the nearest rated charters of the level are what a family there actually has.
                 cc = sorted((sc for sc in (charters or []) if _level_of(sc) == level and sc.get("distance") is not None
                              and float(sc["distance"]) <= WIDEN_CAP_MILES), key=lambda sc: float(sc["distance"]))
-                if cc:
+                # a level the home district runs a school for (rated or not), or whose zone names one, never borrows a
+                # charter from elsewhere: an unrated district school leaves the level unscored (Bronxville Middle,
+                # Campbell Middle, Trinity High, Sheridan's Fort Logan Northgate, Lawrence's elementary schools)
+                district_runs_level = any(_serves(sc, level) and sc.get("isCharterSchool") != "Yes" and not sc.get("isPrivate")
+                                          for sc in pool)
+                if cc and not district_runs_level and not (z and z.get("name") and not z.get("tied")):
                     res.update(source="charter_only", schools=[_entry(sc, "nearest_charter") for sc in cc[:NEAREST_PER_LEVEL]])
                 elif z and z.get("tied"):
                     # no district school near enough: the schools that share the identical zone are all there is to go on

@@ -1,0 +1,15 @@
+# Netlify build settings for the HomeFit frontend (Next.js app in frontend/).
+# The API (including the catalog) runs on Railway; the frontend rewrites /api/catalog-map* to it using
+# RAILWAY_API_BASE_URL, which must be set in the Netlify site's environment variables before the build.
+[build]
+  base = "frontend"
+  command = "npm install && npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Next.js support (server routes, rewrites, middleware). Without it the build output is published as plain files
+# and every page returns 404.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

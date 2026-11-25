@@ -1,7 +1,7 @@
 """
 Community participation sub-score for Social Fabric (breakdown.engagement).
 
-Combines: refined IRS BMF (50%), volunteering proxy (50%).
+Scored from the volunteering proxy alone since v20; the refined IRS BMF rate is kept as a diagnostic only.
 
 Voter turnout excluded: it's an outcome of social capital, not a driver (Putnam),
 and state-level rates have no within-metro discrimination power.
@@ -213,7 +213,11 @@ def compute_participation_score(
     diag["bmf_refined_z"] = z_ref
     diag["bmf_legacy_z"] = z_leg
 
-    bmf_slot = z_ref if z_ref is not None else z_leg
+    # v20 (2026-11-24): the IRS registered-nonprofit rate is reported in the diagnostics but no longer scored. Against
+    # CDC PLACES felt-connection measures it ran the wrong way (support -0.12, loneliness -0.18), is missing for ten
+    # states, and removing it raised the match (analysis/social_fabric_felt_validation_2026-11-24.md).
+    bmf_slot = None
+    diag["bmf_in_score"] = False
 
     vol = get_volunteering_score(zip_code, tract)
     if vol:

@@ -448,7 +448,7 @@ export default function CatalogPageClient({
     setPlaces([])
     ;(async () => {
       try {
-        const r = await fetch('/api/catalog-map?metro=all', { signal: ac.signal })
+        const r = await fetch('/api/catalog-map/all', { signal: ac.signal })
         if (ac.signal.aborted) return
         const j = (await r.json()) as {
           places?: CatalogMapPlaceWithMetro[]
@@ -2018,7 +2018,7 @@ export default function CatalogPageClient({
       )}
 
       {/* Floating map/list toggle — Airbnb style */}
-      {catalogMode === 'explorer' && !(viewMode === 'map' && selectedKey) && (
+      {catalogMode === 'explorer' && !(viewMode === 'map' && selectedPlace) && (
         <div className={`md:hidden pointer-events-none fixed bottom-6 left-0 right-0 z-40 flex justify-center`}>
           <button
             type="button"

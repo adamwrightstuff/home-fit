@@ -56,7 +56,7 @@ function relocationSpec(id: string, row: SavedScoreRow | null): PlaceSpec | null
 
 async function loadRowForId(id: string): Promise<SavedScoreRow> {
   if (!isCatalogKey(id)) return getSavedScore(id)
-  const res = await fetch('/api/catalog-map?metro=all')
+  const res = await fetch('/api/catalog-map/all')
   if (!res.ok) throw new Error(`Catalog load failed (${res.status})`)
   const json = (await res.json()) as { places?: CatalogMapPlaceWithMetro[] }
   const listed = (json.places ?? []).find((p) => catalogRowKey(p.catalog) === id)
