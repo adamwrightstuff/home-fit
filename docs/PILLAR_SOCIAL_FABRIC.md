@@ -285,6 +285,9 @@ SD by area type: 9.5 to 11.9, all above 6.
 Launch pairs: similar pairs pass (Sunnyvale/Campbell 2.0, Potrero Hill/Dogpatch 3.5). Differ pairs fail as under v18 and v20
 (Mission District 52.3 vs Homestead 44.7 is 7.6; Dogpatch 47.0 vs Gary 51.3 is 4.3; Parker 51.9 vs Clarkston 49.2 is 2.7); a
 recorded gap, not fixed here.
-Not done: pin-shift and weight-perturbation reruns for v21; the 18 places with no social fabric score are unchanged. Ridgewood NJ
+Weight perturbation (offline, n=1,459, pass rule fixed 2026-11-03: median move at most 5, p95 at most 15): PASS. EC weight 0.15 moves scores a
+median 0.6 (p95 2.5, max 4.3); EC 0.45 median 1.6 (p95 6.4, max 10.8); participation weight -0.10 median 1.4 (p95 3.7); +0.10 median 1.4
+(p95 3.4), rest rescaled each time.
+Not done: pin-shift rerun for v21 (needs fresh Census and ZIP lookups); the 18 places with no social fabric score are unchanged. Ridgewood NJ
 (0 civic nodes) scores 69.0 from Atlas cohesion 85.1, participation 59.5 and rootedness 93.8; civic nodes have weight 0, so thin
 OSM data does not move it. Last re-validated: 2026-11-25 (offline).
