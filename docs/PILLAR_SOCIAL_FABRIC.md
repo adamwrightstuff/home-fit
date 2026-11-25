@@ -312,3 +312,10 @@ Launch pairs after the fill: Mission District 56.1 vs Homestead 44.7 (11.4, now 
 the 6-point rule (it was 3.5 before the fill). The two remaining differ-pair failures are not fixed: both gaps trace to high economic
 connectedness offsetting low cohesion or participation, and changing weights to move them would be tuning to targets (principle 1).
 Carroll Gardens 53.8, Larchmont 63.4, Hastings-on-Hudson 80.8, Glen Ridge 78.0 (unchanged by the fill).
+
+Potrero Hill / Dogpatch "similar" pair (6.9 points, rule 6): investigated, not changed. Before the rootedness fill both places lacked
+rootedness, so the pair agreed by omission (3.5). The 6.9 gap comes from stored inputs that really differ: Atlas civic-organization score
+27.2 (ZIP 94158) vs 45.3 (94107), and pin-tract 10+ year tenure 42% vs 67% (Dogpatch is recent redevelopment), which put participation at
+37.2 vs 48.2 and rootedness at 82.7 vs 95.0. Cohesion (10.4 vs 11.4) and economic connectedness (100 and 100) match. Moving the pair
+together would mean changing a weight or curve to hit a target (principle 1); the pair's expected similarity is an owner call to confirm or
+retire, and the pass rule was fixed in advance so it stays as written. Result: this pair fails by 0.9.
