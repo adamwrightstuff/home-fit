@@ -1,7 +1,7 @@
 # HomeFit frontend (Next.js) for Railway. Build context is the repo root so the build can read ../data
 # (the neighborhood pages and sitemap are generated from the catalog at build time).
 #
-# Railway: set the service's Config File to /railway.frontend.json (it points here), and add these variables.
+# Railway: add the service variable RAILWAY_DOCKERFILE_PATH=frontend.Dockerfile, plus these variables.
 # The three marked "build" are read while the app is built, so they must be set before the first deploy:
 #   RAILWAY_API_BASE_URL   (build) URL of the API service; /api/catalog-map* is rewritten to it
 #   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY   (build, optional) sign-in
