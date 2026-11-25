@@ -67,16 +67,14 @@ Set **Root Directory** to `frontend` and **`NEXT_PUBLIC_API_URL`** when linking 
 
 ### Railway (frontend on same platform as API)
 
-```bash
-npm i -g @railway/cli
-railway login
-cd frontend
-railway init
-railway variables set NEXT_PUBLIC_API_URL=https://home-fit-production.up.railway.app
-railway up
-```
+The frontend runs as its own Railway service built from `frontend.Dockerfile` (the build needs the repo root so it can read `data/` for the neighborhood pages). Set it up in the Railway dashboard:
 
-Configure build/start per Railway UI if needed (`npm run build` / `npm start`).
+1. In the project that already runs the API, choose New, then GitHub Repo, and pick this repo.
+2. Open the new service's Settings and find Config-as-code (Railway Config File). Set it to `/railway.frontend.json`. Without this, the service would pick up the API's `railway.json` and run the API instead.
+3. Add the variables listed at the top of `frontend.Dockerfile`. `RAILWAY_API_BASE_URL` (and the optional `NEXT_PUBLIC_*` ones) are read while the app is built, so add them before the first deploy. Set `HOMEFIT_DISABLE_SCORE=1` to pause live scoring.
+4. Under Networking, generate a domain to test, then add `trovamo.co` as a custom domain and update DNS at the registrar.
+
+The health check is `/quiz` (a static page that does not depend on the API).
 
 ### Netlify
 
