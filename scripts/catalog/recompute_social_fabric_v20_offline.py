@@ -67,6 +67,11 @@ def recompute(score: dict, state_abbr=None):
     if not sf or not isinstance(sf.get("score"), (int, float)):
         return "no_social_fabric"
     b, s = sf.get("breakdown") or {}, sf.get("summary") or {}
+    # Stored gap (see recompute_social_fabric_v21_offline.py): the stability band score is in summary.rooted_pct even
+    # where breakdown.rootedness is null. Fill it first so these places are not dropped for "too few components".
+    if b.get("rootedness") is None and s.get("stability_blend_pct") is not None and s.get("rooted_pct") is not None:
+        b["rootedness"] = s["rooted_pct"]
+        s["rootedness_filled_offline"] = True
     vol = _vol_score((score.get("location_info") or {}).get("zip"))
     vol_src = "atlas_zip"
     if vol is None:

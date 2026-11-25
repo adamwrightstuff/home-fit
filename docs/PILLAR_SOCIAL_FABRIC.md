@@ -369,14 +369,16 @@ What it was tested against (all outside the pillar's inputs):
   dataset with newcomers' connection by place was found (best candidate: Knight Soul of the Community 2010, ICPSR 35532, 26 communities,
   few overlap ours).
 
-Effects (offline, n=1,416 scored): median move from stored 5.1, p95 13.9, max 20.5; range 27.3 to 91.6; none at or below 5 or at or above 95;
-SD by area type 8.0 (urban_residential) to 10.4. Mean by area type: urban_residential 52.1, suburban 55.2, exurban 55.6, rural 54.2; the
-suburban lead over urban_residential is about 3 points (it was 1.7). Carroll Gardens 59.5, Larchmont 63.0, Hastings-on-Hudson 85.9, Glen
-Ridge 80.2. Launch pairs: Mission District 49.0 vs Homestead 59.7 (10.7, passes on size, direction reversed from v21); Parker 44.9 vs
-Clarkston 53.7 (8.8, fails); Sunnyvale has no score (see below).
+Effects (offline, n=1,459 scored; the same 1,459 as v21): median move from stored 5.0, p95 13.9, max 20.5; range 27.3 to 91.6; none at or
+below 5 or at or above 95; SD by area type 8.2 (urban_residential) to 10.5. Mean by area type: urban_residential 52.3, suburban 55.3,
+exurban 55.7, rural 54.4; the suburban lead over urban_residential is about 3 points (it was 1.7). Carroll Gardens 59.5, Larchmont 63.0,
+Hastings-on-Hudson 85.9, Glen Ridge 80.2. Launch pairs: Mission District 49.0 vs Homestead 59.7 (10.7, passes on size, direction reversed from
+v21); Parker 44.9 vs Clarkston 53.7 (8.8, fails); Sunnyvale 52.9 vs Campbell 53.2 (0.3, passes).
 
-Known cost: 43 places that had only participation plus economic connectedness (for example Chappaqua NY, Chatham NJ, Katonah NY, Madison NJ,
-Sunnyvale CA) now have fewer than two scored components, so under the fail-loud rule they show no data and their weight is redistributed.
+Build note: a first v22 run left 43 places (Chappaqua NY, Chatham NJ, Katonah NY, Sunnyvale CA and others) with no score. Cause: the stability
+band score was stored in `summary.rooted_pct` but null in `breakdown.rootedness`, and the v20 step ran before the v21 fill, so those places
+had only participation scored (economic connectedness no longer counts) and were dropped as "too few components". The fill now also runs in the
+v20 script; all 1,459 places score and the fail-loud rule is unchanged.
 Recorded gaps: no outcome measures newcomers' connection or neighbor connection inside a metro; the 21-metro survey check cannot separate
 cohesion from rootedness; pin-shift and weight-perturbation were last run for v21 and were not rerun for v22.
 Sources: CPS CEV microdata (https://census.gov/newsroom/press-releases/2024/civic-engagement-volunteering-supplement.html), County Health
