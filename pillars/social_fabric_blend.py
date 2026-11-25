@@ -8,12 +8,14 @@ from typing import Dict, Optional, Tuple
 # DPv2 (2026-11-03, owner-approved): economic connectedness (Chetty et al. 2022, the Atlas input that predicts upward
 # mobility) takes 0.20; the four earlier components keep their proportions (0.60/0.20/0.10/0.10 x 0.80).
 # The 0.20 is a judgment call with plausible range 0.15 to 0.45, not a sourced value (docs/PILLAR_SOCIAL_FABRIC.md).
-EC_WEIGHT = 0.20
+# v21 (2026-11-25): weight 0. EC is cross-income friendship share, not neighborly community, and it penalizes
+# high-income, high-inequality places. Still computed and shown as a diagnostic.
+EC_WEIGHT = 0.0
 # v20 (2026-11-24): OSM civic gathering spots are shown but not scored (weight 0). Against CDC PLACES felt-connection
 # measures (analysis/social_fabric_felt_validation_2026-11-24.md) they showed no relation (support +0.06, loneliness
 # -0.06) and dropping them from the blend raised the match slightly. The other four v18 weights keep their proportions
 # (0.48 / 0.16 / 0.08 / 0.20 divided by 0.92). Judgment call, not a sourced value.
-_V18_WEIGHTS = {"participation": 0.48, "cohesion": 0.16, "rootedness": 0.08, "economic_connectedness": 0.20}
+_V18_WEIGHTS = {"participation": 0.48, "cohesion": 0.16, "rootedness": 0.08, "economic_connectedness": EC_WEIGHT}
 _V18_SCORED_SUM = sum(_V18_WEIGHTS.values())
 SF_BASE_WEIGHTS = {
     "participation": round(_V18_WEIGHTS["participation"] / _V18_SCORED_SUM, 4),
