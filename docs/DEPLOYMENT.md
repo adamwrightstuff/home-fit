@@ -91,6 +91,7 @@ Set these in Site configuration, then Environment variables, **before the first 
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Optional; without them sign-in is hidden. |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Optional; without them `/api/score` is not rate limited. |
 | `GOOGLE_PLACES_API_KEY` | Optional; used by the family services panel. |
+| `HOMEFIT_DISABLE_SCORE` | Set to `1` to pause live scoring. `/api/score` and `/api/score/stream` then answer 503 with a "coming soon" message and never call the API. The pre-scored catalog, neighborhood pages and place detail keep working. Remove it to turn scoring back on. |
 
 Production should be publicly visible. Netlify can require a team login for visitors; check Site configuration, then Visitor access, and leave production open.
 
