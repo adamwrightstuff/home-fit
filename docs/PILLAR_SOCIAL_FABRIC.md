@@ -288,6 +288,11 @@ recorded gap, not fixed here.
 Weight perturbation (offline, n=1,459, pass rule fixed 2026-11-03: median move at most 5, p95 at most 15): PASS. EC weight 0.15 moves scores a
 median 0.6 (p95 2.5, max 4.3); EC 0.45 median 1.6 (p95 6.4, max 10.8); participation weight -0.10 median 1.4 (p95 3.7); +0.10 median 1.4
 (p95 3.4), rest rescaled each time.
-Not done: pin-shift rerun for v21 (needs fresh Census and ZIP lookups); the 18 places with no social fabric score are unchanged. Ridgewood NJ
+Pin-shift (live Census calls, `scripts/catalog/social_fabric_pin_shift.py`, 2026-11-25, pass rule: median 3 or less, p95 10 or less at 400 m): PASS.
+101 places (up to 25 per area type; urban_core has only 1), 404 shifts N/S/E/W. Score change median 0.0, p95 2.4, max 5.6 (Red Hook NY);
+by area type p95 2.0 (exurban, rural), 2.4 (suburban), 3.3 (urban_residential). The pin tract changed in 170 of 404 shifts; those moved a
+median 0.9, p95 3.3. Covers the tract-based rootedness input only: ZIP-based Atlas inputs (participation, cohesion, EC) were held fixed, so a
+shift across a ZIP boundary is untested; the above-85% home-value exemption was skipped.
+Not done: the 18 places with no social fabric score are unchanged. Ridgewood NJ
 (0 civic nodes) scores 69.0 from Atlas cohesion 85.1, participation 59.5 and rootedness 93.8; civic nodes have weight 0, so thin
 OSM data does not move it. Last re-validated: 2026-11-25 (offline).
