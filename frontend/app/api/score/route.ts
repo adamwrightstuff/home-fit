@@ -31,7 +31,8 @@ function getClientIp(req: NextRequest): string {
 
 export async function GET(req: NextRequest) {
   if (process.env.HOMEFIT_DISABLE_SCORE === '1') {
-    return NextResponse.json({ detail: 'Temporarily disabled' }, { status: 503 });
+    // Kill switch: set HOMEFIT_DISABLE_SCORE=1 on the frontend host to pause live scoring. The message is shown to visitors.
+    return NextResponse.json({ detail: 'Live scoring for any address is coming soon. Browse our scored neighborhoods in the meantime.' }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
   }
 
   const sp = req.nextUrl.searchParams;
