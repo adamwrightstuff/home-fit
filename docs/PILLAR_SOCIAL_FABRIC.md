@@ -296,3 +296,19 @@ shift across a ZIP boundary is untested; the above-85% home-value exemption was 
 Not done: the 18 places with no social fabric score are unchanged. Ridgewood NJ
 (0 civic nodes) scores 69.0 from Atlas cohesion 85.1, participation 59.5 and rootedness 93.8; civic nodes have weight 0, so thin
 OSM data does not move it. Last re-validated: 2026-11-25 (offline).
+
+#### v21 fix (2026-11-25): rootedness gap filled from stored scores
+
+Found while checking the failing launch pairs: 150 places with a stored stability percent and band score (`summary.rooted_pct`) had a
+null `breakdown.rootedness`, so rootedness was left out of the blend and the rest rescaled (Mission District and Dogpatch among
+them). The score was already stored, so `recompute_social_fabric_v21_offline.py` now fills it (no API calls; flag
+`summary.rootedness_filled_offline`; 30 of the 150 are above 85%, where the stored band score is before the home-value exemption and so
+conservative). Catalog redone: v20 script, then v21 script, then `recompute_catalog_composites.py --no-census`.
+Effect: 150 places moved, median 3.2, max 7.8; nobody else changed. Felt-connection match (853 places with outcomes): v20 0.605 support /
+0.529 loneliness; v21 before the fill 0.604 / 0.558; after 0.596 / 0.553 (within the 0.02 rule). Floor and ceiling still none; SD by area
+type 9.5 to 12.0.
+Launch pairs after the fill: Mission District 56.1 vs Homestead 44.7 (11.4, now passes size); Dogpatch 50.2 vs Gary 51.3 (1.1) and Parker
+51.9 vs Clarkston 49.2 (2.7) still fail; similar pairs: Sunnyvale/Campbell 1.0 passes, Potrero Hill 57.1/Dogpatch 50.2 (6.9) now fails
+the 6-point rule (it was 3.5 before the fill). The two remaining differ-pair failures are not fixed: both gaps trace to high economic
+connectedness offsetting low cohesion or participation, and changing weights to move them would be tuning to targets (principle 1).
+Carroll Gardens 53.8, Larchmont 63.4, Hastings-on-Hudson 80.8, Glen Ridge 78.0 (unchanged by the fill).

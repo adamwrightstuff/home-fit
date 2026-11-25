@@ -3,7 +3,7 @@
 Offline: apply Social Fabric v21 to stored catalog scores (2026-11-25). No API calls; never edits the inputs.
 
 v21 = cohesion is the stored Atlas support score only (clustering is a density artifact, kept as a diagnostic) and
-economic connectedness has weight 0. Participation and rootedness are read from the stored breakdown.
+economic connectedness stays at 0.20. Participation and rootedness are read from the stored breakdown.
 
   PYTHONPATH=. python3 scripts/catalog/recompute_social_fabric_v21_offline.py --out-dir analysis/sf_v21
   then, per output file: recompute_catalog_composites.py --input <new> --output <new2> --no-census
@@ -23,6 +23,9 @@ sys.path.insert(0, str(ROOT))
 from pillars.social_fabric_blend import blend_social_fabric  # noqa: E402
 
 
+FILLED = {"n": 0, "above_85": 0}
+
+
 def recompute(score: dict):
     sf = (score.get("livability_pillars") or {}).get("social_fabric")
     if not sf or not isinstance(sf.get("score"), (int, float)):
@@ -31,6 +34,16 @@ def recompute(score: dict):
     if b.get("participation") is None:
         return "no_participation"
     cohesion = s.get("cohesion_support_score")
+    # Stored gap: some rows carry the stability percent and its band score (summary.rooted_pct) but a null
+    # breakdown.rootedness, so rootedness was silently left out of the blend. The score is already stored; use it
+    # (no API call). It is the band score before the above-85% home-value exemption, so it is conservative for places
+    # above 85% (counted in FILLED_ABOVE_85).
+    if b.get("rootedness") is None and s.get("stability_blend_pct") is not None and s.get("rooted_pct") is not None:
+        b["rootedness"] = s["rooted_pct"]
+        s["rootedness_filled_offline"] = True
+        FILLED["n"] += 1
+        if s["stability_blend_pct"] > 85:
+            FILLED["above_85"] += 1
     try:
         new, weights, _ = blend_social_fabric(participation=b["participation"], cohesion=cohesion,
                                               rootedness=b.get("rootedness"), civic=b.get("peer_civic"),
@@ -78,6 +91,7 @@ def main():
         w.writerow(["metro", "name", "state", "old", "new"])
         w.writerows(changes)
     d = [c[4] - c[3] for c in changes]
+    print(f"rootedness filled from stored score: {FILLED}")
     print(f"places {len(changes)}, mean change {sum(d)/len(d):+.2f}, skipped {skipped}")
 
 
