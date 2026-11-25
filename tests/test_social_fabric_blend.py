@@ -7,14 +7,14 @@ from pillars.social_fabric_blend import SF_BASE_WEIGHTS, blend_social_fabric
 def test_base_weights_sum_to_one_and_civic_is_a_diagnostic():
     assert abs(sum(SF_BASE_WEIGHTS.values()) - 1.0) < 1e-3
     assert SF_BASE_WEIGHTS["civic"] == 0.0
-    assert abs(SF_BASE_WEIGHTS["economic_connectedness"] - 0.20 / 0.92) < 1e-4
+    assert SF_BASE_WEIGHTS["economic_connectedness"] == 0.0
 
 
 def test_all_present_uses_base_weights():
     score, w, missing = blend_social_fabric(participation=50.0, cohesion=60.0, rootedness=70.0, civic=80.0,
                                             economic_connectedness=90.0)
     assert missing == [] and w == SF_BASE_WEIGHTS
-    assert score == round((0.48 * 50 + 0.16 * 60 + 0.08 * 70 + 0.20 * 90) / 0.92, 1)
+    assert score == round(0.60 * 50 + 0.20 * 60 + 0.20 * 70, 1)
 
 
 def test_civic_value_does_not_change_the_score_and_missing_civic_is_not_a_gap():
@@ -23,24 +23,24 @@ def test_civic_value_does_not_change_the_score_and_missing_civic_is_not_a_gap():
     assert a == b and miss_a == [] and miss_b == []
 
 
-def test_missing_ec_leaves_the_old_proportions_unchanged():
-    score, w, missing = blend_social_fabric(participation=50.0, cohesion=60.0, rootedness=70.0, civic=80.0)
-    assert missing == ["economic_connectedness"]
-    assert abs(w["participation"] - 0.48 / 0.72) < 1e-3 and abs(w["cohesion"] - 0.16 / 0.72) < 1e-3
-    assert abs(score - (0.48 * 50 + 0.16 * 60 + 0.08 * 70) / 0.72) < 0.06
+def test_economic_connectedness_is_a_diagnostic_and_missing_ec_is_not_a_gap():
+    a, w, miss_a = blend_social_fabric(participation=50.0, cohesion=60.0, rootedness=70.0, civic=80.0, economic_connectedness=5.0)
+    b, _, miss_b = blend_social_fabric(participation=50.0, cohesion=60.0, rootedness=70.0, civic=80.0)
+    assert a == b and miss_a == [] and miss_b == []
+    assert abs(w["participation"] - 0.60) < 1e-9 and abs(w["cohesion"] - 0.20) < 1e-9 and abs(w["rootedness"] - 0.20) < 1e-9
 
 
 def test_missing_cohesion_scales_the_rest_proportionally():
     score, w, missing = blend_social_fabric(participation=50.0, cohesion=None, rootedness=70.0, civic=80.0)
-    assert missing == ["cohesion", "economic_connectedness"] and abs(sum(w.values()) - 1.0) < 1e-12
-    assert abs(w["participation"] - 0.48 / 0.56) < 1e-3 and abs(w["rootedness"] - 0.08 / 0.56) < 1e-3
-    assert abs(score - (0.48 * 50 + 0.08 * 70) / 0.56) < 0.06
+    assert missing == ["cohesion"] and abs(sum(w.values()) - 1.0) < 1e-12
+    assert abs(w["participation"] - 0.60 / 0.80) < 1e-3 and abs(w["rootedness"] - 0.20 / 0.80) < 1e-3
+    assert abs(score - (0.60 * 50 + 0.20 * 70) / 0.80) < 0.06
 
 
 def test_missing_stability_is_not_scored_as_zero():
-    with_zero = 0.48 * 50 + 0.16 * 60 + 0.08 * 0
+    with_zero = 0.60 * 50 + 0.20 * 60 + 0.20 * 0
     score, _, missing = blend_social_fabric(participation=50.0, cohesion=60.0, rootedness=None, civic=80.0)
-    assert "rootedness" in missing and score > round(with_zero / 0.72, 1)
+    assert "rootedness" in missing and score > round(with_zero, 1)
 
 
 def test_ec_score_is_national_clipped_and_missing_zip_is_none(monkeypatch):

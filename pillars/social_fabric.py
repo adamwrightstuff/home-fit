@@ -1,12 +1,13 @@
 """
-Social Fabric pillar (v21, 2026-11-25; fail-loud blend since 2026-10-24).
+Social Fabric pillar (v22, 2026-11-25; fail-loud blend since 2026-10-24).
 
-score = blend of four scored components, each 0-100; the v18 weights (0.48 / 0.16 / 0.08 / 0.20) divided by 0.92
-    economic_connectedness 0.2174  Atlas ec_zip on a national scale (the Chetty 2022 predictor of upward mobility)
-    participation 0.5217   volunteering (Atlas ZIP rate, CPS state fallback), then 65/35 with the Social Capital Atlas
+score = blend of three scored components, each 0-100 (v22 owner-approved weights 0.60 / 0.20 / 0.20)
+    economic_connectedness 0       Atlas ec_zip on a national scale (the Chetty 2022 predictor of upward mobility); shown, not
+                           scored since v22 (measures cross-income friendship, not neighbor connection)
+    participation 0.60       volunteering (Atlas ZIP rate, CPS state fallback), then 65/35 with the Social Capital Atlas
                            civic-organization rate. The IRS registered-nonprofit rate is a diagnostic, not scored.
-    cohesion      0.1739   Social Capital Atlas support ratio only since v21 (clustering is a diagnostic), peer-normalized by area type
-    rootedness    0.0870   residential stability: 0.8 x B25038 long-tenure + 0.2 x B07003 same-house, blended 0.7 tract /
+    cohesion      0.20     Social Capital Atlas support ratio only since v21 (clustering is a diagnostic), peer-normalized by area type
+    rootedness    0.20     residential stability: 0.8 x B25038 long-tenure + 0.2 x B07003 same-house, blended 0.7 tract /
                            0.3 place, scored against regional bands (above-85% penalty suppressed when home values >= $350k)
     civic         0        OSM/Places civic gathering nodes, peer-normalized by area type (radius 600 / 1200 / 3000 m by
                            density). Shown in the breakdown as a diagnostic; weight 0 since v20.

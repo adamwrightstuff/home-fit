@@ -3,7 +3,7 @@
 Offline: apply Social Fabric v21 to stored catalog scores (2026-11-25). No API calls; never edits the inputs.
 
 v21 = cohesion is the stored Atlas support score only (clustering is a density artifact, kept as a diagnostic) and
-economic connectedness stays at 0.20. Participation and rootedness are read from the stored breakdown.
+economic connectedness and civic spots are diagnostics (weights come from pillars.social_fabric_blend; v22 = 0.60 / 0.20 / 0.20). Participation and rootedness are read from the stored breakdown.
 
   PYTHONPATH=. python3 scripts/catalog/recompute_social_fabric_v21_offline.py --out-dir analysis/sf_v21
   then, per output file: recompute_catalog_composites.py --input <new> --output <new2> --no-census

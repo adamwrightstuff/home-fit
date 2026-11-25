@@ -346,3 +346,38 @@ Method: standard web searches read from result summaries only; the papers themse
 Reading: the best-supported happiness link (trust and belonging) has no input in the pillar. Every weight is a design judgment; no cited study provides a weight, and no study found links a ZIP-level Atlas measure to its residents' well-being. Economic connectedness has strong evidence for mobility, not for happiness, which matters for the pillar's stated construct (felt connection). Evidence gaps to close before re-weighting: a source for the Atlas support-ratio definition, a ZIP- or tract-level trust measure, and a felt-connection outcome that is not modeled from income.
 
 Sources: Helliwell and Putnam 2004 (https://pmc.ncbi.nlm.nih.gov/articles/PMC1693420); Helliwell and Barrington-Leigh (https://www.nber.org/papers/w16025); Helliwell et al. (https://www.nber.org/papers/w23761.pdf); Chetty et al. 2022 (https://www.nber.org/papers/w30313); Sampson, Raudenbush and Earls 1997 (https://www.biostat.jhsph.edu/~fdominic/teaching/bio656/references/sampson.science.pdf); volunteering and well-being (https://pubmed.ncbi.nlm.nih.gov/11467248/, https://pubmed.ncbi.nlm.nih.gov/18198690/, https://link.springer.com/article/10.1007%2Fs10902-021-00480-4); Miami-Dade cohesion (https://nij.ojp.gov/topics/articles/neighborhoods-and-crime-collective-efficacy-and-social-cohesion-miami-dade-county).
+
+### v22 (2026-11-25, owner decision): participation 0.60, cohesion 0.20, rootedness 0.20; economic connectedness and civic spots shown, not scored
+
+Construct (owner's words): a place where someone can move and connect, with a community feel; neighbor connection, not upward mobility, and
+symptoms of a place more than things people do. Economic connectedness (cross-income friendships; Chetty 2022 shows it predicts upward
+mobility, not felt connection) is therefore diagnostic only. This is outside the 0.15 to 0.45 range recorded under DPv2; the owner approved it.
+Weights are design judgments, not sourced values. Catalog redone offline from the v20 recompute (v20 script, v21 script, then
+`recompute_catalog_composites.py --no-census`).
+
+What it was tested against (all outside the pillar's inputs):
+- Census CPS Civic Engagement and Volunteering supplement, 2021 and 2023 microdata, neighbor items PES4 (talk with neighbors), PES6 (favors),
+  PES7 (got together for the neighborhood), weighted by metro, 21 catalog metros (205 to 3,303 respondents each). Spearman of our metro mean
+  with the three items averaged: current 0.53, v22 0.56 (best of 10,626 weight combinations 0.59; fitted on 20 metros and tested on the 21st the
+  search averages 0.38, so the weights are not pinned down by this data).
+- County Health Rankings 2025 loneliness and lack of social and emotional support, county median income held constant (n=986 places):
+  loneliness 0.04 to 0.14, support 0.07 to 0.17 (current to v22).
+- CDC PLACES ZIP estimates (modeled from BRFSS, age and income; favors affluent places), age shares held constant: support 0.56 to 0.46,
+  loneliness 0.46 to 0.43. This falls, as expected, because the input that matched that data best (economic connectedness) is now unscored.
+- Newcomer proxies (renters and adults 18 to 34, same survey): the score tracks their neighbor behavior about as well as owners' and older
+  adults' (+0.35 to +0.59), but the sample is as small as 39 per metro and nothing here measures whether a place is easy to join; no outside
+  dataset with newcomers' connection by place was found (best candidate: Knight Soul of the Community 2010, ICPSR 35532, 26 communities,
+  few overlap ours).
+
+Effects (offline, n=1,416 scored): median move from stored 5.1, p95 13.9, max 20.5; range 27.3 to 91.6; none at or below 5 or at or above 95;
+SD by area type 8.0 (urban_residential) to 10.4. Mean by area type: urban_residential 52.1, suburban 55.2, exurban 55.6, rural 54.2; the
+suburban lead over urban_residential is about 3 points (it was 1.7). Carroll Gardens 59.5, Larchmont 63.0, Hastings-on-Hudson 85.9, Glen
+Ridge 80.2. Launch pairs: Mission District 49.0 vs Homestead 59.7 (10.7, passes on size, direction reversed from v21); Parker 44.9 vs
+Clarkston 53.7 (8.8, fails); Sunnyvale has no score (see below).
+
+Known cost: 43 places that had only participation plus economic connectedness (for example Chappaqua NY, Chatham NJ, Katonah NY, Madison NJ,
+Sunnyvale CA) now have fewer than two scored components, so under the fail-loud rule they show no data and their weight is redistributed.
+Recorded gaps: no outcome measures newcomers' connection or neighbor connection inside a metro; the 21-metro survey check cannot separate
+cohesion from rootedness; pin-shift and weight-perturbation were last run for v21 and were not rerun for v22.
+Sources: CPS CEV microdata (https://census.gov/newsroom/press-releases/2024/civic-engagement-volunteering-supplement.html), County Health
+Rankings 2025 (https://www.countyhealthrankings.org), CDC PLACES ZCTA 2025 (https://data.cdc.gov/resource/qnzd-25i4).

@@ -5,22 +5,19 @@ from __future__ import annotations
 from typing import Dict, Optional, Tuple
 
 
-# DPv2 (2026-11-03, owner-approved): economic connectedness (Chetty et al. 2022, the Atlas input that predicts upward
-# mobility) takes 0.20; the four earlier components keep their proportions (0.60/0.20/0.10/0.10 x 0.80).
-# The 0.20 is a judgment call with plausible range 0.15 to 0.45, not a sourced value (docs/PILLAR_SOCIAL_FABRIC.md).
-EC_WEIGHT = 0.20
-# v20 (2026-11-24): OSM civic gathering spots are shown but not scored (weight 0). Against CDC PLACES felt-connection
-# measures (analysis/social_fabric_felt_validation_2026-11-24.md) they showed no relation (support +0.06, loneliness
-# -0.06) and dropping them from the blend raised the match slightly. The other four v18 weights keep their proportions
-# (0.48 / 0.16 / 0.08 / 0.20 divided by 0.92). Judgment call, not a sourced value.
-_V18_WEIGHTS = {"participation": 0.48, "cohesion": 0.16, "rootedness": 0.08, "economic_connectedness": 0.20}
-_V18_SCORED_SUM = sum(_V18_WEIGHTS.values())
+# v22 (2026-11-25, owner-approved): participation 0.60, cohesion 0.20, rootedness 0.20; economic connectedness and civic
+# gathering spots weight 0 (shown, not scored). Economic connectedness (Chetty et al. 2022) predicts upward mobility, not
+# felt neighbor connection, and sits below the 0.15 to 0.45 range recorded under DPv2 on the owner's definition of
+# community. Weights are judgment calls, not sourced values: tested against Census civic-life neighbor items (21 metros),
+# County Health Rankings county loneliness and support (income-controlled) and CDC PLACES ZIP estimates; the ZIP match
+# falls about 0.1 (docs/PILLAR_SOCIAL_FABRIC.md, "v22").
+EC_WEIGHT = 0.0
 SF_BASE_WEIGHTS = {
-    "participation": round(_V18_WEIGHTS["participation"] / _V18_SCORED_SUM, 4),
-    "cohesion": round(_V18_WEIGHTS["cohesion"] / _V18_SCORED_SUM, 4),
-    "rootedness": round(_V18_WEIGHTS["rootedness"] / _V18_SCORED_SUM, 4),
+    "participation": 0.60,
+    "cohesion": 0.20,
+    "rootedness": 0.20,
     "civic": 0.0,
-    "economic_connectedness": round(_V18_WEIGHTS["economic_connectedness"] / _V18_SCORED_SUM, 4),
+    "economic_connectedness": EC_WEIGHT,
 }
 
 
