@@ -2018,7 +2018,7 @@ export default function CatalogPageClient({
       )}
 
       {/* Floating map/list toggle — Airbnb style */}
-      {catalogMode === 'explorer' && !(viewMode === 'map' && selectedKey) && (
+      {catalogMode === 'explorer' && !(viewMode === 'map' && selectedPlace) && (
         <div className={`md:hidden pointer-events-none fixed bottom-6 left-0 right-0 z-40 flex justify-center`}>
           <button
             type="button"
