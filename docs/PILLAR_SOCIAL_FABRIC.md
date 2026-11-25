@@ -383,3 +383,15 @@ Recorded gaps: no outcome measures newcomers' connection or neighbor connection 
 cohesion from rootedness; pin-shift and weight-perturbation were last run for v21 and were not rerun for v22.
 Sources: CPS CEV microdata (https://census.gov/newsroom/press-releases/2024/civic-engagement-volunteering-supplement.html), County Health
 Rankings 2025 (https://www.countyhealthrankings.org), CDC PLACES ZCTA 2025 (https://data.cdc.gov/resource/qnzd-25i4).
+
+#### v22 sensitivity checks (2026-11-25)
+
+Weight perturbation (offline, n=1,459; pass rule: median 5 or less, p95 15 or less; one weight moved 0.10, rest rescaled): PASS. Participation
+-0.10 / +0.10: median 2.2, p95 5.3 / 5.1, max 7.0. Cohesion: median 2.1, p95 5.5, max 7.7. Rootedness: median 4.6, p95 7.2 / 7.1, max 9.7 / 9.1
+(closest to the line).
+Pin-shift (live Census calls, `scripts/catalog/social_fabric_pin_shift.py`, 101 places, 404 shifts of 400 m N/S/E/W; pass rule: median 3 or less,
+p95 10 or less): PASS. Median 0.0, p95 5.5, max 12.8 (Red Hook NY); by area type p95 3.3 (rural), 4.5 (exurban), 5.5 (suburban), 7.3
+(urban_residential). The pin tract changed in 170 of 404 shifts; those moved a median 1.9, p95 6.6. Under v21 the p95 was 2.4 and the max 5.6; the
+increase comes from rootedness (the only tract-based input) going from 9% to 20% of the score. A 400 m shift in a dense area can move a place by
+more than 10 points (two shifts at Red Hook and one at Glendale NY exceed 10). Not tested: a shift across a ZIP boundary (Atlas inputs held
+fixed); the above-85% home-value exemption was skipped.
