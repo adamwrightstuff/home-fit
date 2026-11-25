@@ -248,3 +248,43 @@ held out did no better than the v18 weights.
 Scope: the pillar is a ZIP-level, Atlas-driven read of felt connection. It cannot see differences between blocks inside a ZIP,
 and no data in the repo measures how connected one neighborhood feels to its residents. Catalog files are not yet recomputed;
 run `scripts/catalog/recompute_social_fabric_v20_offline.py` into a new directory, then `recompute_catalog_composites.py`.
+
+### v21 (2026-11-25): cohesion is the Atlas support ratio only; two other changes tested and rejected
+
+Change shipped: `cohesion` = Atlas support-ratio score against area-type peers; clustering stays in the summary as a diagnostic
+(`cohesion_clustering`, `cohesion_clustering_score`). Reason: friendship clustering is mechanically lower where more ties are
+possible, which the Atlas shows as lower clustering in dense ZIPs (urban_core p50 0.082 vs rural 0.110), and area-type bands only
+partly remove that. Weights unchanged from v20 (EC 0.2174, participation 0.5217, cohesion 0.1739, rootedness 0.0870, civic 0);
+recompute with `recompute_social_fabric_v20_offline.py` then `recompute_social_fabric_v21_offline.py`, then
+`recompute_catalog_composites.py --no-census`. Cohesion is left out (weights rescale, principle 9) when the ZIP has no support value.
+
+Independent validation (principle 7), CDC PLACES ZCTA 2025 loneliness and lack of social and emotional support, sign flipped,
+Spearman, 810 places with all inputs (computed offline from stored components; criterion set before the run: adopt only if the
+match with both outcomes does not fall by more than 0.02):
+
+| Variant | Lack of support | Loneliness | Decision |
+|---|---|---|---|
+| v20 | 0.622 | 0.543 | baseline |
+| v21 support-only cohesion | 0.603 | 0.576 | adopted (-0.019 and +0.033) |
+| v20 with EC weight 0 | 0.576 | 0.517 | rejected, falls on both |
+| volunteering scored against density-band peers | 0.572 | 0.486 | rejected, falls on both |
+| support-only plus density-band volunteering | 0.560 | 0.515 | rejected |
+| support-only plus EC weight 0 | 0.509 | 0.489 | rejected |
+
+EC weight stays 0.20 (recorded range 0.15 to 0.45): the 2026-11-04 owner decision already reversed removing it for the same
+reason, and EC is the only input with tier 1 evidence (Chetty 2022). Density-band volunteering would add another score keyed on
+density and fails the felt-connection check; a continuous-density baseline (principle 14) fit on 23,019 Atlas ZIPs, split-half
+median score difference 0.4, did no better than the area-type version and was not shipped. Caveat: PLACES values are modeled and
+partly affluence-driven, so this check favors affluent places by construction.
+
+All-places check (principle 8, n=1,459 with a score, offline): v20 to v21 median absolute move 1.7, p95 6.3, max 17.2. Mean move by
+area type: exurban +1.2 (n=382), suburban +1.2 (734), rural +1.4 (145), urban_residential -0.7 (192). Dense places do not gain on
+average; the support-only change helps some (Carroll Gardens 48.8 to 53.8, Larchmont 59.2 to 63.4, Glen Ridge 73.4 to 78.0,
+Hastings-on-Hudson 78.4 to 80.8) and lowers others. Floor/ceiling: none at or below 5 or at or above 95 (range 22.6 to 92.1).
+SD by area type: 9.5 to 11.9, all above 6.
+Launch pairs: similar pairs pass (Sunnyvale/Campbell 2.0, Potrero Hill/Dogpatch 3.5). Differ pairs fail as under v18 and v20
+(Mission District 52.3 vs Homestead 44.7 is 7.6; Dogpatch 47.0 vs Gary 51.3 is 4.3; Parker 51.9 vs Clarkston 49.2 is 2.7); a
+recorded gap, not fixed here.
+Not done: pin-shift and weight-perturbation reruns for v21; the 18 places with no social fabric score are unchanged. Ridgewood NJ
+(0 civic nodes) scores 69.0 from Atlas cohesion 85.1, participation 59.5 and rootedness 93.8; civic nodes have weight 0, so thin
+OSM data does not move it. Last re-validated: 2026-11-25 (offline).

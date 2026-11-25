@@ -48,7 +48,6 @@ _ec_mean: Optional[float] = None
 _ec_std: Optional[float] = None
 _EC_CLIP_Z = 2.5
 _bands: Dict[str, Any] = {}
-_vol_by_zip: Dict[str, float] = {}
 
 
 def _fval(v: Any) -> Optional[float]:
@@ -86,9 +85,6 @@ def _load() -> None:
                         rec["support"] = s
                     if cv is not None:
                         rec["civic_orgs"] = cv
-                    vr = _fval(row.get("volunteering_rate_zip"))
-                    if vr is not None:
-                        _vol_by_zip[z] = vr
                     ec = _fval(row.get("ec_zip"))
                     if ec is not None:
                         rec["ec"] = ec
@@ -208,14 +204,6 @@ def get_cohesion_score(
     diag["resolution"] = "support_only"
 
     return max(0.0, min(100.0, round(score, 1))), diag
-
-
-def get_volunteering_value(zip_code: Optional[str]) -> Optional[float]:
-    """Raw Atlas ZIP volunteering rate (None when the ZIP is absent or has no value)."""
-    if not zip_code:
-        return None
-    key = str(zip_code).split("-")[0].zfill(5)
-    return _vol_by_zip.get(key)
 
 
 def get_civic_orgs_value(zip_code: Optional[str]) -> Optional[float]:
