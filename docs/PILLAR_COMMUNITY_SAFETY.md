@@ -84,6 +84,11 @@ PILLAR_DATA_QUALITY.
 - A place legitimately scoring low (Compton 6, Watts) reflects real reported crime, not a bug.
 - The commuter-denominator boost relies on the LODES grid (same data as economic_security's
   job-accessibility); coverage gaps there fall back to no boost.
+- FBI CDE returns zeros for months an agency did not report, and its `participated_population` field can still
+  show full participation (North Miami 2021, 2023, 2024), so a partial release reads as near-zero crime. There is
+  no reliable automatic check. When found, pin the year in `data/crime_agency_map.json` (`"year"` and `"note"`);
+  the pin replaces the walk-back and the note is stored as a data warning. North Miami, FL is pinned to 2022, its last
+  complete year (owner decision 2026-11-25).
 
 ---
 

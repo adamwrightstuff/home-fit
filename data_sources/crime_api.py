@@ -1171,6 +1171,13 @@ _AGENCY_MAP_CACHE: Optional[dict] = None
 
 def _mapped_agency(state_abbr: str, place: str) -> Optional[Tuple[str, str]]:
     """(agency name, kind) from data/crime_agency_map.json for places the automatic match cannot resolve."""
+    entry = _agency_map_entry(state_abbr, place)
+    if not entry or not entry.get("agency"):
+        return None
+    return entry["agency"], entry.get("kind", "own")
+
+
+def _agency_map_entry(state_abbr: str, place: str) -> Optional[dict]:
     global _AGENCY_MAP_CACHE
     if _AGENCY_MAP_CACHE is None:
         try:
@@ -1178,10 +1185,15 @@ def _mapped_agency(state_abbr: str, place: str) -> Optional[Tuple[str, str]]:
                 _AGENCY_MAP_CACHE = json.load(f)
         except (OSError, ValueError):
             _AGENCY_MAP_CACHE = {}
-    entry = (_AGENCY_MAP_CACHE.get((state_abbr or "").upper()) or {}).get((place or "").strip().lower())
-    if not entry or not entry.get("agency"):
-        return None
-    return entry["agency"], entry.get("kind", "own")
+    return (_AGENCY_MAP_CACHE.get((state_abbr or "").upper()) or {}).get((place or "").strip().lower())
+
+
+def _mapped_year(state_abbr: str, place: str) -> Optional[Tuple[int, str]]:
+    """(year, note) when data/crime_agency_map.json pins the FBI year for a place whose agency's recent years are
+    unusable (zeros or a partial release), else None."""
+    entry = _agency_map_entry(state_abbr, place) or {}
+    year = entry.get("year")
+    return (int(year), str(entry.get("note") or "")) if isinstance(year, int) else None
 
 
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -1787,12 +1799,16 @@ def _get_fbi_rates(
     # legacy-UCR agencies often lag 2-3 years.  Walk back up to 3 years to find
     # the most recent year with per-agency data before falling back to state aggregate.
     v_result = p_result = None
+    used_year: Optional[int] = None
+    pinned = _mapped_year(state_abbr, city_hint) if city_hint else None
     if agency_name_hint:
-        for _year in range(data_year, data_year - 4, -1):
+        # A pinned year replaces the walk-back: the agency's later years are known to be unusable.
+        for _year in ([pinned[0]] if pinned else range(data_year, data_year - 4, -1)):
             _found = _agency_year(_year)
             if _found:
                 v_result, p_result = _found
                 prev_year = _year - 1
+                used_year = _year
                 break
 
     if v_result is None:
@@ -1859,6 +1875,7 @@ def _get_fbi_rates(
         "source": source,
         "agency_ori": ori,
         "agency_name": agency_display_name,
+        **({"data_period": str(used_year), "data_note": pinned[1]} if pinned and used_year == pinned[0] else {}),
     }
 
 

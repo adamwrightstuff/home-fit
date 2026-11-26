@@ -435,3 +435,19 @@ def test_arcgis_part1_queries_nibrs_codes_on_each_citys_fields():
     assert seen[0][:3] == ("Charlotte", "LATITUDE_PUBLIC", "LONGITUDE_PUBLIC") and "HIGHEST_NIBRS_CODE IN" in seen[0][3]
     assert seen[2][:3] == ("Las Vegas", "Latitude", "Longitude") and "NIBRSOffenseCode IN" in seen[2][3]
     assert "'13A'" in seen[0][3] and "'13B'" not in seen[0][3]  # simple assault is Part II
+
+
+def test_agency_map_year_pin_is_read_and_absent_by_default(monkeypatch):
+    import data_sources.crime_api as ca
+    monkeypatch.setattr(ca, "_AGENCY_MAP_CACHE", {"FL": {
+        "north miami": {"agency": "North Miami Police Department", "kind": "own", "year": 2022, "note": "zeros after 2022"},
+        "orlando": {"agency": "Orlando Police Department", "kind": "own"}}})
+    assert ca._mapped_year("FL", "North Miami") == (2022, "zeros after 2022")
+    assert ca._mapped_agency("fl", " north miami ") == ("North Miami Police Department", "own")
+    assert ca._mapped_year("FL", "Orlando") is None and ca._mapped_year("FL", "Nowhere") is None
+
+
+def test_north_miami_is_pinned_in_the_shipped_map():
+    import json
+    m = json.load(open("data/crime_agency_map.json"))
+    assert m["FL"]["north miami"]["year"] == 2022

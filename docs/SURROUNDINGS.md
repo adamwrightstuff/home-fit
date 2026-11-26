@@ -34,7 +34,7 @@ Amenities, active outdoors, healthcare, transit and economic opportunity already
 - 8 miles, 3 miles and the 1.0 minimum weight are judgment calls (about a short drive), not fitted to any research.
 - Straight-line distance, not drive time.
 - No independent check that the nearby figure matches what residents experience.
-- A neighbor's bad stored record flows into the nearby figure (for example North Miami's safety record, 0.14 violent crimes per 1,000, counts toward North Miami Beach).
+- A neighbor's bad stored record flows into the nearby figure. North Miami's was one (a partial 2025 FBI release read as 0.14 violent crimes per 1,000); it is now pinned to 2022 (see docs/PILLAR_COMMUNITY_SAFETY.md).
 
 ## Build
 

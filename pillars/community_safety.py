@@ -450,6 +450,9 @@ def get_community_safety_score(
         details["effective_pop_denominator_multiplier"] = round(commuter_mult, 4)
     reasons: list = []
     warnings: list = []
+    if rates.get("data_note"):
+        # A place pinned to an older FBI year (data/crime_agency_map.json): say which year and why.
+        warnings.append(f"crime_data_year_{rates.get('data_period')}: {rates['data_note']}")
     if population_denominator_meta:
         details["population_denominator"] = population_denominator_meta
         if population_denominator_meta.get("commuter_adjustment") == "unavailable":

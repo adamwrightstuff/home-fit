@@ -1,5 +1,5 @@
 {
-  "_doc": "Place -> FBI agency that polices it, for places the automatic name/distance match cannot resolve. Keyed by state then lowercase place name. kind 'own' = the place's own agency (AGENCY_VERIFIED); kind 'county' = the county sheriff, whose rate spans the whole county (PRECINCT_PROXY, lower confidence). Only add agencies confirmed to report agency-level data (scripts/metro_agent fbi --suggest).",
+  "_doc": "Place -> FBI agency that polices it, for places the automatic name/distance match cannot resolve. Keyed by state then lowercase place name. kind 'own' = the place's own agency (AGENCY_VERIFIED); kind 'county' = the county sheriff, whose rate spans the whole county (PRECINCT_PROXY, lower confidence). Only add agencies confirmed to report agency-level data (scripts/metro_agent fbi --suggest). Optional 'year' pins the FBI data year when the agency's later years are unusable (all-zero months or a partial release); 'note' records why and is shown as a data warning.",
   "TX": {
     "cedar park": {
       "agency": "Cedar Park Police Department",
@@ -808,6 +808,12 @@
     "the hammocks township": {
       "agency": "Miami-Dade County Police Department",
       "kind": "county"
+    },
+    "north miami": {
+      "agency": "North Miami Police Department",
+      "kind": "own",
+      "year": 2022,
+      "note": "FBI CDE shows all-zero months for 2021, 2023 and 2024 and a partial 2025 (138 violent across 8 months, NIBRS start 2025-01-01); 2022 is the last complete year, reported as one annual entry (438 violent, 1,663 property). Owner decision 2026-11-25."
     }
   },
   "NC": {
