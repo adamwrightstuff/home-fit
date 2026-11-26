@@ -105,8 +105,13 @@ def jobs_in_disk(lat: float, lon: float, radius_m: float, state: Optional[str] =
     if h3 is None or not _H8_INDEX:
         return None
     built = built_states()
-    if state and built is not None and state.upper() not in built:
-        return None
+    if state and built is not None:
+        # The scorer passes full names ("Colorado"); the sidecar holds postal codes.
+        from data_sources.geocoding import STATE_ABBREVIATIONS
+
+        st = state.strip()
+        if STATE_ABBREVIATIONS.get(st.lower(), st).upper() not in built:
+            return None
     n = 12  # sample grid: (2n+1)^2 points over the circle's bounding square
     step = float(radius_m) / n
     dlat = step / 111_000.0

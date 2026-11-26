@@ -35,6 +35,18 @@ def test_state_missing_from_the_built_list_is_unavailable_even_with_cells_in_the
     assert lc.jobs_in_disk(*AUSTIN, 800, state="tx") is not None
 
 
+def test_full_state_name_from_the_scorer_matches_the_postal_list(grid):
+    # /score passes location_info state as a full name ("Texas"), not "TX".
+    assert lc.jobs_in_disk(*AUSTIN, 800, state="Texas") is not None
+    assert lc.jobs_in_disk(*AUSTIN, 800, state="Pennsylvania") is None
+
+
+def test_sidecar_lists_every_state_with_cells_in_the_parquet():
+    states = lc.built_states()
+    assert states is not None
+    assert {"CO", "GA", "NC", "FL", "AZ", "NV"} <= states  # added to the parquet in 75988a08
+
+
 def test_missing_sidecar_falls_back_to_the_density_check(grid, monkeypatch):
     monkeypatch.setattr(lc, "built_states", lambda: None)
     assert lc.jobs_in_disk(*AUSTIN, 800, state="PA") is not None

@@ -1,11 +1,17 @@
 {
  "states": [
+  "AZ",
   "CA",
+  "CO",
   "CT",
+  "FL",
+  "GA",
   "MA",
+  "NC",
   "NJ",
+  "NV",
   "NY",
   "TX"
  ],
- "note": "States with cells in data/lodes_h8_commuter.parquet, verified 2026-10-25 from cell locations (Hartford, New Haven, Newark, Albany, Buffalo, San Diego, El Paso, Springfield, Boston, Dallas, Houston, Austin covered; Philadelphia, Pittsburgh, Chicago, Providence, Wilmington, Atlanta, Denver, Miami, Phoenix, Seattle not). scripts/baselines/build_lodes_h8_commuter.py rewrites this file when it builds the parquet."
+ "note": "States with cells in data/lodes_h8_commuter.parquet. CA, CT, MA, NJ, NY, TX verified 2026-10-25; CO, GA, NC, FL, AZ, NV (added to the parquet in 75988a08) verified 2026-11-25 from a 37-cell ring at Denver, Colorado Springs, Atlanta, Savannah, Charlotte, Raleigh, Miami, Orlando, Tampa, Phoenix, Tucson, Las Vegas and Reno. Not covered: IL, PA, WA, SC and the rest. scripts/baselines/build_lodes_h8_commuter.py rewrites this file when it builds the parquet."
 }
