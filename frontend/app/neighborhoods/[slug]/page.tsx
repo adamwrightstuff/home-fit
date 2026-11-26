@@ -144,6 +144,7 @@ export default async function NeighborhoodPage({
         workCommute={work_commute}
         placeName={catalog.name}
         placeKey={catalog.county_borough && catalog.state_abbr ? catalogRowKey({ name: catalog.name, county_borough: catalog.county_borough, state_abbr: catalog.state_abbr }) : undefined}
+        housingCost={entry.housing_cost}
         lat={catalog.lat}
         lon={catalog.lon}
       />

@@ -8,7 +8,7 @@ import { getSavedScore, type SavedScoreRow } from '@/lib/savedScores'
 import type { CatalogMapPlaceWithMetro } from '@/lib/catalogMapTypes'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
 import type { WorkCommute } from '@/lib/workZones'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyCurrentHomeDetailsToScore } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, personalHousingScore } from '@/lib/reweight'
 import { PILLAR_META, PILLAR_ORDER, isHappinessPillar, type PillarKey } from '@/lib/pillars'
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
@@ -246,8 +246,13 @@ function CompareContent() {
   const personalize = (raw: ScoreResponse, row: SavedScoreRow): ScoreResponse => {
     const home = compareContext?.currentHome
     const isCurrentHome = !!home && isCatalogKey(row.id) && (home.key ? row.id === home.key : row.id.split('|')[0] === home.name)
-    let out = isCurrentHome ? applyCurrentHomeDetailsToScore(raw, home) : raw
-    out = householdIncome ? applyUserIncomeToScore(out, householdIncome, isCurrentHome ? home.monthlyCost : null) : out
+    let out = personalHousingScore(raw, {
+      income: householdIncome,
+      housingCost: (row as unknown as { housing_cost?: HousingCost | null }).housing_cost ?? null,
+      budget: compareContext?.budget ?? null,
+      isCurrentHome,
+      home,
+    })
     if (compareContext) out = applyExplorerScoreAdjustments(out, compareContext.filters)
     if (compareContext) {
       const extra = row as unknown as { work_commute?: WorkCommute | null; lat?: number | string; lon?: number | string }

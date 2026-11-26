@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { ScoreResponse } from '@/types/api'
-import { applyUserIncomeToScore, applyCurrentHomeDetailsToScore, applyScenerySubPreferencesToScore, reweightScoreResponseFromPriorities } from '@/lib/reweight'
+import { personalHousingScore, applyScenerySubPreferencesToScore, reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { applyCommuteAndPeople, applyExplorerScoreAdjustments, readCompareContext, type CompareContext } from '@/lib/explorerScoreAdjust'
 import { HOMEFIT_COPY, HAPPINESS_INDEX_COPY } from '@/lib/pillars'
 import type { WorkCommute } from '@/lib/workZones'
+import type { HousingCost } from '@/lib/budgetCost'
 
 function ScoreHero({ label, value, tooltip, accent }: { label: string; value: number | null; tooltip: string; accent: string }) {
   return (
@@ -27,11 +28,13 @@ function ScoreHero({ label, value, tooltip, accent }: { label: string; value: nu
  * from the Explorer it applies the same adjustments the list applied (income, school type, scenery and outdoors
  * preferences, work hub, people, weights), so the page and the list row show the same number.
  */
+
 export default function NeighborhoodHeadline({
   score,
   workCommute,
   placeName,
   placeKey,
+  housingCost,
   lat,
   lon,
 }: {
@@ -40,6 +43,8 @@ export default function NeighborhoodHeadline({
   placeName: string
   /** Catalog row key (name|county|state), to tell same-named places in two metros apart. */
   placeKey?: string
+  /** Monthly-cost inputs for the same-size housing comparison (data/catalog_housing_costs.json). */
+  housingCost?: HousingCost | null
   lat?: number | string | null
   lon?: number | string | null
 }) {
@@ -52,8 +57,13 @@ export default function NeighborhoodHeadline({
     if (!ctx) return score
     const home = ctx.currentHome
     const isCurrentHome = !!home && (home.key && placeKey ? home.key === placeKey : home.name === placeName)
-    let out = isCurrentHome ? applyCurrentHomeDetailsToScore(score, home) : score
-    out = ctx.householdIncome ? applyUserIncomeToScore(out, ctx.householdIncome, isCurrentHome ? home!.monthlyCost : null) : out
+    let out = personalHousingScore(score, {
+      income: ctx.householdIncome,
+      housingCost,
+      budget: ctx.budget ?? null,
+      isCurrentHome,
+      home,
+    })
     out = applyExplorerScoreAdjustments(out, ctx.filters)
     out = applyCommuteAndPeople(out, { workCommute: workCommute ?? null, lat, lon }, ctx)
     const nb = ctx.filters.filterNbTypes ?? []

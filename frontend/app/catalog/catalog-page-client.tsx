@@ -40,7 +40,7 @@ import {
   type CatalogMapPlace,
   type CatalogMapPlaceWithMetro,
 } from '@/lib/catalogMapTypes'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyCurrentHomeDetailsToScore, type CurrentHomeDetails, applyScenerySubPreferencesToScore, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesQualityEducationLevelFloor, GATE_DEFAULT_LEVEL, QUALITY_EDUCATION_DEALBREAKER_SCORE, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, personalHousingScore, type CurrentHomeDetails, applyScenerySubPreferencesToScore, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesQualityEducationLevelFloor, GATE_DEFAULT_LEVEL, QUALITY_EDUCATION_DEALBREAKER_SCORE, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { peoplePoints } from '@/lib/peoplePoints'
 import { fetchProfile, saveProfile, type CommuteMode } from '@/lib/userProfile'
@@ -675,10 +675,16 @@ export default function CatalogPageClient({
     const withIncome = places.map((p) => {
       const isCurrentHome = isCurrentHomeRow(p.catalog, currentHome)
       if (!householdIncome && !isCurrentHome) return p
-      // Own home: its bedrooms set space first, then affordability comes from the real monthly cost.
-      const own = isCurrentHome ? applyCurrentHomeDetailsToScore(p.score, currentHomeDetails) : p.score
-      const monthlyCostOverride = isCurrentHome ? currentHomeMonthlyCost : null
-      return { ...p, score: householdIncome ? applyUserIncomeToScore(own, householdIncome, monthlyCostOverride) : own }
+      return {
+        ...p,
+        score: personalHousingScore(p.score, {
+          income: householdIncome,
+          housingCost: p.housing_cost,
+          budget: filterBudget,
+          isCurrentHome,
+          home: { monthlyCost: currentHomeMonthlyCost, bedrooms: currentHomeDetails.bedrooms },
+        }),
+      }
     })
 
     const f = { filterSchoolType, filterSchoolLevels }
@@ -747,6 +753,7 @@ export default function CatalogPageClient({
     currentHomeMonthlyCost,
     currentHome,
     currentHomeDetails,
+    filterBudget,
     workZoneId,
     commuteMode,
     officeDays,

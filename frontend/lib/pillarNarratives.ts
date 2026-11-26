@@ -251,6 +251,21 @@ export function getHousingValueNarrative(
   const space = getPillarValue(pillar, 'breakdown.space')
   const medianValueRaw = getPillarValue(pillar, 'summary.median_home_value')
 
+  // Same-size comparison (lib/reweight.ts personalHousingScore): say exactly what was scored.
+  const same = (pillar.breakdown as { same_size?: { beds: number; monthly?: number; share?: number; own?: boolean; missing?: boolean } } | undefined)?.same_size
+  if (same) {
+    const size = (same.beds >= 5 ? '5+' : String(same.beds)) + '-bedroom'
+    if (same.missing) {
+      return 'There is no monthly cost for a ' + size + ' home in ' + placeLabel + ", so this uses the area's typical homes and prices instead."
+    }
+    if (typeof same.monthly === 'number' && typeof same.share === 'number') {
+      const cost = '$' + same.monthly.toLocaleString('en-US') + ' a month'
+      return same.own
+        ? 'You pay about ' + cost + ' here, about ' + same.share + '% of your income.'
+        : 'A ' + size + ' home in ' + placeLabel + ' costs about ' + cost + ' to buy (7% mortgage, tax and insurance), about ' + same.share + '% of your income.'
+    }
+  }
+
   let costPhrase = 'typical housing costs for the area'
   if (typeof affordability === 'number') {
     if (affordability >= 70) costPhrase = 'more manageable housing costs for the area'

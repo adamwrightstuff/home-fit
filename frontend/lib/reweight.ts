@@ -2,6 +2,7 @@ import type { ScoreResponse } from '@/types/api'
 import { PILLAR_ORDER, type PillarKey, computeHappinessIndex } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import { socialConnectionScore, acquaintancesNearbyScore, type SocialConnectionTier } from '@/lib/socialProximity'
+import { bestCost, minBeds, type Beds, type HousingCost } from '@/lib/budgetCost'
 export { closeTieProximityScore, acquaintanceProximityScore, socialConnectionScore, acquaintancesNearbyScore } from '@/lib/socialProximity'
 export type { SocialConnectionTier, SocialConnectionPoint } from '@/lib/socialProximity'
 import { commutePillarScore, commuteTimeScore } from '@/lib/commuteTime'
@@ -565,6 +566,102 @@ export function scoreHousingSpace(rooms: number | null | undefined): number | nu
   if (rooms >= 4.5) return 15
   if (rooms >= 3.5) return 10
   return 5
+}
+
+/**
+ * Same-size comparison. Once the visitor's income and a bedroom count are known, every place's housing score is the
+ * affordability of the same home there: the monthly cost of that many bedrooms (the Explorer's budget estimate:
+ * Zillow ZIP value, 7% mortgage, ZIP property tax and insurance) as a share of income, on the pillar's own
+ * cost-share curve. The visitor's current home uses what they actually pay when they have entered it. Space and
+ * value for money drop out: the home is the same size everywhere, so the cost already says how much space the money
+ * buys. The bedroom count is the budget filter's "home you need" when set, else the current home's bedrooms.
+ */
+export function sameSizeBeds(budget: { beds: Beds[]; chosen: boolean } | null | undefined, homeBedrooms: number | null | undefined): Beds | null {
+  if (budget?.chosen && budget.beds.length) return minBeds(budget.beds)
+  if (typeof homeBedrooms === 'number' && Number.isInteger(homeBedrooms) && homeBedrooms >= 0) {
+    return Math.min(5, Math.max(1, homeBedrooms)) as Beds
+  }
+  return null
+}
+
+/**
+ * The housing pillar as the same-size comparison (see sameSizeBeds), or null when this place has no monthly cost for
+ * that size and the visitor has not entered their own: the caller then keeps the area-based score and marks it with
+ * markSameSizeMissing, so the switch is never silent.
+ */
+export function applySameSizeHousingToScore(
+  data: ScoreResponse,
+  housingCost: HousingCost | null | undefined,
+  ctx: { income: number; beds: Beds; down: number | null },
+  ownMonthlyCost?: number | null
+): ScoreResponse | null {
+  const hv = (data.livability_pillars as any)?.housing_value
+  if (!hv || !(ctx.income > 0)) return null
+  const own = typeof ownMonthlyCost === 'number' && ownMonthlyCost > 0 ? ownMonthlyCost : null
+  const monthly = own ?? bestCost(housingCost, { beds: [ctx.beds], max: null, down: ctx.down, chosen: true })?.cost.total ?? null
+  if (monthly === null) return null
+  const share = (monthly * 12) / ctx.income
+  const affordability = scoreCostShareOfIncome(share)
+  const bk = hv.breakdown ?? {}
+  const patched: ScoreResponse = {
+    ...data,
+    livability_pillars: {
+      ...data.livability_pillars,
+      housing_value: {
+        ...hv,
+        score: affordability * 2,
+        breakdown: {
+          ...bk,
+          local_affordability: affordability,
+          space: null,
+          value_efficiency: null,
+          same_size: { beds: ctx.beds, monthly: Math.round(monthly), share: Math.round(share * 100), own: own !== null },
+        },
+      },
+    } as ScoreResponse['livability_pillars'],
+  }
+  const newHI = computeHappinessIndex((patched.livability_pillars as any) ?? {})
+  return newHI !== null ? { ...patched, happiness_index: newHI } : patched
+}
+
+/** Marks a place that kept its area-based housing score because no same-size cost exists there. */
+export function markSameSizeMissing(data: ScoreResponse, beds: Beds): ScoreResponse {
+  const hv = (data.livability_pillars as any)?.housing_value
+  if (!hv) return data
+  return {
+    ...data,
+    livability_pillars: {
+      ...data.livability_pillars,
+      housing_value: { ...hv, breakdown: { ...(hv.breakdown ?? {}), same_size: { beds, missing: true } } },
+    } as ScoreResponse['livability_pillars'],
+  }
+}
+
+/**
+ * One place's housing pillar for the visitor, used by every page so a place scores the same everywhere: the
+ * same-size comparison when income and a bedroom count are known and a cost exists; otherwise the current home's
+ * own size and cost, then income against area prices, as before.
+ */
+export function personalHousingScore(
+  data: ScoreResponse,
+  opts: {
+    income: number | null | undefined
+    housingCost?: HousingCost | null
+    budget?: { beds: Beds[]; chosen: boolean; down: number | null } | null
+    isCurrentHome: boolean
+    home?: { monthlyCost?: number | null; bedrooms?: number | null } | null
+  }
+): ScoreResponse {
+  const income = opts.income && opts.income > 0 ? opts.income : null
+  const beds = sameSizeBeds(opts.budget, opts.home?.bedrooms)
+  const ownCost = opts.isCurrentHome ? opts.home?.monthlyCost ?? null : null
+  if (income && beds) {
+    const same = applySameSizeHousingToScore(data, opts.housingCost, { income, beds, down: opts.budget?.down ?? null }, ownCost)
+    if (same) return same
+  }
+  let out = opts.isCurrentHome ? applyCurrentHomeDetailsToScore(data, opts.home) : data
+  if (income) out = applyUserIncomeToScore(out, income, ownCost)
+  return income && beds ? markSameSizeMissing(out, beds) : out
 }
 
 export type CurrentHomeDetails = { bedrooms?: number | null }
