@@ -771,6 +771,14 @@ export default function CatalogPageClient({
 
   const lifeStageCut = useMemo(() => lifeStageCutoffs(places), [places])
 
+  // Tapping a place swaps in its full detail, which can nudge client-computed scores and reshuffle the list under the
+  // user's finger. The swap pins the current order; the pin only applies while the sort/filter inputs are unchanged.
+  const sortSig = JSON.stringify([sortByName, indexMode, sortDir, filterText, filterMetro, householdIncome, workZoneId, commuteMode, filterSchoolType, filterSchoolLevels, effectivePriorities])
+  const sortSigRef = useRef(sortSig)
+  sortSigRef.current = sortSig
+  const listKeysRef = useRef<string[]>([])
+  const [pinnedOrder, setPinnedOrder] = useState<{ sig: string; ranks: Map<string, number> } | null>(null)
+
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
     let list = adjustedPlaces.filter((p) => {
@@ -848,8 +856,15 @@ export default function CatalogPageClient({
       list = list.filter((p) => climateMustHaveFails(p.climate, climatePrefs.must_haves).length === 0)
     }
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
-    return sortPlaces(list, sortKey, sortDir, effectivePriorities)
+    const sorted = sortPlaces(list, sortKey, sortDir, effectivePriorities)
+    if (pinnedOrder && pinnedOrder.sig === sortSig) {
+      const rank = (p: CatalogMapPlace) => pinnedOrder.ranks.get(catalogRowKey(p.catalog)) ?? Number.POSITIVE_INFINITY
+      return [...sorted].sort((a, b) => rank(a) - rank(b))
+    }
+    return sorted
   }, [
+    pinnedOrder,
+    sortSig,
     adjustedPlaces,
     filterText,
     filterMetro,
@@ -872,6 +887,7 @@ export default function CatalogPageClient({
     sortDir,
     effectivePriorities,
   ])
+  listKeysRef.current = filteredPlaces.map((p) => catalogRowKey(p.catalog))
 
   /**
    * Deal-breaker gates: excludes places that fail any active dealbreaker, independent of
@@ -1250,6 +1266,7 @@ export default function CatalogPageClient({
           detailFetched.current.delete(selectedKey)
           return
         }
+        setPinnedOrder({ sig: sortSigRef.current, ranks: new Map(listKeysRef.current.map((k, i) => [k, i])) })
         setPlaces((prev) => prev.map((p) => (catalogRowKey(p.catalog) === selectedKey ? { ...p, score: full.score } : p)))
       })
       .catch(() => detailFetched.current.delete(selectedKey))
