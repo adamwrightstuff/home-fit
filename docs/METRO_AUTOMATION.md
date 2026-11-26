@@ -70,7 +70,7 @@ Agencies for special purposes (university, school district, hospital, park range
 
 ## Order of the offline steps
 
-`finish` runs them in this order, and it matters: education, then composites (`recompute_catalog_composites.py --no-census`), then retries and gap acceptance (composites again), and last `recompute_status_class.py --write`. The composites recompute overwrites `status_signal` and `it_score` with an older blend; the status-class step restores the current one. Run any composites recompute by hand and you must run the status-class step after it. `apply_aura.py` (the Aura badge) is applied only to the metros listed on its command line, not to new metros.
+`finish` runs them in this order, and it matters: education, then composites (`recompute_catalog_composites.py --no-census`), then retries and gap acceptance (composites again), and last `recompute_status_class.py --write`. The composites recompute overwrites `status_signal` and `it_score` with an older blend; the status-class step restores the current one. Run any composites recompute by hand and you must run the status-class step after it.
 
 ## Prerequisites per state (`prereqs`)
 

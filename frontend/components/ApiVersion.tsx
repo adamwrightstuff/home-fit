@@ -7,10 +7,18 @@ export default function ApiVersion() {
 
   useEffect(() => {
     let cancelled = false
-    fetch('/api/health', { cache: 'no-store' })
+    // Ask once per browser session; the response is also cached at the CDN (see app/api/health/route.ts).
+    try {
+      const cached = sessionStorage.getItem('homefit_api_version')
+      if (cached) { setVersion(cached); return }
+    } catch { /* storage unavailable */ }
+    fetch('/api/health')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (!cancelled && data?.version) setVersion(data.version)
+        if (!cancelled && data?.version) {
+          setVersion(data.version)
+          try { sessionStorage.setItem('homefit_api_version', String(data.version)) } catch { /* ignore */ }
+        }
       })
       .catch(() => {})
     return () => { cancelled = true }

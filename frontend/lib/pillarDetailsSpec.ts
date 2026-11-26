@@ -232,6 +232,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
       { label: 'How each level is admitted', path: 'summary.level_access', format: 'text' },
       { label: 'Best options (rating, miles away)', path: 'summary.best_options', format: 'text' },
       { label: 'Which schools count', path: 'summary.level_sources', format: 'text' },
+      { label: 'Estimated ratings', path: 'summary.estimated_ratings', format: 'text' },
       { label: 'Levels with a rated school', path: 'summary.levels_scored', format: 'text' },
       { label: 'Attendance-zone map year', path: 'summary.zone_map_years', format: 'text' },
       { label: 'Schools with ratings', path: 'summary.total_schools_rated', format: 'count', suffix: ' schools' },

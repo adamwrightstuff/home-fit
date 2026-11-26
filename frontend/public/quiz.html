@@ -641,14 +641,14 @@ const QUESTIONS = [
   {
     id: 'bedrooms',
     showIf: () => answers.budget === 'value' || answers.budget === 'balanced',
-    q: 'How many bedrooms do you need?',
+    q: 'What is the fewest bedrooms that would work?',
     sub: 'Used to estimate what a home costs in each place.',
     opts: [
-      { id: '1', icon: '🛏️', label: '1 bedroom',    desc: '' },
-      { id: '2', icon: '🛏️', label: '2 bedrooms',   desc: '' },
-      { id: '3', icon: '🛏️', label: '3 bedrooms',   desc: '' },
-      { id: '4', icon: '🛏️', label: '4 bedrooms',   desc: '' },
-      { id: '5', icon: '🛏️', label: '5 or more',    desc: '' },
+      { id: '1', icon: '🛏️', label: '1 or more',     desc: '' },
+      { id: '2', icon: '🛏️', label: '2 or more',     desc: '' },
+      { id: '3', icon: '🛏️', label: '3 or more',     desc: '' },
+      { id: '4', icon: '🛏️', label: '4 or more',     desc: '' },
+      { id: '5', icon: '🛏️', label: '5 or more',     desc: '' },
     ],
     apply() { /* filter only */ }
   },
@@ -932,7 +932,7 @@ function renderResults() {
   const housingNote = housingPicks.map(p => housingLabels[p]).filter(Boolean).join(' or ')
   const sceneNote = { real: 'Local scene: Lively or Buzzing', some: 'Local scene: Flat or better' }[answers.scene] || ''
   const budgetNote = shown('bedrooms')
-    ? `${answers.bedrooms === '5' ? '5+' : answers.bedrooms} bedrooms` + (/^\d+$/.test(ans('budget_cap') || '') ? `, up to $${Number(answers.budget_cap).toLocaleString('en-US')}/mo` : '')
+    ? `${answers.bedrooms}+ bedrooms` + (/^\d+$/.test(ans('budget_cap') || '') ? `, up to $${Number(answers.budget_cap).toLocaleString('en-US')}/mo` : '')
     : ''
   const filterNotes = [politicalNote, commuteNote, stabilityNote, sceneNote, outdoorsNote, sceneryNote, housingNote, budgetNote, ...weatherNotes].filter(Boolean)
 

@@ -231,3 +231,167 @@ Level 2 status: signed off by the owner with recorded gaps (not a clean pass): t
 file, modeled data, 58 percent of places, with PA, CO and OR in neither CDC release; the county-level test failed; two of three
 "should differ" launch pairs failed under v18 (Dogpatch/Gary, Parker/Clarkston); pin-shift covers tract parts only; weights are
 design judgments; the mobility test (Atlas) passed but is not this pillar's goal.
+
+### v20 (2026-11-24): IRS nonprofits out of participation, civic spots at weight 0
+
+Final blend: economic connectedness 0.2174, participation 0.5217, cohesion 0.1739, rootedness 0.0870, civic 0 (the v18 weights
+divided by 0.92). Participation is Atlas ZIP volunteering (CPS state fallback), then 65/35 with the Atlas civic-organization
+score; the IRS registered-nonprofit rate stays in the summary as a diagnostic. OSM civic gathering spots stay in the breakdown
+(`peer_civic`) as a diagnostic and no longer mark the pillar degraded.
+
+Evidence (`analysis/social_fabric_felt_validation_2026-11-24.md`, `analysis/social_fabric_ablation_2026-11-24.md`): against CDC
+PLACES ZIP-level loneliness and lack of social and emotional support (612 places), IRS nonprofits ran the wrong way (-0.12 and
+-0.18) and civic nodes showed no relation (+0.06 and -0.06); removing both raised the match from 0.682 to 0.711 (support) and
+0.518 to 0.553 (loneliness). The weights themselves remain a judgment call: weights fitted to the same outcome with whole metros
+held out did no better than the v18 weights.
+
+Scope: the pillar is a ZIP-level, Atlas-driven read of felt connection. It cannot see differences between blocks inside a ZIP,
+and no data in the repo measures how connected one neighborhood feels to its residents. Catalog files are not yet recomputed;
+run `scripts/catalog/recompute_social_fabric_v20_offline.py` into a new directory, then `recompute_catalog_composites.py`.
+
+### v21 (2026-11-25): cohesion is the Atlas support ratio only; two other changes tested and rejected
+
+Change shipped: `cohesion` = Atlas support-ratio score against area-type peers; clustering stays in the summary as a diagnostic
+(`cohesion_clustering`, `cohesion_clustering_score`). Reason: friendship clustering is mechanically lower where more ties are
+possible, which the Atlas shows as lower clustering in dense ZIPs (urban_core p50 0.082 vs rural 0.110), and area-type bands only
+partly remove that. Weights unchanged from v20 (EC 0.2174, participation 0.5217, cohesion 0.1739, rootedness 0.0870, civic 0);
+recompute with `recompute_social_fabric_v20_offline.py` then `recompute_social_fabric_v21_offline.py`, then
+`recompute_catalog_composites.py --no-census`. Cohesion is left out (weights rescale, principle 9) when the ZIP has no support value.
+
+Independent validation (principle 7), CDC PLACES ZCTA 2025 loneliness and lack of social and emotional support, sign flipped,
+Spearman, 810 places with all inputs (computed offline from stored components; criterion set before the run: adopt only if the
+match with both outcomes does not fall by more than 0.02):
+
+| Variant | Lack of support | Loneliness | Decision |
+|---|---|---|---|
+| v20 | 0.622 | 0.543 | baseline |
+| v21 support-only cohesion | 0.603 | 0.576 | adopted (-0.019 and +0.033) |
+| v20 with EC weight 0 | 0.576 | 0.517 | rejected, falls on both |
+| volunteering scored against density-band peers | 0.572 | 0.486 | rejected, falls on both |
+| support-only plus density-band volunteering | 0.560 | 0.515 | rejected |
+| support-only plus EC weight 0 | 0.509 | 0.489 | rejected |
+
+EC weight stays 0.20 (recorded range 0.15 to 0.45): the 2026-11-04 owner decision already reversed removing it for the same
+reason, and EC is the only input with tier 1 evidence (Chetty 2022). Density-band volunteering would add another score keyed on
+density and fails the felt-connection check; a continuous-density baseline (principle 14) fit on 23,019 Atlas ZIPs, split-half
+median score difference 0.4, did no better than the area-type version and was not shipped. Caveat: PLACES values are modeled and
+partly affluence-driven, so this check favors affluent places by construction.
+
+All-places check (principle 8, n=1,459 with a score, offline): v20 to v21 median absolute move 1.7, p95 6.3, max 17.2. Mean move by
+area type: exurban +1.2 (n=382), suburban +1.2 (734), rural +1.4 (145), urban_residential -0.7 (192). Dense places do not gain on
+average; the support-only change helps some (Carroll Gardens 48.8 to 53.8, Larchmont 59.2 to 63.4, Glen Ridge 73.4 to 78.0,
+Hastings-on-Hudson 78.4 to 80.8) and lowers others. Floor/ceiling: none at or below 5 or at or above 95 (range 22.6 to 92.1).
+SD by area type: 9.5 to 11.9, all above 6.
+Launch pairs: similar pairs pass (Sunnyvale/Campbell 2.0, Potrero Hill/Dogpatch 3.5). Differ pairs fail as under v18 and v20
+(Mission District 52.3 vs Homestead 44.7 is 7.6; Dogpatch 47.0 vs Gary 51.3 is 4.3; Parker 51.9 vs Clarkston 49.2 is 2.7); a
+recorded gap, not fixed here.
+Weight perturbation (offline, n=1,459, pass rule fixed 2026-11-03: median move at most 5, p95 at most 15): PASS. EC weight 0.15 moves scores a
+median 0.6 (p95 2.5, max 4.3); EC 0.45 median 1.6 (p95 6.4, max 10.8); participation weight -0.10 median 1.4 (p95 3.7); +0.10 median 1.4
+(p95 3.4), rest rescaled each time.
+Pin-shift (live Census calls, `scripts/catalog/social_fabric_pin_shift.py`, 2026-11-25, pass rule: median 3 or less, p95 10 or less at 400 m): PASS.
+101 places (up to 25 per area type; urban_core has only 1), 404 shifts N/S/E/W. Score change median 0.0, p95 2.4, max 5.6 (Red Hook NY);
+by area type p95 2.0 (exurban, rural), 2.4 (suburban), 3.3 (urban_residential). The pin tract changed in 170 of 404 shifts; those moved a
+median 0.9, p95 3.3. Covers the tract-based rootedness input only: ZIP-based Atlas inputs (participation, cohesion, EC) were held fixed, so a
+shift across a ZIP boundary is untested; the above-85% home-value exemption was skipped.
+Not done: the 18 places with no social fabric score are unchanged. Ridgewood NJ
+(0 civic nodes) scores 69.0 from Atlas cohesion 85.1, participation 59.5 and rootedness 93.8; civic nodes have weight 0, so thin
+OSM data does not move it. Last re-validated: 2026-11-25 (offline).
+
+#### v21 fix (2026-11-25): rootedness gap filled from stored scores
+
+Found while checking the failing launch pairs: 150 places with a stored stability percent and band score (`summary.rooted_pct`) had a
+null `breakdown.rootedness`, so rootedness was left out of the blend and the rest rescaled (Mission District and Dogpatch among
+them). The score was already stored, so `recompute_social_fabric_v21_offline.py` now fills it (no API calls; flag
+`summary.rootedness_filled_offline`; 30 of the 150 are above 85%, where the stored band score is before the home-value exemption and so
+conservative). Catalog redone: v20 script, then v21 script, then `recompute_catalog_composites.py --no-census`.
+Effect: 150 places moved, median 3.2, max 7.8; nobody else changed. Felt-connection match (853 places with outcomes): v20 0.605 support /
+0.529 loneliness; v21 before the fill 0.604 / 0.558; after 0.596 / 0.553 (within the 0.02 rule). Floor and ceiling still none; SD by area
+type 9.5 to 12.0.
+Launch pairs after the fill: Mission District 56.1 vs Homestead 44.7 (11.4, now passes size); Dogpatch 50.2 vs Gary 51.3 (1.1) and Parker
+51.9 vs Clarkston 49.2 (2.7) still fail; similar pairs: Sunnyvale/Campbell 1.0 passes, Potrero Hill 57.1/Dogpatch 50.2 (6.9) now fails
+the 6-point rule (it was 3.5 before the fill). The two remaining differ-pair failures are not fixed: both gaps trace to high economic
+connectedness offsetting low cohesion or participation, and changing weights to move them would be tuning to targets (principle 1).
+Carroll Gardens 53.8, Larchmont 63.4, Hastings-on-Hudson 80.8, Glen Ridge 78.0 (unchanged by the fill).
+
+Potrero Hill / Dogpatch "similar" pair (6.9 points, rule 6): investigated, not changed. Before the rootedness fill both places lacked
+rootedness, so the pair agreed by omission (3.5). The 6.9 gap comes from stored inputs that really differ: Atlas civic-organization score
+27.2 (ZIP 94158) vs 45.3 (94107), and pin-tract 10+ year tenure 42% vs 67% (Dogpatch is recent redevelopment), which put participation at
+37.2 vs 48.2 and rootedness at 82.7 vs 95.0. Cohesion (10.4 vs 11.4) and economic connectedness (100 and 100) match. Moving the pair
+together would mean changing a weight or curve to hit a target (principle 1); the pair's expected similarity is an owner call to confirm or
+retire, and the pass rule was fixed in advance so it stays as written. Result: this pair fails by 0.9.
+
+Decision (owner, 2026-11-25): the Potrero Hill / Dogpatch "similar" launch pair is retired. The two neighborhoods differ in measured inputs
+(ZIP civic-organization score, pin-tract tenure), so expected similarity is not supported. Remaining launch pairs: similar Sunnyvale/Campbell
+(1.0, passes); differ Mission District/Homestead (11.4, passes), Dogpatch/Gary (1.1, fails), Parker/Clarkston (2.7, fails). The rule
+thresholds are unchanged. Dogpatch/Gary and Parker/Clarkston stay recorded gaps.
+
+Decision (owner, 2026-11-25): the Dogpatch / Gary "differ" launch pair is retired. Gary scores higher on cohesion (77.4 vs 10.4) and rootedness
+(97.9 vs 82.7), Dogpatch on economic connectedness (100 vs 34.7), and the pair carried no recorded expected direction, so required
+separation is not supported. Remaining launch pairs: similar Sunnyvale/Campbell (1.0, passes); differ Mission District/Homestead (11.4,
+passes) and Parker/Clarkston (2.7, fails, recorded gap).
+
+### Evidence table (2026-11-25): what published work supports each input
+
+Method: standard web searches read from result summaries only; the papers themselves were not read in full. Evidence tiers follow DPv2 (1 published study, 2 revealed-preference proxy, 3 survey). "Our CDC check" is the Spearman of that input alone against CDC PLACES lack of social and emotional support and loneliness, flipped so higher is better (2026-11-24 file, 612 places); the CDC values are modeled partly from age and income.
+
+| Input (weight) | What it measures here | Published evidence | What that evidence shows, and does not | Our CDC check |
+|---|---|---|---|---|
+| Participation (52%): ZIP volunteering rate and civic-organization membership, Atlas | Share of Facebook users in volunteering and civic groups | Helliwell and Putnam 2004 (civic engagement related to well-being); longitudinal volunteering studies: US two-wave panel 2001, Wisconsin Longitudinal Study 2007, German SOEP 2021 (tier 1) | Individual volunteers report higher well-being; effects are small (r about .09 to .28 in one meta-analysis, mostly cross-sectional) and reverse causation is documented (happier people volunteer more). Nothing found on a ZIP's volunteering rate and its residents' well-being. Chetty 2022 found civic engagement did not predict mobility | 0.45 and 0.36 |
+| Economic connectedness (22%) | Share of high-income friends among low-income people in the ZIP | Chetty et al. 2022, Nature (tier 1) | Among the strongest predictors of upward income mobility (about +20% adult income if low-income children grew up at the average high-income level). No study found linking it to happiness or felt connection | 0.67 and 0.54, but the CDC data is affluence-linked, so this favors it |
+| Cohesion (17%): Atlas support ratio | How often friendships are mutually supportive (clustering is shown, not scored) | Helliwell and Putnam 2004 (neighbor ties related to well-being); neighborhood cohesion and collective efficacy studies, e.g. Miami-Dade (tier 1, thin) | Neighbor ties and trust relate to well-being at the individual level; neighborhood-level evidence is thinner and includes a student thesis. Chetty 2022: bonding cohesion did not predict mobility. The support-ratio definition was not confirmed from the paper | 0.31 and 0.28 |
+| Rootedness (9%): 10+ year tenure and same-house rate | Residential stability | Sampson, Raudenbush and Earls 1997, Science (tier 1) | Stable neighborhoods have higher collective efficacy, which mediates much of the link to lower violence; ties take time to form. Wilson caveat: tight ties in poor areas do not always produce collective action. No direct link to happiness | 0.02 and 0.17 |
+| Civic gathering spots (0%): OSM and Places venue counts | Venues, hangouts, civic nodes per area | None found | No study found tying venue counts to felt connection | about 0.06 and -0.06 (none) |
+| Trust and belonging (not in the pillar) | People's trust in neighbors and sense of belonging | Helliwell and Barrington-Leigh (NBER w16025); Helliwell et al. (NBER w23761) (tier 1) | The strongest and most consistent predictor of well-being, beyond income. We have no input for it | n/a |
+
+Reading: the best-supported happiness link (trust and belonging) has no input in the pillar. Every weight is a design judgment; no cited study provides a weight, and no study found links a ZIP-level Atlas measure to its residents' well-being. Economic connectedness has strong evidence for mobility, not for happiness, which matters for the pillar's stated construct (felt connection). Evidence gaps to close before re-weighting: a source for the Atlas support-ratio definition, a ZIP- or tract-level trust measure, and a felt-connection outcome that is not modeled from income.
+
+Sources: Helliwell and Putnam 2004 (https://pmc.ncbi.nlm.nih.gov/articles/PMC1693420); Helliwell and Barrington-Leigh (https://www.nber.org/papers/w16025); Helliwell et al. (https://www.nber.org/papers/w23761.pdf); Chetty et al. 2022 (https://www.nber.org/papers/w30313); Sampson, Raudenbush and Earls 1997 (https://www.biostat.jhsph.edu/~fdominic/teaching/bio656/references/sampson.science.pdf); volunteering and well-being (https://pubmed.ncbi.nlm.nih.gov/11467248/, https://pubmed.ncbi.nlm.nih.gov/18198690/, https://link.springer.com/article/10.1007%2Fs10902-021-00480-4); Miami-Dade cohesion (https://nij.ojp.gov/topics/articles/neighborhoods-and-crime-collective-efficacy-and-social-cohesion-miami-dade-county).
+
+### v22 (2026-11-25, owner decision): participation 0.60, cohesion 0.20, rootedness 0.20; economic connectedness and civic spots shown, not scored
+
+Construct (owner's words): a place where someone can move and connect, with a community feel; neighbor connection, not upward mobility, and
+symptoms of a place more than things people do. Economic connectedness (cross-income friendships; Chetty 2022 shows it predicts upward
+mobility, not felt connection) is therefore diagnostic only. This is outside the 0.15 to 0.45 range recorded under DPv2; the owner approved it.
+Weights are design judgments, not sourced values. Catalog redone offline from the v20 recompute (v20 script, v21 script, then
+`recompute_catalog_composites.py --no-census`).
+
+What it was tested against (all outside the pillar's inputs):
+- Census CPS Civic Engagement and Volunteering supplement, 2021 and 2023 microdata, neighbor items PES4 (talk with neighbors), PES6 (favors),
+  PES7 (got together for the neighborhood), weighted by metro, 21 catalog metros (205 to 3,303 respondents each). Spearman of our metro mean
+  with the three items averaged: current 0.53, v22 0.56 (best of 10,626 weight combinations 0.59; fitted on 20 metros and tested on the 21st the
+  search averages 0.38, so the weights are not pinned down by this data).
+- County Health Rankings 2025 loneliness and lack of social and emotional support, county median income held constant (n=986 places):
+  loneliness 0.04 to 0.14, support 0.07 to 0.17 (current to v22).
+- CDC PLACES ZIP estimates (modeled from BRFSS, age and income; favors affluent places), age shares held constant: support 0.56 to 0.46,
+  loneliness 0.46 to 0.43. This falls, as expected, because the input that matched that data best (economic connectedness) is now unscored.
+- Newcomer proxies (renters and adults 18 to 34, same survey): the score tracks their neighbor behavior about as well as owners' and older
+  adults' (+0.35 to +0.59), but the sample is as small as 39 per metro and nothing here measures whether a place is easy to join; no outside
+  dataset with newcomers' connection by place was found (best candidate: Knight Soul of the Community 2010, ICPSR 35532, 26 communities,
+  few overlap ours).
+
+Effects (offline, n=1,459 scored; the same 1,459 as v21): median move from stored 5.0, p95 13.9, max 20.5; range 27.3 to 91.6; none at or
+below 5 or at or above 95; SD by area type 8.2 (urban_residential) to 10.5. Mean by area type: urban_residential 52.3, suburban 55.3,
+exurban 55.7, rural 54.4; the suburban lead over urban_residential is about 3 points (it was 1.7). Carroll Gardens 59.5, Larchmont 63.0,
+Hastings-on-Hudson 85.9, Glen Ridge 80.2. Launch pairs: Mission District 49.0 vs Homestead 59.7 (10.7, passes on size, direction reversed from
+v21); Parker 44.9 vs Clarkston 53.7 (8.8, fails); Sunnyvale 52.9 vs Campbell 53.2 (0.3, passes).
+
+Build note: a first v22 run left 43 places (Chappaqua NY, Chatham NJ, Katonah NY, Sunnyvale CA and others) with no score. Cause: the stability
+band score was stored in `summary.rooted_pct` but null in `breakdown.rootedness`, and the v20 step ran before the v21 fill, so those places
+had only participation scored (economic connectedness no longer counts) and were dropped as "too few components". The fill now also runs in the
+v20 script; all 1,459 places score and the fail-loud rule is unchanged.
+Recorded gaps: no outcome measures newcomers' connection or neighbor connection inside a metro; the 21-metro survey check cannot separate
+cohesion from rootedness; pin-shift and weight-perturbation were last run for v21 and were not rerun for v22.
+Sources: CPS CEV microdata (https://census.gov/newsroom/press-releases/2024/civic-engagement-volunteering-supplement.html), County Health
+Rankings 2025 (https://www.countyhealthrankings.org), CDC PLACES ZCTA 2025 (https://data.cdc.gov/resource/qnzd-25i4).
+
+#### v22 sensitivity checks (2026-11-25)
+
+Weight perturbation (offline, n=1,459; pass rule: median 5 or less, p95 15 or less; one weight moved 0.10, rest rescaled): PASS. Participation
+-0.10 / +0.10: median 2.2, p95 5.3 / 5.1, max 7.0. Cohesion: median 2.1, p95 5.5, max 7.7. Rootedness: median 4.6, p95 7.2 / 7.1, max 9.7 / 9.1
+(closest to the line).
+Pin-shift (live Census calls, `scripts/catalog/social_fabric_pin_shift.py`, 101 places, 404 shifts of 400 m N/S/E/W; pass rule: median 3 or less,
+p95 10 or less): PASS. Median 0.0, p95 5.5, max 12.8 (Red Hook NY); by area type p95 3.3 (rural), 4.5 (exurban), 5.5 (suburban), 7.3
+(urban_residential). The pin tract changed in 170 of 404 shifts; those moved a median 1.9, p95 6.6. Under v21 the p95 was 2.4 and the max 5.6; the
+increase comes from rootedness (the only tract-based input) going from 9% to 20% of the score. A 400 m shift in a dense area can move a place by
+more than 10 points (two shifts at Red Hook and one at Glendale NY exceed 10). Not tested: a shift across a ZIP boundary (Atlas inputs held
+fixed); the above-85% home-value exemption was skipped.

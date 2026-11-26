@@ -1,0 +1,676 @@
+{
+ "meta": {
+  "calibration_pairs": 685,
+  "method": "isotonic fit of SchoolDigger statewide percentile on tested-weighted percent proficient",
+  "min_tested": 20,
+  "source": "NYSED SRC2024 Annual Regents Exams, 2024, all students"
+ },
+ "schools": {
+  "360001000566": {
+   "name": "Cobleskill-Richmondville High School",
+   "rating": 60.63,
+   "regents_pct_proficient": 76.2,
+   "tested": 827
+  },
+  "360001701925": {
+   "name": "Genesee Valley Central School",
+   "rating": 68.75,
+   "regents_pct_proficient": 81.6,
+   "tested": 279
+  },
+  "360003804346": {
+   "name": "Tapestry Charter School",
+   "rating": 13.76,
+   "regents_pct_proficient": 41.6,
+   "tested": 890
+  },
+  "360005404452": {
+   "name": "KIPP Academy Charter School",
+   "rating": 60.71,
+   "regents_pct_proficient": 76.3,
+   "tested": 642
+  },
+  "360005904803": {
+   "name": "Renaissance Charter School",
+   "rating": 46.58,
+   "regents_pct_proficient": 65.7,
+   "tested": 532
+  },
+  "360006004847": {
+   "name": "Riverhead Charter School",
+   "rating": 46.76,
+   "regents_pct_proficient": 65.9,
+   "tested": 429
+  },
+  "360006704861": {
+   "name": "Global Concepts Charter School",
+   "rating": 27.45,
+   "regents_pct_proficient": 49.3,
+   "tested": 500
+  },
+  "360006804870": {
+   "name": "Harlem Prep Charter School",
+   "rating": 13.83,
+   "regents_pct_proficient": 42.0,
+   "tested": 1123
+  },
+  "360007600695": {
+   "name": "East Side Community School",
+   "rating": 92.82,
+   "regents_pct_proficient": 92.0,
+   "tested": 111
+  },
+  "360007606296": {
+   "name": "Forsythe Satellite Academy",
+   "rating": 27.63,
+   "regents_pct_proficient": 50.0,
+   "tested": 54
+  },
+  "360007700582": {
+   "name": "Landmark High School",
+   "rating": 41.02,
+   "regents_pct_proficient": 60.0,
+   "tested": 108
+  },
+  "360007700585": {
+   "name": "Vanguard High School",
+   "rating": 47.84,
+   "regents_pct_proficient": 68.0,
+   "tested": 159
+  },
+  "360007700586": {
+   "name": "Manhattan International High School",
+   "rating": 58.66,
+   "regents_pct_proficient": 75.0,
+   "tested": 127
+  },
+  "360007700668": {
+   "name": "Satellite Academy High School",
+   "rating": 34.05,
+   "regents_pct_proficient": 58.0,
+   "tested": 48
+  },
+  "360007702862": {
+   "name": "School Of The Future High School",
+   "rating": 98.02,
+   "regents_pct_proficient": 96.7,
+   "tested": 126
+  },
+  "360007705623": {
+   "name": "Essex Street Academy",
+   "rating": 86.97,
+   "regents_pct_proficient": 89.0,
+   "tested": 101
+  },
+  "360007706361": {
+   "name": "Harvest Collegiate High School",
+   "rating": 85.51,
+   "regents_pct_proficient": 88.0,
+   "tested": 112
+  },
+  "360007806115": {
+   "name": "Special Music School",
+   "rating": 87.09,
+   "regents_pct_proficient": 89.2,
+   "tested": 415
+  },
+  "360008604879": {
+   "name": "Bronx International High School",
+   "rating": 30.64,
+   "regents_pct_proficient": 53.0,
+   "tested": 118
+  },
+  "360008705797": {
+   "name": "Jonas Bronck Academy",
+   "rating": 45.02,
+   "regents_pct_proficient": 64.2,
+   "tested": 171
+  },
+  "360008706010": {
+   "name": "English Language Learners-Inter Supp",
+   "rating": 9.37,
+   "regents_pct_proficient": 30.8,
+   "tested": 310
+  },
+  "360008706397": {
+   "name": "Bronx Collaborative High School",
+   "rating": 44.77,
+   "regents_pct_proficient": 64.0,
+   "tested": 173
+  },
+  "360008805683": {
+   "name": "Bronx Lab School",
+   "rating": 31.56,
+   "regents_pct_proficient": 54.0,
+   "tested": 80
+  },
+  "360009105927": {
+   "name": "Gotham Professional Arts Academy",
+   "rating": 43.69,
+   "regents_pct_proficient": 63.0,
+   "tested": 92
+  },
+  "360009106774": {
+   "name": "Design Works",
+   "rating": 47.55,
+   "regents_pct_proficient": 67.5,
+   "tested": 241
+  },
+  "360009205864": {
+   "name": "West Brooklyn Community High School",
+   "rating": 50.35,
+   "regents_pct_proficient": 70.0,
+   "tested": 214
+  },
+  "360011105662": {
+   "name": "Pharos Academy Charter School",
+   "rating": 72.54,
+   "regents_pct_proficient": 82.7,
+   "tested": 638
+  },
+  "360011905933": {
+   "name": "Lyons Community School",
+   "rating": 45.84,
+   "regents_pct_proficient": 65.0,
+   "tested": 83
+  },
+  "360014405787": {
+   "name": "South Bronx Charter School",
+   "rating": 48.41,
+   "regents_pct_proficient": 68.8,
+   "tested": 163
+  },
+  "360015205941": {
+   "name": "Leaders High School",
+   "rating": 60.3,
+   "regents_pct_proficient": 76.0,
+   "tested": 110
+  },
+  "360095005995": {
+   "name": "Rochester Academy Charter School",
+   "rating": 12.38,
+   "regents_pct_proficient": 36.1,
+   "tested": 661
+  },
+  "360096606069": {
+   "name": "Brooklyn Ascend Charter School",
+   "rating": 13.36,
+   "regents_pct_proficient": 39.6,
+   "tested": 810
+  },
+  "360098806137": {
+   "name": "Evergreen Charter School",
+   "rating": 13.4,
+   "regents_pct_proficient": 39.8,
+   "tested": 335
+  },
+  "360099706131": {
+   "name": "Academy Charter School",
+   "rating": 46.52,
+   "regents_pct_proficient": 65.6,
+   "tested": 1244
+  },
+  "360100506110": {
+   "name": "Equality Charter School",
+   "rating": 29.59,
+   "regents_pct_proficient": 52.6,
+   "tested": 816
+  },
+  "360101006183": {
+   "name": "Democracy Prep Harlem Charter School",
+   "rating": 20.2,
+   "regents_pct_proficient": 44.1,
+   "tested": 1056
+  },
+  "360101806192": {
+   "name": "Challenge Preparatory Charter School",
+   "rating": 25.62,
+   "regents_pct_proficient": 47.8,
+   "tested": 635
+  },
+  "360104806255": {
+   "name": "Ember Charter School",
+   "rating": 25.57,
+   "regents_pct_proficient": 47.8,
+   "tested": 232
+  },
+  "360116906639": {
+   "name": "Academy Charter School-Uniondale",
+   "rating": 31.8,
+   "regents_pct_proficient": 55.4,
+   "tested": 1021
+  },
+  "360119606691": {
+   "name": "Dream Charter School Mott Haven",
+   "rating": 31.6,
+   "regents_pct_proficient": 54.2,
+   "tested": 986
+  },
+  "360120306678": {
+   "name": "KIPP Bronx Charter School III",
+   "rating": 51.64,
+   "regents_pct_proficient": 70.6,
+   "tested": 1232
+  },
+  "360122706735": {
+   "name": "KIPP Beyond Charter School",
+   "rating": 54.11,
+   "regents_pct_proficient": 73.0,
+   "tested": 90
+  },
+  "360300000076": {
+   "name": "Andes Central School",
+   "rating": 48.3,
+   "regents_pct_proficient": 68.6,
+   "tested": 38
+  },
+  "360306000078": {
+   "name": "Schenevus Central School",
+   "rating": 53.92,
+   "regents_pct_proficient": 71.7,
+   "tested": 173
+  },
+  "360324000085": {
+   "name": "Arkport Central School",
+   "rating": 92.23,
+   "regents_pct_proficient": 91.1,
+   "tested": 303
+  },
+  "360363000117": {
+   "name": "Avoca Central School",
+   "rating": 86.78,
+   "regents_pct_proficient": 88.7,
+   "tested": 219
+  },
+  "360372000121": {
+   "name": "Babylon Junior-Senior High School",
+   "rating": 86.74,
+   "regents_pct_proficient": 88.6,
+   "tested": 1006
+  },
+  "360435000187": {
+   "name": "Belfast School",
+   "rating": 79.48,
+   "regents_pct_proficient": 84.9,
+   "tested": 187
+  },
+  "360437004801": {
+   "name": "Belleville Henderson Central School",
+   "rating": 65.97,
+   "regents_pct_proficient": 79.5,
+   "tested": 257
+  },
+  "360501000240": {
+   "name": "Bolton Central School",
+   "rating": 88.17,
+   "regents_pct_proficient": 89.6,
+   "tested": 116
+  },
+  "360522000246": {
+   "name": "Bradford Central School",
+   "rating": 82.01,
+   "regents_pct_proficient": 86.7,
+   "tested": 127
+  },
+  "360537000271": {
+   "name": "Bridgehampton School",
+   "rating": 65.41,
+   "regents_pct_proficient": 78.7,
+   "tested": 141
+  },
+  "360567000292": {
+   "name": "Brookfield Central School",
+   "rating": 66.25,
+   "regents_pct_proficient": 80.2,
+   "tested": 76
+  },
+  "360636000418": {
+   "name": "Canaseraga School",
+   "rating": 82.49,
+   "regents_pct_proficient": 86.8,
+   "tested": 89
+  },
+  "360705000497": {
+   "name": "Charlotte Valley School",
+   "rating": 46.93,
+   "regents_pct_proficient": 66.2,
+   "tested": 168
+  },
+  "360789000562": {
+   "name": "Clymer Central School",
+   "rating": 64.59,
+   "regents_pct_proficient": 78.2,
+   "tested": 233
+  },
+  "360810000576": {
+   "name": "Colton-Pierrepont Central School",
+   "rating": 86.8,
+   "regents_pct_proficient": 88.7,
+   "tested": 177
+  },
+  "360828000608": {
+   "name": "Copenhagen Central School",
+   "rating": 79.39,
+   "regents_pct_proficient": 84.7,
+   "tested": 249
+  },
+  "360861000661": {
+   "name": "Crown Point Central School",
+   "rating": 45.99,
+   "regents_pct_proficient": 65.1,
+   "tested": 186
+  },
+  "360924000709": {
+   "name": "Downsville Central School",
+   "rating": 68.15,
+   "regents_pct_proficient": 81.4,
+   "tested": 97
+  },
+  "361008000784": {
+   "name": "Eastchester Middle School",
+   "rating": 98.48,
+   "regents_pct_proficient": 100.0,
+   "tested": 271
+  },
+  "361014000387": {
+   "name": "Greenburgh Eleven High School",
+   "rating": 16.72,
+   "regents_pct_proficient": 43.0,
+   "tested": 65
+  },
+  "361026000797": {
+   "name": "Edmeston Central School",
+   "rating": 83.27,
+   "regents_pct_proficient": 87.0,
+   "tested": 192
+  },
+  "361107004552": {
+   "name": "Fillmore Central School",
+   "rating": 79.72,
+   "regents_pct_proficient": 85.4,
+   "tested": 311
+  },
+  "361110000884": {
+   "name": "Fishers Island School",
+   "rating": 71.98,
+   "regents_pct_proficient": 82.4,
+   "tested": 34
+  },
+  "361131000893": {
+   "name": "Fort Edward School",
+   "rating": 54.52,
+   "regents_pct_proficient": 73.2,
+   "tested": 183
+  },
+  "361143000900": {
+   "name": "Franklin Central School",
+   "rating": 47.42,
+   "regents_pct_proficient": 67.2,
+   "tested": 174
+  },
+  "361164000919": {
+   "name": "Friendship Central School",
+   "rating": 89.16,
+   "regents_pct_proficient": 90.0,
+   "tested": 110
+  },
+  "361212000970": {
+   "name": "Gilboa-Conesville Central School",
+   "rating": 55.53,
+   "regents_pct_proficient": 73.5,
+   "tested": 143
+  },
+  "361344004511": {
+   "name": "Hammond Central School",
+   "rating": 89.41,
+   "regents_pct_proficient": 90.1,
+   "tested": 121
+  },
+  "361425001173": {
+   "name": "Hermon-Dekalb Central School",
+   "rating": 51.42,
+   "regents_pct_proficient": 70.5,
+   "tested": 243
+  },
+  "361431001180": {
+   "name": "Heuvelton Central School",
+   "rating": 63.64,
+   "regents_pct_proficient": 77.7,
+   "tested": 271
+  },
+  "361449001203": {
+   "name": "Hinsdale Central School",
+   "rating": 73.02,
+   "regents_pct_proficient": 83.3,
+   "tested": 197
+  },
+  "361488001245": {
+   "name": "Sackets Harbor Central School",
+   "rating": 86.12,
+   "regents_pct_proficient": 88.3,
+   "tested": 297
+  },
+  "361527001285": {
+   "name": "Indian Lake Central School",
+   "rating": 62.3,
+   "regents_pct_proficient": 77.1,
+   "tested": 48
+  },
+  "361572001359": {
+   "name": "Jefferson Central School",
+   "rating": 28.12,
+   "regents_pct_proficient": 50.6,
+   "tested": 85
+  },
+  "361587001372": {
+   "name": "Johnsburg Central School",
+   "rating": 84.66,
+   "regents_pct_proficient": 87.8,
+   "tested": 190
+  },
+  "361614001394": {
+   "name": "Keene Central School",
+   "rating": 98.39,
+   "regents_pct_proficient": 98.4,
+   "tested": 124
+  },
+  "361638001446": {
+   "name": "La Fargeville Central School",
+   "rating": 80.27,
+   "regents_pct_proficient": 86.2,
+   "tested": 268
+  },
+  "361680001498": {
+   "name": "Laurens Central School",
+   "rating": 53.38,
+   "regents_pct_proficient": 71.3,
+   "tested": 167
+  },
+  "361696001508": {
+   "name": "North Warren Central School",
+   "rating": 58.17,
+   "regents_pct_proficient": 74.7,
+   "tested": 316
+  },
+  "361743001553": {
+   "name": "Lisbon Central School",
+   "rating": 88.55,
+   "regents_pct_proficient": 89.8,
+   "tested": 331
+  },
+  "361776001601": {
+   "name": "Long Lake Central School",
+   "rating": 80.89,
+   "regents_pct_proficient": 86.4,
+   "tested": 22
+  },
+  "361788001604": {
+   "name": "Lyme Central School",
+   "rating": 68.9,
+   "regents_pct_proficient": 81.9,
+   "tested": 209
+  },
+  "361808001616": {
+   "name": "Madison Central School",
+   "rating": 46.87,
+   "regents_pct_proficient": 66.1,
+   "tested": 227
+  },
+  "361851001667": {
+   "name": "Margaretville Central School",
+   "rating": 72.62,
+   "regents_pct_proficient": 82.8,
+   "tested": 173
+  },
+  "361935001769": {
+   "name": "Milford Central School",
+   "rating": 79.08,
+   "regents_pct_proficient": 84.1,
+   "tested": 195
+  },
+  "361953001782": {
+   "name": "Minerva Central School",
+   "rating": 26.31,
+   "regents_pct_proficient": 48.3,
+   "tested": 56
+  },
+  "361986001816": {
+   "name": "Morris Central School",
+   "rating": 83.39,
+   "regents_pct_proficient": 87.3,
+   "tested": 181
+  },
+  "361989001817": {
+   "name": "Morristown Central School",
+   "rating": 91.07,
+   "regents_pct_proficient": 90.5,
+   "tested": 202
+  },
+  "362073002918": {
+   "name": "Newcomb Central School",
+   "rating": 60.3,
+   "regents_pct_proficient": 76.0,
+   "tested": 25
+  },
+  "362210003132": {
+   "name": "Otselic Valley Central School",
+   "rating": 49.06,
+   "regents_pct_proficient": 69.5,
+   "tested": 155
+  },
+  "362220003142": {
+   "name": "Owen D Young Central School",
+   "rating": 65.83,
+   "regents_pct_proficient": 79.4,
+   "tested": 82
+  },
+  "362379003310": {
+   "name": "Prattsburgh Central School",
+   "rating": 84.99,
+   "regents_pct_proficient": 87.9,
+   "tested": 164
+  },
+  "362475003424": {
+   "name": "School 58-World Of Inquiry School",
+   "rating": 6.67,
+   "regents_pct_proficient": 28.0,
+   "tested": 755
+  },
+  "362493004369": {
+   "name": "Romulus Central School",
+   "rating": 65.33,
+   "regents_pct_proficient": 78.6,
+   "tested": 296
+  },
+  "362511003473": {
+   "name": "Roxbury Central School",
+   "rating": 72.27,
+   "regents_pct_proficient": 82.4,
+   "tested": 120
+  },
+  "362613003599": {
+   "name": "Schroon Lake Central School",
+   "rating": 54.05,
+   "regents_pct_proficient": 72.6,
+   "tested": 131
+  },
+  "362619003604": {
+   "name": "Scio Central School",
+   "rating": 56.31,
+   "regents_pct_proficient": 73.7,
+   "tested": 122
+  },
+  "362658003631": {
+   "name": "Sharon Springs Central School",
+   "rating": 47.45,
+   "regents_pct_proficient": 67.3,
+   "tested": 150
+  },
+  "362664003632": {
+   "name": "Shelter Island School",
+   "rating": 58.28,
+   "regents_pct_proficient": 74.8,
+   "tested": 123
+  },
+  "362733003730": {
+   "name": "South Kortright Central School",
+   "rating": 91.97,
+   "regents_pct_proficient": 90.9,
+   "tested": 176
+  },
+  "362802003796": {
+   "name": "Stamford Central School",
+   "rating": 49.39,
+   "regents_pct_proficient": 69.7,
+   "tested": 171
+  },
+  "362814003801": {
+   "name": "Stockbridge Valley Central School",
+   "rating": 66.44,
+   "regents_pct_proficient": 80.6,
+   "tested": 222
+  },
+  "362880003908": {
+   "name": "Town Of Webb School",
+   "rating": 79.55,
+   "regents_pct_proficient": 85.0,
+   "tested": 153
+  },
+  "363045004096": {
+   "name": "Wells School",
+   "rating": 48.21,
+   "regents_pct_proficient": 68.5,
+   "tested": 111
+  },
+  "363090004153": {
+   "name": "West Valley Central School",
+   "rating": 44.82,
+   "regents_pct_proficient": 64.0,
+   "tested": 111
+  },
+  "363150004220": {
+   "name": "Willsboro Central School",
+   "rating": 65.88,
+   "regents_pct_proficient": 79.4,
+   "tested": 117
+  },
+  "363159004225": {
+   "name": "Windham Ashland Central School",
+   "rating": 71.74,
+   "regents_pct_proficient": 82.3,
+   "tested": 202
+  },
+  "363174004232": {
+   "name": "Worcester School",
+   "rating": 69.82,
+   "regents_pct_proficient": 82.1,
+   "tested": 184
+  },
+  "363192004247": {
+   "name": "Yonkers Montessori Academy",
+   "rating": 46.08,
+   "regents_pct_proficient": 65.2,
+   "tested": 861
+  }
+ }
+}

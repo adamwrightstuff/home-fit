@@ -8,7 +8,6 @@ recomputed from the stored airport list. community_safety and natural_beauty are
 Then recomputes totals and composites for the row.
 
 Usage: PYTHONPATH=. python3 scripts/manual/rescore_place_area_type.py "Financial District" sf
-Follow with: PYTHONPATH=. python3 scripts/catalog/apply_aura.py sf
 """
 import json, re, sys
 from pathlib import Path

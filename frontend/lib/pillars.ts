@@ -165,7 +165,7 @@ export const PILLAR_META: Record<
     icon: '🛒',
     name: 'Daily Amenities',
     description:
-      'Walkable access to restaurants, shops, and everyday errands from your front door, plus the vibrancy of the nearest town center.',
+      'Walkable access to restaurants, shops, and everyday errands from your front door, plus the nearest town center.',
   },
   active_outdoors: {
     icon: '🏃',

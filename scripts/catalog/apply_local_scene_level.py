@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+NOTE 2026-11-13: places that carry local_scene_v2.overture are skipped here; their level comes from scripts/catalog/apply_local_scene_hybrid.py.
+
 Offline: write the Local Scene ladder level from each place's stored score.local_scene_v2 facts. No API calls.
 
   score.local_scene_level   the ladder level the Explorer shows (quiet / low_key / lively / buzzing, None = no data)
@@ -84,6 +86,9 @@ def process(path, write=True):
     for r in rows:
         s = r.get("score") if r.get("success") else None
         if not isinstance(s, dict):
+            continue
+        if isinstance((s.get("local_scene_v2") or {}).get("overture"), dict):
+            # the Overture hybrid owns the level for this place (apply_local_scene_hybrid.py, 2026-11-13); do not overwrite it with the OSM-only level
             continue
         if fallback_pin_circle(s):
             fallbacks.append(r["catalog"]["name"])

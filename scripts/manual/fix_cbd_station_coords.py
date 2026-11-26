@@ -57,6 +57,7 @@ MNR_HARLEM = {
     'Tuckahoe':      'Tuckahoe Metro-North Railroad Station, Tuckahoe, NY 10707',
     'Eastchester':   'Tuckahoe Metro-North Railroad Station, Tuckahoe, NY 10707',
     'Scarsdale':     'Scarsdale Metro-North Railroad Station, Scarsdale, NY 10583',
+    'Edgemont':      'Scarsdale Metro-North Railroad Station, Scarsdale, NY 10583',  # 0.64 mi from the Edgemont pin
     'White Plains':  'White Plains Metro-North Railroad Station, White Plains, NY 10601',
     'Pleasantville': 'Pleasantville Metro-North Railroad Station, Pleasantville, NY 10570',
     'Chappaqua':     'Chappaqua Metro-North Railroad Station, Chappaqua, NY 10514',

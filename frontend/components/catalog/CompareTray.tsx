@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import type { CatalogMapPlace } from '@/lib/catalogMapTypes'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
-import { bedsLabel, costGapReason, costSummary, type BudgetFilter } from '@/lib/budgetCost'
+import { bedLabel, bedsPhrase, costGapReason, costSummary, minBeds, type BudgetFilter } from '@/lib/budgetCost'
 
 interface CompareTrayProps {
   compareIds: string[]
@@ -31,8 +31,8 @@ export default function CompareTray({ compareIds, places, lookupPlaces, onRemove
     if (!found) return null
     const text = costSummary(found.housing_cost, budget)
     const title = text === 'no cost'
-      ? `No ${bedsLabel(budget.beds)}-bed cost: ${costGapReason(found.housing_cost, budget)}`
-      : `Estimated monthly cost for a ${bedsLabel(budget.beds)}-bedroom home, from your budget settings`
+      ? `No ${bedLabel(minBeds(budget.beds))}+ bed cost: ${costGapReason(found.housing_cost, budget)}`
+      : `Estimated monthly cost for a home with ${bedsPhrase(budget.beds)}, from your budget settings`
     return { text, title }
   }
 

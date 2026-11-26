@@ -216,3 +216,24 @@ Rendered in a browser: every row in the table above marked as browser. Nothing w
 - The explainer bar and the filter sheet say the cost is a single-family and condo mix, not tied to the housing type chips.
 - The quiz asks bedrooms and a monthly cap only when the visitor said price matters ("best value" or "pay more for the right place"); the answers set the same budget the filter sheet edits (one bedroom count, the cap; the down payment stays as it was, default 20%). Checked by running the quiz's own result function: both questions show only for those two answers, and the payload carries the bedrooms and cap (null otherwise). Not checked: the two quiz screens rendered visually, and the signed-in quiz-to-profile save.
 - The owner also asked whether Archetype should be renamed Status signal and removed as a sort; not changed, waiting for the owner's decision.
+
+### Fix log, 2026-11-11 (owner approved: bedrooms as one "or more" minimum)
+
+- The bedroom chips are now a single minimum, like Zillow's and Airbnb's: tapping 3 selects "3 or more" and highlights 3+, 4+ and 5+ together. Several separate sizes (such as 3 and 5 without 4) are no longer possible, and the row label no longer shows a range like "3-5 bed": it reads "from ~$7,300/mo · 3+ bed". Older saves that held separate sizes read as their smallest size or more. The quiz asks "What is the fewest bedrooms that would work?" with "1 or more" to "5 or more".
+- Checked in a browser: a saved 3-and-5 selection loads as "3 or more bedrooms" and rows read "3+ bed"; tapping 2+ highlights 2+ to 5+ and saves [2, 3, 4, 5]. Not checked: the quiz screens rendered, signed-in save, the compare tray and in-metro price panel wording.
+- Behavior change to know: a saved single size such as 4 now reads as "4 or more", so with a monthly cap a place can show a 5-bedroom cost where it fits.
+
+### Fix log, 2026-11-11 (owner approved: cap shown on the row; unpriced larger sizes count as over the cap)
+
+- The row says the cap: "~$10,000/mo · 4 bed · biggest under your $10,500 cap" (or "under your $X cap" when the shown size is the largest priced one), and "Over your $X cap" when nothing fits.
+- A chosen size with no price that is LARGER than the smallest priced size no longer keeps a place under the cap: a bigger home is assumed to cost more than a smaller priced one, so it cannot fit either. A smaller unpriced size still keeps the place (it might fit). Effect with 4 or more bedrooms, $450,000 down and a $10,500 cap: the list went from 1,310 to 1,289 places, and Cobble Hill (~$34,700) now reads "Over your $10,500 cap" in search results. This rests on the assumption that cost rises with bedrooms, which holds for the ZIP values we use but is not checked place by place.
+
+### Fix log, 2026-11-16 (owner approved: rebuild the same-metro price panel on the compare page)
+
+- The panel now compares ONE bedroom size in both places: the smallest size you picked that both have a price for. The headline states the answer and the size ("Larchmont is about $3,600/mo less than Carroll Gardens for a 3-bedroom home"). Each place shows one number rounded to $100 with its share of income. Other sizes (with "no price" where a place has none) and the basis sit under "Other sizes and how this is estimated". The California tax note shows only when the metro is a California one. Before, the left side showed a range ($10,961 to $19,725) and the right a single figure, which made the headline look contradictory.
+- Checked in a browser with Larchmont and Carroll Gardens, 3 or more bedrooms, income $400,000: headline, ~$11,000 and ~$14,500, 33% and 44% of income, the size table with 3, 4 and 5+ bed rows. Not checked: phone width, a pair with no common priced size, a California pair, the cap marker. The browser's disk cache failed on the large catalog response in this environment, so the page was reached by a client-side navigation with the cache bypassed.
+
+### Fix log, 2026-11-16 (owner approved: compare page layout at phone width)
+
+- The compare page was broken at 375px independent of the budget panel: the pillar table kept fixed 200px and 80px columns, so the two places were squeezed off the right edge (scores and headings cut), the rating pills were overlapped by the difference bars, and the pinned top bar and scoreboard together took a large share of the screen. Under 640px the top bar and scoreboard now scroll with the page (the bar wraps: back link and names, then the Your HomeFit and Catalog toggle), and each pillar row stacks as the pillar name, the two places side by side with score, tier and confidence, then the difference bar. Desktop is unchanged (checked: sticky header and scoreboard, four columns).
+- Checked at 375px in a browser: 13 pillar rows, none clipped, no horizontal overflow, the header and scoreboard static. Not checked: a real phone, widths between 640px and 768px, rows with "No data for this place" at phone width.

@@ -18,7 +18,6 @@ import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
 import { HOMEFIT_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
-import AuraBadge from '@/components/catalog/AuraBadge'
 import BudgetCostLine from '@/components/catalog/BudgetCostLine'
 import type { BudgetFilter } from '@/lib/budgetCost'
 
@@ -200,7 +199,6 @@ export default function CatalogDetailPanel({
               {allIdx?.trajectory && (
                 <TrajectoryChip trajectory={allIdx.trajectory} />
               )}
-              <AuraBadge aura={place.score.aura ?? null} />
               {place.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
                 <span
                   title="No commute data to your work hub from here (different metro) -- this place isn't scored on commute time, and isn't being helped or hurt by that weight."

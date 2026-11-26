@@ -1,6 +1,6 @@
 'use client'
 
-import { DEFAULT_BUDGET, bedsLabel, bestCost, downLabel, normalizeBeds, overBudget, type BudgetFilter } from '@/lib/budgetCost'
+import { DEFAULT_BUDGET, bedsFrom, bedsPhrase, bestCost, downLabel, normalizeBeds, overBudget, type BudgetFilter } from '@/lib/budgetCost'
 import { normalizeSceneFilter, sceneFilterExcludes, type SceneFilter } from '@/lib/sceneLevels'
 import { neighborhoodHref } from '@/lib/neighborhoodPriorities'
 import { placeSlug } from '@/lib/neighborhoodSlug'
@@ -12,13 +12,13 @@ import { LayoutGrid, List, SlidersHorizontal, X } from 'lucide-react'
 import CatalogMapView from '@/components/catalog/CatalogMapView'
 import CatalogBottomSheet, { findPlaceByKey, type CatalogSheetSnap } from '@/components/catalog/CatalogBottomSheet'
 import CatalogDetailPanel from '@/components/catalog/CatalogDetailPanel'
-import CatalogWeightPanel from '@/components/catalog/CatalogWeightPanel'
+import FitPanel from '@/components/catalog/FitPanel'
 import PillarTwinDrawer from '@/components/catalog/PillarTwinDrawer'
 import TwinFinderPanel from '@/components/catalog/TwinFinderPanel'
 import TwinCandidateDetailContent from '@/components/catalog/TwinCandidateDetailContent'
 import CatalogListView from '@/components/catalog/CatalogListView'
+import Link from 'next/link'
 import HeroBand from '@/components/catalog/HeroBand'
-import FilterSheet from '@/components/catalog/FilterSheet'
 import MetroPicker from '@/components/catalog/MetroPicker'
 import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, haversineMiles, minutesForMode, noRouteToZone } from '@/lib/workZones'
 import IndexInfoButton from '@/components/catalog/IndexInfoButton'
@@ -39,7 +39,7 @@ import {
   type CatalogMapPlace,
   type CatalogMapPlaceWithMetro,
 } from '@/lib/catalogMapTypes'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesQualityEducationLevelFloor, GATE_DEFAULT_LEVEL, QUALITY_EDUCATION_DEALBREAKER_SCORE, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
 import { fetchProfile, saveProfile, type CommuteMode } from '@/lib/userProfile'
 import { ALL_SCHOOL_LEVELS, applyExplorerScoreAdjustments, writeCompareContext, type SchoolLevel } from '@/lib/explorerScoreAdjust'
@@ -104,12 +104,32 @@ function sortPlaces(
   return out
 }
 
-/** Life-stage filter: a place matches a cohort when its share is in the top third of US tracts (percentile 67 or more). */
-const LIFE_STAGE_TOP_PERCENTILE = 67
-function lifeStageMatches(p: any, selected: string[]): boolean {
+/** Life-stage filter: a place matches a cohort when its share ranks in the top third of the catalog places (not of all US tracts).
+ *  Ranking is on the stored national age percentile, which preserves share order. The catalog skews young and urban, so a national
+ *  cutoff passed far more than a third of it (young professionals: 44% at the 67th national percentile). */
+const LIFE_STAGE_TOP_SHARE = 1 / 3
+const LIFE_STAGE_COHORTS = ['children', 'young_professionals', 'older'] as const
+type LifeStageCutoffs = Record<string, number>
+
+function lifeStageCutoffs(places: any[]): LifeStageCutoffs {
+  const out: LifeStageCutoffs = {}
+  for (const c of LIFE_STAGE_COHORTS) {
+    const vals: number[] = []
+    for (const p of places) {
+      const v = p?.score?.livability_pillars?.diversity?.age_percentiles?.[c]
+      if (typeof v === 'number') vals.push(v)
+    }
+    if (vals.length === 0) continue
+    vals.sort((a, b) => a - b)
+    out[c] = vals[Math.min(vals.length - 1, Math.floor(vals.length * (1 - LIFE_STAGE_TOP_SHARE)))]
+  }
+  return out
+}
+
+function lifeStageMatches(p: any, selected: string[], cutoffs: LifeStageCutoffs): boolean {
   const pcts = p?.score?.livability_pillars?.diversity?.age_percentiles
   if (!pcts) return false
-  return selected.some((c) => typeof pcts[c] === 'number' && pcts[c] >= LIFE_STAGE_TOP_PERCENTILE)
+  return selected.some((c) => typeof pcts[c] === 'number' && typeof cutoffs[c] === 'number' && pcts[c] >= cutoffs[c])
 }
 
 export default function CatalogPageClient({
@@ -157,7 +177,7 @@ export default function CatalogPageClient({
     try {
       const o = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')
       const v = Array.isArray(o?.diversity_preference) ? o.diversity_preference : Array.isArray(o?.filters?.filterLifeStage) ? o.filters.filterLifeStage : []
-      return v.filter((c: unknown) => ['children', 'working_age', 'older'].includes(c as string))
+      return v.filter((c: unknown) => ['children', 'young_professionals', 'older'].includes(c as string))
     } catch { return [] }
   })
   useEffect(() => {
@@ -227,12 +247,6 @@ export default function CatalogPageClient({
       return normalizeSceneFilter(v)
     } catch { return [] }
   })
-  const [filterAura, setFilterAura] = useState<boolean>(() => {
-    try {
-      const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
-      return f?.filterAura === true
-    } catch { return false }
-  })
   const [filterCommuteMax, setFilterCommuteMax] = useState<'all' | '15' | '30' | '45' | '60'>(() => {
     try {
       const f = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters
@@ -273,20 +287,47 @@ export default function CatalogPageClient({
   // doesn't reset every visit the way search filters should.
   const [people, setPeople] = useState<SocialConnectionPerson[]>([])
   useEffect(() => { setPeople(loadPeople()) }, [])
-/** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
+/** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see FitPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>(() => {
     try {
       const parsed = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')
       return parsed?.dealbreakers && typeof parsed.dealbreakers === 'object' ? parsed.dealbreakers : {}
     } catch { return {} }
   })
+  // One minimum for the Schools dealbreaker, applied to every selected grade level (state percentile, 0-100).
+  const [schoolMinScore, setSchoolMinScore] = useState<number>(() => {
+    try {
+      const v = Number(JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.schoolMinScore)
+      if (Number.isFinite(v) && v >= 0 && v <= 100) return v
+      // Saved before the minimum existed: the old on/off dealbreaker meant the state median.
+      const old = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.dealbreakers?.quality_education
+      return old ? QUALITY_EDUCATION_DEALBREAKER_SCORE : 0
+    } catch { return 0 }
+  })
+  // Strictness of the other gates (0 = Any). A gate switched on in an older session has no level here and keeps
+  // its original cutoff (GATE_DEFAULT_LEVEL).
+  const [gateLevels, setGateLevels] = useState<Record<string, number>>(() => {
+    try {
+      const g = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.gateLevels
+      return g && typeof g === 'object' ? g : {}
+    } catch { return {} }
+  })
+  const pickGate = useCallback((key: PillarKey, level: number) => {
+    setGateLevels((prev) => ({ ...prev, [key]: level }))
+    setDealbreakers((prev) => ({ ...prev, [key]: level > 0 }))
+  }, [])
+  // The pick (0 = Any) is the whole control; the dealbreaker flag just follows it.
+  const pickSchoolMin = useCallback((v: number) => {
+    setSchoolMinScore(v)
+    setDealbreakers((prev) => ({ ...prev, quality_education: v > 0 }))
+  }, [])
   const toggleDealbreaker = useCallback((key: PillarKey) => {
     setDealbreakers((prev) => ({ ...prev, [key]: !prev[key] }))
   }, [])
   const [showExcluded, setShowExcluded] = useState(false)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [snap, setSnap] = useState<CatalogSheetSnap>('peek')
-  const [weightOpen, setWeightOpen] = useState(false)
+  const [fitOpen, setFitOpen] = useState(false)
   const [showQuiz, setShowQuiz] = useState(false)
   const [twinPillarOpen, setTwinPillarOpen] = useState(false)
   const [layoutVersion, setLayoutVersion] = useState(0)
@@ -322,7 +363,6 @@ export default function CatalogPageClient({
     return null
   })
   const [compareIds, setCompareIds] = useState<string[]>([])
-  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [hoverInfo, setHoverInfo] = useState<{ key: string; x: number; y: number } | null>(null)
 
   const handleCompareToggle = useCallback((key: string) => {
@@ -376,6 +416,8 @@ export default function CatalogPageClient({
         ...opts,
         priorities,
         dealbreakers,
+        schoolMinScore,
+        gateLevels,
         filters: {
           ...(opts.filters ?? {}),
           filterAreaTypes,
@@ -391,14 +433,13 @@ export default function CatalogPageClient({
           filterSchoolType,
           filterSchoolLevels,
           filterLocalScene,
-          filterAura,
           filterCommuteMax,
           workZoneId,
           climatePrefs,
         },
       }))
     } catch { /* ignore */ }
-  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, workZoneId, climatePrefs])
+  }, [user, priorities, dealbreakers, schoolMinScore, gateLevels, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterCommuteMax, workZoneId, climatePrefs])
 
   useEffect(() => {
     const ac = new AbortController()
@@ -407,7 +448,7 @@ export default function CatalogPageClient({
     setPlaces([])
     ;(async () => {
       try {
-        const r = await fetch('/api/catalog-map?metro=all', { signal: ac.signal })
+        const r = await fetch('/api/catalog-map/all', { signal: ac.signal })
         if (ac.signal.aborted) return
         const j = (await r.json()) as {
           places?: CatalogMapPlaceWithMetro[]
@@ -467,6 +508,9 @@ export default function CatalogPageClient({
           setPriorities(merged)
         }
         if (opts.dealbreakers && typeof opts.dealbreakers === 'object') setDealbreakers(opts.dealbreakers)
+        if (typeof opts.schoolMinScore === 'number' && opts.schoolMinScore >= 0 && opts.schoolMinScore <= 100) setSchoolMinScore(opts.schoolMinScore)
+        else if (opts.dealbreakers?.quality_education) setSchoolMinScore(QUALITY_EDUCATION_DEALBREAKER_SCORE)
+        if (opts.gateLevels && typeof opts.gateLevels === 'object') setGateLevels(opts.gateLevels)
         const f = opts.filters
         if (f && typeof f === 'object') {
           if (Array.isArray(f.filterAreaTypes)) setFilterAreaTypes(f.filterAreaTypes)
@@ -493,7 +537,6 @@ export default function CatalogPageClient({
             if (lv.length) setFilterSchoolLevels(lv)
           }
           if (f.filterLocalScene !== undefined) setFilterLocalScene(normalizeSceneFilter(f.filterLocalScene))
-          if (typeof f.filterAura === 'boolean') setFilterAura(f.filterAura)
           if (typeof f.filterCommuteMax === 'string') setFilterCommuteMax(f.filterCommuteMax)
           if (f.climatePrefs && typeof f.climatePrefs === 'object') setClimatePrefs(normalizeClimatePrefs(f.climatePrefs))
         }
@@ -533,6 +576,8 @@ export default function CatalogPageClient({
         body: JSON.stringify({
           priorities,
           dealbreakers,
+          schoolMinScore,
+          gateLevels,
           filters: {
             filterAreaTypes,
             filterArchetypes,
@@ -548,7 +593,6 @@ export default function CatalogPageClient({
             filterSchoolType,
             filterSchoolLevels,
             filterLocalScene,
-            filterAura,
             filterCommuteMax,
             climatePrefs,
           },
@@ -556,7 +600,7 @@ export default function CatalogPageClient({
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterAura, filterCommuteMax, climatePrefs])
+  }, [user, priorities, dealbreakers, schoolMinScore, gateLevels, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterNbTypes, filterAoTypes, filterHousingType, filterBudget, filterTenure, filterSchoolType, filterSchoolLevels, filterLocalScene, filterCommuteMax, climatePrefs])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -725,6 +769,16 @@ export default function CatalogPageClient({
     return Math.round(totals[Math.floor(totals.length / 2)] / 100) * 100
   }, [adjustedPlaces, filterBudget])
 
+  const lifeStageCut = useMemo(() => lifeStageCutoffs(places), [places])
+
+  // Tapping a place swaps in its full detail, which can nudge client-computed scores and reshuffle the list under the
+  // user's finger. The swap pins the current order; the pin only applies while the sort/filter inputs are unchanged.
+  const sortSig = JSON.stringify([sortByName, indexMode, sortDir, filterText, filterMetro, householdIncome, workZoneId, commuteMode, filterSchoolType, filterSchoolLevels, effectivePriorities])
+  const sortSigRef = useRef(sortSig)
+  sortSigRef.current = sortSig
+  const listKeysRef = useRef<string[]>([])
+  const [pinnedOrder, setPinnedOrder] = useState<{ sig: string; ranks: Map<string, number> } | null>(null)
+
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
     let list = adjustedPlaces.filter((p) => {
@@ -741,7 +795,7 @@ export default function CatalogPageClient({
         const tr = normalizeTrajectory(p.score.status_signal_breakdown?.trajectory)
         if (tr && tr !== filterTrajectory) return false
       }
-      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage)) return false
+      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage, lifeStageCut)) return false
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         if (typeof lean !== 'number') return false
@@ -756,7 +810,6 @@ export default function CatalogPageClient({
         if (!matchesAny) return false
       }
       if (sceneFilterExcludes(p.score.local_scene_level, filterLocalScene)) return false
-      if (filterAura && p.score.aura !== true) return false
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) return false
@@ -803,8 +856,15 @@ export default function CatalogPageClient({
       list = list.filter((p) => climateMustHaveFails(p.climate, climatePrefs.must_haves).length === 0)
     }
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
-    return sortPlaces(list, sortKey, sortDir, effectivePriorities)
+    const sorted = sortPlaces(list, sortKey, sortDir, effectivePriorities)
+    if (pinnedOrder && pinnedOrder.sig === sortSig) {
+      const rank = (p: CatalogMapPlace) => pinnedOrder.ranks.get(catalogRowKey(p.catalog)) ?? Number.POSITIVE_INFINITY
+      return [...sorted].sort((a, b) => rank(a) - rank(b))
+    }
+    return sorted
   }, [
+    pinnedOrder,
+    sortSig,
     adjustedPlaces,
     filterText,
     filterMetro,
@@ -813,9 +873,10 @@ export default function CatalogPageClient({
     filterTrajectory,
     filterPoliticalLean,
     filterLifeStage,
+    lifeStageCut,
     filterSchoolType,
     filterLocalScene,
-    filterAura,
+   
     filterCommuteMax,
     filterHousingType,
     filterBudget,
@@ -826,49 +887,51 @@ export default function CatalogPageClient({
     sortDir,
     effectivePriorities,
   ])
+  listKeysRef.current = filteredPlaces.map((p) => catalogRowKey(p.catalog))
 
   /**
    * Deal-breaker gates: excludes places that fail any active dealbreaker, independent of
    * importance weight. Never silently empties the list — if nothing survives, fall back to
    * the unfiltered set rather than showing a blank screen. Add a pillar by adding an entry
-   * here and to DEALBREAKER_PILLARS in CatalogWeightPanel.
+   * here and to GATE in FitPanel.
    */
   const DEALBREAKER_CHECKS: Partial<Record<PillarKey, (p: CatalogMapPlace) => boolean>> = {
-    housing_value: (p) => {
-      const hv = (p.score.livability_pillars as any)?.housing_value
-      const medianHomeValue = Number(hv?.summary?.median_home_value ?? 0) || null
-      return passesHousingValueDealbreaker(medianHomeValue, householdIncome)
-    },
     air_travel_access: (p) => {
       const ata = (p.score.livability_pillars as any)?.air_travel_access
       const nearestAirportKm = Number(ata?.summary?.nearest_airport_km ?? 0) || null
       const areaType = ata?.area_classification?.area_type ?? null
-      return passesAirTravelDealbreaker(nearestAirportKm, areaType)
+      return passesAirTravelDealbreaker(nearestAirportKm, areaType, gateLevels.air_travel_access || GATE_DEFAULT_LEVEL.air_travel_access)
     },
     quality_education: (p) => {
       const qe = (p.score.livability_pillars as any)?.quality_education
       if (qe?.status === 'fallback' || qe?.status === 'no_data') return true
       const score = typeof qe?.score === 'number' ? qe.score : null
-      return passesQualityEducationDealbreaker(score)
+      if (!passesQualityEducationDealbreaker(score, schoolMinScore)) return false
+      if (filterSchoolType === 'any' || filterSchoolType === 'public_only') {
+        return passesQualityEducationLevelFloor(qe?.breakdown?.levels, filterSchoolLevels, schoolMinScore)
+      }
+      return true
     },
     community_safety: (p) => {
       const cs = (p.score.livability_pillars as any)?.community_safety
       if (cs?.status === 'fallback' || cs?.status === 'no_data') return true
       const score = typeof cs?.score === 'number' ? cs.score : null
-      return passesCommunitySafetyDealbreaker(score)
+      return passesCommunitySafetyDealbreaker(score, gateLevels.community_safety || GATE_DEFAULT_LEVEL.community_safety)
     },
     healthcare_access: (p) => {
       const ha = (p.score.livability_pillars as any)?.healthcare_access
       const nearestHospitalKm = Number(ha?.summary?.nearest_hospital_km ?? 0) || null
       const areaType = ha?.area_classification?.area_type ?? null
-      return passesHealthcareAccessDealbreaker(nearestHospitalKm, areaType)
+      return passesHealthcareAccessDealbreaker(nearestHospitalKm, areaType, gateLevels.healthcare_access || GATE_DEFAULT_LEVEL.healthcare_access)
     },
     public_transit_access: (p) => {
       const ts = (p.score.livability_pillars as any)?.public_transit_access?.summary
       if (!ts) return true
-      const rail = (Number(ts.heavy_rail_stops) || 0) + (Number(ts.light_rail_stops) || 0)
+      // Rail service is read from the route counts (heavy, light and commuter). The stop counts are 0 for almost every
+      // place, including Brooklyn Heights, Hoboken and Montclair, so they cannot tell a rail town from a bus-only one.
+      const rail = (Number(ts.heavy_rail_routes) || 0) + (Number(ts.light_rail_routes) || 0) + (Number(ts.commuter_rail_routes) || 0)
       const bus = typeof ts.bus_stops === 'number' ? ts.bus_stops : null
-      return passesPublicTransitDealbreaker(rail, bus)
+      return passesPublicTransitDealbreaker(rail, bus, gateLevels.public_transit_access || GATE_DEFAULT_LEVEL.public_transit_access)
     },
   }
   const commuteFailCount = useMemo(() => {
@@ -892,16 +955,24 @@ export default function CatalogPageClient({
     }
     return out
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredPlaces, householdIncome])
+  }, [filteredPlaces, householdIncome, schoolMinScore, gateLevels, filterSchoolType, filterSchoolLevels])
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])
   const dealbreakerActive = activeDealbreakerKeys.length > 0
   // Saved filters are read from localStorage on the client only, so the server render has none;
   // showing the count before mount made the Filters badge differ between server and client HTML.
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBudget.chosen ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene.length > 0 ? 1 : 0) + (filterAura ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
+  const filterBadgeCount = !mounted ? 0 : (filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterLifeStage.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBudget.chosen ? 1 : 0) + (filterTenure.length > 0 ? 1 : 0) + (filterLocalScene.length > 0 ? 1 : 0) + (filterCommuteMax !== 'all' ? 1 : 0) 
   // Priorities badge: pillars moved off the default level, plus Hide choices (which live in Priorities).
   const priorityBadgeCount = !mounted ? 0 : PILLAR_ORDER.filter((k) => priorities[k as keyof PillarPriorities] !== DEFAULT_PRIORITIES[k as keyof PillarPriorities]).length + activeDealbreakerKeys.length + (climatePrefs.must_haves ? Object.values(climatePrefs.must_haves).filter(Boolean).length : 0)
+  const clearRequirements = useCallback(() => {
+    setFilterAreaTypes([]); setFilterArchetypes([]); setFilterTrajectory('all'); setFilterPoliticalLean([])
+    setFilterLifeStage([]); setFilterHousingType([]); handleBudgetChange(DEFAULT_BUDGET); setFilterTenure([])
+    setFilterLocalScene([]); setFilterCommuteMax('all')
+    setDealbreakers({}); setGateLevels({}); setSchoolMinScore(0); setClimatePrefs((prev) => ({ ...prev, must_haves: {} }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const fitBadgeCount = filterBadgeCount + (indexMode === 'homefit' ? priorityBadgeCount : activeDealbreakerKeys.length)
   // Places blocked by regular filters — always shown in "Show excluded"
   const metroFilterExcluded = useMemo(() => {
     const filteredSet = new Set(filteredPlaces)
@@ -927,7 +998,6 @@ export default function CatalogPageClient({
         if (tr && tr !== filterTrajectory) r.push('Trajectory')
       }
       if (sceneFilterExcludes(p.score.local_scene_level, filterLocalScene)) r.push('Local scene')
-      if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) r.push('Commute')
@@ -960,7 +1030,7 @@ export default function CatalogPageClient({
           if (!passesAny) r.push('Tenure')
         }
       }
-      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage)) r.push('Life stage')
+      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage, lifeStageCut)) r.push('Life stage')
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         if (typeof lean === 'number') {
@@ -981,7 +1051,7 @@ export default function CatalogPageClient({
       reasons[key] = r.length > 0 ? r : ['Filters']
     }
     return reasons
-  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterPoliticalLean, climatePrefs])
+  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterPoliticalLean, filterLifeStage, lifeStageCut, climatePrefs])
   const { gatedPlaces, excludedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) {
       return { gatedPlaces: filteredPlaces, excludedPlaces: metroFilterExcluded, dealbreakerExcludedCount: metroFilterExcluded.length, dealbreakerZeroSurvivors: false }
@@ -999,7 +1069,7 @@ export default function CatalogPageClient({
       dealbreakerZeroSurvivors: false,
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredPlaces, metroFilterExcluded, activeDealbreakerKeys.join(','), householdIncome])
+  }, [filteredPlaces, metroFilterExcluded, activeDealbreakerKeys.join(','), householdIncome, schoolMinScore, gateLevels, filterSchoolType, filterSchoolLevels])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setShowExcluded(false), [activeDealbreakerKeys.join(',')])
 
@@ -1031,7 +1101,7 @@ export default function CatalogPageClient({
         const tr = normalizeTrajectory(p.score.status_signal_breakdown?.trajectory)
         if (tr && tr !== filterTrajectory) r.push('Trajectory')
       }
-      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage)) r.push('Life stage')
+      if (filterLifeStage.length > 0 && !lifeStageMatches(p, filterLifeStage, lifeStageCut)) r.push('Life stage')
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         const matchesAny = typeof lean === 'number' && filterPoliticalLean.some((pref) => {
@@ -1045,7 +1115,6 @@ export default function CatalogPageClient({
         if (!matchesAny) r.push('Political lean')
       }
       if (sceneFilterExcludes(p.score.local_scene_level, filterLocalScene)) r.push('Local scene')
-      if (filterAura && p.score.aura !== true) r.push('Aura')
       if (filterCommuteMax !== 'all') {
         const cbd = p.commute_off_zone ? null : p.cbd_transit_minutes
         if (typeof cbd === 'number' && cbd > Number(filterCommuteMax)) r.push('Commute')
@@ -1096,7 +1165,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, filterLocalScene, filterAura, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, lifeStageCut, filterLocalScene, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
@@ -1197,6 +1266,7 @@ export default function CatalogPageClient({
           detailFetched.current.delete(selectedKey)
           return
         }
+        setPinnedOrder({ sig: sortSigRef.current, ranks: new Map(listKeysRef.current.map((k, i) => [k, i])) })
         setPlaces((prev) => prev.map((p) => (catalogRowKey(p.catalog) === selectedKey ? { ...p, score: full.score } : p)))
       })
       .catch(() => detailFetched.current.delete(selectedKey))
@@ -1235,7 +1305,6 @@ export default function CatalogPageClient({
   }, [snap])
 
   useEffect(() => {
-    if (indexMode !== 'homefit') setWeightOpen(false)
   }, [indexMode])
 
   const handleFullBreakdown = useCallback(
@@ -1307,7 +1376,7 @@ export default function CatalogPageClient({
           if (payload.officeDays) setOfficeDays(payload.officeDays)
           // Bedrooms and cap come from the quiz only when the visitor answered them; the down payment stays as it was
           if (payload.homeBudget) {
-            handleBudgetChange({ beds: [payload.homeBudget.beds], max: payload.homeBudget.max, down: filterBudget.down, chosen: true })
+            handleBudgetChange({ beds: bedsFrom(payload.homeBudget.beds), max: payload.homeBudget.max, down: filterBudget.down, chosen: true })
           }
 
           // Dealbreakers: reset the ones the quiz owns, leave any others the user set by hand
@@ -1340,7 +1409,7 @@ export default function CatalogPageClient({
                 filterTrajectory: payload.filterTrajectory,
                 filterCommuteMax: payload.filterCommuteMax,
                 climatePrefs: payload.climatePrefs,
-                ...(payload.homeBudget ? { filterBudget: { beds: [payload.homeBudget.beds], max: payload.homeBudget.max, down: filterBudget.down, chosen: true } } : {}),
+                ...(payload.homeBudget ? { filterBudget: { beds: bedsFrom(payload.homeBudget.beds), max: payload.homeBudget.max, down: filterBudget.down, chosen: true } } : {}),
               },
             }))
           } catch { /* ignore */ }
@@ -1351,6 +1420,47 @@ export default function CatalogPageClient({
       />
     )
   }
+
+  const indexPillStrip = (
+    <>
+              <div className="relative min-w-0 flex-1">
+              {/* Right-edge fade hint */}
+              <div className="absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.7))' }} />
+              <div
+                className="flex gap-1.5 overflow-x-auto px-3 pb-1 pointer-events-auto"
+                style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+              >
+                {INDEXES.filter(x => x.id !== 'status').map((x) => {
+                  const active = indexMode === x.id && !sortByName
+                  const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
+                  return (
+                    <button
+                      key={x.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setIndexModeAndListSort(x.id)}
+                      className="shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
+                      style={active
+                        ? { ...activeStyle, border: 'none' }
+                        : { background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }
+                      }
+                    >{x.label}</button>
+                  )
+                })}
+                <button
+                  type="button"
+                  aria-pressed={sortByName}
+                  onClick={() => setSortByName(true)}
+                  className="shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
+                  style={sortByName
+                    ? { background: 'var(--hf-primary-1)', color: '#fff', border: 'none' }
+                    : { background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }
+                  }
+                >A–Z</button>
+              </div>
+              </div>
+    </>
+  )
 
   return (
     <div className="hf-viewport hf-catalog-root flex min-h-0 flex-col">
@@ -1493,29 +1603,17 @@ export default function CatalogPageClient({
               <>
                 <button
                   type="button"
-                  className="flex h-[var(--hf-control-h)] items-center gap-1 rounded-[var(--hf-control-radius)] border border-[var(--hf-border)] px-2.5 text-[length:var(--hf-control-text)] font-semibold text-[var(--hf-text-secondary)] hover:bg-[var(--hf-hover-bg)]"
-                  onClick={() => setFilterSheetOpen(true)}
+                  className="flex h-[var(--hf-control-h)] items-center gap-1 rounded-[var(--hf-control-radius)] border border-[var(--hf-border-strong)] px-2.5 text-[length:var(--hf-control-text)] font-bold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
+                  onClick={() => setFitOpen(true)}
                 >
                   <span>⚙</span>
-                  Filters
-                  {filterBadgeCount > 0 && (
+                  Your fit
+                  {fitBadgeCount > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {filterBadgeCount}
+                      {fitBadgeCount}
                     </span>
                   )}
                 </button>
-                {indexMode === 'homefit' && <button
-                  type="button"
-                  title={undefined}
-                  className="h-[var(--hf-control-h)] rounded-[var(--hf-control-radius)] border border-[var(--hf-border-strong)] px-2.5 text-[length:var(--hf-control-text)] font-bold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
-                  style={{ opacity: indexMode !== 'homefit' ? 0.4 : 1, pointerEvents: indexMode !== 'homefit' ? 'none' : 'auto' }}
-                  onClick={() => setWeightOpen(true)}
-                >
-                  Priorities
-                  {priorityBadgeCount > 0 && (
-                    <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>{priorityBadgeCount}</span>
-                  )}
-                </button>}
               </>
             )}
             <div className="h-4 w-px bg-[var(--hf-border)]" />
@@ -1632,34 +1730,18 @@ export default function CatalogPageClient({
           </div>
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
-            {/* Priorities pill (mobile: always reachable next to Filters) */}
-            {catalogMode === 'explorer' && indexMode === 'homefit' && (
-              <button
-                type="button"
-                className="flex items-center gap-1.5 rounded-full border border-[var(--hf-border)] bg-white px-3 h-[var(--hf-control-h-touch)] text-xs font-semibold text-[var(--hf-text-primary)] shadow-sm"
-                onClick={() => setWeightOpen(true)}
-                aria-label="Priorities"
-              >
-                Priorities
-                {priorityBadgeCount > 0 && (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                    {priorityBadgeCount}
-                  </span>
-                )}
-              </button>
-            )}
-            {/* Filters pill */}
+            {/* One entry point for requirements and priorities */}
             <button
               type="button"
               className="flex items-center gap-1.5 rounded-full border border-[var(--hf-border)] bg-white px-3 h-[var(--hf-control-h-touch)] text-xs font-semibold text-[var(--hf-text-primary)] shadow-sm"
-              onClick={() => setFilterSheetOpen(true)}
-              aria-label="Filters"
+              onClick={() => setFitOpen(true)}
+              aria-label="Your fit"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              Filters
-              {filterBadgeCount > 0 && (
+              Your fit
+              {fitBadgeCount > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {filterBadgeCount}
+                  {fitBadgeCount}
                 </span>
               )}
             </button>
@@ -1667,8 +1749,18 @@ export default function CatalogPageClient({
         </div>
         {/* Row 2: metro picker */}
           {catalogMode === 'explorer' && (
-            <div className="px-3 pb-3 pt-1">
-              <MetroPicker value={filterMetro} onChange={setFilterMetro} counts={metroResultCounts} />
+            <div className="flex items-center gap-2 px-3 pb-2 pt-0">
+              <div className="w-[46%] shrink-0"><MetroPicker value={filterMetro} onChange={setFilterMetro} counts={metroResultCounts} /></div>
+              <input
+                type="search"
+                inputMode="search"
+                enterKeyHint="search"
+                placeholder="Search places"
+                aria-label="Search neighborhoods"
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                className="h-[var(--hf-control-h-touch)] min-w-0 flex-1 rounded-full border border-[var(--hf-border)] bg-white px-4 text-base"
+              />
             </div>
           )}
         </div>
@@ -1754,12 +1846,12 @@ export default function CatalogPageClient({
       </header>
 
       {catalogMode === 'explorer' && (
-        <p className="m-0 shrink-0 border-b border-[var(--hf-border)] bg-white px-4 py-1 text-[0.7rem] text-[var(--hf-text-secondary)]">
+        <p className={`m-0 shrink-0 border-b border-[var(--hf-border)] bg-white px-4 py-1 text-[0.7rem] text-[var(--hf-text-secondary)] hidden md:block`}>
           {scoreBasisLine(indexMode, priorities)}
           {filterBudget.chosen && viewMode === 'list' && (
             <>
               {' '}
-              Monthly cost: a {bedsLabel(filterBudget.beds)}-bedroom home (single-family and condo mix) at the ZIP median price, mortgage at 7% after {downLabel(filterBudget.down)}, plus property tax and insurance.
+              Monthly cost: a home with {bedsPhrase(filterBudget.beds)} (single-family and condo mix) at the ZIP median price, mortgage at 7% after {downLabel(filterBudget.down)}, plus property tax and insurance.
             </>
           )}
         </p>
@@ -1783,42 +1875,7 @@ export default function CatalogPageClient({
           {/* Mobile floating score + sort strip */}
           {catalogMode === 'explorer' && (
             <div className="md:hidden absolute top-2 left-0 right-0 z-10 pointer-events-none flex items-start gap-1.5 pr-3">
-              <div className="relative min-w-0 flex-1">
-              {/* Right-edge fade hint */}
-              <div className="absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.7))' }} />
-              <div
-                className="flex gap-1.5 overflow-x-auto px-3 pb-1 pointer-events-auto"
-                style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
-              >
-                {INDEXES.filter(x => x.id !== 'status').map((x) => {
-                  const active = indexMode === x.id && !sortByName
-                  const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
-                  return (
-                    <button
-                      key={x.id}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => setIndexModeAndListSort(x.id)}
-                      className="shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
-                      style={active
-                        ? { ...activeStyle, border: 'none' }
-                        : { background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }
-                      }
-                    >{x.label}</button>
-                  )
-                })}
-                <button
-                  type="button"
-                  aria-pressed={sortByName}
-                  onClick={() => setSortByName(true)}
-                  className="shrink-0 rounded-full px-3 h-[var(--hf-chip-h-touch)] text-xs font-bold shadow-sm"
-                  style={sortByName
-                    ? { background: 'var(--hf-primary-1)', color: '#fff', border: 'none' }
-                    : { background: 'rgba(255,255,255,0.92)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)', backdropFilter: 'blur(4px)' }
-                  }
-                >A–Z</button>
-              </div>
-              </div>
+              {indexPillStrip}
             </div>
           )}
 
@@ -1910,7 +1967,7 @@ export default function CatalogPageClient({
       )}
 
       {viewMode === 'list' && catalogMode === 'explorer' && !searchResults && (dealbreakerActive || metroFilterExcluded.length > 0) && (
-        <div className="flex items-center gap-2 border-b border-[var(--hf-border)] bg-[var(--hf-hover-bg)] px-4 py-2 text-xs text-[var(--hf-text-secondary)]">
+        <div className="flex items-center gap-2 border-b border-[var(--hf-border)] bg-[var(--hf-hover-bg)] px-4 py-1 md:py-2 text-xs text-[var(--hf-text-secondary)]">
           <span>
             {dealbreakerZeroSurvivors
               ? 'No places clear all your filters — showing closest matches anyway'
@@ -1931,6 +1988,7 @@ export default function CatalogPageClient({
 
       {viewMode === 'list' && catalogMode === 'explorer' && (
         <div className={`flex min-h-0 flex-1 flex-col pb-20 md:pb-0${dealbreakerZeroSurvivors && !searchResults ? ' opacity-60' : ''}`}>
+          <div className="md:hidden flex shrink-0 border-b border-[var(--hf-border)] bg-white py-1">{indexPillStrip}</div>
           <CatalogListView
             places={searchResults ? searchResults.hits : showExcluded && excludedPlaces.length > 0 ? (dealbreakerZeroSurvivors ? excludedPlaces : [...gatedPlaces, ...excludedPlaces]) : gatedPlaces}
             filteredOutReasons={searchResults ? searchResults.reasons : showExcluded && excludedPlaces.length > 0 ? {
@@ -1977,8 +2035,8 @@ export default function CatalogPageClient({
       )}
 
       {/* Floating map/list toggle — Airbnb style */}
-      {catalogMode === 'explorer' && !(viewMode === 'map' && selectedKey) && (
-        <div className={`md:hidden pointer-events-none fixed ${viewMode === 'map' ? 'bottom-24' : 'bottom-6'} left-0 right-0 z-40 flex justify-center`}>
+      {catalogMode === 'explorer' && !(viewMode === 'map' && selectedPlace) && (
+        <div className={`md:hidden pointer-events-none fixed bottom-6 left-0 right-0 z-40 flex justify-center`}>
           <button
             type="button"
             className="pointer-events-auto flex items-center gap-2 rounded-full border border-[var(--hf-border-strong)] bg-white px-5 py-3 text-sm font-semibold text-[var(--hf-text-primary)] shadow-xl"
@@ -2058,18 +2116,19 @@ export default function CatalogPageClient({
         </div>
       )}
 
-      <CatalogWeightPanel
-        open={weightOpen && indexMode === 'homefit'}
-        onClose={() => setWeightOpen(false)}
+      <FitPanel
+        open={fitOpen}
+        onClose={() => setFitOpen(false)}
+        showMatters={indexMode === 'homefit'}
+        resultCount={gatedPlaces.length}
+        onClearRequirements={clearRequirements}
         priorities={priorities}
-        onChange={setPriorities}
-
-        onTakeQuiz={() => { setWeightOpen(false); setShowQuiz(true) }}
-        householdIncome={householdIncome}
-        currentHomeName={currentHomeMatch}
-        currentHomeMonthlyCost={currentHomeMonthlyCost}
+        onPrioritiesChange={setPriorities}
+        onTakeQuiz={() => { setFitOpen(false); setShowQuiz(true) }}
         hasWorkHub={Boolean(findWorkZone(workZoneId))}
         hasPeople={people.length > 0}
+        peopleCount={people.length}
+        workZoneLabel={findWorkZone(workZoneId)?.label ?? null}
         filterNbTypes={filterNbTypes}
         onFilterNbTypesChange={setFilterNbTypes}
         filterAoTypes={filterAoTypes}
@@ -2081,9 +2140,40 @@ export default function CatalogPageClient({
         dealbreakers={dealbreakers}
         onDealbreakerToggle={toggleDealbreaker}
         dealbreakerFailCounts={dealbreakerFailCounts}
+        schoolMinScore={schoolMinScore}
+        onSchoolMinScoreChange={pickSchoolMin}
+        gateLevels={gateLevels}
+        onGateLevelChange={pickGate}
+        filterCommuteMax={filterCommuteMax}
+        onFilterCommuteMaxChange={setFilterCommuteMax}
+        commuteFailCount={commuteFailCount}
+        filterBudget={filterBudget}
+        onFilterBudgetChange={handleBudgetChange}
+        suggestedCaps={[
+          ...(currentHomeMonthlyCost ? [{ label: 'Your current cost', value: Math.round(currentHomeMonthlyCost) }] : []),
+          ...(householdIncome ? [{ label: '30% of your income', value: Math.round((householdIncome * 0.3) / 12) }] : []),
+          ...(typicalMonthlyCost ? [{ label: 'Typical place', value: typicalMonthlyCost }] : []),
+        ]}
+        filterAreaTypes={filterAreaTypes}
+        onFilterAreaTypesChange={setFilterAreaTypes}
+        filterHousingType={filterHousingType}
+        onFilterHousingTypeChange={setFilterHousingType}
+        filterTenure={filterTenure}
+        onFilterTenureChange={setFilterTenure}
         climatePrefs={climatePrefs}
         onClimatePrefsChange={setClimatePrefs}
-        climateMustHaveFailCounts={climateMustHaveFailCounts}
+        climateMustHaveFailCounts={climateMustHaveFailCounts as Record<string, number> | undefined}
+        filterLocalScene={filterLocalScene}
+        onFilterLocalSceneChange={setFilterLocalScene}
+        filterTrajectory={filterTrajectory}
+        onFilterTrajectoryChange={setFilterTrajectory}
+        filterArchetypes={filterArchetypes}
+        onFilterArchetypesChange={setFilterArchetypes}
+        archetypes={archetypes}
+        filterPoliticalLean={filterPoliticalLean}
+        onFilterPoliticalLeanChange={setFilterPoliticalLean}
+        filterLifeStage={filterLifeStage}
+        onFilterLifeStageChange={setFilterLifeStage}
       />
 
       <PillarTwinDrawer
@@ -2101,51 +2191,6 @@ export default function CatalogPageClient({
         lookupPlaces={adjustedPlaces}
         onRemove={(key) => setCompareIds((prev) => prev.filter((k) => k !== key))}
         onClear={() => setCompareIds([])}
-      />
-
-      <FilterSheet
-        open={filterSheetOpen}
-        onClose={() => setFilterSheetOpen(false)}
-        filterMetro={filterMetro}
-        onFilterMetroChange={setFilterMetro}
-        filterAreaTypes={filterAreaTypes}
-        onFilterAreaTypesChange={setFilterAreaTypes}
-        filterArchetypes={filterArchetypes}
-        onFilterArchetypesChange={setFilterArchetypes}
-        archetypes={archetypes}
-        filterTrajectory={filterTrajectory}
-        onFilterTrajectoryChange={setFilterTrajectory}
-        filterPoliticalLean={filterPoliticalLean}
-        onFilterPoliticalLeanChange={setFilterPoliticalLean}
-        filterLifeStage={filterLifeStage}
-        onFilterLifeStageChange={setFilterLifeStage}
-        filterHousingType={filterHousingType}
-        onFilterHousingTypeChange={setFilterHousingType}
-        filterBudget={filterBudget}
-        onFilterBudgetChange={handleBudgetChange}
-        suggestedCaps={[
-          ...(currentHomeMonthlyCost ? [{ label: 'Your current cost', value: Math.round(currentHomeMonthlyCost) }] : []),
-          ...(householdIncome ? [{ label: '30% of your income', value: Math.round((householdIncome * 0.3) / 12) }] : []),
-          ...(typicalMonthlyCost ? [{ label: 'Typical place', value: typicalMonthlyCost }] : []),
-        ]}
-        filterTenure={filterTenure}
-        onFilterTenureChange={setFilterTenure}
-        filterLocalScene={filterLocalScene}
-        onFilterLocalSceneChange={setFilterLocalScene}
-        filterAura={filterAura}
-        onFilterAuraChange={setFilterAura}
-        dealbreakers={dealbreakers}
-        onDealbreakerToggle={toggleDealbreaker}
-        dealbreakerFailCounts={dealbreakerFailCounts}
-        householdIncome={householdIncome}
-        filterCommuteMax={filterCommuteMax}
-        onFilterCommuteMaxChange={setFilterCommuteMax}
-        workZoneLabel={findWorkZone(workZoneId)?.label ?? null}
-        commuteFailCount={commuteFailCount}
-        climateMustHaveFailCounts={climateMustHaveFailCounts}
-        climatePrefs={climatePrefs}
-        onClimatePrefsChange={setClimatePrefs}
-        resultCount={gatedPlaces.length}
       />
 
       {loading && (

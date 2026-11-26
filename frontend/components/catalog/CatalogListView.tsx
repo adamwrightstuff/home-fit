@@ -25,7 +25,6 @@ import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import LocalSceneChip from '@/components/catalog/LocalSceneChip'
 import { SCENE_LABEL } from '@/lib/sceneLevels'
-import AuraBadge from '@/components/catalog/AuraBadge'
 
 function MetroDot({ metro }: { metro: CatalogMetro }) {
   return <span className="inline-block h-2 w-2 rounded-full" style={{ background: CATALOG_METRO_META[metro].color }} title={CATALOG_METRO_META[metro].label} />
@@ -204,7 +203,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
   return (
     <div className="min-h-0 flex-1 overflow-auto px-2 pb-8">
       <table className="w-full border-collapse text-left text-xs">
-        <thead className="sticky top-0 z-10 bg-white/95 backdrop-blur">
+        <thead className="hidden md:table-header-group sticky top-0 z-10 bg-white/95 backdrop-blur">
           <tr className="border-b border-[var(--hf-border)]">
             <th className="py-2 pr-2 font-semibold">Place</th>
             <th className="py-2 px-1"> </th>
@@ -218,7 +217,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 )}
               </th>
             )}
-            <th className="py-2 px-1 font-semibold">Profile</th>
+            <th className="hidden md:table-cell py-2 px-1 font-semibold">Profile</th>
             <th className="py-2 pl-1"> </th>
           </tr>
         </thead>
@@ -250,6 +249,29 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 </div>
               )
             }
+            const profileChips = (
+                    <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', whiteSpace: 'nowrap' }}>
+                      <ArchetypeBadge
+                        archetype={p.score.status_signal_breakdown?.archetype ?? null}
+                        breakdown={p.score.status_signal_breakdown ?? null}
+                        compositeScore={
+                          typeof p.score.status_signal === 'number' ? p.score.status_signal : null
+                        }
+                        compact
+                      />
+                      <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
+                      <LocalSceneChip level={p.score.local_scene_level ?? null} compact />
+                      {p.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
+                        <span
+                          title="No commute data to your work hub from here (different metro) -- this place isn't scored on commute time, and isn't being helped or hurt by that weight."
+                          className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[0.65rem] font-medium"
+                          style={{ background: '#f1f5f9', border: '1px dashed #cbd5e1', color: '#64748b' }}
+                        >
+                          Commute: N/A
+                        </span>
+                      )}
+                    </span>
+            )
             return (
               <Fragment key={key}>
                 {showDivider && (
@@ -271,8 +293,19 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 >
                   <td className="py-2 pr-2">
                     <div className="text-sm font-semibold text-[var(--hf-text-primary)]">{p.catalog.name}</div>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <div className="text-[0.6rem] text-[var(--hf-text-tertiary)]">
                       {p.catalog.county_borough}, {p.catalog.state_abbr}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 md:hidden">
+                      <ArchetypeBadge
+                        archetype={p.score.status_signal_breakdown?.archetype ?? null}
+                        breakdown={p.score.status_signal_breakdown ?? null}
+                        compositeScore={typeof p.score.status_signal === 'number' ? p.score.status_signal : null}
+                        compact
+                      />
+                      <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
+                    </div>
                     </div>
                     {budget && <BudgetCostLine housingCost={p.housing_cost} stateAbbr={p.catalog.state_abbr} budget={budget} />}
                     {isFilteredOut && (
@@ -310,29 +343,8 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       </td>
                     )
                   })()}
-                  <td className="py-2 px-1 align-top">
-                    <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', whiteSpace: 'nowrap' }}>
-                      <ArchetypeBadge
-                        archetype={p.score.status_signal_breakdown?.archetype ?? null}
-                        breakdown={p.score.status_signal_breakdown ?? null}
-                        compositeScore={
-                          typeof p.score.status_signal === 'number' ? p.score.status_signal : null
-                        }
-                        compact
-                      />
-                      <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
-                      <LocalSceneChip level={p.score.local_scene_level ?? null} compact />
-                      <AuraBadge aura={p.score.aura ?? null} compact />
-                      {p.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
-                        <span
-                          title="No commute data to your work hub from here (different metro) -- this place isn't scored on commute time, and isn't being helped or hurt by that weight."
-                          className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[0.65rem] font-medium"
-                          style={{ background: '#f1f5f9', border: '1px dashed #cbd5e1', color: '#64748b' }}
-                        >
-                          Commute: N/A
-                        </span>
-                      )}
-                    </span>
+                  <td className="hidden md:table-cell py-2 px-1 align-top">
+                    {profileChips}
                   </td>
                   <td className="py-2 pl-1">
                     <div className="flex items-center gap-1">
@@ -341,7 +353,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                           type="button"
                           aria-label={`Add ${p.catalog.name} to comparison`}
                           aria-pressed={compareIds.includes(key)}
-                          className={`rounded border px-1.5 py-0.5 text-[0.65rem] font-bold opacity-0 transition-opacity group-hover/row:opacity-100 focus:opacity-100 ${
+                          className={`hidden md:inline-block rounded border px-1.5 py-0.5 text-[0.65rem] font-bold opacity-0 transition-opacity group-hover/row:opacity-100 focus:opacity-100 ${
                             compareIds.includes(key) ? 'border-gray-200 text-gray-300' : 'border-gray-200 text-gray-500'
                           }`}
                           disabled={!compareIds.includes(key) && compareIds.length >= 2}
@@ -353,7 +365,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       )}
                       <button
                         type="button"
-                        className="rounded border border-[var(--hf-border)] px-1.5 py-0.5 text-[0.65rem] font-bold text-[var(--hf-primary-1)]"
+                        className="rounded border border-[var(--hf-border)] whitespace-nowrap px-2.5 py-1 md:px-1.5 md:py-0.5 text-xs md:text-[0.65rem] font-bold text-[var(--hf-primary-1)]"
                         onClick={(e) => { e.stopPropagation(); onTwinRow(key) }}
                       >
                         Twin →
@@ -404,6 +416,22 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                         </div>
                       )}
                       <ExplorerPillarGrid place={p} priorities={priorities} />
+                    </td>
+                  </tr>
+                )}
+                {i === 2 && (
+                  <tr className="md:hidden">
+                    <td colSpan={5} className="py-3">
+                      <Link
+                        href="/quiz"
+                        className="flex items-center justify-between gap-3 rounded-xl border border-[var(--hf-border)] bg-[var(--hf-bg-subtle)] px-4 py-3"
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-[var(--hf-text-primary)]">Not sure what to prioritize?</span>
+                          <span className="block text-xs text-[var(--hf-text-secondary)]">Take the 2-minute quiz to tailor these scores.</span>
+                        </span>
+                        <span className="shrink-0 text-xs font-bold text-[var(--hf-primary-1)]">Take quiz →</span>
+                      </Link>
                     </td>
                   </tr>
                 )}

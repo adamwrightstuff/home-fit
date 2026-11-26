@@ -17,7 +17,8 @@ export async function GET() {
       status: upstream.status,
       headers: {
         'Content-Type': upstream.headers.get('content-type') || 'application/json',
-        'Cache-Control': 'no-store',
+        // The version label barely changes: let the CDN answer repeat page loads instead of running a function each time.
+        'Cache-Control': upstream.ok ? 'public, s-maxage=300, stale-while-revalidate=3600' : 'no-store',
       },
     });
   } catch {

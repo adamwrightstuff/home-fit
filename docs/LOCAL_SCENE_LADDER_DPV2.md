@@ -3,6 +3,7 @@
 Status: built 2026-11-11 (variant B). The ladder is stored as score.local_scene_level (quiet, low_key, lively, buzzing; None = no data) in all 21 catalog files, replaces the 3-tier tag and the lively flag in the Explorer, Aura is rebuilt on it (Buzzing, Affluent or Elite, not a job center: 62 places, was 49; all 49 kept) and the twin finder reads the mix reading. Level 1 is not signed off. No "validated" claim is allowed. This replaces the 3-tier activity tag in `docs/LOCAL_SCENE_ACTIVITY_L2.md` once built (a change to a signed-off measure drops it back to Level 1, DPv2 adoption rule section 2). Written by the session that designed the ladder, so it must not grade it: the Level 2 checks in section 3 are to be run by a different session, against the pass criteria in this file, which are fixed by this commit.
 
 Level names (owner decision 2026-11-11): level 0 Sleepy, level 1 Flat, level 2 Lively, level 3 Buzzing. Stored keys stay quiet, low_key, lively, buzzing. The checks refer to levels 0 to 3.
+UPDATE 2026-11-13 (owner decision): level 0 is defined only by having fewer than 15 mapped venues, so it is thin data and not a finding. The Explorer now shows it as "Limited data" and does not offer it as a filter choice; "Sleepy" is retired as a display word. The stored key stays quiet and no catalog file changes. A place with enough mapped venues and a weak mix reads Flat.
 
 ## 1. Level 1 spec sheet
 
@@ -146,3 +147,29 @@ Launch pairs still 6 of 6; no density band has more than 80% in one level. Jumps
 **Reading.** The new tier cuts the two-level jumps by more than a third but does not reach 1%, and it makes things slightly worse on the other gate: a narrow Lively band for large places (mix 50 to 55) is crossed easily, so Lively is the least stable level. The remaining Flat to Buzzing jumps are shifts where the mix moves by 5 or more points at once (a shifted circle picks up a different block), which no tier boundary can absorb. The mix reading itself, a rank within a band, is what moves under a shift. Level 2 is still not passed.
 
 **Options now (not decided).** (1) Accept this and record that the one-level criterion is likely unreachable for a rank-based mix at a 500 m shift. (2) Rewrite the jump criterion before the next run (a post-hoc change, to be labeled). (3) Make the mix steadier before ranking it (pool venues across the shifted circles, or shrink small samples toward the band average); both were tried on the old pin-circle measure and failed (docs/VIBE_VALIDATION.md sections 12 and 13), so this is the least promising.
+
+
+## 7. Overture hybrid (owner decision 2026-11-13, built on branch local-scene-overture-hybrid)
+
+What changed. The ladder's venue volume now comes from Overture Maps Places (release 2026-10-21.0), its mix reading still comes from OpenStreetMap where OSM has enough data. Full evidence, every test and every limit: `analysis/local_scene_mix_proposal_2026-11-13.md` (sections 1 to 20, local, not in the repo).
+
+Why. Census LODES retail and food-service jobs (2022, 18 states) track Overture venue counts better than OSM's: Spearman 0.91 against 0.81 overall, 0.84 against 0.57 in the 571 places where OSM maps under 15 venues (Rye has 2,541 such jobs and 8 mapped OSM venues, 60 in Overture). A blind rater (one AI rater, 240 places) agreed with the hybrid 50% of the time against 38% for the OSM ladder, 53% against 18% on the places it was High-confidence about. Overture's gallery, bookstore and theater categories are noisy in small towns (Pelham read Lively because Overture labels a gear shop a gallery and a gazebo a theater; Bronxville read Flat because Overture lacks two galleries OSM has), so the mix stays on OSM where OSM has 15 or more venues.
+
+Rule (pillars/local_scene_v2.py, scripts/catalog/add_local_scene_overture_facts.py, scripts/catalog/apply_local_scene_hybrid.py):
+- Overture venues of the same seven types in the same measured area (pin circle at the stored radius; an equal-area circle around the pin for places OSM measures by town boundary, an approximation); operating, confidence 0.5 or more, registry-only (BrightQuery) rows dropped; chain when Overture gives a brand.
+- Limited data (stored key quiet): fewer than 30 Overture venues in the measured area. No data (null): no Overture venue.
+- Mix reading: from OSM when OSM maps 15 or more venues in the measured area, else from Overture. Each is `(1 - w) x current mix + w x restaurant-free mix`, `w = clamp((Overture independent venues within 1,200 m - 30) / (126 - 30), 0, 1)`. The restaurant-free mix is the mean of the percentile ranks (same geography and density band) of culture share among hangout venues and hangout venues per km2 of the measured area.
+- Cuts unchanged in form: Lively at mix 55 (50 for large places), Buzzing needs 126 or more Overture independent venues (was 71 OSM).
+- Aura follows the level: Buzzing, Affluent or Elite, not a job center. 64 places (was 58).
+
+Parameters (all unsourced judgments, principle 4): floor 30 (OSM 15 scaled by Overture's 2.4 times higher counts, about 36, rounded down; 15 reads 181 places as Limited data, 30 reads 414); Buzzing cut 126 (the 85th percentile of Overture independent counts, matched to OSM's 71); OSM-enough line 15 (the old OSM floor); blend ramp 30 to 126 (the two cuts). The mix cuts 55 and 50 are unchanged from the OSM ladder and were not re-fitted (the label sweep was flat across 40 to 57.5 on the OSM two-term mix).
+
+Result on the catalog (1,477 places): Limited data 414, Flat 520, Lively 385, Buzzing 133, no data 25 (OSM ladder: 502, 475, 304, 127, 69).
+
+Checks (details in the analysis file; the same procedures as section 3): pin-shift (118 NYC places) level unchanged 85.59% (needs 85), Lively or Buzzing stay 93.6% (80), two-level jumps 2.33% (1 or less, FAIL, as the OSM ladder at 3.18%); launch pairs 5 of 6 (Tribeca and Murray Hill tied at Buzzing); distribution passes; recorded owner calls 14 of 15 "has it" and 2 of 2 "does not"; blind rater 50% exact. Not run: pin-shift for towns measured by boundary, a rater-free check of the mix fallback beyond spot results, a check of closed or duplicate Overture venues beyond samples in Rye, Larchmont, Mamaroneck, Hastings-on-Hudson.
+
+Known limits: the Overture area for towns is an equal-area circle, not the town boundary; Overture contains stale and duplicate rows; Overture's license and attribution terms are shown as CDLA Permissive 2.0 in the amenities audit but not confirmed (the Explorer copy credits the Overture Maps Foundation); the live scorer still uses the old OSM formula and the old Aura and is not updated; places now read from two sources, so a place with OSM mapping above and below 15 venues is read through different mix sources.
+
+Open owner decisions: the five Aura places the owner ruled out on 2026-11-06 (Battery Park City, Carnegie Hill, Upper East Side, and Venice now) enter Aura under this rule; Aura follows the data per the owner's 2026-11-13 principle that the data is the source of truth when it is good data.
+
+Order to rebuild after a new OSM read or Overture release: `add_local_scene_overture_facts.py --write`, then `apply_local_scene_hybrid.py --write`. `apply_local_scene_level.py` skips places that carry Overture facts.

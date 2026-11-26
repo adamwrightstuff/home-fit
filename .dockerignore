@@ -1,4 +1,4 @@
-# Don't ship frontend or dev/cache into the API image
+# Don't ship dev/cache into the images. (The frontend source is NOT excluded: frontend.Dockerfile builds from it.)
 .git
 .venv
 venv
@@ -9,9 +9,14 @@ __pycache__
 .coverage
 htmlcov
 node_modules
-frontend
+frontend/node_modules
+frontend/.next
 analysis
+data/backups_*
 *.jsonl
+# The catalog is served by the API (catalog_api.py); the image needs these files to build and serve it.
+!data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl
+!data/catalog_climate_profiles.jsonl
 *.webm
 *.png
 .env

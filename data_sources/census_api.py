@@ -1621,7 +1621,9 @@ def _fetch_diversity_acs(geo_for: str, geo_in: str) -> Optional[Dict]:
         prime = prime_male + prime_female
         seniors = seniors_male + seniors_female
 
-        age_counts = {"youth": youth, "prime": prime, "seniors": seniors}
+        # 25 to 34 (B01001_011, 012 male; 035, 036 female) is a subset of prime: age_vars indices 8, 9 and 31, 32.
+        age_counts = {"youth": youth, "prime": prime, "seniors": seniors,
+                      "young_professionals": _val(8) + _val(9) + _val(31) + _val(32)}
 
         # ---- Education attainment: B15003 counts -> percentages (for Status Signal) ----
         # B15003_001E = Total pop 25+, 022 = Bachelor's, 023 = Master's, 024 = Professional, 025 = Doctorate

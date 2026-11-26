@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import QuizModal, { type QuizPayload } from '@/components/QuizModal'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import type { PillarPriorities } from '@/components/SearchOptions'
-import { DEFAULT_BUDGET } from '@/lib/budgetCost'
+import { DEFAULT_BUDGET, bedsFrom } from '@/lib/budgetCost'
 import { saveProfile } from '@/lib/userProfile'
 
 export default function QuizPage() {
@@ -35,7 +35,7 @@ export default function QuizPage() {
           filterCommuteMax: payload.filterCommuteMax,
           climatePrefs: payload.climatePrefs,
           ...(payload.homeBudget
-            ? { filterBudget: { beds: [payload.homeBudget.beds], max: payload.homeBudget.max, down: opts.filters?.filterBudget?.down ?? DEFAULT_BUDGET.down, chosen: true } }
+            ? { filterBudget: { beds: bedsFrom(payload.homeBudget.beds), max: payload.homeBudget.max, down: opts.filters?.filterBudget?.down ?? DEFAULT_BUDGET.down, chosen: true } }
             : {}),
         },
         dealbreakers: payload.dealbreakers,
@@ -45,7 +45,7 @@ export default function QuizPage() {
     if (payload.homeBudget) {
       let down: number | null = DEFAULT_BUDGET.down
       try { down = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')?.filters?.filterBudget?.down ?? down } catch { /* ignore */ }
-      void saveProfile({ home_budget: { beds: [payload.homeBudget.beds], down } })
+      void saveProfile({ home_budget: { beds: bedsFrom(payload.homeBudget.beds), down } })
     }
     router.push('/catalog')
   }

@@ -67,23 +67,31 @@ Set **Root Directory** to `frontend` and **`NEXT_PUBLIC_API_URL`** when linking 
 
 ### Railway (frontend on same platform as API)
 
-```bash
-npm i -g @railway/cli
-railway login
-cd frontend
-railway init
-railway variables set NEXT_PUBLIC_API_URL=https://home-fit-production.up.railway.app
-railway up
-```
+The frontend runs as its own Railway service built from `frontend.Dockerfile` (the build needs the repo root so it can read `data/` for the neighborhood pages). Set it up in the Railway dashboard:
 
-Configure build/start per Railway UI if needed (`npm run build` / `npm start`).
+1. In the project that already runs the API, choose New, then GitHub Repo, and pick this repo.
+2. In the new service's Variables, add `RAILWAY_DOCKERFILE_PATH=frontend.Dockerfile`. Without it Railway would build the API's root `Dockerfile` instead. (Railway's Config-as-code is deprecated and not available to new services, so do not use a config file for this.)
+3. Add the variables listed at the top of `frontend.Dockerfile`. `RAILWAY_API_BASE_URL` (and the optional `NEXT_PUBLIC_*` ones) are read while the app is built, so add them before the first deploy. Set `HOMEFIT_DISABLE_SCORE=1` to pause live scoring.
+4. Under Networking, generate a domain to test, then add `trovamo.co` as a custom domain and update DNS at the registrar.
+
+In the service's Settings, under Deploy, set Healthcheck Path to `/quiz` (a static page that does not depend on the API).
 
 ### Netlify
 
-- Base directory: `frontend`
-- Build: `npm run build`
-- Publish: `frontend/.next` (or per Netlify Next.js docs)
-- Env: `NEXT_PUBLIC_API_URL`
+The repo root `netlify.toml` sets base directory `frontend`, build command `npm install && npm run build` and Node 20, so a Netlify site connected to this repo needs no build settings in the dashboard.
+
+Set these in Site configuration, then Environment variables, **before the first build** (a placeholder such as `PASTE_URL` breaks the build; leave a variable out instead):
+
+| Variable | Notes |
+|----------|-------|
+| `RAILWAY_API_BASE_URL` | The Railway API URL. Required at build time: the catalog rewrites in `frontend/next.config.js` are resolved when the app is built. |
+| `HOMEFIT_PROXY_SECRET` | Must equal the secret on the Railway API, or scoring requests are rejected. |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Optional; without them sign-in is hidden. |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Optional; without them `/api/score` is not rate limited. |
+| `GOOGLE_PLACES_API_KEY` | Optional; used by the family services panel. |
+| `HOMEFIT_DISABLE_SCORE` | Set to `1` to pause live scoring. `/api/score` and `/api/score/stream` then answer 503 with a "coming soon" message and never call the API. The pre-scored catalog, neighborhood pages and place detail keep working. Remove it to turn scoring back on. |
+
+Production should be publicly visible. Netlify can require a team login for visitors; check Site configuration, then Visitor access, and leave production open.
 
 ### Self-hosted (Docker)
 
@@ -118,3 +126,15 @@ Example pattern: multi-stage Node build, `output: 'standalone'` in `next.config`
 - **Build fails**: Run `npm run build` locally in `frontend/`.
 - **API errors**: Check `NEXT_PUBLIC_API_URL`, CORS, and that the Railway API is up.
 - **Styles**: Confirm Tailwind and `globals.css` in `layout.tsx`.
+
+
+## Catalog served by the API (since 2026-11-24)
+
+The ~111 MB catalog is no longer bundled into the Vercel frontend. `catalog_api.py` serves it from the API:
+
+- `GET /catalog/list` returns the slimmed list of every live-metro place (what `/api/catalog-map?metro=all` used to return). It is built at image build time by `scripts/catalog/build_catalog_list.py` into `data_cache/catalog_list.json` and `.json.gz` (about 18 MB, 1.9 MB gzipped) and served as a static file; if the build step did not run, the first request builds it.
+- `GET /catalog/place?metro=nyc&key=<name>|<county>|<state>` returns the full detail for one place.
+- The frontend keeps calling `/api/catalog-map/all` and `/api/catalog-map?metro=X&key=Y`; `frontend/next.config.js` rewrites them to the API using `RAILWAY_API_BASE_URL` (falling back to `NEXT_PUBLIC_API_URL`). **That variable must be set for the Vercel build, not only at runtime**, because rewrites are resolved when the app is built.
+- The API image needs the catalog files: `data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl`, `data/catalog_climate_profiles.jsonl`, `data/catalog_housing_costs.json` and `data/metro_registry.json`. When the catalog changes, redeploy the API so the list is rebuilt.
+- The slimming rules (heavy per-pillar detail, and key names nothing in the frontend reads) live in `catalog_api.py` (`UNUSED_KEYS`, `KEEP_PATHS`). Before adding a read of one of those names in a list-level view, remove it from `UNUSED_KEYS`.
+- Static neighborhood pages and the sitemap still read the catalog at build time (`frontend/vercel.json` copies it into `frontend/data` before `next build`), but no deployed server function bundles it.

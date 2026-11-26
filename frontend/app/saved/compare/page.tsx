@@ -21,6 +21,26 @@ import { applyCommuteAndPeople, applyExplorerScoreAdjustments, readCompareContex
 
 type ScoreMode = 'yours' | 'catalog'
 
+/**
+ * Phone layout for the compare page (inline styles cannot use media queries). Under 640px: the top bar scrolls with the page and wraps, with the place names on
+ * their own line, the overall scoreboard scrolls with the page instead of staying pinned, and each pillar row becomes the pillar name,
+ * then the two places side by side, then the difference bar, so no column is squeezed off the screen.
+ */
+const COMPARE_NARROW_CSS = `
+@media (max-width: 640px) {
+  .cmp-nav { position: static !important; flex-wrap: wrap; row-gap: 0.4rem; }
+  .cmp-nav-names { flex: 1 1 100%; flex-wrap: wrap; row-gap: 0.15rem; }
+  .cmp-nav-names > span { white-space: normal !important; }
+  .cmp-score { position: static !important; }
+  .cmp-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 0.5rem !important; }
+  .cmp-row > :nth-child(1) { grid-column: 1 / -1; order: 0; }
+  .cmp-row > :nth-child(2) { order: 1; }
+  .cmp-row > :nth-child(4) { order: 2; }
+  .cmp-row > :nth-child(3) { grid-column: 1 / -1; order: 3; }
+  .cmp-row-head > :nth-child(1), .cmp-row-head > :nth-child(3) { display: none; }
+}
+`
+
 function isCatalogKey(id: string): boolean {
   return id.includes('|')
 }
@@ -36,7 +56,7 @@ function relocationSpec(id: string, row: SavedScoreRow | null): PlaceSpec | null
 
 async function loadRowForId(id: string): Promise<SavedScoreRow> {
   if (!isCatalogKey(id)) return getSavedScore(id)
-  const res = await fetch('/api/catalog-map?metro=all')
+  const res = await fetch('/api/catalog-map/all')
   if (!res.ok) throw new Error(`Catalog load failed (${res.status})`)
   const json = (await res.json()) as { places?: CatalogMapPlaceWithMetro[] }
   const listed = (json.places ?? []).find((p) => catalogRowKey(p.catalog) === id)
@@ -371,7 +391,9 @@ function CompareContent() {
   return (
     <main className="hf-page hf-page-no-hero">
       <div className="hf-container">
+        <style>{COMPARE_NARROW_CSS}</style>
         <nav
+          className="cmp-nav"
           style={{
             position: 'sticky',
             top: 0,
@@ -386,7 +408,7 @@ function CompareContent() {
             borderBottom: '1px solid var(--hf-border)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+          <div className="cmp-nav-names" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
             <Link href="/saved" className="hf-btn-link" style={{ fontSize: '0.9rem' }}>
               ← My places
             </Link>
@@ -456,6 +478,7 @@ function CompareContent() {
           <>
             <section
               aria-label="Overall comparison"
+              className="cmp-score"
               style={{
                 position: 'sticky',
                 top: 48,
@@ -644,6 +667,7 @@ function CompareContent() {
 
             <section style={{ marginTop: '1rem' }}>
               <div
+                className="cmp-row cmp-row-head"
                 style={{
                   display: 'grid',
                   gridTemplateColumns: '200px minmax(0,1fr) 80px minmax(0,1fr)',
@@ -692,6 +716,7 @@ function CompareContent() {
                   return (
                     <div
                       key={p.key}
+                      className="cmp-row"
                       style={{
                         display: 'grid',
                         gridTemplateColumns: '200px minmax(0,1fr) 80px minmax(0,1fr)',

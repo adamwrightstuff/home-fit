@@ -417,12 +417,13 @@ const ROAD_CIRCUITY = 1.3
 
 export function passesAirTravelDealbreaker(
   nearestAirportKm: number | null | undefined,
-  effectiveAreaType: string | null | undefined
+  effectiveAreaType: string | null | undefined,
+  maxMinutes: number = AIR_TRAVEL_DEALBREAKER_MINUTES,
 ): boolean {
   if (!nearestAirportKm || nearestAirportKm <= 0) return true
   const kmh = AIRPORT_DRIVE_KMH[(effectiveAreaType || '').toLowerCase()] ?? 50.0
   const minutes = (nearestAirportKm * ROAD_CIRCUITY) / kmh * 60.0
-  return minutes <= AIR_TRAVEL_DEALBREAKER_MINUTES
+  return minutes <= maxMinutes
 }
 
 /**
@@ -433,9 +434,30 @@ export function passesAirTravelDealbreaker(
  */
 export const QUALITY_EDUCATION_DEALBREAKER_SCORE = 50
 
-export function passesQualityEducationDealbreaker(score: number | null | undefined): boolean {
+export function passesQualityEducationDealbreaker(
+  score: number | null | undefined,
+  min: number = QUALITY_EDUCATION_DEALBREAKER_SCORE,
+): boolean {
   if (score === null || score === undefined) return true
-  return score >= QUALITY_EDUCATION_DEALBREAKER_SCORE
+  return score >= min
+}
+
+/**
+ * Per-level floor for the same gate: every picked grade level (elementary, middle, high) that has a rated
+ * school must clear the visitor's minimum (default: the state-median bar) on its own, so a strong elementary score cannot carry weak
+ * middle or high schools past the blended-average check. A level with no rated school is skipped.
+ */
+export function passesQualityEducationLevelFloor(
+  levels: Partial<Record<string, { score?: number | null }>> | null | undefined,
+  picked: readonly string[],
+  min: number = QUALITY_EDUCATION_DEALBREAKER_SCORE,
+): boolean {
+  if (!levels) return true
+  for (const l of picked) {
+    const s = levels[l]?.score
+    if (typeof s === 'number' && s < min) return false
+  }
+  return true
 }
 
 
@@ -447,9 +469,12 @@ export function passesQualityEducationDealbreaker(score: number | null | undefin
  */
 export const COMMUNITY_SAFETY_DEALBREAKER_SCORE = 25
 
-export function passesCommunitySafetyDealbreaker(score: number | null | undefined): boolean {
+export function passesCommunitySafetyDealbreaker(
+  score: number | null | undefined,
+  min: number = COMMUNITY_SAFETY_DEALBREAKER_SCORE,
+): boolean {
   if (score === null || score === undefined) return true
-  return score >= COMMUNITY_SAFETY_DEALBREAKER_SCORE
+  return score >= min
 }
 
 /**
@@ -463,12 +488,13 @@ export const HEALTHCARE_DEALBREAKER_MINUTES = 30
 
 export function passesHealthcareAccessDealbreaker(
   nearestHospitalKm: number | null | undefined,
-  areaType: string | null | undefined
+  areaType: string | null | undefined,
+  maxMinutes: number = HEALTHCARE_DEALBREAKER_MINUTES,
 ): boolean {
   if (!nearestHospitalKm || nearestHospitalKm <= 0) return true
   const kmh = AIRPORT_DRIVE_KMH[(areaType || '').toLowerCase()] ?? 50.0
   const minutes = (nearestHospitalKm * ROAD_CIRCUITY) / kmh * 60.0
-  return minutes <= HEALTHCARE_DEALBREAKER_MINUTES
+  return minutes <= maxMinutes
 }
 
 /**
@@ -481,8 +507,11 @@ export const PUBLIC_TRANSIT_DEALBREAKER_MAX_BUS_STOPS = 10
 
 export function passesPublicTransitDealbreaker(
   railStops: number | null | undefined,
-  busStops: number | null | undefined
+  busStops: number | null | undefined,
+  /** 1 = rail or more than a handful of bus stops (the original gate); 2 = rail only. `railStops` is the count of rail routes. */
+  level: number = 1,
 ): boolean {
+  if (level >= 2) return railStops === null || railStops === undefined ? true : railStops > 0
   if (railStops === null || railStops === undefined || busStops === null || busStops === undefined) return true
   return railStops > 0 || busStops > PUBLIC_TRANSIT_DEALBREAKER_MAX_BUS_STOPS
 }
@@ -675,3 +704,11 @@ export function getPillarWeightsAndContributions(
   return out
 }
 
+
+/** Original cutoff of each gate, used when a gate was switched on before strictness levels existed. */
+export const GATE_DEFAULT_LEVEL: Record<string, number> = {
+  community_safety: COMMUNITY_SAFETY_DEALBREAKER_SCORE,
+  healthcare_access: HEALTHCARE_DEALBREAKER_MINUTES,
+  air_travel_access: AIR_TRAVEL_DEALBREAKER_MINUTES,
+  public_transit_access: 1,
+}

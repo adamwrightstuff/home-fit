@@ -32,8 +32,12 @@ def test_old_dimension_names_are_ignored():
 def test_pooled_age_counts_sums_nearby_tracts(monkeypatch):
     import numpy as np
     from data_sources import surrounding_density as sd
-    monkeypatch.setattr(diversity, "_TRACT_AGE_COUNTS", {"A": (10, 20, 5), "B": (30, 40, 10), "FAR": (999, 999, 999)})
+    monkeypatch.setattr(diversity, "_TRACT_AGE_COUNTS", {"A": (10, 20, 5, 4), "B": (30, 40, 10, 6), "FAR": (999, 999, 999, 999)})
     monkeypatch.setattr(sd, "_load_tracts", lambda: (np.array([40.0, 40.005, 41.0]), np.array([-75.0, -75.0, -75.0]), None, None))
     monkeypatch.setattr(sd, "_geoid_index", {"A": 0, "B": 1, "FAR": 2})
-    y, p, s, n = diversity.pooled_age_counts(40.0, -75.0, own_geoid=None, radius_m=1400)
-    assert (y, p, s, n) == (40, 60, 15, 2)
+    y, p, s, n, yp = diversity.pooled_age_counts(40.0, -75.0, own_geoid=None, radius_m=1400)
+    assert (y, p, s, n, yp) == (40, 60, 15, 2, 10)
+
+
+def test_young_professionals_is_a_valid_preference():
+    assert diversity.parse_diversity_preference(["young_professionals", "older"]) == ["young_professionals", "older"]

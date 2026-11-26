@@ -100,6 +100,36 @@ def fetch_state(state: str, app_id: str, app_key: str, log=print) -> Dict[str, A
     return meta
 
 
+def _grade_num(g: Any) -> Optional[int]:
+    g = str(g or "").strip().upper()
+    if g in ("PK", "KG", "K"):
+        return 0
+    return int(g) if g.isdigit() else None
+
+
+def _apply_nysed_estimates(schools: List[Dict[str, Any]]) -> None:
+    """Give NY schools SchoolDigger leaves unrated (Babylon Junior-Senior High, K-12 central schools) a rating
+    estimated from their NYSED Regents results (data/nysed_regents_estimates.json, built by
+    scripts/baselines/build_nysed_regents_estimates.py). The rating is flagged `_estimated` so the details can say so.
+    Regents results cover the secondary grades only, so the school counts for middle (when it starts at grade 8 or
+    lower) and high, never elementary; SchoolDigger's own label for these schools is often 'Alternative'."""
+    p = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "nysed_regents_estimates.json")
+    if not os.path.isfile(p):
+        return
+    try:
+        est = json.load(open(p, encoding="utf-8")).get("schools") or {}
+    except Exception:
+        return
+    for s in schools:
+        e = est.get(str(s.get("schoolid")))
+        if not e or s.get("rankHistory"):
+            continue
+        low = _grade_num(s.get("lowGrade"))
+        s["rankHistory"] = [{"year": 2024, "rankStars": None, "rankStatewidePercentage": e["rating"],
+                             "rankMovement": None, "_estimated": "nysed_regents"}]
+        s["_serves"] = ["middle", "high"] if (low is not None and low <= 8) else ["high"]
+
+
 def load_state(state: Optional[str]) -> Optional[Dict[str, Any]]:
     """{'meta': {...}, 'schools': [...], 'by_district': {id: [schools]}, 'charters': [...]} or None."""
     if not state:
@@ -114,6 +144,8 @@ def load_state(state: Optional[str]) -> Optional[Dict[str, Any]]:
             try:
                 with gzip.open(p, "rt", encoding="utf-8") as f:
                     data = json.load(f)
+                if state == "NY":
+                    _apply_nysed_estimates(data["schools"])
                 by: Dict[str, List[Dict[str, Any]]] = {}
                 for s in data["schools"]:
                     did = (s.get("district") or {}).get("districtID")

@@ -150,5 +150,90 @@ class TestBoundary(unittest.TestCase):
         self.assertEqual([x["combined"] for x in f[:4]], [12.5, 37.5, 62.5, 87.5])
 
 
+class TestOvertureHybrid(unittest.TestCase):
+    """Overture volume with an OSM mix (owner decision 2026-11-13, docs/LOCAL_SCENE_LADDER_DPV2.md section 7)."""
+
+    def test_blend_weight_ramps_from_the_floor_to_the_buzzing_cut(self):
+        self.assertEqual(ls.blend_weight(0), 0.0)
+        self.assertEqual(ls.blend_weight(ls.OVERTURE_MIN_VENUES), 0.0)
+        self.assertEqual(ls.blend_weight(ls.OVERTURE_TOP_VOLUME_FROM), 1.0)
+        self.assertEqual(ls.blend_weight(10_000), 1.0)
+        mid = (ls.OVERTURE_MIN_VENUES + ls.OVERTURE_TOP_VOLUME_FROM) / 2
+        self.assertAlmostEqual(ls.blend_weight(mid), 0.5)
+        self.assertEqual(ls.blend_weight(None), 0.0)
+
+    def test_hybrid_mix_blends_and_missing_stays_missing(self):
+        self.assertEqual(ls.hybrid_mix(40.0, 80.0, 0.0), 40.0)
+        self.assertEqual(ls.hybrid_mix(40.0, 80.0, 1.0), 80.0)
+        self.assertEqual(ls.hybrid_mix(40.0, 80.0, 0.25), 50.0)
+        self.assertIsNone(ls.hybrid_mix(None, 80.0, 0.5))
+        self.assertIsNone(ls.hybrid_mix(40.0, None, 0.5))
+
+    def test_overture_floor_is_the_overture_venue_count(self):
+        thin = {"venues_total": ls.OVERTURE_MIN_VENUES - 1, "independent_venues_1200m": 5}
+        self.assertEqual(ls.hybrid_level(thin, 90.0), "quiet")  # too few venues: Limited data, whatever the mix
+        enough = {"venues_total": ls.OVERTURE_MIN_VENUES, "independent_venues_1200m": 5}
+        self.assertEqual(ls.hybrid_level(enough, 90.0), "lively")
+        self.assertEqual(ls.hybrid_level(enough, 10.0), "low_key")
+
+    def test_buzzing_needs_the_overture_volume_cut(self):
+        below = {"venues_total": 200, "independent_venues_1200m": ls.OVERTURE_TOP_VOLUME_FROM - 1}
+        at = {"venues_total": 200, "independent_venues_1200m": ls.OVERTURE_TOP_VOLUME_FROM}
+        self.assertEqual(ls.hybrid_level(below, 80.0), "lively")
+        self.assertEqual(ls.hybrid_level(at, 80.0), "buzzing")
+        self.assertEqual(ls.hybrid_level(at, 52.0), "lively")  # large place, average mix
+        self.assertIsNone(ls.hybrid_level({"venues_total": 0, "independent_venues_1200m": 0}, 80.0))
+
+    def test_osm_level_function_is_unchanged(self):
+        self.assertEqual(ls.scene_level({"venues_total": 14, "independent_venues_1200m": 14, "combined": 90.0}), "quiet")
+        self.assertEqual(ls.scene_level({"venues_total": 80, "independent_venues_1200m": 71, "combined": 60.0}), "buzzing")
+
+    def test_restaurant_free_reading_ignores_the_restaurant_count(self):
+        # same hangout and culture venues, one place has 100 extra restaurants: the restaurant-free reading must not move
+        base = {"venues_total": 20, "culture_venues": 2, "hangout_share": 50.0, "geography": "pin_circle"}
+        padded = {"venues_total": 120, "culture_venues": 2, "hangout_share": round(100 * 10 / 120, 1), "geography": "pin_circle"}
+        other = {"venues_total": 30, "culture_venues": 0, "hangout_share": 20.0, "geography": "pin_circle"}
+        filler = {"venues_total": 0, "culture_venues": 0, "hangout_share": None, "geography": "pin_circle"}
+        for first in (base, padded):
+            # ten places so the two under test share the lowest density band
+            f = [dict(first), dict(other)] + [dict(filler) for _ in range(8)]
+            ls.apply_restaurant_free_reading(f, [2.0] * 10, [float(k) for k in range(1, 11)])
+            self.assertGreater(f[0]["combined_new"], f[1]["combined_new"])
+        self.assertEqual(ls.hangout_count(base), 10)
+        self.assertEqual(ls.hangout_count(padded), 10)
+
+    def test_restaurant_free_reading_needs_area_and_density(self):
+        f = [{"venues_total": 10, "culture_venues": 1, "hangout_share": 50.0, "geography": "pin_circle"}]
+        ls.apply_restaurant_free_reading(f, [None], [5.0])
+        self.assertIsNone(f[0]["combined_new"])
+        ls.apply_restaurant_free_reading(f, [2.0], [None])
+        self.assertIsNone(f[0]["combined_new"])
+
+
+class TestOvertureFacts(unittest.TestCase):
+    def setUp(self):
+        from scripts.catalog import add_local_scene_overture_facts as ov
+        self.ov = ov
+
+    def test_category_mapping(self):
+        t = self.ov.venue_type
+        self.assertEqual(t("coffee_shop", "coffee_shop"), "cafe")
+        self.assertEqual(t("wine_bar", "bar"), "bar")
+        self.assertEqual(t("italian_restaurant", "restaurant"), "restaurant")
+        self.assertEqual(t("art_gallery", "art_gallery"), "gallery")
+        self.assertEqual(t("record_store", "shopping"), "records")
+        self.assertEqual(t("movie_theater", "movie_theater"), "theater")
+        self.assertIsNone(t("bakery", "casual_eatery"))
+        self.assertIsNone(t("fast_food_restaurant", "fast_food_restaurant"))
+
+    def test_registry_only_and_low_confidence_rows_are_dropped(self):
+        k = self.ov.keep_row
+        self.assertTrue(k(0.9, ["meta", "Overture"]))
+        self.assertTrue(k(None, ["Foursquare", "Overture-signals"]))
+        self.assertFalse(k(0.4, ["meta", "Overture"]))
+        self.assertFalse(k(0.9, ["BrightQuery", "Overture"]))
+        self.assertTrue(k(0.9, ["BrightQuery", "meta", "Overture"]))  # registry plus a real source is kept
+
+
 if __name__ == "__main__":
     unittest.main()

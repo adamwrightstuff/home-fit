@@ -1460,6 +1460,13 @@ _NY_COUNTY_PD_POPULATIONS: Dict[str, int] = {
 # town_population is the full agency service population so per-1k rates are correct.
 _NY_VILLAGE_TO_TOWN_PD: Dict[str, tuple] = {
     "nyack": ("Orangetown", "Rockland", 50_000),  # Nyack Village is within Town of Orangetown
+    # Edgemont is an unincorporated hamlet policed by Greenburgh Town PD. Service population is the Town of
+    # Greenburgh (ACS 2022: 94,259) minus the five villages with their own PD that report to the state
+    # (Ardsley 5,013, Dobbs Ferry 11,431, Elmsford 5,192, Hastings-on-Hudson 8,456, Irvington 6,590) = 57,577.
+    "edgemont": ("Greenburgh", "Westchester", 57_577),
+    # Reverse geocoding names Edgemont's pin "Greenville" (the neighbouring hamlet, same town and police
+    # department). Applied only when the FBI agency found for the pin is in Westchester (see the county guard).
+    "greenville": ("Greenburgh", "Westchester", 57_577),
 }
 
 
@@ -1585,6 +1592,8 @@ def _get_fbi_rates(
             # town PD that reports to the state UCR (e.g. Nyack → Orangetown).
             if ny_row is None:
                 town_entry = _NY_VILLAGE_TO_TOWN_PD.get(_city_kw.lower())
+                if town_entry and county and town_entry[1].lower() != county.lower():
+                    town_entry = None  # same name in another county (e.g. Greenville, Greene County)
                 if town_entry:
                     town_kw, town_county, town_pop = town_entry
                     ny_row = _fetch_ny_state_agency_row(town_kw, town_county, data_year)

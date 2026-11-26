@@ -152,6 +152,9 @@ export default function AuthBar() {
             Search any place
           </Link>
           )}
+          <Link href="/quiz" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e', fontSize: '0.9rem' }} onClick={closeMobileMenu}>
+            Take the quiz
+          </Link>
           {accountNav}
         </nav>
       </header>

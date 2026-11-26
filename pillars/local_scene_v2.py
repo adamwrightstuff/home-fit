@@ -170,19 +170,100 @@ LARGE_PLACE_MIX_CUT = 50.0
 LEVELS = ("quiet", "low_key", "lively", "buzzing")
 
 
-def scene_level(facts: Dict[str, Any]) -> Optional[str]:
-    """Ladder level from a place's stored local_scene_v2 facts (venues_total, combined, independent_venues_1200m)."""
+def scene_level_with_cuts(facts: Dict[str, Any], min_venues: float, top_volume_from: float) -> Optional[str]:
+    """Ladder level from venue facts (venues_total, combined, independent_venues_1200m) and the two volume cuts."""
     total, n = facts.get("venues_total"), facts.get("independent_venues_1200m")
     if not total or n is None:
         return None
-    if total < MIN_VENUES:
+    if total < min_venues:
         return "quiet"
     combined = facts.get("combined")
     if combined is None:
         return "low_key"
-    large = n >= TOP_VOLUME_FROM
+    large = n >= top_volume_from
     if combined >= LEVEL_MIX_CUT:
         return "buzzing" if large else "lively"
     if large and combined >= LARGE_PLACE_MIX_CUT:
         return "lively"
     return "low_key"
+
+
+def scene_level(facts: Dict[str, Any]) -> Optional[str]:
+    """Ladder level from a place's stored local_scene_v2 facts, OpenStreetMap counts and OSM cuts (the pre-2026-11-13 ladder)."""
+    return scene_level_with_cuts(facts, MIN_VENUES, TOP_VOLUME_FROM)
+
+
+# ---------------------------------------------------------------------------------------------------------------------------------
+# Overture hybrid ladder (owner decision 2026-11-13; docs/LOCAL_SCENE_LADDER_DPV2.md section 7, analysis/local_scene_mix_proposal_2026-11-13.md).
+# Venue VOLUME (the floor, the Buzzing cut and the blend weight) comes from Overture Maps Places, because its counts track Census
+# retail and food-service employment far better than OpenStreetMap's (LODES, Spearman 0.91 vs 0.81 overall, 0.84 vs 0.57 where OSM has
+# under 15 venues). The MIX reading comes from OpenStreetMap when OSM maps at least OSM_ENOUGH_VENUES in the measured area (its venue
+# categories are cleaner in small towns), else from Overture. All of these are unsourced judgments (principle 4):
+#   OVERTURE_MIN_VENUES        30   floor on Overture venues; about the OSM floor of 15 scaled by Overture's 2.4x higher counts, rounded
+#   OVERTURE_TOP_VOLUME_FROM   126  Overture independent venues within 1,200 m; the 85th percentile, matched to the OSM cut of 71
+#   OSM_ENOUGH_VENUES          15   the OSM mix is used when OSM has at least this many venues (the old OSM floor)
+# The blend weight rises linearly from 0 at OVERTURE_MIN_VENUES to 1 at OVERTURE_TOP_VOLUME_FROM and mixes the current mix (culture and
+# hangout shares of all venues) with the restaurant-independent mix (culture share among hangout venues, hangout venues per km2).
+OVERTURE_MIN_VENUES = 30
+OVERTURE_TOP_VOLUME_FROM = 126
+OSM_ENOUGH_VENUES = 15
+
+
+def hangout_count(facts: Dict[str, Any]) -> int:
+    """Hangout venue count recovered from the stored share and total."""
+    return int(round((facts.get("hangout_share") or 0.0) * (facts.get("venues_total") or 0) / 100.0))
+
+
+def apply_restaurant_free_reading(facts: List[Dict[str, Any]], areas_km2: List[Optional[float]], densities: List[Optional[float]]) -> None:
+    """
+    Add combined_new to each place's facts, in place: the mean of two percentile ranks within the same density band and kind of
+    geography as apply_reading: culture share among hangout venues, and hangout venues per km2 of the measured area. Neither
+    contains the restaurant count. None when the place has no venues, no density figure or no area.
+    """
+    n = len(facts)
+    bands = density_bands(densities)
+    values: List[Optional[tuple]] = []
+    for f, area in zip(facts, areas_km2):
+        total = f.get("venues_total")
+        if not total or not area:
+            values.append(None)
+            continue
+        hang = hangout_count(f)
+        values.append((100.0 * (f.get("culture_venues") or 0) / hang if hang else 0.0, hang / area))
+    groups: Dict[Any, List[int]] = {}
+    for i in range(n):
+        facts[i]["combined_new"] = None
+        if bands[i] is None or values[i] is None:
+            continue
+        groups.setdefault((facts[i].get("geography", "pin_circle"), bands[i]), []).append(i)
+    for members in groups.values():
+        a = percentile_ranks([values[i][0] for i in members])
+        b = percentile_ranks([values[i][1] for i in members])
+        for i, x, y in zip(members, a, b):
+            facts[i]["combined_new"] = round((x + y) / 2, 1)
+
+
+def blend_weight(independent_venues: Optional[float], lo: float = OVERTURE_MIN_VENUES, hi: float = OVERTURE_TOP_VOLUME_FROM) -> float:
+    """0 at lo or fewer independent venues, 1 at hi or more, linear between."""
+    n = independent_venues or 0
+    return min(1.0, max(0.0, (n - lo) / (hi - lo)))
+
+
+def hybrid_mix(current: Optional[float], restaurant_free: Optional[float], weight: float) -> Optional[float]:
+    """(1 - w) x current mix + w x restaurant-free mix; None when either is missing."""
+    if current is None or restaurant_free is None:
+        return None
+    return round((1.0 - weight) * current + weight * restaurant_free, 1)
+
+
+def hybrid_level(overture: Dict[str, Any], mix: Optional[float]) -> Optional[str]:
+    """Ladder level from Overture volume facts and the hybrid mix: floor and Buzzing cut on Overture counts."""
+    return scene_level_with_cuts(
+        {
+            "venues_total": overture.get("venues_total"),
+            "independent_venues_1200m": overture.get("independent_venues_1200m"),
+            "combined": mix,
+        },
+        OVERTURE_MIN_VENUES,
+        OVERTURE_TOP_VOLUME_FROM,
+    )

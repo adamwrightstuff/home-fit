@@ -167,10 +167,9 @@ def get_cohesion_score(
     """
     Return (cohesion 0-100 or None, diagnostics).
 
-    Blend: 0.65 clustering (network tightness) + 0.35 support ratio (reciprocity),
-    each scored against area-type peers. Clustering is the primary felt-tightness
-    signal; support ratio sharpens it. Returns None when the ZIP is absent from the
-    Atlas so the caller can fall back to the tenure-based stability channel.
+    v21: support ratio (reciprocity) scored against area-type peers. Clustering is reported in the
+    diagnostics but not scored (density artifact). Returns None when the ZIP or its support value is
+    absent so the blend leaves cohesion out and rescales the rest.
     """
     diag: Dict[str, Any] = {
         "clustering": None,
@@ -197,17 +196,12 @@ def get_cohesion_score(
     diag["clustering_score"] = round(c_score, 1) if c_score is not None else None
     diag["support_score"] = round(s_score, 1) if s_score is not None else None
 
-    if c_score is not None and s_score is not None:
-        score = 0.65 * c_score + 0.35 * s_score
-        diag["resolution"] = "clustering+support"
-    elif c_score is not None:
-        score = c_score
-        diag["resolution"] = "clustering_only"
-    elif s_score is not None:
-        score = s_score
-        diag["resolution"] = "support_only"
-    else:
+    # v21: clustering is mechanically lower where more ties are possible (dense places), so it is shown as a
+    # diagnostic only. Cohesion is the support ratio (do neighbors help each other), scored against area-type peers.
+    if s_score is None:
         return None, diag
+    score = s_score
+    diag["resolution"] = "support_only"
 
     return max(0.0, min(100.0, round(score, 1))), diag
 
