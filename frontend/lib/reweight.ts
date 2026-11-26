@@ -567,45 +567,34 @@ export function scoreHousingSpace(rooms: number | null | undefined): number | nu
   return 5
 }
 
-/**
- * Value for money, 0 to 20, from rooms per $100k. Mirrors _score_value_efficiency in pillars/housing_value.py
- * with no metro adjustment (catalog places are stored without one).
- */
-export function scoreValueEfficiency(price: number | null | undefined, rooms: number | null | undefined): number | null {
-  if (typeof price !== 'number' || !(price > 0) || typeof rooms !== 'number' || !(rooms > 0)) return null
-  const r = (rooms / price) * 100000
-  if (r >= 0.5) return r >= 1 ? 20 : 18 + 2 * Math.min(1, (r - 0.5) / 0.5)
-  if (r >= 0.2) return 14 + 4 * ((r - 0.2) / 0.3)
-  if (r >= 0.1) return 10 + 4 * ((r - 0.1) / 0.1)
-  return 10 * Math.min(1, r / 0.1)
+export type CurrentHomeDetails = { bedrooms?: number | null }
+
+/** Census rooms for a bedroom count: bedrooms plus a living room and kitchen; a studio is one room. */
+export function censusRoomsFromBedrooms(bedrooms: number | null | undefined): number | null {
+  if (typeof bedrooms !== 'number' || !Number.isInteger(bedrooms) || bedrooms < 0) return null
+  return bedrooms === 0 ? 1 : bedrooms + 2
 }
 
-export type CurrentHomeDetails = { rooms?: number | null; purchasePrice?: number | null }
-
 /**
- * For the visitor's own home: score space from their room count and value for money from their rooms and what
- * they paid, in place of the area's figures. The stored area value for money is scaled by the owner share of
- * households (renters get none, see pillars/housing_value.py); a purchase price means this household owns, so
- * its own value for money counts in full. Without a price (a renter), the area's figure stays. Affordability is left as stored (applyUserIncomeToScore sets it from
- * the real monthly cost when income is known), so call this first. No-op when neither detail is given.
+ * For the visitor's own home: score space from their bedroom count (converted to Census rooms, the unit the
+ * pillar uses everywhere) in place of the area's median. Affordability is left as stored
+ * (applyUserIncomeToScore sets it from the real monthly cost when income is known), so call this first. Value for
+ * money stays on the area's current prices, like every other place. No-op without a bedroom count.
  */
 export function applyCurrentHomeDetailsToScore(data: ScoreResponse, details: CurrentHomeDetails | null | undefined): ScoreResponse {
   const hv = (data.livability_pillars as any)?.housing_value
   if (!hv || typeof hv.score !== 'number' || !details) return data
-  const newSpace = scoreHousingSpace(details.rooms)
+  const newSpace = scoreHousingSpace(censusRoomsFromBedrooms(details.bedrooms))
   if (newSpace === null) return data
-  const newEffOwn = scoreValueEfficiency(details.purchasePrice, details.rooms)
   const bk = hv.breakdown ?? {}
   const pool = hv.summary?.pooling
   const oldSpace = Number(pool?.space ?? bk.space)
   if (!Number.isFinite(oldSpace)) return data
-  const oldEffRaw = pool && 'value_efficiency' in pool ? pool.value_efficiency : bk.value_efficiency
-  const oldEff = oldEffRaw == null ? null : Number(oldEffRaw)
-  // Affordability as stored, recovered from the total (a missing value efficiency rescales the rest to 100).
-  const affordability = oldEff === null ? hv.score * 0.8 - oldSpace : hv.score - oldSpace - oldEff
-  const newEff = newEffOwn ?? oldEff
-  const total = newEff === null ? (affordability + newSpace) * (100 / 80) : affordability + newSpace + newEff
-  const own = { space: newSpace, ...(newEffOwn !== null ? { value_efficiency: newEffOwn } : {}) }
+  // The other components are unchanged, so the total moves by the space difference (rescaled when value for money
+  // is missing, which scores the rest out of 80).
+  const effRaw = pool && 'value_efficiency' in pool ? pool.value_efficiency : bk.value_efficiency
+  const scale = effRaw == null ? 100 / 80 : 1
+  const total = hv.score + (newSpace - oldSpace) * scale
   const patched: ScoreResponse = {
     ...data,
     livability_pillars: {
@@ -613,8 +602,8 @@ export function applyCurrentHomeDetailsToScore(data: ScoreResponse, details: Cur
       housing_value: {
         ...hv,
         score: Math.min(100, Math.max(0, total)),
-        breakdown: { ...bk, ...own, own_home: true },
-        ...(pool ? { summary: { ...hv.summary, pooling: { ...pool, ...own } } } : {}),
+        breakdown: { ...bk, space: newSpace, own_home: true },
+        ...(pool ? { summary: { ...hv.summary, pooling: { ...pool, space: newSpace } } } : {}),
       },
     } as ScoreResponse['livability_pillars'],
   }

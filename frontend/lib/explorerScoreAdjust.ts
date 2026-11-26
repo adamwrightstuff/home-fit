@@ -119,7 +119,7 @@ export interface CompareContext {
   /** Explorer's live income (signed-in users load it from their profile, not sessionStorage). */
   householdIncome?: number | null
   /** "Current home" monthly-cost override, applied only to the place with this catalog name. */
-  currentHome?: { name: string; key?: string | null; monthlyCost: number | null; rooms?: number | null; purchasePrice?: number | null } | null
+  currentHome?: { name: string; key?: string | null; monthlyCost: number | null; bedrooms?: number | null } | null
   /** Commute and nearby-people inputs: the Explorer adds those two pillars before weighting. */
   workZoneId?: string | null
   commuteMode?: CommuteMode | null

@@ -6,8 +6,8 @@ export type CommuteMode = 'auto' | 'transit' | 'active'
 export interface UserProfile {
   household_income: number | null
   /** key: catalog row key (name|county|state); missing on homes saved before it was stored. */
-  /** rooms (Census rooms) and purchase_price (owners) rescore space and value for money for this home only. */
-  current_home: { name: string; monthly_cost: number | null; key?: string; rooms?: number; purchase_price?: number } | null
+  /** bedrooms (0 = studio) rescores space for this home only, in the same unit as the budget filter. */
+  current_home: { name: string; monthly_cost: number | null; key?: string; bedrooms?: number } | null
   work_zone_id: string | null
   commute_mode: CommuteMode | null
   /** Days per week in the office, 0 (fully remote) to 5. */
@@ -57,8 +57,7 @@ export function sanitizeProfile(raw: unknown): Partial<UserProfile> {
         name: v.name,
         monthly_cost: cost,
         ...(typeof v.key === 'string' && v.key ? { key: v.key } : {}),
-        ...(typeof v.rooms === 'number' && v.rooms > 0 && v.rooms <= 30 ? { rooms: v.rooms } : {}),
-        ...(typeof v.purchase_price === 'number' && v.purchase_price >= 10000 ? { purchase_price: v.purchase_price } : {}),
+        ...(Number.isInteger(v.bedrooms) && v.bedrooms >= 0 && v.bedrooms <= 10 ? { bedrooms: v.bedrooms } : {}),
       }
     }
   }
@@ -115,8 +114,7 @@ export function readLocalProfile(): Partial<UserProfile> {
         name: homeName,
         monthly_cost: typeof cost === 'number' && cost > 0 ? cost : null,
         ...(typeof homeKey === 'string' && homeKey ? { key: homeKey } : {}),
-        ...(typeof opts?.current_home_rooms === 'number' && opts.current_home_rooms > 0 ? { rooms: opts.current_home_rooms } : {}),
-        ...(typeof opts?.current_home_purchase_price === 'number' && opts.current_home_purchase_price > 0 ? { purchase_price: opts.current_home_purchase_price } : {}),
+        ...(Number.isInteger(opts?.current_home_bedrooms) && opts.current_home_bedrooms >= 0 ? { bedrooms: opts.current_home_bedrooms } : {}),
       }
     }
     const fb = opts?.filters?.filterBudget

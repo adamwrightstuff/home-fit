@@ -407,8 +407,7 @@ export default function CatalogPageClient({
     try {
       const parsed = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')
       return {
-        rooms: typeof parsed?.current_home_rooms === 'number' ? parsed.current_home_rooms : null,
-        purchasePrice: typeof parsed?.current_home_purchase_price === 'number' ? parsed.current_home_purchase_price : null,
+        bedrooms: Number.isInteger(parsed?.current_home_bedrooms) ? parsed.current_home_bedrooms : null,
       }
     } catch { /* ignore */ }
     return {}
@@ -580,7 +579,7 @@ export default function CatalogPageClient({
       if (p.current_home) {
         setCurrentHomeMatch(p.current_home.name)
         setCurrentHomeKey(p.current_home.key ?? '')
-        setCurrentHomeDetails({ rooms: p.current_home.rooms ?? null, purchasePrice: p.current_home.purchase_price ?? null })
+        setCurrentHomeDetails({ bedrooms: p.current_home.bedrooms ?? null })
         setCurrentHomeMonthlyCost(p.current_home.monthly_cost)
       }
       if (p.work_zone_id && findWorkZone(p.work_zone_id)) setWorkZoneId(p.work_zone_id)
@@ -676,7 +675,7 @@ export default function CatalogPageClient({
     const withIncome = places.map((p) => {
       const isCurrentHome = isCurrentHomeRow(p.catalog, currentHome)
       if (!householdIncome && !isCurrentHome) return p
-      // Own home: its rooms and purchase price first, then affordability from the real monthly cost.
+      // Own home: its bedrooms set space first, then affordability comes from the real monthly cost.
       const own = isCurrentHome ? applyCurrentHomeDetailsToScore(p.score, currentHomeDetails) : p.score
       const monthlyCostOverride = isCurrentHome ? currentHomeMonthlyCost : null
       return { ...p, score: householdIncome ? applyUserIncomeToScore(own, householdIncome, monthlyCostOverride) : own }
