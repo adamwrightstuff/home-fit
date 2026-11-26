@@ -197,7 +197,13 @@ All-places check (offline, NYC catalog, n = 194, one test acquaintance at the Ca
   old curve: 170 places got some credit, 31 scored 100
   new curve: 5 places get credit: Carroll Gardens 100 (0 m), Cobble Hill 99 (806 m), Red Hook 66 (954 m), Gowanus 37 (1,089 m), Boerum Hill 9 (1,217 m)
 
-Not yet done (DPv2 6, 10): pin-shift and radius sensitivity, launch pairs.
+DPv2 checks run 2026-11-26 (offline, all 21 metro catalogs, n = 1,477 places; script kept out of the repo):
+- Launch pairs, fixed before scoring, acquaintance at the Carroll Gardens pin: should differ, Carroll Gardens 100 vs Park Slope 0 (2,068 m) PASS; Carroll Gardens 100 vs Brooklyn Heights 0 (1,847 m) PASS. Should be similar, Carroll Gardens 100 vs Cobble Hill 99 (806 m) PASS. No place outside NYC gets credit.
+- Spread: an acquaintance at a place's pin credits a median of 1 place (p95 3, max 8 in NYC); 85% credit only their own place. No ceiling clumping.
+- Walk-distance sensitivity across the recorded ranges (full 400 to 1,000 m, zero 524 to 1,260 m): median credited stays 1, p95 1 to 3, only-own 85% to 98%. Robust.
+- Pin shift: moving the acquaintance 100 m changes scores at nearby places by median 0, p95 16, max 22; 250 m gives p95 37, max 54. The 460 m ramp is steep, so geocode error of a few hundred meters matters; typical address geocodes are much closer than that.
+- Total effect at default priorities (12 pillars at Medium, acquaintance at Medium = 2 of 26 tokens): a full-credit acquaintance lifts the total by median 2.8, max 4.8 points; Carroll Gardens 1.8.
+- FAIL, edge problem: with no neighborhood boundaries in the data, distance is to the catalog centroid. Taking half the gap to the nearest other centroid as a rough neighborhood edge (median 1,787 m, p90 5,275 m), a person at the edge of their own neighborhood gets 0 at that neighborhood in 921 of 1,477 places (62%); worst in suburban metros (Las Vegas 28/30, Orlando 36/43), best in NYC (61/194). The walk zone fits dense neighborhoods; most suburban catalog places are larger than a walk, so the centroid stands in poorly for where run-ins happen. Not yet decided.
 
 ## Sources checked this session
 - Sun and Schafer 2023, J Gerontol B 78(11):1917-1926, SHARE waves 4 and 6, n=18,055, fixed effects: relative within 1 km and non-kin within about 5 km (odds ratios about 1.7 and 1.3 for severe loneliness); losses farther away not significant; a new core member offsets most of it. VERIFIED abstract-level. Correction to the earlier note in HAPPINESS_EVIDENCE_NOTES.md section 2c ("losing a child raises loneliness at any distance"): the version I read does not say that, and the code comment claiming it supports decline "through 25 km" for kin is not supported (kin effect only within 1 km).
