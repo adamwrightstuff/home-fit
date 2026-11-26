@@ -19,6 +19,7 @@ import { HOMEFIT_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pi
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import BudgetCostLine from '@/components/catalog/BudgetCostLine'
+import SurroundingsCard from '@/components/catalog/SurroundingsCard'
 import type { BudgetFilter } from '@/lib/budgetCost'
 
 const INDEX_TABS: { id: CatalogMapIndexMode; label: string; tooltip: string }[] = [
@@ -253,6 +254,12 @@ export default function CatalogDetailPanel({
             <p style={{ margin: '0 0 16px', fontSize: '0.8rem', lineHeight: 1.6, color: 'var(--hf-text-secondary)' }}>
               {place.score.place_summary}
             </p>
+          )}
+
+          {place.surroundings && (
+            <div className="mb-3">
+              <SurroundingsCard surroundings={place.surroundings} />
+            </div>
           )}
 
           {/* Climate profile */}

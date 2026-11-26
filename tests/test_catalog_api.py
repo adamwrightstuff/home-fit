@@ -50,11 +50,13 @@ def data(tmp_path, monkeypatch):
     (d / "catalog_climate_profiles.jsonl").write_text(
         json.dumps({"name": "Carroll Gardens", "source": "nyc_metro", "climate": {"months": months}}) + "\n")
     (d / "catalog_housing_costs.json").write_text(json.dumps({"places": {"nyc::Carroll Gardens|Kings|NY": {"rent": 1}}}))
+    (d / "catalog_surroundings.json").write_text(json.dumps({"places": {"nyc::Carroll Gardens|Kings|NY": {
+        "income": {"here": 150000, "around": 120000}, "neighbors": ["Park Slope"]}}}))
     monkeypatch.setattr(catalog_api, "DATA_DIR", d)
     monkeypatch.setattr(catalog_api, "CACHE_DIR", cache)
     monkeypatch.setattr(catalog_api, "LIST_JSON", cache / "catalog_list.json")
     monkeypatch.setattr(catalog_api, "LIST_GZ", cache / "catalog_list.json.gz")
-    for fn in (catalog_api._climate_index, catalog_api._housing_costs, catalog_api._metro_index):
+    for fn in (catalog_api._climate_index, catalog_api._housing_costs, catalog_api._surroundings, catalog_api._metro_index):
         fn.cache_clear()
     app = FastAPI()
     app.include_router(catalog_api.router)
@@ -101,6 +103,9 @@ def test_list_endpoint_builds_slim_list_and_serves_gzip(data):
     cg = next(p for p in body["places"] if p["catalog"]["name"] == "Carroll Gardens")
     assert cg["metro"] == "nyc" and cg["housing_cost"] == {"rent": 1} and cg["climate"]["jan_f"] == 31.0
     assert "tree_analysis" not in cg["score"]["livability_pillars"]["natural_beauty"]
+    assert cg["surroundings"]["income"] == {"here": 150000, "around": 120000}
+    ps = next(p for p in body["places"] if p["catalog"]["name"] == "Park Slope")
+    assert "surroundings" not in ps  # no figure: the key is left out, never zero
     plain = data.get("/catalog/list", headers={"accept-encoding": "identity"})
     assert plain.status_code == 200 and plain.json() == body
 

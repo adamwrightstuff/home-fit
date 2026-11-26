@@ -1,4 +1,5 @@
 import type { HousingCost } from '@/lib/budgetCost'
+import type { Surroundings } from '@/lib/surroundings'
 import { isCatalogMetro, type CatalogMetro } from '@/lib/catalogMetros'
 import type { WorkCommute } from './workZones'
 import type { ScoreResponse } from '@/types/api'
@@ -73,6 +74,8 @@ export interface CatalogMapPlace {
   score: ScoreResponse
   /** Zillow ZIP values by bedroom count plus ZIP property tax; see lib/budgetCost.ts. */
   housing_cost?: HousingCost | null
+  /** Income and home value around the place vs here; display only (lib/surroundings.ts). Absent when too few neighbors. */
+  surroundings?: Surroundings
   climate?: ClimateIndicators
   cbd_transit_minutes?: number | null
   cbd_transit_dest?: 'gct' | 'penn' | null

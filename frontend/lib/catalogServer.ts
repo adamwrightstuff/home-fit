@@ -13,6 +13,7 @@ import path from 'path'
 import { CATALOG_METROS, type CatalogMetro } from './catalogMetros'
 import { placeSlug } from './neighborhoodSlug'
 import type { ScoreResponse } from '@/types/api'
+import type { Surroundings } from './surroundings'
 
 export interface NeighborhoodCatalogInfo {
   name: string
@@ -33,6 +34,18 @@ export interface NeighborhoodEntry {
   score: ScoreResponse
   /** Precomputed minutes to each work hub, when this metro has them. */
   work_commute: WorkCommute | null
+  /** Income and home value nearby vs here (data/catalog_surroundings.json); null when too few neighbors. */
+  surroundings: Surroundings | null
+}
+
+function loadSurroundings(): Record<string, Surroundings> {
+  const file = findFile('catalog_surroundings.json')
+  if (!file) return {}
+  try {
+    return (JSON.parse(fs.readFileSync(file, 'utf8')) as { places?: Record<string, Surroundings> }).places ?? {}
+  } catch {
+    return {}
+  }
 }
 
 const METRO_FILES: Record<CatalogMetro, string> = {
@@ -87,6 +100,7 @@ let cache: NeighborhoodEntry[] | null = null
 export function loadAllNeighborhoods(): NeighborhoodEntry[] {
   if (cache) return cache
   const entries: NeighborhoodEntry[] = []
+  const around = loadSurroundings()
   for (const metro of CATALOG_METROS) {
     const file = findFile(METRO_FILES[metro])
     if (!file) continue // metro not yet batch-scored; skip
@@ -107,6 +121,8 @@ export function loadAllNeighborhoods(): NeighborhoodEntry[] {
           catalog: row.catalog,
           score: row.score,
           work_commute: row.work_commute ?? null,
+          surroundings:
+            around[`${metro}::${row.catalog.name}|${row.catalog.county_borough}|${row.catalog.state_abbr}`] ?? null,
         })
       } catch {
         /* skip malformed lines */

@@ -17,6 +17,7 @@ import { CATALOG_METRO_META } from '@/lib/catalogMetros'
 import NeighborhoodMap from '@/components/NeighborhoodMap'
 import NeighborhoodPersonal from '@/components/NeighborhoodPersonal'
 import WhoLivesHere from '@/components/WhoLivesHere'
+import SurroundingsCard from '@/components/catalog/SurroundingsCard'
 
 export const dynamicParams = false
 
@@ -251,6 +252,12 @@ export default async function NeighborhoodPage({
 
       {/* Who lives here: neutral description, no score and no weight */}
       <WhoLivesHere pillars={score.livability_pillars} />
+
+      {entry.surroundings && (
+        <section className="-mt-4 mb-8">
+          <SurroundingsCard surroundings={entry.surroundings} size="page" />
+        </section>
+      )}
 
       <NeighborhoodPersonal score={score} workCommute={work_commute} />
 

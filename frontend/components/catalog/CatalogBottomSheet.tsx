@@ -19,6 +19,7 @@ import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import { SCENE_LABEL } from '@/lib/sceneLevels'
 import BudgetCostLine from '@/components/catalog/BudgetCostLine'
+import SurroundingsCard from '@/components/catalog/SurroundingsCard'
 import type { BudgetFilter } from '@/lib/budgetCost'
 
 export type CatalogSheetSnap = 'peek' | 'expanded'
@@ -367,6 +368,12 @@ export default function CatalogBottomSheet({
               >
                 {place.score.place_summary}
               </p>
+            )}
+
+            {snap === 'expanded' && place.surroundings && (
+              <div style={{ marginBottom: 10 }}>
+                <SurroundingsCard surroundings={place.surroundings} />
+              </div>
             )}
 
             <button

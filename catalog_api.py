@@ -300,6 +300,16 @@ def _housing_costs() -> Dict[str, Any]:
         return {}
 
 
+@lru_cache(maxsize=1)
+def _surroundings() -> Dict[str, Any]:
+    """Income and home value around each place (scripts/catalog/build_catalog_surroundings.py). Display only."""
+    path = DATA_DIR / "catalog_surroundings.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8")).get("places") or {}
+    except (OSError, ValueError):
+        return {}
+
+
 def _metro_file(metro: str) -> Path:
     return DATA_DIR / f"{metro}_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
 
@@ -309,7 +319,7 @@ def iter_metro_places(metro: str) -> Iterable[Dict[str, Any]]:
     path = _metro_file(metro)
     if not path.is_file():
         return
-    climate, housing = _climate_index(), _housing_costs()
+    climate, housing, around = _climate_index(), _housing_costs(), _surroundings()
     with path.open(encoding="utf-8") as fh:
         for line in fh:
             line = line.strip()
@@ -331,6 +341,9 @@ def iter_metro_places(metro: str) -> Iterable[Dict[str, Any]]:
             if clim:
                 place["climate"] = clim
             place["housing_cost"] = housing.get(f"{metro}::{row_key(row['catalog'])}")
+            surroundings = around.get(f"{metro}::{row_key(row['catalog'])}")
+            if surroundings:
+                place["surroundings"] = surroundings
             yield place
 
 
