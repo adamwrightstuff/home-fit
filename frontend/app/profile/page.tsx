@@ -17,11 +17,14 @@ import {
   type UserProfile,
 } from '@/lib/userProfile'
 
+import { catalogRowKey } from '@/lib/catalogMapTypes'
+
 type SaveState = 'idle' | 'local' | 'saving' | 'saved' | 'error'
 
 interface HomeOption {
   name: string
   sub: string
+  key: string
 }
 
 /** Catalog place names for the current-home picker, fetched once on first use. */
@@ -36,6 +39,7 @@ async function loadHomeOptions(): Promise<HomeOption[]> {
       .map((p) => ({
         name: String(p?.catalog?.name ?? ''),
         sub: [p?.catalog?.county_borough, p?.catalog?.state_abbr].filter(Boolean).join(', '),
+        key: p?.catalog ? catalogRowKey(p.catalog) : '',
       }))
       .filter((o) => o.name)
     return homeOptionsCache
@@ -55,6 +59,7 @@ function persistLocal(patch: Partial<UserProfile>) {
     if ('current_home' in patch) {
       opts.current_home_match = patch.current_home?.name ?? ''
       opts.current_home_monthly_cost = patch.current_home?.monthly_cost ?? null
+      opts.current_home_key = patch.current_home?.key ?? ''
     }
     if ('home_budget' in patch) {
       const prev = opts.filters?.filterBudget ?? {}
@@ -247,14 +252,14 @@ export default function ProfilePage() {
     const valid = n !== null && n >= 100 ? n : null
     setCostInput(valid ? valid.toLocaleString('en-US') : '')
     if (profile.current_home && valid !== profile.current_home.monthly_cost) {
-      update({ current_home: { name: profile.current_home.name, monthly_cost: valid } })
+      update({ current_home: { ...profile.current_home, monthly_cost: valid } })
     }
   }
 
   const chooseHome = (o: HomeOption) => {
     setHomeQuery(o.name)
     setHomeOpen(false)
-    update({ current_home: { name: o.name, monthly_cost: profile.current_home?.monthly_cost ?? null } })
+    update({ current_home: { name: o.name, monthly_cost: profile.current_home?.monthly_cost ?? null, ...(o.key ? { key: o.key } : {}) } })
   }
 
   const clearHome = () => {

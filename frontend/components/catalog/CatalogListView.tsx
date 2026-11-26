@@ -194,11 +194,11 @@ interface CatalogListViewProps {
   dividerLabel?: string
   /** Bedrooms and down payment for the estimated monthly cost shown under each place name. */
   budget?: BudgetFilter
-  /** Name of the visitor's current home (profile); that row gets a "Current neighborhood" label. */
-  currentHomeName?: string
+  /** True for the visitor's current home (profile); that row gets a "Current neighborhood" label. */
+  isCurrentHome?: (c: CatalogMapPlace['catalog']) => boolean
 }
 
-export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle, onRowExpand, filteredOutReasons, dividerLabel = 'Outside your filters', budget, currentHomeName }: CatalogListViewProps) {
+export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle, onRowExpand, filteredOutReasons, dividerLabel = 'Outside your filters', budget, isCurrentHome }: CatalogListViewProps) {
   const pillarMode = isPillarIndexMode(indexMode)
   const activePillarMeta = pillarMode ? PILLAR_INDEX_MODES.find(p => p.id === indexMode) : null
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
@@ -311,7 +311,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                   <td className="py-2 pr-2">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="text-sm font-semibold text-[var(--hf-text-primary)]">{p.catalog.name}</span>
-                      {currentHomeName && p.catalog.name === currentHomeName && (
+                      {isCurrentHome?.(p.catalog) && (
                         <span className="rounded-full bg-[var(--hf-bg-subtle)] px-1.5 py-0.5 text-[0.6rem] font-semibold text-[var(--hf-text-secondary)]">
                           Current neighborhood
                         </span>

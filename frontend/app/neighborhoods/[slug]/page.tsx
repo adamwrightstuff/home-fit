@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { catalogRowKey } from '@/lib/catalogMapTypes'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
@@ -142,6 +143,7 @@ export default async function NeighborhoodPage({
         score={score}
         workCommute={work_commute}
         placeName={catalog.name}
+        placeKey={catalog.county_borough && catalog.state_abbr ? catalogRowKey({ name: catalog.name, county_borough: catalog.county_borough, state_abbr: catalog.state_abbr }) : undefined}
         lat={catalog.lat}
         lon={catalog.lon}
       />

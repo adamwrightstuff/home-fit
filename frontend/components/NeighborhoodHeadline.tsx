@@ -31,12 +31,15 @@ export default function NeighborhoodHeadline({
   score,
   workCommute,
   placeName,
+  placeKey,
   lat,
   lon,
 }: {
   score: ScoreResponse
   workCommute?: WorkCommute | null
   placeName: string
+  /** Catalog row key (name|county|state), to tell same-named places in two metros apart. */
+  placeKey?: string
   lat?: number | string | null
   lon?: number | string | null
 }) {
@@ -48,7 +51,7 @@ export default function NeighborhoodHeadline({
   const shown = useMemo(() => {
     if (!ctx) return score
     const home = ctx.currentHome
-    const isCurrentHome = !!home && home.name === placeName
+    const isCurrentHome = !!home && (home.key && placeKey ? home.key === placeKey : home.name === placeName)
     let out = ctx.householdIncome ? applyUserIncomeToScore(score, ctx.householdIncome, isCurrentHome ? home!.monthlyCost : null) : score
     out = applyExplorerScoreAdjustments(out, ctx.filters)
     out = applyCommuteAndPeople(out, { workCommute: workCommute ?? null, lat, lon }, ctx)

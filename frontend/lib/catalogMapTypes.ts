@@ -101,6 +101,19 @@ export function catalogRowKey(c: Pick<CatalogRow, 'name' | 'county_borough' | 's
   return `${c.name}|${c.county_borough}|${c.state_abbr}`
 }
 
+/**
+ * Is this catalog row the visitor's current home? Matches on the catalog key (name, county, state) when
+ * the profile has one, so two metros' places with the same name are not confused. Homes saved before the
+ * key was stored have only a name and match on it.
+ */
+export function isCurrentHomeRow(
+  c: Pick<CatalogRow, 'name' | 'county_borough' | 'state_abbr'> | null | undefined,
+  home: { name: string; key?: string | null } | null | undefined
+): boolean {
+  if (!c || !home?.name) return false
+  return home.key ? catalogRowKey(c) === home.key : c.name === home.name
+}
+
 const SF_COUNTIES = new Set(['San Francisco', 'San Mateo', 'Santa Clara', 'Alameda', 'Contra Costa', 'Marin'])
 const PHILLY_NJ_COUNTIES = new Set(['Burlington', 'Camden', 'Gloucester', 'Salem'])
 

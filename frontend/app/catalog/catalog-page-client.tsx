@@ -32,6 +32,7 @@ import { catalogRampKey } from '@/lib/catalogIndexColors'
 import { catalogTabActiveStyle } from '@/lib/indexColorSystem'
 import {
   catalogRowKey,
+  isCurrentHomeRow,
   inferCatalogMetro,
   isPillarIndexMode,
   PILLAR_INDEX_MODES,
@@ -395,6 +396,17 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
     return ''
   })
+  const [currentHomeKey, setCurrentHomeKey] = useState<string>(() => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem('homefit_search_options') ?? '{}')
+      return typeof parsed?.current_home_key === 'string' ? parsed.current_home_key : ''
+    } catch { /* ignore */ }
+    return ''
+  })
+  const currentHome = useMemo(
+    () => (currentHomeMatch ? { name: currentHomeMatch, key: currentHomeKey || null } : null),
+    [currentHomeMatch, currentHomeKey]
+  )
 
   const setIndexModeAndListSort = useCallback((mode: CatalogMapIndexMode) => {
     setIndexMode(mode)
@@ -557,6 +569,7 @@ export default function CatalogPageClient({
       if (p.home_budget) setFilterBudget((b) => ({ ...b, beds: normalizeBeds(p.home_budget!.beds), down: p.home_budget!.down, chosen: true }))
       if (p.current_home) {
         setCurrentHomeMatch(p.current_home.name)
+        setCurrentHomeKey(p.current_home.key ?? '')
         setCurrentHomeMonthlyCost(p.current_home.monthly_cost)
       }
       if (p.work_zone_id && findWorkZone(p.work_zone_id)) setWorkZoneId(p.work_zone_id)
@@ -651,7 +664,7 @@ export default function CatalogPageClient({
   const adjustedPlaces = useMemo(() => {
     const withIncome = householdIncome
       ? places.map((p) => {
-          const isCurrentHome = currentHomeMatch && p.catalog?.name === currentHomeMatch
+          const isCurrentHome = isCurrentHomeRow(p.catalog, currentHome)
           const monthlyCostOverride = isCurrentHome ? currentHomeMonthlyCost : null
           return { ...p, score: applyUserIncomeToScore(p.score, householdIncome, monthlyCostOverride) }
         })
@@ -721,7 +734,7 @@ export default function CatalogPageClient({
     filterSchoolType,
     filterSchoolLevels,
     currentHomeMonthlyCost,
-    currentHomeMatch,
+    currentHome,
     workZoneId,
     commuteMode,
     officeDays,
@@ -738,14 +751,14 @@ export default function CatalogPageClient({
       priorities,
       filters: { filterSchoolType, filterSchoolLevels, filterNbTypes, filterAoTypes },
       householdIncome,
-      currentHome: currentHomeMatch ? { name: currentHomeMatch, monthlyCost: currentHomeMonthlyCost } : null,
+      currentHome: currentHomeMatch ? { name: currentHomeMatch, key: currentHomeKey || null, monthlyCost: currentHomeMonthlyCost } : null,
       workZoneId,
       commuteMode,
       officeDays,
       people,
       budget: filterBudget.chosen ? filterBudget : null,
     })
-  }, [priorities, filterSchoolType, filterSchoolLevels, filterNbTypes, filterAoTypes, householdIncome, currentHomeMatch, currentHomeMonthlyCost, workZoneId, commuteMode, officeDays, people, filterBudget])
+  }, [priorities, filterSchoolType, filterSchoolLevels, filterNbTypes, filterAoTypes, householdIncome, currentHomeMatch, currentHomeKey, currentHomeMonthlyCost, workZoneId, commuteMode, officeDays, people, filterBudget])
 
   const effectivePriorities = useMemo(
     () => priorities,
@@ -826,7 +839,7 @@ export default function CatalogPageClient({
         }
       }
       // The visitor's current home stays in the list under a budget filter, labeled, as a reference point.
-      if (p.catalog?.name !== currentHomeMatch && overBudget(p.housing_cost, filterBudget)) return false
+      if (!isCurrentHomeRow(p.catalog, currentHome) && overBudget(p.housing_cost, filterBudget)) return false
       if (filterTenure.length > 0 && filterTenure.length < 3) {
         const renterPct = (p.score as any)?.livability_pillars?.housing_value?.summary?.renter_pct
         if (typeof renterPct === 'number') {
@@ -877,7 +890,7 @@ export default function CatalogPageClient({
     filterCommuteMax,
     filterHousingType,
     filterBudget,
-    currentHomeMatch,
+    currentHome,
     filterTenure,
     climatePrefs,
     indexMode,
@@ -1015,7 +1028,7 @@ export default function CatalogPageClient({
           if (!passesAny) r.push('Housing type')
         }
       }
-      if (p.catalog?.name !== currentHomeMatch && overBudget(p.housing_cost, filterBudget)) r.push('Budget')
+      if (!isCurrentHomeRow(p.catalog, currentHome) && overBudget(p.housing_cost, filterBudget)) r.push('Budget')
       if (filterTenure.length > 0 && filterTenure.length < 3) {
         const renterPct = (p.score as any)?.livability_pillars?.housing_value?.summary?.renter_pct
         if (typeof renterPct === 'number') {
@@ -1049,7 +1062,7 @@ export default function CatalogPageClient({
       reasons[key] = r.length > 0 ? r : ['Filters']
     }
     return reasons
-  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterCommuteMax, filterHousingType, filterBudget, currentHomeMatch, filterTenure, filterPoliticalLean, filterLifeStage, lifeStageCut, climatePrefs])
+  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterCommuteMax, filterHousingType, filterBudget, currentHome, filterTenure, filterPoliticalLean, filterLifeStage, lifeStageCut, climatePrefs])
   const { gatedPlaces, excludedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) {
       return { gatedPlaces: filteredPlaces, excludedPlaces: metroFilterExcluded, dealbreakerExcludedCount: metroFilterExcluded.length, dealbreakerZeroSurvivors: false }
@@ -1132,7 +1145,7 @@ export default function CatalogPageClient({
           if (!passesAny) r.push('Housing type')
         }
       }
-      if (p.catalog?.name !== currentHomeMatch && overBudget(p.housing_cost, filterBudget)) r.push('Budget')
+      if (!isCurrentHomeRow(p.catalog, currentHome) && overBudget(p.housing_cost, filterBudget)) r.push('Budget')
       if (filterTenure.length > 0 && filterTenure.length < 3) {
         const renterPct = (p.score as any)?.livability_pillars?.housing_value?.summary?.renter_pct
         if (typeof renterPct === 'number') {
@@ -1163,7 +1176,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, lifeStageCut, filterLocalScene, filterCommuteMax, filterHousingType, filterBudget, currentHomeMatch, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, lifeStageCut, filterLocalScene, filterCommuteMax, filterHousingType, filterBudget, currentHome, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
@@ -2008,7 +2021,7 @@ export default function CatalogPageClient({
             onCompareToggle={handleCompareToggle}
             onRowExpand={setSelectedKey}
             budget={filterBudget.chosen ? filterBudget : undefined}
-            currentHomeName={currentHomeMatch || undefined}
+            isCurrentHome={(c) => isCurrentHomeRow(c, currentHome)}
           />
         </div>
       )}

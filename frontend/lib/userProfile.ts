@@ -5,7 +5,8 @@ export type CommuteMode = 'auto' | 'transit' | 'active'
 /** Personal facts that adjust cached place scores. Stored in user_preferences.profile. */
 export interface UserProfile {
   household_income: number | null
-  current_home: { name: string; monthly_cost: number | null } | null
+  /** key: catalog row key (name|county|state); missing on homes saved before it was stored. */
+  current_home: { name: string; monthly_cost: number | null; key?: string } | null
   work_zone_id: string | null
   commute_mode: CommuteMode | null
   /** Days per week in the office, 0 (fully remote) to 5. */
@@ -51,7 +52,7 @@ export function sanitizeProfile(raw: unknown): Partial<UserProfile> {
     else if (v && typeof v.name === 'string' && v.name) {
       const cost = typeof v.monthly_cost === 'number' && Number.isFinite(v.monthly_cost) && v.monthly_cost > 0
         ? v.monthly_cost : null
-      out.current_home = { name: v.name, monthly_cost: cost }
+      out.current_home = { name: v.name, monthly_cost: cost, ...(typeof v.key === 'string' && v.key ? { key: v.key } : {}) }
     }
   }
   if ('work_zone_id' in r) {
@@ -102,7 +103,12 @@ export function readLocalProfile(): Partial<UserProfile> {
     const homeName = opts?.current_home_match
     if (typeof homeName === 'string' && homeName) {
       const cost = opts?.current_home_monthly_cost
-      out.current_home = { name: homeName, monthly_cost: typeof cost === 'number' && cost > 0 ? cost : null }
+      const homeKey = opts?.current_home_key
+      out.current_home = {
+        name: homeName,
+        monthly_cost: typeof cost === 'number' && cost > 0 ? cost : null,
+        ...(typeof homeKey === 'string' && homeKey ? { key: homeKey } : {}),
+      }
     }
     const fb = opts?.filters?.filterBudget
     if (fb?.chosen === true && cleanBeds(fb.beds).length > 0 && (fb.down === null || (typeof fb.down === 'number' && fb.down >= 0))) {

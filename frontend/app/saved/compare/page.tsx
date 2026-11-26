@@ -245,7 +245,7 @@ function CompareContent() {
   // "Catalog": the stored scores under each row's own (or default) weights.
   const personalize = (raw: ScoreResponse, row: SavedScoreRow): ScoreResponse => {
     const home = compareContext?.currentHome
-    const isCurrentHome = !!home && isCatalogKey(row.id) && row.id.split('|')[0] === home.name
+    const isCurrentHome = !!home && isCatalogKey(row.id) && (home.key ? row.id === home.key : row.id.split('|')[0] === home.name)
     let out = householdIncome ? applyUserIncomeToScore(raw, householdIncome, isCurrentHome ? home.monthlyCost : null) : raw
     if (compareContext) out = applyExplorerScoreAdjustments(out, compareContext.filters)
     if (compareContext) {
