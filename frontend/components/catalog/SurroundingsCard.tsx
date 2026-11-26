@@ -1,9 +1,9 @@
-import { SURROUNDINGS_EXPLAINER, surroundingsRows, type Surroundings } from '@/lib/surroundings'
+import { NEIGHBOR_CATEGORIES, SURROUNDINGS_EXPLAINER, surroundingsGroups, type Surroundings } from '@/lib/surroundings'
 
-/** Income and home value nearby vs here. A description, not a score (docs/SURROUNDINGS.md). */
+/** Income, home value and safety nearby vs here, grouped by neighbor category. A description, not a score (docs/SURROUNDINGS.md). */
 export default function SurroundingsCard({ surroundings, size = 'compact' }: { surroundings?: Surroundings | null; size?: 'compact' | 'page' }) {
-  const rows = surroundingsRows(surroundings)
-  if (rows.length === 0) return null
+  const groups = surroundingsGroups(surroundings)
+  if (groups.length === 0) return null
   const page = size === 'page'
   const text = page ? 'text-sm' : 'text-[0.75rem]'
   const neighbors = surroundings?.neighbors?.filter(Boolean) ?? []
@@ -18,17 +18,31 @@ export default function SurroundingsCard({ surroundings, size = 'compact' }: { s
           <span>Here</span>
         </span>
       </div>
-      <dl className="space-y-0.5">
-        {rows.map((r) => (
-          <div key={r.label} className="flex items-baseline justify-between gap-2">
-            <dt className={`${text} text-[var(--hf-text-secondary)]`}>{r.label}</dt>
-            <dd className={`grid grid-cols-2 gap-3 text-right tabular-nums ${text}`} style={{ minWidth: page ? 140 : 104 }}>
-              <span className="text-[var(--hf-text-secondary)]">{r.around}</span>
-              <span className="font-bold text-[var(--hf-text-primary)]">{r.here}</span>
-            </dd>
+      <div className="space-y-1.5">
+        {groups.map((g) => (
+          <div key={g.key}>
+            <div className="text-[0.6rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)]">{g.label}</div>
+            <dl className="space-y-0.5">
+              {g.rows.map((r) => (
+                <div key={r.label} className="flex items-baseline justify-between gap-2">
+                  <dt className={`${text} text-[var(--hf-text-secondary)]`}>{r.label}</dt>
+                  <dd className={`grid grid-cols-2 gap-3 text-right tabular-nums ${text}`} style={{ minWidth: page ? 140 : 104 }}>
+                    <span className="text-[var(--hf-text-secondary)]">{r.around}</span>
+                    <span className="font-bold text-[var(--hf-text-primary)]">{r.here}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
         ))}
-      </dl>
+        {page &&
+          NEIGHBOR_CATEGORIES.filter((c) => c.notShown).map((c) => (
+            <div key={c.key}>
+              <div className="text-[0.6rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)]">{c.label}</div>
+              <p className="m-0 text-xs leading-snug text-[var(--hf-text-tertiary)]">{c.notShown}</p>
+            </div>
+          ))}
+      </div>
       {neighbors.length > 0 && (
         <p className={`mt-1.5 ${page ? 'text-xs' : 'text-[0.68rem]'} leading-snug text-[var(--hf-text-tertiary)]`}>
           Closest: {neighbors.join(', ')}

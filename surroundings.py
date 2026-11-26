@@ -35,6 +35,35 @@ SAME_PLACE_MILES = 2.0
 # ("Village of Hempstead" vs "Hempstead").
 SAME_PIN_MILES = 0.25
 
+# Neighbor taxonomy (docs/SURROUNDINGS.md): how a signal from neighbor B behaves across the line into focal place A.
+# Every neighbor signal carries one of these tags. Tags describe; they never feed a pillar or a weight.
+NEIGHBOR_CATEGORIES = {
+    "accessible_amenities": "Parks, transit stops, groceries, services and recreation in B that a resident of A can "
+                            "reach and use (weighted by travel time and barrier friction).",
+    "spillover_externalities": "Traffic cut-throughs, parking pressure, noise, runoff, flood exposure or crime that can "
+                               "flow into A from B (weighted by direction and physical or road links).",
+    "boundary_locked_rules": "School catchments, municipal lines, tax rates and zoning that stay tied to legal "
+                             "boundaries rather than blending across them.",
+    "cost_space_arbitrage": "Differences in housing cost, layout or carrying costs between A and B, and whether using "
+                            "B's perks or commuting from B erases the savings.",
+    "social_stability_context": "Turnover, demographic and household mix, and community continuity in B that show "
+                                "whether nearby social networks or pressures spill over or stay isolated.",
+}
+# Category of each figure this module reports. Income is relative standing (Luttmer 2005), home value is the cost
+# gap, safety is crime crossing the line (Morenoff, Sampson and Raudenbush 2001).
+FIELD_CATEGORY = {
+    "income": "social_stability_context",
+    "home_value": "cost_space_arbitrage",
+    "safety": "spillover_externalities",
+}
+# Categories with no neighbor figure here, and why (so the gap is stated, not silent).
+CATEGORY_NOT_SHOWN = {
+    "accessible_amenities": "Already counted by radius inside the amenities, active outdoors, transit and healthcare "
+                            "pillars, so neighbors' amenities are in the score.",
+    "boundary_locked_rules": "Schools follow the district line; a better district next door does nothing without moving.",
+}
+assert set(FIELD_CATEGORY.values()) | set(CATEGORY_NOT_SHOWN) == set(NEIGHBOR_CATEGORIES)
+
 _AGENCY_SOURCES = {"fbi_nibrs_agency", "fbi_ucr_agency", "ny_state_ucr", "ca_doj_ucr"}
 
 

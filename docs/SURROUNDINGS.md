@@ -23,6 +23,20 @@ Amenities, active outdoors, healthcare, transit and economic opportunity already
 
 "Nearby" is a weighted average over the other catalog places within 8 miles, each weighted `exp(-(d / 3 mi)^2)`, so the closest count most. The three closest are named.
 
+## Neighbor taxonomy
+
+Every signal about a neighbor B, relative to a focal place A, carries one of five tags describing how it behaves across the line. Tags describe; they never feed a pillar or a weight, and the core pillars are unchanged. Defined once in `surroundings.py` (`NEIGHBOR_CATEGORIES`, `FIELD_CATEGORY`, `CATEGORY_NOT_SHOWN`) and mirrored in `frontend/lib/surroundings.ts`; the card groups its rows by tag.
+
+| Tag | Card heading | What belongs | Signals today |
+|---|---|---|---|
+| accessible_amenities | Amenities you can reach | Parks, transit stops, groceries, services and recreation in B that a resident of A can reach (by travel time and barrier friction) | None as a neighbor row: already counted by radius in the amenities, active outdoors, transit and healthcare pillars. The page view says so. |
+| spillover_externalities | What spills over | Traffic cut-throughs, parking pressure, noise, runoff, flood exposure or crime flowing from B into A (by direction and road or physical links) | Safety score (Morenoff, Sampson and Raudenbush 2001) |
+| boundary_locked_rules | Stops at the line | School catchments, municipal lines, tax rates, zoning | None as a neighbor row: schools follow the district line. The page view says so. |
+| cost_space_arbitrage | Cost next door | Housing cost, layout and carrying-cost gaps between A and B, and whether using B's perks or commuting from B erases the savings | Home value |
+| social_stability_context | Who lives around you | Turnover, household mix, community continuity in B | Household income (relative standing, Luttmer 2005) |
+
+A new neighbor signal must take one of these tags before it is shown. Weighting by travel time, barriers or direction is part of each tag's definition but not yet built: every row still uses the straight-line weight below.
+
 ## Rules
 
 - Only catalog places count as neighbors, not every town or tract. A place whose nearby weight is under 1.0 gets no figure (about 54% of places get one).
