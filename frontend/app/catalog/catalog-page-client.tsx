@@ -825,7 +825,8 @@ export default function CatalogPageClient({
           if (!passesAny) return false
         }
       }
-      if (overBudget(p.housing_cost, filterBudget)) return false
+      // The visitor's current home stays in the list under a budget filter, labeled, as a reference point.
+      if (p.catalog?.name !== currentHomeMatch && overBudget(p.housing_cost, filterBudget)) return false
       if (filterTenure.length > 0 && filterTenure.length < 3) {
         const renterPct = (p.score as any)?.livability_pillars?.housing_value?.summary?.renter_pct
         if (typeof renterPct === 'number') {
@@ -876,6 +877,7 @@ export default function CatalogPageClient({
     filterCommuteMax,
     filterHousingType,
     filterBudget,
+    currentHomeMatch,
     filterTenure,
     climatePrefs,
     indexMode,
@@ -1013,7 +1015,7 @@ export default function CatalogPageClient({
           if (!passesAny) r.push('Housing type')
         }
       }
-      if (overBudget(p.housing_cost, filterBudget)) r.push('Budget')
+      if (p.catalog?.name !== currentHomeMatch && overBudget(p.housing_cost, filterBudget)) r.push('Budget')
       if (filterTenure.length > 0 && filterTenure.length < 3) {
         const renterPct = (p.score as any)?.livability_pillars?.housing_value?.summary?.renter_pct
         if (typeof renterPct === 'number') {
@@ -1047,7 +1049,7 @@ export default function CatalogPageClient({
       reasons[key] = r.length > 0 ? r : ['Filters']
     }
     return reasons
-  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterPoliticalLean, filterLifeStage, lifeStageCut, climatePrefs])
+  }, [metroFilterExcluded, filterAreaTypes, filterArchetypes, filterTrajectory, filterLocalScene, filterCommuteMax, filterHousingType, filterBudget, currentHomeMatch, filterTenure, filterPoliticalLean, filterLifeStage, lifeStageCut, climatePrefs])
   const { gatedPlaces, excludedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) {
       return { gatedPlaces: filteredPlaces, excludedPlaces: metroFilterExcluded, dealbreakerExcludedCount: metroFilterExcluded.length, dealbreakerZeroSurvivors: false }
@@ -1130,7 +1132,7 @@ export default function CatalogPageClient({
           if (!passesAny) r.push('Housing type')
         }
       }
-      if (overBudget(p.housing_cost, filterBudget)) r.push('Budget')
+      if (p.catalog?.name !== currentHomeMatch && overBudget(p.housing_cost, filterBudget)) r.push('Budget')
       if (filterTenure.length > 0 && filterTenure.length < 3) {
         const renterPct = (p.score as any)?.livability_pillars?.housing_value?.summary?.renter_pct
         if (typeof renterPct === 'number') {
@@ -1161,7 +1163,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, lifeStageCut, filterLocalScene, filterCommuteMax, filterHousingType, filterBudget, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLifeStage, lifeStageCut, filterLocalScene, filterCommuteMax, filterHousingType, filterBudget, currentHomeMatch, filterTenure, filterNbTypes, filterAoTypes, activeDealbreakerKeys.join(','), householdIncome, climatePrefs])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
@@ -2006,6 +2008,7 @@ export default function CatalogPageClient({
             onCompareToggle={handleCompareToggle}
             onRowExpand={setSelectedKey}
             budget={filterBudget.chosen ? filterBudget : undefined}
+            currentHomeName={currentHomeMatch || undefined}
           />
         </div>
       )}

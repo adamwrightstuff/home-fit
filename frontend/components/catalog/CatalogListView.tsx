@@ -194,9 +194,11 @@ interface CatalogListViewProps {
   dividerLabel?: string
   /** Bedrooms and down payment for the estimated monthly cost shown under each place name. */
   budget?: BudgetFilter
+  /** Name of the visitor's current home (profile); that row gets a "Current neighborhood" label. */
+  currentHomeName?: string
 }
 
-export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle, onRowExpand, filteredOutReasons, dividerLabel = 'Outside your filters', budget }: CatalogListViewProps) {
+export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle, onRowExpand, filteredOutReasons, dividerLabel = 'Outside your filters', budget, currentHomeName }: CatalogListViewProps) {
   const pillarMode = isPillarIndexMode(indexMode)
   const activePillarMeta = pillarMode ? PILLAR_INDEX_MODES.find(p => p.id === indexMode) : null
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
@@ -307,7 +309,14 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                   onClick={() => toggleRow(key)}
                 >
                   <td className="py-2 pr-2">
-                    <div className="text-sm font-semibold text-[var(--hf-text-primary)]">{p.catalog.name}</div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-sm font-semibold text-[var(--hf-text-primary)]">{p.catalog.name}</span>
+                      {currentHomeName && p.catalog.name === currentHomeName && (
+                        <span className="rounded-full bg-[var(--hf-bg-subtle)] px-1.5 py-0.5 text-[0.6rem] font-semibold text-[var(--hf-text-secondary)]">
+                          Current neighborhood
+                        </span>
+                      )}
+                    </div>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <div className="text-[0.6rem] text-[var(--hf-text-tertiary)]">
                       {p.catalog.county_borough}, {p.catalog.state_abbr}
