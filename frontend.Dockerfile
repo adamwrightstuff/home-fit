@@ -18,7 +18,7 @@ RUN cd frontend && npm ci --no-audit --no-fund
 COPY frontend frontend
 # Catalog files needed at build time (kept out of the final server's runtime path; nothing serves them from here).
 COPY data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl data/
-COPY data/catalog_climate_profiles.jsonl data/catalog_housing_costs.json data/
+COPY data/catalog_climate_profiles.jsonl data/catalog_housing_costs.json data/catalog_surroundings.json data/
 
 ARG RAILWAY_API_BASE_URL
 ARG NEXT_PUBLIC_API_URL
