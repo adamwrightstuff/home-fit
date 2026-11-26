@@ -31,20 +31,33 @@ export default function NeighborhoodPersonal({ score, workCommute }: { score: Sc
   const pillars = (personal.livability_pillars ?? {}) as Record<string, any>
   const commute = pillars.commute_time
   const social = pillars.social_connection
+  const acq = pillars.acquaintances_nearby
 
   const commuteMinutes = typeof commute?.breakdown?.minutes === 'number' ? commute.breakdown.minutes : null
   const commuteScore = typeof commute?.score === 'number' ? commute.score : null
   const commuteNoRoute = commute?.breakdown?.no_route === true
   const showCommute = (commuteMinutes != null || commuteNoRoute) && commuteScore != null
   const showSocial = social && typeof social.weight === 'number' && social.weight > 0
-  if (!showCommute && !showSocial) return null
+  const showAcq = acq && typeof acq.weight === 'number' && acq.weight > 0
+  if (!showCommute && !showSocial && !showAcq) return null
 
-  const points: Array<{ tier: 'close' | 'acquaintance'; miles: number | null; label: string | null }> =
-    Array.isArray(social?.breakdown?.points) ? social.breakdown.points : []
+  type Point = { tier: 'close' | 'acquaintance'; miles: number | null; label: string | null }
+  const pointsOf = (pl: any): Point[] => (Array.isArray(pl?.breakdown?.points) ? pl.breakdown.points : [])
 
   const formatMiles = (m: number | null) =>
     typeof m !== 'number' || !Number.isFinite(m) ? 'n/a' : m < 10 ? `${m.toFixed(1)} mi` : `${Math.round(m).toLocaleString()} mi`
-  const sortedPoints = [...points].sort((a, b) => (a.miles ?? Infinity) - (b.miles ?? Infinity))
+  const sortedPoints = (pl: any) => [...pointsOf(pl)].sort((a, b) => (a.miles ?? Infinity) - (b.miles ?? Infinity))
+  const pointList = (pl: any, fallback: string) =>
+    pointsOf(pl).length > 0 && (
+      <div className="mx-4 mb-3 divide-y divide-[var(--hf-border)] border-t border-[var(--hf-border)]">
+        {sortedPoints(pl).map((p, i) => (
+          <div key={i} className="flex items-baseline justify-between gap-3 py-1.5 text-sm text-[var(--hf-text-secondary)]">
+            <span className="min-w-0 truncate">{p.label ?? fallback}</span>
+            <span className="shrink-0 tabular-nums text-[var(--hf-text-tertiary)]">{formatMiles(p.miles)}</span>
+          </div>
+        ))}
+      </div>
+    )
 
   const row = (title: string, note: string, value: number | null) => {
     const band = value != null ? getScoreBand(value) : null
@@ -95,19 +108,20 @@ export default function NeighborhoodPersonal({ score, workCommute }: { score: Sc
           <div className={showCommute ? 'border-t border-[var(--hf-border)]' : ''}>
             {row(
               'Social connection',
-              'Distance to the people you added. Your own preference. The shape comes from studies of older adults and caregiving, not a research-backed score.',
+              'Distance to the close family and friends you added. Your own preference. The shape comes from studies of older adults and caregiving, not a research-backed score.',
               typeof social.score === 'number' ? social.score : null
             )}
-            {points.length > 0 && (
-              <div className="mx-4 mb-3 divide-y divide-[var(--hf-border)] border-t border-[var(--hf-border)]">
-                {sortedPoints.map((p, i) => (
-                  <div key={i} className="flex items-baseline justify-between gap-3 py-1.5 text-sm text-[var(--hf-text-secondary)]">
-                    <span className="min-w-0 truncate">{p.label ?? (p.tier === 'close' ? 'Close connection' : 'Acquaintance')}</span>
-                    <span className="shrink-0 tabular-nums text-[var(--hf-text-tertiary)]">{formatMiles(p.miles)}</span>
-                  </div>
-                ))}
-              </div>
+            {pointList(social, 'Close connection')}
+          </div>
+        )}
+        {showAcq && (
+          <div className={showCommute || showSocial ? 'border-t border-[var(--hf-border)]' : ''}>
+            {row(
+              'Acquaintances nearby',
+              'Whether an acquaintance you added lives within about a 10-minute walk, where chance run-ins happen. Your own preference; the walk distance is borrowed from walk-to-destination research.',
+              typeof acq.score === 'number' ? acq.score : null
             )}
+            {pointList(acq, 'Acquaintance')}
           </div>
         )}
       </div>

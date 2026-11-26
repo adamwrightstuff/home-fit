@@ -21,6 +21,8 @@ interface PillarPriorities {
   /** Opt-in, catalog-explorer only -- see lib/reweight.ts. Only affects HomeFit total once at
    * least one person has been added via PeopleYouKnowPicker; otherwise inert. */
   social_connection?: PriorityLevel
+  /** Opt-in, same as social_connection, for acquaintances living within walking distance of the place. */
+  acquaintances_nearby?: PriorityLevel
 }
 
 interface SearchOptions {
@@ -65,6 +67,7 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   political_lean: 'None',
   commute_time: 'None',
   social_connection: 'None',
+  acquaintances_nearby: 'None',
 }
 
 export const JOB_CATEGORY_OPTIONS: Array<{ key: string; label: string; description: string }> = [

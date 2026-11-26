@@ -9,12 +9,13 @@ import { getPillarValue, getPillarString } from '@/lib/pillarDetailsSpec'
 /** Synthetic, client-side-only pillars (lib/reweight.ts) -- not in PillarKey/PILLAR_META, only
  * present when applicable (work hub selected / a person added) and given a real weight once the
  * user sets a priority for them. */
-type ExtraPillarKey = 'commute_time' | 'social_connection'
+type ExtraPillarKey = 'commute_time' | 'social_connection' | 'acquaintances_nearby'
 type DragKey = PillarKey | ExtraPillarKey
 
 const EXTRA_PILLAR_META: Record<ExtraPillarKey, { icon: string; name: string }> = {
   commute_time: { icon: '🚗', name: 'Commute Time' },
   social_connection: { icon: '🤝', name: 'Social Connection' },
+  acquaintances_nearby: { icon: '🙂', name: 'Acquaintances Nearby' },
 }
 
 function metaFor(key: DragKey): { icon: string; name: string } {
@@ -46,13 +47,14 @@ function causeForExtraPillar(key: ExtraPillarKey, breakdown: Record<string, unkn
       return `About ${article} ${rounded}-minute commute to your work location.`
     }
   } else {
-    const points = Array.isArray(breakdown.points) ? (breakdown.points as Array<{ minutes: number | null; label: string | null }>) : []
+    const points = Array.isArray(breakdown.points) ? (breakdown.points as Array<{ miles: number | null; label: string | null }>) : []
     const nearest = points
-      .filter((p): p is { minutes: number; label: string | null } => typeof p.minutes === 'number')
-      .sort((a, b) => a.minutes - b.minutes)[0]
+      .filter((p): p is { miles: number; label: string | null } => typeof p.miles === 'number')
+      .sort((a, b) => a.miles - b.miles)[0]
     if (nearest) {
-      const who = nearest.label || 'Your closest connection'
-      return `${who} is about ${Math.round(nearest.minutes)} minutes away.`
+      const who = nearest.label || (key === 'social_connection' ? 'Your closest connection' : 'Your nearest acquaintance')
+      const dist = nearest.miles < 10 ? nearest.miles.toFixed(1) : String(Math.round(nearest.miles))
+      return `${who} is about ${dist} miles away.`
     }
   }
   return 'Not pulling its weight in your total yet.'
@@ -172,7 +174,7 @@ function buildDrags(
       if (pointsLost < 0.5) return null
 
       const pillarRecord = pillar as unknown as Record<string, unknown>
-      const isExtra = key === 'commute_time' || key === 'social_connection'
+      const isExtra = key === 'commute_time' || key === 'social_connection' || key === 'acquaintances_nearby'
       let cause: string
       if (isExtra) {
         cause = causeForExtraPillar(key as ExtraPillarKey, (pillarRecord.breakdown as Record<string, unknown>) ?? {})

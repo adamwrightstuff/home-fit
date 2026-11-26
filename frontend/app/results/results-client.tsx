@@ -755,7 +755,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   location={locationLabel}
                   coordinates={mapCoords}
                   completed_pillars={Object.keys(displayData!.livability_pillars ?? {}).filter(
-                    (k) => k !== 'commute_time' && k !== 'social_connection'
+                    (k) => k !== 'commute_time' && k !== 'social_connection' && k !== 'acquaintances_nearby'
                   )}
                 />
               </div>

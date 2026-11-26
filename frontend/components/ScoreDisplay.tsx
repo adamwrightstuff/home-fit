@@ -114,6 +114,22 @@ function overallTier(score: number): { label: string; tone: string } {
   return { label: 'Challenging', tone: 'low' }
 }
 
+
+/** The two people priorities (see lib/socialProximity.ts), each shown as a card once weighted. */
+const PEOPLE_PILLAR_CARDS = [
+  {
+    key: 'social_connection',
+    icon: '🤝',
+    name: 'Social Connection',
+    note: 'Distance to the close family and friends you added under People You Know, off by default. Your own preference. The shape comes from studies of older adults and caregiving, not a research-backed score.',
+  },
+  {
+    key: 'acquaintances_nearby',
+    icon: '🙂',
+    name: 'Acquaintances Nearby',
+    note: 'Whether an acquaintance you added lives within about a 10-minute walk, where chance run-ins happen. Off by default. Your own preference; the walk distance is borrowed from walk-to-destination research.',
+  },
+] as const
 export default function ScoreDisplay({
   data,
   loading,
@@ -383,7 +399,7 @@ export default function ScoreDisplay({
             <InteractiveMap
               location={mapLocationLabel}
               coordinates={{ lat: mapCoords.lat, lon: mapCoords.lon }}
-              completed_pillars={Object.keys(livability_pillars ?? {}).filter((k) => k !== 'commute_time' && k !== 'social_connection')}
+              completed_pillars={Object.keys(livability_pillars ?? {}).filter((k) => k !== 'commute_time' && k !== 'social_connection' && k !== 'acquaintances_nearby')}
               pois={mapPois.length > 0 ? mapPois : null}
             />
           </div>
@@ -630,25 +646,25 @@ export default function ScoreDisplay({
           })}
         </div>
 
-        {(() => {
-          // social_connection is a synthetic, client-side pillar (see lib/reweight.ts) -- not
-          // in PILLAR_ORDER, so it never appears in the loop above. Only show it here once it's
-          // actually contributing to the total (weight > 0), matching how the People You Know
-          // priority chips in the Fit panel only appear once someone's been added.
-          const sc = (livability_pillars as any)?.social_connection
+        {PEOPLE_PILLAR_CARDS.map((card) => {
+          // social_connection and acquaintances_nearby are synthetic, client-side pillars (see
+          // lib/reweight.ts) -- not in PILLAR_ORDER, so they never appear in the loop above. Only
+          // show one here once it's actually contributing to the total (weight > 0), matching how
+          // the People You Know priority chips in the Fit panel only appear once someone's been added.
+          const sc = (livability_pillars as any)?.[card.key]
           if (!sc || typeof sc.weight !== 'number' || sc.weight <= 0) return null
           const score = typeof sc.score === 'number' ? sc.score : null
           const points: Array<{ tier: 'close' | 'acquaintance'; miles: number | null; label: string | null }> =
             Array.isArray(sc.breakdown?.points) ? sc.breakdown.points : []
           return (
-            <div className="hf-card-sm" style={{ marginTop: '1rem' }}>
+            <div key={card.key} className="hf-card-sm" style={{ marginTop: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', minWidth: 0, flex: '1 1 0' }}>
-                  <div style={{ fontSize: '1.6rem', flexShrink: 0 }}>🤝</div>
+                  <div style={{ fontSize: '1.6rem', flexShrink: 0 }}>{card.icon}</div>
                   <div style={{ minWidth: 0 }}>
-                    <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)' }}>Social Connection</span>
+                    <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)' }}>{card.name}</span>
                     <div className="tr-muted" style={{ fontSize: '0.95rem', marginTop: '0.5rem', lineHeight: 1.4 }}>
-                      Distance to the people you added under People You Know, off by default. Your own preference. The shape comes from studies of older adults and caregiving, not a research-backed score.
+                      {card.note}
                     </div>
                   </div>
                 </div>
@@ -706,7 +722,7 @@ export default function ScoreDisplay({
               )}
             </div>
           )
-        })()}
+        })}
 
         {not_included_pillars.length > 0 && !hideNotIncluded && (
           <div style={{ marginTop: '2rem' }}>

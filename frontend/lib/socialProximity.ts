@@ -2,12 +2,13 @@
 // Spec sheet: docs/SOCIAL_PROXIMITY.md
 
 /**
- * Social-proximity score (personal priority, key social_connection; opt-in, client-side only, not
- * a pillar and not in the general happiness index). Spec sheet: docs/SOCIAL_PROXIMITY.md.
- * The user enters people (family and friends) tagged close or acquaintance; each person's
- * straight-line MILES to the place go through the tier's curve, then the people combine via
- * socialConnectionScore. Distance is miles on purpose: the studies are in miles and km, and the
- * place's area-type label is not an input (DPv2 principle 14).
+ * Two personal priorities (opt-in, client-side only, not pillars, not in the general happiness index).
+ * Spec sheet: docs/SOCIAL_PROXIMITY.md. The user enters people tagged close or acquaintance.
+ * - social_connection: close family and friends, straight-line MILES through the close curve, combined
+ *   by socialConnectionScore. Miles because the study is in miles.
+ * - acquaintances_nearby: acquaintances, scored on whether they live inside the place's walk zone
+ *   (acquaintancesNearbyScore).
+ * The place's area-type label is not an input to either (DPv2 principle 14).
  *
  * Close curve, a documented fit (owner approved 2026-11-05) to one study:
  * - Schoeni, Cho and Choi 2022 (Soc Sci Med 292:114627, PSID, 810 parents 55+ with a disability,
@@ -29,12 +30,13 @@
  *   have moved closer as health declined). Supporting, not used for a constant: Sun and Schafer 2023
  *   (SHARE): losing a relative within 1 km or a non-relative within about 5 km raises loneliness.
  *
- * Acquaintance curve: no evidence found. Kept as the previous curve converted to miles at the old
- * suburban baseline (2.4 minutes per mile): 100 through 7.5 miles, 55 at 12.5, 10 at 25, 0 at 31.
- * Every knot is a TODO with range unknown. It makes no research claim. After the close curve was
- * refit (2026-11-05) the old acquaintance knots scored above the close curve between 7.5 and about 12
- * miles, which makes no sense (a casual tie worth more than a close one), so the acquaintance score
- * is capped at the close score for the same distance. The cap is a consistency rule, not a finding.
+ * Acquaintances are a separate priority (key acquaintances_nearby), not a weaker close tie. Close ties
+ * work through planned visits and help (Hawkley and Cacioppo's intimate and relational loneliness);
+ * acquaintances work through chance run-ins (collective loneliness and belonging). Huxhold, Fiori,
+ * Webster and Antonucci 2020 (J Gerontol B 75(7), N = 802, 23 years) found the number of weaker ties
+ * predicted lower depressed affect and higher positive affect more strongly than the number of close
+ * ties, so nothing caps an acquaintance below a close tie, and the user's two priority levels weigh
+ * them against each other (no research ratio exists). See docs/SOCIAL_PROXIMITY.md.
  */
 export type SocialConnectionTier = 'close' | 'acquaintance'
 
@@ -57,57 +59,68 @@ export function closeTieProximityScore(miles: number | null | undefined): number
   return 39
 }
 
+/**
+ * Acquaintance walk zone, in meters because the evidence is walking distance, not travel miles.
+ * Full credit within 800 m (common walk-access benchmark), straight line to 0 at 1,260 m (observed
+ * 85th percentile walk to commuter rail, Montreal). Both are walk-to-destination evidence, borrowed for
+ * walk-to-encounter; no study measures run-ins by distance. TODO, range unknown.
+ */
+export const ACQUAINTANCE_WALK_FULL_M = 800
+export const ACQUAINTANCE_WALK_ZERO_M = 1260
+const METERS_PER_MILE = 1609.344
+
 export function acquaintanceProximityScore(miles: number | null | undefined): number | null {
   if (!validMiles(miles)) return null
-  const old =
-    miles <= 7.5 ? 100
-    : miles <= 12.5 ? 100 - (miles - 7.5) * (45 / 5)
-    : miles <= 25 ? 55 - (miles - 12.5) * (45 / 12.5)
-    : miles <= 31 ? 10 - (miles - 25) * (10 / 6)
-    : 0
-  return Math.min(old, closeTieProximityScore(miles) as number)
-}
-
-const TIE_PROXIMITY_CURVE: Record<SocialConnectionTier, (miles: number | null | undefined) => number | null> = {
-  close: closeTieProximityScore,
-  acquaintance: acquaintanceProximityScore,
+  const m = miles * METERS_PER_MILE
+  if (m <= ACQUAINTANCE_WALK_FULL_M) return 100
+  if (m >= ACQUAINTANCE_WALK_ZERO_M) return 0
+  return 100 * (ACQUAINTANCE_WALK_ZERO_M - m) / (ACQUAINTANCE_WALK_ZERO_M - ACQUAINTANCE_WALK_FULL_M)
 }
 
 /**
- * Nearest-tie-plus-bonus: score is whoever's closest, plus a small flat bonus for each
- * additional point that's also meaningfully close (up to a cap). Chosen over an earlier
- * noisy-OR combine, which let a single point above the close-tie plateau instantly saturate
- * every place in that tie's whole metro to ~100 regardless of the rest of the list, with no way
- * to tell places in that metro apart on this pillar anymore. This version still lets one very
- * close tie carry most of the score, but multiple close ties add a visible, bounded bump
- * instead of an invisible ceiling effect.
+ * Close ties: nearest close person, plus a small flat bonus for each additional close person who is
+ * also meaningfully close (up to a cap). Chosen over an earlier noisy-OR combine, which let a single
+ * point saturate every place in that person's metro to ~100. Acquaintance points are ignored here;
+ * they score under acquaintancesNearbyScore.
  *
- * The bonus amount (5), the cap (2 extras) and the "counts as close" thresholds (close 70,
- * acquaintance 60) are unsourced placeholders, all TODO with range unknown. The older derivations
- * of the thresholds from minute-based curves no longer apply. On the current curves a threshold of
- * 70 means a close person within about 6 miles, and 60 means an acquaintance within about 12 miles.
+ * The bonus amount (5), the cap (2 extras) and the threshold (70, a close person within about 6 miles)
+ * are unsourced placeholders, all TODO with range unknown.
  */
-const SOCIAL_CONNECTION_BONUS_THRESHOLD: Record<SocialConnectionTier, number> = {
-  close: 70,
-  acquaintance: 60,
-}
+const CLOSE_BONUS_THRESHOLD = 70
 const SOCIAL_CONNECTION_BONUS_PER_EXTRA_POINT = 5
 const SOCIAL_CONNECTION_MAX_BONUS_POINTS = 2
 
-export function socialConnectionScore(
-  points: Array<{ tier: SocialConnectionTier; miles: number | null | undefined }>
-): number | null {
-  const scored: Array<{ tier: SocialConnectionTier; proximity: number }> = []
+type TierMiles = { tier: SocialConnectionTier; miles: number | null | undefined }
+
+export function socialConnectionScore(points: TierMiles[]): number | null {
+  const scored: number[] = []
   for (const p of points) {
-    const proximity = TIE_PROXIMITY_CURVE[p.tier](p.miles)
-    if (proximity === null) continue
-    scored.push({ tier: p.tier, proximity })
+    if (p.tier !== 'close') continue
+    const proximity = closeTieProximityScore(p.miles)
+    if (proximity !== null) scored.push(proximity)
   }
   if (scored.length === 0) return null
-  scored.sort((a, b) => b.proximity - a.proximity)
+  scored.sort((a, b) => b - a)
   const [best, ...rest] = scored
-  const bonusEligibleCount = rest.filter((p) => p.proximity >= SOCIAL_CONNECTION_BONUS_THRESHOLD[p.tier]).length
+  const bonusEligibleCount = rest.filter((v) => v >= CLOSE_BONUS_THRESHOLD).length
   const bonus = Math.min(bonusEligibleCount, SOCIAL_CONNECTION_MAX_BONUS_POINTS) * SOCIAL_CONNECTION_BONUS_PER_EXTRA_POINT
-  return Math.min(100, Math.round((best.proximity + bonus) * 10) / 10)
+  return Math.min(100, Math.round((best + bonus) * 10) / 10)
 }
 
+/**
+ * Acquaintances: the best walk-zone score among acquaintances inside the zone. Anyone outside the walk
+ * zone drops out rather than scoring 0, so an acquaintance can lift the places they live near but never
+ * penalize the rest; with nobody inside, the result is null and the priority drops out of the total.
+ * More acquaintances in the zone add nothing yet: the research supports the count of weak ties
+ * mattering, but gives no mapping from count to score. TODO, range unknown.
+ */
+export function acquaintancesNearbyScore(points: TierMiles[]): number | null {
+  let best: number | null = null
+  for (const p of points) {
+    if (p.tier !== 'acquaintance') continue
+    const proximity = acquaintanceProximityScore(p.miles)
+    if (proximity === null || proximity <= 0) continue
+    if (best === null || proximity > best) best = proximity
+  }
+  return best === null ? null : Math.round(best * 10) / 10
+}

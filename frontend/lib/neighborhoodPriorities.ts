@@ -3,7 +3,7 @@ import type { PillarPriorities, PriorityLevel } from '@/components/SearchOptions
 import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 
 const LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
-const KEYS = [...PILLAR_ORDER, 'natural_beauty', 'commute_time', 'social_connection'] as PillarKey[]
+const KEYS = [...PILLAR_ORDER, 'natural_beauty', 'commute_time', 'social_connection', 'acquaintances_nearby'] as PillarKey[]
 
 /** Merge an unknown priorities object over the defaults, keeping only valid levels. */
 export function mergePriorities(source: unknown): PillarPriorities {

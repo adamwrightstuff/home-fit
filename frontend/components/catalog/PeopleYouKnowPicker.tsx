@@ -12,7 +12,7 @@ interface PeopleYouKnowPickerProps {
 
 const TIER_COPY: Record<SocialConnectionTier, { label: string; icon: typeof Heart; sub: string }> = {
   close: { label: 'Close', icon: Heart, sub: 'Family or a close friend' },
-  acquaintance: { label: 'Acquaintance', icon: Users, sub: 'Someone you know, casually' },
+  acquaintance: { label: 'Acquaintance', icon: Users, sub: 'Someone you know casually; counts where you could run into them on foot' },
 }
 
 function TierIcon({ tier, size = 14 }: { tier: SocialConnectionTier; size?: number }) {

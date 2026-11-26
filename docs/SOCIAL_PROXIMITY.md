@@ -172,6 +172,33 @@ Level 2: all fixed checks are run or accepted (area-type spread run, independent
 Sign-off: Level 2 (Verified). Date: 2026-11-05. Signed off by: Adam Wright (owner). Accepted TODOs listed below. Re-validate quarterly or when a source changes. User-facing copy must not call this priority "validated": the independent check supports the shape only weakly (wide intervals, one study of help to disabled older parents).
 Accepted TODOs (not Level 3): lines between band midpoints, the near-premium inside 3 miles, acquaintance knots and cap, combine bonus (5, cap 2), thresholds (70 and 60).
 
+## 7. Split into two priorities (2026-11-26)
+
+Trigger: one acquaintance in the user's own neighborhood moved Carroll Gardens from 76 to 78. Cause: the old acquaintance curve gave a flat 100 out to 7.5 miles, so one person lifted most of a metro.
+
+Change: acquaintances are now their own personal priority, key `acquaintances_nearby` ("Acquaintances within walking distance"), separate from `social_connection` (close family and friends). The user's two priority levels weigh them; no research ratio is assumed.
+
+Why separate (read this session):
+- Mechanism differs. Close ties map to intimate and relational loneliness, weak ties to collective loneliness and belonging (Hawkley and Cacioppo three-factor model, VERIFIED abstract-level).
+- Weak ties are not a discounted close tie. Huxhold, Fiori, Webster and Antonucci 2020 (J Gerontol B 75(7):1433, N = 802, 23 years, VERIFIED full text of Results): freeing close and weaker couplings improved fit for depressed affect (chi-square diff 22.19, df 2, p < .001) and positive affect (6.07, df 2, p = .048), with weaker ties the stronger predictor; no per-tie coefficient is reported, so no ratio. Zhou, Gao, Richards and Fingerman 2025 (J Gerontol B, N = 287, EMA): weak-tie encounter quality lowered momentary loneliness regardless of sleep (split coefficients in a supplement not read).
+- Weak-tie benefit comes from encounters (Sandstrom and Dunn 2014; Collins et al. 2022 PNAS; SUMMARY only, publisher pages blocked), so the measurement area is a walk zone, not travel miles (DPv2 principle 3).
+
+Acquaintance parameters: name | value | source | plausible range | sensitivity
+  full-credit walk distance | 800 m | common walk-access benchmark (DPv2 Part 4 transit and outdoors rows) | 400 to 1,000 m | not run
+  zero-credit walk distance | 1,260 m, linear between | observed 85th percentile walk to commuter rail, Montreal | 524 to 1,260 m | not run
+  outside the zone | drops out (null), never 0 | DPv2 principle 16 and owner decision 2026-11-26: a missing run-in is not a loss | n/a | n/a
+  more acquaintances in the zone | no bonus | TODO: count of weak ties matters (Huxhold) but no count-to-score mapping exists | unknown | not run
+  close-tie cap | removed | Huxhold: weaker ties not weaker predictors | n/a | n/a
+Construct caveat: the research measures how many weak-tie encounters people have, not living near one named person. Walk distances are walk-to-destination evidence borrowed for walk-to-encounter. Distance is from the catalog place centroid, so a large neighborhood can miss an acquaintance on its far edge.
+
+The close-tie bonus (5 per extra close person at 70 or above, max 2) now counts close people only; still TODO, range unknown.
+
+All-places check (offline, NYC catalog, n = 194, one test acquaintance at the Carroll Gardens pin):
+  old curve: 170 places got some credit, 31 scored 100
+  new curve: 5 places get credit: Carroll Gardens 100 (0 m), Cobble Hill 99 (806 m), Red Hook 66 (954 m), Gowanus 37 (1,089 m), Boerum Hill 9 (1,217 m)
+
+Not yet done (DPv2 6, 10): pin-shift and radius sensitivity, launch pairs.
+
 ## Sources checked this session
 - Sun and Schafer 2023, J Gerontol B 78(11):1917-1926, SHARE waves 4 and 6, n=18,055, fixed effects: relative within 1 km and non-kin within about 5 km (odds ratios about 1.7 and 1.3 for severe loneliness); losses farther away not significant; a new core member offsets most of it. VERIFIED abstract-level. Correction to the earlier note in HAPPINESS_EVIDENCE_NOTES.md section 2c ("losing a child raises loneliness at any distance"): the version I read does not say that, and the code comment claiming it supports decline "through 25 km" for kin is not supported (kin effect only within 1 km).
 - Schoeni, Cho and Choi 2022, Soc Sci Med 292:114627, PSID 2011 and 2013, 810 parents 55+ with ADL or IADL limits, 1,767 dyads: adjusted weekly hours of help coresident 5.99, same block 3.16, 2 to 5 miles 1.16, 5 to 10 miles 0.79, over 100 miles 0.58; little help beyond 2 to 5 miles. Possible endogeneity, wide intervals. VERIFIED abstract-level (via PMC page).

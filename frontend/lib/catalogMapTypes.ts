@@ -35,6 +35,7 @@ export type CatalogMapIndexMode =
   | 'air_travel_access'
   | 'commute_time'
   | 'social_connection'
+  | 'acquaintances_nearby'
 
 export const PILLAR_INDEX_MODES: { id: CatalogMapIndexMode; label: string }[] = [
   { id: 'active_outdoors', label: 'Active outdoors' },
@@ -51,6 +52,7 @@ export const PILLAR_INDEX_MODES: { id: CatalogMapIndexMode; label: string }[] = 
   { id: 'air_travel_access', label: 'Air travel' },
   { id: 'commute_time', label: 'Commute time' },
   { id: 'social_connection', label: 'Social proximity' },
+  { id: 'acquaintances_nearby', label: 'Acquaintances nearby' },
 ]
 
 export function isPillarIndexMode(mode: CatalogMapIndexMode): boolean {

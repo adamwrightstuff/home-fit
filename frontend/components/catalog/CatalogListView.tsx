@@ -30,16 +30,31 @@ function MetroDot({ metro }: { metro: CatalogMetro }) {
   return <span className="inline-block h-2 w-2 rounded-full" style={{ background: CATALOG_METRO_META[metro].color }} title={CATALOG_METRO_META[metro].label} />
 }
 
+/** The two people priorities (see lib/socialProximity.ts), shown under the pillar rows once weighted. */
+const PEOPLE_PILLARS = [
+  {
+    key: 'social_connection',
+    name: 'Social Connection',
+    note: 'Distance to the close family and friends you added. Your own preference. The shape comes from studies of older adults and caregiving, not a research-backed score.',
+  },
+  {
+    key: 'acquaintances_nearby',
+    name: 'Acquaintances Nearby',
+    note: 'Whether an acquaintance you added lives within about a 10-minute walk, where chance run-ins happen. Your own preference; the walk distance is borrowed from walk-to-destination research.',
+  },
+] as const
+
 function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; priorities: PillarPriorities }) {
   const rw = reweightScoreResponseFromPriorities(place.score, priorities)
   const lp = rw.livability_pillars as unknown as Record<
     string,
     { score?: number; weight?: number; status?: string; data_quality?: { fallback_used?: boolean; reason?: string } }
   >
-  const availablePillars: (PillarKey | 'commute_time' | 'social_connection')[] = [
+  const availablePillars: (PillarKey | 'commute_time' | 'social_connection' | 'acquaintances_nearby')[] = [
     ...PILLAR_ORDER.filter((k) => Boolean(lp[k])),
     ...(lp.commute_time ? (['commute_time'] as const) : []),
     ...(lp.social_connection ? (['social_connection'] as const) : []),
+    ...(lp.acquaintances_nearby ? (['acquaintances_nearby'] as const) : []),
   ]
   const schoolsDisabled =
     lp.quality_education?.data_quality?.fallback_used === true &&
@@ -97,19 +112,19 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
             </div>
           )
         })}
-        {(() => {
-          // social_connection is synthetic/client-side (see lib/reweight.ts) -- not in
-          // PILLAR_ORDER, so it never appears in the loop above. Only show it once it's
-          // actually weighted (someone's been added under People You Know).
-          const sc = lp.social_connection
+        {PEOPLE_PILLARS.map(({ key, name, note }) => {
+          // social_connection and acquaintances_nearby are synthetic/client-side (see
+          // lib/reweight.ts) -- not in PILLAR_ORDER, so they never appear in the loop above. Only
+          // show one once it's actually weighted (someone's been added under People You Know).
+          const sc = lp[key]
           const w = typeof sc?.weight === 'number' && Number.isFinite(sc.weight) ? sc.weight : 0
           if (w <= 0) return null
           const score = typeof sc?.score === 'number' && Number.isFinite(sc.score) ? sc.score : null
           const fill = score != null ? homefitPillarBarFill(score) : 'rgba(0,0,0,0.08)'
           return (
-            <div className="flex min-w-0 items-center gap-2 text-[0.65rem]">
-              <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]" title="Distance to the people you added. Your own preference. The shape comes from studies of older adults and caregiving, not a research-backed score.">
-                Social Connection
+            <div key={key} className="flex min-w-0 items-center gap-2 text-[0.65rem]">
+              <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]" title={note}>
+                {name}
               </span>
               <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
                 {score != null && (
@@ -122,7 +137,7 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
               <span className="w-9 shrink-0 text-right tabular-nums text-[var(--hf-text-tertiary)]">{w.toFixed(0)}%</span>
             </div>
           )
-        })()}
+        })}
         {place.commute_off_zone && priorities.commute_time && priorities.commute_time !== 'None' && (
           <div className="flex min-w-0 items-center gap-2 text-[0.65rem]">
             <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]">Commute Time</span>

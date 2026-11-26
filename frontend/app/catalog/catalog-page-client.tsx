@@ -156,7 +156,7 @@ export default function CatalogPageClient({
         const merged = { ...DEFAULT_PRIORITIES }
         const valid: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
         const source = parsed.priorities ?? parsed
-        for (const k of [...PILLAR_ORDER, 'natural_beauty', 'commute_time', 'social_connection'] as PillarKey[]) {
+        for (const k of [...PILLAR_ORDER, 'natural_beauty', 'commute_time', 'social_connection', 'acquaintances_nearby'] as PillarKey[]) {
           if (valid.includes(source[k])) merged[k] = source[k]
         }
         return merged
@@ -502,7 +502,7 @@ export default function CatalogPageClient({
         const valid: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
         if (opts.priorities) {
           const merged = { ...DEFAULT_PRIORITIES }
-          for (const k of [...PILLAR_ORDER, 'natural_beauty', 'commute_time', 'social_connection'] as PillarKey[]) {
+          for (const k of [...PILLAR_ORDER, 'natural_beauty', 'commute_time', 'social_connection', 'acquaintances_nearby'] as PillarKey[]) {
             if (valid.includes(opts.priorities[k])) merged[k] = opts.priorities[k]
           }
           setPriorities(merged)
@@ -688,8 +688,8 @@ export default function CatalogPageClient({
         adjusted = { ...adjusted, score: withCommuteTimePillar(adjusted.score, null, 0) }
       }
 
-      // Optional social_connection pillar (see lib/reweight.ts) -- only meaningful once at least
-      // one person has been added. Distance is straight-line miles (no area-type label input).
+      // Optional social_connection and acquaintances_nearby pillars (see lib/reweight.ts) -- only
+      // meaningful once at least one person has been added. Distance is straight-line miles (no area-type label input).
       // catalog.lat/lon come out of the JSONL as strings despite the CatalogMapPlace type
       // declaring them as number, so a strict `typeof === 'number'` guard here silently never
       // passes -- Number(...) + Number.isFinite matches how the rest of the app actually
@@ -1694,7 +1694,7 @@ export default function CatalogPageClient({
             className="hidden md:flex flex-wrap gap-1.5 px-4 py-2 border-t border-[var(--hf-border)]"
             style={{ background: 'var(--hf-bg-subtle)' }}
           >
-            {PILLAR_INDEX_MODES.filter((p) => (p.id !== 'commute_time' && p.id !== 'social_connection') || adjustedPlaces.some((pl) => typeof (pl.score.livability_pillars as any)?.[p.id]?.score === 'number')).map((p) => (
+            {PILLAR_INDEX_MODES.filter((p) => (p.id !== 'commute_time' && p.id !== 'social_connection' && p.id !== 'acquaintances_nearby') || adjustedPlaces.some((pl) => typeof (pl.score.livability_pillars as any)?.[p.id]?.score === 'number')).map((p) => (
               <button
                 key={p.id}
                 type="button"
@@ -2128,6 +2128,8 @@ export default function CatalogPageClient({
         hasWorkHub={Boolean(findWorkZone(workZoneId))}
         hasPeople={people.length > 0}
         peopleCount={people.length}
+        closeCount={people.filter((x) => x.tier === 'close').length}
+        acquaintanceCount={people.filter((x) => x.tier === 'acquaintance').length}
         workZoneLabel={findWorkZone(workZoneId)?.label ?? null}
         filterNbTypes={filterNbTypes}
         onFilterNbTypesChange={setFilterNbTypes}

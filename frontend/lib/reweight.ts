@@ -1,8 +1,8 @@
 import type { ScoreResponse } from '@/types/api'
 import { PILLAR_ORDER, type PillarKey, computeHappinessIndex } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
-import { socialConnectionScore, type SocialConnectionTier } from '@/lib/socialProximity'
-export { closeTieProximityScore, acquaintanceProximityScore, socialConnectionScore } from '@/lib/socialProximity'
+import { socialConnectionScore, acquaintancesNearbyScore, type SocialConnectionTier } from '@/lib/socialProximity'
+export { closeTieProximityScore, acquaintanceProximityScore, socialConnectionScore, acquaintancesNearbyScore } from '@/lib/socialProximity'
 export type { SocialConnectionTier, SocialConnectionPoint } from '@/lib/socialProximity'
 import { commutePillarScore, commuteTimeScore } from '@/lib/commuteTime'
 import { applyAoPreferences, applyWaterfrontPreference, type WaterfrontSubPreference } from '@/lib/aoPreference'
@@ -314,35 +314,43 @@ export function withCommuteTimePillar(
 }
 
 /**
- * Injects a synthetic social_connection pillar into a catalog place's score, same mechanism
- * as withCommuteTimePillar: any key in livability_pillars with a numeric score is eligible for
- * a token share via prioritiesToTokens' extra-keys handling. No-ops when there are no usable
- * points (none supplied, or none with a resolvable minutes value), so the pillar doesn't
- * appear and gets no weight.
+ * Injects the two synthetic people pillars into a catalog place's score, same mechanism as
+ * withCommuteTimePillar: any key in livability_pillars with a numeric score is eligible for a token
+ * share via prioritiesToTokens' extra-keys handling. Close people go to social_connection and
+ * acquaintances to acquaintances_nearby (see lib/socialProximity.ts). Each is left out when it has no
+ * usable points (no close people, or no acquaintance inside the walk zone), so it gets no weight.
  */
 export function withSocialConnectionPillar(
   data: ScoreResponse,
   points: Array<{ tier: SocialConnectionTier; miles: number | null | undefined; label?: string }>
 ): ScoreResponse {
-  const score = socialConnectionScore(points)
-  if (score === null) return data
+  const pillarFor = (tier: SocialConnectionTier, score: number | null) => {
+    if (score === null) return null
+    return {
+      score,
+      weight: 0,
+      contribution: 0,
+      importance_level: null,
+      breakdown: {
+        points: points
+          .filter((p) => p.tier === tier)
+          .map((p) => ({
+            tier: p.tier,
+            miles: typeof p.miles === 'number' ? Math.round(p.miles * 100) / 100 : null,
+            label: p.label ?? null,
+          })),
+      },
+    }
+  }
+  const close = pillarFor('close', socialConnectionScore(points))
+  const acquaintances = pillarFor('acquaintance', acquaintancesNearbyScore(points))
+  if (!close && !acquaintances) return data
   return {
     ...data,
     livability_pillars: {
       ...data.livability_pillars,
-      social_connection: {
-        score,
-        weight: 0,
-        contribution: 0,
-        importance_level: null,
-        breakdown: {
-          points: points.map((p) => ({
-            tier: p.tier,
-            miles: typeof p.miles === 'number' ? Math.round(p.miles * 10) / 10 : null,
-            label: p.label ?? null,
-          })),
-        },
-      },
+      ...(close ? { social_connection: close } : {}),
+      ...(acquaintances ? { acquaintances_nearby: acquaintances } : {}),
     } as any,
   }
 }

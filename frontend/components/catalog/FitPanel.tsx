@@ -181,6 +181,8 @@ export interface FitPanelProps {
   hasWorkHub: boolean
   hasPeople: boolean
   peopleCount: number
+  closeCount: number
+  acquaintanceCount: number
   workZoneLabel: string | null
 
   filterNbTypes: string[]
@@ -637,14 +639,16 @@ export default function FitPanel(p: FitPanelProps) {
               <div className="mb-2 rounded-xl border border-[var(--hf-border)] px-3 py-2.5">
                 <div className="mb-1 text-sm font-bold text-[var(--hf-text-primary)]">Personal</div>
                 {PERSONAL_ROWS.map((row) => {
-                  const available = row.key === 'commute_time' ? p.hasWorkHub : p.hasPeople
+                  const available = row.key === 'commute_time' ? p.hasWorkHub : row.key === 'social_connection' ? p.closeCount > 0 : p.acquaintanceCount > 0
                   return available ? (
                     <div key={row.key} className="mb-2">
                       <LevelRow keyName={row.key} label={row.name} icon={row.icon} />
                       <p className="m-0 text-[0.7rem] text-[var(--hf-text-secondary)]">
                         {row.key === 'commute_time'
                           ? `To ${p.workZoneLabel ?? 'your work address'}. `
-                          : `${p.peopleCount} ${p.peopleCount === 1 ? 'person' : 'people'} you want to live near. `}
+                          : row.key === 'social_connection'
+                            ? `${p.closeCount} close ${p.closeCount === 1 ? 'person' : 'people'} you want to live near. `
+                            : `${p.acquaintanceCount} ${p.acquaintanceCount === 1 ? 'acquaintance' : 'acquaintances'}; counts only where they live within about a 10-minute walk. `}
                         <Link href="/profile" className="font-semibold text-[var(--hf-primary-1)]">
                           {row.key === 'commute_time' ? 'Change in your profile' : 'Edit in your profile'}
                         </Link>

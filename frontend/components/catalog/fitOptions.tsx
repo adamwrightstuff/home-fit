@@ -27,10 +27,11 @@ export const GROUPS: { title: string; keys: PillarKey[] }[] = [
 
 export const LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
 
-type PersonalKey = 'commute_time' | 'social_connection'
+type PersonalKey = 'commute_time' | 'social_connection' | 'acquaintances_nearby'
 export const PERSONAL_ROWS: { key: PersonalKey; icon: string; name: string; needs: string }[] = [
   { key: 'commute_time', icon: '🚆', name: 'Your commute', needs: 'Add a work hub to weigh your commute.' },
-  { key: 'social_connection', icon: '💛', name: 'Closeness to people you know', needs: 'Add people you want to live near to weigh this.' },
+  { key: 'social_connection', icon: '💛', name: 'Closeness to family and close friends', needs: 'Add close people you want to live near to weigh this.' },
+  { key: 'acquaintances_nearby', icon: '🙂', name: 'Acquaintances within walking distance', needs: 'Add acquaintances to weigh running into them on foot.' },
 ]
 
 export const NB_TYPE_OPTIONS: { value: string; label: string }[] = [

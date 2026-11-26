@@ -1,7 +1,7 @@
 // Run: node --test tests/social_proximity.test.mjs   (Node 22.18+ strips TypeScript types natively)
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { closeTieProximityScore, acquaintanceProximityScore, socialConnectionScore } from '../frontend/lib/socialProximity.ts'
+import { closeTieProximityScore, acquaintanceProximityScore, socialConnectionScore, acquaintancesNearbyScore } from '../frontend/lib/socialProximity.ts'
 
 const MILES = [0, 1, 2, 5, 6, 7.5, 10, 25, 50, 100, 500, 3000]
 
@@ -27,16 +27,36 @@ test('close curve is non-increasing and no steeper than 10.75 points a mile', ()
   }
 })
 
-test('acquaintance is non-increasing and never above the close curve', () => {
-  assert.equal(acquaintanceProximityScore(3), 100)
-  assert.equal(acquaintanceProximityScore(31), 0)
+const M = 1609.344 // meters per mile
+
+test('acquaintance walk zone: 100 within 800 m, 0 from 1,260 m, non-increasing', () => {
+  assert.equal(acquaintanceProximityScore(0), 100)
+  assert.equal(acquaintanceProximityScore(800 / M), 100)
+  assert.equal(acquaintanceProximityScore(1260 / M), 0)
+  assert.equal(acquaintanceProximityScore(3), 0)
+  assert.ok(Math.abs(acquaintanceProximityScore(1030 / M) - 50) < 1e-6)
   let prev = 101
-  for (let m = 0; m <= 100; m += 0.5) {
-    const a = acquaintanceProximityScore(m)
-    assert.ok(a <= prev + 1e-9, `rises at ${m}`)
-    assert.ok(a <= closeTieProximityScore(m) + 1e-9, `above close at ${m}`)
+  for (let m = 0; m <= 2000; m += 10) {
+    const a = acquaintanceProximityScore(m / M)
+    assert.ok(a <= prev + 1e-9, `rises at ${m} m`)
     prev = a
   }
+})
+
+test('close and acquaintance score separately', () => {
+  // an acquaintance never feeds the close score, and a close person never feeds the acquaintance score
+  assert.equal(socialConnectionScore([{ tier: 'acquaintance', miles: 0.1 }]), null)
+  assert.equal(acquaintancesNearbyScore([{ tier: 'close', miles: 0.1 }]), null)
+  const mixed = [{ tier: 'close', miles: 30 }, { tier: 'acquaintance', miles: 0.2 }]
+  assert.equal(socialConnectionScore(mixed), 39)
+  assert.equal(acquaintancesNearbyScore(mixed), 100)
+})
+
+test('acquaintance outside the walk zone drops out instead of scoring 0', () => {
+  assert.equal(acquaintancesNearbyScore([{ tier: 'acquaintance', miles: 2 }]), null)
+  assert.equal(acquaintancesNearbyScore([{ tier: 'acquaintance', miles: 2 }, { tier: 'acquaintance', miles: 0.3 }]), 100)
+  // more acquaintances inside the zone add nothing yet (count-to-score mapping is a TODO)
+  assert.equal(acquaintancesNearbyScore([{ tier: 'acquaintance', miles: 0.1 }, { tier: 'acquaintance', miles: 0.1 }]), 100)
 })
 
 test('invalid distance gives null, not a neutral number', () => {
@@ -46,6 +66,8 @@ test('invalid distance gives null, not a neutral number', () => {
   }
   assert.equal(socialConnectionScore([{ tier: 'close', miles: null }]), null)
   assert.equal(socialConnectionScore([]), null)
+  assert.equal(acquaintancesNearbyScore([{ tier: 'acquaintance', miles: null }]), null)
+  assert.equal(acquaintancesNearbyScore([]), null)
 })
 
 test('nearest person carries the score; bonus only for people at or above the threshold', () => {
@@ -65,5 +87,6 @@ test('bonus cap: three extras count as two', () => {
 
 test('score does not depend on any place label (function takes miles only)', () => {
   assert.equal(socialConnectionScore.length, 1)
+  assert.equal(acquaintancesNearbyScore.length, 1)
   assert.equal(closeTieProximityScore.length, 1)
 })
