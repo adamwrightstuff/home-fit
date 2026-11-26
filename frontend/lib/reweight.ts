@@ -541,19 +541,34 @@ function scoreAffordabilityRatio(ratio: number): number {
 }
 
 /**
- * Mirror of Python _score_rent_affordability — step function on annual housing cost as a share
- * of income (0–50 pts). This is the curve for a user-entered monthly cost; scoreAffordabilityRatio
- * is for home price / income (typically 2–7) and must never receive a cost share (typically
- * 0.2–0.5), which it would read as an extremely cheap home. Interim curve (30% convention)
- * until the cost-burden calibration replaces it.
+ * Housing cost as a share of income (0–50 pts), for a visitor's own cost and the same-size comparison.
+ * Same points as Python _score_rent_affordability (a step function), joined by straight lines so a
+ * cost share of 24.9% and 25.1% no longer differ by a whole step (the backend's rent curve still steps).
+ * Past the last point (50% of income, 7 pts) the last segment's slope continues to 0 at about 59%,
+ * instead of the step's drop from 7 to 0; that extension is a choice, not a finding.
+ * scoreAffordabilityRatio is for home price / income (typically 2–7) and must never receive a cost
+ * share (typically 0.2–0.5), which it would read as an extremely cheap home. Interim curve (30%
+ * convention) until the cost-burden calibration replaces it.
  */
-function scoreCostShareOfIncome(share: number): number {
-  if (share <= 0.20) return 50
-  if (share <= 0.25) return 43
-  if (share <= 0.30) return 35
-  if (share <= 0.35) return 25
-  if (share <= 0.40) return 15
-  if (share <= 0.50) return 7
+const COST_SHARE_KNOTS: Array<[number, number]> = [
+  [0.20, 50],
+  [0.25, 43],
+  [0.30, 35],
+  [0.35, 25],
+  [0.40, 15],
+  [0.50, 7],
+  [0.50 + 7 / 80, 0], // last slope (8 pts per 10% of income) continued to 0
+]
+
+export function scoreCostShareOfIncome(share: number): number {
+  if (!(share > COST_SHARE_KNOTS[0][0])) return COST_SHARE_KNOTS[0][1]
+  for (let i = 1; i < COST_SHARE_KNOTS.length; i++) {
+    const [x1, y1] = COST_SHARE_KNOTS[i]
+    if (share <= x1) {
+      const [x0, y0] = COST_SHARE_KNOTS[i - 1]
+      return y0 + ((share - x0) / (x1 - x0)) * (y1 - y0)
+    }
+  }
   return 0
 }
 
@@ -609,7 +624,7 @@ export function applySameSizeHousingToScore(
       ...data.livability_pillars,
       housing_value: {
         ...hv,
-        score: affordability * 2,
+        score: Math.round(affordability * 20) / 10,
         breakdown: {
           ...bk,
           local_affordability: affordability,
