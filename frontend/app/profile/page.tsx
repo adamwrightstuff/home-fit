@@ -89,6 +89,15 @@ const INPUT_CLASS =
   'min-h-[44px] w-full rounded-lg border border-[var(--hf-border)] bg-white px-3 py-2.5 text-base text-[var(--hf-text-primary)] ' +
   'placeholder:text-[var(--hf-text-tertiary)] focus:border-[var(--hf-text-primary)] focus:outline-none sm:text-sm'
 
+/** Census rooms for common layouts: bedrooms plus a living room and kitchen (a studio is one room). */
+const ROOM_PICKS = [
+  { label: 'Studio', rooms: 1 },
+  { label: '1 bed', rooms: 3 },
+  { label: '2 bed', rooms: 4 },
+  { label: '3 bed', rooms: 5 },
+  { label: '4 bed', rooms: 6 },
+]
+
 function Chip({
   active,
   onClick,
@@ -516,8 +525,20 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs text-[var(--hf-text-tertiary)]">Quick pick</span>
+                  {ROOM_PICKS.map((r) => (
+                    <Chip
+                      key={r.label}
+                      active={profile.current_home?.rooms === r.rooms}
+                      onClick={() => commitHomeDetail('rooms', String(r.rooms))}
+                    >
+                      {r.label}
+                    </Chip>
+                  ))}
+                </div>
                 <p className="m-0 mt-1.5 text-xs text-[var(--hf-text-secondary)]">
-                  Count bedrooms, living room, kitchen and dining room, not bathrooms, halls or closets (the Census way, so it compares with every other place). Rooms score this home&apos;s space; rooms and price together score its value for money.
+                  Bedrooms plus living room and kitchen. Add a separate dining room, office or den; skip bathrooms and halls.
                 </p>
               </div>
             )}
