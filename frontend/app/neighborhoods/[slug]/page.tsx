@@ -10,12 +10,11 @@ import {
   PILLAR_ORDER,
   PILLAR_META,
   getScoreBand,
-  HOMEFIT_COPY,
-  HAPPINESS_INDEX_COPY,
 } from '@/lib/pillars'
 import { CATALOG_METRO_META } from '@/lib/catalogMetros'
 import NeighborhoodMap from '@/components/NeighborhoodMap'
 import NeighborhoodPersonal from '@/components/NeighborhoodPersonal'
+import NeighborhoodHeadline from '@/components/NeighborhoodHeadline'
 import WhoLivesHere from '@/components/WhoLivesHere'
 import SurroundingsCard from '@/components/catalog/SurroundingsCard'
 
@@ -84,33 +83,6 @@ export async function generateMetadata({
   }
 }
 
-function ScoreHero({
-  label,
-  value,
-  tooltip,
-  accent,
-}: {
-  label: string
-  value: number | null
-  tooltip: string
-  accent: string
-}) {
-  return (
-    <div
-      className="flex flex-col items-center rounded-2xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)] px-4 py-5"
-      title={tooltip}
-    >
-      <div className="text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-[var(--hf-text-tertiary)]">
-        {label}
-      </div>
-      <div className="mt-1 text-4xl font-bold tabular-nums" style={{ color: accent }}>
-        {value != null && Number.isFinite(value) ? value.toFixed(0) : 'No data'}
-      </div>
-      <div className="mt-1 text-[0.7rem] text-[var(--hf-text-tertiary)]">out of 100</div>
-    </div>
-  )
-}
-
 export default async function NeighborhoodPage({
   params,
 }: {
@@ -166,20 +138,13 @@ export default async function NeighborhoodPage({
       </div>
 
       {/* Score hero */}
-      <section className="mb-6 grid grid-cols-2 gap-3" aria-label="Scores">
-        <ScoreHero
-          label="HomeFit"
-          value={typeof score.total_score === 'number' ? score.total_score : null}
-          tooltip={HOMEFIT_COPY.tooltip}
-          accent="var(--hf-primary-1)"
-        />
-        <ScoreHero
-          label="Happiness"
-          value={typeof score.happiness_index === 'number' ? score.happiness_index : null}
-          tooltip={HAPPINESS_INDEX_COPY.tooltip}
-          accent="var(--tr-accent-800)"
-        />
-      </section>
+      <NeighborhoodHeadline
+        score={score}
+        workCommute={work_commute}
+        placeName={catalog.name}
+        lat={catalog.lat}
+        lon={catalog.lon}
+      />
 
       {/* Summary */}
       {typeof score.place_summary === 'string' && score.place_summary.trim() && (
