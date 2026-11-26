@@ -37,10 +37,30 @@ def test_safety_zero_is_a_real_value_and_missing_neighbors_are_skipped():
 def test_only_a_place_s_own_rate_counts():
     feed = {"source": "denver_open_data"}
     own = {"source": "fbi_nibrs_agency", "agency_name": "Dobbs Ferry Police Department"}
-    assert b._safety_key({"type": "neighborhood"}, feed) == ("denver_open_data", "")
-    assert b._safety_key({"type": "suburb"}, own) == ("fbi_nibrs_agency", "Dobbs Ferry Police Department")
-    assert b._safety_key({"type": "neighborhood"}, {**own, "agency_name": "Denver Police Department"}) is None
-    assert b._safety_key({"type": "suburb"}, {"source": "fbi_county_agency", "agency_name": "Jefferson County Sheriff's Office"}) is None
-    assert b._safety_key({"type": "suburb"}, {"source": "ny_state_ucr", "agency_name": "Nassau County PD"}) is None
-    assert b._safety_key({"type": "suburb"}, {"source": "lasd_station", "agency_name": "Lakewood"}) is None
-    assert b._safety_key({"type": "suburb"}, {"source": "fbi_cde_state"}) is None
+    assert b._safety_key("neighborhood", feed) == ("denver_open_data", "")
+    assert b._safety_key("suburb", own) == ("fbi_nibrs_agency", "Dobbs Ferry Police Department")
+    assert b._safety_key("neighborhood", {**own, "agency_name": "Denver Police Department"}) is None
+    assert b._safety_key("suburb", {"source": "fbi_county_agency", "agency_name": "Jefferson County Sheriff's Office"}) is None
+    assert b._safety_key("suburb", {"source": "ny_state_ucr", "agency_name": "Nassau County PD"}) is None
+    assert b._safety_key("suburb", {"source": "lasd_station", "agency_name": "Lakewood"}) is None
+    assert b._safety_key("suburb", {"source": "fbi_cde_state"}) is None
+
+
+def test_live_point_uses_catalog_neighbors_and_drops_shared_city_rates(monkeypatch):
+    import surroundings as s
+    city = ("fbi_nibrs_agency", "Big City Police Department")
+    rows = (
+        {"key": "Twin|C|ST", "name": "Twin", "ll": (40.0, -74.0), "income": 90_000.0, "home_value": None, "safety": 50.0, "agency_key": ("x_open_data", "")},
+        {"key": "N1|C|ST", "name": "N1", "ll": (40.0, -74.01), "income": 100_000.0, "home_value": None, "safety": 70.0, "agency_key": ("x_open_data", "")},
+        {"key": "N2|C|ST", "name": "N2", "ll": (40.0, -73.99), "income": 120_000.0, "home_value": None, "safety": None, "agency_key": None, "agency_any": city},
+        {"key": "N3|C|ST", "name": "N3", "ll": (40.008, -74.0), "income": 110_000.0, "home_value": None, "safety": 80.0, "agency_key": ("x_open_data", "")},
+    )
+    monkeypatch.setattr(s, "all_catalog_rows", lambda: rows)
+    # A searched point named like a catalog place is that place: it is not its own neighbor.
+    own = s.for_point(40.0, -74.0, name="Twin", income=80_000, safety=60, safety_source="x_open_data")
+    assert own["neighbors"][0] != "Twin" and 100_000 <= own["income"]["around"] <= 120_000
+    assert own["safety"]["here"] == 60
+    # A point on an agency rate that a catalog place also uses (a city-wide rate) gets no safety row.
+    shared = s.for_point(40.0, -74.0, name="Elsewhere", income=80_000, safety=20,
+                         safety_source="fbi_nibrs_agency", agency_name="Big City Police Department")
+    assert "safety" not in shared and "income" in shared

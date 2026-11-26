@@ -411,6 +411,20 @@ def catalog_list(request: Request):
     return FileResponse(LIST_JSON, media_type="application/json", headers=headers)
 
 
+@router.get("/catalog/surroundings")
+def catalog_surroundings(
+    lat: float = Query(...), lon: float = Query(...), name: Optional[str] = None, place_type: Optional[str] = None,
+    income: Optional[float] = None, home_value: Optional[float] = None, safety: Optional[float] = None,
+    safety_source: Optional[str] = None, agency_name: Optional[str] = None,
+):
+    """"Around here" for any scored point (results page), from nearby catalog places. Display only (docs/SURROUNDINGS.md)."""
+    import surroundings  # imports this module, so load it on first use
+
+    s = surroundings.for_point(lat, lon, name=name, place_type=place_type, income=income, home_value=home_value,
+                               safety=safety, safety_source=safety_source, agency_name=agency_name)
+    return JSONResponse({"surroundings": s or None}, headers={"Cache-Control": CACHE_CONTROL})
+
+
 @router.get("/catalog/place")
 def catalog_place(metro: str = Query(...), key: str = Query(...)):
     metro = metro.lower()

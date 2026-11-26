@@ -1,6 +1,8 @@
 # Surroundings ("Around here")
 
-A description of the places around a catalog place, next to the place's own figures. Not a pillar: no score, no weight, not counted in any total. Shown in the Explorer side panel, the mobile sheet (expanded) and the neighborhood page.
+A description of the places around a place, next to the place's own figures. Not a pillar: no score, no weight, not counted in any total. Shown in the Explorer side panel, the mobile sheet (expanded), the neighborhood page and the results page (any searched address).
+
+Catalog places use stored figures (`data/catalog_surroundings.json`). The results page calls `GET /catalog/surroundings` (frontend `/api/surroundings`) with the live score's own figures; it applies the same rules against the catalog places nearby. A catalog place within 0.25 miles of the searched point, or with the same name within 2 miles, is treated as the point itself. A searched place whose police agency also scores another catalog place (a city-wide rate such as Houston PD) gets no safety row. All rules live in `surroundings.py`, shared by both paths.
 
 ## Why
 

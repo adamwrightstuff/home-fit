@@ -12,6 +12,7 @@ const nextConfig = {
     return [
       { source: '/api/catalog-map/all', destination: `${API_BASE}/catalog/list` },
       { source: '/api/catalog-map', destination: `${API_BASE}/catalog/place` },
+      { source: '/api/surroundings', destination: `${API_BASE}/catalog/surroundings` },
     ]
   },
   experimental: {

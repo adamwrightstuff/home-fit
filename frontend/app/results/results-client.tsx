@@ -35,6 +35,7 @@ import { saveScore } from '@/lib/savedScores'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import { PILLAR_META } from '@/lib/pillars'
 import FamilyServicesPanel from '@/components/FamilyServicesPanel'
+import ResultsSurroundings from '@/components/ResultsSurroundings'
 
 type RawSearchParams = Record<string, string | string[] | undefined>
 
@@ -933,6 +934,8 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
             />
           ) : null}
         </div>
+
+        {finalResponse && <ResultsSurroundings score={finalResponse} />}
 
         {mapCoords && (
           <FamilyServicesPanel lat={mapCoords.lat} lon={mapCoords.lon} />

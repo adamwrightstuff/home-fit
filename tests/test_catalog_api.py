@@ -132,3 +132,11 @@ def test_missing_catalog_reports_missing_source(data, monkeypatch):
     monkeypatch.setattr(catalog_api, "live_metros", lambda: ["la"])
     n, source = catalog_api.build_list_files()
     assert (n, source) == (0, "missing")
+
+
+def test_surroundings_endpoint_returns_figures_or_null(data, monkeypatch):
+    import surroundings as s
+    monkeypatch.setattr(s, "for_point", lambda lat, lon, **kw: {"income": {"here": kw["income"], "around": 1}} if kw["income"] else {})
+    r = data.get("/catalog/surroundings", params={"lat": 40.7, "lon": -74.0, "income": 50000})
+    assert r.status_code == 200 and r.json()["surroundings"]["income"]["here"] == 50000
+    assert data.get("/catalog/surroundings", params={"lat": 40.7, "lon": -74.0}).json() == {"surroundings": None}
