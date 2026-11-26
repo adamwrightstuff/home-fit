@@ -90,7 +90,7 @@ const CLOSE_BONUS_THRESHOLD = 70
 const SOCIAL_CONNECTION_BONUS_PER_EXTRA_POINT = 5
 const SOCIAL_CONNECTION_MAX_BONUS_POINTS = 2
 
-type TierMiles = { tier: SocialConnectionTier; miles: number | null | undefined }
+type TierMiles = { tier: SocialConnectionTier; miles: number | null | undefined; sameNeighborhood?: boolean }
 
 export function socialConnectionScore(points: TierMiles[]): number | null {
   const scored: number[] = []
@@ -108,7 +108,8 @@ export function socialConnectionScore(points: TierMiles[]): number | null {
 }
 
 /**
- * Acquaintances: the best walk-zone score among acquaintances inside the zone. Anyone outside the walk
+ * Acquaintances: full credit at the neighborhood they live in (sameNeighborhood, see livesInPlace),
+ * otherwise the best walk-zone score among acquaintances inside the zone. Anyone outside the walk
  * zone drops out rather than scoring 0, so an acquaintance can lift the places they live near but never
  * penalize the rest; with nobody inside, the result is null and the priority drops out of the total.
  * More acquaintances in the zone add nothing yet: the research supports the count of weak ties
@@ -118,9 +119,81 @@ export function acquaintancesNearbyScore(points: TierMiles[]): number | null {
   let best: number | null = null
   for (const p of points) {
     if (p.tier !== 'acquaintance') continue
-    const proximity = acquaintanceProximityScore(p.miles)
+    const proximity = p.sameNeighborhood ? 100 : acquaintanceProximityScore(p.miles)
     if (proximity === null || proximity <= 0) continue
     if (best === null || proximity > best) best = proximity
   }
   return best === null ? null : Math.round(best * 10) / 10
+}
+
+const EARTH_RADIUS_M = 6371008.8
+
+function metersBetween(aLat: number, aLon: number, bLat: number, bLon: number): number {
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(bLat - aLat)
+  const dLon = toRad(bLon - aLon)
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLon / 2) ** 2
+  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(h))
+}
+
+/**
+ * Does the person live in this place? The data has no neighborhood boundaries, so a person lives in the
+ * place whose center point is nearest to them (among the catalog centers and this place's own pin), and
+ * no farther from it than the gap from that center to the next nearest center. The gap limit keeps
+ * someone far outside every catalog place from being assigned to one. Both are geometric choices, not
+ * findings; a large suburban place gives full credit across a distance no one walks. TODO, range unknown.
+ * Centers within 1 m of the place are treated as the place itself (a catalog place's own entry).
+ *
+ * makeLivesInPlace caches each person's nearest center and each center's gap, so checking every
+ * catalog place for one person costs one pass over the centers instead of one per place.
+ */
+export function makeLivesInPlace(centroids: ReadonlyArray<readonly [number, number]>) {
+  const nearestByPerson = new Map<string, { index: number; meters: number }>()
+  const gapByCenter = new Map<number, number>()
+  const gapFrom = (lat: number, lon: number, skip?: number) => {
+    let gap = Infinity
+    for (let i = 0; i < centroids.length; i++) {
+      if (i === skip) continue
+      const d = metersBetween(lat, lon, centroids[i][0], centroids[i][1])
+      if (d > 1) gap = Math.min(gap, d)
+    }
+    return gap
+  }
+  return function livesInPlace(person: { lat: number; lon: number }, place: { lat: number; lon: number }): boolean {
+    const values = [person.lat, person.lon, place.lat, place.lon]
+    if (!values.every((v) => typeof v === 'number' && Number.isFinite(v))) return false
+    const key = `${person.lat},${person.lon}`
+    let nearest = nearestByPerson.get(key)
+    if (!nearest) {
+      nearest = { index: -1, meters: Infinity }
+      for (let i = 0; i < centroids.length; i++) {
+        const d = metersBetween(person.lat, person.lon, centroids[i][0], centroids[i][1])
+        if (d < nearest.meters) nearest = { index: i, meters: d }
+      }
+      nearestByPerson.set(key, nearest)
+    }
+    const toPlace = metersBetween(person.lat, person.lon, place.lat, place.lon)
+    const home = nearest.index >= 0 ? centroids[nearest.index] : null
+    if (home && metersBetween(place.lat, place.lon, home[0], home[1]) <= 1) {
+      // the place is the person's nearest catalog center
+      let gap = gapByCenter.get(nearest.index)
+      if (gap === undefined) {
+        gap = gapFrom(home[0], home[1], nearest.index)
+        gapByCenter.set(nearest.index, gap)
+      }
+      return nearest.meters <= gap
+    }
+    // a pin that is not the person's nearest catalog center: it must beat every catalog center
+    if (toPlace > nearest.meters) return false
+    return toPlace <= gapFrom(place.lat, place.lon)
+  }
+}
+
+/** One-off form of makeLivesInPlace, for tests and single checks. */
+export function livesInPlace(
+  person: { lat: number; lon: number },
+  place: { lat: number; lon: number },
+  centroids: ReadonlyArray<readonly [number, number]>
+): boolean {
+  return makeLivesInPlace(centroids)(person, place)
 }

@@ -20,7 +20,7 @@ import CatalogListView from '@/components/catalog/CatalogListView'
 import Link from 'next/link'
 import HeroBand from '@/components/catalog/HeroBand'
 import MetroPicker from '@/components/catalog/MetroPicker'
-import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, haversineMiles, minutesForMode, noRouteToZone } from '@/lib/workZones'
+import { availableWorkZones, commuteToZone, findWorkZone, formatZoneCommute, minutesForMode, noRouteToZone } from '@/lib/workZones'
 import IndexInfoButton from '@/components/catalog/IndexInfoButton'
 import CompareTray from '@/components/catalog/CompareTray'
 import { DEFAULT_PRIORITIES, type PillarPriorities, type PriorityLevel } from '@/components/SearchOptions'
@@ -41,6 +41,7 @@ import {
 } from '@/lib/catalogMapTypes'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, applyScenerySubPreferencesToScore, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesQualityEducationLevelFloor, GATE_DEFAULT_LEVEL, QUALITY_EDUCATION_DEALBREAKER_SCORE, passesCommunitySafetyDealbreaker, passesHealthcareAccessDealbreaker, passesPublicTransitDealbreaker, withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
+import { peoplePoints } from '@/lib/peoplePoints'
 import { fetchProfile, saveProfile, type CommuteMode } from '@/lib/userProfile'
 import { ALL_SCHOOL_LEVELS, applyExplorerScoreAdjustments, writeCompareContext, type SchoolLevel } from '@/lib/explorerScoreAdjust'
 import { climateMustHaveFails, hasClimateMustHaves, normalizeClimatePrefs, type ClimatePreferences, type ClimateMustHaves } from '@/lib/climatePreferences'
@@ -698,12 +699,7 @@ export default function CatalogPageClient({
       const placeLat = Number(p.catalog?.lat)
       const placeLon = Number(p.catalog?.lon)
       if (people.length > 0 && Number.isFinite(placeLat) && Number.isFinite(placeLon)) {
-        const points = people.map((person) => ({
-          tier: person.tier,
-          miles: haversineMiles(person.lat, person.lon, placeLat, placeLon),
-          label: person.label,
-        }))
-        adjusted = { ...adjusted, score: withSocialConnectionPillar(adjusted.score, points) }
+        adjusted = { ...adjusted, score: withSocialConnectionPillar(adjusted.score, peoplePoints(people, placeLat, placeLon)) }
       }
 
       return adjusted

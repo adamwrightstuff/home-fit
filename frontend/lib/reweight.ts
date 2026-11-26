@@ -322,7 +322,7 @@ export function withCommuteTimePillar(
  */
 export function withSocialConnectionPillar(
   data: ScoreResponse,
-  points: Array<{ tier: SocialConnectionTier; miles: number | null | undefined; label?: string }>
+  points: Array<{ tier: SocialConnectionTier; miles: number | null | undefined; label?: string; sameNeighborhood?: boolean }>
 ): ScoreResponse {
   const pillarFor = (tier: SocialConnectionTier, score: number | null) => {
     if (score === null) return null
@@ -338,6 +338,7 @@ export function withSocialConnectionPillar(
             tier: p.tier,
             miles: typeof p.miles === 'number' ? Math.round(p.miles * 100) / 100 : null,
             label: p.label ?? null,
+            ...(p.sameNeighborhood ? { same_neighborhood: true } : {}),
           })),
       },
     }

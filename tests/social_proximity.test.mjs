@@ -1,7 +1,7 @@
 // Run: node --test tests/social_proximity.test.mjs   (Node 22.18+ strips TypeScript types natively)
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { closeTieProximityScore, acquaintanceProximityScore, socialConnectionScore, acquaintancesNearbyScore } from '../frontend/lib/socialProximity.ts'
+import { closeTieProximityScore, acquaintanceProximityScore, socialConnectionScore, acquaintancesNearbyScore, livesInPlace } from '../frontend/lib/socialProximity.ts'
 
 const MILES = [0, 1, 2, 5, 6, 7.5, 10, 25, 50, 100, 500, 3000]
 
@@ -57,6 +57,27 @@ test('acquaintance outside the walk zone drops out instead of scoring 0', () => 
   assert.equal(acquaintancesNearbyScore([{ tier: 'acquaintance', miles: 2 }, { tier: 'acquaintance', miles: 0.3 }]), 100)
   // more acquaintances inside the zone add nothing yet (count-to-score mapping is a TODO)
   assert.equal(acquaintancesNearbyScore([{ tier: 'acquaintance', miles: 0.1 }, { tier: 'acquaintance', miles: 0.1 }]), 100)
+})
+
+test('same neighborhood gives full credit beyond the walk zone', () => {
+  assert.equal(acquaintancesNearbyScore([{ tier: 'acquaintance', miles: 2, sameNeighborhood: true }]), 100)
+  assert.equal(acquaintancesNearbyScore([{ tier: 'acquaintance', miles: 2, sameNeighborhood: false }]), null)
+  // the flag never feeds the close score
+  assert.equal(socialConnectionScore([{ tier: 'acquaintance', miles: 2, sameNeighborhood: true }]), null)
+})
+
+test('livesInPlace: nearest center wins, capped at the gap to the next center', () => {
+  // two centers 2 km apart east-west at the equator (0.018 deg lon ~ 2,004 m)
+  const A = { lat: 0, lon: 0 }, B = { lat: 0, lon: 0.018 }
+  const centers = [[0, 0], [0, 0.018]]
+  assert.equal(livesInPlace({ lat: 0, lon: 0.008 }, A, centers), true)   // closer to A
+  assert.equal(livesInPlace({ lat: 0, lon: 0.010 }, A, centers), false)  // closer to B
+  assert.equal(livesInPlace({ lat: 0, lon: 0.010 }, B, centers), true)
+  assert.equal(livesInPlace({ lat: 0, lon: -0.017 }, A, centers), true)  // 1.9 km west, within the 2 km gap
+  assert.equal(livesInPlace({ lat: 0, lon: -0.030 }, A, centers), false) // 3.3 km west, past the gap
+  // a searched pin not in the catalog is compared against all catalog centers
+  assert.equal(livesInPlace({ lat: 0, lon: 0.004 }, { lat: 0, lon: 0.003 }, centers), true)
+  assert.equal(livesInPlace({ lat: NaN, lon: 0 }, A, centers), false)
 })
 
 test('invalid distance gives null, not a neutral number', () => {

@@ -1,8 +1,9 @@
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import { withCommuteTimePillar, withSocialConnectionPillar } from '@/lib/reweight'
-import { commuteToZone, findWorkZone, haversineMiles, minutesForMode, noRouteToZone, type WorkCommute } from '@/lib/workZones'
+import { commuteToZone, findWorkZone, minutesForMode, noRouteToZone, type WorkCommute } from '@/lib/workZones'
 import { loadPeople, type SocialConnectionPerson } from '@/lib/socialConnections'
+import { peoplePoints } from '@/lib/peoplePoints'
 import type { CommuteMode } from '@/lib/userProfile'
 import { normalizeBeds, type BudgetFilter } from '@/lib/budgetCost'
 /** Explorer filters that rewrite pillar scores (as opposed to filters that only hide places). */
@@ -157,7 +158,7 @@ export function applyCommuteAndPeople(
   if (people.length > 0 && Number.isFinite(lat) && Number.isFinite(lon)) {
     out = withSocialConnectionPillar(
       out,
-      people.map((p) => ({ tier: p.tier, miles: haversineMiles(p.lat, p.lon, lat, lon), label: p.label }))
+      peoplePoints(people, lat, lon)
     )
   }
   return out

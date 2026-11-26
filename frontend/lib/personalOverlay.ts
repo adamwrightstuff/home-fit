@@ -6,6 +6,7 @@ import {
 } from '@/lib/reweight'
 import { commuteToZone, findWorkZone, haversineMiles, minutesForMode, noRouteToZone, type WorkCommute } from '@/lib/workZones'
 import type { UserProfile } from '@/lib/userProfile'
+import { peoplePoints } from '@/lib/peoplePoints'
 import { estimateHubDriveMinutes } from '@/lib/commuteTime'
 
 /**
@@ -71,12 +72,7 @@ export function applyProfileToScore(
   }
 
   if (profile.people?.length) {
-    const points = profile.people.map((person) => ({
-      tier: person.tier,
-      miles: haversineMiles(person.lat, person.lon, lat, lon),
-      label: person.label,
-    }))
-    out = withSocialConnectionPillar(out, points)
+    out = withSocialConnectionPillar(out, peoplePoints(profile.people, lat, lon))
   }
 
   return out
