@@ -1,6 +1,6 @@
 # HomeFit deployment
 
-Single reference for backend (Railway) and frontend (Vercel or alternatives). Environment variable for the browser-facing app: **`NEXT_PUBLIC_API_URL`** → your production API base (e.g. `https://home-fit-production.up.railway.app`).
+Single reference for backend (Railway) and frontend (Netlify in production; Railway and self-hosted as alternatives). Environment variable for the browser-facing app: **`NEXT_PUBLIC_API_URL`** → your production API base (e.g. `https://home-fit-production.up.railway.app`).
 
 ---
 
@@ -37,34 +37,6 @@ The repo has a **root `Dockerfile`**. Railway should build from it automatically
 
 ## Frontend
 
-### Vercel (recommended)
-
-**Dashboard (one-time)**
-
-1. [vercel.com](https://vercel.com) → Add New Project → import this repo.
-2. **Root Directory**: `frontend`
-3. **Environment variable**: `NEXT_PUBLIC_API_URL` = your Railway API URL.
-4. Deploy; later pushes to the connected branch redeploy automatically.
-
-**CLI (token-based, no browser)**
-
-1. Create a token: [vercel.com/account/tokens](https://vercel.com/account/tokens)
-2. Deploy:
-   ```bash
-   cd frontend
-   vercel --token YOUR_TOKEN_HERE --yes
-   vercel env add NEXT_PUBLIC_API_URL production
-   # When prompted, enter your API base URL
-   ```
-
-**Quick script from repo root** (interactive `vercel login`):
-
-```bash
-cd frontend && vercel login && vercel --prod
-```
-
-Set **Root Directory** to `frontend` and **`NEXT_PUBLIC_API_URL`** when linking the project.
-
 ### Railway (frontend on same platform as API)
 
 The frontend runs as its own Railway service built from `frontend.Dockerfile` (the build needs the repo root so it can read `data/` for the neighborhood pages). Set it up in the Railway dashboard:
@@ -76,7 +48,10 @@ The frontend runs as its own Railway service built from `frontend.Dockerfile` (t
 
 In the service's Settings, under Deploy, set Healthcheck Path to `/quiz` (a static page that does not depend on the API).
 
-### Netlify
+### Netlify (production)
+
+The production frontend is the Netlify site `home-fit-ates`, which builds on every push to `main`.
+
 
 The repo root `netlify.toml` sets base directory `frontend`, build command `npm install && npm run build` and Node 20, so a Netlify site connected to this repo needs no build settings in the dashboard.
 
@@ -109,7 +84,7 @@ Example pattern: multi-stage Node build, `output: 'standalone'` in `next.config`
 
 ## Viewing logs
 
-- **Vercel**: Project → **Deployments** (build) / **Logs** (runtime, e.g. `/api/score` proxy).
+- **Netlify**: site → **Deploys** (build) / **Logs**, Functions (runtime, e.g. `/api/score` proxy).
 - **Railway**: As above for the API service.
 
 ---
@@ -130,11 +105,11 @@ Example pattern: multi-stage Node build, `output: 'standalone'` in `next.config`
 
 ## Catalog served by the API (since 2026-11-24)
 
-The ~111 MB catalog is no longer bundled into the Vercel frontend. `catalog_api.py` serves it from the API:
+The ~111 MB catalog is no longer bundled into the frontend. `catalog_api.py` serves it from the API:
 
 - `GET /catalog/list` returns the slimmed list of every live-metro place (what `/api/catalog-map?metro=all` used to return). It is built at image build time by `scripts/catalog/build_catalog_list.py` into `data_cache/catalog_list.json` and `.json.gz` (about 18 MB, 1.9 MB gzipped) and served as a static file; if the build step did not run, the first request builds it.
 - `GET /catalog/place?metro=nyc&key=<name>|<county>|<state>` returns the full detail for one place.
-- The frontend keeps calling `/api/catalog-map/all` and `/api/catalog-map?metro=X&key=Y`; `frontend/next.config.js` rewrites them to the API using `RAILWAY_API_BASE_URL` (falling back to `NEXT_PUBLIC_API_URL`). **That variable must be set for the Vercel build, not only at runtime**, because rewrites are resolved when the app is built.
+- The frontend keeps calling `/api/catalog-map/all` and `/api/catalog-map?metro=X&key=Y`; `frontend/next.config.js` rewrites them to the API using `RAILWAY_API_BASE_URL` (falling back to `NEXT_PUBLIC_API_URL`). **That variable must be set for the frontend build, not only at runtime**, because rewrites are resolved when the app is built.
 - The API image needs the catalog files: `data/*_metro_place_catalog_scores_merged.composites_recomputed.jsonl`, `data/catalog_climate_profiles.jsonl`, `data/catalog_housing_costs.json` and `data/metro_registry.json`. When the catalog changes, redeploy the API so the list is rebuilt.
 - The slimming rules (heavy per-pillar detail, and key names nothing in the frontend reads) live in `catalog_api.py` (`UNUSED_KEYS`, `KEEP_PATHS`). Before adding a read of one of those names in a list-level view, remove it from `UNUSED_KEYS`.
-- Static neighborhood pages and the sitemap still read the catalog at build time (`frontend/vercel.json` copies it into `frontend/data` before `next build`), but no deployed server function bundles it.
+- Static neighborhood pages and the sitemap still read the catalog at build time (`frontend/vercel.json` and `frontend.Dockerfile` copy it into `frontend/data` before `next build`), but no deployed server function bundles it.

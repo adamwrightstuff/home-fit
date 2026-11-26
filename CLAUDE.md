@@ -8,7 +8,7 @@ Answer in one sentence. Lead with the fix, not the explanation. No code snippets
 
 ## What This Is
 
-HomeFit is a personalized livability scoring API that evaluates any location across 12 research-backed pillars (active outdoors, natural beauty, neighborhood amenities, air travel, public transit, healthcare, education, housing value, economic security, climate risk, social fabric, community safety) to produce a weighted 0–100 score. Political lean and diversity are opt-in filters, not pillars. Built environment is retired: the area type is decided once per request and shared by every pillar. Commute time and social proximity (nearby family and friends) are opt-in personal priorities, also not pillars. The pillar list lives in `pillar_registry.py`; frontend `PILLAR_ORDER` mirrors it by hand. Production backend runs on Railway; frontend on Vercel.
+HomeFit is a personalized livability scoring API that evaluates any location across 12 research-backed pillars (active outdoors, natural beauty, neighborhood amenities, air travel, public transit, healthcare, education, housing value, economic security, climate risk, social fabric, community safety) to produce a weighted 0–100 score. Political lean and diversity are opt-in filters, not pillars. Built environment is retired: the area type is decided once per request and shared by every pillar. Commute time and social proximity (nearby family and friends) are opt-in personal priorities, also not pillars. The pillar list lives in `pillar_registry.py`; frontend `PILLAR_ORDER` mirrors it by hand. Production backend runs on Railway; frontend on Netlify (built from `main` via the root `netlify.toml`).
 
 ## Running Locally
 

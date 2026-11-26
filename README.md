@@ -6,7 +6,7 @@ Trovamo is a neighborhood scoring and discovery platform. Enter any address or n
 
 ## Stack
 
-- Frontend: Next.js, Tailwind CSS, deployed on Vercel
+- Frontend: Next.js, Tailwind CSS, deployed on Netlify
 - Backend: FastAPI, deployed on Railway
 - Data: OSM, Google Places, custom scoring pipeline
 
