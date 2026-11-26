@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { ScoreResponse } from '@/types/api'
-import { applyUserIncomeToScore, applyScenerySubPreferencesToScore, reweightScoreResponseFromPriorities } from '@/lib/reweight'
+import { applyUserIncomeToScore, applyCurrentHomeDetailsToScore, applyScenerySubPreferencesToScore, reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { applyCommuteAndPeople, applyExplorerScoreAdjustments, readCompareContext, type CompareContext } from '@/lib/explorerScoreAdjust'
 import { HOMEFIT_COPY, HAPPINESS_INDEX_COPY } from '@/lib/pillars'
 import type { WorkCommute } from '@/lib/workZones'
@@ -52,7 +52,8 @@ export default function NeighborhoodHeadline({
     if (!ctx) return score
     const home = ctx.currentHome
     const isCurrentHome = !!home && (home.key && placeKey ? home.key === placeKey : home.name === placeName)
-    let out = ctx.householdIncome ? applyUserIncomeToScore(score, ctx.householdIncome, isCurrentHome ? home!.monthlyCost : null) : score
+    let out = isCurrentHome ? applyCurrentHomeDetailsToScore(score, home) : score
+    out = ctx.householdIncome ? applyUserIncomeToScore(out, ctx.householdIncome, isCurrentHome ? home!.monthlyCost : null) : out
     out = applyExplorerScoreAdjustments(out, ctx.filters)
     out = applyCommuteAndPeople(out, { workCommute: workCommute ?? null, lat, lon }, ctx)
     const nb = ctx.filters.filterNbTypes ?? []

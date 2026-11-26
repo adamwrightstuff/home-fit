@@ -6,7 +6,8 @@ export type CommuteMode = 'auto' | 'transit' | 'active'
 export interface UserProfile {
   household_income: number | null
   /** key: catalog row key (name|county|state); missing on homes saved before it was stored. */
-  current_home: { name: string; monthly_cost: number | null; key?: string } | null
+  /** rooms (Census rooms) and purchase_price (owners) rescore space and value for money for this home only. */
+  current_home: { name: string; monthly_cost: number | null; key?: string; rooms?: number; purchase_price?: number } | null
   work_zone_id: string | null
   commute_mode: CommuteMode | null
   /** Days per week in the office, 0 (fully remote) to 5. */
@@ -52,7 +53,13 @@ export function sanitizeProfile(raw: unknown): Partial<UserProfile> {
     else if (v && typeof v.name === 'string' && v.name) {
       const cost = typeof v.monthly_cost === 'number' && Number.isFinite(v.monthly_cost) && v.monthly_cost > 0
         ? v.monthly_cost : null
-      out.current_home = { name: v.name, monthly_cost: cost, ...(typeof v.key === 'string' && v.key ? { key: v.key } : {}) }
+      out.current_home = {
+        name: v.name,
+        monthly_cost: cost,
+        ...(typeof v.key === 'string' && v.key ? { key: v.key } : {}),
+        ...(typeof v.rooms === 'number' && v.rooms > 0 && v.rooms <= 30 ? { rooms: v.rooms } : {}),
+        ...(typeof v.purchase_price === 'number' && v.purchase_price >= 10000 ? { purchase_price: v.purchase_price } : {}),
+      }
     }
   }
   if ('work_zone_id' in r) {
@@ -108,6 +115,8 @@ export function readLocalProfile(): Partial<UserProfile> {
         name: homeName,
         monthly_cost: typeof cost === 'number' && cost > 0 ? cost : null,
         ...(typeof homeKey === 'string' && homeKey ? { key: homeKey } : {}),
+        ...(typeof opts?.current_home_rooms === 'number' && opts.current_home_rooms > 0 ? { rooms: opts.current_home_rooms } : {}),
+        ...(typeof opts?.current_home_purchase_price === 'number' && opts.current_home_purchase_price > 0 ? { purchase_price: opts.current_home_purchase_price } : {}),
       }
     }
     const fb = opts?.filters?.filterBudget

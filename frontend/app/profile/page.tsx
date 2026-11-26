@@ -60,6 +60,8 @@ function persistLocal(patch: Partial<UserProfile>) {
       opts.current_home_match = patch.current_home?.name ?? ''
       opts.current_home_monthly_cost = patch.current_home?.monthly_cost ?? null
       opts.current_home_key = patch.current_home?.key ?? ''
+      opts.current_home_rooms = patch.current_home?.rooms ?? null
+      opts.current_home_purchase_price = patch.current_home?.purchase_price ?? null
     }
     if ('home_budget' in patch) {
       const prev = opts.filters?.filterBudget ?? {}
@@ -160,6 +162,8 @@ export default function ProfilePage() {
 
   const [incomeInput, setIncomeInput] = useState('')
   const [costInput, setCostInput] = useState('')
+  const [roomsInput, setRoomsInput] = useState('')
+  const [priceInput, setPriceInput] = useState('')
   const [homeQuery, setHomeQuery] = useState('')
   const [homeOpen, setHomeOpen] = useState(false)
   const [homeOptions, setHomeOptions] = useState<HomeOption[]>([])
@@ -173,6 +177,8 @@ export default function ProfilePage() {
   const syncInputs = useCallback((p: Partial<UserProfile>) => {
     setIncomeInput(p.household_income ? p.household_income.toLocaleString('en-US') : '')
     setCostInput(p.current_home?.monthly_cost ? p.current_home.monthly_cost.toLocaleString('en-US') : '')
+    setRoomsInput(p.current_home?.rooms ? String(p.current_home.rooms) : '')
+    setPriceInput(p.current_home?.purchase_price ? p.current_home.purchase_price.toLocaleString('en-US') : '')
     setHomeQuery(p.current_home?.name ?? '')
   }, [])
 
@@ -256,15 +262,36 @@ export default function ProfilePage() {
     }
   }
 
+  const commitHomeDetail = (field: 'rooms' | 'purchase_price', raw: string) => {
+    const n = digitsToNumber(raw)
+    const valid = field === 'rooms' ? (n !== null && n >= 1 && n <= 30 ? n : null) : (n !== null && n >= 10000 ? n : null)
+    if (field === 'rooms') setRoomsInput(valid ? String(valid) : '')
+    else setPriceInput(valid ? valid.toLocaleString('en-US') : '')
+    if (!profile.current_home || valid === (profile.current_home[field] ?? null)) return
+    const { [field]: _drop, ...rest } = profile.current_home
+    update({ current_home: valid === null ? rest : { ...rest, [field]: valid } })
+  }
+
   const chooseHome = (o: HomeOption) => {
     setHomeQuery(o.name)
     setHomeOpen(false)
-    update({ current_home: { name: o.name, monthly_cost: profile.current_home?.monthly_cost ?? null, ...(o.key ? { key: o.key } : {}) } })
+    const prev = profile.current_home
+    update({
+      current_home: {
+        name: o.name,
+        monthly_cost: prev?.monthly_cost ?? null,
+        ...(o.key ? { key: o.key } : {}),
+        ...(prev?.rooms ? { rooms: prev.rooms } : {}),
+        ...(prev?.purchase_price ? { purchase_price: prev.purchase_price } : {}),
+      },
+    })
   }
 
   const clearHome = () => {
     setHomeQuery('')
     setCostInput('')
+    setRoomsInput('')
+    setPriceInput('')
     setHomeOpen(false)
     update({ current_home: null })
   }
@@ -453,6 +480,44 @@ export default function ProfilePage() {
                   {costShare !== null
                     ? `That's about ${costShare}% of your income. Only this neighborhood uses your real cost; every other place uses its area median.`
                     : 'Add your income above to see this as a share of what you earn. Only this neighborhood uses your real cost.'}
+                </p>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="profile-rooms">Rooms in your home</Label>
+                    <input
+                      id="profile-rooms"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      placeholder="e.g. 5"
+                      value={roomsInput}
+                      onChange={(e) => setRoomsInput(e.target.value)}
+                      onBlur={() => commitHomeDetail('rooms', roomsInput)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+                      className={INPUT_CLASS}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="profile-price">What you paid, if you own</Label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--hf-text-secondary)]">$</span>
+                      <input
+                        id="profile-price"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        placeholder="Purchase price"
+                        value={priceInput}
+                        onChange={(e) => setPriceInput(e.target.value)}
+                        onBlur={() => commitHomeDetail('purchase_price', priceInput)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+                        className={INPUT_CLASS + ' pl-7'}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <p className="m-0 mt-1.5 text-xs text-[var(--hf-text-secondary)]">
+                  Count bedrooms, living room, kitchen and dining room, not bathrooms, halls or closets (the Census way, so it compares with every other place). Rooms score this home&apos;s space; rooms and price together score its value for money.
                 </p>
               </div>
             )}
