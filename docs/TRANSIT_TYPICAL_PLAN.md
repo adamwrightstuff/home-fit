@@ -17,6 +17,10 @@ Why best-timed was chosen is not recorded. The R5 script is not in the repo; the
 5. Report: per place and hub, median minus best; which places move most (expect transfer-heavy commuter-rail suburbs such as Glen Rock); rank changes in the commute pillar at a few hubs. Then the owner decides whether the commute score switches to p50.
 6. If switched: frontend commute reads `transit_p50`, COMMUTE_TIME.md spec sheet and gap 9 updated, the "best-timed" disclosure becomes "typical".
 
+## Also store transfers (owner request 2026-11-27)
+
+Show "53 min, 1 transfer" wherever commute time is shown today (the place's Your fit row, the Explorer list and Compare). The matrix call above returns minutes only, so for each place and hub also run r5py `DetailedItineraries` at the median departure and store `transfers` (transit legs minus 1) and the transfer stations (for example "change at Secaucus") in `work_commute` next to `transit_p50`. Display only at first; whether transfers should also move the commute score is a separate owner decision (see below). A place with no transit route shows "no route", never 0 transfers.
+
 ## Not in scope
 
 A separate per-transfer penalty. Time-value research weights waits about 1.5 to 2 times in-vehicle time, but stored minutes do not split waiting from riding, and p50 already captures realistic transfer waits.
